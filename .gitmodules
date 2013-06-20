@@ -1,0 +1,3 @@
+[submodule "src/Boost-Btree"]
+	path = src/Boost-Btree
+	url = https://github.com/Beman/Boost-Btree.git
