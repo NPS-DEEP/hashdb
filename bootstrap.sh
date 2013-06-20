@@ -8,7 +8,7 @@ then
   git submodule init
 fi
 
-if [ ! -r src/Boost-Btree-64-bit-port/.git ] ;
+if [ ! -r src/Boost-Btree/.git ] ;
 then
   echo submodule error.  Please check out with git clone --recursive
   exit 1

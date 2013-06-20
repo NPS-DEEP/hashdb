@@ -24,7 +24,7 @@ libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/Boost-Btree-64-bit-port \
+	-isystem${top_srcdir}/src/Boost-Btree \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
@@ -71,28 +71,28 @@ MISC_INCS = \
 	../misc/util.h
 
 BOOST_BTREE_INCS = \
-	../Boost-Btree-64-bit-port/boost/btree/dynamic_size.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/header.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/map.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/set.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/detail/binary_file.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/detail/buffer_manager.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/detail/common.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/detail/config.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/support/c_str_proxy.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/support/fixstr.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/support/random_string.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/support/strbuf.hpp \
-	../Boost-Btree-64-bit-port/boost/btree/support/timer.hpp \
-	../Boost-Btree-64-bit-port/boost/integer/endian.hpp \
-	../Boost-Btree-64-bit-port/boost/integer/endian_flip.hpp \
-	../Boost-Btree-64-bit-port/boost/integer/endian_binary_stream.hpp \
-	../Boost-Btree-64-bit-port/boost/integer/cover_operators.hpp \
-	../Boost-Btree-64-bit-port/libs/btree/src/detail/run_timer.cpp \
-	../Boost-Btree-64-bit-port/libs/btree/src/detail/buffer_manager.cpp \
-	../Boost-Btree-64-bit-port/libs/btree/src/detail/binary_file.cpp \
-	../Boost-Btree-64-bit-port/libs/btree/src/detail/timer.cpp \
-	../Boost-Btree-64-bit-port/libs/btree/src/detail/run_timer_ctors.cpp
+	../Boost-Btree/boost/btree/dynamic_size.hpp \
+	../Boost-Btree/boost/btree/header.hpp \
+	../Boost-Btree/boost/btree/map.hpp \
+	../Boost-Btree/boost/btree/set.hpp \
+	../Boost-Btree/boost/btree/detail/binary_file.hpp \
+	../Boost-Btree/boost/btree/detail/buffer_manager.hpp \
+	../Boost-Btree/boost/btree/detail/common.hpp \
+	../Boost-Btree/boost/btree/detail/config.hpp \
+	../Boost-Btree/boost/btree/support/c_str_proxy.hpp \
+	../Boost-Btree/boost/btree/support/fixstr.hpp \
+	../Boost-Btree/boost/btree/support/random_string.hpp \
+	../Boost-Btree/boost/btree/support/strbuf.hpp \
+	../Boost-Btree/boost/btree/support/timer.hpp \
+	../Boost-Btree/boost/integer/endian.hpp \
+	../Boost-Btree/boost/integer/endian_flip.hpp \
+	../Boost-Btree/boost/integer/endian_binary_stream.hpp \
+	../Boost-Btree/boost/integer/cover_operators.hpp \
+	../Boost-Btree/libs/btree/src/detail/run_timer.cpp \
+	../Boost-Btree/libs/btree/src/detail/buffer_manager.cpp \
+	../Boost-Btree/libs/btree/src/detail/binary_file.cpp \
+	../Boost-Btree/libs/btree/src/detail/timer.cpp \
+	../Boost-Btree/libs/btree/src/detail/run_timer_ctors.cpp
 
 libhashdb_la_SOURCES = \
 	$(QUERY_INCS) $(DFXML_INCS) $(MISC_INCS) $(BOOST_BTREE_INCS)
