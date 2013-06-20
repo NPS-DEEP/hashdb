@@ -23,25 +23,15 @@ bin_PROGRAMS = hashdb_checker
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/xbtree \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
 LDADD = ../libhashdb/libhashdb.la
 
-# zzzzzzzz
 AM_LDFLAGS = -static $(XML_LIBS)
 
 DFXML_INCS = \
 	../dfxml/src/hash_t.h
-
-MISC_LIBXML_INCS = \
-	../misc_libxml/unicode_escape.cpp \
-	../misc_libxml/unicode_escape.h \
-	../misc_libxml/utf8.h \
-	../misc_libxml/utf8/checked.h \
-	../misc_libxml/utf8/core.h \
-	../misc_libxml/utf8/unchecked.h
 
 hashdb_checker_SOURCES = \
 	$(DFXML_INCS) \

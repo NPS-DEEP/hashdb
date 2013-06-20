@@ -47,4 +47,6 @@ out-*/
 src/TAGS
 TAGS
 core.*
+src/hashdb_manager
+src/hashdb_checker/hashdb_checker
 

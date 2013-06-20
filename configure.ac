@@ -316,9 +316,6 @@ if test  x"$mingw" = x"yes";  then
   AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
 fi
 PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4, [], [AC_MSG_ERROR([libxml2 failed])])
-#CPPFLAGS="-I/usr/include/libxml2 $CPPFLAGS"
-#AC_CHECK_HEADERS([libxml/parser.h],,[AC_MSG_ERROR([Could not find libxml2 at /usr/include/libxml2.  Please install libxml2 or adjust this hardcoded path.])])
-#AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"], [AC_MSG_ERROR([Could not find libxml2 library])])
 
 ################################################################
 ## support required by zmq

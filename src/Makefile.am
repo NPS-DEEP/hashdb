@@ -23,7 +23,7 @@ bin_PROGRAMS = hashdb_manager
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/xbtree \
+	-isystem${top_srcdir}/src/Boost-Btree-64-bit-port \
 	$(XML_CFLAGS)
 
 # zzzzzzzz
@@ -72,30 +72,30 @@ MISC_INCS = \
 	misc/bloom.hpp \
 	misc/util.h
 
-BOOST_INCS = \
-	xbtree/boost/btree/dynamic_size.hpp \
-	xbtree/boost/btree/header.hpp \
-	xbtree/boost/btree/map.hpp \
-	xbtree/boost/btree/set.hpp \
-	xbtree/boost/btree/detail/binary_file.hpp \
-	xbtree/boost/btree/detail/buffer_manager.hpp \
-	xbtree/boost/btree/detail/common.hpp \
-	xbtree/boost/btree/detail/config.hpp \
-	xbtree/boost/btree/support/c_str_proxy.hpp \
-	xbtree/boost/btree/support/fixstr.hpp \
-	xbtree/boost/btree/support/random_string.hpp \
-	xbtree/boost/btree/support/strbuf.hpp \
-	xbtree/boost/btree/support/timer.hpp \
-	xbtree/boost/integer/endian.hpp \
-	xbtree/boost/integer/endian_flip.hpp \
-	xbtree/boost/integer/endian_binary_stream.hpp \
-	xbtree/boost/integer/cover_operators.hpp \
-	xbtree/libs/btree/src/detail/run_timer.cpp \
-	xbtree/libs/btree/src/detail/buffer_manager.cpp \
-	xbtree/libs/btree/src/detail/binary_file.cpp \
-	xbtree/libs/btree/src/detail/timer.cpp \
-	xbtree/libs/btree/src/detail/run_timer_ctors.cpp
+BOOST_BTREE_INCS = \
+	Boost-Btree-64-bit-port/boost/btree/dynamic_size.hpp \
+	Boost-Btree-64-bit-port/boost/btree/header.hpp \
+	Boost-Btree-64-bit-port/boost/btree/map.hpp \
+	Boost-Btree-64-bit-port/boost/btree/set.hpp \
+	Boost-Btree-64-bit-port/boost/btree/detail/binary_file.hpp \
+	Boost-Btree-64-bit-port/boost/btree/detail/buffer_manager.hpp \
+	Boost-Btree-64-bit-port/boost/btree/detail/common.hpp \
+	Boost-Btree-64-bit-port/boost/btree/detail/config.hpp \
+	Boost-Btree-64-bit-port/boost/btree/support/c_str_proxy.hpp \
+	Boost-Btree-64-bit-port/boost/btree/support/fixstr.hpp \
+	Boost-Btree-64-bit-port/boost/btree/support/random_string.hpp \
+	Boost-Btree-64-bit-port/boost/btree/support/strbuf.hpp \
+	Boost-Btree-64-bit-port/boost/btree/support/timer.hpp \
+	Boost-Btree-64-bit-port/boost/integer/endian.hpp \
+	Boost-Btree-64-bit-port/boost/integer/endian_flip.hpp \
+	Boost-Btree-64-bit-port/boost/integer/endian_binary_stream.hpp \
+	Boost-Btree-64-bit-port/boost/integer/cover_operators.hpp \
+	Boost-Btree-64-bit-port/libs/btree/src/detail/run_timer.cpp \
+	Boost-Btree-64-bit-port/libs/btree/src/detail/buffer_manager.cpp \
+	Boost-Btree-64-bit-port/libs/btree/src/detail/binary_file.cpp \
+	Boost-Btree-64-bit-port/libs/btree/src/detail/timer.cpp \
+	Boost-Btree-64-bit-port/libs/btree/src/detail/run_timer_ctors.cpp
 
 hashdb_manager_SOURCES = \
-	$(SECTOR_HASH_INCS) $(DFXML_INCS) $(MISC_INCS) $(BOOST_INCS)
+	$(SECTOR_HASH_INCS) $(DFXML_INCS) $(MISC_INCS) $(BOOST_BTREE_INCS)
 
