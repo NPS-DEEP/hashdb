@@ -1,0 +1,7 @@
+Doxygen is not made to build with the rest of the distribution.
+
+To compile, type "make" in this directory.
+This is equivalent to "doxygen Doxyfile".
+
+File Doxyfile was configured using the doxywizard UI.
+To update the Doxyfile type "doxywizard Doxyfile".

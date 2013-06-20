@@ -1,0 +1,64 @@
+test input parameters.
+Inspect using export, settings.xml, and log.xml:
+
+Run examples in Usage.  Additionally:
+
+define most parameters when creating a new hashdb:
+hashdb_manager --copy -p512 -m10 -thash -n2 -i33 --b1 disabled --b1n 10000 --b2 disabled --b2n 100000 -rmy_repo dfxml_in hashdb_out
+
+hashdb_manager --rebuild_bloom --b1 enabled --b1kM 2:15 --b2 disabled --b2kM 4:22 hashdb_out
+
+hashdb_manager --copy -rmy_repo dfxml_in hashdb_out
+hashdb_manager --export hashdb_out dfxml_out
+hashdb_manager --remove -rmy_repo dfxml_in hashdb_out
+
+
+------------------------------------------------------------
+simple example sequence for testing scan_hashdb
+Identify an image file to use, create a hashdb of it, and then scan it:
+
+$ mkdir test_scan_hashid
+$ cp Images/geotag-example.jpg test_scan_hashid/
+$ cd test_scan_hashid/
+$ md5deep -p 4096 -d geotag-example.jpg > geo_dfxml
+$ hashdb_manager --copy -r "myrep" geo_dfxml  geo_hashdb
+$ bulk_extractor -ehashid -s path=geo_hashdb -o be4 geotag-example.jpg 
+
+Then validate features in file be4/md5.txt
+
+------------------------------------------------------------
+Sequence for testing basic functional integrity.
+These tests were used to validate the port to Windows and Mac.
+
+Tests include import, export, and query by path and socket
+using the hashdb_checker tool and bulk_extractor via scan_hashid.
+
+# create dfxml file from md5deep
+md5deep -p 4096 -d myfile > my_dfxml
+
+# import dfxml file
+# b1 is disabled on Windows until Bloom works
+hashdb_manager --copy --b1 disabled -r "my repository" my_dfxml my_db
+
+# export dfxml file and validate by inspection
+hashdb_manager --export my_db temp_dfxml
+vi temp_dfxml
+
+# lookup using the hashdb_checker tool using database
+hashdb_checker --lookup -p my_db my_dfxml
+
+# start server for serving lookups from my_db using default socket
+hashdb_manager --server my_db
+
+# lookup using the hashdb_checker tool using default socket
+hashdb_checker --lookup -l use_socket my_dfxml
+
+# lookup using the bulk_extractor scan_hashid scanner using database
+bulk_extractor -S lookup_type=use_path -S path=my_db -o out1 myfile
+
+# start server for serving lookups from my_db using default socket
+hashdb_manager --server my_db
+
+# lookup using the bulk_extractor scan_hashid scanner using default socket
+bulk_extractor -S lookup_type=use_socket -o out2 myfile
+

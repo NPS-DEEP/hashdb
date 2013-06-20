@@ -1,0 +1,102 @@
+Welcome to hashdb!
+
+The hashdb package includes hashdb_manager, hashdb_checker, and
+the hashdb library.
+
+The hashdb_manager tool provides facilities for creating hash databases
+of MD5 hashes on files along chunk boundaries as well as querying
+hash databases, merging hash databases, and performing hash lookups.
+Multiple map types are supported, allowing for specific optimizations.
+Hash databases may be imported and exported in DFXML format.
+
+hashdb requires additional packages.
+For FC18, perform the following setup:
+
+   $ sudo yum update
+   $ sudo yum groupinstall development-tools
+   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
+   $ sudo yum install boost-devel
+
+To install on a Linux/MacOS/Mingw system, use:
+   $ ./configure
+   $ make
+   $ sudo make install
+
+Running "sudo make install" is not required.  In a default Fedora
+configuration, "make" creates executables here:
+   src/hashdb_manager
+   src/hashdb_checker/hashdb_checker
+   src/libhashdb/.libs/libhashdb.la
+   src/libhashdb/.libs/libhashdb.a
+
+In a default Fedora configuration, "sudo make install" installs
+files here:
+   /usr/local/bin/hashdb_manager
+   /usr/local/bin/hashdb_checker
+   /usr/local/lib/hashdb/libhashdb.la
+   /usr/local/lib/hashdb/libhashdb.a
+
+To cross-compile from Fedora 18 to Windows, do the following:
+   1) Set up the mingw cross compiler environment:
+      $ cd src_win; ./CONFIGURE_F18.sh
+   2) type "make win32" or "make win64".
+
+================================================================
+
+Compiling hashdb
+*************************
+hashdb builds with the GNU auto tools. The maintainer has
+prevously run automake and autoconf to produce the script
+"configure". This script *should* be able to compile hashdb
+for your platform. 
+
+We recommend compiling hashdb with -O3 and that is the
+default. You can disable all optimizaiton flags by specifying the
+configure option --with-noopt.
+
+INSTALLING DEPENDENCIES ON FEDORA
+
+On Fedora, this command should add the appropriate packages:
+
+  $ sudo yum update
+  $ sudo yum groupinstall development-tools
+
+Also: libxml++-devel and zeromq3
+
+INSTALLING DEPENDENCIES ON UBUNTU:
+
+On Ubuntu 12.04, this may be sufficient:
+
+  $ sudo apt-get -y install gcc g++
+
+Also: libxml++-devel and zeromq3
+
+INSTALLING DEPENDENCIES ON MAC:
+
+We recommend installing Mac dependencies using the MacPorts system. Once that is installed, try:
+
+  $ sudo port install autoconf automake
+
+Also: libxml++-devel and zeromq3
+
+Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
+to include /opt/local/bin.
+
+
+
+Cross-compiling for Windows from Fedora
+*************************************************
+1) Set up mingw and the cross-compilation environment by running script
+src_win/CONFIGURE_F17.sh
+
+2) Run script CONFIGURE_F17.sh found in directory src_win/ to set up Fedora 17
+or newer to set up the mingw environment for cross-compiling to Windows.
+
+3) Create and cd to directory win32 or win64
+
+4) type "mingw64-configure" in directory win64 to set up the build environment
+in the win64 directory
+
+5) type "make" in the win64 directory
+
+

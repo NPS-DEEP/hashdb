@@ -1,0 +1,138 @@
+Note: changed xbtree/boost/btree/detail/common.hpp line 1643:
+
+template <class Key, class Base, class Traits, class Comp>   
+typename btree_base<Key,Base,Traits,Comp>::size_type
+btree_base<Key,Base,Traits,Comp>::erase(const key_type& k)
+{
+  BOOST_ASSERT_MSG(is_open(), "erase() on unopen btree");
+  BOOST_ASSERT_MSG(!read_only(), "erase() on read only btree");
+  size_type count = 0;
+  const_iterator it = lower_bound(k);
+    
+//zzzzzzzzzz  while (it != end() && !key_comp()(k, key(*it)))
+  while (it != end() && !key_comp()(k, this->key(*it)))
+  {
+    ++count;
+    it = erase(it);
+  }
+  return count;
+}
+
+
+to prevent error:
+../src/xbtree/boost/btree/detail/common.hpp:1642:3: error: ‘key’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+
+Function erase is now required to support modifying records when there
+are duplicate keys.
+
+
+Note: fixed broken constructor for manager_iterator in manager.h:
+    class manager_iterator
+      : public boost::iterator_facade<
+            manager_iterator
+          , val_t const
+          , boost::forward_traversal_tag
+        > {
+
+      public:
+//zz NO        manager_iterator() : m_itr(0),m_map(0),m_mgr(0) { }
+        manager_iterator() : m_itr(),m_map(0),m_mgr(0) { }
+
+        explicit manager_iterator(map_const_iterator p, uint64_t map, const this_t* mgr) 
+          : m_itr(p), m_map(map), m_mgr(mgr)
+        {}
+
+<...etc>
+
+Note: removed use of iterator_facade because it causes many compiler warnings like this:
+warning: base class ‘class boost::iterator_facade<burst_manager_map<md5_t, source_lookup_record_t>::manager_iterator, const std::pair<const md5_t, source_lookup_record_t>, boost::forward_traversal_tag, const std::pair<const md5_t, source_lookup_record_t>&, long int>’ has a non-virtual destructor [-Weffc++]
+This change helped ensure efficient usage (prefix increment), reduces the call chain, and allows control over what the compiler generates, specifically, operator= and the copy constructor.
+
+Note: 
+Removed the dependency on libtoolize by porting libxml++ to libxml2.  libxml++ requires libtoolize because it requires PKG_CHECK_MODULES, requiring the use of AM_PROG_CC_C_O and requiring makefiles to define program_CPPFLAGS and program_LIBS.  Additional side effects are:
+
+1)  the libtoolize comment libtoolize: `AC_PROG_RANLIB' is rendered obsolete by `LT_INIT'.
+2)  all the generated .o files are prefixed with the primary name, which is annoying.
+3)  Makefiles that need libxml++ require the lines:
+          hashdb_CPPFLAGS = $(LIBXMLXX_CFLAGS) $(AM_CPPFLAGS)
+          hashdb_LDFLAGS = $(LIBXMLXX_LIBS)
+     which makes it so I can't readily compile with flag -lsystem for libxml++, which would make all those libxml++ warnings go away.
+
+Here are some ramifications of this effort:
+hashdb_settings_t now includes hashdigest_type.
+
+When parsing DFXML, hashdigest_type and chunk_size are passed to hashdb_manager.
+This way, hashdb_manager can manage all checking and report all failures at the same place.
+
+There were 3 similar DFXML parsers because the action is embedded in the parser:
+  Add hash
+  remove hash
+  hashdb lookup
+
+Now, the action is still embedded, but a consumer callback is used with a Template so there is only one DFXML scanner for all three.
+
+Also, the XML settings parser has been ported to use libxml2, not libxml++.
+
+
+xbtree modified for Windows port: include winsock2.h before windows.h
+to avoid winsock2.h warning.
+
+------------------------------------------------------------
+Windows Port:
+zmq for mingw is not static, so don't compile with --enable-static --disable-shared.
+
+Later, may change zmq to static.  A code change recommendation is provided at
+http://comments.gmane.org/gmane.network.zeromq.devel/17178
+
+In configure.ac, changed boost to use macro boost.m4
+because macros ax_boost_base.m4, ax_boost_system.m4, ax_boost_filesystem.m4
+failed to work with mingw.  Specifically, ax_boost_system.m4 failed
+with "Could not find a version of the library!".
+
+------------------------------------------------------------
+Issues with scan_hashid:
+
+--------------------
+(1)
+These files moved from be13_api to dfxml/src:
+    md5.c
+    md5.h
+    xml.c
+    xml.h
+
+The bulk_extractor git archive needs updated to include the dfxml package.
+File bulk_extractor/src/Makefile needs to be changed so that these files
+are found in dfxml/src instead of in be13_api.
+
+
+--------------------
+2)
+I introduced HAVE_HASHID as the switch for generating the hashid scanner
+and including the libhashdb library.  This impacts configure.ac
+by adding libraries and the Boost library.  This implementation currently is
+sloppy and I need to clean it up.
+
+--------------------
+3)
+<resolved>.
+--------------------
+4)
+<resolved>.
+
+--------------------
+5)
+I changed usage of "#include <config.h>" to be in .c files and to never be 
+in .h files.  I did this because it is inappropriate to have
+"#include <config.h>" inside library header files.  In some cases, header
+files require definitions that "#include <config.h>" would have provided,
+such as WIN32.  The result is that the program including the library is
+responsible for providing any definitions that the library needs.
+
+--------------------
+6)
+When these issues get settled, I will want to push bulk_extractor changes
+to github.  Currently I am archiving relavent files in SVN under sectorid2.
+
+
+
+
