@@ -1,3 +1,6 @@
 [submodule "src/Boost-Btree"]
 	path = src/Boost-Btree
 	url = https://github.com/Beman/Boost-Btree.git
+[submodule "src/dfxml"]
+	path = src/dfxml
+	url = https://github.com/simsong/dfxml.git
