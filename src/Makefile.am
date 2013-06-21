@@ -23,7 +23,7 @@ bin_PROGRAMS = hashdb_manager
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/Boost-Btree \
+	-isystem${top_srcdir}/src/Boost-Btree-64-bit-port \
 	$(XML_CFLAGS)
 
 # zzzzzzzz

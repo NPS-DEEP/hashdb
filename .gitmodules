@@ -4,3 +4,6 @@
 [submodule "src/dfxml"]
 	path = src/dfxml
 	url = https://github.com/simsong/dfxml.git
+[submodule "src/Boost-Btree-64-bit-port"]
+	path = src/Boost-Btree-64-bit-port
+	url = https://github.com/BruceMty/Boost-Btree-64-bit-port.git
