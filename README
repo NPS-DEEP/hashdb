@@ -1,13 +1,28 @@
 Welcome to hashdb!
 
-The hashdb package includes hashdb_manager, hashdb_checker, and
-the hashdb library.
-
 The hashdb_manager tool provides facilities for creating hash databases
 of MD5 hashes on files along chunk boundaries as well as querying
 hash databases, merging hash databases, and performing hash lookups.
 Multiple map types are supported, allowing for specific optimizations.
 Hash databases may be imported and exported in DFXML format.
+
+The hashdb package provides hashdb_manager, hashdb_checker, and
+hashdb library files hashdb.hpp and libhashdb.a.
+
+Downloads and Websites
+----------------------
+
+  * A hashdb version has not been released yet
+
+
+Downloading the Development Tree
+--------------------------------
+
+Download the sources with git:
+
+  $ git clone --recursive https://github.com/simsong/hashdb.git
+
+
 
 hashdb requires additional packages.
 For FC18, perform the following setup:
@@ -38,7 +53,7 @@ files here:
 
 To cross-compile from Fedora 18 to Windows, do the following:
    1) Set up the mingw cross compiler environment:
-      $ cd src_win; ./CONFIGURE_F18.sh
+      $ cd src_win; ./CONFIGURE_F18.sh; cd ..
    2) type "make win32" or "make win64".
 
 ================================================================
