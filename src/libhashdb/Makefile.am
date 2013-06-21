@@ -24,7 +24,7 @@ libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/Boost-Btree-64-bit-port \
+	-isystem${top_srcdir}/src/Boost-Btree \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
