@@ -66,7 +66,7 @@ class hash_lookup_consumer_t {
     std::string source = ss.str();
 
     // add hash to request
-    request->hash_requests.push_back(hashdb::hash_request_md5_t(query_id, digest));
+    request->push_back(hashdb::hash_request_md5_t(query_id, digest));
 
     // add source to source map
     (*source_map)[query_id] = source;

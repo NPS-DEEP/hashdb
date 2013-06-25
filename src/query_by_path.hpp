@@ -30,6 +30,7 @@
 #include "hashdb_settings.h"
 #include "hashdb_db_manager.hpp"
 #include "dfxml/src/hash_t.h"
+#include "hashdb.hpp"
 
 // Standard includes
 //#include <cstdlib>
@@ -48,6 +49,7 @@ class query_by_path_t {
   private:
 
   // hashdb state
+  bool is_valid;
   hashdb_db_manager_t* hashdb_db_manager;
 
   // do not allow these
@@ -56,11 +58,16 @@ class query_by_path_t {
 
   public:
 
+  // the query source is valid
+  bool query_source_is_valid() const {
+    return is_valid;
+  }
+
   /**
    * Create the client hashdb query service using a file path.
    */
   query_by_path_t(const std::string& lookup_source_string) :
-                                hashdb_db_manager(0) {
+                                is_valid(false), hashdb_db_manager(0) {
 
     // perform setup by opening a hashdb
 
@@ -68,20 +75,20 @@ class query_by_path_t {
     bool is_present = (access(lookup_source_string.c_str(),F_OK) == 0);
     if (!is_present) {
       std::cerr << "Error: hashdb directory path '" << lookup_source_string << "' is invalid.\n"
-              << "Cannot continue.\n";
-      // zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz exit must go?
-      exit(1);
+              << "Query by path service not activated.\n";
     }
 
     // open the hashdb
     std::cout << "Opening hashdb '" << lookup_source_string << "' ...\n";
     hashdb_db_manager = new hashdb_db_manager_t(lookup_source_string, READ_ONLY);
+    is_valid = true;
     std::cout << "hashdb opened.\n";
 
   }
 
   ~query_by_path_t() {
     // close the hashdb resource
+    is_valid = false;
     std::cout << "hashdb closed.\n";
   }
  
@@ -91,18 +98,21 @@ class query_by_path_t {
   bool lookup_hashes_md5(const hashdb::hashes_request_md5_t& request,
                          hashdb::hashes_response_md5_t& response) {
 
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
     // make sure the hashdb is using MD5
     if (hashdb_db_manager->hashdb_settings.hashdigest_type != HASHDIGEST_MD5) {
       std::cerr << "The hashdigest type is invalid.\n";
       return false;
     }
 
-    response.chunk_size = hashdb_db_manager->hashdb_settings.chunk_size;
-
     // perform lookups for each hash
     source_lookup_record_t source_lookup_record;
-    response.hash_responses.clear();
-    for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.hash_requests.begin(); it != request.hash_requests.end(); ++it) {
+    response.clear();
+    for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.begin(); it != request.end(); ++it) {
       
 //      md5_t md5 = it->digest;
       const uint8_t* digest = it->digest;
@@ -126,7 +136,7 @@ class query_by_path_t {
                                                   count,
                                                   source_lookup_index,
                                                   chunk_offset_value);
-        response.hash_responses.push_back(hash_response);
+        response.push_back(hash_response);
       }
     }
 
@@ -134,9 +144,72 @@ class query_by_path_t {
   }
 
   /**
+   * Look up sources.
+   */
+  bool lookup_sources_md5(const hashdb::sources_request_md5_t& sources_request,
+                          hashdb::sources_response_md5_t& sources_response) {
+
+    // note: this implemenatation can be optimized but it will require better
+    //       interfaces in hashdb_db_manager_t
+
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
+    // make sure the hashdb is using MD5
+    if (hashdb_db_manager->hashdb_settings.hashdigest_type != HASHDIGEST_MD5) {
+      std::cerr << "The hashdigest type is invalid.\n";
+      return false;
+    }
+
+    std::vector<hash_source_record_t> hash_source_records;
+    sources_response.clear();
+
+    // perform lookups for each source
+    for (hashdb::sources_request_md5_t::const_iterator it = sources_request.begin(); it != sources_request.end(); ++it) {
+      
+//      md5_t md5 = it->digest;
+      const uint8_t* digest = it->digest;
+      md5_t md5;
+      memcpy(md5.digest, digest, 16);
+
+      bool has_records = hashdb_db_manager->get_hash_source_records(
+                                                   md5, hash_source_records);
+
+      // skip if hash is not there
+      if (!has_records) {
+        continue;
+      }
+
+      // build source response for this hash
+      hashdb::source_response_md5_t source_response(it->id, it->digest);
+      for (std::vector<hash_source_record_t>::const_iterator hash_source_record_it = hash_source_records.begin(); hash_source_record_it != hash_source_records.end(); ++hash_source_record_it) {
+        source_response.source_references.push_back(hashdb::source_reference_t(
+                              hash_source_record_it->repository_name,
+                              hash_source_record_it->filename,
+                              hash_source_record_it->file_offset));
+      }
+
+      // push source response for this hash
+      sources_response.push_back(source_response);
+    }
+
+    return true;
+  }
+
+
+
+  /**
    * Request information about the hashdb.
    */
   bool get_hashdb_info(std::string& info) {
+
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
     info = "currently not available";
     return true;
   }

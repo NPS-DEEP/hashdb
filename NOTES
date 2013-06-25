@@ -134,5 +134,23 @@ When these issues get settled, I will want to push bulk_extractor changes
 to github.  Currently I am archiving relavent files in SVN under sectorid2.
 
 
+------------------------------------------------------------
+Change in hashdb interface usage
 
+Here is a kind of pseudocode view of current hashdb interfaces:
+
+For hash lookup request, a vector of {hash id, hash digest} pairs is provided:
+  hashes_request {
+    vector<{id, digest}>
+  }
+
+For hash lookup response, a structure containing chunk size and a vector of {hash id, hash digest, duplicates count, lookup index, chunk offset} is returned:
+  hashes_response {
+    chunk_size;
+    vector<{id, digest, count, lookup_index, chunk_offset}>
+  }
+
+I like the request and response structures except for the use of variable "chunk_size".  I provide "chunk_size" so the user can validate that the chunk size the user expects and the chunk size the database uses match.  The test should be hidden, but the library doesn't know the chunk size the user is using.  I don't want to pass in chunk_size during instantiation because the reason is obscure.  Also, testing on chunk size alone does not cover potential future checks.
+
+I'll resolve this by removing the check and expecting future "get_hashdb_info" interface to allow this capability.
 

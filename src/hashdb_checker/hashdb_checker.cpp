@@ -36,6 +36,7 @@
 #include "hashdb.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "hash_lookup_consumer.hpp"
+#include "identified_blocks_reader.hpp"
 //#include "md5.h"
 #include <getopt.h>
 
@@ -43,6 +44,10 @@
 void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
                         std::string lookup_path,
                         std::string dfxml_infile);
+
+void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
+                          std::string lookup_path,
+                          std::string dfxml_infile);
 
 static std::string see_usage = "Please type 'hashdb_checker -h' for usage.";
 
@@ -68,7 +73,7 @@ void usage() {
   << "    <lookup parameter>\n"
   << "        Please see <lookup parameter> options.\n"
   << "\n"
-  << "--lookup [<lookup parameter>]+ <dfxml input>\n"
+  << "--lookup_hash [<lookup parameter>]+ <dfxml input>\n"
   << "\n"
   << "    Options:\n"
   << "    <lookup parameter>\n"
@@ -76,6 +81,18 @@ void usage() {
   << "\n"
   << "    Parameters:\n"
   << "        <dfxml input>  a DFXML file containing hashes to be looked up\n"
+  << "\n"
+  << "--lookup_source [<lookup parameter>]+ <identified_blocks.txt input>\n"
+  << "\n"
+  << "    Options:\n"
+  << "    <lookup parameter>\n"
+  << "        Please see <lookup parameter> options.\n"
+  << "        Note: currently, only lookup_type use_path is supported,\n"
+  << "        lookup_type use_socket is not supported.\n"
+  << "\n"
+  << "    Parameters:\n"
+  << "        <identified_blocks.txt input>  a identified_blocks.txt file\n"
+  << "        generated using bulk_extractor containing hashes to be looked up\n"
   << "\n"
   << "<lookup parameter> options establish the lookup type and location:\n"
   << "    -l, --lookup_type=<lookup type>\n"
@@ -106,7 +123,8 @@ int main(int argc,char **argv)
 
   // input parsing commands
   int info_flag = 0;
-  int lookup_flag = 0;
+  int lookup_hash_flag = 0;
+  int lookup_source_flag = 0;
 
   // defaults
   hashdb::lookup_type_t lookup_type = hashdb::QUERY_USE_PATH;
@@ -129,7 +147,8 @@ int main(int argc,char **argv)
 
       // commands
       {"info", no_argument, &info_flag, 1},
-      {"lookup", no_argument, &lookup_flag, 1},
+      {"lookup_hash", no_argument, &lookup_hash_flag, 1},
+      {"lookup_source", no_argument, &lookup_source_flag, 1},
 
       // command options
       {"lookup_type", required_argument, 0, 'l'},
@@ -185,7 +204,7 @@ int main(int argc,char **argv)
   }
 
   // check that there is exactly one command issued
-  int num_commands = info_flag + lookup_flag;
+  int num_commands = info_flag + lookup_hash_flag + lookup_source_flag;
   if (num_commands == 0) {
     std::cerr << "Error: missing command.  " << see_usage << "\n";
     exit(1);
@@ -224,10 +243,10 @@ int main(int argc,char **argv)
 //    do_show_hashdb_info(lookup_type, lookup_path);
     std::cout << "info currently not supported.\n";
 
-  // lookup
-  } else if (lookup_flag) {
+  // lookup hash
+  } else if (lookup_hash_flag) {
     if (argc - optind != 1) {
-      std::cerr << "The lookup command requires 1 parameter.  " << see_usage << "\n";
+      std::cerr << "The lookup_hash command requires 1 parameter.  " << see_usage << "\n";
       exit(1);
     }
     arg1 = argv[optind++];
@@ -237,6 +256,20 @@ int main(int argc,char **argv)
       exit(1);
     }
     do_hash_lookup_md5(lookup_type, lookup_path, arg1);
+
+  // lookup source
+  } else if (lookup_source_flag) {
+    if (argc - optind != 1) {
+      std::cerr << "The lookup_source command requires 1 parameter.  " << see_usage << "\n";
+      exit(1);
+    }
+    arg1 = argv[optind++];
+ 
+    if (has_client_hashdb_path && has_client_socket_endpoint) {
+      std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
+      exit(1);
+    }
+    do_source_lookup_md5(lookup_type, lookup_path, arg1);
 
   } else {
     // program error
@@ -291,12 +324,18 @@ void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
   // create the client query service
   hashdb::query_t query(lookup_type, lookup_path);
 
+  // verify that the query source opened
+  if (!query.query_source_is_valid()) {
+    std::cerr << "Unable to open query service.  Aborting.\n";
+    exit(1);
+  }
+
   // perform the query lookup
   bool success = query.lookup_hashes_md5(request, response);
 
   // show result
   if (success) {
-    for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response.hash_responses.begin(); it != response.hash_responses.end(); ++it) {
+    for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response.begin(); it != response.end(); ++it) {
 
       const uint8_t* digest = it->digest;
       md5_t md5;
@@ -309,6 +348,58 @@ void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
                 << ",chunk_offset_value=" << it->chunk_offset_value
                 << ",from_map=" << source_map[it->id]
                 << "\n";
+    }
+  } else {
+    std::cerr << "Failure in accessing the hashdb server for lookup.\n";
+  }
+}
+
+void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
+                        std::string lookup_path,
+                        std::string identified_blocks_infile) {
+  std::cout << "hashdb lookup, lookup type " << lookup_type_to_string(lookup_type)
+            << " lookup path '" << lookup_path << "'\n";
+
+  // request, response, and offset map
+  hashdb::sources_request_md5_t request;
+  hashdb::sources_response_md5_t response;
+  std::map<uint32_t, std::string> offset_map;
+
+  // read the identified blocks
+  identified_blocks_reader_t(identified_blocks_infile, request, offset_map);
+
+  // create the client query service
+  hashdb::query_t query(lookup_type, lookup_path);
+
+  // verify that the query source opened
+  if (!query.query_source_is_valid()) {
+    std::cerr << "Unable to open query service.  Aborting.\n";
+    exit(1);
+  }
+
+  // perform the query lookup
+  bool success = query.lookup_sources_md5(request, response);
+
+  // show result
+  if (success) {
+    for (hashdb::sources_response_md5_t::const_iterator it = response.begin(); it != response.end(); ++it) {
+
+      // get offset and md5 digest together
+      std::string offset = offset_map[it->id];
+      const uint8_t* digest = it->digest;
+      md5_t md5;
+      memcpy(md5.digest, digest, 16);
+
+      // output one line for each source reference
+      for (hashdb::source_references_t::const_iterator source_reference_it = it->source_references.begin(); source_reference_it != it->source_references.end(); ++source_reference_it) {
+
+        std::cout << offset << "\t"
+                  << md5 << "\t"
+                  << "repository_name=" << source_reference_it->repository_name
+                  << ",filename=" << source_reference_it->filename
+                  << ",file_offset=" << source_reference_it->file_offset
+                  << "\n";
+      }
     }
   } else {
     std::cerr << "Failure in accessing the hashdb server for lookup.\n";

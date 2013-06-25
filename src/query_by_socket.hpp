@@ -66,11 +66,14 @@
 enum query_type_t {NOT_DEFINED,
                    QUERY_INFO,
                    QUERY_HASHES_MD5,
-                   QUERY_DUPLICATE_HASHES_MD5,
-                   QUERY_SOURCE_MD5};
+                   QUERY_SOURCES_MD5};
 
 static const size_t MAX_HASHES = 10000;
+static const size_t MAX_SOURCES = 5000;
 
+// ************************************************************
+// ZMQ hashes request and response
+// ************************************************************
 class zmq_hashes_request_md5_t {
   private:
   const query_type_t query_type;
@@ -108,8 +111,6 @@ class zmq_hashes_request_md5_t {
 };
 
 class zmq_hashes_response_md5_t {
-  public:
-  const size_t chunk_size;
 
   private:
   uint32_t hash_count;
@@ -117,14 +118,11 @@ class zmq_hashes_response_md5_t {
   public:
   hashdb::hash_response_md5_t hash_response[MAX_HASHES];
 
-  zmq_hashes_response_md5_t(size_t p_chunk_size) :
-                              chunk_size(p_chunk_size), hash_count(0) {
-  }
-  zmq_hashes_response_md5_t() : chunk_size(0), hash_count(0) {
+  zmq_hashes_response_md5_t() : hash_count(0) {
   }
 
   size_t byte_size() const {
-    return sizeof(size_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::hash_response_md5_t);
+    return sizeof(uint32_t) + hash_count * sizeof(hashdb::hash_response_md5_t);
   }
 
   void add(const hashdb::hash_response_md5_t& p_hash_response) {
@@ -148,6 +146,129 @@ class zmq_hashes_response_md5_t {
   }
 };
 
+// ************************************************************
+// ZMQ sources request and response
+// ************************************************************
+/* TBD zzzzzzzzzzzzzzzzzzzzz
+
+class zmq_sources_request_md5_t {
+
+  private:
+  const query_type_t query_type;
+  uint32_t source_count;
+
+  public:
+  hashdb::source_request_md5_t source_request[MAX_SOURCES];
+
+  zmq_sources_request_md5_t() : query_type(QUERY_SOURCES_MD5), source_count(0) {
+  }
+
+  size_t byte_size() const {
+    return sizeof(query_type_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::sources_request_md5_t);
+  }
+
+  void add(const hashdb::source_request_md5_t& p_source_request) {
+    if (source_count >= MAX_SOURCES) {
+      // the caller is responsible for checking size
+      assert(0);
+    }
+    source_request[source_count++] = p_source_request;
+  }
+
+  size_t count() const {
+    return source_count;
+  }
+
+  void clear() {
+    source_count = 0;
+  }
+
+  bool is_full() const {
+    return (source_count >= MAX_SOURCES);
+  }
+};
+
+struct zmq_source_response_md5_t {
+  uint32_t id;
+  uint8_t digest[16];
+  char fixed_size_repository_name[200];
+  char fixed_size_filename[200];
+  uint64_t file_offset;
+
+  zmq_source_response_md5_t() : id(0),
+                                p_digest(),
+                                fixed_size_repository_name(),
+                                fixed_size_filename(),
+                                file_offset(0) {
+  }
+
+  zmq_source_response_md5_t(uint32_t p_id,
+                            uint8_t* p_digest,
+                            std::string p_repository_name,
+                            std::string p_filename,
+                            uint64_t p_file_offset) :
+           id(p_id), file_offset(p_file_offset) {
+
+    // digest
+    memcpy(digest, p_digest, 16);
+
+    const char* record;
+    size_t count;
+
+    // p_repository_name
+    record = (char*)p_repository_name.c_str();
+    count = p_repository_name.size();
+    if (count > 200) count = 200;
+    memcpy(fixed_size_repository_name, record, count);
+
+    // p_filename
+    record = (char*)p_filename.c_str();
+    count = p_filename.size();
+    if (count > 200) count = 200;
+    memcpy(fixed_size_filename, record, count);
+  }
+};
+
+class zmq_sources_response_md5_t {
+
+  private:
+  uint32_t source_count;
+
+  public:
+  zmq_source_response_md5_t zmq_source_response[MAX_SOURCES];
+
+  zmq_source_response_md5_t() : source_count(0) {
+  }
+
+  size_t byte_size() const {
+    sizeof(uint32_t) + hash_count * sizeof(hashdb::hash_response_md5_t);
+  }
+
+  void add(const hashdb::hash_response_md5_t& p_hash_response) {
+    if (hash_count >= MAX_HASHES) {
+      // the caller is responsible for checking size
+      assert(0);
+    }
+    hash_response[hash_count++] = p_hash_response;
+  }
+
+  uint32_t count() const {
+    return hash_count;
+  }
+
+  void clear() {
+    hash_count = 0;
+  }
+
+  bool is_full() const {
+    return (hash_count >= MAX_HASHES);
+  }
+};
+*/
+
+// ************************************************************
+// ZMQ generic structure for request and response
+// ************************************************************
 // generic structure
 struct zmq_generic_request_t {
   query_type_t query_type;
@@ -166,6 +287,7 @@ struct zmq_generic_request_t {
 class query_by_socket_t {
 
   private:
+  bool is_valid;
 
 #ifdef HAVE_PTHREAD
     pthread_mutex_t M;                  // mutext protecting out
@@ -297,11 +419,17 @@ class query_by_socket_t {
 
   public:
 
-  /**
+  // the query source is valid
+  bool query_source_is_valid() const {
+    return is_valid;
+  }
+
+   /**
    * Create the client hashdb query service using zmq3 and socket endpoint
    * such as "tcp://localhost:14500".
    */
   query_by_socket_t(const std::string& lookup_source_string) :
+                                is_valid(false),
                                 M(),
                                 context(),
                                 socket_endpoint(lookup_source_string),
@@ -316,11 +444,13 @@ class query_by_socket_t {
     if (context == 0) {
       std::cerr << "error: query_by_socket_t failed to create query service client, zmq_ctx_new.\n";
       std::cerr << strerror(errno) << "\n";
-      exit(1);
+      std::cerr << "Query by socket service not activated.\n";
     }
+    is_valid = true;
   }
 
   ~query_by_socket_t() {
+    is_valid = false;
 
     // close socket resources
     for (std::map<pthread_t,
@@ -347,6 +477,11 @@ class query_by_socket_t {
   bool lookup_hashes_md5(const hashdb::hashes_request_md5_t& request,
                          hashdb::hashes_response_md5_t& response) {
 
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
     // allocate big space on heap for zmq request and response
     zmq_hashes_request_md5_t* zmq_request = new zmq_hashes_request_md5_t;
     zmq_hashes_response_md5_t* zmq_response = new zmq_hashes_response_md5_t;
@@ -354,11 +489,10 @@ class query_by_socket_t {
     bool success = true;
 
     // clear existing response
-    response.chunk_size = 0;
     response.clear();
 
     // copy request to zmq request, flushing when array is full
-    for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.hash_requests.begin(); it != request.hash_requests.end(); ++it) {
+    for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.begin(); it != request.end(); ++it) {
       zmq_request->add(*it);
       if (zmq_request->is_full()) {
         success = zmq_lookup_hashes_md5(zmq_request, zmq_response);
@@ -388,9 +522,29 @@ class query_by_socket_t {
   }
 
   /**
+   * Look up sources.
+   */
+  bool lookup_sources_md5(const hashdb::sources_request_md5_t& sources_request,
+                          hashdb::sources_response_md5_t& sources_response) {
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
+    // TBD zzzzzzzzzzzzzzzzzzz
+    std::cerr << "TBD: The query by socket lookup_sources_md5 interface is currently not supported.\n";
+    return false;
+  }
+
+  /**
    * Request information about the hashdb.
    */
   bool get_hashdb_info(std::string& info) {
+    // the query service must be working
+    if (!is_valid) {
+      return false;
+    }
+
     info = "info currently not available";
     return true;
   }
@@ -413,12 +567,9 @@ private:
   void copy_zmq_response(const zmq_hashes_response_md5_t* zmq_response,
                          hashdb::hashes_response_md5_t& response) {
 
-    // record chunk_size from response
-    response.chunk_size = zmq_response->chunk_size;
-
     // record each feature in the response
     for (size_t i=0; i<zmq_response->count(); i++) {
-      response.hash_responses.push_back(zmq_response->hash_response[i]);
+      response.push_back(zmq_response->hash_response[i]);
     }
   }
 };

@@ -71,7 +71,7 @@ class query_by_socket_server_t {
            context(0),
            socket(0),
            zmq_generic_request(),
-           zmq_hashes_response(hashdb_db_manager->hashdb_settings.chunk_size) {
+           zmq_hashes_response() {
     int status;
     context = zmq_ctx_new();
     if (context == 0) {

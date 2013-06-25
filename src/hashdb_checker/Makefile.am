@@ -37,5 +37,6 @@ hashdb_checker_SOURCES = \
 	$(DFXML_INCS) \
 	hashdb_checker.cpp \
 	hash_lookup_consumer.hpp \
+	identified_blocks_reader.hpp \
 	../hashdb.hpp
 

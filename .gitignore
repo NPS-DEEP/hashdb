@@ -34,6 +34,7 @@ configure
 depcomp
 doc/Makefile
 doc/user_manual/Makefile
+doc/doxygen/html
 install-sh
 man/Makefile
 missing

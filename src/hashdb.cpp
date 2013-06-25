@@ -74,35 +74,19 @@ bool hashdb::string_to_lookup_type(
 // ************************************************************ 
 // data structures required by the query interfaces
 // ************************************************************ 
-/**
- * data associated with one hash in a request
- */
-// request
+// hash request
 hashdb::hash_request_md5_t::hash_request_md5_t() : id(0), digest() {
 }
-// response serves correctly sized digest
 hashdb::hash_request_md5_t::hash_request_md5_t(uint32_t p_id, const uint8_t* p_digest) :
          id(p_id), digest() {
   memcpy(this->digest,p_digest,16);
 }
 
-/**
- * Hash request sent to the query engine
- */
-hashdb::hashes_request_md5_t::hashes_request_md5_t() :
-             hash_requests() {
-}
-
-/**
- * data associated with one hash in a response
- */
-// response
+// hash response, also same as source request
 hashdb::hash_response_md5_t::hash_response_md5_t() :
              id(0), digest(), duplicates_count(0),
              source_lookup_index(0), chunk_offset_value(0) {
 }
-
-// response serves correctly sized digest
 hashdb::hash_response_md5_t::hash_response_md5_t(
                     uint32_t p_id,
                     const uint8_t* p_digest,
@@ -116,35 +100,50 @@ hashdb::hash_response_md5_t::hash_response_md5_t(
   memcpy(this->digest,p_digest,16);
 }
 
-/**
- * Hash lookup response returned from the query engine
- */
-hashdb::hashes_response_md5_t::hashes_response_md5_t() :
-             chunk_size(0), hash_responses() {
+// one source reference
+hashdb::source_reference_t::source_reference_t() :
+             repository_name(""),
+             filename(""),
+             file_offset(0) {
+}
+hashdb::source_reference_t::source_reference_t(
+                    std::string p_repository_name,
+                    std::string p_filename,
+                    uint64_t p_file_offset) :
+             repository_name(p_repository_name),
+             filename(p_filename),
+             file_offset(p_file_offset) {
 }
 
-void hashdb::hashes_response_md5_t::clear() {
-  chunk_size = 0;
-  hash_responses.clear();
+// source response for one hash
+hashdb::source_response_md5_t::source_response_md5_t() :
+             id(0),
+             source_references() {
+}
+hashdb::source_response_md5_t::source_response_md5_t(
+                    uint32_t p_id,
+                    const uint8_t* p_digest) :
+             id(p_id),
+             source_references() {
+  memcpy(this->digest,p_digest,16);
 }
 
 // ************************************************************ 
 // the query interfaces
 // ************************************************************ 
 
-hashdb::query_t::query_t(
-                              hashdb::lookup_type_t p_lookup_type,
-                              const std::string& lookup_source_string) :
-                                        lookup_type(p_lookup_type),
-                                        query_by_path(0),
-                                        query_by_socket(0) {
+hashdb::query_t::query_t(hashdb::lookup_type_t p_lookup_type,
+                         const std::string& p_lookup_source_string) :
+             lookup_type(p_lookup_type),
+             query_by_path(0),
+             query_by_socket(0) {
 
     switch(lookup_type) {
       case QUERY_USE_PATH:
-        query_by_path = new query_by_path_t(lookup_source_string);
+        query_by_path = new query_by_path_t(p_lookup_source_string);
         break;
       case QUERY_USE_SOCKET:
-        query_by_socket = new query_by_socket_t(lookup_source_string);
+        query_by_socket = new query_by_socket_t(p_lookup_source_string);
         break;
       default:
         // non-valid source type was provided
@@ -166,6 +165,17 @@ hashdb::query_t::~query_t() {
   }
 }
 
+bool hashdb::query_t::query_source_is_valid() const {
+    switch(lookup_type) {
+      case QUERY_USE_PATH:
+        return query_by_path->query_source_is_valid();
+      case QUERY_USE_SOCKET:
+        return query_by_socket->query_source_is_valid();
+      default:
+        return false;
+    }
+}
+
 bool hashdb::query_t::lookup_hashes_md5(
                 const hashdb::hashes_request_md5_t& request,
                 hashdb::hashes_response_md5_t& response) {
@@ -176,7 +186,22 @@ bool hashdb::query_t::lookup_hashes_md5(
         return query_by_socket->lookup_hashes_md5(request, response);
       default:
         // non-valid source type was provided
-        std::cerr << "Error on lookup: A valid lookup service type is required.\n";
+        std::cerr << "Error on lookup hashes md5: A valid lookup service type is required.\n";
+        return false;
+    }
+}
+ 
+bool hashdb::query_t::lookup_sources_md5(
+                const hashdb::sources_request_md5_t& request,
+                hashdb::sources_response_md5_t& response) {
+    switch(lookup_type) {
+      case QUERY_USE_PATH:
+        return query_by_path->lookup_sources_md5(request, response);
+      case QUERY_USE_SOCKET:
+        return query_by_socket->lookup_sources_md5(request, response);
+      default:
+        // non-valid source type was provided
+        std::cerr << "Error on lookup sources md5: A valid lookup service type is required.\n";
         return false;
     }
 }

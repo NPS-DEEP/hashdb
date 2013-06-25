@@ -7,28 +7,22 @@ Submit for second internal review.
 
 Post first release.
 
-Allow multiple targets:
-Make Windows target and later make Mac target.  Not just Linux target.
-If libxml++ wrapper is problematic, port to libxml2.
-If zeromq is problematic, port to Boost interprocess.
-
-Add new option to not pack upon saving.  Add feedback to indicate
-when packing starts and stops.
+Make databases portable across systems, for example 64-bit Fedora and
+32-bit Windows.
 
 Add API to look up source repository name and filename.
 This is functionally missing, and also prevents regression testing.
 
-Change lookup API to manage lookups in sorted array groups.
-Currently, embedded scanner does not use this API.
-The local-mode scanner work like the client scanner with array
-to allow sort option.
-
-Update documentation so it is not wrong (2 days).
-
 ------------------------------------------------------------
 Functinality, later:
-Make databases portable across systems, for example 64-bit Fedora and
-32-bit Windows.
+Add new option to not pack upon saving.  Add feedback to indicate
+when packing starts and stops.
+
+Change lookup API to manage lookups in sorted array groups.
+
+Make library completely failure-friendly.  Currently it calls exit() when
+files faile and it has Boost code that can throw interprocess_exception.
+Tests are in place to prevent these under normal circumstances.
 
 May optimise the -x command that entirely removes popular hashes.
 
@@ -48,6 +42,8 @@ Known causes:
 2) Reading using bulk_extractor recursive.
 
 Compile with another compiler, try clang.
+
+Update documentation so it is not wrong (2 days).
 
 ------------------------------------------------------------
 Notes:
@@ -99,7 +95,7 @@ Locked the socket map during access so that threads can't break it.
 Allow multiple targets:
 Compiles to c++98, not just C++11, in order to improve compiler portability.
 
-Add BTree input parameter option for specifying number of hashes
+Added BTree input parameter option for specifying number of hashes
 instead of number of hash functions k and hash size M.
 Joel and Avner will provide feedback on hashdb usage.
 Add new hashdb command for regenerating the Bloom filter
@@ -108,9 +104,7 @@ Write the scan_md5 bulk_extractor plugin.
 Help James with client code.
 Add runtime timer information.
 
-Improve integration with bulk_extractor:
-1) use be_config_t be_config parameter: "hashdb_path=<path>"
-   and open DB from scanner.
-2) use opt_scan_bulk_block_size when opening DB to validate chunk size match.
-   use opt_scan_bulk_block_size in scanner to create the md5.
+Improved integration with bulk_extractor.
+
+Allows multiple targets: Linux, Windows, Mac.
 

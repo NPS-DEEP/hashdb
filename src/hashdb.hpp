@@ -67,11 +67,7 @@ struct hash_request_md5_t {
 /**
  * Hash lookup request sent to the query engine
  */
-struct hashes_request_md5_t {
-    std::vector<hash_request_md5_t> hash_requests;
-
-    hashes_request_md5_t();
-};
+typedef std::vector<hash_request_md5_t> hashes_request_md5_t;
 
 /**
  * data associated with one hash in a response
@@ -93,67 +89,65 @@ struct hash_response_md5_t {
 
 /**
  * Hash lookup response returned from the query engine
+ * and source lookup request sent to the query engine
  */
-struct hashes_response_md5_t {
-    uint32_t chunk_size;
-    std::vector<hash_response_md5_t> hash_responses;
-
-    hashes_response_md5_t();
-    void clear();
-};
-
-// ************************************************************ 
-// data structures supporting lookup_sources_md5
-// ************************************************************ 
-/**
- * data for source requests
- */
-struct source_request_md5_t {
-    uint32_t id;
-    uint8_t digest[16];
-
-    source_request_md5_t();
-    source_request_md5_t(uint32_t id, const uint8_t* p_digest);
-};
-
-typedef std::vector<source_request_md5_t> source_requests_md5_t;
+typedef std::vector<hash_response_md5_t> hashes_response_md5_t;
 
 /**
- * data for source responses
+ * Source lookup request sent to the qery engine
+ * identical to hash lookup response
  */
-/*
-struct source_record_t {
-    uint64_t file_offset;
+typedef hash_response_md5_t source_request_md5_t;
+typedef hashes_response_md5_t sources_request_md5_t;
+
+/**
+ * data associated with one source reference
+ */
+struct source_reference_t {
     std::string repository_name;
     std::string filename;
+    uint64_t file_offset;
+
+    source_reference_t();
+    source_reference_t(std::string p_repository_name,
+                       std::string p_filename,
+                       uint64_t p_file_offset);
 };
 
-typedef std::vector<source_record_t> source_records_t;
+/**
+ * source references
+ */
+typedef std::vector<source_reference_t> source_references_t;
 
+/**
+ * source response data associated with one hash response
+ */
 struct source_response_md5_t {
     uint32_t id;
     uint8_t digest[16];
-    source_records_t source_records;
+    source_references_t source_references;
 
-    source_resposne_md5_t();
-    source_resposne_md5_t(uint32_t id, const uint8_t* p_digest);
+    source_response_md5_t();
+    source_response_md5_t(uint32_t p_id, const uint8_t* p_digest);
 };
 
-typedef std::vector<source_response_md5_t> source_responses_t;
-*/
+/**
+ * source responses
+ */
+typedef std::vector<source_response_md5_t> sources_response_md5_t;
 
 class query_t {
     public:
-    query_t(lookup_type_t, const std::string&);
+    query_t(lookup_type_t p_lookup_type, const std::string& p_lookup_source);
     ~query_t();
+
+    bool query_source_is_valid() const;
 
     bool lookup_hashes_md5(const hashes_request_md5_t& hashes_request,
                            hashes_response_md5_t& hashes_response);
 
-/*
     bool lookup_sources_md5(const sources_request_md5_t& sources_request,
-                           sources_response_md5_t& sources_response);
-*/
+                            sources_response_md5_t& sources_response);
 
     private:
     lookup_type_t lookup_type;
