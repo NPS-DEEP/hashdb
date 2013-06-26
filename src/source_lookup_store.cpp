@@ -36,6 +36,7 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
                            file_mode_type_t _file_mode_type,
                            source_lookup_settings_t _source_lookup_settings) :
                                 multi_index_container(0),
+                                bidirectional_btree(0),
                                 filename(_filename),
                                 file_mode_type(_file_mode_type),
                                 source_lookup_settings(_source_lookup_settings),
@@ -59,6 +60,16 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
             next_source_lookup_index = multi_index_container->get_highest_key() + 1L;
           }
         break;
+        case BIDIRECTIONAL_BTREE:
+          bidirectional_btree = new bidirectional_btree_t(
+                filename,
+                file_mode_type);
+
+          // set next index higher if in append mode
+          if (file_mode_type == RW_MODIFY) {
+            next_source_lookup_index = bidirectional_btree->get_highest_key() + 1L;
+          }
+        break;
         default:
           assert(0);
       }
@@ -72,6 +83,10 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
       switch(multi_index_container_type) {
         case MULTI_INDEX_CONTAINER: {
           delete multi_index_container;
+        }
+        break;
+        case BIDIRECTIONAL_BTREE: {
+          delete bidirectional_btree;
         }
         break;
         default:
@@ -91,6 +106,10 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
       switch(multi_index_container_type) {
       case MULTI_INDEX_CONTAINER: {
         has = multi_index_container->has_pay(fixed);
+        break;
+      }
+      case BIDIRECTIONAL_BTREE: {
+        has = bidirectional_btree->has_pay(fixed);
         break;
       }
       default:
@@ -115,6 +134,12 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
                fixed_size_source_location_record_t(source_location_record));
         }
         break;
+        case BIDIRECTIONAL_BTREE: {
+          bidirectional_btree->insert_element(
+               source_lookup_index,
+               fixed_size_source_location_record_t(source_location_record));
+        }
+        break;
         default:
           assert(0);
       }
@@ -131,6 +156,12 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
       case MULTI_INDEX_CONTAINER: {
         fixed_size_source_location_record_t r;
         multi_index_container->get_pay(source_lookup_index, r);
+        source_location_record = r.to_string();
+        break;
+      }
+      case BIDIRECTIONAL_BTREE: {
+        fixed_size_source_location_record_t r;
+        bidirectional_btree->get_pay(source_lookup_index, r);
         source_location_record = r.to_string();
         break;
       }
@@ -151,6 +182,10 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
       switch(multi_index_container_type) {
       case MULTI_INDEX_CONTAINER: {
         multi_index_container->get_key(fixed_size_source_location_record_t(source_location_record), source_lookup_index);
+        break;
+      }
+      case BIDIRECTIONAL_BTREE: {
+        bidirectional_btree->get_key(fixed_size_source_location_record_t(source_location_record), source_lookup_index);
         break;
       }
       default:
@@ -178,6 +213,9 @@ const std::string MULTI_INDEX_CONTAINER_NAME = "multi_index_container";
       switch(multi_index_container_type) {
         case MULTI_INDEX_CONTAINER:
           multi_index_container->report_status(consumer);
+          break;
+        case BIDIRECTIONAL_BTREE:
+          bidirectional_btree->report_status(consumer);
           break;
         default:
           assert(0);

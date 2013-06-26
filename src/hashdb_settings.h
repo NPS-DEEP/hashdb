@@ -139,7 +139,7 @@ struct source_lookup_settings_t {
 
     source_lookup_settings_t() :
         number_of_index_bits_type(NUMBER_OF_INDEX_BITS32),
-        multi_index_container_type(MULTI_INDEX_CONTAINER) {
+        multi_index_container_type(BIDIRECTIONAL_BTREE) {
     }
 
     void report_settings(std::ostream& os) const {

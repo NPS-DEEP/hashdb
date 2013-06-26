@@ -118,7 +118,6 @@
 
 // Boost includes
 #include <boost/functional/hash.hpp>
-//#include <boost/iterator/iterator_facade.hpp>
 
 // If a particular MAP_TYPE wasn't selected, build them all
 #ifndef LOCAL_MAP_TYPE
@@ -719,7 +718,7 @@ class BURST_MANAGER {
     /**
      * Determine if key is present.
      */
-    bool has_key(const key_t& key, pay_t &pay) const {
+    bool has_key(const key_t& key, pay_t& pay) const {
       uint8_t            map = key.digest[0]>>shift_bits;
 //      typename T::const_iterator itr = maps[map]->find(key);
       map_const_iterator itr = maps[map]->find(key);

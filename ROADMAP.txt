@@ -10,8 +10,12 @@ Post first release.
 Make databases portable across systems, for example 64-bit Fedora and
 32-bit Windows.
 
-Add API to look up source repository name and filename.
-This is functionally missing, and also prevents regression testing.
+Improve hashdb API query functionality:
+Improve lookup_sources_md5() to be supported by the socket lookup.
+Currently this is only supported by file lookup.
+
+Add lookup_info() to export info in xml format.  This is not in place
+because dfxml_writer.cpp only outputs to file.
 
 ------------------------------------------------------------
 Functinality, later:

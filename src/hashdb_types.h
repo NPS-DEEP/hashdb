@@ -127,11 +127,13 @@ inline std::ostream& operator<<(std::ostream& os, const multimap_type_t& t) {
 }
 
 // variable length value reversible value lookup map type
-enum multi_index_container_type_t {MULTI_INDEX_CONTAINER};
+enum multi_index_container_type_t {MULTI_INDEX_CONTAINER,
+                                   BIDIRECTIONAL_BTREE};
 
 inline std::string multi_index_container_type_to_string(multi_index_container_type_t type) {
   switch(type) {
     case MULTI_INDEX_CONTAINER: return "multi-index-container";
+    case BIDIRECTIONAL_BTREE: return "bidirectional-btree";
     default: assert(0); return "";
   }
 }
@@ -141,7 +143,11 @@ inline bool string_to_multi_index_container_type(const std::string& name, multi_
     type = MULTI_INDEX_CONTAINER;
     return true;
   }
-  type = MULTI_INDEX_CONTAINER;
+  if (name == "bidirectional-btree") {
+    type = BIDIRECTIONAL_BTREE;
+    return true;
+  }
+  type = BIDIRECTIONAL_BTREE;
   return false;
 }
 

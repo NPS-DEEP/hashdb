@@ -50,5 +50,8 @@ TAGS
 core.*
 src/hashdb_manager
 src/hashdb_checker/hashdb_checker
+src/hashdb_manager.exe
+src/hashdb_checker/hashdb_checker.exe
 hashdb*.tar.gz
+space
 

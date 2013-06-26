@@ -28,18 +28,21 @@
 #include "hashdb_settings.h"
 #include "source_location_record.hpp"
 #include "manager_multi_index_container.h"
+#include "manager_bidirectional_btree.h"
 #include <string>
 
 // provide purposed name for multi_index
 typedef manager_multi_index_container_t<uint64_t, fixed_size_source_location_record_t> multi_index_container_t;
+typedef manager_bidirectional_btree_t<uint64_t, fixed_size_source_location_record_t> bidirectional_btree_t;
 
 /**
  * Provides interfaces to the source lookup store.
  */
 class source_lookup_store_t {
   private:
-    // each map type, currently just BIMAP
+    // each map type
     multi_index_container_t* multi_index_container;
+    bidirectional_btree_t* bidirectional_btree;
 
     const std::string filename;
     const file_mode_type_t file_mode_type;
