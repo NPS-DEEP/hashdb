@@ -63,10 +63,10 @@
 // ************************************************************
 // types of fixed size for ZMQ
 // ************************************************************
-enum query_type_t {NOT_DEFINED,
-                   QUERY_INFO,
-                   QUERY_HASHES_MD5,
-                   QUERY_SOURCES_MD5};
+enum zmq_query_type_t {NOT_DEFINED,
+                       QUERY_INFO,
+                       QUERY_HASHES_MD5,
+                       QUERY_SOURCES_MD5};
 
 static const size_t MAX_HASHES = 10000;
 static const size_t MAX_SOURCES = 5000;
@@ -76,17 +76,17 @@ static const size_t MAX_SOURCES = 5000;
 // ************************************************************
 class zmq_hashes_request_md5_t {
   private:
-  const query_type_t query_type;
+  const zmq_query_type_t zmq_query_type;
   uint32_t hash_count;
 
   public:
   hashdb::hash_request_md5_t hash_request[MAX_HASHES];
 
-  zmq_hashes_request_md5_t() : query_type(QUERY_HASHES_MD5), hash_count(0) {
+  zmq_hashes_request_md5_t() : zmq_query_type(QUERY_HASHES_MD5), hash_count(0) {
   }
 
   uint32_t byte_size() const {
-    return sizeof(query_type_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::hash_request_md5_t);
+    return sizeof(zmq_query_type_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::hash_request_md5_t);
   }
 
   void add(const hashdb::hash_request_md5_t& p_hash_request) {
@@ -154,17 +154,17 @@ class zmq_hashes_response_md5_t {
 class zmq_sources_request_md5_t {
 
   private:
-  const query_type_t query_type;
+  const zmq_query_type_t zmq_query_type;
   uint32_t source_count;
 
   public:
   hashdb::source_request_md5_t source_request[MAX_SOURCES];
 
-  zmq_sources_request_md5_t() : query_type(QUERY_SOURCES_MD5), source_count(0) {
+  zmq_sources_request_md5_t() : zmq_query_type(QUERY_SOURCES_MD5), source_count(0) {
   }
 
   size_t byte_size() const {
-    return sizeof(query_type_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::sources_request_md5_t);
+    return sizeof(zmq_query_type_t) + sizeof(uint32_t) + hash_count * sizeof(hashdb::sources_request_md5_t);
   }
 
   void add(const hashdb::source_request_md5_t& p_source_request) {
@@ -271,10 +271,10 @@ class zmq_sources_response_md5_t {
 // ************************************************************
 // generic structure
 struct zmq_generic_request_t {
-  query_type_t query_type;
+  zmq_query_type_t zmq_query_type;
   // bytes of largest request structure
-  uint8_t unused[sizeof(zmq_hashes_request_md5_t) - sizeof(query_type_t)];
-  zmq_generic_request_t() : query_type(NOT_DEFINED) {
+  uint8_t unused[sizeof(zmq_hashes_request_md5_t) - sizeof(zmq_query_type_t)];
+  zmq_generic_request_t() : zmq_query_type(NOT_DEFINED) {
   }
 };
 
@@ -420,19 +420,23 @@ class query_by_socket_t {
   public:
 
   // the query source is valid
-  bool query_source_is_valid() const {
-    return is_valid;
+  int query_status() const {
+    if (is_valid) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
    /**
    * Create the client hashdb query service using zmq3 and socket endpoint
    * such as "tcp://localhost:14500".
    */
-  query_by_socket_t(const std::string& lookup_source_string) :
+  query_by_socket_t(const std::string& query_source_string) :
                                 is_valid(false),
                                 M(),
                                 context(),
-                                socket_endpoint(lookup_source_string),
+                                socket_endpoint(query_source_string),
                                 sockets() {
 
 #ifdef HAVE_PTHREAD
@@ -474,7 +478,7 @@ class query_by_socket_t {
   /**
    * Look up hashes.
    */
-  bool lookup_hashes_md5(const hashdb::hashes_request_md5_t& request,
+  bool query_hashes_md5(const hashdb::hashes_request_md5_t& request,
                          hashdb::hashes_response_md5_t& response) {
 
     // the query service must be working
@@ -495,7 +499,7 @@ class query_by_socket_t {
     for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.begin(); it != request.end(); ++it) {
       zmq_request->add(*it);
       if (zmq_request->is_full()) {
-        success = zmq_lookup_hashes_md5(zmq_request, zmq_response);
+        success = zmq_query_hashes_md5(zmq_request, zmq_response);
         if (success == true) {
           copy_zmq_response(zmq_response, response);
         } else {
@@ -506,7 +510,7 @@ class query_by_socket_t {
       }
     }
     if (success == true) {
-      success = zmq_lookup_hashes_md5(zmq_request, zmq_response);
+      success = zmq_query_hashes_md5(zmq_request, zmq_response);
     }
     if (success == true) {
       copy_zmq_response(zmq_response, response);
@@ -524,36 +528,36 @@ class query_by_socket_t {
   /**
    * Look up sources.
    */
-  bool lookup_sources_md5(const hashdb::sources_request_md5_t& sources_request,
-                          hashdb::sources_response_md5_t& sources_response) {
+  int query_sources_md5(const hashdb::sources_request_md5_t& sources_request,
+                        hashdb::sources_response_md5_t& sources_response) {
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     // TBD zzzzzzzzzzzzzzzzzzz
-    std::cerr << "TBD: The query by socket lookup_sources_md5 interface is currently not supported.\n";
-    return false;
+    std::cerr << "TBD: The query by socket query_sources_md5 interface is currently not supported.\n";
+    return -2;
   }
 
   /**
    * Request information about the hashdb.
    */
-  bool get_hashdb_info(std::string& info) {
+  int query_hashdb_info(std::string& info) {
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     info = "info currently not available";
-    return true;
+    return 0;
   }
 
 private:
-  bool zmq_lookup_hashes_md5(const zmq_hashes_request_md5_t* zmq_request,
+  bool zmq_query_hashes_md5(const zmq_hashes_request_md5_t* zmq_request,
                              zmq_hashes_response_md5_t* zmq_response) {
 
-    // perform the lookup
+    // perform the query
     int response_size;
     bool success = transact(*zmq_request,
                             zmq_request->byte_size(),

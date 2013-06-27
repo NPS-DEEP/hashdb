@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Provides the hash lookup service for testing hashdb query interfaces.
+ * Provides the hash query service for testing hashdb query interfaces.
  */
 
-#ifndef HASH_LOOKUP_CONSUMER_HPP
-#define HASH_LOOKUP_CONSUMER_HPP
+#ifndef HASH_QUERY_CONSUMER_HPP
+#define HASH_QUERY_CONSUMER_HPP
 
 // Standard includes
 #include <cstdlib>
@@ -38,15 +38,15 @@
 #include "dfxml/src/hash_t.h"
 
 // helper class
-class hash_lookup_consumer_t {
+class hash_query_consumer_t {
   private:
   uint32_t query_id;
   hashdb::hashes_request_md5_t* request;
   std::map<uint32_t, std::string>* source_map;
 
   public:
-  hash_lookup_consumer_t(hashdb::hashes_request_md5_t* p_request,
-                         std::map<uint32_t, std::string>* p_source_map) :
+  hash_query_consumer_t(hashdb::hashes_request_md5_t* p_request,
+                        std::map<uint32_t, std::string>* p_source_map) :
           query_id(0), request(p_request), source_map(p_source_map) {
   }
 

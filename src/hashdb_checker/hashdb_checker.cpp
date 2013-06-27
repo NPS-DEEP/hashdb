@@ -20,7 +20,7 @@
 /**
  * \file
  * Provides the main entry for the hashdb_checker tool that exists
- * to provide dfxml lookup services and to test hashdb interfaces.
+ * to provide dfxml query services and to test hashdb interfaces.
  */
 
 #include <config.h>
@@ -35,24 +35,24 @@
 #include <string>
 #include "hashdb.hpp"
 #include "dfxml_hashdigest_reader.hpp"
-#include "hash_lookup_consumer.hpp"
+#include "hash_query_consumer.hpp"
 #include "identified_blocks_reader.hpp"
 //#include "md5.h"
 #include <getopt.h>
 
-//void do_show_hashdb_info(lookup_type_t lookup_type, std::string lookup_path);
-void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
-                        std::string lookup_path,
-                        std::string dfxml_infile);
+//void do_show_hashdb_info(query_type_t query_type, std::string query_path);
+void do_hash_query_md5(hashdb::query_type_t query_type,
+                       std::string query_path,
+                       std::string dfxml_infile);
 
-void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
-                          std::string lookup_path,
-                          std::string dfxml_infile);
+void do_source_query_md5(hashdb::query_type_t query_type,
+                         std::string query_path,
+                         std::string dfxml_infile);
 
 static std::string see_usage = "Please type 'hashdb_checker -h' for usage.";
 
 // options
-bool has_lookup_type = false;
+bool has_query_type = false;
 bool has_client_hashdb_path = false;
 bool has_client_socket_endpoint = false;
 std::string client_hashdb_path = "hashdb path not defined";
@@ -67,36 +67,36 @@ void usage() {
   << "\n"
   << "hashdb_checker supports the following <command> options:\n"
   << "\n"
-  << "--info [<lookup parameter>]+\n"
+  << "--info [<query parameter>]+\n"
   << "\n"
   << "    Options:\n"
-  << "    <lookup parameter>\n"
-  << "        Please see <lookup parameter> options.\n"
+  << "    <query parameter>\n"
+  << "        Please see <query parameter> options.\n"
   << "\n"
-  << "--lookup_hash [<lookup parameter>]+ <dfxml input>\n"
+  << "--query_hash [<query parameter>]+ <dfxml input>\n"
   << "\n"
   << "    Options:\n"
-  << "    <lookup parameter>\n"
-  << "        Please see <lookup parameter> options.\n"
+  << "    <query parameter>\n"
+  << "        Please see <query parameter> options.\n"
   << "\n"
   << "    Parameters:\n"
   << "        <dfxml input>  a DFXML file containing hashes to be looked up\n"
   << "\n"
-  << "--lookup_source [<lookup parameter>]+ <identified_blocks.txt input>\n"
+  << "--query_source [<query parameter>]+ <identified_blocks.txt input>\n"
   << "\n"
   << "    Options:\n"
-  << "    <lookup parameter>\n"
-  << "        Please see <lookup parameter> options.\n"
-  << "        Note: currently, only lookup_type use_path is supported,\n"
-  << "        lookup_type use_socket is not supported.\n"
+  << "    <query parameter>\n"
+  << "        Please see <query parameter> options.\n"
+  << "        Note: currently, only query type use_path is supported,\n"
+  << "        query_type use_socket is not supported.\n"
   << "\n"
   << "    Parameters:\n"
   << "        <identified_blocks.txt input>  a identified_blocks.txt file\n"
   << "        generated using bulk_extractor containing hashes to be looked up\n"
   << "\n"
-  << "<lookup parameter> options establish the lookup type and location:\n"
-  << "    -l, --lookup_type=<lookup type>\n"
-  << "        <lookup type> used to perform the lookup, where <lookup_type>\n"
+  << "<query parameter> options establish the query type and location:\n"
+  << "    -q, --query_type=<query type>\n"
+  << "        <query type> used to perform the query, where <query_type>\n"
   << "        is one of use_path | use_socket (default use_path).\n"
   << "        use_path   - Lookups are performed from a hashdb in the filesystem\n"
   << "                     at the specified <path>.\n"
@@ -105,7 +105,7 @@ void usage() {
   << "\n"
   << "    -p, --path =<path>]\n"
   << "        specifies the <path> to the hash database to be used for performing\n"
-  << "        the lookup service. This option is only valid when the lookup type\n"
+  << "        the query service. This option is only valid when the query type\n"
   << "        is set to \"use_path\".\n"
   << "\n"
   << "    -s, --socket=<socket>]\n"
@@ -113,7 +113,7 @@ void usage() {
   << "        hashdb server (default '" << client_socket_endpoint << "').  Valid socket\n"
   << "        transports supported by the zmq messaging kernel are tcp, ipc, and\n"
   << "        inproc.  Currently, only tcp is tested.  This option is only valid\n"
-  << "        when the lookup type is set to \"use_socket\".\n"
+  << "        when the query type is set to \"use_socket\".\n"
   << "\n"
   ;
 }
@@ -123,12 +123,12 @@ int main(int argc,char **argv)
 
   // input parsing commands
   int info_flag = 0;
-  int lookup_hash_flag = 0;
-  int lookup_source_flag = 0;
+  int query_hash_flag = 0;
+  int query_source_flag = 0;
 
   // defaults
-  hashdb::lookup_type_t lookup_type = hashdb::QUERY_USE_PATH;
-  std::string lookup_path = "query path not defined";
+  hashdb::query_type_t query_type = hashdb::QUERY_USE_PATH;
+  std::string query_path = "query path not defined";
 
   // manage when there are no arguments
   if(argc==1) {
@@ -147,18 +147,18 @@ int main(int argc,char **argv)
 
       // commands
       {"info", no_argument, &info_flag, 1},
-      {"lookup_hash", no_argument, &lookup_hash_flag, 1},
-      {"lookup_source", no_argument, &lookup_source_flag, 1},
+      {"query_hash", no_argument, &query_hash_flag, 1},
+      {"query_source", no_argument, &query_source_flag, 1},
 
       // command options
-      {"lookup_type", required_argument, 0, 'l'},
+      {"query_type", required_argument, 0, 'l'},
       {"path", required_argument, 0, 'p'},
       {"socket", required_argument, 0, 's'},
 
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hVl:p:s:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hVq:p:s:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -178,11 +178,11 @@ int main(int argc,char **argv)
         exit(0);
         break;
       }
-      case 'l': {	// lookup type
-        has_lookup_type = true;
-        bool is_ok_lookup_type = string_to_lookup_type(optarg, lookup_type);
-        if (!is_ok_lookup_type) {
-          std::cerr << "Invalid lookup type: '" << optarg << "'.  " << see_usage << "\n";
+      case 'q': {	// query type
+        has_query_type = true;
+        bool is_ok_query_type = string_to_query_type(optarg, query_type);
+        if (!is_ok_query_type) {
+          std::cerr << "Invalid query type: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
@@ -204,7 +204,7 @@ int main(int argc,char **argv)
   }
 
   // check that there is exactly one command issued
-  int num_commands = info_flag + lookup_hash_flag + lookup_source_flag;
+  int num_commands = info_flag + query_hash_flag + query_source_flag;
   if (num_commands == 0) {
     std::cerr << "Error: missing command.  " << see_usage << "\n";
     exit(1);
@@ -214,16 +214,16 @@ int main(int argc,char **argv)
     exit(1);
   }
 
-  // set lookup path based on lookup type
-  switch(lookup_type) {
-    case hashdb::QUERY_USE_PATH:   lookup_path = client_hashdb_path;     break;
-    case hashdb::QUERY_USE_SOCKET: lookup_path = client_socket_endpoint; break;
-    default:            lookup_path = "lookup path not defined";
+  // set query path based on query type
+  switch(query_type) {
+    case hashdb::QUERY_USE_PATH:   query_path = client_hashdb_path;     break;
+    case hashdb::QUERY_USE_SOCKET: query_path = client_socket_endpoint; break;
+    default:            query_path = "query path not defined";
   }
 
-  // if the lookup type is QUERY_USE_PATH then the lookup path must be provided
-  if (lookup_type == hashdb::QUERY_USE_PATH && has_client_hashdb_path == false) {
-    std::cerr << "The --path parameter is required when the lookup type is 'lookup_path'\n";
+  // if the query type is QUERY_USE_PATH then the query path must be provided
+  if (query_type == hashdb::QUERY_USE_PATH && has_client_hashdb_path == false) {
+    std::cerr << "The --path parameter is required when the query type is 'query_path'\n";
     exit(1);
   }
 
@@ -240,13 +240,13 @@ int main(int argc,char **argv)
       exit(1);
     }
  
-//    do_show_hashdb_info(lookup_type, lookup_path);
+//    do_show_hashdb_info(query_type, query_path);
     std::cout << "info currently not supported.\n";
 
-  // lookup hash
-  } else if (lookup_hash_flag) {
+  // query hash
+  } else if (query_hash_flag) {
     if (argc - optind != 1) {
-      std::cerr << "The lookup_hash command requires 1 parameter.  " << see_usage << "\n";
+      std::cerr << "The query_hash command requires 1 parameter.  " << see_usage << "\n";
       exit(1);
     }
     arg1 = argv[optind++];
@@ -255,12 +255,12 @@ int main(int argc,char **argv)
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
       exit(1);
     }
-    do_hash_lookup_md5(lookup_type, lookup_path, arg1);
+    do_hash_query_md5(query_type, query_path, arg1);
 
-  // lookup source
-  } else if (lookup_source_flag) {
+  // query source
+  } else if (query_source_flag) {
     if (argc - optind != 1) {
-      std::cerr << "The lookup_source command requires 1 parameter.  " << see_usage << "\n";
+      std::cerr << "The query_source command requires 1 parameter.  " << see_usage << "\n";
       exit(1);
     }
     arg1 = argv[optind++];
@@ -269,7 +269,7 @@ int main(int argc,char **argv)
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
       exit(1);
     }
-    do_source_lookup_md5(lookup_type, lookup_path, arg1);
+    do_source_query_md5(query_type, query_path, arg1);
 
   } else {
     // program error
@@ -281,17 +281,17 @@ int main(int argc,char **argv)
 }
 
 /*
-void do_show_hashdb_info(hashdb::lookup_type_t lookup_type, std::string lookup_path) {
-  std::cout << "hashdb info, lookup type '" << lookup_type_to_string(lookup_type)
-            << "', lookup path '" << lookup_path << "'\n";
+void do_show_hashdb_info(hashdb::query_type_t query_type, std::string query_path) {
+  std::cout << "hashdb info, query type '" << query_type_to_string(query_type)
+            << "', query path '" << query_path << "'\n";
 
   // allocate space for the response
   query_info_response_t response;
 
   // create the client query service
-  hashdb::query_t query(lookup_type, lookup_path);
+  hashdb::query_t query(query_type, query_path);
 
-  // perform the information lookup
+  // perform the information query
   bool success = query.get_hashdb_info(response);
   if (success) {
     std::cout << "report:\n";
@@ -303,38 +303,38 @@ void do_show_hashdb_info(hashdb::lookup_type_t lookup_type, std::string lookup_p
 }
 */
 
-void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
-                        std::string lookup_path,
+void do_hash_query_md5(hashdb::query_type_t query_type,
+                        std::string query_path,
                         std::string dfxml_infile) {
-  std::cout << "hashdb lookup, lookup type " << lookup_type_to_string(lookup_type)
-            << " lookup path '" << lookup_path << "'\n";
+  std::cout << "hashdb query, query type " << query_type_to_string(query_type)
+            << " query path '" << query_path << "'\n";
 
   // request, response, and source text map
   hashdb::hashes_request_md5_t request;
   hashdb::hashes_response_md5_t response;
   std::map<uint32_t, std::string> source_map;
 
-  // create the hash lookup consumer with its consume callback method
-  hash_lookup_consumer_t hash_lookup_consumer(&request, &source_map);
+  // create the hash query consumer with its consume callback method
+  hash_query_consumer_t hash_query_consumer(&request, &source_map);
 
   // perform the DFXML read
-  dfxml_hashdigest_reader_t<hash_lookup_consumer_t>::do_read(
-                             dfxml_infile, "not used", &hash_lookup_consumer);
+  dfxml_hashdigest_reader_t<hash_query_consumer_t>::do_read(
+                             dfxml_infile, "not used", &hash_query_consumer);
 
   // create the client query service
-  hashdb::query_t query(lookup_type, lookup_path);
+  hashdb::query_t query(query_type, query_path);
 
   // verify that the query source opened
-  if (!query.query_source_is_valid()) {
+  if (query.query_status() != 0) {
     std::cerr << "Unable to open query service.  Aborting.\n";
     exit(1);
   }
 
-  // perform the query lookup
-  bool success = query.lookup_hashes_md5(request, response);
+  // perform the query
+  int success = query.query_hashes_md5(request, response);
 
   // show result
-  if (success) {
+  if (success == 0) {
     for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response.begin(); it != response.end(); ++it) {
 
       const uint8_t* digest = it->digest;
@@ -344,21 +344,21 @@ void do_hash_lookup_md5(hashdb::lookup_type_t lookup_type,
       std::cout << source_map[it->id] << "\t"
                 << md5 << "\t"
                 << "count=" << it->duplicates_count
-                << ",source_lookup_index=" << it->source_lookup_index
+                << ",source_query_index=" << it->source_query_index
                 << ",chunk_offset_value=" << it->chunk_offset_value
                 << ",from_map=" << source_map[it->id]
                 << "\n";
     }
   } else {
-    std::cerr << "Failure in accessing the hashdb server for lookup.\n";
+    std::cerr << "Failure in accessing the hashdb server for query.\n";
   }
 }
 
-void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
-                        std::string lookup_path,
+void do_source_query_md5(hashdb::query_type_t query_type,
+                        std::string query_path,
                         std::string identified_blocks_infile) {
-  std::cout << "hashdb lookup, lookup type " << lookup_type_to_string(lookup_type)
-            << " lookup path '" << lookup_path << "'\n";
+  std::cout << "hashdb query, query type " << query_type_to_string(query_type)
+            << " query path '" << query_path << "'\n";
 
   // request, response, and offset map
   hashdb::sources_request_md5_t request;
@@ -369,19 +369,19 @@ void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
   identified_blocks_reader_t(identified_blocks_infile, request, offset_map);
 
   // create the client query service
-  hashdb::query_t query(lookup_type, lookup_path);
+  hashdb::query_t query(query_type, query_path);
 
   // verify that the query source opened
-  if (!query.query_source_is_valid()) {
+  if (!query.query_status() != 0) {
     std::cerr << "Unable to open query service.  Aborting.\n";
     exit(1);
   }
 
-  // perform the query lookup
-  bool success = query.lookup_sources_md5(request, response);
+  // perform the query
+  int success = query.query_sources_md5(request, response);
 
   // show result
-  if (success) {
+  if (success == 0) {
     for (hashdb::sources_response_md5_t::const_iterator it = response.begin(); it != response.end(); ++it) {
 
       // get offset and md5 digest together
@@ -402,7 +402,7 @@ void do_source_lookup_md5(hashdb::lookup_type_t lookup_type,
       }
     }
   } else {
-    std::cerr << "Failure in accessing the hashdb server for lookup.\n";
+    std::cerr << "Failure in accessing the hashdb server for query.\n";
   }
 }
 

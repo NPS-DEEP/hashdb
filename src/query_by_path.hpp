@@ -59,28 +59,32 @@ class query_by_path_t {
   public:
 
   // the query source is valid
-  bool query_source_is_valid() const {
-    return is_valid;
+  int query_status() const {
+    if (is_valid) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
   /**
    * Create the client hashdb query service using a file path.
    */
-  query_by_path_t(const std::string& lookup_source_string) :
+  query_by_path_t(const std::string& query_source_string) :
                                 is_valid(false), hashdb_db_manager(0) {
 
     // perform setup by opening a hashdb
 
     // make sure the hashdb path is available
-    bool is_present = (access(lookup_source_string.c_str(),F_OK) == 0);
+    bool is_present = (access(query_source_string.c_str(),F_OK) == 0);
     if (!is_present) {
-      std::cerr << "Error: hashdb directory path '" << lookup_source_string << "' is invalid.\n"
+      std::cerr << "Error: hashdb directory path '" << query_source_string << "' is invalid.\n"
               << "Query by path service not activated.\n";
     }
 
     // open the hashdb
-    std::cout << "Opening hashdb '" << lookup_source_string << "' ...\n";
-    hashdb_db_manager = new hashdb_db_manager_t(lookup_source_string, READ_ONLY);
+    std::cout << "Opening hashdb '" << query_source_string << "' ...\n";
+    hashdb_db_manager = new hashdb_db_manager_t(query_source_string, READ_ONLY);
     is_valid = true;
     std::cout << "hashdb opened.\n";
 
@@ -95,21 +99,21 @@ class query_by_path_t {
   /**
    * Look up hashes.
    */
-  bool lookup_hashes_md5(const hashdb::hashes_request_md5_t& request,
-                         hashdb::hashes_response_md5_t& response) {
+  int query_hashes_md5(const hashdb::hashes_request_md5_t& request,
+                       hashdb::hashes_response_md5_t& response) {
 
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     // make sure the hashdb is using MD5
     if (hashdb_db_manager->hashdb_settings.hashdigest_type != HASHDIGEST_MD5) {
       std::cerr << "The hashdigest type is invalid.\n";
-      return false;
+      return -2;
     }
 
-    // perform lookups for each hash
+    // perform query for each hash
     source_lookup_record_t source_lookup_record;
     response.clear();
     for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.begin(); it != request.end(); ++it) {
@@ -140,33 +144,33 @@ class query_by_path_t {
       }
     }
 
-    return true;
+    return 0;
   }
 
   /**
    * Look up sources.
    */
-  bool lookup_sources_md5(const hashdb::sources_request_md5_t& sources_request,
-                          hashdb::sources_response_md5_t& sources_response) {
+  int query_sources_md5(const hashdb::sources_request_md5_t& sources_request,
+                        hashdb::sources_response_md5_t& sources_response) {
 
     // note: this implemenatation can be optimized but it will require better
     //       interfaces in hashdb_db_manager_t
 
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     // make sure the hashdb is using MD5
     if (hashdb_db_manager->hashdb_settings.hashdigest_type != HASHDIGEST_MD5) {
       std::cerr << "The hashdigest type is invalid.\n";
-      return false;
+      return -2;
     }
 
     std::vector<hash_source_record_t> hash_source_records;
     sources_response.clear();
 
-    // perform lookups for each source
+    // perform query for each source
     for (hashdb::sources_request_md5_t::const_iterator it = sources_request.begin(); it != sources_request.end(); ++it) {
       
 //      md5_t md5 = it->digest;
@@ -195,7 +199,7 @@ class query_by_path_t {
       sources_response.push_back(source_response);
     }
 
-    return true;
+    return 0;
   }
 
 
@@ -203,15 +207,15 @@ class query_by_path_t {
   /**
    * Request information about the hashdb.
    */
-  bool get_hashdb_info(std::string& info) {
+  int query_hashdb_info(std::string& info) {
 
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     info = "currently not available";
-    return true;
+    return 0;
   }
 };
 

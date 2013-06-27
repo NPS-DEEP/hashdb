@@ -114,7 +114,7 @@ class query_by_socket_server_t {
     }
 
     // act based on type of request
-    switch(zmq_generic_request.query_type) {
+    switch(zmq_generic_request.zmq_query_type) {
       case QUERY_INFO: process_get_info(); break;
       case QUERY_HASHES_MD5: process_query_hashes_md5(); break;
       default: {

@@ -43,15 +43,15 @@ namespace hashdb {
 /**
  * Lookup types that are available.
  */
-enum lookup_type_t {QUERY_NOT_SELECTED,
-                    QUERY_USE_PATH,
-                    QUERY_USE_SOCKET};
+enum query_type_t {QUERY_NOT_SELECTED,
+                   QUERY_USE_PATH,
+                   QUERY_USE_SOCKET};
 
-std::string lookup_type_to_string(lookup_type_t type);
-bool string_to_lookup_type(const std::string& name, lookup_type_t& type);
+std::string query_type_to_string(query_type_t type);
+bool string_to_query_type(const std::string& name, query_type_t& type);
 
 // ************************************************************ 
-// data structures supporting lookup_hashes_md5
+// data structures supporting query_hashes_md5
 // ************************************************************ 
 /**
  * data associated with one hash in a request
@@ -65,7 +65,7 @@ struct hash_request_md5_t {
 };
 
 /**
- * Hash lookup request sent to the query engine
+ * Hash query request sent to the query engine
  */
 typedef std::vector<hash_request_md5_t> hashes_request_md5_t;
 
@@ -76,26 +76,26 @@ struct hash_response_md5_t {
     uint32_t id;
     uint8_t digest[16];
     uint32_t duplicates_count;
-    uint64_t source_lookup_index;
+    uint64_t source_query_index;
     uint64_t chunk_offset_value;
 
     hash_response_md5_t();
     hash_response_md5_t(uint32_t p_id,
                         const uint8_t* p_digest,
                         uint32_t p_duplicates_count,
-                        uint64_t p_source_lookup_index,
+                        uint64_t p_source_query_index,
                         uint64_t p_chunk_offset_value);
 };
 
 /**
- * Hash lookup response returned from the query engine
- * and source lookup request sent to the query engine
+ * Hash query response returned from the query engine
+ * and source query request sent to the query engine
  */
 typedef std::vector<hash_response_md5_t> hashes_response_md5_t;
 
 /**
- * Source lookup request sent to the qery engine
- * identical to hash lookup response
+ * Source query request sent to the qery engine
+ * identical to hash query response
  */
 typedef hash_response_md5_t source_request_md5_t;
 typedef hashes_response_md5_t sources_request_md5_t;
@@ -138,19 +138,19 @@ typedef std::vector<source_response_md5_t> sources_response_md5_t;
 
 class query_t {
     public:
-    query_t(lookup_type_t p_lookup_type, const std::string& p_lookup_source);
+    query_t(query_type_t p_query_type, const std::string& p_query_source);
     ~query_t();
 
-    bool query_source_is_valid() const;
+    int query_status() const;
 
-    bool lookup_hashes_md5(const hashes_request_md5_t& hashes_request,
-                           hashes_response_md5_t& hashes_response);
+    int query_hashes_md5(const hashes_request_md5_t& hashes_request,
+                         hashes_response_md5_t& hashes_response);
 
-    bool lookup_sources_md5(const sources_request_md5_t& sources_request,
-                            sources_response_md5_t& sources_response);
+    int query_sources_md5(const sources_request_md5_t& sources_request,
+                          sources_response_md5_t& sources_response);
 
     private:
-    lookup_type_t lookup_type;
+    query_type_t query_type;
     query_by_path_t* query_by_path;
     query_by_socket_t* query_by_socket;
 
