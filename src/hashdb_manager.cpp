@@ -353,10 +353,6 @@ void usage() {
   << "recursive directories.  This bug will be addressed in a future release\n"
   << "of boost btree.\n"
   << "\n"
-  << "On 32-bit Windows systems, Bloom filters greater than 32 bits are not\n"
-  << "allowed.  Larger values will crash the program.  Checks need to be put in\n"
-  << "place to prevent this from happening.\n"
-  << "\n"
   << "Deficiencies:\n"
   << "\n"
   << "Bloom filter support is currently not available on Windows systems.\n"
@@ -974,6 +970,23 @@ int main(int argc,char **argv) {
   if ((has_b1n && has_b1kM) || (has_b2n && has_b2kM)) {
     std::cerr << "Error: either a Bloom filter n value or a bloom filter k:M value may be\n";
     std::cerr << "specified, but not both.  " << see_usage << "\n";
+    exit(1);
+  }
+
+  // check that bloom hash size is compatible with the running system
+  uint32_t temp_st = sizeof(size_t) * 8;
+  uint32_t temp_b1 = hashdb_settings.bloom1_settings.M_hash_size;
+  uint32_t temp_b2 = hashdb_settings.bloom2_settings.M_hash_size;
+  if (temp_b1 > temp_st) {
+    std::cerr << "Error: Bloom 1 bits per hash, " << temp_b1
+              << ", exceeds " << temp_st
+              << ", which is the limit on this system.\n";
+    exit(1);
+  }
+  if (temp_b2 > temp_st) {
+    std::cerr << "Error: Bloom 2 bits per hash, " << temp_b2
+              << ", exceeds " << temp_st
+              << ", which is the limit on this system.\n";
     exit(1);
   }
 

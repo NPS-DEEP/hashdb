@@ -49,9 +49,6 @@ zmq_msg_size.  Then get socket working for hashdb_checker --query_source.
 
 Encrypt traffic through zmq socket.
 
-Prevent user from attempting to create a bloom filter > 32 bits
-on Win32.
-
 Write small test programs for code that breaks BTree.
 Known causes:
 1) create empty BTree, then check for presence of an entry.
