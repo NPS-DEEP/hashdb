@@ -73,27 +73,28 @@ class query_by_path_t {
   query_by_path_t(const std::string& query_source_string) :
                                 is_valid(false), hashdb_db_manager(0) {
 
-    // perform setup by opening a hashdb
-
     // make sure the hashdb path is available
     bool is_present = (access(query_source_string.c_str(),F_OK) == 0);
     if (!is_present) {
       std::cerr << "Error: hashdb directory path '" << query_source_string << "' is invalid.\n"
               << "Query by path service not activated.\n";
+      return;
     }
 
     // open the hashdb
-    std::cout << "Opening hashdb '" << query_source_string << "' ...\n";
-    hashdb_db_manager = new hashdb_db_manager_t(query_source_string, READ_ONLY);
     is_valid = true;
+    std::cout << "Opening hashdb '" << query_source_string << "' for query by path ...\n";
+    hashdb_db_manager = new hashdb_db_manager_t(query_source_string, READ_ONLY);
     std::cout << "hashdb opened.\n";
-
   }
 
   ~query_by_path_t() {
-    // close the hashdb resource
-    is_valid = false;
-    std::cout << "hashdb closed.\n";
+    if (is_valid) {
+      // close the hashdb resource
+      delete hashdb_db_manager;
+      is_valid = false;
+      std::cout << "hashdb closed.\n";
+    }
   }
  
   /**

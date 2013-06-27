@@ -478,12 +478,12 @@ class query_by_socket_t {
   /**
    * Look up hashes.
    */
-  bool query_hashes_md5(const hashdb::hashes_request_md5_t& request,
-                         hashdb::hashes_response_md5_t& response) {
+  int query_hashes_md5(const hashdb::hashes_request_md5_t& request,
+                       hashdb::hashes_response_md5_t& response) {
 
     // the query service must be working
     if (!is_valid) {
-      return false;
+      return -1;
     }
 
     // allocate big space on heap for zmq request and response
@@ -522,7 +522,7 @@ class query_by_socket_t {
     delete zmq_request;
     delete zmq_response;
 
-    return success;
+    return (success) ? 0 : -1;
   }
 
   /**

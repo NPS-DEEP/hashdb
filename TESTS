@@ -14,7 +14,7 @@ hashdb_manager --remove -rmy_repo dfxml_in hashdb_out
 
 
 ------------------------------------------------------------
-simple example sequence for testing scan_hashdb
+simple example sequence for testing bulk_extractor scanner scan_hashdb
 Identify an image file to use, create a hashdb of it, and then scan it:
 
 $ mkdir test_scan_hashid
@@ -22,9 +22,16 @@ $ cp Images/geotag-example.jpg test_scan_hashid/
 $ cd test_scan_hashid/
 $ md5deep -p 4096 -d geotag-example.jpg > geo_dfxml
 $ hashdb_manager --copy -r "myrep" geo_dfxml  geo_hashdb
-$ bulk_extractor -ehashid -s path=geo_hashdb -o be4 geotag-example.jpg 
+$ bulk_extractor -S query_type=use_path -S path=geo_hashdb -o be4 geotag-example.jpg 
 
-Then validate features in file be4/md5.txt
+Examine be4/identified_blocks.txt for hash content
+
+Now scan using Socket service:
+
+$ hashdb_manager --socket geo_hashdb
+$ bulk_extractor -S query_type=use_socket -o be5 geotag-example.jpg 
+
+Examine be5/identified_blocks.txt for hash content
 
 ------------------------------------------------------------
 Sequence for testing basic functional integrity.

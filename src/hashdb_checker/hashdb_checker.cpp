@@ -306,8 +306,8 @@ void do_show_hashdb_info(hashdb::query_type_t query_type, std::string query_path
 void do_hash_query_md5(hashdb::query_type_t query_type,
                         std::string query_path,
                         std::string dfxml_infile) {
-  std::cout << "hashdb query, query type " << query_type_to_string(query_type)
-            << " query path '" << query_path << "'\n";
+  std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
+            << "', query path '" << query_path << "'\n";
 
   // request, response, and source text map
   hashdb::hashes_request_md5_t request;
@@ -326,7 +326,7 @@ void do_hash_query_md5(hashdb::query_type_t query_type,
 
   // verify that the query source opened
   if (query.query_status() != 0) {
-    std::cerr << "Unable to open query service.  Aborting.\n";
+    std::cerr << "Unable to open query service for hash query.  Aborting.\n";
     exit(1);
   }
 
@@ -357,8 +357,8 @@ void do_hash_query_md5(hashdb::query_type_t query_type,
 void do_source_query_md5(hashdb::query_type_t query_type,
                         std::string query_path,
                         std::string identified_blocks_infile) {
-  std::cout << "hashdb query, query type " << query_type_to_string(query_type)
-            << " query path '" << query_path << "'\n";
+  std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
+            << "', query path '" << query_path << "'\n";
 
   // request, response, and offset map
   hashdb::sources_request_md5_t request;
@@ -372,8 +372,8 @@ void do_source_query_md5(hashdb::query_type_t query_type,
   hashdb::query_t query(query_type, query_path);
 
   // verify that the query source opened
-  if (!query.query_status() != 0) {
-    std::cerr << "Unable to open query service.  Aborting.\n";
+  if (query.query_status() != 0) {
+    std::cerr << "Unable to open query service for source query.  Aborting.\n";
     exit(1);
   }
 

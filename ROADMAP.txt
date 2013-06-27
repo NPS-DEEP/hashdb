@@ -22,11 +22,15 @@ Functinality, later:
 Add new option to not pack upon saving.  Add feedback to indicate
 when packing starts and stops.
 
-Change lookup API to manage lookups in sorted array groups.
+Change query internals to manage lookups in sorted array groups.
 
 Make library completely failure-friendly.  Currently it calls exit() when
 files faile and it has Boost code that can throw interprocess_exception.
 Tests are in place to prevent these under normal circumstances.
+Change this to return integer error codes that the application can test.
+
+Make library quiet.  Currently, the library prints errors.
+Change it to return integer error codes that the application can decode.
 
 May optimise the -x command that entirely removes popular hashes.
 
@@ -38,7 +42,15 @@ variable-length string records.
 
 Maybe shard Bloom filter.
 
+Change zmq to use zmq_msg_t rather than locally allocated buffers.
+This allows internal management of arbitrarily long buffers.
+Specifically, use zmq_msg_init, zmq_msg_recv, zmq_msg_data, and
+zmq_msg_size.  Then get socket working for hashdb_checker --query_source.
+
 Encrypt traffic through zmq socket.
+
+Prevent user from attempting to create a bloom filter > 32 bits
+on Win32.
 
 Write small test programs for code that breaks BTree.
 Known causes:
