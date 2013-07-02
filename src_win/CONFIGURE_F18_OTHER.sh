@@ -87,6 +87,7 @@ if [ ! -r $ZMQFILE ]; then
   wget $ZMQURL
 fi
 tar xfvz $ZMQFILE
+patch -p1 <zmq-configure.patch
 patch -p1 <zmq-configure.in.patch
 patch -p1 <zmq-zmq.h.patch
 patch -p1 <zmq-zmq_utils.h.patch
