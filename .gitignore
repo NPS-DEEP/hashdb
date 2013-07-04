@@ -19,6 +19,7 @@
 *.o
 *.so
 *.swp
+*.swo
 *~
 .deps
 Makefile
