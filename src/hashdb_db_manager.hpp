@@ -624,10 +624,10 @@ class hashdb_db_manager_t {
       } else {
         // get multiple source lookup records from the hash duplicates store
         std::vector<source_lookup_record_t> records;
-        hash_duplicates_store->get_source_lookup_record_vector( md5, records);
+        hash_duplicates_store->get_source_lookup_record_vector(md5, records);
         for (std::vector<source_lookup_record_t>::iterator it = records.begin();
                      it != records.end(); it++) {
-          source_lookup_record_to_hash_source_record(record, hash_source_record);
+          source_lookup_record_to_hash_source_record(*it, hash_source_record);
           hash_source_records.push_back(hash_source_record);
         }
       }
