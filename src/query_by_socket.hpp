@@ -65,7 +65,7 @@
 #endif
 
 // types of queries that are available
-const uint32_t QUERY_INFO = 1;
+const uint32_t QUERY_HASHDB_INFO = 1;
 const uint32_t QUERY_HASHES_MD5 = 2;
 const uint32_t QUERY_SOURCES_MD5 = 3;
 
@@ -79,12 +79,14 @@ struct zmq_source_reference_t {
   char filename_bytes[200];
   uint64_t file_offset;
 
-  zmq_source_reference_t(hashdb::source_reference_t source_reference) :
+  zmq_source_reference_t(std::string p_repository_name,
+                         std::string p_filename,
+                         uint64_t p_file_offset) :
           repository_name_bytes(), filename_bytes(),
-          file_offset(source_reference.file_offset) {
-    strncpy(repository_name_bytes, source_reference.repository_name.c_str(), 200);
+          file_offset(p_file_offset) {
+    strncpy(repository_name_bytes, p_repository_name.c_str(), 200);
     repository_name_bytes[200-1] = '\0';
-    strncpy(filename_bytes, source_reference.filename.c_str(), 200);
+    strncpy(filename_bytes, p_filename.c_str(), 200);
     filename_bytes[200-1] = '\0';
   }
 };
@@ -144,6 +146,7 @@ class zmq_helper_t {
                                    size_t structure_size,
                                    size_t& count,
                                    bool& is_more) {
+    is_more = false;
 
     // initialize zmq_part
     size_t status;
@@ -176,6 +179,7 @@ class zmq_helper_t {
     // set count and is_more
     count = response_count / structure_size;
     is_more = (zmq_msg_more(&zmq_part) == 1) ? true : false;
+//std::cerr << "qbs open_and_receive_part size " << response_count << ", count " << count << ", is_more " << is_more << "\n";
     return 0;
   }
 
@@ -194,6 +198,7 @@ class zmq_helper_t {
       std::cerr << "open_and_receive_part failed data size, " << zmq_msg_size(&zmq_part) << " is not " << structure_size << "\n";
       return -1;
     }
+    return 0;
   }
 
   /**
@@ -300,7 +305,6 @@ class query_by_socket_t {
    */
   int query_hashes_md5(const hashdb::hashes_request_md5_t& request,
                        hashdb::hashes_response_md5_t& response) {
-std::cerr << "query_by_socket.query_hashes_md5.a\n";
 
     // the query service must be working
     if (!is_valid) {
@@ -422,7 +426,7 @@ std::cerr << "query_by_socket.query_hashes_md5.a\n";
       bool is_more;
       status = zmq_helper_t::open_and_receive_part(zmq_source_request,
                                      socket,
-                                     sizeof(hashdb::hash_request_md5_t),
+                                     sizeof(hashdb::source_request_md5_t),
                                      count,
                                      is_more);
       if (status != 0) {
@@ -439,7 +443,7 @@ std::cerr << "query_by_socket.query_hashes_md5.a\n";
       }
 
       if ((count != 1) || (!is_more)) {
-        std::cerr << "query_sources_md5 receive hash request requires more data.\n";
+        std::cerr << "query_sources_md5 receive hash request requires more data, count " << count << ", is_more " << is_more << "\n";
         bool status2 __attribute__((unused)) = zmq_helper_t::close_part(zmq_source_request);
         return -1;
       }

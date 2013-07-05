@@ -151,8 +151,8 @@ class query_by_path_t {
   /**
    * Look up sources.
    */
-  int query_sources_md5(const hashdb::sources_request_md5_t& sources_request,
-                        hashdb::sources_response_md5_t& sources_response) {
+  int query_sources_md5(const hashdb::sources_request_md5_t& request,
+                        hashdb::sources_response_md5_t& response) {
 
     // note: this implemenatation can be optimized but it will require better
     //       interfaces in hashdb_db_manager_t
@@ -169,10 +169,10 @@ class query_by_path_t {
     }
 
     std::vector<hash_source_record_t> hash_source_records;
-    sources_response.clear();
+    response.clear();
 
     // perform query for each source
-    for (hashdb::sources_request_md5_t::const_iterator it = sources_request.begin(); it != sources_request.end(); ++it) {
+    for (hashdb::sources_request_md5_t::const_iterator it = request.begin(); it != request.end(); ++it) {
       
 //      md5_t md5 = it->digest;
       const uint8_t* digest = it->digest;
@@ -188,22 +188,22 @@ class query_by_path_t {
       }
 
       // build source response for this hash
-      hashdb::source_response_md5_t source_response(it->id, it->digest);
+      response.push_back(hashdb::source_response_md5_t(it->id, it->digest));
+
+      // get address of source response
+      hashdb::source_response_md5_t* source_response = &response.back();
+
+      // fill in source reference array of source response
       for (std::vector<hash_source_record_t>::const_iterator hash_source_record_it = hash_source_records.begin(); hash_source_record_it != hash_source_records.end(); ++hash_source_record_it) {
-        source_response.source_references.push_back(hashdb::source_reference_t(
+        source_response->source_references.push_back(hashdb::source_reference_t(
                               hash_source_record_it->repository_name,
                               hash_source_record_it->filename,
                               hash_source_record_it->file_offset));
       }
-
-      // push source response for this hash
-      sources_response.push_back(source_response);
     }
 
     return 0;
   }
-
-
 
   /**
    * Request information about the hashdb.

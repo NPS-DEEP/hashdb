@@ -171,12 +171,11 @@ class query_by_socket_server_t {
 
     // perform lookups for each hash in request
     source_lookup_record_t source_lookup_record;
-    for (size_t i=0; i<request_size; i++) {
+    for (size_t i=0; i<request_count; i++) {
       // get digest into md5
       const uint8_t* digest = request_array[i].digest;
       md5_t md5;
       memcpy(md5.digest, digest, 16);
-//std::cout << "qbss request " << i << "		" << md5 << "\n";
 
       // perform lookup
       bool has_record = hashdb_db_manager->has_source_lookup_record(
@@ -212,27 +211,29 @@ class query_by_socket_server_t {
 
   void send_source_references(const std::vector<hash_source_record_t>& hash_source_records) {
 
-    // copy hash_source_records to zmq_source_references
+    // allocate zmq_source_references
     zmq_source_references_t* zmq_source_references = new zmq_source_references_t();
-    for (std::vector<hash_source_record_t>::const_iterator it = hash_source_records->begin(); it!= hash_source_records->end(); ++it) {
 
-      zmq_source_references.push_back(zmq_source_reference_t(
+    // copy hash_source_records to zmq_source_references
+    for (std::vector<hash_source_record_t>::const_iterator it = hash_source_records.begin(); it!= hash_source_records.end(); ++it) {
+
+      zmq_source_references->push_back(zmq_source_reference_t(
                   it->repository_name,
                   it->filename,
                   it->file_offset));
     }
 
     // send zmq_source_references
-    status = send_part( (&(*zmq_source_references)[0]),
-                        sizeof(zmq_source_reference_t * hash_source_records.size()),
-                        socket,
-                        true);
+    int status = zmq_helper_t::send_part( (&(*zmq_source_references)[0]),
+                   sizeof(zmq_source_reference_t) * hash_source_records.size(),
+                   socket,
+                   true);
     if (status != 0) {
       exit(-1);
     }
 
+    // deallocate zmq_source_references
     delete zmq_source_references;
-    return;
   }
 
   void process_query_sources_md5() {
@@ -244,7 +245,7 @@ class query_by_socket_server_t {
     zmq_msg_t zmq_request;
     status = zmq_helper_t::open_and_receive_part(zmq_request,
                                    socket,
-                                   sizeof(hahsdb::source_request_md5_t),
+                                   sizeof(hashdb::source_request_md5_t),
                                    request_count,
                                    is_more);
     if (status != 0) {
@@ -262,13 +263,12 @@ class query_by_socket_server_t {
                                       new std::vector<hash_source_record_t>();
 
     // perform query for each source in request
-    for (size_t i=0; i<request_size; i++) {
+    for (size_t i=0; i<request_count; i++) {
 
       // get digest into md5
       const uint8_t* digest = request_array[i].digest;
       md5_t md5;
       memcpy(md5.digest, digest, 16);
-std::cout << "qbss request " << i << "		" << md5 << "\n";
 
       // perform lookup
       bool has_record = hashdb_db_manager->get_hash_source_records(
@@ -279,10 +279,13 @@ std::cout << "qbss request " << i << "		" << md5 << "\n";
         continue;
       }
 
-      // send hash_request part of response pair
-      status = send_part( (&(*request_array)[i]), sizeof(hash_source_record_t), socket, true);
+      // send 1 of 2: hash_request part of response pair
+      status = zmq_helper_t::send_part( (&request_array[i]),
+                                        sizeof(hashdb::source_request_md5_t),
+                                        socket,
+                                        true);
 
-      // send response for this source request
+      // send 2 of 2: response for this source request
       send_source_references(*hash_source_records);
     }
 
@@ -290,7 +293,7 @@ std::cout << "qbss request " << i << "		" << md5 << "\n";
     delete hash_source_records;
 
     // send closure signal indicating last part
-    status = send_part(0, 0, socket, false);
+    status = zmq_helper_t::send_part(0, 0, socket, false);
     if (status != 0) {
       exit(-1);
     }
