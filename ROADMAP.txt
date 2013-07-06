@@ -3,20 +3,6 @@ Things to do:
 ------------------------------------------------------------
 Functinality:
 
-Submit for second internal review.
-
-Post first release.
-
-Make databases portable across systems, for example 64-bit Fedora and
-32-bit Windows.
-
-Improve hashdb API query functionality:
-Improve lookup_sources_md5() to be supported by the socket lookup.
-Currently this is only supported by file lookup.
-
-Add lookup_info() to export info in xml format.  This is not in place
-because dfxml_writer.cpp only outputs to file.
-
 ------------------------------------------------------------
 Functinality, later:
 Add new option to not pack upon saving.  Add feedback to indicate
@@ -120,4 +106,9 @@ Add runtime timer information.
 Improved integration with bulk_extractor.
 
 Allows multiple targets: Linux, Windows, Mac.
+
+Databases are portable across Linux, Windows32/Windows64, Mac.
+
+Added hashdb API query functionality: query_sources_md5 and
+query_hashdb_info are fully implemented.
 
