@@ -149,6 +149,8 @@ class query_t {
     int query_sources_md5(const sources_request_md5_t& sources_request,
                           sources_response_md5_t& sources_response);
 
+    int query_hashdb_info(std::string& hashdb_info_response);
+
     private:
     query_type_t query_type;
     query_by_path_t* query_by_path;

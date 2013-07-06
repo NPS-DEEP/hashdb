@@ -31,6 +31,7 @@
 #include "hashdb_db_manager.hpp"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
+#include "query_by_socket_server.hpp"
 
 // Standard includes
 //#include <cstdlib>
@@ -215,7 +216,7 @@ class query_by_path_t {
       return -1;
     }
 
-    info = "currently not available";
+    hashdb_db_info_provider_t::get_hashdb_info(*hashdb_db_manager, info);
     return 0;
   }
 };

@@ -206,3 +206,16 @@ int hashdb::query_t::query_sources_md5(
     }
 }
  
+int hashdb::query_t::query_hashdb_info(std::string& hashdb_info_response) {
+    switch(query_type) {
+      case QUERY_USE_PATH:
+        return query_by_path->query_hashdb_info(hashdb_info_response);
+      case QUERY_USE_SOCKET:
+        return query_by_socket->query_hashdb_info(hashdb_info_response);
+      default:
+        // non-valid source type was provided
+        std::cerr << "Error on query hashdb info: A valid query service type is required.\n";
+        return -1;
+    }
+}
+ 

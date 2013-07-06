@@ -37,6 +37,7 @@
 #include "hashdb_settings.h"
 #include "hashdb_db_manager.hpp"
 #include "hashdb.hpp"
+#include "hashdb_db_info_provider.hpp"
 #include <map>
 #include <zmq.h>
 
@@ -511,7 +512,43 @@ class query_by_socket_t {
       return -1;
     }
 
-    info = "info currently not available";
+    // get the socket
+    void* socket = get_socket();
+    if (socket == 0) {
+      std::cerr << "query_by_socket_t failed to procure a socket\n";
+      return -1;
+    }
+
+    int status;
+
+    // send the hash query request type
+    status = zmq_helper_t::send_part(
+                       &QUERY_HASHDB_INFO, sizeof(uint32_t), socket, false);
+    if (status != 0) {
+      return status;
+    }
+
+    // get the hashdb info response
+    zmq_msg_t zmq_response;
+    size_t char_count;
+    bool is_more;
+    status = zmq_helper_t::open_and_receive_part(zmq_response,
+                        socket,
+                        sizeof(char),
+                        char_count,
+                        is_more);
+    if (status != 0) {
+      return status;
+    }
+    if (is_more) {
+      std::cerr << "query_hashdb_info unexpected more data\n";
+      bool status2 __attribute__((unused)) = zmq_helper_t::close_part(zmq_response);
+      return -1;
+    }
+    char* c = reinterpret_cast<char*>(zmq_msg_data(&zmq_response));
+
+    // set info from response
+    info = std::string(c);
     return 0;
   }
 

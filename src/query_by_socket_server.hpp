@@ -139,6 +139,12 @@ class query_by_socket_server_t {
         exit(-1);
       }
       process_query_sources_md5();
+    } else if (request_type == QUERY_HASHDB_INFO) {
+      if (is_more) {
+        std::cerr << "query_by_socket_server sources no more required\n";
+        exit(-1);
+      }
+      process_query_hashdb_info();
     }
   }
 
@@ -299,10 +305,31 @@ class query_by_socket_server_t {
     }
   }
 
-  void process_get_info() {
-    //TBD
-  }
+  void process_query_hashdb_info() {
+    int status = 0;
 
+    // create space on the heap for the response
+    std::string response;
+
+    // get the query info
+    hashdb_db_info_provider_t::get_hashdb_info(*hashdb_db_manager, response);
+
+    // convert to char array to ensure null termination
+    char *c=new char[response.size()+1];
+    c[response.size()] = '\0';
+    memcpy(c, response.c_str(), response.size());
+
+    // send the response
+    status = zmq_helper_t::send_part(&c[0],
+                       sizeof(char) * response.size(),
+                       socket,
+                       false);
+    if (status != 0) {
+      exit(-1);
+    }
+
+    delete c;
+  }
 };
 
 #endif

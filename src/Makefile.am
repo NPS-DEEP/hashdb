@@ -26,7 +26,6 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/Boost-Btree \
 	$(XML_CFLAGS)
 
-# zzzzzzzz
 AM_LDFLAGS = -static $(XML_LIBS)
 
 SECTOR_HASH_INCS = \
@@ -35,6 +34,7 @@ SECTOR_HASH_INCS = \
 	dfxml_hashdigest_reader.hpp \
 	hashdb.cpp \
 	hashdb.hpp \
+	hashdb_db_info_provider.hpp \
 	hashdb_db_manager.hpp \
 	hashdb_exporter.hpp \
 	hashdb_filenames.cpp \

@@ -40,14 +40,16 @@
 //#include "md5.h"
 #include <getopt.h>
 
-//void do_show_hashdb_info(query_type_t query_type, std::string query_path);
-void do_hash_query_md5(hashdb::query_type_t query_type,
+void do_query_hash_md5(hashdb::query_type_t query_type,
                        std::string query_path,
                        std::string dfxml_infile);
 
-void do_source_query_md5(hashdb::query_type_t query_type,
+void do_query_source_md5(hashdb::query_type_t query_type,
                          std::string query_path,
-                         std::string dfxml_infile);
+                         std::string identified_blocks_infile);
+
+void do_query_hashdb_info(hashdb::query_type_t query_type,
+                         std::string query_path);
 
 static std::string see_usage = "Please type 'hashdb_checker -h' for usage.";
 
@@ -67,7 +69,7 @@ void usage() {
   << "\n"
   << "hashdb_checker supports the following <command> options:\n"
   << "\n"
-  << "--info [<query parameter>]+\n"
+  << "--query_hashdb_info [<query parameter>]+\n"
   << "\n"
   << "    Options:\n"
   << "    <query parameter>\n"
@@ -122,7 +124,7 @@ int main(int argc,char **argv)
 {
 
   // input parsing commands
-  int info_flag = 0;
+  int query_hashdb_info_flag = 0;
   int query_hash_flag = 0;
   int query_source_flag = 0;
 
@@ -146,7 +148,7 @@ int main(int argc,char **argv)
       {"Version", no_argument, 0, 'V'},
 
       // commands
-      {"info", no_argument, &info_flag, 1},
+      {"query_hashdb_info", no_argument, &query_hashdb_info_flag, 1},
       {"query_hash", no_argument, &query_hash_flag, 1},
       {"query_source", no_argument, &query_source_flag, 1},
 
@@ -204,7 +206,7 @@ int main(int argc,char **argv)
   }
 
   // check that there is exactly one command issued
-  int num_commands = info_flag + query_hash_flag + query_source_flag;
+  int num_commands = query_hashdb_info_flag + query_hash_flag + query_source_flag;
   if (num_commands == 0) {
     std::cerr << "Error: missing command.  " << see_usage << "\n";
     exit(1);
@@ -233,15 +235,14 @@ int main(int argc,char **argv)
 
   // run the command
 
-  // info
-  if (info_flag) {
+  // query hashdb info
+  if (query_hashdb_info_flag) {
     if (argc - optind != 0) {
-      std::cerr << "The info command requires 0 parameters.  " << see_usage << "\n";
+      std::cerr << "The query hashdb info command requires 0 additional parameters.  " << see_usage << "\n";
       exit(1);
     }
  
-//    do_show_hashdb_info(query_type, query_path);
-    std::cout << "info currently not supported.\n";
+    do_query_hashdb_info(query_type, query_path);
 
   // query hash
   } else if (query_hash_flag) {
@@ -255,7 +256,7 @@ int main(int argc,char **argv)
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
       exit(1);
     }
-    do_hash_query_md5(query_type, query_path, arg1);
+    do_query_hash_md5(query_type, query_path, arg1);
 
   // query source
   } else if (query_source_flag) {
@@ -269,7 +270,7 @@ int main(int argc,char **argv)
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
       exit(1);
     }
-    do_source_query_md5(query_type, query_path, arg1);
+    do_query_source_md5(query_type, query_path, arg1);
 
   } else {
     // program error
@@ -280,30 +281,7 @@ int main(int argc,char **argv)
   return 0;
 }
 
-/*
-void do_show_hashdb_info(hashdb::query_type_t query_type, std::string query_path) {
-  std::cout << "hashdb info, query type '" << query_type_to_string(query_type)
-            << "', query path '" << query_path << "'\n";
-
-  // allocate space for the response
-  query_info_response_t response;
-
-  // create the client query service
-  hashdb::query_t query(query_type, query_path);
-
-  // perform the information query
-  bool success = query.get_hashdb_info(response);
-  if (success) {
-    std::cout << "report:\n";
-    response.hashdb_settings.report_settings(std::cout);
-    std::cout << "\n";
-  } else {
-    std::cerr << "Failure in accessing the hashdb server for info.\n";
-  }
-}
-*/
-
-void do_hash_query_md5(hashdb::query_type_t query_type,
+void do_query_hash_md5(hashdb::query_type_t query_type,
                         std::string query_path,
                         std::string dfxml_infile) {
   std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
@@ -331,10 +309,10 @@ void do_hash_query_md5(hashdb::query_type_t query_type,
   }
 
   // perform the query
-  int success = query.query_hashes_md5(request, response);
+  int status = query.query_hashes_md5(request, response);
 
   // show result
-  if (success == 0) {
+  if (status == 0) {
     for (std::vector<hashdb::hash_response_md5_t>::const_iterator it = response.begin(); it != response.end(); ++it) {
 
       const uint8_t* digest = it->digest;
@@ -350,11 +328,11 @@ void do_hash_query_md5(hashdb::query_type_t query_type,
                 << "\n";
     }
   } else {
-    std::cerr << "Failure in accessing the hashdb server for query.\n";
+    std::cerr << "Failure in accessing the hashdb for hash query.\n";
   }
 }
 
-void do_source_query_md5(hashdb::query_type_t query_type,
+void do_query_source_md5(hashdb::query_type_t query_type,
                         std::string query_path,
                         std::string identified_blocks_infile) {
   std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
@@ -378,10 +356,10 @@ void do_source_query_md5(hashdb::query_type_t query_type,
   }
 
   // perform the query
-  int success = query.query_sources_md5(request, response);
+  int status = query.query_sources_md5(request, response);
 
   // show result
-  if (success == 0) {
+  if (status == 0) {
     for (hashdb::sources_response_md5_t::const_iterator it = response.begin(); it != response.end(); ++it) {
 
       // get offset and md5 digest together
@@ -402,7 +380,29 @@ void do_source_query_md5(hashdb::query_type_t query_type,
       }
     }
   } else {
-    std::cerr << "Failure in accessing the hashdb server for query.\n";
+    std::cerr << "Failure in accessing the hashdb server for source query.\n";
+  }
+}
+
+void do_query_hashdb_info(hashdb::query_type_t query_type, std::string query_path) {
+  std::cout << "hashdb info, query type '" << query_type_to_string(query_type)
+            << "', query path '" << query_path << "'\n";
+
+  // allocate space for the response
+  std::string response;
+
+  // create the client query service
+  hashdb::query_t query(query_type, query_path);
+
+  // perform the information query
+  int status = query.query_hashdb_info(response);
+  if (status == 0) {
+    std::cout << "hashdb info:\n"
+              << response
+              << "\n"
+              ;
+  } else {
+    std::cerr << "Failure in accessing the hashdb server for info query.\n";
   }
 }
 
