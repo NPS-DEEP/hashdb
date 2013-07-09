@@ -3,7 +3,7 @@ $ sudo yum -y install mingw64-gcc-c++ mingw64-zlib-static mingw64-pthreads flex
 $ sudo yum -y install autoconf automake  # not strictly needed, but necessary to build from SVN/GIT
 $ sudo yum -y install zlib-devel zlib-static
 
-1) Run script CONFIGURE_F17.sh found in directory src_win/ to set up Fedora 17
+1) Run script CONFIGURE_F18.sh found in directory src_win/ to set up Fedora 18
 or newer to set up the mingw environment for cross-compiling to Windows.
 
 2) Create and cd to directory win32 or win64

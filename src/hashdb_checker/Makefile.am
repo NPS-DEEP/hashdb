@@ -38,6 +38,5 @@ hashdb_checker_SOURCES = \
 	hashdb_checker.cpp \
 	hash_query_consumer.hpp \
 	identified_blocks_reader.hpp \
-	hashdb_db_info_provider.hpp \
 	../hashdb.hpp
 

@@ -25,6 +25,7 @@
 .deps
 Makefile
 Makefile.in
+hashdb-*.zip
 aclocal.m4
 autom4te.cache
 config.guess
