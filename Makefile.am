@@ -45,8 +45,8 @@ windist: win32 win64
 	@echo Adding text files to $(distdir).zip 
 	@echo 
 	cp COPYING		$(distdir)/COPYING.txt
-	md5deep -r  $distdir > md5list.txt
-	md5deep -rd $distdir > md5list.xml
+	md5deep -r  $(distdir) > md5list.txt
+	md5deep -rd $(distdir) > md5list.xml
 	mv md5list.txt md5list.xml $(distdir)
 	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml
 
