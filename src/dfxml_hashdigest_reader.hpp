@@ -276,7 +276,9 @@ class dfxml_hashdigest_reader_t {
       user_data.filename = std::string(filename_chars);
       user_data.has_filename = true;
 
-    } else if (user_data.is_at_hashdigest) {
+    } else if (user_data.is_at_hashdigest
+               && user_data.has_byte_run_file_offset_attribute
+               && user_data.has_byte_run_len_attribute) {
 
       // get hashdigest
       char hashdigest_chars[len+1];
@@ -286,6 +288,10 @@ class dfxml_hashdigest_reader_t {
 
       // save hashdigest
       save_hashdigest(user_data);
+
+      // hashdigest consumed the byte_run information
+      user_data.has_byte_run_file_offset_attribute = false;
+      user_data.has_byte_run_len_attribute = false;
     }
   }
 
