@@ -65,12 +65,10 @@ DFXML_INCS = \
 	../dfxml/src/cppmutex.h
 
 MISC_INCS = \
-	../misc/aftimer.h \
 	../misc/bloom.c \
 	../misc/bloom.h \
 	../misc/boost_filemapper.cpp \
-	../misc/boost_filemapper.hpp \
-	../misc/util.h
+	../misc/boost_filemapper.hpp
 
 BOOST_BTREE_INCS = \
 	../Boost-Btree/boost/btree/dynamic_size.hpp \
