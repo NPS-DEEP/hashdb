@@ -29,7 +29,8 @@
 #ifndef BLOOM_FILTER_HPP
 #define BLOOM_FILTER_HPP
 #include "hashdb_types.h"
-#include "bloom.hpp"
+#include "bloom.h"
+#include "boost_filemapper.hpp"
 #include "dfxml/src/hash_t.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -63,7 +64,7 @@ class bloom_filter_t {
         // open based on file mode
         switch(file_mode_type) {
         case READ_ONLY:
-          success = bloom.open(filename.c_str(), O_RDONLY);
+          success = bloom.open(filename.c_str(), MAP_READ_ONLY);
 
           // validate
           if (success != 0) {
@@ -91,7 +92,7 @@ class bloom_filter_t {
           }
           break;
         case RW_MODIFY:
-          success = bloom.open(filename.c_str(), O_RDWR);
+          success = bloom.open(filename.c_str(), MAP_READ_AND_WRITE);
 
           // validate
           if (success != 0) {

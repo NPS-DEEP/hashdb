@@ -77,8 +77,9 @@ void usage() {
   // print usage
   std::cout
   << "hashdb_manager Version " << PACKAGE_VERSION  << "\n"
-  << "Usage: hashdb_manager -h | -V | <command>\n"
+  << "Usage: hashdb_manager -h | -H | -V | <command>\n"
   << "    -h, --help    print this message\n"
+  << "    -H            print detailed help including usage notes and examples\n"
   << "    --Version     print version number\n"
   << "\n"
   << "hashdb_manager supports the following <command> options:\n"
@@ -222,6 +223,12 @@ void usage() {
   << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom2_settings.k_hash_functions << "\n"
   << "        and <M>=" << s.bloom2_settings.M_hash_size << " or <M>=value calculated from value in --b2n)\n"
   << "\n"
+  ;
+}
+
+void detailed_usage() {
+  // print usage notes and examples
+  std::cout
   << "Notes:\n"
   << "Using the md5deep tool to generate hash data:\n"
   << "hashdb_manager imports hashes from DFXML files that contain chunk hashes.\n"
@@ -348,18 +355,10 @@ void usage() {
   << "\n"
   << "Known bugs:\n"
   << "Performing hash queries in a threaded environment using the btree storage\n"
-  << "type causes intermittent crashes.  In particular, this is prevalent when\n"
-  << "running the bulk_extractor hashid scanner when bulk_extractor is scanning\n"
-  << "recursive directories.  This bug will be addressed in a future release\n"
-  << "of boost btree.\n"
-  << "\n"
-  << "Deficiencies:\n"
-  << "\n"
-  << "Bloom filter support is currently not available on Windows systems.\n"
-  << "\n"
-  << "The source lookup capability provided by the query service is not\n"
-  << "available with the use_socket query type.  The source lookup capability\n"
-  << "is available for the use_path query type.\n"
+  << "type causes intermittent crashes.  This was observed when running the\n"
+  << "bulk_extractor hashid scanner when bulk_extractor is scanning recursive\n"
+  << "directories.  This bug will be addressed in a future release of boost\n"
+  << "btree.\n"
   << "\n"
   << "Examples:\n"
   << "This example uses the md5deep tool to generate chunk hashes from a file,\n"
@@ -775,7 +774,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hVr:s:x:p:m:t:n:i:A:B:C:D:E:F", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHVr:s:x:p:m:t:n:i:A:B:C:D:E:F", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -787,6 +786,12 @@ int main(int argc,char **argv) {
     switch (ch) {
       case 'h': {	// help
         usage();
+        exit(0);
+        break;
+      }
+      case 'H': {	// help
+        usage();
+        detailed_usage();
         exit(0);
         break;
       }

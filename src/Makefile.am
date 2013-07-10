@@ -69,8 +69,10 @@ DFXML_INCS = \
 
 MISC_INCS = \
 	misc/aftimer.h \
-	misc/bloom.cpp \
-	misc/bloom.hpp \
+	misc/bloom.c \
+	misc/bloom.h \
+	misc/boost_filemapper.cpp \
+	misc/boost_filemapper.hpp \
 	misc/util.h
 
 BOOST_BTREE_INCS = \
