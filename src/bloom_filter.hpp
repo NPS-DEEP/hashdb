@@ -108,18 +108,21 @@ class bloom_filter_t {
     }
 
     void add_hash_value(const md5_t& md5) {
-//std::cout << "bloom_filter add_hash_value " << md5 << " " << filename << "\n";
+//std::cerr << "bloom_filter add_hash_value.a " << md5 << " " << filename << std::endl;
       if (is_used) {
-        // program error
         bloom.add(md5.digest);
       } else {
+        // program error
         assert(0);
       }
+//std::cerr << "bloom_filter add_hash_value.b" << std::endl;
     }
 
     bool is_positive(const md5_t& md5) const {
-//std::cout << "bloom_filter is_positive " << md5 << " " << bloom.query(md5.digest) << " " << filename << "\n";
+//std::cerr << "bloom_filter is_positive.a " << md5 << " " << bloom.query(md5.digest) << " " << filename << std::endl;
       if (is_used) {
+        bool temp = bloom.query(md5.digest);
+//std::cerr << "bloom_filter is_positive.b" << std::endl;
         return bloom.query(md5.digest);
       } else {
         // program error

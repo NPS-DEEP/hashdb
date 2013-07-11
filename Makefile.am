@@ -26,6 +26,17 @@ win64:
 	cp src/hashdb_manager.exe win64/hashdb_manager64.exe
 	cp src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe
 
+# useful during development when mingw configure is already set up
+win32_dev:
+	make
+	cp src/hashdb_manager.exe win32/hashdb_manager32.exe
+	cp src/hashdb_checker/hashdb_checker.exe win32/hashdb_checker32.exe
+
+win64_dev:
+	make
+	cp src/hashdb_manager.exe win64/hashdb_manager64.exe
+	cp src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe
+
 # windist makes win32 and win64 .exe files and puts them in a zip file
 windist: win32 win64
 	rm -rf $(distdir).zip $(distdir) src/*.exe
@@ -59,5 +70,5 @@ windist: win32 win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
-.PHONY: win32 win64 windist
+.PHONY: win32 win64 win32_dev win64_dev windist
 

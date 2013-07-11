@@ -22,6 +22,9 @@
  * --------------------------------------------------------------------
  *
  * Change History:
+ * Jon Schmid - July 10, 2013
+ *   - Uses a boost::interprocess map implementation instead of 
+ *     mmap(... as 'map_file_region' and 'unmap_file_region'
  * Joel D. Young - Jun 15, 2012
  *   - Cleaned up 32bit/64bit issues for M >= 32
  *   - Other polishing
@@ -31,8 +34,6 @@
  *   - Re-implemented based on Douglas White's original Perl code.
  *   - First 4096-bytes of file describes parameters
  *   - Single executable for both 128-bit and 160-bit Bloom filters.
- *   - Uses a boost::interprocess map implementation instead of 
- *     mmap(... as 'map_file_region' and 'unmap_file_region'
  * Douglas White - douglas.white@nist.gov - June 21, 2003
  *   Original implementation in perl.
  */
@@ -625,6 +626,28 @@ static void nsrl_bloom_set_params(nsrl_bloom *b)
 #define xstr(s) str(s)
 #define str(s) #s
 
+// strsep is not in windows' string.h, so use this one
+// from http://stackoverflow.com/questions/8512958/is-there-a-windows-variant-of-strsep
+char* mystrsep(char** stringp, const char* delim)
+{
+  char* start = *stringp;
+  char* p;
+
+  p = (start != NULL) ? strpbrk(start, delim) : NULL;
+
+  if (p == NULL)
+  {
+    *stringp = NULL;
+  }
+  else
+  {
+    *p = '\0';
+    *stringp = p + 1;
+  }
+
+  return start;
+}
+
 // Open a bloom filter, return 0 if successful.
 int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode)
 {
@@ -641,9 +664,10 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
 	return -1;			/* not big enough for header? */
     }
     buf = offset_buf;
-    
-    while((line = strsep(&buf,"\n"))){
-	char *colon = index(line,':');
+
+    while((line = mystrsep(&buf,"\n"))){
+// index is not on windows and is also deprected	char *colon = index(line,':');
+	char *colon = strchr(line,':');
 	if(colon){
 	    *colon = 0;			/* terminate at the colon */
 	    const char *after_colon = colon + 1;
@@ -676,16 +700,16 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
 //    b->vector = (uint8_t *)map_file_region(&mapHandle, fname, fileMode, BLOOM_VECTOR_OFFSET);
 
     // Map bloom filter data structure into memory
-    map_file_region(fname,
-                    file_mode,
-                    BLOOM_VECTOR_OFFSET,
-                    b->vector_bytes, 
-                    &(b->map_handle),
-                    &(b->vector));
+    int status = map_file_region(fname,
+                                 file_mode,
+                                 BLOOM_VECTOR_OFFSET,
+                                 b->vector_bytes, 
+                                 &(b->map_handle),
+                                 &(b->vector));
 
         // xxx  mmap(0,b->vector_bytes, prot, MAP_FILE|MAP_SHARED, b->fd,BLOOM_VECTOR_OFFSET);
     
-    return 0;
+    return status;
 }
 
 /** nsrl_bloom_write:
@@ -771,17 +795,17 @@ int nsrl_bloom_create(nsrl_bloom *b,
     free(b->vector);
 
     // Map bloom filter data structure into memory
-    map_file_region(fname,
-                    MAP_READ_AND_WRITE,
-                    BLOOM_VECTOR_OFFSET,
-                    b->vector_bytes, 
-                    &(b->map_handle),
-                    &(b->vector));
+    int status = map_file_region(fname,
+                                 MAP_READ_AND_WRITE,
+                                 BLOOM_VECTOR_OFFSET,
+                                 b->vector_bytes, 
+                                 &(b->map_handle),
+                                 &(b->vector));
 
 //zz    b->vector = (uint8_t *)map_file_region(&mapHandle, fname, MAP_READ_AND_WRITE, BLOOM_VECTOR_OFFSET);
          //mmap(0,b->vector_bytes,PROT_READ|PROT_WRITE,MAP_FILE|MAP_SHARED,b->fd, BLOOM_VECTOR_OFFSET);
 
-    return 0;
+    return status;
 }
     
 #ifdef HAVE_PTHREAD

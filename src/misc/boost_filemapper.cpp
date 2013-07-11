@@ -1,8 +1,29 @@
 /* 
- * File:   boostMappedReg.cpp
+ * File:   boost_filemapper.cpp
  * Author: jschmid
  * 
  * Created on July 2, 2013, 4:56 PM
+ */
+
+// The software provided here is released by the Naval Postgraduate
+// School, an agency of the U.S. Department of Navy.  The software
+// bears no warranty, either expressed or implied. NPS does not assume
+// legal liability nor responsibility for a User's use of the software
+// or the results of such use.
+//
+// Please note that within the United States, copyright protection,
+// under Section 105 of the United States Code, Title 17, is not
+// available for any work of the United States Government and/or for
+// any works created by United States Government employees. User
+// acknowledges that this software contains work which was created by
+// NPS government employees and is therefore in the public domain and
+// not subject to copyright.
+//
+// Released into the public domain on July 11, 2013 by Bruce Allen.
+
+/**
+ * \file
+ * Provides a Boost file map service from C rather than from C++.
  */
 
 #include <string.h>
@@ -10,99 +31,61 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include "boost_filemapper.hpp"
 
-// Note that region_offset can be 0 for whole file
-
 namespace BIP = boost::interprocess;
 using namespace std;
 
 typedef struct map_impl_ {
 
-  BIP::file_mapping*  file_map;
   BIP::mapped_region* region;
-  size_t              region_offset;
-  size_t              region_length;
 
   public:
     map_impl_(const char* file_path,
                map_permissions_t curMode,
-               size_t region_offset_init,
-               size_t region_length_init):
-         file_map(0), region(0), region_offset(0), region_length(0) {
+               size_t file_offset,
+               size_t region_size): region(0) {
 
-      assert(region_length_init > 0);  // Need some data in map
-      BIP::mode_t boostFileMode;
-      
-      if(MAP_READ_ONLY == curMode) {
-          boostFileMode = BIP::read_only;
-      }
-      else { // read & write mode
-          boostFileMode = BIP::read_write;
-      }
+      // convert file mode to boost file mode
+      BIP::mode_t boost_file_mode = (curMode == MAP_READ_ONLY) ?
+                                    BIP::read_only : BIP::read_write;
 
-//printf("Creating map for file: %s\n", file_path);
-      file_map      = new BIP::file_mapping(    file_path, 
-                                                boostFileMode );
+      // create file mapping
+      BIP::file_mapping file_map(file_path, boost_file_mode);
 
-      // Store long-term parameters
-      region_offset = region_offset_init;
-      region_length = region_length_init;
-
-//printf("Creating region from file-map, with offset: %lu, region length: %lu\n", region_offset, region_length);
-      region        = new BIP::mapped_region(   *file_map,
-                                                boostFileMode,
-                                                region_offset,
-                                                region_length );
+      // map bloom region of file to memory
+      region = new BIP::mapped_region(file_map,
+                                      boost_file_mode,
+                                      file_offset,
+                                      region_size);
     }
 
     // do not allow these
     map_impl_(const map_impl_t& implInstance);
     map_impl_& operator=(const map_impl_&);
 
-/*
-            file_map(0), region(0), region_offset(0), region_length(0) 
-
-      printf("Error: construction of 'map_impl_t' class from a const instance not yet supported");
-      exit(-1);
-    }
-*/
-
     ~map_impl_() {
-
-//printf("DESTROYING MAP OBJ\n");
       if (region) {
         delete region;
+      } else {
+        // program error
+        assert(0);
       }
-      if (file_map) {
-        delete file_map;
-      }
-      
-//printf("MAP DESTROYED\n");
     }
 
     BIP::mapped_region* getRegion() {
       return(region);
     }
-
-  private:
-    map_impl_(): file_map(0), region(0), region_offset(0), region_length(0) {}
 } map_impl_t;
 
-// A pointer to implementation of Boost Region black box
 extern "C"
-/**
- * parameters are ...
- */
 int map_file_region(const char* filePath,
                     map_permissions_t curMode,
-                    int region_offset,
+                    int file_offset,
                     size_t region_size,
                     map_impl_t** p_impl,
                     uint8_t** address) {
 
-    int regionLength = (region_size - region_offset);
-
     // set p_impl
-    *p_impl = new map_impl_t(filePath, curMode, region_offset, regionLength);
+    *p_impl = new map_impl_t(filePath, curMode, file_offset, region_size);
 
     // set address of mapped region
     uint8_t* temp = static_cast<uint8_t*>((*p_impl)->getRegion()->get_address());
