@@ -46,6 +46,7 @@ SECTOR_HASH_INCS = \
 	hash_duplicates_store.cpp \
 	hash_store.hpp \
 	hash_store.cpp \
+	history_manager.hpp \
 	manager_bidirectional_btree.h \
 	manager_modified.h \
 	manager_modified_includes.h \

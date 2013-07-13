@@ -28,6 +28,7 @@
 #include "hashdb_settings.h"
 #include "hashdb_filenames.hpp"
 #include "settings_writer.hpp"
+#include "history_manager.hpp"
 #include "hashdb_db_manager.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "hashdb_exporter.hpp"
@@ -80,8 +81,7 @@ class commands_t {
 */
 
   static void open_log(const std::string& hashdb_dir,
-                       const std::string& command,
-                       bool p_is_new) {
+                       const std::string& command) {
 
     if (x != 0) {
       // misuse
@@ -91,28 +91,15 @@ class commands_t {
     // get the log filename
     std::string log_filename = hashdb_filenames_t::log_filename(hashdb_dir);
 
-    is_new = p_is_new;
-    if (is_new) {
-      x = new dfxml_writer(log_filename, false);
-      // create new log
-      x->push("log");
+    // start command logger
+    x = new dfxml_writer(log_filename, false);
 
-    } else {
-      // append to existing log
-      // zzzzzzz TBD
-//    dfxml_writer::existing e;
-//    dfxml_writer x(hashdb_filenames_t::log_filename(hashdb), e);
-
-      // workaround: treat as new
-      x = new dfxml_writer(log_filename, false);
-      x->push("log");
-    }
-
+    // log the preamble
+    x->push("log");
     std::stringstream ss;
     ss << "command_type='" << command << "'";
     x->push("command", ss.str());
     x->add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line);
-
   }
 
   static void close_log() {
@@ -121,18 +108,10 @@ class commands_t {
       assert(0);
     }
 
+    // log closure
     x->add_rusage();
     x->pop(); // command
-
-    if (is_new) {
-      // create new log
-      x->pop(); // log
-    } else {
-      // zzzzzzz TBD
-
-      // workaround: treat as new
-      x->pop(); // log
-    }
+    x->pop(); // log
     delete x;
   }
 
@@ -190,7 +169,7 @@ class commands_t {
                                 const std::string& repository_name,
                                 const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_NEW_DFXML, true);
+    open_log(hashdb_outdir, COMMAND_COPY_NEW_DFXML);
     x->xmlout("repository_name", repository_name);
 
     // open the new hashdb
@@ -210,15 +189,18 @@ class commands_t {
 
     x->add_timestamp("done");
 
+    // explain if nothing happened
+    if (hash_changes.hashes_inserted == 0) {
+      describe_none_inserted_dfxml();
+    }
+
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_insert_changes(*x);
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
-    if (hash_changes.hashes_inserted == 0) {
-      describe_none_inserted_dfxml();
-    }
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -228,7 +210,7 @@ class commands_t {
                             const std::string& repository_name,
                             const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_DFXML, false);
+    open_log(hashdb_outdir, COMMAND_COPY_DFXML);
     x->xmlout("repository_name", repository_name);
 
     // open the hashdb to be modified
@@ -248,15 +230,18 @@ class commands_t {
 
     x->add_timestamp("done");
 
+    // explain if nothing happened
+    if (hash_changes.hashes_inserted == 0) {
+      describe_none_inserted_dfxml();
+    }
+
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_insert_changes(*x);
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
-    if (hash_changes.hashes_inserted == 0) {
-      describe_none_inserted_dfxml();
-    }
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -265,7 +250,7 @@ class commands_t {
   static void do_copy_new(const std::string& hashdb_indir,
                           const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_NEW, true);
+    open_log(hashdb_outdir, COMMAND_COPY_NEW);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
@@ -298,6 +283,8 @@ class commands_t {
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
+    history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
 
   /**
@@ -306,7 +293,7 @@ class commands_t {
   static void do_copy(const std::string& hashdb_indir,
                       const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY, false);
+    open_log(hashdb_outdir, COMMAND_COPY);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
@@ -339,6 +326,8 @@ class commands_t {
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
+    history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
 
   /**
@@ -348,7 +337,7 @@ class commands_t {
                                              const std::string& hashdb_outdir,
                                              size_t exclude_duplicates_count) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_EXCLUDE_DUPLICATES, true);
+    open_log(hashdb_outdir, COMMAND_COPY_EXCLUDE_DUPLICATES);
 
     // for completeness log this exclude_duplicates_count tag
     x->xmlout("exclude_duplicates_count", exclude_duplicates_count);
@@ -401,6 +390,8 @@ class commands_t {
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
+    history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
 
   /**
@@ -410,7 +401,7 @@ class commands_t {
                               const std::string& repository_name,
                               const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_REMOVE_DFXML, false);
+    open_log(hashdb_outdir, COMMAND_REMOVE_DFXML);
     x->xmlout("repository_name", repository_name);
 
     // open the hashdb to be modified
@@ -430,15 +421,18 @@ class commands_t {
 
     x->add_timestamp("done");
 
+    // explain if nothing happened
+    if (hash_changes.hashes_removed == 0) {
+      describe_none_removed_dfxml();
+    }
+
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_remove_changes(*x);
     hash_changes.report_remove_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
-    if (hash_changes.hashes_removed == 0) {
-      describe_none_removed_dfxml();
-    }
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -447,7 +441,7 @@ class commands_t {
   static void do_remove(const std::string& hashdb_indir,
                         const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_REMOVE, false);
+    open_log(hashdb_outdir, COMMAND_REMOVE);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
@@ -480,6 +474,7 @@ class commands_t {
     hash_changes.report_remove_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -489,7 +484,7 @@ class commands_t {
                        const std::string& hashdb_indir2,
                        const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_MERGE, false);
+    open_log(hashdb_outdir, COMMAND_MERGE);
 
     // open hashdb 1
     hashdb_db_manager_t hashdb_in1(hashdb_indir1, READ_ONLY);
@@ -544,6 +539,9 @@ class commands_t {
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
+    history_manager_t::merge_history_to_history(hashdb_indir1, hashdb_outdir);
+    history_manager_t::merge_history_to_history(hashdb_indir2, hashdb_outdir);
   }
 
   /**
@@ -551,7 +549,7 @@ class commands_t {
    */
   static void do_rebuild_bloom(const std::string& hashdb_indir) {
 
-    open_log(hashdb_indir, COMMAND_REBUILD_BLOOM, false);
+    open_log(hashdb_indir, COMMAND_REBUILD_BLOOM);
 
     // get hashdb tuning settings
     hashdb_settings_t hashdb_settings =
@@ -620,6 +618,7 @@ class commands_t {
     hashdb_settings.bloom2_settings.report_settings(*x, 2);
     bloom2.report_status(*x, 2);
     close_log();
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
  
   /**

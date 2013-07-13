@@ -33,6 +33,7 @@ namespace hashdb_filenames_t {
  
     std::string settings_filename(const std::string& hashdb_dir);
     std::string log_filename(const std::string& hashdb_dir);
+    std::string history_filename(const std::string& hashdb_dir);
     std::string hash_store_filename(const std::string& hashdb_dir);
     std::string hash_duplicates_store_filename(const std::string& hashdb_dir);
     std::string source_lookup_filename(const std::string& hashdb_dir);

@@ -29,23 +29,23 @@ namespace hashdb_filenames_t {
 
     std::string SETTINGS_FILENAME              = "settings.xml";
     std::string LOG_FILENAME                   = "log.xml";
-//    std::string METADATA_FILENAME              = "metadata.xml";
+    std::string LOG_HISTORY_FILENAME           = "log_history.xml";
     std::string HASH_STORE_FILENAME            = "hash_store";
     std::string HASH_DUPLICATES_STORE_FILENAME = "hash_duplicates_store";
     std::string SOURCE_LOOKUP_FILENAME         = "source_lookup_store";
     std::string BLOOM1_FILENAME                = "bloom_filter_1";
     std::string BLOOM2_FILENAME                = "bloom_filter_2";
 
-//std::string metadata_filename(const std::string& hashdb_dir) {
-//return (hashdb_dir + "/" + METADATA_FILENAME);
-//}
- 
     std::string settings_filename(const std::string& hashdb_dir) {
       return (hashdb_dir + "/" + SETTINGS_FILENAME);
     }
  
     std::string log_filename(const std::string& hashdb_dir) {
       return (hashdb_dir + "/" + LOG_FILENAME);
+    }
+ 
+    std::string log_history_filename(const std::string& hashdb_dir) {
+      return (hashdb_dir + "/" + LOG_HISTORY_FILENAME);
     }
  
     std::string hash_store_filename(const std::string& hashdb_dir) {
