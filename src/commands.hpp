@@ -638,16 +638,20 @@ class commands_t {
   }
 
   /**
-   * statistics about hashdb including settings and usage statistics
+   * information about hashdb including settings and usage statistics
    */
   static void do_info(const std::string& hashdb_indir) {
 
-    // open the hashdb input
-    hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
+    // get info
+    std::string info;
+    int status = hashdb_db_info_provider_t::get_hashdb_info(hashdb_indir, info);
+    if (status != 0) {
+      std::cerr << "Error in info command.\n";
+      exit (-1);
+    }
 
-    // provide hashdb settings and status
-    hashdb_in.hashdb_settings.report_settings(std::cout);
-    hashdb_in.report_status(std::cout);
+    // report info to stdout
+    std::cout << info;
   }
 
   /**

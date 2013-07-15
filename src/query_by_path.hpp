@@ -216,8 +216,9 @@ class query_by_path_t {
       return -1;
     }
 
-    hashdb_db_info_provider_t::get_hashdb_info(*hashdb_db_manager, info);
-    return 0;
+    int status = hashdb_db_info_provider_t::get_hashdb_info(
+                     hashdb_db_manager->hashdb_dir, info);
+    return status;
   }
 };
 

@@ -312,7 +312,12 @@ class query_by_socket_server_t {
     std::string response;
 
     // get the query info
-    hashdb_db_info_provider_t::get_hashdb_info(*hashdb_db_manager, response);
+    status = hashdb_db_info_provider_t::get_hashdb_info(
+                    hashdb_db_manager->hashdb_dir, response);
+
+    if (status != 0) {
+      exit(-1);
+    }
 
     // convert to char array to ensure null termination
     char *c=new char[response.size()+1];

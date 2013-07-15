@@ -152,5 +152,5 @@ For hash lookup response, a structure containing chunk size and a vector of {has
 
 I like the request and response structures except for the use of variable "chunk_size".  I provide "chunk_size" so the user can validate that the chunk size the user expects and the chunk size the database uses match.  The test should be hidden, but the library doesn't know the chunk size the user is using.  I don't want to pass in chunk_size during instantiation because the reason is obscure.  Also, testing on chunk size alone does not cover potential future checks.
 
-I'll resolve this by removing the check and expecting future "get_hashdb_info" interface to allow this capability.
+I resolved this by removing the check.  The use must check the xml returned by "get_hashdb_info" interface to determine the chunk_size.
 

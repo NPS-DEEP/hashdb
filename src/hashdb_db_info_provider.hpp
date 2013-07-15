@@ -35,25 +35,25 @@
  */
 class hashdb_db_info_provider_t {
   public:
-  static void get_hashdb_info(const hashdb_db_manager_t& hashdb, std::string& info) {
+  static int get_hashdb_info(const std::string& hashdb_dir, std::string& info) {
 
-    // return history as metadata information
+    // return history which serves as attribution and metadata information
 
     // get the history filename
-    std::string history_filename = hashdb_filenames_t::history_filename(hashdb.hashdb_dir);
+    std::string history_filename = hashdb_filenames_t::history_filename(hashdb_dir);
 
     // open the history filename
     if(access(history_filename.c_str(),R_OK)){
       std::cerr << "Error: File " << history_filename << " is missing or unreadable.\n";
       std::cerr << "Cannot continue.\n";
-      exit(1);
+      return -1;
     }
 
     // get file stream
     std::fstream in(history_filename.c_str());
     if (!in.is_open()) {
       std::cout << "Cannot open " << history_filename << ": " << strerror(errno) << "\n";
-      exit(1);
+      return -1;
     }
 
     // make output stream
@@ -70,6 +70,7 @@ class hashdb_db_info_provider_t {
     in.close();
 
     info = ss.str();
+    return 0;
   }
 
   private:
