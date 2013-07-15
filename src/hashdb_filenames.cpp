@@ -29,7 +29,7 @@ namespace hashdb_filenames_t {
 
     std::string SETTINGS_FILENAME              = "settings.xml";
     std::string LOG_FILENAME                   = "log.xml";
-    std::string LOG_HISTORY_FILENAME           = "log_history.xml";
+    std::string HISTORY_FILENAME               = "history.xml";
     std::string HASH_STORE_FILENAME            = "hash_store";
     std::string HASH_DUPLICATES_STORE_FILENAME = "hash_duplicates_store";
     std::string SOURCE_LOOKUP_FILENAME         = "source_lookup_store";
@@ -44,8 +44,8 @@ namespace hashdb_filenames_t {
       return (hashdb_dir + "/" + LOG_FILENAME);
     }
  
-    std::string log_history_filename(const std::string& hashdb_dir) {
-      return (hashdb_dir + "/" + LOG_HISTORY_FILENAME);
+    std::string history_filename(const std::string& hashdb_dir) {
+      return (hashdb_dir + "/" + HISTORY_FILENAME);
     }
  
     std::string hash_store_filename(const std::string& hashdb_dir) {

@@ -189,11 +189,6 @@ class commands_t {
 
     x->add_timestamp("done");
 
-    // explain if nothing happened
-    if (hash_changes.hashes_inserted == 0) {
-      describe_none_inserted_dfxml();
-    }
-
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_insert_changes(*x);
@@ -201,6 +196,11 @@ class commands_t {
     hashdb_out.report_status(*x);
     close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
+
+    // explain if nothing happened
+    if (hash_changes.hashes_inserted == 0) {
+      describe_none_inserted_dfxml();
+    }
   }
 
   /**
@@ -216,8 +216,8 @@ class commands_t {
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+//    // log the hashdb settings
+//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -230,11 +230,6 @@ class commands_t {
 
     x->add_timestamp("done");
 
-    // explain if nothing happened
-    if (hash_changes.hashes_inserted == 0) {
-      describe_none_inserted_dfxml();
-    }
-
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_insert_changes(*x);
@@ -242,6 +237,11 @@ class commands_t {
     hashdb_out.report_status(*x);
     close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
+
+    // explain if nothing happened
+    if (hash_changes.hashes_inserted == 0) {
+      describe_none_inserted_dfxml();
+    }
   }
 
   /**
@@ -303,8 +303,8 @@ class commands_t {
     // open the hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+//    // log the hashdb settings
+//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -407,8 +407,8 @@ class commands_t {
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+//    // log the hashdb settings
+//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -421,11 +421,6 @@ class commands_t {
 
     x->add_timestamp("done");
 
-    // explain if nothing happened
-    if (hash_changes.hashes_removed == 0) {
-      describe_none_removed_dfxml();
-    }
-
     // provide log summary
     hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
     hash_changes.report_remove_changes(*x);
@@ -433,6 +428,11 @@ class commands_t {
     hashdb_out.report_status(*x);
     close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
+
+    // explain if nothing happened
+    if (hash_changes.hashes_removed == 0) {
+      describe_none_removed_dfxml();
+    }
   }
 
   /**
@@ -451,8 +451,8 @@ class commands_t {
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+//    // log the hashdb settings
+//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -618,7 +618,7 @@ class commands_t {
     hashdb_settings.bloom2_settings.report_settings(*x, 2);
     bloom2.report_status(*x, 2);
     close_log();
-    history_manager_t::append_log_to_history(hashdb_outdir);
+    history_manager_t::append_log_to_history(hashdb_indir);
   }
  
   /**

@@ -979,7 +979,7 @@ int main(int argc,char **argv) {
   }
 
   // check that bloom hash size is compatible with the running system
-  uint32_t temp_st = sizeof(size_t) * 8;
+  uint32_t temp_st = (sizeof(size_t) * 8) -1;
   uint32_t temp_b1 = hashdb_settings.bloom1_settings.M_hash_size;
   uint32_t temp_b2 = hashdb_settings.bloom2_settings.M_hash_size;
   if (temp_b1 > temp_st) {

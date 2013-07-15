@@ -37,22 +37,22 @@ class hashdb_db_info_provider_t {
   public:
   static void get_hashdb_info(const hashdb_db_manager_t& hashdb, std::string& info) {
 
-    // for now, just return settings information
+    // return history as metadata information
 
-    // get the settings filename
-    std::string settings_filename = hashdb_filenames_t::settings_filename(hashdb.hashdb_dir);
+    // get the history filename
+    std::string history_filename = hashdb_filenames_t::history_filename(hashdb.hashdb_dir);
 
-    // open the settings filename
-    if(access(settings_filename.c_str(),R_OK)){
-      std::cerr << "Error: File " << settings_filename << " is missing or unreadable.\n";
+    // open the history filename
+    if(access(history_filename.c_str(),R_OK)){
+      std::cerr << "Error: File " << history_filename << " is missing or unreadable.\n";
       std::cerr << "Cannot continue.\n";
       exit(1);
     }
 
     // get file stream
-    std::fstream in(settings_filename.c_str());
+    std::fstream in(history_filename.c_str());
     if (!in.is_open()) {
-      std::cout << "Cannot open " << settings_filename << ": " << strerror(errno) << "\n";
+      std::cout << "Cannot open " << history_filename << ": " << strerror(errno) << "\n";
       exit(1);
     }
 

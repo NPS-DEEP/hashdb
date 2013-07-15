@@ -121,7 +121,6 @@ class bloom_filter_t {
     bool is_positive(const md5_t& md5) const {
 //std::cerr << "bloom_filter is_positive.a " << md5 << " " << bloom.query(md5.digest) << " " << filename << std::endl;
       if (is_used) {
-        bool temp = bloom.query(md5.digest);
 //std::cerr << "bloom_filter is_positive.b" << std::endl;
         return bloom.query(md5.digest);
       } else {
