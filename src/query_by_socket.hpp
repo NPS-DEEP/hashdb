@@ -155,7 +155,7 @@ class zmq_helper_t {
     size_t status;
     status = zmq_msg_init(&zmq_part);
     if (status != 0) {
-      std::cerr << "open_and_receive_part failed zmq_msg_init\n";
+      std::cerr << "Socket open_and_receive_part failed zmq_msg_init\n";
       return status;
     }
 
@@ -166,7 +166,7 @@ class zmq_helper_t {
       zmq_pollitem_t zmq_pollitems[] = { {socket, 0, ZMQ_POLLIN, 0} };
       int poll_count = zmq_poll(zmq_pollitems, 1, 10000); // 10 second timeout
       if (poll_count < 1) {
-        std::cerr << "open_and_receive_part failed zmq_msg_recv: timeout.\n";
+        std::cerr << "Socket timeout: open_and_receive_part failed zmq_msg_recv.\n";
         return -1;
       }
     }
@@ -174,7 +174,7 @@ class zmq_helper_t {
     // get the response
     int response_count = zmq_msg_recv(&zmq_part, socket, 0);
     if (response_count == -1) {
-      std::cerr << "open_and_receive_part failed zmq_msg_recv " << zmq_strerror(errno) << "\n";
+      std::cerr << "Socket open_and_receive_part failed zmq_msg_recv " << zmq_strerror(errno) << "\n";
       if (errno == 0) {
         bool status2 __attribute__((unused)) = close_part(zmq_part);
         return -1;
@@ -186,7 +186,7 @@ class zmq_helper_t {
 
     // validate that the response size is aligned
     if (response_count % structure_size != 0) {
-      std::cerr << "open_and_receive_part failed data structure boundary, " << response_count << " does not align with " << structure_size << "\n";
+      std::cerr << "Socket open_and_receive_part failed data structure boundary, " << response_count << " does not align with " << structure_size << "\n";
       bool status4 __attribute__((unused)) = close_part(zmq_part);
       return -1;
     }
@@ -214,7 +214,7 @@ class zmq_helper_t {
     }
     // return size must be exactly equal to structure size
     if (count != 1) {
-      std::cerr << "open_and_receive_part failed data size, " << zmq_msg_size(&zmq_part) << " is not " << structure_size << "\n";
+      std::cerr << "Socket open_and_receive_part failed data size, " << zmq_msg_size(&zmq_part) << " is not " << structure_size << "\n";
       return -1;
     }
     return 0;
