@@ -328,7 +328,8 @@ void do_query_hash_md5(hashdb::query_type_t query_type,
                 << "\n";
     }
   } else {
-    std::cerr << "Failure in accessing the hashdb for hash query.\n";
+    std::cerr << "Failure in accessing the hashdb for hash query.  Aborting.\n";
+    exit(1);
   }
 }
 
@@ -381,6 +382,7 @@ void do_query_source_md5(hashdb::query_type_t query_type,
     }
   } else {
     std::cerr << "Failure in accessing the hashdb server for source query.\n";
+    exit(1);
   }
 }
 
@@ -403,6 +405,7 @@ void do_query_hashdb_info(hashdb::query_type_t query_type, std::string query_pat
               ;
   } else {
     std::cerr << "Failure in accessing the hashdb server for info query.\n";
+    exit(1);
   }
 }
 

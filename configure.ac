@@ -335,9 +335,16 @@ AX_BOOST_BASE([1.44],
   [AC_MSG_ERROR([Boost 1.44 or newer is required to build hashdb])])
 
 ################################################################
+## OpenSSL Support is required for hash_t and bloom
+AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
+# OpenSSL has been installed under at least two different names...
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
+AC_CHECK_LIB([ssl],[SSL_library_init])
+AC_CHECK_FUNCS([EVP_get_digestbyname],,
+	AC_MSG_ERROR([SSL/OpenSSL support required]))
+
+################################################################
 ## support required by bloom.h
-AC_TYPE_INT64_T
-AC_CHECK_HEADERS([openssl/hmac.h openssl/pem.h],,[AC_MSG_ERROR([openssl headers are required])])
 AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])
 AC_CHECK_HEADERS([err.h sys/mman.h sys/resource.h unistd.h],,[AC_MSG_WARN([Not all requested headers are available: err.h, sys/mman.h, ...])])
 #PTHREAD: AC_CHECK_HEADERS([pthread.h],,[AC_MSG_ERROR([pthread headers are required])])

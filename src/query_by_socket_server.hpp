@@ -45,6 +45,13 @@
 
 /**
  * Provide server hashdb query service.
+ *
+ * Design philosophy for failure conditions:
+ * May call exit() or return error, depending on failure type.
+ * Terminal failures are because of failed system resources such as no memory.
+ * Recoverable failures include message loss due to a network failure.
+ * Since zmq manages multipart message groups as atomic, a missing close flag
+ * is considered terminal.
  */
 class query_by_socket_server_t {
 //  static const char* socket_endpoint = "inproc://zmq_query_service";
@@ -102,17 +109,15 @@ class query_by_socket_server_t {
    * Also, buffers are copied; this can be improved for performance.
    * TBD: allow resilience.
    */
-  void process_request() {
+  int process_request() {
     zmq_msg_t zmq_request_type;
     int status;
     bool is_more;
     status = zmq_helper_t::open_and_receive_part(zmq_request_type,
                                                  socket,
                                                  sizeof(uint32_t),
+                                                 false,
                                                  is_more);
-    if (status != 0) {
-      exit(-1);
-    }
 
     // read the request type
     uint32_t* request_type_pointer;
@@ -129,27 +134,28 @@ class query_by_socket_server_t {
     // process the request
     if (request_type == QUERY_HASHES_MD5) {
       if (!is_more) {
-        std::cerr << "query_by_socket_server hashes more required\n";
-        exit(-1);
+        std::cerr << "Invalid request: query_by_socket_server hashes more required\n";
+        return -1;
       }
-      process_query_hashes_md5();
+      status = process_query_hashes_md5();
     } else if (request_type == QUERY_SOURCES_MD5) {
       if (!is_more) {
-        std::cerr << "query_by_socket_server sources more required\n";
-        exit(-1);
+        std::cerr << "Invalid request: query_by_socket_server sources more required\n";
+        return -1;
       }
-      process_query_sources_md5();
+      status = process_query_sources_md5();
     } else if (request_type == QUERY_HASHDB_INFO) {
       if (is_more) {
-        std::cerr << "query_by_socket_server sources no more required\n";
-        exit(-1);
+        std::cerr << "Invalid request: query_by_socket_server sources no more required\n";
+        return -1;
       }
-      process_query_hashdb_info();
+      status = process_query_hashdb_info();
     }
+    return status;
   }
 
   private:
-  void process_query_hashes_md5() {
+  int process_query_hashes_md5() {
     int status = 0;
     size_t request_count;
     bool is_more;
@@ -159,14 +165,15 @@ class query_by_socket_server_t {
     status = zmq_helper_t::open_and_receive_part(zmq_request,
                                    socket,
                                    sizeof(hashdb::hash_request_md5_t),
+                                   false,
                                    request_count,
                                    is_more);
     if (status != 0) {
       exit(-1);
     }
     if (is_more) {
-      std::cerr << "query_by_socket_server no more required\n";
-      exit(-1);
+      std::cerr << "Invalid request: query_by_socket_server no more required\n";
+      return -1;
     }
 
     // get address of request
@@ -213,9 +220,11 @@ class query_by_socket_server_t {
     }
 
     delete response;
+
+    return 0;
   }
 
-  void send_source_references(const std::vector<hash_source_record_t>& hash_source_records) {
+  int send_source_references(const std::vector<hash_source_record_t>& hash_source_records) {
 
     // allocate zmq_source_references
     zmq_source_references_t* zmq_source_references = new zmq_source_references_t();
@@ -240,9 +249,11 @@ class query_by_socket_server_t {
 
     // deallocate zmq_source_references
     delete zmq_source_references;
+
+    return 0;
   }
 
-  void process_query_sources_md5() {
+  int process_query_sources_md5() {
     int status = 0;
     size_t request_count;
     bool is_more;
@@ -252,14 +263,15 @@ class query_by_socket_server_t {
     status = zmq_helper_t::open_and_receive_part(zmq_request,
                                    socket,
                                    sizeof(hashdb::source_request_md5_t),
+                                   false,
                                    request_count,
                                    is_more);
     if (status != 0) {
       exit(-1);
     }
     if (is_more) {
-      std::cerr << "query_by_socket_server no more required for sources\n";
-      exit(-1);
+      std::cerr << "Invalid request: query_by_socket_server no more required for sources\n";
+      return -1;
     }
     // get address of request
     hashdb::source_request_md5_t* request_array = reinterpret_cast<hashdb::source_request_md5_t*>(zmq_msg_data(&zmq_request));
@@ -290,9 +302,15 @@ class query_by_socket_server_t {
                                         sizeof(hashdb::source_request_md5_t),
                                         socket,
                                         true);
+      if (status != 0) {
+        exit(-1);
+      }
 
       // send 2 of 2: response for this source request
-      send_source_references(*hash_source_records);
+      status = send_source_references(*hash_source_records);
+      if (status != 0) {
+        exit(-1);
+      }
     }
 
     // free hash_source_records
@@ -303,9 +321,11 @@ class query_by_socket_server_t {
     if (status != 0) {
       exit(-1);
     }
+
+    return 0;
   }
 
-  void process_query_hashdb_info() {
+  int process_query_hashdb_info() {
     int status = 0;
 
     // create space on the heap for the response
@@ -334,6 +354,8 @@ class query_by_socket_server_t {
     }
 
     delete c;
+
+    return 0;
   }
 };
 

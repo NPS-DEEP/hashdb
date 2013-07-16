@@ -145,8 +145,10 @@ class zmq_helper_t {
   static int open_and_receive_part(zmq_msg_t& zmq_part,
                                    void* socket,
                                    size_t structure_size,
+                                   bool do_timeout,
                                    size_t& count,
                                    bool& is_more) {
+    count = 0;
     is_more = false;
 
     // initialize zmq_part
@@ -155,6 +157,18 @@ class zmq_helper_t {
     if (status != 0) {
       std::cerr << "open_and_receive_part failed zmq_msg_init\n";
       return status;
+    }
+
+    // hardcode recv to timeout and fail rather than hang.
+    // this cheap solution requires the user to check the server
+    // for availability and to restart the client.
+    if (do_timeout) {
+      zmq_pollitem_t zmq_pollitems[] = { {socket, 0, ZMQ_POLLIN, 0} };
+      int poll_count = zmq_poll(zmq_pollitems, 1, 10000); // 10 second timeout
+      if (poll_count < 1) {
+        std::cerr << "open_and_receive_part failed zmq_msg_recv: timeout.\n";
+        return -1;
+      }
     }
 
     // get the response
@@ -187,9 +201,13 @@ class zmq_helper_t {
   /**
    * Helper function for cleanly receiving one fixed size data structure.
    */
-  static int open_and_receive_part(zmq_msg_t& zmq_part, void* socket, size_t structure_size, bool& is_more) {
+  static int open_and_receive_part(zmq_msg_t& zmq_part,
+                                   void* socket,
+                                   size_t structure_size,
+                                   bool do_timeout,
+                                   bool& is_more) {
     size_t count;
-    int status = open_and_receive_part(zmq_part, socket, structure_size, count, is_more);
+    int status = open_and_receive_part(zmq_part, socket, structure_size, do_timeout, count, is_more);
     if (status != 0) {
       bool status2 __attribute__((unused)) = close_part(zmq_part);
       return status;
@@ -203,7 +221,7 @@ class zmq_helper_t {
   }
 
   /**
-   * Helper function to close the zmq_part that open_and_receive_part opened
+   * Helper function to close a zmq_part
    */
   static int close_part(zmq_msg_t& zmq_part) {
     // deallocate the message
@@ -354,6 +372,7 @@ class query_by_socket_t {
     status = zmq_helper_t::open_and_receive_part(zmq_response,
                                    socket,
                                    sizeof(hashdb::hash_response_md5_t),
+                                   true,
                                    hash_response_count,
                                    is_more);
     if (status != 0) {
@@ -428,6 +447,7 @@ class query_by_socket_t {
       status = zmq_helper_t::open_and_receive_part(zmq_source_request,
                                      socket,
                                      sizeof(hashdb::source_request_md5_t),
+                                     true,
                                      count,
                                      is_more);
       if (status != 0) {
@@ -468,9 +488,11 @@ class query_by_socket_t {
       // get the zmq source_references
       zmq_msg_t zmq_source_references_request;
       size_t zmq_source_references_count;
-      status = zmq_helper_t::open_and_receive_part(zmq_source_references_request,
+      status = zmq_helper_t::open_and_receive_part(
+                                     zmq_source_references_request,
                                      socket,
                                      sizeof(zmq_source_reference_t),
+                                     true,
                                      zmq_source_references_count,
                                      is_more);
       if (status != 0) {
@@ -532,9 +554,11 @@ class query_by_socket_t {
     zmq_msg_t zmq_response;
     size_t char_count;
     bool is_more;
-    status = zmq_helper_t::open_and_receive_part(zmq_response,
+    status = zmq_helper_t::open_and_receive_part(
+                        zmq_response,
                         socket,
                         sizeof(char),
+                        true,
                         char_count,
                         is_more);
     if (status != 0) {

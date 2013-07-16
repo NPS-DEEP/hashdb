@@ -668,7 +668,10 @@ class commands_t {
 
     while (std::cin) {
       // process hash sets indefinitely
-      server.process_request();
+      int status = server.process_request();
+      if (status != 0) {
+        std::cerr << "Error in server service while processing request.  Request lost.\n";
+      }
     }
   }
 };
