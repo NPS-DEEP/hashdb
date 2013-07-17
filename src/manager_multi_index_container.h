@@ -54,11 +54,11 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
 
-// zzzzzzzzzzzz required, but why?
+// template usage fails without these "using" directives
 using boost::multi_index_container;
 using namespace boost::multi_index;
 
-// zz prefer within class private
+// prefer within class private
 struct key_tag{};
 struct pay_tag{};
 
@@ -149,8 +149,6 @@ class manager_multi_index_container_t {
       if (file_mode == READ_ONLY) {
         assert(0);
       }
-// zzzzzzzzzzzzzzzz possibly meaningful if underlying map type is flat map
-//        segment_t::shrink_to_fit(namer(name,map).c_str());
     }
  
   private:
@@ -234,7 +232,7 @@ class manager_multi_index_container_t {
      */
     bool has_key(const key_t& key) const {
       typename map_t::iterator it = map->get<key_tag>().find(key);
-//zzzzzzzzzzzzzzzzzzzzz this requires "using namespace boost::multi_index;"
+      // this requires "using namespace boost::multi_index;"
       return (it != map->get<key_tag>().end());
 return false;
     }
@@ -243,11 +241,7 @@ return false;
      * Determine if pay exists.
      */
     bool has_pay(const pay_t& pay) const {
-//zzzzzzzzzzzzzzzzzzzz this fails but it seems that it should work
-//      map_t::index<pay_tag>::type::iterator it = map->get<pay_tag>().find(pay);
-//zzz this works
       typename boost::multi_index::index<map_t, pay_tag>::type::const_iterator it = map->get<pay_tag>().find(pay);
-//      typename map_t::iterator it = map->get<pay_tag>().find(pay);
       return (it != map->get<pay_tag>().end());
     }
 
@@ -289,7 +283,6 @@ return false;
       }
   
       typename boost::multi_index::index<map_t, pay_tag>::type::const_iterator it = map->get<pay_tag>().find(pay);
-//zz      typename map_t::iterator it = map.get<pay_tag>().find(pay);
       key = it->first;
     }
 

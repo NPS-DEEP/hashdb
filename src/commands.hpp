@@ -283,8 +283,8 @@ class commands_t {
     hash_changes.report_insert_changes(std::cout);
     hashdb_out.report_status(*x);
     close_log();
-    history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**

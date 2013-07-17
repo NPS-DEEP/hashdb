@@ -655,7 +655,7 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
     char *line,*buf;
     int version = 0;
 
-    // Open the file and get the parameters (xxx: insert 'O_RDONLY' for mode)
+    // Open the file and get the parameters
     b->fd = open(fname, (O_RDONLY|O_BINARY), 0);
     if(b->fd<0) return -1;			/* could not open */
 
@@ -697,8 +697,6 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
     }
     b->vector_bytes  = (size_t)0x1l << (b->M-3);
 
-//    b->vector = (uint8_t *)map_file_region(&mapHandle, fname, fileMode, BLOOM_VECTOR_OFFSET);
-
     // Map bloom filter data structure into memory
     int status = map_file_region(fname,
                                  file_mode,
@@ -707,8 +705,6 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
                                  &(b->map_handle),
                                  &(b->vector));
 
-        // xxx  mmap(0,b->vector_bytes, prot, MAP_FILE|MAP_SHARED, b->fd,BLOOM_VECTOR_OFFSET);
-    
     return status;
 }
 
@@ -757,7 +753,6 @@ int nsrl_bloom_write(nsrl_bloom *b,const char *fname)
  * @param k = k
  * @param comment - a comment to store in the bloom filter.
  */
-// xxx                           fileName,     128,          bitsPerHash,         hashesPerMd5
 int nsrl_bloom_create(nsrl_bloom *b,
 		      const char *fname, uint32_t hash_bits, uint32_t bloom_bits, uint32_t k,
 		      const char *comment)
@@ -801,9 +796,6 @@ int nsrl_bloom_create(nsrl_bloom *b,
                                  b->vector_bytes, 
                                  &(b->map_handle),
                                  &(b->vector));
-
-//zz    b->vector = (uint8_t *)map_file_region(&mapHandle, fname, MAP_READ_AND_WRITE, BLOOM_VECTOR_OFFSET);
-         //mmap(0,b->vector_bytes,PROT_READ|PROT_WRITE,MAP_FILE|MAP_SHARED,b->fd, BLOOM_VECTOR_OFFSET);
 
     return status;
 }

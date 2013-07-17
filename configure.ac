@@ -363,15 +363,6 @@ AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
 AC_ARG_WITH([o3], AC_HELP_STRING([--without-o3], [Do not force O3 optimization; use default level]))
 
 ################################################################
-## support required by be13_api required by hashdb plugin
-
-# zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz is this used?
-if test  x"$mingw" = x"no";  then
-AC_CHECK_HEADERS([netinet/in.h],[],[AC_MSG_ERROR([Could not find netinet/in.h, netinet is required])])
-fi
-# zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz is this used?
-
-################################################################
 ## regex support
 ## there are several options
 ## tre is better than regex

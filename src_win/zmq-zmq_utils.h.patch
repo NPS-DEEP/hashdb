@@ -5,7 +5,7 @@
  
  /*  Handle DSO symbol visibility                                             */
 +#define ZMQ_EXPORT
-+/* bda zzzzzzzzzzzzzz
++/*
  #if defined _WIN32
  #   if defined DLL_EXPORT
  #       define ZMQ_EXPORT __declspec(dllexport)

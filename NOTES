@@ -1,48 +1,5 @@
-Note: changed xbtree/boost/btree/detail/common.hpp line 1643:
-
-template <class Key, class Base, class Traits, class Comp>   
-typename btree_base<Key,Base,Traits,Comp>::size_type
-btree_base<Key,Base,Traits,Comp>::erase(const key_type& k)
-{
-  BOOST_ASSERT_MSG(is_open(), "erase() on unopen btree");
-  BOOST_ASSERT_MSG(!read_only(), "erase() on read only btree");
-  size_type count = 0;
-  const_iterator it = lower_bound(k);
-    
-//zzzzzzzzzz  while (it != end() && !key_comp()(k, key(*it)))
-  while (it != end() && !key_comp()(k, this->key(*it)))
-  {
-    ++count;
-    it = erase(it);
-  }
-  return count;
-}
-
-
-to prevent error:
-../src/xbtree/boost/btree/detail/common.hpp:1642:3: error: ‘key’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
-
-Function erase is now required to support modifying records when there
-are duplicate keys.
-
-
-Note: fixed broken constructor for manager_iterator in manager.h:
-    class manager_iterator
-      : public boost::iterator_facade<
-            manager_iterator
-          , val_t const
-          , boost::forward_traversal_tag
-        > {
-
-      public:
-//zz NO        manager_iterator() : m_itr(0),m_map(0),m_mgr(0) { }
-        manager_iterator() : m_itr(),m_map(0),m_mgr(0) { }
-
-        explicit manager_iterator(map_const_iterator p, uint64_t map, const this_t* mgr) 
-          : m_itr(p), m_map(map), m_mgr(mgr)
-        {}
-
-<...etc>
+Note: made changes to xbtree to remove compiler errors/warnings.
+This will be replaced with a new version of boost btree in the future.
 
 Note: removed use of iterator_facade because it causes many compiler warnings like this:
 warning: base class ‘class boost::iterator_facade<burst_manager_map<md5_t, source_lookup_record_t>::manager_iterator, const std::pair<const md5_t, source_lookup_record_t>, boost::forward_traversal_tag, const std::pair<const md5_t, source_lookup_record_t>&, long int>’ has a non-virtual destructor [-Weffc++]
