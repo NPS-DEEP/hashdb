@@ -170,7 +170,11 @@ class commands_t {
                                 const std::string& hashdb_outdir) {
 
     open_log(hashdb_outdir, COMMAND_COPY_NEW_DFXML);
+
+    // log control parameters
+    x->xmlout("dfxml_infile", dfxml_infile);
     x->xmlout("repository_name", repository_name);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
 
     // open the new hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_NEW);
@@ -211,13 +215,14 @@ class commands_t {
                             const std::string& hashdb_outdir) {
 
     open_log(hashdb_outdir, COMMAND_COPY_DFXML);
+
+    // log control parameters
+    x->xmlout("dfxml_infile", dfxml_infile);
     x->xmlout("repository_name", repository_name);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
-
-//    // log the hashdb settings
-//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -251,6 +256,10 @@ class commands_t {
                           const std::string& hashdb_outdir) {
 
     open_log(hashdb_outdir, COMMAND_COPY_NEW);
+
+    // log control parameters
+    x->xmlout("hashdb_indir", hashdb_indir);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
@@ -295,6 +304,10 @@ class commands_t {
 
     open_log(hashdb_outdir, COMMAND_COPY);
 
+    // log control parameters
+    x->xmlout("hashdb_indir", hashdb_indir);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
+
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
@@ -302,9 +315,6 @@ class commands_t {
 
     // open the hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
-
-//    // log the hashdb settings
-//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -338,6 +348,11 @@ class commands_t {
                                              size_t exclude_duplicates_count) {
 
     open_log(hashdb_outdir, COMMAND_COPY_EXCLUDE_DUPLICATES);
+
+    // log control parameters
+    x->xmlout("hashdb_indir", hashdb_indir);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
+    x->xmlout("exclude_duplicates_count", exclude_duplicates_count);
 
     // for completeness log this exclude_duplicates_count tag
     x->xmlout("exclude_duplicates_count", exclude_duplicates_count);
@@ -402,13 +417,14 @@ class commands_t {
                               const std::string& hashdb_outdir) {
 
     open_log(hashdb_outdir, COMMAND_REMOVE_DFXML);
+
+    // log control parameters
+    x->xmlout("dfxml_infile", dfxml_infile);
     x->xmlout("repository_name", repository_name);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
-
-//    // log the hashdb settings
-//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -443,6 +459,10 @@ class commands_t {
 
     open_log(hashdb_outdir, COMMAND_REMOVE);
 
+    // log control parameters
+    x->xmlout("hashdb_indir", hashdb_indir);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
+
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
@@ -450,9 +470,6 @@ class commands_t {
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
-
-//    // log the hashdb settings
-//    hashdb_out.hashdb_settings.report_settings(*x);
 
     x->add_timestamp("opened hashdb");
 
@@ -485,6 +502,11 @@ class commands_t {
                        const std::string& hashdb_outdir) {
 
     open_log(hashdb_outdir, COMMAND_MERGE);
+
+    // log control parameters
+    x->xmlout("hashdb_indir1", hashdb_indir1);
+    x->xmlout("hashdb_indir2", hashdb_indir2);
+    x->xmlout("hashdb_outdir", hashdb_outdir);
 
     // open hashdb 1
     hashdb_db_manager_t hashdb_in1(hashdb_indir1, READ_ONLY);
@@ -550,6 +572,9 @@ class commands_t {
   static void do_rebuild_bloom(const std::string& hashdb_indir) {
 
     open_log(hashdb_indir, COMMAND_REBUILD_BLOOM);
+
+    // log control parameters
+    x->xmlout("hashdb_indir", hashdb_indir);
 
     // get hashdb tuning settings
     hashdb_settings_t hashdb_settings =
