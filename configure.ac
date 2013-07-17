@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.0.0-beta1)
+AC_INIT(hashdb, 1.0.0-beta2)
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile
