@@ -326,34 +326,34 @@ class query_by_socket_server_t {
   }
 
   int process_query_hashdb_info() {
-    int status = 0;
 
     // create space on the heap for the response
     std::string response;
 
     // get the query info
-    status = hashdb_db_info_provider_t::get_hashdb_info(
+    int query_status = hashdb_db_info_provider_t::get_hashdb_info(
                     hashdb_db_manager->hashdb_dir, response);
 
-    if (status != 0) {
-      exit(-1);
+    if (query_status != 0) {
+      response = "Error: Server was unable to obtain information for the hashdb.";
     }
 
     // convert to char array to ensure null termination
-    char *c=new char[response.size()+1];
-    c[response.size()] = '\0';
-    memcpy(c, response.c_str(), response.size());
+    size_t c_size = response.size()+1;
+    char *c=new char[c_size];
+    c[c_size - 1] = '\0';
+    memcpy(c, response.c_str(), c_size);
 
     // send the response
-    status = zmq_helper_t::send_part(&c[0],
-                       sizeof(char) * response.size(),
+    int status = zmq_helper_t::send_part(&c[0],
+                       sizeof(char) * (c_size),
                        socket,
                        false);
     if (status != 0) {
       exit(-1);
     }
 
-    delete c;
+    delete[] c;
 
     return 0;
   }

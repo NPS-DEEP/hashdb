@@ -51,21 +51,68 @@ hashdb_manager --copy --b1 disabled -r "my repository" my_dfxml my_db
 hashdb_manager --export my_db temp_dfxml
 vi temp_dfxml
 
-# lookup using the hashdb_checker tool using database
-hashdb_checker --lookup -p my_db my_dfxml
+# query_hash using the hashdb_checker tool using database
+hashdb_checker --query_hash -p my_db my_dfxml
 
 # start server for serving lookups from my_db using default socket
 hashdb_manager --server my_db
 
-# lookup using the hashdb_checker tool using default socket
-hashdb_checker --lookup -l use_socket my_dfxml
+# query_hash using the hashdb_checker tool using default socket
+hashdb_checker --query_hash -q use_socket my_dfxml
 
-# lookup using the bulk_extractor scan_hashid scanner using database
-bulk_extractor -S lookup_type=use_path -S path=my_db -o out1 myfile
+# query_hash using the bulk_extractor scan_hashid scanner using database
+bulk_extractor -S query_hash_type=use_path -S path=my_db -o out1 myfile
 
 # start server for serving lookups from my_db using default socket
 hashdb_manager --server my_db
 
-# lookup using the bulk_extractor scan_hashid scanner using default socket
-bulk_extractor -S lookup_type=use_socket -o out2 myfile
+# query_hash using the bulk_extractor scan_hashid scanner using default socket
+bulk_extractor -S query_hash_type=use_socket -o out2 myfile
+
+
+------------------------------------------------------------
+Test form memory leaks using valgrind.
+Setup: create file vg.supp in working directory:
+
+{
+  <socketcall_sendto>
+  Memcheck:Param
+  socketcall.sendto(msg)
+  fun:send
+  ...
+}
+{
+  <socketcall_sendto>
+  Memcheck:Param
+  socketcall.send(msg)
+  fun:send
+  ...
+}
+
+Start server:
+$ valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp hashdb_manager --server my_hashdb
+
+Run client:
+$ valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp hashdb_checker --query_hash -q use_socket my_dfxml
+
+$ valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp hashdb_checker --query_source -q use_socket my_identified_blocks.txt
+
+$ valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp hashdb_checker --query_hashdb_info -q use_socket
+
+Inspect client run for memory leaks.  Note that the "suppressed errors"
+warning is because of the vg.supp suppression file.  ZMQ considers these
+errors suppressible.
+
+Abort server, inspect for memory leaks.
+
+Run client without server.  Let client timeout.
+
+Inspect client run for memory leaks.
+
+Expected results:
+Client should run to completion with 0 leaks.
+Server is currently not designed to abort (CNTL C) with good cleanup, so
+leaks are expected.  But varying the quantity of client queries should not
+change the number of leaks reported.
+------------------------------------------------------------
 

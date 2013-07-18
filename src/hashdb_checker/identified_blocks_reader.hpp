@@ -50,7 +50,7 @@ class identified_blocks_reader_t {
     offset_map.clear();
 
     if(access(filename.c_str(),R_OK)){
-      std::cerr << "Error: File " << filename << " is missing or unreadable.\n";
+      std::cerr << "Error: identified_blocks.txt feature file " << filename << " is missing or unreadable.\n";
       std::cerr << "Cannot continue.\n";
       exit(1);
     }

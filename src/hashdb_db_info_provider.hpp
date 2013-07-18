@@ -44,8 +44,7 @@ class hashdb_db_info_provider_t {
 
     // open the history filename
     if(access(history_filename.c_str(),R_OK)){
-      std::cerr << "Error: File " << history_filename << " is missing or unreadable.\n";
-      std::cerr << "Cannot continue.\n";
+      std::cerr << "Read failure: History file " << history_filename << " is missing or unreadable.\n";
       return -1;
     }
 

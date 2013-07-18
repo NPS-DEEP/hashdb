@@ -41,15 +41,15 @@
 #include <getopt.h>
 
 void do_query_hash_md5(hashdb::query_type_t query_type,
-                       std::string query_path,
-                       std::string dfxml_infile);
+                       const std::string& query_path,
+                       const std::string& dfxml_infile);
 
 void do_query_source_md5(hashdb::query_type_t query_type,
-                         std::string query_path,
-                         std::string identified_blocks_infile);
+                         const std::string& query_path,
+                         const std::string& identified_blocks_infile);
 
 void do_query_hashdb_info(hashdb::query_type_t query_type,
-                         std::string query_path);
+                         const std::string& query_path);
 
 static std::string see_usage = "Please type 'hashdb_checker -h' for usage.";
 
@@ -131,7 +131,6 @@ int main(int argc,char **argv)
 
   // defaults
   hashdb::query_type_t query_type = hashdb::QUERY_USE_PATH;
-  std::string query_path = "query path not defined";
 
   // manage when there are no arguments
   if(argc==1) {
@@ -218,6 +217,7 @@ int main(int argc,char **argv)
   }
 
   // set query path based on query type
+  std::string query_path;
   switch(query_type) {
     case hashdb::QUERY_USE_PATH:   query_path = client_hashdb_path;     break;
     case hashdb::QUERY_USE_SOCKET: query_path = client_socket_endpoint; break;
@@ -283,8 +283,8 @@ int main(int argc,char **argv)
 }
 
 void do_query_hash_md5(hashdb::query_type_t query_type,
-                        std::string query_path,
-                        std::string dfxml_infile) {
+                       const std::string& query_path,
+                       const std::string& dfxml_infile) {
   std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
             << "', query path '" << query_path << "'\n";
 
@@ -335,8 +335,8 @@ void do_query_hash_md5(hashdb::query_type_t query_type,
 }
 
 void do_query_source_md5(hashdb::query_type_t query_type,
-                        std::string query_path,
-                        std::string identified_blocks_infile) {
+                         const std::string& query_path,
+                         const std::string& identified_blocks_infile) {
   std::cout << "hashdb query, query type '" << query_type_to_string(query_type)
             << "', query path '" << query_path << "'\n";
 
@@ -387,7 +387,8 @@ void do_query_source_md5(hashdb::query_type_t query_type,
   }
 }
 
-void do_query_hashdb_info(hashdb::query_type_t query_type, std::string query_path) {
+void do_query_hashdb_info(hashdb::query_type_t query_type,
+                          const std::string& query_path) {
   std::cout << "hashdb info, query type '" << query_type_to_string(query_type)
             << "', query path '" << query_path << "'\n";
 

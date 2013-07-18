@@ -369,6 +369,10 @@ class dfxml_hashdigest_reader_t {
     int sax_parser_resource = xmlSAXUserParseFile(
                               &sax_handlers, &user_data, dfxml_file.c_str());
 
+    // clean up libxml2 malloc resources to help memory leak analysis using
+    // tools such as valgrind.  Call only in non-multithreaded environment.
+    xmlCleanupParser();
+
     if (sax_parser_resource == 0) {
       // good, no failure
       return true;

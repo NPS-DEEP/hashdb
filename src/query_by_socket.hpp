@@ -460,7 +460,7 @@ class query_by_socket_t {
         if (status != 0) {
           return status;
         }
-        return 0;
+        break;
       }
 
       if ((count != 1) || (!is_more)) {
@@ -573,7 +573,11 @@ class query_by_socket_t {
 
     // set info from response
     info = std::string(c);
-    return 0;
+
+    // close hashdb info response
+    status = zmq_helper_t::close_part(zmq_response);
+
+    return status;
   }
 
   private:
