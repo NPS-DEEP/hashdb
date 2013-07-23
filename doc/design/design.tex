@@ -1554,7 +1554,7 @@ import -i <DFXML file> [-a] -o <hashdb> [-t <tuning parameter>]+
 \begin{algorithmic}
 \STATE open the input DFXML file
 \STATE open a \hdb manager for writing
-\STATE using state machine variables and SAX interfaces of libxml++
+\STATE using state machine variables and SAX interfaces of libxml2
 \FORALL {hash chunk entries in the DFXML file}
   \STATE parse out the hash source record element
   \STATE add the element to the hashdb
@@ -1562,8 +1562,8 @@ import -i <DFXML file> [-a] -o <hashdb> [-t <tuning parameter>]+
 \STATE close hashdb for writing
 \end{algorithmic}
 
-Note that we have chosen to use \texttt{libxml} wrappted by \texttt{libxml++}.
-We chose \texttt{libxml++} over other alternatives such as \texttt{xerces}
+Note that we have chosen to use \texttt{libxml} wrappted by \texttt{libxml2}.
+We chose \texttt{libxml2} over other alternatives such as \texttt{xerces}
 because it integrates adequately with Autoconf.
 We use SAX rather than DOM because the DFXML content can be very large.
 

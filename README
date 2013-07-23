@@ -76,7 +76,7 @@ On Fedora, this command should add the appropriate packages:
   $ sudo yum update
   $ sudo yum groupinstall development-tools
 
-Also: libxml++-devel and zeromq3
+Also: libxml2-devel and zeromq3
 
 INSTALLING DEPENDENCIES ON UBUNTU:
 
@@ -84,7 +84,7 @@ On Ubuntu 12.04, this may be sufficient:
 
   $ sudo apt-get -y install gcc g++
 
-Also: libxml++-devel and zeromq3
+Also: libxml2-devel and zeromq3
 
 INSTALLING DEPENDENCIES ON MAC:
 
@@ -92,7 +92,7 @@ We recommend installing Mac dependencies using the MacPorts system. Once that is
 
   $ sudo port install autoconf automake
 
-Also: libxml++-devel and zeromq3
+Also: libxml2-devel and zeromq3
 
 Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
 to include /opt/local/bin.
