@@ -654,6 +654,18 @@ static void reset_bloom_filters(const std::string& hashdb,
   delete_file(bloom2_path);
 }
 
+// 0.17 ~= -1/(math.log(0.06)/(math.log(2)*math.log(2)))
+// M = \lg(-\frac{n \ln(p)}{\ln(2)^2})
+//
+// Where p is held at 6% (0.06)
+//
+// In this code we first find a notional size in bits of the bloom filter needed
+// to get a false positive rate 0f 6%.  We then take the ceiling of the log base 2 of that
+// size.  This gives us the number of bits needed to express the bloom filter while
+// guaranteeing that the false positive rate is at or lower than 6%.  For example, at
+// n = 1billion, this results in M = 33 bits giving a false positive rate of about 1.7%.
+// If we had chosen M = 32 bits our false positive rate would have been almost 13%.
+//
 // approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
 uint64_t approximate_M_to_n(uint32_t M) {
   uint64_t m = (uint64_t)1<<M;
