@@ -5,6 +5,18 @@ Functinality:
 
 ------------------------------------------------------------
 Functinality, later:
+Have bulk_extractor hashid scan mode where scanner can populate the database.
+This is a good way to really study the problem of non-distinct hashes
+on real hard drives.
+
+Introduce another data map for storing file hashes.
+
+Add statistic capability for reporting information such as
+how many duplicates there are.
+
+Add interfaces to the query API to allow databases to be
+created, iterated, and added to.
+
 Add new option to not pack upon saving.  Add feedback to indicate
 when packing starts and stops.
 
