@@ -261,7 +261,7 @@ struct hashdb_settings_t {
         hashdb_version(1),
         chunk_size(4096),
         hashdigest_type(HASHDIGEST_MD5),
-        maximum_hash_duplicates(25),
+        maximum_hash_duplicates(0),
         hash_store_settings(),
         hash_duplicates_store_settings(),
         source_lookup_settings(),
