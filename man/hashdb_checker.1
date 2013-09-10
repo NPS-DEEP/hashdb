@@ -1,0 +1,52 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH HASHDB_CHECKER 1 "SEP 2013" "User Manuals"
+.SH NAME
+hashdb_checker \- Provide hash lookup services.
+.SH SYNOPSIS
+.B hashdb_checker <command>
+.SH DESCRIPTION
+.B hashdb_checker
+provides commands that may be used for looking up information
+in a hash database.
+The hash database may be resident at a file path
+or it may be accessed through a server service available at a socket.
+.SH QUERY_HASH
+This command is useful for looking up hash values that are in a
+DFXML file.
+
+.IP "--query_hash [query parameter>]+ <dfxml input>"
+
+.SH QUERY_SOURCE
+This command is useful for looking up hash source information that is in an
+.B identified_blocks.txt
+input file.
+
+.IP "--query_hashdb_info [query parameter>]+"
+
+.SH HISTORY
+.BR "hashdb_checker" 
+was released into the public domain by Bruce Allen in 2013.
+.SH AUTHOR
+Bruce Allen <bdallen@nps.edu>
+.SH REPORTING BUGS
+Report bugs to bdallen@nps.edu
+.SH COPYRIGHT
+.BR "hashdb_checker" 
+code is provided with the following notice:
+The software provided here is released by the Naval Postgraduate School,
+an agency of the U.S. Department of Navy. The software bears no warranty,
+either expressed or implied. NPS does not assume legal liability nor
+responsibility for a User's use of the software or the results of such use.
+
+Please note that within the United States, copyright protection,
+under Section 105 of the United States Code, Title 17, is not available
+for any work of the United States Government and/or for any works
+created by United States Government employees. 
+
+.SH SEE ALSO
+.BR "hashdb" 
+wiki at https://github.com/simsong/hashdb/wiki.
+Also, please see The User Guide for the hashdb Tools.
+
