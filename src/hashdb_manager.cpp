@@ -112,7 +112,7 @@ void usage() {
   << "    <hashdb>   a hash database being created or a hash database being\n"
   << "               copied to\n"
   << "\n"
-  << "--remove <input> <hashdb> [-r <repository name>]\n"
+  << "--remove [-r <repository name>] <input> <hashdb>\n"
   << "    Removes hashes in the <input> from the <hashdb> hash database.\n"
  << "\n"
   << "    Options:\n"

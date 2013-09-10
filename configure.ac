@@ -14,6 +14,7 @@ AC_CONFIG_FILES([Makefile
                  src/libhashdb/Makefile
                  src/hashdb_checker/Makefile
                  src_win/Makefile
+                 man/Makefile
                  doc/Makefile])
 
 AC_CONFIG_HEADER([config.h])

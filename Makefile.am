@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src src/libhashdb src/hashdb_checker src_win doc
+SUBDIRS = src src/libhashdb src/hashdb_checker src_win man doc
 
 EXTRA_DIST = bootstrap.sh
 

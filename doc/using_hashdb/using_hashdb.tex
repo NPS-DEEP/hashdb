@@ -141,7 +141,7 @@ and for providing a hash database query service over a socket:
 \begin{compactitem}
 \item \texttt{copy}: Import a DFXML file into a \hdb
 or copy hashes from one \hdb into another.
-\item \texttt{remove}: Remove hashes in a DFXML file
+\item \texttt{remove}: Remove hashes defined in a DFXML file
 or a \hdb from another \hdb.
 \item \texttt{merge}: Merge the contents of two {\hdb} databases
 into a third \hdb.
@@ -423,7 +423,7 @@ hashdb_manager supports the following <command> options:
     <hashdb>         a hash database whose database information is to be
                      displayed
 
---server [-s] <server socket endpoint> <hashdb>
+--server [-s <server socket endpoint>] <hashdb>
     Starts hashdb_manager as a query server service for supporting hashdb
     queries.
 
