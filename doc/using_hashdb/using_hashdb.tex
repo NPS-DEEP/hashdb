@@ -80,6 +80,9 @@ from 4KiB chunks of data aligned on 512 byte sector boundaries.
 	\label{fig:sector_boundaries}
 \end{figure}
 
+Outside of this document, a chunk hash is often
+called a target block or a hash block.
+
 \subsection{Hash Source}
 Hashes stored in hash databases may be sourced from many files
 and from many repositories.
@@ -162,8 +165,8 @@ named \texttt{my\_hashdb}:
 
 \begin{small}
 \begin{verbatim}
-hashdb_checker --query_source -q use_path \
--p my_hashdb identified_blocks.txt
+md5deep -p 4096 -d -r my_dir > my_dfxml_file
+hashdb_manager --copy my_dfxml_file my_hashdb
 \end{verbatim}
 \end{small}
 
@@ -187,8 +190,8 @@ that was created  while using the \bulk \hid scanner:
 
 \begin{small}
 \begin{verbatim}
-md5deep -p 4096 -d -r my_dir > my_dfxml_file
-hashdb_manager --copy my_dfxml_file my_hashdb
+hashdb_checker --query_source -q use_path \
+-p my_hashdb identified_blocks.txt
 \end{verbatim}
 \end{small}
 
@@ -265,6 +268,14 @@ because it takes time for the hash database to open.
 It is additionally beneficial to use the socket across systems
 in order to keep as much of the hash database cached in memory as possible,
 for faster performance.
+
+Note: When a socket server service is opened,
+its associated hash database is opened.
+Do not make changes to a hash database
+when it is opened as a socket server service.
+Although this will not corrupt the hash database,
+it will corrupt the socket server service,
+resulting in invalid output or possibly a server service termination.
 
 This example has several parts.
 First, it opens a socket server service

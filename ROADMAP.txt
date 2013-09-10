@@ -1,10 +1,6 @@
-Things to do:
-
+Possible features after 1.0.0:
 ------------------------------------------------------------
-Functinality:
 
-------------------------------------------------------------
-Functinality, later:
 Have bulk_extractor hashid scan mode where scanner can populate the database.
 This is a good way to really study the problem of non-distinct hashes
 on real hard drives.
@@ -47,80 +43,7 @@ zmq_msg_size.  Then get socket working for hashdb_checker --query_source.
 
 Encrypt traffic through zmq socket.
 
-Write small test programs for code that breaks BTree.
-Known causes:
-1) create empty BTree, then check for presence of an entry.
-2) Reading using bulk_extractor recursive.
-
 Compile with another compiler, try clang.
 
-Update documentation so it is not wrong (2 days).
-
 ------------------------------------------------------------
-Notes:
-
-Naming: May call chunk_size the hash block size.
-
-Provide note to user: Don't open a hashdb RW that is opened RO for reading
-or reads will break.
-
-------------------------------------------------------------
-Testing:
-Create hashdb of /corp/nps/files/govdocs1/.
-Create hashdb of malware/.
-Work under /raid/bdallen.
-Perform bulk_extractor scan of /corp.
-There are two approaches for creating the dfxml from govdocs:
-  1) create one massive dfxml from all of govdocs.
-  2) create dfxml for each primary directory under govdocs.
-
-Compile on ncr.nps.edu.
-Perform testing on r2.ncr.nps.edu.
-Note available file r0.ncr.nps.edu /corp/quist/malware/files-4096.xml
-
-------------------------------------------------------------
-Done:
-
-Boost:
-Use Boost extraction tool BCP to assemble required headers for tarball and
-have autotools choose native Boost over assembled headers.
-(bda): No, bcp tool created 1.3MB zip, without libs, so I may not pursue 
-       assembled headers unless further directed.
-Put back filesystem v3 compatibility for Boost v1.48 onward.
-(bda): Done.
-
-Functionality:
-Added new scan parameter, sector_size, which is different from chunk size,
-so that chunk hashes can be managed on sector boundaries.
-
-Added -x parameter to copy command to remove duplicates.
-The implementation may be optimised in the future.
-
-Renamed client request offset to query_id because it is an ID that is
-not necessarily bound to an offset.
-
-Usage now shows default values.
-
-Locked the socket map during access so that threads can't break it.
-
-Allow multiple targets:
-Compiles to c++98, not just C++11, in order to improve compiler portability.
-
-Added BTree input parameter option for specifying number of hashes
-instead of number of hash functions k and hash size M.
-Joel and Avner will provide feedback on hashdb usage.
-Add new hashdb command for regenerating the Bloom filter
-using different Bloom filter parameters.
-Write the scan_md5 bulk_extractor plugin.
-Help James with client code.
-Add runtime timer information.
-
-Improved integration with bulk_extractor.
-
-Allows multiple targets: Linux, Windows, Mac.
-
-Databases are portable across Linux, Windows32/Windows64, Mac.
-
-Added hashdb API query functionality: query_sources_md5 and
-query_hashdb_info are fully implemented.
 

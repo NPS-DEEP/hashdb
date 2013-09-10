@@ -2,44 +2,58 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src src/libhashdb src/hashdb_checker src_win man doc
 
-EXTRA_DIST = bootstrap.sh
+# don't include bootstrap. People run it, and they shoudln't
+# It's only for people who check out the git repo
+EXTRA_DIST = \
+	ROADMAP.txt \
+        m4/ax_boost_base.m4 \
+        m4/ax_boost_filesystem.m4 \
+        m4/ax_boost_system.m4 \
+        m4/ax_pthread.m4
 
 RELEASE	     = $(PACKAGE)-$(VERSION)
 
-win32:
-	rm -rf win32
-	mkdir win32
-	make distclean
-	mingw32-configure
-	make
-	sudo make install
-	cp src/hashdb_manager.exe win32/hashdb_manager32.exe
-	cp src/hashdb_checker/hashdb_checker.exe win32/hashdb_checker32.exe
+.PHONY: exels
+exels:
+	/bin/ls -l */*exe
 
-win64:
-	rm -rf win64
-	mkdir win64
-	make distclean
-	mingw64-configure
-	make
-	sudo make install
-	cp src/hashdb_manager.exe win64/hashdb_manager64.exe
-	cp src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe
+.PHONY: execlean
+execlean:
+	/bin/rm -f */*exe
 
-# useful during development when mingw configure is already set up
-win32_dev:
-	make
-	cp src/hashdb_manager.exe win32/hashdb_manager32.exe
-	cp src/hashdb_checker/hashdb_checker.exe win32/hashdb_checker32.exe
+.PHONY: win32
+win32: win32/bulk_extractor32.exe
 
-win64_dev:
-	make
-	cp src/hashdb_manager.exe win64/hashdb_manager64.exe
-	cp src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe
+.PHONY: win64
+win64: win64/bulk_extractor64.exe
+
+win32/bulk_extractor32.exe:
+	@echo '****************************************************'
+	@echo '*** making win32 with mingw32-configure and make ***'
+	@echo '****************************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win32  ]; then mkdir win32 ; fi
+	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure) ; fi
+	(cd win32;$(MAKE))
+	(cp win32/src/hashdb_manager.exe win32/hashdb_manager32.exe)
+	(cp win32/src/hashdb_checker/hashdb_checker.exe win32/hashdb_checker32.exe)
+	ls -l win32/*.exe
+
+win64/bulk_extractor64.exe:
+	@echo '****************************************************'
+	@echo '*** making win64 with mingw32-configure and make ***'
+	@echo '****************************************************'
+	if [ -r Makefile ]; then $(MAKE) distclean ; fi
+	if [ ! -d win64  ]; then mkdir win64 ; fi
+	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure) ; fi
+	(cd win64;$(MAKE))
+	(cp win64/src/hashdb_manager.exe win64/hashdb_manager64.exe)
+	(cp win64/src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe)
+	ls -l win64/*.exe
 
 # windist makes win32 and win64 .exe files and puts them in a zip file
 windist: win32 win64
-	rm -rf $(distdir).zip $(distdir) src/*.exe
+	rm -rf $(distdir).zip
 	mkdir $(distdir)
 	@echo
 	cp win32/hashdb_manager32.exe $(distdir)
@@ -70,5 +84,5 @@ windist: win32 win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
-.PHONY: win32 win64 win32_dev win64_dev windist
+.PHONY: exels execlean win32 win64 windist
 
