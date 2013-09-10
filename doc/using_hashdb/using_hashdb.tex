@@ -179,7 +179,8 @@ from a list of hash values.
 
 The complete \hdbc usage is listed in Appendix~\ref{hdbc-usage}.
 
-This command line example illustrates the process for looking up hash sources
+The command line example below illustrates the process of
+looking up hash sources
 from a hash database called \texttt{my\_hashdb}
 from a feature file called \texttt{identified\_blocks.txt}
 that was created  while using the \bulk \hid scanner:
@@ -200,7 +201,8 @@ for the given MD5 hashes.
 \item \texttt{query\_hashdb\_info}: Obtain information about the \hdb.
 \end{compactitem}	
 
-Please see \hdb library file \texttt{hashdb.hpp}.
+The complete \hdb library file \texttt{hashdb.hpp}
+is listed in Appendix~\ref{hdb-lib}.
 
 \section{\bulk \hid Scanner\label{hid-scanner}}
 The \bulk \hid scanner is not distributed with \hdb; it is part of \bulk.
@@ -222,13 +224,20 @@ available as a server service available at a socket.
 \end{compactitem}	
 \item \texttt{path}: Specifies the file path to the \hdb.
 \item \texttt{socket}: Specifies the socket endpoint to the \hdb server service.
-\end{compactitem}	
+\item \texttt{chunk\_size}: Specifies a chunk size, in bytes,
+to use for generating chunk hashes, default 4096.
+\item \texttt{sector\_size}: Specifies a sector size.
+Hashes are generated on each sector size boundary.
+\end{compactitem}
 
-The command line example below demonstrates how to scan
-image file \texttt{my\_imagefile}
+\subsection{Example using Path}
+
+The command line example below illustrates the process of scanning
+disk image file \texttt{my\_imagefile}
 for chunk hash values that match values present
-in the \texttt{my\_hashdb} hash database and places
-matches in the \texttt{outpath/identified\_blocks.txt} feature file:
+in the \texttt{my\_hashdb} hash database and placing
+matches in feature file \texttt{identified\_blocks.txt}
+under output directory \texttt{outpath}:
 
 \begin{small}
 \begin{verbatim}
@@ -237,8 +246,70 @@ bulk_extractor -S query_type=use_path \
 \end{verbatim}
 \end{small}
 
-The command line example below is similar, but uses Socket ...
+It is useful to see where hash values are sourced from.
+This command line example illustrates the process of
+using the \hdbc tool to obtain
+hash source information from the hash values present in \bulk Feature file
+\texttt{identified\_blocks.txt} referencing the \hdb
+at path \texttt{my\_hashdb}:
 
+\begin{small}
+\begin{verbatim}
+hashdb_checker --query_source -q use_path -p my_hashdb identified_blocks.txt
+\end{verbatim}
+\end{small}
+
+\subsection{Example using Socket}
+It is beneficial to use a socket when the hash database is large
+because it takes time for the hash database to open.
+It is additionally beneficial to use the socket across systems
+in order to keep as much of the hash database cached in memory as possible,
+for faster performance.
+
+This example has several parts.
+First, it opens a socket server service
+enabling queries against a hash database.
+Then it performs query functions against the database that is available
+over the socket service.
+
+The command line example below illustrates the process of opening
+hash database \texttt{my\_hashdb} as a separate
+query service process running in a separate terminal window
+available at default socket \texttt{tcp://*:14500}
+using the \hdbm tool:
+
+\begin{small}
+\begin{verbatim}
+hashdb_manager --server my_hashdb
+\end{verbatim}
+\end{small}
+
+The command line example below illustrates the process of scanning
+disk image file \texttt{my\_imagefile}
+for chunk hash values that match values present
+in the \texttt{my\_hashdb} hash database
+made available as a socket service in the example above.
+Hash values that match the hash database are placed
+in feature file \texttt{identified\_blocks.txt}
+under output directory \texttt{outpath}:
+
+\begin{small}
+\begin{verbatim}
+bulk_extractor -S query_type=use_socket -o outpath my_imagefile
+\end{verbatim}
+\end{small}
+
+It is useful to see where hash values are sourced from.
+This command line example illustrates the process of
+using the \hdbc tool to obtain
+hash source information from the hash values present in \bulk Feature file
+\texttt{identified\_blocks.txt} referencing the socket service opened above:
+
+\begin{small}
+\begin{verbatim}
+hashdb_checker --query_source -q use_socket identified_blocks.txt
+\end{verbatim}
+\end{small}
 
 
 % no, later:
@@ -776,6 +847,179 @@ hashdb_checker supports the following <command> options:
         transports supported by the zmq messaging kernel are tcp, ipc, and
         inproc.  Currently, only tcp is tested.  This option is only valid
         when the query type is set to "use_socket".
+\end{verbatim}
+\end{small}
+
+\subsection{\hdbc Usage\label{hdb-lib}}
+The \hdb library file \texttt{hashdb.hpp} follows:
+\begin{small}
+\begin{verbatim}
+// Author:  Bruce Allen <bdallen@nps.edu>
+// Created: 2/25/2013
+//
+// The software provided here is released by the Naval Postgraduate
+// School, an agency of the U.S. Department of Navy.  The software
+// bears no warranty, either expressed or implied. NPS does not assume
+// legal liability nor responsibility for a User's use of the software
+// or the results of such use.
+//
+// Please note that within the United States, copyright protection,
+// under Section 105 of the United States Code, Title 17, is not
+// available for any work of the United States Government and/or for
+// any works created by United States Government employees. User
+// acknowledges that this software contains work which was created by
+// NPS government employees and is therefore in the public domain and
+// not subject to copyright.
+//
+// Released into the public domain on February 25, 2013 by Bruce Allen.
+
+/**
+ * \file
+ * Header file for the hashdb query interface.
+ */
+
+#ifndef HASHDB_HPP
+#define HASHDB_HPP
+
+#include <string>
+#include <vector>
+#include <stdint.h>
+
+class query_by_path_t;
+class query_by_socket_t;
+
+/**
+ * Version of the hashdb client library.
+ */
+extern "C"
+const char* hashdb_version();
+
+namespace hashdb {
+
+/**
+ * Lookup types that are available.
+ */
+enum query_type_t {QUERY_NOT_SELECTED,
+                   QUERY_USE_PATH,
+                   QUERY_USE_SOCKET};
+
+std::string query_type_to_string(query_type_t type);
+bool string_to_query_type(const std::string& name, query_type_t& type);
+
+// ************************************************************ 
+// data structures supporting query_hashes_md5
+// ************************************************************ 
+/**
+ * data associated with one hash in a request
+ */
+struct hash_request_md5_t {
+    uint32_t id;
+    uint8_t digest[16];
+
+    hash_request_md5_t();
+    hash_request_md5_t(uint32_t id, const uint8_t* p_digest);
+};
+
+/**
+ * Hash query request sent to the query engine
+ */
+typedef std::vector<hash_request_md5_t> hashes_request_md5_t;
+
+/**
+ * data associated with one hash in a response
+ */
+struct hash_response_md5_t {
+    uint32_t id;
+    uint8_t digest[16];
+    uint32_t duplicates_count;
+    uint64_t source_query_index;
+    uint64_t chunk_offset_value;
+
+    hash_response_md5_t();
+    hash_response_md5_t(uint32_t p_id,
+                        const uint8_t* p_digest,
+                        uint32_t p_duplicates_count,
+                        uint64_t p_source_query_index,
+                        uint64_t p_chunk_offset_value);
+};
+
+/**
+ * Hash query response returned from the query engine
+ * and source query request sent to the query engine
+ */
+typedef std::vector<hash_response_md5_t> hashes_response_md5_t;
+
+/**
+ * Source query request sent to the qery engine
+ * identical to hash query response
+ */
+typedef hash_response_md5_t source_request_md5_t;
+typedef hashes_response_md5_t sources_request_md5_t;
+
+/**
+ * data associated with one source reference
+ */
+struct source_reference_t {
+    std::string repository_name;
+    std::string filename;
+    uint64_t file_offset;
+
+    source_reference_t();
+    source_reference_t(std::string p_repository_name,
+                       std::string p_filename,
+                       uint64_t p_file_offset);
+};
+
+/**
+ * source references
+ */
+typedef std::vector<source_reference_t> source_references_t;
+
+/**
+ * source response data associated with one hash response
+ */
+struct source_response_md5_t {
+    uint32_t id;
+    uint8_t digest[16];
+    source_references_t source_references;
+
+    source_response_md5_t();
+    source_response_md5_t(uint32_t p_id, const uint8_t* p_digest);
+};
+
+/**
+ * source responses
+ */
+typedef std::vector<source_response_md5_t> sources_response_md5_t;
+
+class query_t {
+    public:
+    query_t(query_type_t p_query_type, const std::string& p_query_source);
+    ~query_t();
+
+    int query_status() const;
+
+    int query_hashes_md5(const hashes_request_md5_t& hashes_request,
+                         hashes_response_md5_t& hashes_response);
+
+    int query_sources_md5(const sources_request_md5_t& sources_request,
+                          sources_response_md5_t& sources_response);
+
+    int query_hashdb_info(std::string& hashdb_info_response);
+
+    private:
+    query_type_t query_type;
+    query_by_path_t* query_by_path;
+    query_by_socket_t* query_by_socket;
+
+    // do not allow these
+    query_t(const query_t&);
+    query_t& operator=(const query_t&);
+};
+
+} // namespace
+
+#endif
 \end{verbatim}
 \end{small}
 
