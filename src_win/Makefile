@@ -12,6 +12,11 @@
 
 # NOTE: To build just win32, win64, or windist, you may use hashdb/Makefile.
 
+HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
+
+UNVERSIONED_INSTALLER = temp-hashdb-windowsinstaller.exe
+INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
+
 SRC_WIN_DIST = \
 	CONFIGURE_F18.bash \
 	icu-mingw32-libprefix.patch \
@@ -21,10 +26,6 @@ SRC_WIN_DIST = \
 	zmq-zmq.h.patch \
 	zmq-zmq_utils.h.patch
 
-HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
-
-INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
-
 PDFDOCS = using_hashdb.pdf
 
 # The prerequisites for the installer can't be listed after the colon 
@@ -33,7 +34,7 @@ PDFDOCS = using_hashdb.pdf
 # So this just manually checks to see if the prerequists are present and,
 # if not, it makes them.
 #
-$(INSTALLER): build_installer.nsi $(PDFDOCS)
+$(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
 	if [ ! -r ../win32/Makefile ]; then \
 	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
@@ -42,8 +43,8 @@ $(INSTALLER): build_installer.nsi $(PDFDOCS)
 	fi
 	echo '**** running make in win32/ to create win32 .exe files ****'; \
 	(cd ../win32;$(MAKE))
-	cp win32/src/hashdb_manager.exe win32/hashdb_manager32.exe
-	cp win32/src/hashdb_checker/hashdb_checker.exe win32/hashdb_checker32.exe
+	cp ../win32/src/hashdb_manager.exe hashdb_manager32.exe
+	cp ../win32/src/hashdb_checker/hashdb_checker.exe hashdb_checker32.exe
 	@echo 
 	@echo
 	if [ ! -r ../win64/Makefile ]; then \
@@ -53,12 +54,13 @@ $(INSTALLER): build_installer.nsi $(PDFDOCS)
 	fi
 	echo '**** running make in win64/ to create win64 .exe files ****'; \
 	(cd ../win64;$(MAKE))
-	cp win64/src/hashdb_manager.exe win64/hashdb_manager64.exe
-	cp win64/src/hashdb_checker/hashdb_checker.exe win64/hashdb_checker64.exe
+	cp ../win64/src/hashdb_manager.exe hashdb_manager64.exe
+	cp ../win64/src/hashdb_checker/hashdb_checker.exe hashdb_checker64.exe
 	@echo
 	@echo
 	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
 	echo '**************** INSTALLER IS MADE ****************'
+	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 	ls -lt *exe
 
 $(SRC_WIN)clean:
@@ -72,7 +74,7 @@ $(SRC_WIN)distclean:
 ##
 ## Get the PDF documentation from where it is built
 ##
-using_hashdb.pdf: doc/using_hashdb/using_hashdb.pdf
-	cp doc/using_hashdb/using_hashdb.pdf using_hashdb.pdf
+using_hashdb.pdf: ../doc/using_hashdb/using_hashdb.pdf
+	cp ../doc/using_hashdb/using_hashdb.pdf using_hashdb.pdf
 
 

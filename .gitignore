@@ -46,6 +46,8 @@ stamp-h
 stamp-h1
 win32
 win64
+*.exe
+src_win/using_hashdb.pdf
 .DS_Store
 out-*/
 src/TAGS
