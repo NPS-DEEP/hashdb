@@ -1,6 +1,11 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src src/libhashdb src/hashdb_checker src_win man doc
+if WANT_WIN_INSTALLER
+# defines SRC_WIN_DIST
+include src_win/Makefile
+endif
+
+SUBDIRS = src src/libhashdb src/hashdb_checker man doc
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
@@ -9,7 +14,8 @@ EXTRA_DIST = \
         m4/ax_boost_base.m4 \
         m4/ax_boost_filesystem.m4 \
         m4/ax_boost_system.m4 \
-        m4/ax_pthread.m4
+        m4/ax_pthread.m4 \
+	$(SRC_WIN_DIST)
 
 RELEASE	     = $(PACKAGE)-$(VERSION)
 
@@ -85,6 +91,10 @@ windist: win32 win64
 	ls -l $(distdir).*
 	@echo ""
 	@unzip -l $(distdir).zip
+
+clean-local:
+	rm -rf $(distdir).tar.gz
+	rm -rf $(distdir).zip
 
 .PHONY: exels execlean win32 win64 windist
 

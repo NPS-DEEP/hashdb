@@ -27,7 +27,6 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
 m4_include([src/dfxml/src/dfxml_configure.m4])
-m4_include([src/be13_api/be13_configure.m4])
 
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN

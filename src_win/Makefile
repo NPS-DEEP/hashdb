@@ -12,7 +12,7 @@
 
 # NOTE: To build just win32, win64, or windist, you may use hashdb/Makefile.
 
-EXTRA_DIST = \
+SRC_WIN_DIST = \
 	CONFIGURE_F18.bash \
 	icu-mingw32-libprefix.patch \
 	icu-mingw64-libprefix.patch \
