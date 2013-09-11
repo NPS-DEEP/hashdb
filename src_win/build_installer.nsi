@@ -59,6 +59,9 @@ function InstallOnce
 	# don't install twice
 	ifFileExists "$INSTDIR\uninstall.exe" AlreadyThere
 
+        # establish out path
+        setOutPath "$INSTDIR"
+
 	# install Registry information
 	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
 	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
