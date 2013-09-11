@@ -9,11 +9,12 @@ AC_PREREQ(2.57)
 AC_INIT(hashdb, 1.0.0-beta2)
 AC_CONFIG_MACRO_DIR(m4)
 
+# NOTE - src_win/Makefile is not automatically generated. This is necessary
+# so that it can be run even after a 'make distclean' is done
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/libhashdb/Makefile
                  src/hashdb_checker/Makefile
-                 src_win/Makefile
                  man/Makefile
                  doc/Makefile])
 
@@ -25,8 +26,25 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/be13_api/be13_configure.m4])
+
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
+
+##
+## NSIS Windows Installer
+AC_ARG_ENABLE(win_installer,
+    [AS_HELP_STRING([--enable-win_installer],[enable genration of the Windows installer, this also requires BEViewer])], 
+      request_win_installer=yes, 
+      request_win_installer=no)
+if test x"$request_win_installer" == "xyes" ; then
+    AC_CHECK_PROG(has_nsis, makensis, true, false)
+    if test x"$has_nsis" == "xfalse" ; then
+      AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
+    fi
+fi
+AM_CONDITIONAL([WANT_WIN_INSTALLER], [test x"$has_nsis" == xtrue])
 
 ##
 ## Standard macros

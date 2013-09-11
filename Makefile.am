@@ -52,6 +52,8 @@ win64/bulk_extractor64.exe:
 	ls -l win64/*.exe
 
 # windist makes win32 and win64 .exe files and puts them in a zip file
+# NOTE: this is no longer preferable since we have a hashdb windows installer
+#       in src_win
 windist: win32 win64
 	rm -rf $(distdir).zip
 	mkdir $(distdir)
