@@ -302,19 +302,35 @@ class dfxml_hashdigest_reader_t {
   static void on_warning(void* p_user_data ATTRIBUTE_UNUSED,
                          const char* msg,
                          ...) {
-    std::cout << "dfxml_hashdigest_reader on_warning(): " << msg << std::endl;
+    // adapted from http://stackoverflow.com/questions/5977326/call-printf-using-va-list
+    va_list arglist;
+    printf("dfxml_hashdigest_reader on_warning(): ");
+    va_start(arglist, msg);
+    vprintf(msg, arglist);
+    va_end(arglist);
+//    std::cout << "dfxml_hashdigest_reader on_warning(): " << msg << std::endl;
   }
 
   static void on_error(void* p_user_data ATTRIBUTE_UNUSED,
                        const char* msg,
                        ...) {
-    std::cout << "dfxml_hashdigest_reader on_error(): " << msg << std::endl;
+    va_list arglist;
+    printf("dfxml_hashdigest_reader on_error(): ");
+    va_start(arglist, msg);
+    vprintf(msg, arglist);
+    va_end(arglist);
+//    std::cout << "dfxml_hashdigest_reader on_error(): " << msg << std::endl;
   }
 
   static void on_fatal_error(void* p_user_data ATTRIBUTE_UNUSED,
                              const char* msg,
                              ...) {
-    std::cout << "dfxml_hashdigest_reader on_fatal_error(): " << msg << std::endl;
+    va_list arglist;
+    printf("dfxml_hashdigest_reader on_fatal_error(): ");
+    va_start(arglist, msg);
+    vprintf(msg, arglist);
+    va_end(arglist);
+//    std::cout << "dfxml_hashdigest_reader on_fatal_error(): " << msg << std::endl;
   }
 
   // ************************************************************
