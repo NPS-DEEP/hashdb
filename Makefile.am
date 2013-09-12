@@ -1,11 +1,20 @@
 ACLOCAL_AMFLAGS = -I m4
 
 if WANT_WIN_INSTALLER
-# defines SRC_WIN_DIST
+SRC_WIN_DIR = src_win
 include src_win/Makefile
 endif
 
 SUBDIRS = src src/libhashdb src/hashdb_checker man doc
+
+SRC_WIN_DIST = \
+	src_win/CONFIGURE_F18.bash \
+	src_win/icu-mingw32-libprefix.patch \
+	src_win/icu-mingw64-libprefix.patch \
+	src_win/zmq-configure.in.patch \
+	src_win/zmq-configure.patch \
+	src_win/zmq-zmq.h.patch \
+	src_win/zmq-zmq_utils.h.patch
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo

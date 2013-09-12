@@ -1,19 +1,23 @@
 Welcome to hashdb!
 
-The hashdb_manager tool provides facilities for creating hash databases
+The hashdb tools are used for finding blacklist data in raw media
+by using chunk hashes.
+
+The toolset provides facilities for creating hash databases
 of MD5 hashes on files along chunk boundaries as well as querying
 hash databases, merging hash databases, and performing hash lookups.
 Multiple map types are supported, allowing for specific optimizations.
 Hash databases may be imported and exported in DFXML format.
 
-The hashdb package provides hashdb_manager, hashdb_checker, and
+The hashdb toolset includes hashdb_manager, hashdb_checker, and
 hashdb library files hashdb.hpp and libhashdb.a.
 
 Downloads and Websites
 ----------------------
 
-  * A hashdb version has not been released yet
-
+  * [Current Release](http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta3.tar.gz)
+  * [Download Archive](http://digitalcorpora.org/downloads/hashdb/)
+  * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/hashdb)
 
 Downloading the Development Tree
 --------------------------------
@@ -23,19 +27,30 @@ Download the sources with git:
   $ git clone --recursive https://github.com/simsong/hashdb.git
 
 
+Compiling hashdb
+----------------
 
-hashdb requires additional packages.
-For FC18, perform the following setup:
+hashdb builds with the GNU auto tools. The maintainer has
+prevously run automake and autoconf to produce the script
+"configure". This script *should* be able to compile hashdb
+for your platform. 
 
-   $ sudo yum update
-   $ sudo yum groupinstall development-tools
-   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
-   $ sudo yum install boost-devel
+We recommend compiling hashdb with -O3 and that is the
+default. You can disable all optimizaiton flags by specifying the
+configure option --with-noopt.
 
-To install on a Linux/MacOS/Mingw system, use:
+hashdb requires additional packages:
+    zeromq3-devel
+    libxml2-devel
+    openssl-devel
+    tre-devel
+    boost-devel
+
+To install on a Linux/MacOS system, use:
    $ ./configure
    $ make
    $ sudo make install
+
 
 Running "sudo make install" is not required.  In a default Fedora
 configuration, "make" creates executables here:
@@ -51,32 +66,22 @@ files here:
    /usr/local/lib/hashdb/libhashdb.la
    /usr/local/lib/hashdb/libhashdb.a
 
+================================================================
+
+INSTALLING DEPENDENCIES ON FEDORA
+For FC18, perform the following setup:
+
+   $ sudo yum update
+   $ sudo yum groupinstall development-tools
+   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
+   $ sudo yum install boost-devel
+
 To cross-compile from Fedora 18 to Windows, do the following:
    1) Set up the mingw cross compiler environment:
       $ cd src_win; ./CONFIGURE_F18.sh; cd ..
-   2) type "make win32" or "make win64".
+   2) type "make win32" or "make win64" or, to also create a windows
+      installer, thpe "cd src_win; make".
 
-================================================================
-
-Compiling hashdb
-*************************
-hashdb builds with the GNU auto tools. The maintainer has
-prevously run automake and autoconf to produce the script
-"configure". This script *should* be able to compile hashdb
-for your platform. 
-
-We recommend compiling hashdb with -O3 and that is the
-default. You can disable all optimizaiton flags by specifying the
-configure option --with-noopt.
-
-INSTALLING DEPENDENCIES ON FEDORA
-
-On Fedora, this command should add the appropriate packages:
-
-  $ sudo yum update
-  $ sudo yum groupinstall development-tools
-
-Also: libxml2-devel and zeromq3
 
 INSTALLING DEPENDENCIES ON UBUNTU:
 
@@ -96,22 +101,4 @@ Also: libxml2-devel and zeromq3
 
 Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
 to include /opt/local/bin.
-
-
-
-Cross-compiling for Windows from Fedora
-*************************************************
-1) Set up mingw and the cross-compilation environment by running script
-src_win/CONFIGURE_F17.sh
-
-2) Run script CONFIGURE_F17.sh found in directory src_win/ to set up Fedora 17
-or newer to set up the mingw environment for cross-compiling to Windows.
-
-3) Create and cd to directory win32 or win64
-
-4) type "mingw64-configure" in directory win64 to set up the build environment
-in the win64 directory
-
-5) type "make" in the win64 directory
-
 

@@ -17,15 +17,6 @@ HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ 
 UNVERSIONED_INSTALLER = temp-hashdb-windowsinstaller.exe
 INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
-SRC_WIN_DIST = \
-	CONFIGURE_F18.bash \
-	icu-mingw32-libprefix.patch \
-	icu-mingw64-libprefix.patch \
-	zmq-configure.in.patch \
-	zmq-configure.patch \
-	zmq-zmq.h.patch \
-	zmq-zmq_utils.h.patch
-
 PDFDOCS = using_hashdb.pdf
 
 # The prerequisites for the installer can't be listed after the colon 
