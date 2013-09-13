@@ -47,7 +47,7 @@ stamp-h1
 win32
 win64
 *.exe
-src_win/using_hashdb.pdf
+src_win/hashdb_user_guide.pdf
 .DS_Store
 out-*/
 src/TAGS
@@ -64,6 +64,7 @@ doc/design/design.bbl
 doc/design/design.blg
 doc/design/design.out
 doc/design/design.pdf
-doc/using_hashdb/using_hashdb.aux
-doc/using_hashdb/using_hashdb.out
-doc/using_hashdb/using_hashdb.pdf
+doc/hashdb_user_guide/hashdb_user_guide.aux
+doc/hashdb_user_guide/hashdb_user_guide.tex
+doc/hashdb_user_guide/hashdb_user_guide.out
+doc/hashdb_user_guide/hashdb_user_guide.pdf

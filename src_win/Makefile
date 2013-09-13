@@ -17,7 +17,7 @@ HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ 
 UNVERSIONED_INSTALLER = temp-hashdb-windowsinstaller.exe
 INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
-PDFDOCS = using_hashdb.pdf
+PDFDOCS = hashdb_user_guide.pdf
 
 # The prerequisites for the installer can't be listed after the colon 
 # becuase then the system will try to generate them simultaneously,
@@ -65,7 +65,7 @@ $(SRC_WIN)distclean:
 ##
 ## Get the PDF documentation from where it is built
 ##
-using_hashdb.pdf: ../doc/using_hashdb/using_hashdb.pdf
-	cp ../doc/using_hashdb/using_hashdb.pdf using_hashdb.pdf
+hashdb_user_guide.pdf: ../doc/hashdb_user_guide/hashdb_user_guide.pdf
+	cp ../doc/hashdb_user_guide/hashdb_user_guide.pdf hashdb_user_guide.pdf
 
 
