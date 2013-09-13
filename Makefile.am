@@ -1,9 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
-if WANT_WIN_INSTALLER
-SRC_WIN_DIR = src_win
+SRC_WIN = src_win
 include src_win/Makefile
-endif
 
 SUBDIRS = src src/libhashdb src/hashdb_checker man doc
 

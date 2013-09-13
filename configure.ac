@@ -32,18 +32,11 @@ m4_include([src/dfxml/src/dfxml_configure.m4])
 AC_C_BIGENDIAN
 
 ##
-## NSIS Windows Installer
-AC_ARG_ENABLE(win_installer,
-    [AS_HELP_STRING([--enable-win_installer],[enable genration of the Windows installer, this also requires BEViewer])], 
-      request_win_installer=yes, 
-      request_win_installer=no)
-if test x"$request_win_installer" == "xyes" ; then
-    AC_CHECK_PROG(has_nsis, makensis, true, false)
-    if test x"$has_nsis" == "xfalse" ; then
-      AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
-    fi
+## optional NSIS Windows Installer
+AC_CHECK_PROG(has_nsis, makensis, true, false)
+if test x"$has_nsis" == "xfalse" ; then
+  AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
 fi
-AM_CONDITIONAL([WANT_WIN_INSTALLER], [test x"$has_nsis" == xtrue])
 
 ##
 ## Standard macros
