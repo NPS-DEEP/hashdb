@@ -2,8 +2,8 @@
 \usepackage[bf,small]{caption}
 \usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
 \usepackage{paralist} % comapctitem, compactdesc, compactenum
-\usepackage{titlesec}
-\usepackage{titletoc}
+%\usepackage{titlesec}
+%\usepackage{titletoc}
 \usepackage{times}
 \usepackage{hyperref}
 \usepackage{algorithmic}
@@ -63,9 +63,8 @@ for hash features.
 
 \subsection{Hash Block}
 A hash block, or target block, is a contiguous chunk of data,
-typically 4KiB in size,
-from which a crypotgraphic hash is taken.
-We copy the cryptographic hashs,
+typically 4KiB in size.
+We calculate cryptographic hashes from hash blocks,
 along with information of where the hash blocks
 are sourced from, into a hash database.
 We then search through media images for matching cryptographic hash values
