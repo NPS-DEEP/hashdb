@@ -19,9 +19,9 @@
 
 /**
  * \file
- * Provides the service of reading chunk hash data from a DFXML file
+ * Provides the service of reading hash data from a DFXML file
  * typically created by md5deep or by a hashdb_manager export operation
- * and calling a consumer to process the chunk hash data.
+ * and calling a consumer to process the hash data.
  */
 
 /**

@@ -201,11 +201,11 @@ class query_by_socket_server_t {
         uint32_t count = source_lookup_record.get_count();
         uint64_t source_lookup_index = (count == 1) ?
                      source_lookup_record.source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
-        uint64_t chunk_offset_value = (count == 1) ?
-                     source_lookup_record.chunk_offset_value(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
+        uint64_t hash_block_offset_value = (count == 1) ?
+                     source_lookup_record.hash_block_offset_value(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
 
         // construct hash response
-        hashdb::hash_response_md5_t hash_response(id, digest, count, source_lookup_index, chunk_offset_value);
+        hashdb::hash_response_md5_t hash_response(id, digest, count, source_lookup_index, hash_block_offset_value);
         response->push_back(hash_response);
       }
     }

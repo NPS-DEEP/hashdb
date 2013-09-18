@@ -1,10 +1,10 @@
 Welcome to hashdb!
 
 The hashdb tools are used for finding blacklist data in raw media
-by using chunk hashes.
+by using cryptographic hashes calculated from hash blocks.
 
 The toolset provides facilities for creating hash databases
-of MD5 hashes on files along chunk boundaries as well as querying
+of MD5 hashes on files aligned along hash block boundaries as well as querying
 hash databases, merging hash databases, and performing hash lookups.
 Multiple map types are supported, allowing for specific optimizations.
 Hash databases may be imported and exported in DFXML format.

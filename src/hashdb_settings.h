@@ -236,7 +236,7 @@ inline std::ostream& operator<<(std::ostream& os,
 struct hashdb_settings_t {
 
     uint32_t hashdb_version;
-    uint32_t chunk_size;
+    uint32_t hash_block_size;
     hashdigest_type_t hashdigest_type;
     uint32_t maximum_hash_duplicates;
     hash_store_settings_t hash_store_settings;
@@ -247,7 +247,7 @@ struct hashdb_settings_t {
 
     hashdb_settings_t(const hashdb_settings_t& settings) : 
         hashdb_version(settings.hashdb_version),
-        chunk_size(settings.chunk_size),
+        hash_block_size(settings.hash_block_size),
         hashdigest_type(settings.hashdigest_type),
         maximum_hash_duplicates(settings.maximum_hash_duplicates),
         hash_store_settings(settings.hash_store_settings),
@@ -259,7 +259,7 @@ struct hashdb_settings_t {
 
     hashdb_settings_t() : 
         hashdb_version(1),
-        chunk_size(4096),
+        hash_block_size(4096),
         hashdigest_type(HASHDIGEST_MD5),
         maximum_hash_duplicates(0),
         hash_store_settings(),
@@ -272,7 +272,7 @@ struct hashdb_settings_t {
     void report_settings(std::ostream& os) const {
       os << "hashdb settings: ";
       os << "hashdb version=" << hashdb_version << ", ";
-      os << "chunk size=" << chunk_size << ", ";
+      os << "hash block size=" << hash_block_size << ", ";
       os << "hashdigest type=" << hashdigest_type_to_string(hashdigest_type) << ", ";
       os << "maximum hash duplicates=" << maximum_hash_duplicates << "\n";
       hash_store_settings.report_settings(os);
@@ -284,7 +284,7 @@ struct hashdb_settings_t {
 
     hashdb_settings_t& operator=(const hashdb_settings_t& other) {
       hashdb_version = other.hashdb_version;
-      chunk_size = other.chunk_size;
+      hash_block_size = other.hash_block_size;
       hashdigest_type = other.hashdigest_type;
       maximum_hash_duplicates = other.maximum_hash_duplicates;
       hash_store_settings = other.hash_store_settings;
@@ -298,7 +298,7 @@ struct hashdb_settings_t {
     void report_settings(dfxml_writer& x) const {
       x.xmlout("hashdb_version", hashdb_version);
       x.xmlout("hashdigest_type", hashdigest_type_to_string(hashdigest_type));
-      x.xmlout("chunk_size", chunk_size);
+      x.xmlout("hash_block_size", hash_block_size);
       x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
       hash_store_settings.report_settings(x);
       hash_duplicates_store_settings.report_settings(x);
@@ -312,7 +312,7 @@ inline std::ostream& operator<<(std::ostream& os,
                          const class hashdb_settings_t& settings) {
   os << "("
      << "hashdb_version=" << settings.hashdb_version
-     << ",chunk_size=" << settings.chunk_size
+     << ",hash_block_size=" << settings.hash_block_size
      << ",hashdigest_type=" << hashdigest_type_to_string(settings.hashdigest_type)
      << ",maximum hash duplicates=" << settings.maximum_hash_duplicates
      << settings.hash_store_settings

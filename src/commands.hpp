@@ -118,7 +118,7 @@ class commands_t {
   static void describe_none_inserted_dfxml() {
     std::cout << "No hashes were inserted from DFXML.  Possible causes:\n"
               << "    The \"-p\" option was not used by md5deep.\n"
-              << "    The \"--chunk_size\" value used does not match that used by md5deep.\n"
+              << "    The \"--hash_block_size\" value used does not match that used by md5deep.\n"
               << "    The hashes were already inserted.\n"
               << "    There are too many duplicates for this hash value.\n"
     ;

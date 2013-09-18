@@ -54,14 +54,14 @@ class hashdb_db_manager_t {
     struct hash_changes_t {
       uint64_t hashes_inserted;
       uint64_t hashes_not_inserted_invalid_file_offset;
-      uint64_t hashes_not_inserted_wrong_chunk_size;
+      uint64_t hashes_not_inserted_wrong_hash_block_size;
       uint64_t hashes_not_inserted_wrong_hashdigest_type;
       uint64_t hashes_not_inserted_exceeds_max_duplicates;
       uint64_t hashes_not_inserted_duplicate_source;
 
       uint64_t hashes_removed;
       uint64_t hashes_not_removed_invalid_file_offset;
-      uint64_t hashes_not_removed_wrong_chunk_size;
+      uint64_t hashes_not_removed_wrong_hash_block_size;
       uint64_t hashes_not_removed_wrong_hashdigest_type;
       uint64_t hashes_not_removed_no_hash;
       uint64_t hashes_not_removed_different_source;
@@ -69,14 +69,14 @@ class hashdb_db_manager_t {
       // create with all fields zero
       hash_changes_t() : hashes_inserted(0),
                          hashes_not_inserted_invalid_file_offset(0),
-                         hashes_not_inserted_wrong_chunk_size(0),
+                         hashes_not_inserted_wrong_hash_block_size(0),
                          hashes_not_inserted_wrong_hashdigest_type(0),
                          hashes_not_inserted_exceeds_max_duplicates(0),
                          hashes_not_inserted_duplicate_source(0),
 
                          hashes_removed(0),
                          hashes_not_removed_invalid_file_offset(0),
-                         hashes_not_removed_wrong_chunk_size(0),
+                         hashes_not_removed_wrong_hash_block_size(0),
                          hashes_not_removed_wrong_hashdigest_type(0),
                          hashes_not_removed_no_hash(0),
                          hashes_not_removed_different_source(0) {
@@ -86,14 +86,14 @@ class hashdb_db_manager_t {
       hash_changes_t(const hash_changes_t& hash_changes) :
          hashes_inserted(hash_changes.hashes_inserted),
          hashes_not_inserted_invalid_file_offset(hash_changes.hashes_not_inserted_invalid_file_offset),
-         hashes_not_inserted_wrong_chunk_size(hash_changes.hashes_not_inserted_wrong_chunk_size),
+         hashes_not_inserted_wrong_hash_block_size(hash_changes.hashes_not_inserted_wrong_hash_block_size),
          hashes_not_inserted_wrong_hashdigest_type(hash_changes.hashes_not_inserted_wrong_hashdigest_type),
          hashes_not_inserted_exceeds_max_duplicates(hash_changes.hashes_not_inserted_exceeds_max_duplicates),
          hashes_not_inserted_duplicate_source(hash_changes.hashes_not_inserted_duplicate_source),
 
          hashes_removed(hash_changes.hashes_removed),
          hashes_not_removed_invalid_file_offset(hash_changes.hashes_not_removed_invalid_file_offset),
-         hashes_not_removed_wrong_chunk_size(hash_changes.hashes_not_removed_wrong_chunk_size),
+         hashes_not_removed_wrong_hash_block_size(hash_changes.hashes_not_removed_wrong_hash_block_size),
          hashes_not_removed_wrong_hashdigest_type(hash_changes.hashes_not_removed_wrong_hashdigest_type),
          hashes_not_removed_no_hash(hash_changes.hashes_not_removed_no_hash),
          hashes_not_removed_different_source(hash_changes.hashes_not_removed_different_source) {
@@ -104,7 +104,7 @@ class hashdb_db_manager_t {
         os << "hashdb changes:\n"
            << "    hashes inserted=" << hashes_inserted << "\n"
            << "    hashes not inserted, invalid file offset=" << hashes_not_inserted_invalid_file_offset << "\n"
-           << "    hashes not inserted, wrong chunk size=" << hashes_not_inserted_wrong_chunk_size << "\n"
+           << "    hashes not inserted, wrong hash block size=" << hashes_not_inserted_wrong_hash_block_size << "\n"
            << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n"
            << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n"
            << "    hashes not inserted, duplicate source=" << hashes_not_inserted_duplicate_source << "\n"
@@ -115,7 +115,7 @@ class hashdb_db_manager_t {
         os << "hashdb changes:\n"
            << "    hashes removed=" << hashes_removed << "\n"
            << "    hashes not removed, invalid file offset=" << hashes_not_removed_invalid_file_offset << "\n"
-           << "    hashes not removed, wrong chunk size=" << hashes_not_removed_wrong_chunk_size << "\n"
+           << "    hashes not removed, wrong hash block size=" << hashes_not_removed_wrong_hash_block_size << "\n"
            << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n"
            << "    hashes not removed, no hash=" << hashes_not_removed_no_hash << "\n"
            << "    hashes not removed, different source=" << hashes_not_removed_different_source << "\n"
@@ -127,7 +127,7 @@ class hashdb_db_manager_t {
         x.push("hashdb_changes");
         x.xmlout("hashes_inserted", hashes_inserted);
         x.xmlout("hashes_not_inserted_invalid_file_offset", hashes_not_inserted_invalid_file_offset);
-        x.xmlout("hashes_not_inserted_wrong_chunk_size", hashes_not_inserted_wrong_chunk_size);
+        x.xmlout("hashes_not_inserted_wrong_hash_block_size", hashes_not_inserted_wrong_hash_block_size);
         x.xmlout("hashes_not_inserted_wrong_hashdigest_type", hashes_not_inserted_wrong_hashdigest_type);
         x.xmlout("hashes_not_inserted_exceeds_max_duplicates", hashes_not_inserted_exceeds_max_duplicates);
         x.xmlout("hashes_not_inserted_duplicate_source", hashes_not_inserted_duplicate_source);
@@ -138,7 +138,7 @@ class hashdb_db_manager_t {
         x.push("hashdb_changes");
         x.xmlout("hashes_removed", hashes_removed);
         x.xmlout("hashes_not_removed_invalid_file_offset", hashes_not_removed_invalid_file_offset);
-        x.xmlout("hashes_not_removed_wrong_chunk_size", hashes_not_removed_wrong_chunk_size);
+        x.xmlout("hashes_not_removed_wrong_hash_block_size", hashes_not_removed_wrong_hash_block_size);
         x.xmlout("hashes_not_removed_wrong_hashdigest_type", hashes_not_removed_wrong_hashdigest_type);
         x.xmlout("hashes_not_removed_no_hash", hashes_not_removed_no_hash);
         x.xmlout("hashes_not_removed_different_source", hashes_not_removed_different_source);
@@ -191,12 +191,12 @@ class hashdb_db_manager_t {
                         source_lookup_index, source_location_record);
 
       // get the hash source record
-      uint64_t chunk_offset_value = source_lookup_record.chunk_offset_value(
+      uint64_t hash_block_offset_value = source_lookup_record.hash_block_offset_value(
                          number_of_index_bits_type);
-      uint64_t file_offset = chunk_offset_value * hashdb_settings.chunk_size;
+      uint64_t file_offset = hash_block_offset_value * hashdb_settings.hash_block_size;
       hash_source_record = hash_source_record_t(
                                   file_offset,
-                                  hashdb_settings.chunk_size,
+                                  hashdb_settings.hash_block_size,
                                   hashdigest_type_to_string(hashdb_settings.hashdigest_type),
                                   source_location_record.repository_name(),
                                   source_location_record.filename());
@@ -237,19 +237,19 @@ class hashdb_db_manager_t {
                                        source_location_record,
                                        source_lookup_index);
 
-      // calculate the chunk offset
-      if (hash_source_record.file_offset % hashdb_settings.chunk_size != 0) {
+      // calculate the hash block offset
+      if (hash_source_record.file_offset % hashdb_settings.hash_block_size != 0) {
         // program error
         assert(0);
       }
-      uint64_t chunk_offset =
-                 hash_source_record.file_offset / hashdb_settings.chunk_size;
+      uint64_t hash_block_offset =
+                 hash_source_record.file_offset / hashdb_settings.hash_block_size;
 
       // now compose the source lookup record
       source_lookup_record_t composed_source_lookup_record(
                number_of_index_bits_type,
                source_lookup_index,
-               chunk_offset);
+               hash_block_offset);
 
       source_lookup_record = composed_source_lookup_record;
     }
@@ -334,7 +334,7 @@ class hashdb_db_manager_t {
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
       // stop if the request is wrong for this database
-      if (hash_source_record.chunk_size != hashdb_settings.chunk_size) {
+      if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
         return false;
       }
       hashdigest_type_t type;
@@ -383,16 +383,16 @@ class hashdb_db_manager_t {
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
       // validate the file offset
-      if (hash_source_record.file_offset % hashdb_settings.chunk_size != 0) {
+      if (hash_source_record.file_offset % hashdb_settings.hash_block_size != 0) {
         // invalid offset value
         ++hash_changes.hashes_not_inserted_invalid_file_offset;
         return;
       }
 
-      // validate the chunk size
-      if (hash_source_record.chunk_size != hashdb_settings.chunk_size) {
-        // wrong chunk size
-        ++hash_changes.hashes_not_inserted_wrong_chunk_size;
+      // validate the hash block size
+      if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
+        // wrong hash block size
+        ++hash_changes.hashes_not_inserted_wrong_hash_block_size;
         return;
       }
 
@@ -438,7 +438,7 @@ class hashdb_db_manager_t {
       source_lookup_record_t existing_source_lookup_record;
       if (!hash_store->has_source_lookup_record(md5, existing_source_lookup_record)) {
 
-        // the chunk hash is new so add it to the hash store
+        // the cryptographic hash is new so add it to the hash store
         hash_store->insert_hash_element(md5, source_lookup_record);
 
         // also, since it is new, add it to bloom filters
@@ -451,7 +451,7 @@ class hashdb_db_manager_t {
 
       } else {
 
-        // add the chunk hash to the hash duplicates store,
+        // add the cryptographic hash to the hash duplicates store,
         // changing the hash store as needed
 
         // identify the existing count
@@ -489,16 +489,16 @@ class hashdb_db_manager_t {
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
       // validate the file offset
-      if (hash_source_record.file_offset % hashdb_settings.chunk_size != 0) {
+      if (hash_source_record.file_offset % hashdb_settings.hash_block_size != 0) {
         // invalid offset value
         ++hash_changes.hashes_not_removed_invalid_file_offset;
         return;
       }
 
-      // validate the chunk size
-      if (hash_source_record.chunk_size != hashdb_settings.chunk_size) {
-        // wrong chunk size
-        ++hash_changes.hashes_not_removed_wrong_chunk_size;
+      // validate the hash block size
+      if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
+        // wrong hash block size
+        ++hash_changes.hashes_not_removed_wrong_hash_block_size;
         return;
       }
 
@@ -635,7 +635,7 @@ class hashdb_db_manager_t {
     }
 
     /**
-     * Iterator for all chunk hashes in the hashdb,
+     * Iterator for all cryptographic hashes in the hashdb,
      * where dereferencing produces pair of md5_t and hash_source_record_t.
      */
     class hashdb_iterator_t {

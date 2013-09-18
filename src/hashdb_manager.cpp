@@ -98,9 +98,9 @@ void usage() {
   << "    -r, --repository=<repository name>\n"
   << "        When importing hashes from a md5deep generated DFXML <input> file,\n"
   << "        where a repository name is not specified, a <repository name> may\n"
-  << "        be provided to speify the repository from which chunk hashes are\n"
-  << "        sourced.  (default is \"repository_\" followed by the <DFXML file>\n"
-  << "        path).\n"
+  << "        be provided to speify the repository from which cryptographic hashes\n"
+  << "        of hash blocks are sourced.  (default is \"repository_\" followed\n"
+  << "        by the <DFXML file> path).\n"
   << "\n"
   << "    -x, --exclude_duplicates=<count>\n"
   << "        When copying hashes from an <input> hashdb hash dtatabase to a new\n"
@@ -120,8 +120,8 @@ void usage() {
   << "        When removing hashes identified from a md5deep generated DFXML\n"
   << "        <input> file, where a repository name is not specified, a\n"
   << "        <repository name> may be provided to speify the repository from\n"
-  << "        which chunk hashes will be removed.  (default is \"repository_\"\n"
-  << "        followed by the <DFXML file> path)\n"
+  << "        which cryptographic hashes of hash blocks will be removed.\n"
+  << "        (default is \"repository_\"\n followed by the <DFXML file> path)\n"
   << "\n"
   << "    Parameters:\n"
   << "    <input>    a md5deep generated DFXML file or another hashdb hash database\n"
@@ -143,7 +143,7 @@ void usage() {
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb input 1>    a hashdb hash database input\n"
-  << "    <hashdb input 2>    a hashdb hash database input\n"
+  << "    <hashdb input 2>    a second hashdb hash database input\n"
   << "    <hashdb output>     a new hashdb hash database that will contain the\n"
   << "                        merged inputs\n"
   << "\n"
@@ -185,8 +185,8 @@ void usage() {
   << "\n"
   << "<hashdb tuning parameter> options set the configuration of a new hash\n"
   << "database:\n"
-  << "    -p, --chunk_size=<chunk size>\n"
-  << "        <chunk size>, in bytes, used to generate hashes (default " << s.chunk_size << ")\n"
+  << "    -p, --hash_block_size=<hash block size>\n"
+  << "        <hash block size>, in bytes, used to generate hashes (default " << s.hash_block_size << ")\n"
   << "\n"
   << "    -m, --max_duplicates=<maximum>\n"
   << "        <maximum> number of hash duplicates allowed, or 0 for no limit\n"
@@ -203,7 +203,7 @@ void usage() {
   << "    -i, --bits=<number of index bits>\n"
   << "        <number of index bits> to use for the source lookup index, between\n"
   << "        32 and 40 (default " << s.source_lookup_settings.number_of_index_bits_type << ")\n"
-  << "        The number of bits used for the chunk offset value is\n"
+  << "        The number of bits used for the hash block offset value is\n"
   << "        (64 - <number of index bits>).\n"
   << "\n"
   << "<bloom filter tuning parameter> settings can help performance during hash\n"
@@ -231,14 +231,14 @@ void detailed_usage() {
   std::cout
   << "Notes:\n"
   << "Using the md5deep tool to generate hash data:\n"
-  << "hashdb_manager imports hashes from DFXML files that contain chunk hashes.\n"
-  << "These files can be generated using the md5deep tool or by exporting a\n"
-  << "hash database using the hashdb_manager \"--export\" command.  When using\n"
-  << "the md5deep tool to generate hash data, the \"-p <partition size>\" option\n"
-  << "must be set to the desired chunk size for hashes.  This value must match\n"
-  << "the chunk size that hashdb_manager expects or else no hashes will be copied\n"
-  << "in.  The md5deep tool also requires the \"-d\" option in order to instruct\n"
-  << "md5deep to generate output in DFXML format.\n"
+  << "hashdb_manager imports hashes from DFXML files that contain cryptographic\n"
+  << "hashes of hash blocks.  These files can be generated using the md5deep tool\n"
+  << "or by exporting a hash database using the hashdb_manager \"--export\" command.\n"
+  << "When using the md5deep tool to generate hash data, the \"-p <partition size>\"\n"
+  << "option must be set to the desired hash block size.  This value must match\n"
+  << "the hash block size that hashdb_manager expects or else no hashes will be\n"
+  << "copied in.  The md5deep tool also requires the \"-d\" option in order to\n"
+  << "instruct md5deep to generate output in DFXML format.\n"
   << "\n"
   << "Selecting an optimal hash database storage type:\n"
   << "The storage type option, \"-t\", selects the storage type to use in the\n"
@@ -291,13 +291,13 @@ void detailed_usage() {
   << "database lookup is required to be sure.\n"
   << "\n"
   << "Performing hash queries using the hashid scanner with bulk_extractor:\n"
-  << "bulk_extractor may be used to scan for chunk hash values if the hashid\n"
-  << "scanner is configured and enabled.  The hashid scanner runs either as\n"
-  << "a client with hashdb_manager running as a server to perform hash queries,\n"
-  << "or loads the hash database directly and performs queries directly.  The\n"
-  << "hashid scanner takes parameters from bulk_extractor using\n"
-  << "bulk_extractor's \"-S name=value\" control parameter.  hashid accepts the\n"
-  << "following parameters:\n"
+  << "bulk_extractor may be used to scan the hash database for matching\n"
+  << "cryptographic hashes if the hashid scanner is configured and enabled.\n"
+  << "The hashid scanner runs either as a client with hashdb_manager running as\n"
+  << "a server to perform hash queries, or loads the hash database drectly and\n"
+  << "performs queries directly.  The hashid scanner takes parameters from\n"
+  << "bulk_extractor using bulk_extractor's \"-S name=value\" control parameter.\n"
+  << " hashid accepts the following parameters:\n"
   << "\n"
   << "   -S query_type=use_path\n"
   << "      <query_type> used to perform the query, where <query_type>\n"
@@ -316,13 +316,14 @@ void detailed_usage() {
   << "      transports supported by the zmq messaging kernel are tcp, ipc, and\n"
   << "      inproc.  Currently, only tcp is tested.  This opition is only valid\n"
   << "      when the query type is set to \"use_socket\".\n"
-  << "   -S chunk_size=4096    Chunk size, in bytes, used to generate hashes\n"
+  << "   -S hash_block_size=4096    Hash block size, in bytes, used to generate\n"
+  << "      cryptographic hashes\n"
   << "   -S sector_size=512    Sector size, in bytes\n"
   << "      Hashes are generated on each sector_size boundary.\n"
   << "\n"
   << "Performing hash queries using the hashdb_checker tool:\n"
   << "The hashdb_checker tool runs as a client service to scan a DFXML file for\n"
-  << "chunk hash values that match chunk hash values in a hash database. In order\n"
+  << "cryptographic hash values that match values in a hash database. In order\n"
   << "to work, the hashdb_checker tool requires that the hashdb_manager tool be\n"
   << "running as a server hash database query service at a matching socket\n"
   << "endpoint.  Please type \"hashdb_checker --help\" for more information on\n"
@@ -361,19 +362,20 @@ void detailed_usage() {
   << "btree.\n"
   << "\n"
   << "Examples:\n"
-  << "This example uses the md5deep tool to generate chunk hashes from a file,\n"
-  << "and is suitable for importing into a hash database using the hashdb_manager\n"
-  << "\"--copy\" command.  Specifically:\n"
-  << "\"-p 4096\" sets the partition size to a chunk hash size of 4096 bytes.\n"
+  << "This example uses the md5deep tool to generate cryptographic hashes from\n"
+  << "hash blocks in a file, and is suitable for importing into a hash database\n"
+  << "using the hashdb_manager \"--copy\" command.  Specifically:\n"
+  << "\"-p 4096\" sets the hash block partition size to 4096 bytes.\n"
   << "\"-d\" instructs the md5deep tool to produce output in DFXML format.\n"
-  << "\"my_file\" specifies the file that chunk hashes will be generated for.\n"
+  << "\"my_file\" specifies the file that cryptographic hashes will be generated\n"
+  << "for.\n"
   << "The output of md5deep is directed to file \"my_dfxml_file\".\n"
   << "    md5deep -p 4096 -d my_file > my_dfxml_file\n"
   << "\n"
   << "This example uses the md5deep tool to generate hashes recursively under\n"
   << "subdirectories, and is suitable for importing into a hash database using\n"
   << "the hashdb_manager \"--copy\" command.  Specifically:\n"
-  << "\"-p 4096\" sets the partition size to a chunk hash size of 4096 bytes.\n"
+  << "\"-p 4096\" sets the hash block partition size to 4096 bytes.\n"
   << "\"-d\" instructs the md5deep tool to produce output in DFXML format.\n"
   << "\"-r mydir\" specifies that hashes will be generated recursively under\n"
   << "directory mydir.\n"
@@ -403,7 +405,7 @@ void detailed_usage() {
   << "This example copies hashes from my_hashdb1 to new hash database my_hashdb2\n"
   << "using various tuning parameters.  Specifically:\n"
   << "\"-p 512\" specifies that the hash database will contain hashes for data\n"
-  << "hashed with a chunk size of 512 bytes.\n"
+  << "hashed with a hash block size of 512 bytes.\n"
   << "\"-m 2\" specifies that when there are duplicate hashes, only the first\n"
   << "two hashes of a duplicate hash value will be copied.\n"
   << "\"-t hash\" specifies that hashes will be recorded using the \"hash\" storage\n"
@@ -412,7 +414,7 @@ void detailed_usage() {
   << "sharded across four files.\n"
   << "\"-i 34\" specifies that 34 bits are allocated for the source lookup index,\n"
   << "allowing 2^34 entries of source lookup data.  Note that this leaves 2^30\n"
-  << "entries remaining for chunk offset values.\n"
+  << "entries remaining for hash block offset values.\n"
   << "\"--b1 enabled\" specifies that Bloom filter 1 is enabled.\n"
   << "\"--b1n 50000000\" specifies that Bloom filter 1 should be sized to expect\n"
   << "50,000,000 different hash values.\n"
@@ -447,30 +449,30 @@ void detailed_usage() {
   << "    hashdb_manager --server -s tcp://*:14501 my_hashdb\n"
   << "\n"
   << "This example uses bulk_extractor to run the hashid scanner to scan for\n"
-  << "chunk hash values in a media file where the hash queries are performed\n"
+  << "hash values in a media file where the hash queries are performed\n"
   << "locally from a hashdb database that is opened by the hashid scanner.\n"
   << "Parameters to bulk_extractor for this example follow:\n"
   << "\"-S query_type=use_path\" tells the scanner to perform hash queries\n"
   << "using a hashdb at a local file path.\n"
   << "\"-S path=my_hashdb\" tells the scanner to perform hash queries\n"
   << "using local hashdb my_hashdb.\n"
-  << "\"-S chunk_size=4096\" tells the scanner to create hashes on 4096-byte\n"
-  << "chunks of data.\n"
-  << "\"-S sector_size=512\" tells the scanner to create hashes at every\n"
-  << "512-byte sector boundary.\n"
+  << "\"-S hash_block_size=4096\" tells the scanner to create cryptographic hashes\n"
+  << "on 4096-byte chunks of data.\n"
+  << "\"-S sector_size=512\" tells the scanner to create cryptographic hashes at\n"
+  << "every 512-byte sector boundary.\n"
   << "\"-o scanner_output\" tells bulk_extractor to put scanner output into the\n"
   << "scanner_output directory.\n"
   << "File \"my_imagefile\" is the name of the image file that the scanner will use.\n"
-  << "Specifically, the scanner will create hashes from chunk_size data at each\n"
+  << "Specifically, the scanner will create hashes from hash blocks at each\n"
   << "sector boundary.\n"
   << "    bulk_extractor -S query_type=use_path\n"
   << "                   -S path=my_hashdb\n"
-  << "                   -S chunk_size=4096\n"
+  << "                   -S hash_block_size=4096\n"
   << "                   -S sector_size=512\n"
   << "                   -o scanner_output my_imagefile\n"
   << "\n"
   << "This example uses bulk_extractor to run the scan_hashid scanner to scan\n"
-  << "for chunk hash values in a media file where the hash queries are performed\n"
+  << "for hash values in a media file where the hash queries are performed\n"
   << "remotely using a hash database query server service available at a socket\n"
   << "endpoint.  Parameters to bulk_extractor for this example follow:\n"
   << "\"-S query_type=use_socket\" tells the scanner to perform hash queries\n"
@@ -481,18 +483,18 @@ void detailed_usage() {
   << "socket endpoint \"tcp://*:14501\" or else this example will fail because\n"
   << "a server service is not available.  Please see the example for starting\n"
   << "hashdb_manager as a server query service.\n"
-  << "\"-S chunk_size=4096\" tells the scanner to create hashes on 4096-byte\n"
-  << "chunks of data.\n"
-  << "\"-S sector_size=512\" tells the scanner to create hashes at every\n"
-  << "512-byte sector boundary.\n"
+  << "\"-S hash_block_size=4096\" tells the scanner to create cryptographic\n"
+  << "hashes on 4096-byte chunks of data.\n"
+  << "\"-S sector_size=512\" tells the scanner to create cryptographic hashes at\n"
+  << "every 512-byte sector boundary.\n"
   << "\"-o scanner_output\" tells bulk_extractor to put scanner output into the\n"
   << "scanner_output directory.\n"
   << "File \"my_imagefile\" is the name of the image file that the scanner will use.\n"
-  << "Specifically, the scanner will create hashes from chunk_size data at each\n"
+  << "Specifically, the scanner will create hashes from hash blocks at each\n"
   << "sector boundary.\n"
   << "    bulk_extractor -S query_type=use_socket\n"
   << "                   -S socket=tcp://localhost:14501\n"
-  << "                   -S chunk_size=4096\n"
+  << "                   -S hash_block_size=4096\n"
   << "                   -S sector_size=512\n"
   << "                   -o scanner_output my_imagefile\n"
   << "\n"
@@ -732,14 +734,14 @@ void no_has_exclude_duplicates(const std::string& action) {
     exit(1);
   }
 }
-void require_chunk_sizes_match(const std::string& hashdb1, const std::string& hashdb2,
+void require_hash_block_sizes_match(const std::string& hashdb1, const std::string& hashdb2,
                                const std::string& action) {
   hashdb_settings_t settings1 = settings_reader_t::read_settings(hashdb1);
   hashdb_settings_t settings2 = settings_reader_t::read_settings(hashdb2);
-  if (settings1.chunk_size != settings2.chunk_size) {
-    std::cerr << "Error: The chunk size for the databases do not match.\n";
-    std::cerr << "The chunk size for " << hashdb1 << " is " << settings1.chunk_size << "\n";
-    std::cerr << "but the chunk size for " << hashdb2 << " is " << settings2.chunk_size << ".\n";
+  if (settings1.hash_block_size != settings2.hash_block_size) {
+    std::cerr << "Error: The hash block size for the databases do not match.\n";
+    std::cerr << "The hash block size for " << hashdb1 << " is " << settings1.hash_block_size << "\n";
+    std::cerr << "but the hash block size for " << hashdb2 << " is " << settings2.hash_block_size << ".\n";
     std::cerr << "Aborting command to " << action << ".\n";
     exit(1);
   }
@@ -790,7 +792,7 @@ int main(int argc,char **argv) {
       {"exclude_duplicates", required_argument, 0, 'x'},
 
       // tuning
-      {"chunk_size", required_argument, 0, 'p'},
+      {"hash_block_size", required_argument, 0, 'p'},
       {"max_duplicates", required_argument, 0, 'm'},
       {"storage_type", required_argument, 0, 't'},
       {"shards", required_argument, 0, 'n'},
@@ -852,12 +854,12 @@ int main(int argc,char **argv) {
         }
         break;
       }
-      case 'p': {	// chunk size
+      case 'p': {	// hash block size
         has_tuning = true;
         try {
-          hashdb_settings.chunk_size = boost::lexical_cast<size_t>(optarg);
+          hashdb_settings.hash_block_size = boost::lexical_cast<size_t>(optarg);
         } catch (...) {
-          std::cerr << "Invalid value for chunk_size: '" << optarg << "'.  " << see_usage << "\n";
+          std::cerr << "Invalid value for hash_block_size: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
@@ -1091,7 +1093,7 @@ int main(int argc,char **argv) {
       no_has_server_socket_endpoint(ACTION_COPY_NEW);
 
       create_hashdb(arg2, hashdb_settings);
-      require_chunk_sizes_match(arg1, arg2, ACTION_COPY_NEW);
+      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_NEW);
       commands_t::do_copy_new(arg1, arg2);
 
     // copy hashdb to new hashdb, excluding all duplicates
@@ -1100,7 +1102,7 @@ int main(int argc,char **argv) {
       no_has_server_socket_endpoint(ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
 
       create_hashdb(arg2, hashdb_settings);
-      require_chunk_sizes_match(arg1, arg2, ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
+      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
       commands_t::do_copy_new_exclude_duplicates(arg1, arg2, exclude_duplicates_count);
 
     // copy hashdb to existing hashdb
@@ -1111,7 +1113,7 @@ int main(int argc,char **argv) {
       no_has_server_socket_endpoint(ACTION_COPY_EXISTING);
       no_has_exclude_duplicates(ACTION_COPY_EXISTING);
 
-      require_chunk_sizes_match(arg1, arg2, ACTION_COPY_EXISTING);
+      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_EXISTING);
       commands_t::do_copy(arg1, arg2);
 
     // else something went wrong
@@ -1147,7 +1149,7 @@ int main(int argc,char **argv) {
       no_has_server_socket_endpoint(ACTION_REMOVE);
       no_has_exclude_duplicates(ACTION_REMOVE);
 
-      require_chunk_sizes_match(arg1, arg2, ACTION_REMOVE);
+      require_hash_block_sizes_match(arg1, arg2, ACTION_REMOVE);
       commands_t::do_remove(arg1, arg2);
 
     // else something went wrong
@@ -1171,8 +1173,8 @@ int main(int argc,char **argv) {
     no_has_exclude_duplicates(ACTION_MERGE);
 
     create_hashdb(arg3, hashdb_settings);
-    require_chunk_sizes_match(arg1, arg2, ACTION_MERGE);
-    require_chunk_sizes_match(arg1, arg3, ACTION_MERGE);
+    require_hash_block_sizes_match(arg1, arg2, ACTION_MERGE);
+    require_hash_block_sizes_match(arg1, arg3, ACTION_MERGE);
     commands_t::do_merge(arg1, arg2, arg3);
 
   // rebuild bloom

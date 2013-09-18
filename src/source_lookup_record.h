@@ -21,7 +21,7 @@
  * \file
  * Provides a source location record and accessors for it.
  * This record optimizes for space by allowing more bits for the
- * source lookup index and less bits for the chunk offset value,
+ * source lookup index and less bits for the hash block offset value,
  * while still consuming 64 bits total.
  */
 
@@ -37,7 +37,7 @@
 
 // note optimizations:
 // 1) number_of_index_bits_type_t is used to pack source lookup index
-//    and chunk offset value fields.
+//    and hash block offset value fields.
 // 2) count information is encoded in first uint32_t when second uint32_t is max
 
 // ************************************************************
@@ -96,39 +96,39 @@ class source_lookup_record_t {
 
     struct slide32_t {
       uint64_t source_lookup_index:32;
-      uint64_t chunk_offset_value:32;
+      uint64_t hash_block_offset_value:32;
     };
     struct slide33_t {
       uint64_t source_lookup_index:33;
-      uint64_t chunk_offset_value:31;
+      uint64_t hash_block_offset_value:31;
     };
     struct slide34_t {
       uint64_t source_lookup_index:34;
-      uint64_t chunk_offset_value:30;
+      uint64_t hash_block_offset_value:30;
     };
     struct slide35_t {
       uint64_t source_lookup_index:35;
-      uint64_t chunk_offset_value:29;
+      uint64_t hash_block_offset_value:29;
     };
     struct slide36_t {
       uint64_t source_lookup_index:36;
-      uint64_t chunk_offset_value:28;
+      uint64_t hash_block_offset_value:28;
     };
     struct slide37_t {
       uint64_t source_lookup_index:37;
-      uint64_t chunk_offset_value:27;
+      uint64_t hash_block_offset_value:27;
     };
     struct slide38_t {
       uint64_t source_lookup_index:38;
-      uint64_t chunk_offset_value:26;
+      uint64_t hash_block_offset_value:26;
     };
     struct slide39_t {
       uint64_t source_lookup_index:39;
-      uint64_t chunk_offset_value:25;
+      uint64_t hash_block_offset_value:25;
     };
     struct slide40_t {
       uint64_t source_lookup_index:40;
-      uint64_t chunk_offset_value:24;
+      uint64_t hash_block_offset_value:24;
     };
     struct counter_t {
       uint64_t count:32;
@@ -160,7 +160,7 @@ class source_lookup_record_t {
       }
     }
 
-    void validate_chunk_offset_value(
+    void validate_hash_block_offset_value(
                      number_of_index_bits_type_t number_of_index_bits_type,
                      uint64_t offset) {
       bool is_valid = false;
@@ -176,9 +176,9 @@ class source_lookup_record_t {
         case NUMBER_OF_INDEX_BITS40: is_valid = offset < (uint64_t)1<<24; break;
       }
       if (!is_valid) {
-        std::cerr << "Error: The chunk offset value is too large for the current source lookup record type " << number_of_index_bits_type << ".\n";
+        std::cerr << "Error: The hash block offset value is too large for the current source lookup record type " << number_of_index_bits_type << ".\n";
         std::cerr << "Use a number of index bits type with a lower capacity\n";
-        std::cerr << "in order to index higher chunk offset values.\n";
+        std::cerr << "in order to index higher hash block offset values.\n";
         std::cerr << "Cannot continue.  Aborting.\n";
         exit(1);
       }
@@ -193,73 +193,73 @@ class source_lookup_record_t {
     }
 
     /**
-     * Construct from source lookup index and chunk offset value.
+     * Construct from source lookup index and hash block offset value.
      */
     source_lookup_record_t(
             number_of_index_bits_type_t number_of_index_bits_type,
             uint64_t _source_lookup_index,
-            uint64_t _chunk_offset_value) :
+            uint64_t _hash_block_offset_value) :
                   // The composite_value cannot be set from this constructor
                   composite_value(0UL) {
 
       // validate the inputs
       validate_source_lookup_index(number_of_index_bits_type, _source_lookup_index);
-      validate_chunk_offset_value(number_of_index_bits_type, _chunk_offset_value);
+      validate_hash_block_offset_value(number_of_index_bits_type, _hash_block_offset_value);
 
       // now accept the input values
       switch(number_of_index_bits_type) {
         case NUMBER_OF_INDEX_BITS32: {
           slide32_t* slide32 = reinterpret_cast<slide32_t*>(this);
           slide32->source_lookup_index = _source_lookup_index;
-          slide32->chunk_offset_value = _chunk_offset_value;
+          slide32->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS33: {
           slide33_t* slide33 = reinterpret_cast<slide33_t*>(this);
           slide33->source_lookup_index = _source_lookup_index;
-          slide33->chunk_offset_value = _chunk_offset_value;
+          slide33->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS34: {
           slide34_t* slide34 = reinterpret_cast<slide34_t*>(this);
           slide34->source_lookup_index = _source_lookup_index;
-          slide34->chunk_offset_value = _chunk_offset_value;
+          slide34->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS35: {
           slide35_t* slide35 = reinterpret_cast<slide35_t*>(this);
           slide35->source_lookup_index = _source_lookup_index;
-          slide35->chunk_offset_value = _chunk_offset_value;
+          slide35->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS36: {
           slide36_t* slide36 = reinterpret_cast<slide36_t*>(this);
           slide36->source_lookup_index = _source_lookup_index;
-          slide36->chunk_offset_value = _chunk_offset_value;
+          slide36->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS37: {
           slide37_t* slide37 = reinterpret_cast<slide37_t*>(this);
           slide37->source_lookup_index = _source_lookup_index;
-          slide37->chunk_offset_value = _chunk_offset_value;
+          slide37->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS38: {
           slide38_t* slide38 = reinterpret_cast<slide38_t*>(this);
           slide38->source_lookup_index = _source_lookup_index;
-          slide38->chunk_offset_value = _chunk_offset_value;
+          slide38->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS39: {
           slide39_t* slide39 = reinterpret_cast<slide39_t*>(this);
           slide39->source_lookup_index = _source_lookup_index;
-          slide39->chunk_offset_value = _chunk_offset_value;
+          slide39->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         case NUMBER_OF_INDEX_BITS40: {
           slide40_t* slide40 = reinterpret_cast<slide40_t*>(this);
           slide40->source_lookup_index = _source_lookup_index;
-          slide40->chunk_offset_value = _chunk_offset_value;
+          slide40->hash_block_offset_value = _hash_block_offset_value;
           break;
         }
         default: {
@@ -287,7 +287,7 @@ class source_lookup_record_t {
       counter_t* counter = reinterpret_cast<counter_t*>(this);
       if (counter->overflow_indicator != std::numeric_limits<uint32_t>::max()) {
         // the data structure is using source_lookup_index
-        // and chunk_offset_value rather than count
+        // and hash_block_offset_value rather than count
         return 1;
       } else {
         // the data structure is using overflow_indicator and count
@@ -351,46 +351,46 @@ class source_lookup_record_t {
     }
 
     /**
-     * Get the chunk offset value given the number of index bits type.
+     * Get the hash block offset value given the number of index bits type.
      */
-    uint64_t chunk_offset_value(
+    uint64_t hash_block_offset_value(
                  number_of_index_bits_type_t number_of_index_bits_type) const {
       switch(number_of_index_bits_type) {
         case NUMBER_OF_INDEX_BITS32: {
           slide32_t const* slide32 = reinterpret_cast<slide32_t const*>(this);
-          return slide32->chunk_offset_value;
+          return slide32->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS33: {
           slide33_t const* slide33 = reinterpret_cast<slide33_t const*>(this);
-          return slide33->chunk_offset_value;
+          return slide33->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS34: {
           slide34_t const* slide34 = reinterpret_cast<slide34_t const*>(this);
-          return slide34->chunk_offset_value;
+          return slide34->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS35: {
           slide35_t const* slide35 = reinterpret_cast<slide35_t const*>(this);
-          return slide35->chunk_offset_value;
+          return slide35->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS36: {
           slide36_t const* slide36 = reinterpret_cast<slide36_t const*>(this);
-          return slide36->chunk_offset_value;
+          return slide36->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS37: {
           slide37_t const* slide37 = reinterpret_cast<slide37_t const*>(this);
-          return slide37->chunk_offset_value;
+          return slide37->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS38: {
           slide38_t const* slide38 = reinterpret_cast<slide38_t const*>(this);
-          return slide38->chunk_offset_value;
+          return slide38->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS39: {
           slide39_t const* slide39 = reinterpret_cast<slide39_t const*>(this);
-          return slide39->chunk_offset_value;
+          return slide39->hash_block_offset_value;
         }
         case NUMBER_OF_INDEX_BITS40: {
           slide40_t const* slide40 = reinterpret_cast<slide40_t const*>(this);
-          return slide40->chunk_offset_value;
+          return slide40->hash_block_offset_value;
         }
       }
       assert(0); return 0;

@@ -75,7 +75,7 @@ class settings_reader_t {
   enum node_type_t {NO_NODE,
                     // hashdb
                     HASHDB_VERSION,
-                    CHUNK_SIZE,
+                    HASH_BLOCK_SIZE,
                     HASHDIGEST_TYPE,
                     MAXIMUM_HASH_DUPLICATES,
                     // hash store, hash duplicates store
@@ -136,7 +136,7 @@ class settings_reader_t {
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdb_version"))) return HASHDB_VERSION;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("chunk_size"))) return CHUNK_SIZE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
@@ -273,8 +273,8 @@ class settings_reader_t {
       case NO_PARENT_NODE:
         if (user_data.active_node == HASHDB_VERSION) {
           xmlChar_to_number(characters, len, user_data.settings.hashdb_version);
-        } else if (user_data.active_node == CHUNK_SIZE) {
-          xmlChar_to_number(characters, len, user_data.settings.chunk_size);
+        } else if (user_data.active_node == HASH_BLOCK_SIZE) {
+          xmlChar_to_number(characters, len, user_data.settings.hash_block_size);
         } else if (user_data.active_node == HASHDIGEST_TYPE) {
           // get hashdigest type
           std::string hashdigest_type_string;

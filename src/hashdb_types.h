@@ -31,7 +31,7 @@
 #include <string.h> // for memcmp
 #include <string>
 #include <iostream>
-#include "dfxml/src/hash_t.h"    // defines chunk hash type
+#include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
 
 // ************************************************************
 // file mode types
@@ -184,26 +184,26 @@ inline bool string_to_hashdigest_type(const std::string& name, hashdigest_type_t
 // hash source record
 struct hash_source_record_t {
     uint64_t file_offset;
-    uint32_t chunk_size;
+    uint32_t hash_block_size;
     std::string hashdigest_type_string;
     std::string repository_name;
     std::string filename;
 
 
     hash_source_record_t() : file_offset(0),
-                             chunk_size(0),
+                             hash_block_size(0),
                              hashdigest_type_string(""),
                              repository_name(""),
                              filename("") {
     }
 
     hash_source_record_t(uint64_t p_file_offset,
-                         size_t p_chunk_size,
+                         size_t p_hash_block_size,
                          std::string p_hashdigest_type_string,
                          std::string p_repository_name,
                          std::string p_filename) :
                                file_offset(p_file_offset),
-                               chunk_size(p_chunk_size),
+                               hash_block_size(p_hash_block_size),
                                hashdigest_type_string(p_hashdigest_type_string),
                                repository_name(p_repository_name),
                                filename(p_filename) {
@@ -211,7 +211,7 @@ struct hash_source_record_t {
 
     bool const operator==(const hash_source_record_t& hash_source_record) const {
       return (hash_source_record.file_offset == this->file_offset
-           && hash_source_record.chunk_size == this->chunk_size
+           && hash_source_record.hash_block_size == this->hash_block_size
            && hash_source_record.hashdigest_type_string == this->hashdigest_type_string
            && hash_source_record.repository_name == this->repository_name
            && hash_source_record.filename == this->filename);
@@ -219,7 +219,7 @@ struct hash_source_record_t {
 
     bool const operator<(const hash_source_record_t& hash_source_record) const {
       if (file_offset < hash_source_record.file_offset) return true;
-      if (chunk_size < hash_source_record.chunk_size) return true;
+      if (hash_block_size < hash_source_record.hash_block_size) return true;
       if (hashdigest_type_string < hash_source_record.hashdigest_type_string) return true;
       if (repository_name < hash_source_record.repository_name) return true;
       if (filename < hash_source_record.filename) return true;
@@ -231,7 +231,7 @@ inline std::ostream& operator<<(std::ostream& os,
                          const class hash_source_record_t& hash_source_record) {
 //  os << "(hash_source_record_t file_offset=" << hash_source_record.file_offset
   os << "(file_offset=" << hash_source_record.file_offset
-     << ",chunk_size=" << hash_source_record.chunk_size
+     << ",hash_block_size=" << hash_source_record.hash_block_size
 
      << ",hashdigest_type_string=" << hash_source_record.hashdigest_type_string
      << ",repository_name=" << hash_source_record.repository_name

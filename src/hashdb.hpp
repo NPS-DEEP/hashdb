@@ -77,14 +77,14 @@ struct hash_response_md5_t {
     uint8_t digest[16];
     uint32_t duplicates_count;
     uint64_t source_query_index;
-    uint64_t chunk_offset_value;
+    uint64_t hash_block_offset_value;
 
     hash_response_md5_t();
     hash_response_md5_t(uint32_t p_id,
                         const uint8_t* p_digest,
                         uint32_t p_duplicates_count,
                         uint64_t p_source_query_index,
-                        uint64_t p_chunk_offset_value);
+                        uint64_t p_hash_block_offset_value);
 };
 
 /**

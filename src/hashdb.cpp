@@ -85,18 +85,18 @@ hashdb::hash_request_md5_t::hash_request_md5_t(uint32_t p_id, const uint8_t* p_d
 // hash response, also same as source request
 hashdb::hash_response_md5_t::hash_response_md5_t() :
              id(0), digest(), duplicates_count(0),
-             source_query_index(0), chunk_offset_value(0) {
+             source_query_index(0), hash_block_offset_value(0) {
 }
 hashdb::hash_response_md5_t::hash_response_md5_t(
                     uint32_t p_id,
                     const uint8_t* p_digest,
                     uint32_t p_duplicates_count,
                     uint64_t p_source_query_index,
-                    uint64_t p_chunk_offset_value) :
+                    uint64_t p_hash_block_offset_value) :
              id(p_id),
              duplicates_count(p_duplicates_count),
              source_query_index(p_source_query_index),
-             chunk_offset_value(p_chunk_offset_value) {
+             hash_block_offset_value(p_hash_block_offset_value) {
   memcpy(this->digest,p_digest,16);
 }
 

@@ -60,7 +60,7 @@ class hashdb_exporter_t {
     }
 
     void do_export(const hashdb_db_manager_t& hashdb_in) {
-      const size_t chunk_size = hashdb_in.hashdb_settings.chunk_size;
+      const size_t hash_block_size = hashdb_in.hashdb_settings.hash_block_size;
 
       hashdb_db_manager_t::hashdb_iterator_t it = hashdb_in.begin();
       hashdb_db_manager_t::hashdb_iterator_t end = hashdb_in.end();
@@ -88,7 +88,7 @@ class hashdb_exporter_t {
 
         // start the byte_run tag with its file_offset attribute
         std::stringstream ss;
-        ss << "file_offset='" << file_offset << "' len='" << chunk_size << "'";
+        ss << "file_offset='" << file_offset << "' len='" << hash_block_size << "'";
         x.push("byte_run", ss.str());
 
         // write the hashdigest

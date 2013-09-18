@@ -18,7 +18,7 @@ Removed the dependency on libtoolize by porting libxml++ to libxml2.  libxml++ r
 Here are some ramifications of this effort:
 hashdb_settings_t now includes hashdigest_type.
 
-When parsing DFXML, hashdigest_type and chunk_size are passed to hashdb_manager.
+When parsing DFXML, hashdigest_type and hash_block_size are passed to hashdb_manager.
 This way, hashdb_manager can manage all checking and report all failures at the same place.
 
 There were 3 similar DFXML parsers because the action is embedded in the parser:
@@ -101,15 +101,15 @@ For hash lookup request, a vector of {hash id, hash digest} pairs is provided:
     vector<{id, digest}>
   }
 
-For hash lookup response, a structure containing chunk size and a vector of {hash id, hash digest, duplicates count, lookup index, chunk offset} is returned:
+For hash lookup response, a structure containing hash block size and a vector of {hash id, hash digest, duplicates count, lookup index, hash block offset value} is returned:
   hashes_response {
-    chunk_size;
-    vector<{id, digest, count, lookup_index, chunk_offset}>
+    hash_block_size;
+    vector<{id, digest, count, lookup_index, hash_block_offset_value}>
   }
 
-I like the request and response structures except for the use of variable "chunk_size".  I provide "chunk_size" so the user can validate that the chunk size the user expects and the chunk size the database uses match.  The test should be hidden, but the library doesn't know the chunk size the user is using.  I don't want to pass in chunk_size during instantiation because the reason is obscure.  Also, testing on chunk size alone does not cover potential future checks.
+I like the request and response structures except for the use of variable "hash_block_size".  I provide "hash_block_size" so the user can validate that the hash block size the user expects and the hash block size the database uses match.  The test should be hidden, but the library doesn't know the hash block size the user is using.  I don't want to pass in hash_block_size during instantiation because the reason is obscure.  Also, testing on hash block size alone does not cover potential future checks.
 
-I resolved this by removing the check.  The use must check the xml returned by "get_hashdb_info" interface to determine the chunk_size.
+I resolved this by removing the check.  The use must check the xml returned by "get_hashdb_info" interface to determine the hash_block_size.
 
 ------------------------------------------------------------
 Testing:
@@ -142,8 +142,8 @@ Put back filesystem v3 compatibility for Boost v1.48 onward.
 (bda): Done.
 
 Functionality:
-Added new scan parameter, sector_size, which is different from chunk size,
-so that chunk hashes can be managed on sector boundaries.
+Added new scan parameter, sector_size, which is different from hash block size,
+so that hashes can be managed on sector boundaries.
 
 Added -x parameter to copy command to remove duplicates.
 The implementation may be optimised in the future.
