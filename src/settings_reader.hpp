@@ -428,12 +428,39 @@ class settings_reader_t {
   public:
   static hashdb_settings_t read_settings(const std::string hashdb_dir) {
 
+    // avoid obvious xml trouble by verifying that hashdb_dir exists
+    bool dir_is_present = (access(hashdb_dir.c_str(),F_OK) == 0);
+    if (!dir_is_present) {
+      std::cerr << "Error:\nHash database directory '"
+                << hashdb_dir << "' does not exist.\n"
+                << "Is the path to the hash database correct?\n"
+                << "Cannot continue.\n";
+      exit(1);
+    }
+
+    // also make sure hashdb_dir is a directory
+    struct stat s;
+    bool is_dir = false;
+    if (stat(hashdb_dir.c_str(), &s) == 0) {
+      if (s.st_mode & S_IFDIR) {
+        // good
+        is_dir = true;
+      }
+    }
+    if (!is_dir) {
+      std::cerr << "Error:\nHash database directory '"
+                << hashdb_dir << "' is not a directory.\n"
+                << "Is the path to the hash database correct?\n"
+                << "Cannot continue.\n";
+      exit(1);
+    }
+
     // look up the settings filename
     std::string filename(hashdb_filenames_t::settings_filename(hashdb_dir));
 
-    // avoid obvious xml trouble by verifying that the file exists
-    bool is_present = (access(filename.c_str(),F_OK) == 0);
-    if (!is_present) {
+    // also verify that the settings file exists
+    bool file_is_present = (access(filename.c_str(),F_OK) == 0);
+    if (!file_is_present) {
       std::cerr << "Error:\nSettings file '"
                 << filename << "' does not exist.\n"
                 << "Is the path to the hash database correct?\n"
