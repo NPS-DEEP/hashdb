@@ -65,7 +65,7 @@ case $host in
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *-*-mingw32*)   
+  *mingw32*)   
      LIBS="$LIBS -lpsapi -lws2_32 -lgdi32 -lstdc++"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
@@ -245,6 +245,7 @@ if test  x"$mingw" = x"yes";  then
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
+
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])

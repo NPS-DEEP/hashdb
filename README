@@ -76,6 +76,16 @@ For FC18, perform the following setup:
    $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
    $ sudo yum install boost-devel
 
+Note: the following specific packages may be loaded instead of
+installing development-tools:
+   git
+   gcc
+   gcc-c++
+   autoconf
+   automake
+   libtool
+   openssl-devel
+
 To cross-compile from Fedora 18 to Windows, do the following:
    1) Set up the mingw cross compiler environment:
       $ cd src_win; ./CONFIGURE_F18.sh; cd ..

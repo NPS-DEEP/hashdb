@@ -16,7 +16,7 @@ mingw32 and 64.  Please perform the following steps:
         http://fedoraproject.org/en/get-fedora-options#formats
    1b - Create a new VM using this ISO as the boot.
        
-2. Plese put this CONFIGURE_F18.sh script in you home directory.
+2. Plese put this CONFIGURE_F18.bash script in you home directory.
 
 3. Run this script to configure the system to cross-compile bulk_extractor.
    Parts of this script will be run as root using "sudo".
@@ -28,6 +28,11 @@ read
 # cd to the directory where the script is
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [ "$PWD" != "$DIR" ]; then
+    changed_dir="true"
+else
+    changed_dir="false"
+fi
 cd $DIR
 
 NEEDED_FILES=" icu-mingw32-libprefix.patch icu-mingw64-libprefix.patch"
@@ -109,17 +114,20 @@ function build_mingw {
   then
     echo $LIB already installed. Skipping
   else
-    echo Building $1 from $URL/$FILE
+    echo Building $1 from $URL
     if [ ! -r $FILE ]; then
-       wget $URL/$FILE
+       wget --content-disposition $URL
     fi
-    tar xfvz $FILE
+    tar xvf $FILE
     # Now get the directory that it unpacked into
-    DIR=`tar tfz $FILE |head -1`
+    DIR=`tar tf $FILE |head -1`
     pushd $DIR
     for i in 32 64 ; do
       echo
       echo %%% $LIB mingw$i
+      if [ ! -r configure -a -r bootstrap.sh ]; then
+        . bootstrap.sh
+      fi
       mingw$i-configure --enable-static --disable-shared
       make
       sudo make install
@@ -130,7 +138,7 @@ function build_mingw {
   fi
 }
 
-build_mingw libtre   http://laurikari.net/tre/   tre-0.8.0.tar.gz
+build_mingw libtre   http://laurikari.net/tre/tre-0.8.0.tar.gz   tre-0.8.0.tar.gz
 
 #
 # ICU requires patching and a special build sequence
@@ -149,11 +157,11 @@ else
   if [ ! -r $ICUFILE ]; then
     wget $ICUURL
   fi
-  tar xzf $ICUFILE
+  tar xf $ICUFILE
   patch -p1 < icu-mingw32-libprefix.patch
   patch -p1 < icu-mingw64-libprefix.patch
   
-  ICUDIR=`tar tfz $ICUFILE|head -1`
+  ICUDIR=`tar tf $ICUFILE|head -1`
   # build ICU for Linux to get packaging tools used by MinGW builds
   echo
   echo icu linux
@@ -199,13 +207,13 @@ else
   if [ ! -r $ZMQFILE ]; then
     wget $ZMQURL
   fi
-  tar xzf $ZMQFILE
+  tar xf $ZMQFILE
   patch -p1 <zmq-configure.patch
   patch -p1 <zmq-configure.in.patch
   patch -p1 <zmq-zmq.h.patch
   patch -p1 <zmq-zmq_utils.h.patch
   
-  ZMQDIR=`tar tfz $ZMQFILE|head -1`
+  ZMQDIR=`tar tf $ZMQFILE|head -1`
   
   # build 32- and 64-bit ZMQ for MinGW
   pushd $ZMQDIR
@@ -264,5 +272,8 @@ echo ================================================================
 echo 'You are now ready to cross-compile for win32 and win64.'
 echo 'To make win32 executables: cd ..; make win32'
 echo 'To make win64 executables: cd ..; make win64'
-#echo 'To make ZIP file with win32 and win64 executables:   cd ..; make windist'
+echo 'To make ZIP file with win32 and win64 executables:   cd ..; make windist'
 echo 'To make the Nulsoft installer with both: make'
+if [ "$changed_dir" == "true" ]; then
+    echo "NOTE: paths are relative to the directory $0 is in"
+fi
