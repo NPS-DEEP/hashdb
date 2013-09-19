@@ -303,9 +303,7 @@ void nsrl_calc_histogram(const nsrl_bloom *b,uint64_t counts[256])
 {
     size_t i;
 
-    // JDY: I'm pretty sure this memset is not cleaning the whole structure
-    // JDY: since the sizeof of arrays doesn't carry across call boundary?
-    memset(counts,0,sizeof(counts));
+    memset(counts,0,sizeof(uint64_t) * 256); // hardcoded, so check caller.
     for(i=0;i<b->vector_bytes;i++){
     	if(b->vector[i]) {
 	    counts[b->vector[i]]++;
@@ -628,7 +626,7 @@ static void nsrl_bloom_set_params(nsrl_bloom *b)
 
 // strsep is not in windows' string.h, so use this one
 // from http://stackoverflow.com/questions/8512958/is-there-a-windows-variant-of-strsep
-char* mystrsep(char** stringp, const char* delim)
+static char* mystrsep(char** stringp, const char* delim)
 {
   char* start = *stringp;
   char* p;
