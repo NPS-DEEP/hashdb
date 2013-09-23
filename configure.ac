@@ -246,6 +246,9 @@ if test  x"$mingw" = x"yes";  then
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
 
+  # temporary boost fc19 hack until mingw64-boost package update is available
+  AC_DEFINE(BOOST_USE_WINDOWS_H,1,[temporary cross-compiler windows fix for FC19])
+
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])

@@ -22,6 +22,7 @@
  * Provides hashdb filenames.
  */
 
+#include <config.h>
 #include <string>
 #include "hashdb_filenames.hpp"
 

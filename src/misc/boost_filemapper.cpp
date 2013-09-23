@@ -26,6 +26,7 @@
  * Provides a Boost file map service from C rather than from C++.
  */
 
+#include <config.h>
 #include <string.h>
 #include <boost/interprocess/file_mapping.hpp>  
 #include <boost/interprocess/mapped_region.hpp>
