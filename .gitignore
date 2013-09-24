@@ -23,6 +23,7 @@
 *.swn
 *~
 .deps
+libtool
 Makefile
 Makefile.in
 hashdb-*.zip
