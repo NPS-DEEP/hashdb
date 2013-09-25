@@ -61,6 +61,14 @@ $(SRC_WIN)distclean:
 	if [ -r ../Makefile ]; then (cd ..;$(MAKE) distclean); fi
 	$(MAKE) clean
 
+$(SRC_WIN)install:
+	(cd ../win32/src/libhashdb;$(MAKE) install)
+	(cd ../win64/src/libhashdb;$(MAKE) install)
+
+$(SRC_WIN)uninstall:
+	(cd ../win32/src/libhashdb;$(MAKE) uninstall)
+	(cd ../win64/src/libhashdb;$(MAKE) uninstall)
+
 ################################################################
 ##
 ## Get the PDF documentation from where it is built
@@ -68,4 +76,5 @@ $(SRC_WIN)distclean:
 hashdb_user_guide.pdf: ../doc/hashdb_user_guide/hashdb_user_guide.pdf
 	cp ../doc/hashdb_user_guide/hashdb_user_guide.pdf hashdb_user_guide.pdf
 
+.PHONY: clean distclean install uninstall
 

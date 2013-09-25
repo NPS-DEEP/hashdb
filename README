@@ -36,7 +36,7 @@ prevously run automake and autoconf to produce the script
 for your platform. 
 
 We recommend compiling hashdb with -O3 and that is the
-default. You can disable all optimizaiton flags by specifying the
+default. You can disable all optimization flags by specifying the
 configure option --with-noopt.
 
 hashdb requires additional packages:
