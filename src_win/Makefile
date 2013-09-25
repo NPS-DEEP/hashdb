@@ -56,6 +56,7 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 
 $(SRC_WIN)clean:
 	/bin/rm -rf ../win32 ../win64 *.exe
+	/bin/rm -rf $(PDFDOCS)
 
 $(SRC_WIN)distclean:
 	if [ -r ../Makefile ]; then (cd ..;$(MAKE) distclean); fi
@@ -71,10 +72,11 @@ $(SRC_WIN)uninstall:
 
 ################################################################
 ##
-## Get the PDF documentation from where it is built
+## Get the PDF documentation from the download site
 ##
-hashdb_user_guide.pdf: ../doc/hashdb_user_guide/hashdb_user_guide.pdf
-	cp ../doc/hashdb_user_guide/hashdb_user_guide.pdf hashdb_user_guide.pdf
+DOWNLOAD = http://digitalcorpora.org/downloads/hashdb
+hashdb_user_guide.pdf:
+	wget $(DOWNLOAD)/hashdb_user_guide.pdf
 
 .PHONY: clean distclean install uninstall
 
