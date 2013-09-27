@@ -206,6 +206,45 @@ Both the \hdbc and the \bulk \hid scanner require that one of these two
 query types be selected in order to perform hash lookup queries
 against a specific \hdb.
 
+\subsection{Socket Query Type\label{socket-query-type}}
+Hash databases can be very large.
+Benefeits of using a \hdb server socket service
+rather than accessing a \hdb at a file path include:
+\begin{compactitem}	
+\item Keeping the service available saves fire-up time
+if multiple scans are to be run.
+\item The hash database may not be on your system.
+\item Keeping the hash database on a separate system helps to
+keep as much of the hash database cached in memory as possible,
+enabling faster performance.
+\end{compactitem}	
+
+When a socket query type is selected,
+the \hid library uses a TCP socket to communicate
+between client and server systems.
+If you are using a firewall, it must not block your socket.
+For example on Linux systems, you might use the \texttt{firewall-config}
+tool to enable tcp port 14500.
+For Windows systems,
+use ``Start\textbar Control Panel\textbar Security\textbar Windows Firewall''
+to configure the firewall, and then select ``Allow Program Through Firewall''
+to select each program to be allowed,
+specifically, \texttt{hashdb\_manager.exe},
+\texttt{hashdb\_viewer.exe}, and \texttt{bulk\_extractor.exe}.
+
+For the server, provide the query lookup service socket endpoint,
+for example \texttt{tcp://*:14500}.
+For the client, provide the destination host address and port,
+for example \texttt{tcp://yourmachine.com:14500}.
+
+Caution: When a socket server service is opened,
+its associated hash database is opened.
+Do not make changes to a hash database
+when it is opened as a socket server service.
+Although this will not corrupt the hash database,
+it will corrupt the socket server service,
+resulting in invalid output or possibly a server service termination.
+
 \section{\bulk \hid Scanner\label{hid-scanner}}
 The \bulk \hid scanner is not distributed with \hdb; it is part of \bulk.
 
@@ -319,25 +358,7 @@ bulk_extractor -S query_type=use_socket -o outpath my_imagefile
 We open a server \hdb lookup service at a socket
 so that query services can use the lookup service rather than
 opening and accessing the \hdb by itself.
-
-Hash databases can be very large.
-Benefeits of using a \hdb server socket service
-rather than accessing a \hdb at a file path include:
-\begin{compactitem}	
-\item Keeping the service available saves fire-up time.
-\item The hash database may not be on your system.
-\item Keeping the hash database on a separate system helps to
-keep as much of the hash database cached in memory as possible,
-enabling faster performance.
-\end{compactitem}	
-
-Caution: When a socket server service is opened,
-its associated hash database is opened.
-Do not make changes to a hash database
-when it is opened as a socket server service.
-Although this will not corrupt the hash database,
-it will corrupt the socket server service,
-resulting in invalid output or possibly a server service termination.
+Please see Section~\ref{socket-query-type} for advantages and usage of sockets.
 
 The command line example below illustrates the process of opening
 hash database \texttt{my\_hashdb} as a separate
