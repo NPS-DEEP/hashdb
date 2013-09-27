@@ -1,0 +1,30 @@
+		Announcing hashdb 0.9.0
+		  September 27, 2013
+
+hashdb Version 0.9.0 has been released for Linux, MacOS and Windows.
+
+Version 0.9.0 is the introductory release of hashdb.
+
+Please see https://github.com/simsong/hashdb/wiki.
+
+hashdb enables examiners to search for blacklist data in raw media by
+using cryptographic hashes calculated from hash blocks.
+
+hashdb tools provide two fundamental services:
+* Creating and maintaining hash databases containing cryptographic hashes
+  of hash blocks.
+* Interfaces for searching these hash databases for matching hash values.
+
+The hashdb toolset provides the following resources:
+* hashdb_manager tool:
+  This program is used to build and manage hash
+  datagases and to support hash database lookups.
+* hashdb library:
+  Programs such as the bulk_extractor hashid scanner
+  link this library to support hash database lookups.
+* hashdb_checker tool:
+  Used to support hash database lookups
+
+Starting with bulk_extractor v1.4.1, bulk_extractor provides the hashid
+scanner for scanning for matching hash values.
+
