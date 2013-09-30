@@ -196,6 +196,20 @@ fi
 # ZMQ requires patching
 #
 
+# libzmq.a created with the FC18 cross-compiler is not compatible with
+# the FC19 cross-compiler, so if it can't compile, rebuild it.
+if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq.a ]; then
+  cat > conftest.c <<EOF
+int main() { zmq_bind(0,0); return 0; }
+EOF
+  RESULT=`x86_64-w64-mingw32-gcc -o conftest.exe conftest.c -lzmq -lstdc++ -lws2_32 2>&1` || echo unable to compile existing libzmq.a
+  rm -f conftest.c conftest.exe
+  if [ -n "$RESULT" ]; then
+    echo Removing existing libzmq;
+    sudo rm -f /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libzmq*
+  fi
+fi
+
 echo "Building and installing ZMQ for mingw"
 ZMQVER=3.2.2
 ZMQFILE=zeromq-$ZMQVER.tar.gz
@@ -226,36 +240,14 @@ else
     make clean
   done
   popd
-  rm -rf $ZMQDIR
+  rm -rf $ZMQDIR $ZMQFILE
 fi
 
 #
-# Lightgrep is currently built from github, which I don't like
+# build liblightgrep
 #
 
-if is_installed liblightgrep
-then
-  echo liblightgrep is already installed
-else
-  echo "Building and installing lightgrep for mingw"
-  LGDIR=liblightgrep
-  LGURL=git://github.com/LightboxTech/liblightgrep.git
-  
-  git clone --recursive $LGURL $LGDIR
-  pushd $LGDIR
-  autoreconf -i
-  for i in 32 64 ; do
-    echo
-    echo liblightgrep mingw$i
-    mingw$i-configure --enable-static --disable-shared
-    make
-    sudo make install
-    make clean
-  done
-  popd
-  echo "liblightgrep mingw installation complete."
-  rm -rf $LGDIR
-fi
+build_mingw liblightgrep   https://github.com/LightboxTech/liblightgrep/archive/v1.2.1.tar.gz   liblightgrep-1.2.1.tar.gz
 
 #
 # closure
