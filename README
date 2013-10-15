@@ -14,10 +14,8 @@ hashdb library files hashdb.hpp and libhashdb.a.
 
 Downloads and Websites
 ----------------------
-
-  * [Current Release](http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta3.tar.gz)
-  * [Download Archive](http://digitalcorpora.org/downloads/hashdb/)
-  * [Forensics Wiki Entry](http://www.forensicswiki.org/wiki/hashdb)
+The hashdb toolset is available for Windows, Linux, and Mac users.
+Please see the hashdb Wiki home page at https://github.com/simsong/hashdb/wiki
 
 Downloading the Development Tree
 --------------------------------
