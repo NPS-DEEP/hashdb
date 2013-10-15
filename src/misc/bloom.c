@@ -40,7 +40,7 @@
 
 #include "config.h"			/* required for OpenSSL defs */
 #include "bloom.h"
-#include "boost_filemapper.hpp"
+#include "file_mapper.hpp"
 
 #ifdef WIN32
 #include <winsock.h>

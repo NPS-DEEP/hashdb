@@ -1,5 +1,5 @@
 /* 
- * File:   boost_filemapper.hpp
+ * File:   file_mapper.hpp
  * Author: jschmid
  * 
  * Created on July 2, 2013, 4:56 PM
@@ -26,8 +26,8 @@
  * Provides a Boost file map service from C rather than from C++.
  */
 
-#ifndef BOOST_FILEMAPPER_HPP
-#define BOOST_FILEMAPPER_HPP
+#ifndef FILE_MAPPER_HPP
+#define FILE_MAPPER_HPP
 
 #include <stddef.h>
 #include <stdint.h>

@@ -1,5 +1,5 @@
 /* 
- * File:   boost_filemapper.cpp
+ * File:   file_mapper.cpp
  * Author: jschmid
  * 
  * Created on July 2, 2013, 4:56 PM
@@ -30,7 +30,7 @@
 #include <string.h>
 #include <boost/interprocess/file_mapping.hpp>  
 #include <boost/interprocess/mapped_region.hpp>
-#include "boost_filemapper.hpp"
+#include "file_mapper.hpp"
 
 namespace BIP = boost::interprocess;
 using namespace std;

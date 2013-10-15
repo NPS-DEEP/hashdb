@@ -71,8 +71,8 @@ DFXML_INCS = \
 MISC_INCS = \
 	misc/bloom.c \
 	misc/bloom.h \
-	misc/boost_filemapper.cpp \
-	misc/boost_filemapper.hpp
+	misc/file_mapper.cpp \
+	misc/file_mapper.hpp
 
 BOOST_BTREE_INCS = \
 	Boost-Btree/boost/btree/dynamic_size.hpp \

@@ -30,7 +30,7 @@
 #define BLOOM_FILTER_HPP
 #include "hashdb_types.h"
 #include "bloom.h"
-#include "boost_filemapper.hpp"
+//#include "file_mapper.hpp"
 #include "dfxml/src/hash_t.h"
 #include <sys/stat.h>
 #include <fcntl.h>

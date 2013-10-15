@@ -24,7 +24,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
-#include "boost_filemapper.hpp"
+#include "file_mapper.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
