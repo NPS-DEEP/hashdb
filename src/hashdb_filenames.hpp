@@ -37,6 +37,9 @@ namespace hashdb_filenames_t {
     std::string hash_store_filename(const std::string& hashdb_dir);
     std::string hash_duplicates_store_filename(const std::string& hashdb_dir);
     std::string source_lookup_filename(const std::string& hashdb_dir);
+    std::string source_repository_name_filename(const std::string& hashdb_dir);
+    std::string source_filename_filename(const std::string& hashdb_dir);
+    std::string repository_name_filename(const std::string& hashdb_dir);
     std::string bloom1_filename(const std::string& hashdb_dir);
     std::string bloom2_filename(const std::string& hashdb_dir);
 }

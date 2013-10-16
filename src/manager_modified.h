@@ -309,7 +309,8 @@ class BURST_MANAGER {
           // pack btree to .scratch
           map_t db_final(namer(name,map)+".scratch", boost::btree::flags::truncate);
           for (map_const_iterator i = maps[map]->begin(); i != maps[map]->end(); ++i) {
-            db_final.emplace(i->key(),i->mapped_value());
+//zz            db_final.emplace(i->key(),i->mapped_value());
+            db_final.emplace(i->first,i->second);
           }
           delete maps[map];
           // rename .scratch back to existing btree, replacing existing btree
@@ -349,7 +350,7 @@ class BURST_MANAGER {
 //        // pack btree to .scratch
 //        map_t db_final(namer(name,map)+".scratch", boost::btree::flags::truncate);
 //        for (map_const_iterator i = maps[map]->begin(); i != maps[map]->end(); ++i) {
-//          db_final.emplace(i->key(),i->mapped_value());
+//          db_final.emplace(i->first,i->second);
 //        }
 //        delete maps[map];
 //        // rename .scratch back to existing btree, replacing existing btree
@@ -567,19 +568,19 @@ class BURST_MANAGER {
 
 
     key_t get_key(const citr_t& i) const {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-      return i->key();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//      return i->key();
+//  #else
       return i->first;
-  #endif
+//  #endif
     }
 
     pay_t get_pay(const citr_t& i) const {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-      return i->mapped_value();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//      return i->mapped_value();
+//  #else
       return i->second;
-  #endif
+//  #endif
     }
 
     std::size_t size() const {
@@ -726,12 +727,12 @@ class BURST_MANAGER {
       if (itr == maps[map]->end()) {
         return false;
       } else {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-        // BTree uses mapped_value
-        pay = itr->mapped_value();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//        // BTree uses mapped_value
+//        pay = itr->mapped_value();
+//  #else
         pay = itr->second;
-  #endif
+//  #endif
         return true;
       }
     }
@@ -776,12 +777,12 @@ class BURST_MANAGER {
         assert(0);
       }
 
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-      // BTree uses mapped_value
-      pay = itr->mapped_value();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//      // BTree uses mapped_value
+//      pay = itr->mapped_value();
+//  #else
       pay = itr->second;
-  #endif
+//  #endif
     }
 */
 

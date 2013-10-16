@@ -176,9 +176,10 @@
 #elif LOCAL_MAP_TYPE == MAP_TYPE_UNORDERED_MAP
 #include <boost/unordered/unordered_map.hpp>
 #elif LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-#include <boost/btree/header.hpp>
-#include <boost/btree/map.hpp>
-#include <boost/btree/support/strbuf.hpp>
+//#include <boost/btree/header.hpp>
+//#include <boost/btree/map.hpp>
+//#include <boost/btree/support/strbuf.hpp>
+#include <boost/btree/btree_map.hpp>
 #endif
 
 // managed the mapped file during creation.  Allows for growing the 
@@ -238,6 +239,7 @@ class BURST_MANAGER {
     typedef typename map_t::const_iterator           map_const_iterator;
 
     typedef std::pair<typename map_t::iterator, typename map_t::iterator> iterator_range;
+    typedef std::pair<typename map_t::const_iterator, typename map_t::const_iterator> const_iterator_range;
 
 /*
     #if     LOCAL_MAP_TYPE == MAP_TYPE_FLAT_MAP
@@ -326,7 +328,8 @@ class BURST_MANAGER {
           // pack btree to .scratch
           map_t db_final(namer(name,map)+".scratch", boost::btree::flags::truncate);
           for (map_const_iterator i = maps[map]->begin(); i != maps[map]->end(); ++i) {
-            db_final.emplace(i->key(),i->mapped_value());
+//zz            db_final.emplace(i->key(),i->mapped_value());
+            db_final.emplace(i->first,i->second);
           }
           delete maps[map];
           // rename .scratch back to existing btree, replacing existing btree
@@ -552,19 +555,19 @@ class BURST_MANAGER {
 
 
     key_t get_key(const citr_t& i) const {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-      return i->key();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//      return i->key();
+//  #else
       return i->first;
-  #endif
+//  #endif
     }
 
     pay_t get_pay(const citr_t& i) const {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-      return i->mapped_value();
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//      return i->mapped_value();
+//  #else
       return i->second;
-  #endif
+//  #endif
     }
 
     std::size_t size() const {
@@ -728,18 +731,18 @@ class BURST_MANAGER {
       typename map_t::const_iterator lower_it = maps[map]->lower_bound(_key);
       typename map_t::const_iterator upper_it = maps[map]->upper_bound(_key);
 #else
-      iterator_range range = maps[map]->equal_range(_key);
+      const_iterator_range range = maps[map]->equal_range(_key);
       typename map_t::const_iterator lower_it = range.first;
       typename map_t::const_iterator upper_it = range.second;
 #endif
 
       // find source lookup record in range
       while (lower_it != upper_it) {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-        if (pay == lower_it->mapped_value())
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//        if (pay == lower_it->mapped_value())
+//  #else
         if (pay == lower_it->second)
-  #endif
+//  #endif
         {
           // found match
           maps[map]->erase(lower_it);
@@ -762,24 +765,24 @@ class BURST_MANAGER {
       typename map_t::const_iterator lower_it = maps[map]->lower_bound(_key);
       typename map_t::const_iterator upper_it = maps[map]->upper_bound(_key);
 #else
-      iterator_range range = maps[map]->equal_range(_key);
+      const_iterator_range range = maps[map]->equal_range(_key);
       typename map_t::const_iterator lower_it = range.first;
       typename map_t::const_iterator upper_it = range.second;
 #endif
 
       // find source lookup record in range
       while (lower_it != upper_it) {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-        if (pay == lower_it->mapped_value()) {
-          // found match
-          return true;
-        }
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//        if (pay == lower_it->mapped_value()) {
+//          // found match
+//          return true;
+//        }
+//  #else
         if (pay == lower_it->second) {
           // found match
           return true;
         }
-  #endif
+//  #endif
         ++lower_it;
       }
       // there was no match
@@ -798,7 +801,7 @@ class BURST_MANAGER {
       typename map_t::const_iterator lower_it = maps[map]->lower_bound(_key);
       typename map_t::const_iterator upper_it = maps[map]->upper_bound(_key);
 #else
-      iterator_range range = maps[map]->equal_range(_key);
+      const_iterator_range range = maps[map]->equal_range(_key);
       typename map_t::const_iterator lower_it = range.first;
       typename map_t::const_iterator upper_it = range.second;
 #endif
@@ -823,18 +826,18 @@ class BURST_MANAGER {
       typename map_t::const_iterator lower_it = maps[map]->lower_bound(_key);
       typename map_t::const_iterator upper_it = maps[map]->upper_bound(_key);
 #else
-      iterator_range range = maps[map]->equal_range(_key);
+      const_iterator_range range = maps[map]->equal_range(_key);
       typename map_t::const_iterator lower_it = range.first;
       typename map_t::const_iterator upper_it = range.second;
 #endif
 
       // iterate through range to calculate key count
       while (lower_it != upper_it) {
-  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-        pay_vector.push_back(lower_it->mapped_value());
-  #else
+//  #if LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
+//        pay_vector.push_back(lower_it->mapped_value());
+//  #else
         pay_vector.push_back(lower_it->second);
-  #endif
+//  #endif
         ++lower_it;
       }
     }

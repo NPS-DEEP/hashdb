@@ -23,8 +23,10 @@ lib_LTLIBRARIES = libhashdb.la
 libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
+#zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/Boost-Btree \
+	-isystem${top_srcdir}/src/btree/include \
+	-isystem${top_srcdir}/src/endian/include \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
@@ -101,11 +103,7 @@ ENDIAN_INCS = \
 	../endian/include/boost/endian/detail/config.hpp \
 	../endian/include/boost/endian/detail/disable_warnings_pop.hpp \
 	../endian/include/boost/endian/detail/intrinsic.hpp \
-	../endian/include/boost/endian/conversion.hpp \
-
-
-
-
+	../endian/include/boost/endian/conversion.hpp
 
 libhashdb_la_SOURCES = \
 	$(QUERY_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)

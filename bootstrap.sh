@@ -8,9 +8,15 @@ then
   git submodule init
 fi
 
-if [ ! -r src/Boost-Btree/.git ] ;
+if [ ! -r src/btree/.git ] ;
 then
-  echo submodule error.  Please check out with git clone --recursive
+  echo btree submodule error.  Please check out with git clone --recursive
+  exit 1
+fi
+
+if [ ! -r src/endian/.git ] ;
+then
+  echo endian submodule error.  Please check out with git clone --recursive
   exit 1
 fi
 

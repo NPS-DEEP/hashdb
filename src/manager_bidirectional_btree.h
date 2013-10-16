@@ -45,9 +45,10 @@
 // Boost includes
 #include <boost/functional/hash.hpp>
 
-#include <boost/btree/header.hpp>
-#include <boost/btree/map.hpp>
-#include <boost/btree/support/strbuf.hpp>
+#include <boost/btree/btree_map.hpp>
+//#include <boost/btree/header.hpp>
+//#include <boost/btree/map.hpp>
+//#include <boost/btree/support/strbuf.hpp>
 #
 
 template<typename KEY_T, typename PAY_T>
@@ -55,8 +56,8 @@ template<typename KEY_T, typename PAY_T>
 class manager_bidirectional_btree_t {
   private:
     // glue for forward map
-    typedef boost::btree::btree_map<KEY_T, PAY_T> map_forward_t;
-    typedef boost::btree::btree_map<PAY_T, KEY_T> map_backward_t;
+    typedef boost::btree::btree_multimap<KEY_T, PAY_T> map_forward_t;
+    typedef boost::btree::btree_multimap<PAY_T, KEY_T> map_backward_t;
 
     std::string  name_forward;
     std::string  name_backward;
@@ -105,10 +106,12 @@ class manager_bidirectional_btree_t {
         map_backward_t map_backward_scratch(name_backward + ".scratch",
                                           boost::btree::flags::truncate);
         for (typename map_forward_t::const_iterator it_forward = map_forward->begin(); it_forward != map_forward->end(); ++it_forward) {
-          map_forward_scratch.emplace(it_forward->key(), it_forward->mapped_value());
+//          map_forward_scratch.emplace(it_forward->key(), it_forward->mapped_value());
+          map_forward_scratch.emplace(it_forward->first, it_forward->second);
         }
         for (typename map_backward_t::const_iterator it_backward = map_backward->begin(); it_backward != map_backward->end(); ++it_backward) {
-          map_backward_scratch.emplace(it_backward->key(), it_backward->mapped_value());
+//          map_backward_scratch.emplace(it_backward->key(), it_backward->mapped_value());
+          map_backward_scratch.emplace(it_backward->first, it_backward->second);
         }
 
         // delete btree
@@ -175,7 +178,8 @@ class manager_bidirectional_btree_t {
         return false;
       } else {
         // has key, set pay
-        pay = it->mapped_value();
+//        pay = it->mapped_value();
+        pay = it->second;
         return true;
       }
     }
@@ -191,7 +195,8 @@ class manager_bidirectional_btree_t {
         return false;
       } else {
         // has pay, set key
-        key = it->mapped_value();
+//        key = it->mapped_value();
+        key = it->second;
         return true;
       }
     }
@@ -223,9 +228,12 @@ class manager_bidirectional_btree_t {
       KEY_T highest = 0L; // this requires that KEY_T must be uint64_t
       typename map_forward_t::const_iterator end = map_forward->end();
       for (typename map_forward_t::const_iterator it=map_forward->begin(); it!=end; ++it) {
-        if (it->key() > highest) {
-          highest = it->key();
+        if (it->first > highest) {
+          highest = it->first;
         }
+//        if (it->key() > highest) {
+//          highest = it->key();
+//        }
       }
       return highest;
     }
