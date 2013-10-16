@@ -1,9 +1,9 @@
-[submodule "src/Boost-Btree"]
-	path = src/Boost-Btree
-	url = https://github.com/Beman/Boost-Btree.git
 [submodule "src/dfxml"]
 	path = src/dfxml
 	url = https://github.com/simsong/dfxml.git
-[submodule "src/Boost-Btree-64-bit-port"]
-	path = src/Boost-Btree-64-bit-port
-	url = https://github.com/BruceMty/Boost-Btree-64-bit-port.git
+[submodule "src/btree"]
+	path = src/btree
+	url = https://github.com/Beman/btree
+[submodule "src/endian"]
+	path = src/endian
+	url = https://github.com/Beman/endian

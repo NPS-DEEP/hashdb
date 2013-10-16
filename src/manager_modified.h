@@ -171,9 +171,10 @@
 #elif LOCAL_MAP_TYPE == MAP_TYPE_UNORDERED_MAP
 #include <boost/unordered/unordered_map.hpp>
 #elif LOCAL_MAP_TYPE == MAP_TYPE_BTREE_MAP
-#include <boost/btree/header.hpp>
-#include <boost/btree/map.hpp>
-#include <boost/btree/support/strbuf.hpp>
+#include <boost/btree/btree_map.hpp>
+//#include <boost/btree/header.hpp>
+//#include <boost/btree/map.hpp>
+//#include <boost/btree/support/strbuf.hpp>
 #endif
 
 // managed the mapped file during creation.  Allows for growing the 

@@ -70,32 +70,45 @@ MISC_INCS = \
 	../misc/file_mapper.cpp \
 	../misc/file_mapper.hpp
 
-BOOST_BTREE_INCS = \
-	../Boost-Btree/boost/btree/dynamic_size.hpp \
-	../Boost-Btree/boost/btree/header.hpp \
-	../Boost-Btree/boost/btree/map.hpp \
-	../Boost-Btree/boost/btree/set.hpp \
-	../Boost-Btree/boost/btree/detail/binary_file.hpp \
-	../Boost-Btree/boost/btree/detail/buffer_manager.hpp \
-	../Boost-Btree/boost/btree/detail/common.hpp \
-	../Boost-Btree/boost/btree/detail/config.hpp \
-	../Boost-Btree/boost/btree/support/c_str_proxy.hpp \
-	../Boost-Btree/boost/btree/support/fixstr.hpp \
-	../Boost-Btree/boost/btree/support/random_string.hpp \
-	../Boost-Btree/boost/btree/support/strbuf.hpp \
-	../Boost-Btree/boost/btree/support/timer.hpp \
-	../Boost-Btree/boost/integer/endian.hpp \
-	../Boost-Btree/boost/integer/endian_flip.hpp \
-	../Boost-Btree/boost/integer/endian_binary_stream.hpp \
-	../Boost-Btree/boost/integer/cover_operators.hpp \
-	../Boost-Btree/libs/btree/src/detail/run_timer.cpp \
-	../Boost-Btree/libs/btree/src/detail/buffer_manager.cpp \
-	../Boost-Btree/libs/btree/src/detail/binary_file.cpp \
-	../Boost-Btree/libs/btree/src/detail/timer.cpp \
-	../Boost-Btree/libs/btree/src/detail/run_timer_ctors.cpp
+BTREE_INCS = \
+	../btree/include/boost/btree/index_helpers.hpp \
+	../btree/include/boost/btree/support/string_view.hpp \
+	../btree/include/boost/btree/support/random_string.hpp \
+	../btree/include/boost/btree/support/size_t_codec.hpp \
+	../btree/include/boost/btree/support/string_holder.hpp \
+	../btree/include/boost/btree/btree_index_set.hpp \
+	../btree/include/boost/btree/mmff.hpp \
+	../btree/include/boost/btree/btree_set.hpp \
+	../btree/include/boost/btree/btree_index_set.hpp \
+	../btree/include/boost/btree/helpers.hpp \
+	../btree/include/boost/btree/detail/binary_file.hpp \
+	../btree/include/boost/btree/detail/test_traits.hpp \
+	../btree/include/boost/btree/detail/index_bases.hpp \
+	../btree/include/boost/btree/detail/config.hpp \
+	../btree/include/boost/btree/detail/btree_bases.hpp \
+	../btree/include/boost/btree/detail/buffer_manager.hpp \
+	../btree/include/boost/btree/header.hpp \
+	../btree/include/boost/btree/bulk_load.hpp \
+	../btree/include/boost/btree/btree_map.hpp \
+	../btree/src/detail/buffer_manager.cpp \
+	../btree/src/detail/binary_file.cpp
+
+ENDIAN_INCS = \
+	../endian/include/boost/endian/std_pair.hpp \
+	../endian/include/boost/endian/types.hpp \
+	../endian/include/boost/endian/detail/cover_operators.hpp \
+	../endian/include/boost/endian/detail/disable_warnings.hpp \
+	../endian/include/boost/endian/detail/config.hpp \
+	../endian/include/boost/endian/detail/disable_warnings_pop.hpp \
+	../endian/include/boost/endian/detail/intrinsic.hpp \
+	../endian/include/boost/endian/conversion.hpp \
+
+
+
+
 
 libhashdb_la_SOURCES = \
-	$(QUERY_INCS) $(DFXML_INCS) $(MISC_INCS) $(BOOST_BTREE_INCS)
+	$(QUERY_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)
 
 include_HEADERS = ../hashdb.hpp
 
