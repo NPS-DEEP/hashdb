@@ -33,7 +33,9 @@ namespace hashdb_filenames_t {
     std::string HISTORY_FILENAME               = "history.xml";
     std::string HASH_STORE_FILENAME            = "hash_store";
     std::string HASH_DUPLICATES_STORE_FILENAME = "hash_duplicates_store";
-    std::string SOURCE_LOOKUP_FILENAME         = "source_lookup_store";
+    std::string SOURCE_LOOKUP_PREFIX           = "source_lookup_store";
+    std::string SOURCE_REPOSITORY_NAME_PREFIX  = "source_repository_name_store";
+    std::string SOURCE_FILENAME_PREFIX         = "source_filename_store";
     std::string BLOOM1_FILENAME                = "bloom_filter_1";
     std::string BLOOM2_FILENAME                = "bloom_filter_2";
 
@@ -57,8 +59,16 @@ namespace hashdb_filenames_t {
       return hashdb_dir + "/" + HASH_DUPLICATES_STORE_FILENAME;
     }
 
-    std::string source_lookup_filename(const std::string& hashdb_dir) {
-      return hashdb_dir + "/" + SOURCE_LOOKUP_FILENAME;
+    std::string source_lookup_prefix(const std::string& hashdb_dir) {
+      return hashdb_dir + "/" + SOURCE_LOOKUP_PREFIX;
+    }
+
+    std::string source_repository_name_prefix(const std::string& hashdb_dir) {
+      return hashdb_dir + "/" + SOURCE_REPOSITORY_NAME_PREFIX;
+    }
+
+    std::string source_filename_prefix(const std::string& hashdb_dir) {
+      return hashdb_dir + "/" + SOURCE_FILENAME_PREFIX;
     }
 
     std::string bloom1_filename(const std::string& hashdb_dir) {

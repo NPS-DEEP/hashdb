@@ -56,7 +56,7 @@ struct indexed_string_t {
 inline std::ostream& operator<<(std::ostream& os,
                                 const indexed_string_t& indexed_string)
 {
-  os << indexed_string.id
+  os << indexed_string.index
      << " \""
      << indexed_string.value
      << "\"";
