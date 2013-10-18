@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides interfaces to the source lookup store.
+ * Provides indexable key, value data type for use with btree.
  */
 
 // file adapted from btree/example/udt.hpp
@@ -33,20 +33,23 @@
 
 using std::cout;
 using namespace boost::btree;
-using boost::string_view;
+//using boost::string_view;
 
-struct indexed_string_t {
-  typedef uint64_t index_type;
+template<typename KEY_T, typename PAY_T>
+struct two_index_set_t {
+  typedef uint64_t key_type;
 
+  KEY_T key;
+  PAY_T payload;
   uint64_t index;
   string_view value;
 
-  indexed_string_t() {}
-  indexed_string_t(uint64_t p_index, const std::string p_value) :
+  two_index_set_t() {}
+  two_index_set_t(uint64_t p_index, const std::string p_value) :
                              index(p_index), value(p_value) {
   }
 
-  bool operator < (const indexed_string_t& rhs) const {
+  bool operator < (const two_index_set_t& rhs) const {
     return value < rhs.index;
   }
 };
@@ -54,11 +57,11 @@ struct indexed_string_t {
 //  stream inserter  ---------------------------------------------------------//
 
 inline std::ostream& operator<<(std::ostream& os,
-                                const indexed_string_t& indexed_string)
+                                const two_index_set_t& two_index_set)
 {
-  os << indexed_string.index
+  os << two_index_set.index
      << " \""
-     << indexed_string.value
+     << two_index_set.value
      << "\"";
   return os;
 }
@@ -67,7 +70,7 @@ inline std::ostream& operator<<(std::ostream& os,
 
 struct value_ordering
 {
-  bool operator()(const indexed_string_t& x, const indexed_string_t& y) const
+  bool operator()(const two_index_set_t& x, const two_index_set_t& y) const
     {return x.value < y.value;}
 };
 
@@ -75,22 +78,22 @@ struct value_ordering
 
 namespace boost {
 namespace btree {
-  template <> struct index_reference<indexed_string_t> {
-    typedef const indexed_string_t type;
+  template <> struct index_reference<two_index_set_t> {
+    typedef const two_index_set_t type;
   };
 
   template <>
-  inline void index_serialize<indexed_string_t>(const indexed_string_t& indexed_string, flat_file_type& file) {
-    index_serialize(indexed_string.index, file);
-    index_serialize(indexed_string.value, file);
+  inline void index_serialize<two_index_set_t>(const two_index_set_t& two_index_set, flat_file_type& file) {
+    index_serialize(two_index_set.index, file);
+    index_serialize(two_index_set.value, file);
   }
 
   template <>
-  inline index_reference<indexed_string_t>::type index_deserialize<indexed_string_t>(const char** flat) {
-    indexed_string_t indexed_string;
-    indexed_string.index = index_deserialize<indexed_string_t::index_type>(flat);
-    indexed_string.value = index_deserialize<boost::string_view>(flat);
-    return indexed_string;
+  inline index_reference<two_index_set_t>::type index_deserialize<two_index_set_t>(const char** flat) {
+    two_index_set_t two_index_set;
+    two_index_set.index = index_deserialize<two_index_set_t::key_type>(flat);
+    two_index_set.value = index_deserialize<boost::string_view>(flat);
+    return two_index_set;
   }
 }} // namespaces
 
