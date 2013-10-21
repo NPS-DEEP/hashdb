@@ -54,7 +54,7 @@ class bi_store_t {
       filename_prefix(p_filename_prefix), file_mode_type(p_file_mode_type,
       map_by_index(0), map_by_value(0) {
 
-    // derive store filenames
+    // data store filenames
     std::string dat_filename = filename_prefix + ".dat";
     std::string idx1_filename = filename_prefix + ".idx1";
     std::string idx2_filename = filename_prefix + ".idx2";
@@ -96,12 +96,11 @@ class bi_store_t {
   }
 
   /**
-   * Get string value from index or return false.
+   * Get value from key or return false.
    */
-  bool get_value(uint64_t index, std::string& value) {
+  bool get_value(const BI_T::key_type& index, BI_T::value_type& value) {
     map_by_index_t::iterator it = map_by_index.find(index);
     if (it == map_by_index_t.end()) {
-      value = "";
       return false;
     } else {
       value = it.second;
@@ -110,12 +109,11 @@ class bi_store_t {
   }
 
   /**
-   * Get index from string value or return false.
+   * Get key from value or return false.
    */
-  bool get_index(const std::string& value, uint64_t& index) {
+  bool get_key(const BI_T::value_type& value, BI_T::key_type& index) {
     map_by_value_t::iterator it = map_by_value.find(value);
     if (it == map_by_value_t.end()) {
-      index = 0;
       return false;
     } else {
       index = it.second;
@@ -126,9 +124,14 @@ class bi_store_t {
   /**
    * Insert element, return false if already there.
    */
-  bool insert_element(uint64_t index, const std::string& value) {
+  std::pair<map_by_index_t::const_iterator, bool>
+  insert_element(const BI_T::key_type, const BI_T::value_type& value) {
+    if (file_mode == READ_ONLY) {
+      assert(0);
+    }
+
     std::pair<map_by_index_t::const_iterator, bool> effect =
-                          map_by_index.emplace(index, value);
+                          map_by_index.zzzzzz(index, value);
 
     // return true if insert happened, false if already there
     return effect.second;
