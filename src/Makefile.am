@@ -31,6 +31,9 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 AM_LDFLAGS = -static $(XML_LIBS)
 
 HASHDB_INCS = \
+	bi_64_pair_data.hpp \
+	bi_64_sv_data.hpp \
+	bi_store.hpp \
 	bloom_filter.hpp \
 	commands.hpp \
 	dfxml_hashdigest_reader.hpp \
@@ -49,20 +52,16 @@ HASHDB_INCS = \
 	hash_store.hpp \
 	hash_store.cpp \
 	history_manager.hpp \
-	manager_bidirectional_btree.h \
 	manager_modified.h \
 	manager_modified_includes.h \
 	manager_modified_multimap.h \
-	manager_multi_index_container.h \
 	query_by_path.hpp \
 	query_by_socket.hpp \
 	query_by_socket_server.hpp \
 	settings_reader.hpp \
 	settings_writer.hpp \
 	source_location_record.hpp \
-	source_lookup_record.h \
-	source_lookup_store.hpp \
-	source_lookup_store.cpp
+	source_lookup_record.h
 
 DFXML_INCS = \
 	dfxml/src/hash_t.h \

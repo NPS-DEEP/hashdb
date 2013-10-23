@@ -52,9 +52,9 @@ class source_lookup_manager_t {
   const file_mode_type_t file_mode_type;
   uint64_t next_source_lookup_index;
 
-  bi_store_t<bi_64_pair_data_t> source_lookup_store;
-  bi_store_t<bi_64_sv_data_t> repository_name_lookup_store;
-  bi_store_t<bi_64_sv_data_t> filename_lookup_store;
+  const bi_store_t<bi_64_pair_data_t> source_lookup_store;
+  const bi_store_t<bi_64_sv_data_t> repository_name_lookup_store;
+  const bi_store_t<bi_64_sv_data_t> filename_lookup_store;
 
   // disallow these
   source_lookup_manager_t(const source_lookup_manager_t&);
@@ -83,12 +83,12 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
   /**
    * Close and release resources.
    */
-  ~source_lookup_store_t() {
+  ~source_lookup_manager_t() {
   }
 
   /**
    * Get the source location of a source lookup index
-   * else clear and return false.
+   * else clear response and return false.
    */
   bool get_source_location(uint64_t source_lookup_index,
                            std::string& repository_name,
@@ -128,7 +128,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
 
   /**
    * Get the source lookup index from source names
-   * else clear and return false.
+   * else clear response and return false.
    */
   bool get_source_lookup_index(const std::string& repository_name,
                                const std::string& filename,
@@ -164,7 +164,49 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     return true;
   }
 
+  /**
+   * Insert the source location element else return false if already there.
+   */
+  bool insert_source_location_element(const std::string& repository_name,
+                                      const std::string& filename,
+                                      uint64_t& source_lookup_index) {
 
+    // get or make repository name index from repository name
+    string_view repository_name_sv(repository_name);
+    uint64_t repository_name_index;
+    bool status1 = repository_name_lookup_store.get_key(
+                                repository_name_sv, repository_name_index);
+    if (status1 == false) {
+      // add new repository name using its new key
+      repository_name_index = repository_name_lookup_store.insert_value(repository_name_sv);
+    }
+
+    // get or make filename index from filename
+    string_view filename_sv(filename);
+    uint64_t filename_index;
+    bool status2 = filename_lookup_store.get_key(filename_sv, filename_index);
+    if (status2 == false) {
+      // add new repository name using its new key
+      filename_index = filename_lookup_store.insert_value(filename_sv);
+    }
+
+    // define the index_pair value for the source lookup store
+    std::pair index_pair(repository_name_index, filename_index);
+
+    // look for existing key
+    bool status3 = source_lookup_store.get_key(
+                         index_pair, source_lookup_index);
+
+    // either offer existing key or add element and offer new key
+    if (status3 == false) {
+      // insert the new element
+      source_lookup_index = source_lookup_store.insert_value(index_pair);
+      return true;
+    } else {
+      // just offer the index from the existing element
+      return false;
+    }
+  }
 
 
 
