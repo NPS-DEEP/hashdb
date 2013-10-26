@@ -26,11 +26,11 @@
 #define SOURCE_LOOKUP_STORE_HPP
 #include "hashdb_types.h"
 #include "hashdb_settings.h"
-#include "source_location_record.hpp"
-#include "manager_multi_index_container.h"
-#include "manager_bidirectional_btree.h"
+#include "bi_data_types.hpp"
+#include <boost/btree/support/string_view.hpp>
+#include "bi_store.hpp"
 #include <string>
-#include <cassert>
+//#include <cassert>
 
 /**
  * Provides interfaces for managing source lookup storage.
@@ -50,11 +50,14 @@ class source_lookup_manager_t {
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode_type;
-  uint64_t next_source_lookup_index;
 
-  const bi_store_t<bi_64_pair_data_t> source_lookup_store;
-  const bi_store_t<bi_64_sv_data_t> repository_name_lookup_store;
-  const bi_store_t<bi_64_sv_data_t> filename_lookup_store;
+  typedef bi_store_t<bi_data_64_pair_t> source_lookup_store_t;
+  typedef bi_store_t<bi_data_64_sv_t>   repository_name_lookup_store_t;
+  typedef bi_store_t<bi_data_64_sv_t>   filename_lookup_store_t;
+
+  source_lookup_store_t          *source_lookup_store;
+  repository_name_lookup_store_t *repository_name_lookup_store;
+  filename_lookup_store_t        *filename_lookup_store;
 
   // disallow these
   source_lookup_manager_t(const source_lookup_manager_t&);
@@ -63,21 +66,19 @@ class source_lookup_manager_t {
   public:
   source_lookup_manager_t (const std::string p_hashdb_dir,
                            file_mode_type_t p_file_mode_type) :
-    hashdb_dir(p_hashdb_dir), file_mode_type(p_file_mode_type),
-    next_source_lookup_index(0),
-    source_lookup_store(hashdb_filenames_t::source_lookup_prefix(hashdb_dir),
-              file_mode_type),
-    repository_name_lookup_store(hashdb_filenames_t::source_repository_name_prefix(hashdb_dir),
-              file_mode_type),
-    filename_lookup_store(hashdb_filenames_t::source_filename_prefix(hashdb_dir)
-              file_mode_type)
-  {
-    // if appending, find the next available source lookup index
-    if (file_mode_type == RW_MODIFY && !source_lookup_store.empty()) {
-      bi_store_t<bi_64_pair_data_t>::const_iterator it = source_lookup_store.rbegin();
-      next_source_lookup_index = it->first + 1;
-std::cout << "next source lookup index: " << next_source_lookup_index;
-    }
+               hashdb_dir(p_hashdb_dir), file_mode_type(p_file_mode_type),
+               source_lookup_store(0),
+               repository_name_lookup_store(0),
+               filename_lookup_store(0) {
+    source_lookup_store = new source_lookup_store_t(
+         hashdb_filenames_t::source_lookup_prefix(hashdb_dir),
+         file_mode_type);
+    repository_name_lookup_store = new repository_name_lookup_store_t(
+         hashdb_filenames_t::source_repository_name_prefix(hashdb_dir),
+         file_mode_type);
+    filename_lookup_store = new filename_lookup_store_t(
+         hashdb_filenames_t::source_filename_prefix(hashdb_dir),
+         file_mode_type);
   }
 
   /**
@@ -95,7 +96,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
                            std::string& filename) {
 
     std::pair<uint64_t, uint64_t> lookup_pair;
-    bool status1 = source_lookup_store.get_value(
+    bool status1 = source_lookup_store->get_value(
                                      source_lookup_index, lookup_pair);
     if (status1 == false) {
       repository_name = "";
@@ -104,7 +105,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     } else {
       // get repository name from repository name index
       string_view repository_name_sv;
-      bool status2 = repository_name_lookup_store.get_value(
+      bool status2 = repository_name_lookup_store->get_value(
                                       lookup_pair.first, repository_name_sv);
       if (status2 != true) {
         // program error
@@ -114,7 +115,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
 
       // get filename from filename index
       string_view filename_sv;
-      bool status3 = filename_lookup_store.get_value(
+      bool status3 = filename_lookup_store->get_value(
                                       lookup_pair.first, filename_sv);
       if (status3 != true) {
         // program error
@@ -137,7 +138,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     // get repository name index from repository name
     string_view repository_name_sv(repository_name);
     uint64_t repository_name_index;
-    bool status1 = repository_name_lookup_store.get_key(
+    bool status1 = repository_name_lookup_store->get_key(
                                 repository_name_sv, repository_name_index);
     if (status1 == false) {
       source_lookup_index = 0;
@@ -147,7 +148,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     // get filename index from filename
     string_view filename_sv(filename);
     uint64_t filename_index;
-    bool status2 = filename_lookup_store.get_key(filename_sv, filename_index);
+    bool status2 = filename_lookup_store->get_key(filename_sv, filename_index);
     if (status2 == false) {
       source_lookup_index = 0;
       return false;
@@ -155,7 +156,7 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
 
     // get source lookup index from looked up index values
     std::pair<uint64_t, uint64_t> index_pair(repository_name_index, filename_index);
-    bool status3 = source_lookup_store.get_key(index_pair, source_lookup_index);
+    bool status3 = source_lookup_store->get_key(index_pair, source_lookup_index);
     if (status3 == false) {
       source_lookup_index = 0;
       return false;
@@ -174,33 +175,33 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     // get or make repository name index from repository name
     string_view repository_name_sv(repository_name);
     uint64_t repository_name_index;
-    bool status1 = repository_name_lookup_store.get_key(
+    bool status1 = repository_name_lookup_store->get_key(
                                 repository_name_sv, repository_name_index);
     if (status1 == false) {
       // add new repository name using its new key
-      repository_name_index = repository_name_lookup_store.insert_value(repository_name_sv);
+      repository_name_index = repository_name_lookup_store->insert_value(repository_name_sv);
     }
 
     // get or make filename index from filename
     string_view filename_sv(filename);
     uint64_t filename_index;
-    bool status2 = filename_lookup_store.get_key(filename_sv, filename_index);
+    bool status2 = filename_lookup_store->get_key(filename_sv, filename_index);
     if (status2 == false) {
       // add new repository name using its new key
-      filename_index = filename_lookup_store.insert_value(filename_sv);
+      filename_index = filename_lookup_store->insert_value(filename_sv);
     }
 
     // define the index_pair value for the source lookup store
     std::pair index_pair(repository_name_index, filename_index);
 
     // look for existing key
-    bool status3 = source_lookup_store.get_key(
+    bool status3 = source_lookup_store->get_key(
                          index_pair, source_lookup_index);
 
     // either offer existing key or add element and offer new key
     if (status3 == false) {
       // insert the new element
-      source_lookup_index = source_lookup_store.insert_value(index_pair);
+      source_lookup_index = source_lookup_store->insert_value(index_pair);
       return true;
     } else {
       // just offer the index from the existing element
@@ -208,54 +209,27 @@ std::cout << "next source lookup index: " << next_source_lookup_index;
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-  /**
-   * Determine if a source location record exists.
-   */
-  bool has_source_location_record(
-                  const source_location_record_t& source_location_record);
-
-  /**
-   * Insert else fail if left or right already exist.
-   */
-  void insert_source_lookup_element(uint64_t source_lookup_index,
-                   const source_location_record_t& source_location_record);
-
-  /**
-   * Get the source location record from the source lookup index else fail.
-   */
-  void get_source_location_record(uint64_t source_lookup_index,
-                     source_location_record_t& source_location_record);
-
-  /**
-   * Get the source lookup index from the source location record.
-   */
-  void get_source_lookup_index(
-                const source_location_record_t& source_location_record,
-                uint64_t& source_lookup_index);
-
-  /**
-   * Get the next unallocated source lookup index to use
-   * or fail if they are all used up.
-   */
-  uint64_t new_source_lookup_index();
-
   /**
    * Report status to consumer.
    */
-  template <class T>
-  void report_status(T& consumer) const;
+  void report_status(std::ostream& os) const {
+    os << "source lookup store status: ";
+    os << "source lookup store size count=" << source_lookup_store->size();
+    os << "repository name lookup store size count=" << repository_name_lookup_store->size();
+    os << "filename lookup store size count=" << filename_lookup_store->size();
+    os << ", bytes=" << size;
+    os << "\n";
+  }
+
+  void report_status(dfxml_writer& x) const {
+    x.push("source_lookup_store_status");
+    x.xmlout("source_lookup_store_element_count", source_lookup_store->size());
+    x.xmlout("repository_name_lookup_store_element_count", repository_name_lookup_store->size());
+    x.xmlout("filename_lookup_store_element_count", filename_lookup_store->size());
+    x.xmlout("bytes", size);
+    x.pop();
+  }
 };
 
 #endif
+

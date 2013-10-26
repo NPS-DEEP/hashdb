@@ -26,7 +26,7 @@
 #ifndef REPOSITORY_NAME_LOOKUP_STORE_HPP
 #define REPOSITORY_NAME_LOOKUP_STORE_HPP
 #include <string>
-#include "indexed_string_t.hpp"
+//#include "indexed_string_t.hpp"
 #include "boost/btree/btree_index_set.hpp"
 
 template<typename BI_T>
@@ -35,7 +35,7 @@ class bi_store_t {
 
   // btree
   typedef boost::btree::btree_index_set<BI_T> index_by_key_t;
-  typedef boost::btree::btree_index_set<BI_T, default_traits, value_ordering> index_by_value_t;
+  typedef boost::btree::btree_index_set<BI_T, default_traits, class BI_T::value_ordering> index_by_value_t;
 
   const std::string filename_prefix;
   const file_mode_type_t file_mode;
@@ -51,7 +51,7 @@ class bi_store_t {
   public:
   bi_store_t (const std::string p_filename_prefix,
               file_mode_type_t p_file_mode) :
-      filename_prefix(p_filename_prefix), file_mode_type(p_file_mode_type,
+      filename_prefix(p_filename_prefix), file_mode(p_file_mode),
       index_by_key(0), index_by_value(0) {
 
     // data store filenames
@@ -67,7 +67,7 @@ class bi_store_t {
                                           boost::btree::flags::read_only);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::read_only,
-                                        -1, index_ordering);
+                                          -1, BI_T::value_ordering);
     } else if (file_mode == RW_NEW) {
 
       // RW_NEW
@@ -75,7 +75,7 @@ class bi_store_t {
                                           boost::btree::flags::truncate);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::truncate,
-                                        -1, index_ordering);
+                                          -1, BI_T::value_ordering);
     } else if (file_mode == RW_MODIFY) {
 
       // RW_MODIFY
@@ -83,7 +83,7 @@ class bi_store_t {
                                           boost::btree::flags::read_write);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::read_write,
-                                          -1, index_ordering);
+                                          -1, BI_T::value_ordering);
     }
   }
 
@@ -98,7 +98,7 @@ class bi_store_t {
   /**
    * Get value from key or return false.
    */
-  bool get_value(const BI_T::key_type& key, BI_T::value_type& value) {
+  bool get_value(const typename BI_T::key_type& key, typename BI_T::value_type& value) {
     index_by_key_t::iterator it = index_by_key->find(key);
     if (it == index_by_key_t.end()) {
       return false;
@@ -111,7 +111,7 @@ class bi_store_t {
   /**
    * Get key from value or return false.
    */
-  bool get_key(const BI_T::value_type& value, BI_T::key_type& key) {
+  bool get_key(const typename BI_T::value_type& value, typename BI_T::key_type& key) {
     index_by_value_t::iterator it = index_by_value->find(value);
     if (it == index_by_value_t.end()) {
       return false;
@@ -124,7 +124,7 @@ class bi_store_t {
   /**
    * Insert new element returning new key, else assert program error.
    */
-  BI_T::key_type insert_value(const BI_T::value_type& value) {
+  typename BI_T::key_type insert_value(const typename BI_T::value_type& value) {
 
     // btree must be writable
     if (file_mode == READ_ONLY) {

@@ -31,8 +31,7 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 AM_LDFLAGS = -static $(XML_LIBS)
 
 HASHDB_INCS = \
-	bi_64_pair_data.hpp \
-	bi_64_sv_data.hpp \
+	bi_data_types.hpp \
 	bi_store.hpp \
 	bloom_filter.hpp \
 	commands.hpp \
@@ -60,7 +59,7 @@ HASHDB_INCS = \
 	query_by_socket_server.hpp \
 	settings_reader.hpp \
 	settings_writer.hpp \
-	source_location_record.hpp \
+	source_lookup_manager.hpp \
 	source_lookup_record.h
 
 DFXML_INCS = \

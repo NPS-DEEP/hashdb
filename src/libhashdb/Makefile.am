@@ -36,6 +36,8 @@ AM_LDFLAGS = -static $(XML_LIBS)
 # for libhashdb sources
 # ############################################################
 QUERY_INCS = \
+	../bi_data_types.hpp \
+	../bi_store.hpp \
 	../bloom_filter.hpp \
 	../hashdb.cpp \
 	../hashdb.hpp \
@@ -55,10 +57,8 @@ QUERY_INCS = \
 	../query_by_path.hpp \
 	../query_by_socket.hpp \
 	../settings_reader.hpp \
-	../source_location_record.hpp \
-	../source_lookup_record.h \
-	../source_lookup_store.cpp \
-	../source_lookup_store.hpp
+	../source_lookup_manager.hpp \
+	../source_lookup_record.h
 
 DFXML_INCS = \
 	../dfxml/src/hash_t.h \

@@ -12,33 +12,39 @@ using namespace boost::btree;
 
 struct bi_64_pair_data_t {
   typedef uint64_t key_type;
-  typedef pair<uint64_t,uint64_t> value_type;
+  typedef std::pair<uint64_t,uint64_t> value_type;
 
   key_type key;
   value_type value;
 
-  bi_64_pair_data_t() {}
-  bi_64_pair_data_t(key_type p_key, uint64_t p_value) : key(p_key), value(p_value) {}
-  std::string &value_string() { return value; }
+//  bi_64_pair_data_t() {}
+  bi_64_pair_data_t();
+  bi_64_pair_data_t(key_type p_key, value_type p_value) : key(p_key), value(p_value) {}
 
   bool operator < (const bi_64_pair_data_t& rhs) const { return key < rhs.key; }
+
+  //  function objects for different orderings  ------------------------------//
+  struct value_ordering {
+    bool operator()(const bi_64_pair_data_t& x, const bi_64_pair_data_t& y) const
+      {return x.value < y.value;}
+  };
 };
 
 //  stream inserter  ---------------------------------------------------------//
 
 inline std::ostream& operator<<(std::ostream& os, const bi_64_pair_data_t& x)
 {
-  os << x.key << " \"" << x.value << "\"";
+  os << x.key << ", pair(" << x.value.first << ", " << x.value.second << ")";
   return os;
 }
 
-//  function objects for different orderings  --------------------------------//
-
-struct value_ordering
-{
-  bool operator()(const bi_64_pair_data_t& x, const bi_64_pair_data_t& y) const
-    {return x.value < y.value;}
-};
+////  function objects for different orderings  --------------------------------//
+//
+//struct value_ordering
+//{
+//  bool operator()(const bi_64_pair_data_t& x, const bi_64_pair_data_t& y) const
+//    {return x.value < y.value;}
+//};
 
 //  specializations to support btree indexes  --------------------------------//
 

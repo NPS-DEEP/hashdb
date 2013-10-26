@@ -12,7 +12,7 @@ using std::cout;
 using namespace boost::btree;
 using boost::string_view;
 
-struct bi_64_s_data_t {
+struct bi_64_sv_data_t {
   typedef uint64_t key_type;
   typedef string_view value_type;
 
@@ -20,29 +20,34 @@ struct bi_64_s_data_t {
 //  string_view value;
   value_type value;
 
-  bi_64_s_data_t() {}
-  bi_64_s_data_t(key_type p_key, std::string p_value) : key(p_key), value(p_value) {}
-  bi_64_s_data_t(key_type p_key, string_view p_value) : key(p_key), value(p_value) {}
-  std::string &value_string() { return value; }
+  bi_64_sv_data_t();
+  bi_64_sv_data_t(key_type p_key, std::string p_value) : key(p_key), value(p_value) {}
+  bi_64_sv_data_t(key_type p_key, string_view p_value) : key(p_key), value(p_value) {}
 
-  bool operator < (const bi_64_s_data_t& rhs) const { return key < rhs.key; }
+  bool operator < (const bi_64_sv_data_t& rhs) const { return key < rhs.key; }
+
+  //  function objects for different orderings  ------------------------------//
+  struct value_ordering {
+    bool operator()(const bi_64_sv_data_t& x, const bi_64_sv_data_t& y) const
+      {return x.value < y.value;}
+  };
 };
 
 //  stream inserter  ---------------------------------------------------------//
 
-inline std::ostream& operator<<(std::ostream& os, const bi_64_s_data_t& x)
+inline std::ostream& operator<<(std::ostream& os, const bi_64_sv_data_t& x)
 {
   os << x.key << " \"" << x.value << "\"";
   return os;
 }
 
-//  function objects for different orderings  --------------------------------//
-
-struct value_ordering
-{
-  bool operator()(const bi_64_s_data_t& x, const bi_64_s_data_t& y) const
-    {return x.value < y.value;}
-};
+////  function objects for different orderings  --------------------------------//
+//
+//struct value_ordering
+//{
+//  bool operator()(const bi_64_sv_data_t& x, const bi_64_sv_data_t& y) const
+//    {return x.value < y.value;}
+//};
 
 //  specializations to support btree indexes  --------------------------------//
 
@@ -50,22 +55,22 @@ namespace boost
 {
 namespace btree
 {
-  template <> struct index_reference<bi_64_s_data_t> { typedef const bi_64_s_data_t type; };
+  template <> struct index_reference<bi_64_sv_data_t> { typedef const bi_64_sv_data_t type; };
 
   template <>
-  inline void index_serialize<bi_64_s_data_t>(const bi_64_s_data_t& bi_data, flat_file_type& file)
+  inline void index_serialize<bi_64_sv_data_t>(const bi_64_sv_data_t& bi_data, flat_file_type& file)
   {
     index_serialize(bi_data.key, file);
     index_serialize(bi_data.value, file);
   }
 
   template <>
-  inline index_reference<bi_64_s_data_t>::type index_deserialize<bi_64_s_data_t>(const char** flat)
+  inline index_reference<bi_64_sv_data_t>::type index_deserialize<bi_64_sv_data_t>(const char** flat)
   {
-    bi_64_s_data_t bi_data;
-    bi_data.key = index_deserialize<bi_64_s_data_t::key_type>(flat);
+    bi_64_sv_data_t bi_data;
+    bi_data.key = index_deserialize<bi_64_sv_data_t::key_type>(flat);
 //    bi_data.value = index_deserialize<boost::string_view>(flat);
-    bi_data.value = index_deserialize<bi_64_s_data_t::value_type>(flat);
+    bi_data.value = index_deserialize<bi_64_sv_data_t::value_type>(flat);
     return bi_data;
   }
 }} // namespaces
