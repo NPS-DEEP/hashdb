@@ -34,8 +34,8 @@ class bi_store_t {
   private:
 
   // btree
-  typedef boost::btree::btree_index_set<BI_T> index_by_key_t;
-  typedef boost::btree::btree_index_set<BI_T, default_traits, class BI_T::value_ordering> index_by_value_t;
+  typedef typename boost::btree::btree_index_set<BI_T> index_by_key_t;
+  typedef typename boost::btree::btree_index_set<BI_T, default_traits, typename BI_T::value_ordering> index_by_value_t;
 
   const std::string filename_prefix;
   const file_mode_type_t file_mode;
@@ -67,7 +67,7 @@ class bi_store_t {
                                           boost::btree::flags::read_only);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::read_only,
-                                          -1, BI_T::value_ordering);
+                                          -1, typename BI_T::value_ordering());
     } else if (file_mode == RW_NEW) {
 
       // RW_NEW
@@ -75,7 +75,7 @@ class bi_store_t {
                                           boost::btree::flags::truncate);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::truncate,
-                                          -1, BI_T::value_ordering);
+                                          -1, typename BI_T::value_ordering());
     } else if (file_mode == RW_MODIFY) {
 
       // RW_MODIFY
@@ -83,7 +83,7 @@ class bi_store_t {
                                           boost::btree::flags::read_write);
       index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
                                           boost::btree::flags::read_write,
-                                          -1, BI_T::value_ordering);
+                                          -1, typename BI_T::value_ordering());
     }
   }
 
@@ -96,14 +96,21 @@ class bi_store_t {
   }
 
   /**
+   * Get size.
+   */
+  uint64_t size() const {
+    return index_by_key->size();
+  }
+
+  /**
    * Get value from key or return false.
    */
   bool get_value(const typename BI_T::key_type& key, typename BI_T::value_type& value) {
-    index_by_key_t::iterator it = index_by_key->find(key);
-    if (it == index_by_key_t.end()) {
+    typename index_by_key_t::iterator it = index_by_key->find(key);
+    if (it == index_by_key->end()) {
       return false;
     } else {
-      value = it.second;
+      value = it->value;
       return true;
     }
   }
@@ -112,11 +119,11 @@ class bi_store_t {
    * Get key from value or return false.
    */
   bool get_key(const typename BI_T::value_type& value, typename BI_T::key_type& key) {
-    index_by_value_t::iterator it = index_by_value->find(value);
-    if (it == index_by_value_t.end()) {
+    typename index_by_value_t::iterator it = index_by_value->find(value);
+    if (it == index_by_value->end()) {
       return false;
     } else {
-      key = it.first;
+      key = it->key;
       return true;
     }
   }
@@ -132,27 +139,30 @@ class bi_store_t {
     }
 
     // key must not exist
-    key_type key;
+    typename BI_T::key_type key;
     bool status1 = get_key(value, key);
     if (status1 == true) {
       assert(0);
     }
 
-    // get new key, which is last added key + 1
+    // get new key, which is last added key value + 1
     if (index_by_value->empty()) {
       // no elements, use 0
       key = 0;
     } else {
       // use 1 + last key
-      index_by_value_t::const_iterator it = index_by_value.rbegin();
-      key = it->first + 1;
+      typename index_by_value_t::const_reverse_iterator rit = index_by_value->crbegin();
+//      key = rit->key + 1;
+      key = (*rit).key + 1;
     }
 
     // add new element
-    index_by_key_t::file_position pos;
+    typename index_by_key_t::file_position pos;
     pos = index_by_key->push_back(BI_T(key, value));
     index_by_key->insert_file_position(pos);
     index_by_value->insert_file_position(pos);
+
+    return key;
   }
 };
 

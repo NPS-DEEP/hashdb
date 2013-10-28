@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
+#include <cassert>
 
 /**
  * The hashdb DB manager controls access to the hashdb
@@ -197,7 +198,7 @@ class hashdb_db_manager_t {
       // get the repository name and the filename
       std::string repository_name;
       std::string filename;
-      bool status = source_lookup_manager.get_source_location(
+      bool status = source_lookup_manager->get_source_location(
                         source_lookup_index, repository_name, filename);
       if (status != true) {
         // program error
@@ -214,16 +215,18 @@ class hashdb_db_manager_t {
     }
 
     /**
-     * Obtain the hash source record corresponding to the source lookup record
-     * based on repository name and filename else false.
+     * Obtain the source lookup record corresponding to the repository name
+     * and filename in the hash source record else false.
      */
     void hash_source_record_to_source_lookup_record(
              const hash_source_record_t& hash_source_record,
              source_lookup_record_t& source_lookup_record) const {
 
-      bool status = source_lookup_manager.get_source_lookup_index(
+      uint64_t source_lookup_index;
+      bool status = source_lookup_manager->get_source_lookup_index(
                                     hash_source_record.repository_name,
-                                    hash_source_record.filename);
+                                    hash_source_record.filename,
+                                    source_lookup_index);
 
       if (status == false) {
         // program error
@@ -270,8 +273,6 @@ class hashdb_db_manager_t {
                hashdb_filenames_t::hash_store_filename(hashdb_dir);
       std::string hash_duplicates_store_path =
                hashdb_filenames_t::hash_duplicates_store_filename(hashdb_dir);
-      std::string source_lookup_prefix =
-               hashdb_filenames_t::source_lookup_prefix(hashdb_dir);
       std::string bloom1_path =
                hashdb_filenames_t::bloom1_filename(hashdb_dir);
       std::string bloom2_path =
@@ -287,7 +288,7 @@ class hashdb_db_manager_t {
                file_mode_type,
                hashdb_settings.hash_duplicates_store_settings);
       source_lookup_manager = new source_lookup_manager_t(
-               source_lookup_prefix,
+               hashdb_dir,
                file_mode_type);
       bloom1 = new bloom_filter_t(
                bloom1_path,
@@ -327,25 +328,28 @@ class hashdb_db_manager_t {
       const md5_t md5(hashdb_element.first);
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
-      // stop if the request is wrong for this database
+      // stop if the hash block size is wrong for this database
       if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
         return false;
       }
+
+      // stop if the hash digest type is wrong for this database
       hashdigest_type_t type;
       bool has = string_to_hashdigest_type(hash_source_record.hashdigest_type_string, type);
       if (!(has && type == hashdb_settings.hashdigest_type)) {
         return false;
       }
 
+      // false if no md5
       source_lookup_record_t source_lookup_record;
       if (!has_source_lookup_record(md5, source_lookup_record)) {
         // no md5, so no element
         return false;
       }
 
-      // also stop if the store has no source location record
+      // false if the source lookup store has no source location record
       uint64_t source_lookup_index;
-      bool status = source_lookup_manager.get_source_lookup_index(
+      bool status = source_lookup_manager->get_source_lookup_index(
                     hash_source_record.repository_name,
                     hash_source_record.filename,
                     source_lookup_index);
@@ -355,7 +359,7 @@ class hashdb_db_manager_t {
         return false;
       }
 
-      // generate the expected source lookup record
+      // look up the expected source lookup record
       source_lookup_record_t expected_source_lookup_record;
       hash_source_record_to_source_lookup_record(
                        hash_source_record, expected_source_lookup_record);
@@ -414,10 +418,14 @@ class hashdb_db_manager_t {
 
       // get the source lookup index
       uint64_t source_lookup_index;
-      bool dummy = source_lookup_manager.insert_source_lookup_index(
+      bool status = source_lookup_manager->insert_source_lookup_element(
                                     hash_source_record.repository_name,
                                     hash_source_record.filename,
                                     source_lookup_index);
+      if (status == 0) {
+        // program error
+        assert(0);
+      }
 
       // calculate hash block offset
       uint64_t hash_block_offset =
@@ -519,7 +527,7 @@ class hashdb_db_manager_t {
 
       // see if the source lookup store has the source location record
       uint64_t source_lookup_index;
-      bool status = source_lookup_manager.get_source_lookup_index(
+      bool status = source_lookup_manager->get_source_lookup_index(
                     hash_source_record.repository_name,
                     hash_source_record.filename,
                     source_lookup_index);
@@ -527,7 +535,7 @@ class hashdb_db_manager_t {
       if (status == false) {
         // no hash_source_record, so no element
         ++hash_changes.hashes_not_removed_different_source;
-        return false;
+        return;
       }
 
       // the hash and source lookup record exist

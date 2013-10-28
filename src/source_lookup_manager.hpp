@@ -59,6 +59,17 @@ class source_lookup_manager_t {
   repository_name_lookup_store_t *repository_name_lookup_store;
   filename_lookup_store_t        *filename_lookup_store;
 
+  // helper
+  std::string to_string(const boost::string_view& sv) const {
+    std::string s = "";
+    boost::string_view::const_iterator it = sv.begin();
+    while (it != sv.end()) {
+      s.push_back(*it);
+      ++it;
+    }
+    return s;
+  }
+
   // disallow these
   source_lookup_manager_t(const source_lookup_manager_t&);
   source_lookup_manager_t& operator=(const source_lookup_manager_t&);
@@ -104,24 +115,24 @@ class source_lookup_manager_t {
       return false;
     } else {
       // get repository name from repository name index
-      string_view repository_name_sv;
+      boost::string_view repository_name_sv;
       bool status2 = repository_name_lookup_store->get_value(
                                       lookup_pair.first, repository_name_sv);
       if (status2 != true) {
         // program error
         assert(0);
       }
-      repository_name = std::string(repository_name_sv);
+      repository_name = to_string(repository_name_sv);
 
       // get filename from filename index
-      string_view filename_sv;
+      boost::string_view filename_sv;
       bool status3 = filename_lookup_store->get_value(
                                       lookup_pair.first, filename_sv);
       if (status3 != true) {
         // program error
         assert(0);
       }
-      filename = std::string(filename_sv);
+      filename = to_string(filename_sv);
 
       return true;
     }
@@ -136,7 +147,7 @@ class source_lookup_manager_t {
                                uint64_t& source_lookup_index) {
 
     // get repository name index from repository name
-    string_view repository_name_sv(repository_name);
+    boost::string_view repository_name_sv(repository_name);
     uint64_t repository_name_index;
     bool status1 = repository_name_lookup_store->get_key(
                                 repository_name_sv, repository_name_index);
@@ -146,7 +157,7 @@ class source_lookup_manager_t {
     }
 
     // get filename index from filename
-    string_view filename_sv(filename);
+    boost::string_view filename_sv(filename);
     uint64_t filename_index;
     bool status2 = filename_lookup_store->get_key(filename_sv, filename_index);
     if (status2 == false) {
@@ -166,24 +177,24 @@ class source_lookup_manager_t {
   }
 
   /**
-   * Insert the source location element else return false if already there.
+   * Insert the source lookup element else return false if already there.
    */
-  bool insert_source_location_element(const std::string& repository_name,
-                                      const std::string& filename,
-                                      uint64_t& source_lookup_index) {
+  bool insert_source_lookup_element(const std::string& repository_name,
+                                    const std::string& filename,
+                                    uint64_t& source_lookup_index) {
 
     // get or make repository name index from repository name
-    string_view repository_name_sv(repository_name);
+    boost::string_view repository_name_sv(repository_name);
     uint64_t repository_name_index;
     bool status1 = repository_name_lookup_store->get_key(
                                 repository_name_sv, repository_name_index);
     if (status1 == false) {
-      // add new repository name using its new key
+      // add new repository name element, returning new index
       repository_name_index = repository_name_lookup_store->insert_value(repository_name_sv);
     }
 
     // get or make filename index from filename
-    string_view filename_sv(filename);
+    boost::string_view filename_sv(filename);
     uint64_t filename_index;
     bool status2 = filename_lookup_store->get_key(filename_sv, filename_index);
     if (status2 == false) {
@@ -192,13 +203,13 @@ class source_lookup_manager_t {
     }
 
     // define the index_pair value for the source lookup store
-    std::pair index_pair(repository_name_index, filename_index);
+    std::pair<uint64_t, uint64_t> index_pair(repository_name_index, filename_index);
 
     // look for existing key
     bool status3 = source_lookup_store->get_key(
                          index_pair, source_lookup_index);
 
-    // either offer existing key or add element and offer new key
+    // either use existing key or add element and use new key
     if (status3 == false) {
       // insert the new element
       source_lookup_index = source_lookup_store->insert_value(index_pair);
@@ -217,7 +228,7 @@ class source_lookup_manager_t {
     os << "source lookup store size count=" << source_lookup_store->size();
     os << "repository name lookup store size count=" << repository_name_lookup_store->size();
     os << "filename lookup store size count=" << filename_lookup_store->size();
-    os << ", bytes=" << size;
+//total bytes is sum of files    os << ", bytes=" << size;
     os << "\n";
   }
 
@@ -226,7 +237,7 @@ class source_lookup_manager_t {
     x.xmlout("source_lookup_store_element_count", source_lookup_store->size());
     x.xmlout("repository_name_lookup_store_element_count", repository_name_lookup_store->size());
     x.xmlout("filename_lookup_store_element_count", filename_lookup_store->size());
-    x.xmlout("bytes", size);
+//total bytes is sum of files    x.xmlout("bytes", size);
     x.pop();
   }
 };

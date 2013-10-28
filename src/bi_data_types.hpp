@@ -64,9 +64,9 @@ struct bi_data_64_sv_t {
 };
 
 // ordering for key
-bool operator<(const bi_data_64_sv_t& lhs, const bi_data_64_sv_t& rhs) {return lhs.key < rhs.key;}
-bool operator<(const bi_data_64_sv_t& lhs, uint64_t rhs) {return lhs.key < rhs;}
-bool operator<(uint64_t lhs, const bi_data_64_sv_t& rhs) {return lhs < rhs.key;}
+inline bool operator<(const bi_data_64_sv_t& lhs, const bi_data_64_sv_t& rhs) {return lhs.key < rhs.key;}
+inline bool operator<(const bi_data_64_sv_t& lhs, uint64_t rhs) {return lhs.key < rhs;}
+inline bool operator<(uint64_t lhs, const bi_data_64_sv_t& rhs) {return lhs < rhs.key;}
 
 // stream inserter
 inline std::ostream& operator<<(std::ostream& os, const bi_data_64_sv_t& x) {
@@ -132,9 +132,9 @@ struct bi_data_64_pair_t {
 };
 
 // ordering for key
-bool operator<(const bi_data_64_pair_t& lhs, const bi_data_64_pair_t& rhs) {return lhs.key < rhs.key;}
-bool operator<(const bi_data_64_pair_t& lhs, uint64_t rhs) {return lhs.key < rhs;}
-bool operator<(uint64_t lhs, const bi_data_64_pair_t& rhs) {return lhs < rhs.key;}
+inline bool operator<(const bi_data_64_pair_t& lhs, const bi_data_64_pair_t& rhs) {return lhs.key < rhs.key;}
+inline bool operator<(const bi_data_64_pair_t& lhs, uint64_t rhs) {return lhs.key < rhs;}
+inline bool operator<(uint64_t lhs, const bi_data_64_pair_t& rhs) {return lhs < rhs.key;}
 
 // stream inserter
 inline std::ostream& operator<<(std::ostream& os, const bi_data_64_pair_t& x) {

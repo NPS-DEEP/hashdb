@@ -338,13 +338,12 @@ AC_CHECK_FUNCS([zmq_version],,[AC_MSG_ERROR([test fails])])
 
 ################################################################
 ## support required by boost
-# Require boost filesystem v3, which, in Boost versions 1.44 through 1.49,
-# require BOOST_FILESYSTEM_VERSION 3 to be defined.
-AX_BOOST_BASE([1.44],
+AX_BOOST_BASE([1.53],
   [AX_BOOST_SYSTEM
   AX_BOOST_FILESYSTEM
-  LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $LIBS"],
-  [AC_MSG_ERROR([Boost 1.44 or newer is required to build hashdb])])
+  AX_BOOST_IOSTREAMS
+  LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $LIBS"],
+  [AC_MSG_ERROR([Boost 1.53 or newer is required to build hashdb])])
 
 ################################################################
 ## OpenSSL Support is required for hash_t and bloom
