@@ -19,12 +19,11 @@
 
 /**
  * \file
- * Provides interfaces to a two-index btree store.
- * Interfaces include lookup and add, and not removal.
+ * Provides simple lookup and add interfaces for a two-index btree store.
  */
 
-#ifndef REPOSITORY_NAME_LOOKUP_STORE_HPP
-#define REPOSITORY_NAME_LOOKUP_STORE_HPP
+#ifndef BI_STORE_HPP
+#define BI_STORE_HPP
 #include <string>
 //#include "indexed_string_t.hpp"
 #include "boost/btree/btree_index_set.hpp"
@@ -53,6 +52,7 @@ class bi_store_t {
               file_mode_type_t p_file_mode) :
       filename_prefix(p_filename_prefix), file_mode(p_file_mode),
       index_by_key(0), index_by_value(0) {
+std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
 
     // data store filenames
     std::string dat_filename  = filename_prefix + ".dat";
