@@ -9,25 +9,41 @@ hash databases, merging hash databases, and performing hash lookups.
 Multiple map types are supported, allowing for specific optimizations.
 Hash databases may be imported and exported in DFXML format.
 
-The hashdb toolset includes hashdb_manager, hashdb_checker, and
-hashdb library files hashdb.hpp and libhashdb.a.
+The hashdb toolset includes the hashdb_manager and hashdb_checker tools
+and hashdb library file libhashdb.a and header file hashdb.hpp.
+
 
 Downloads and Websites
 ----------------------
 The hashdb toolset is available for Windows, Linux, and Mac users.
 Please see the hashdb Wiki home page at https://github.com/simsong/hashdb/wiki
 
+
 Downloading the Development Tree
 --------------------------------
-
 Download the sources with git:
 
   $ git clone --recursive https://github.com/simsong/hashdb.git
 
 
+Installing Dependencies
+-----------------------
+A development envirnment and libraries are required.  The following steps
+install requisite dependencies on Fedora 19.
+
+   $ sudo yum update
+   $ sudo yum groupinstall development-tools
+   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
+   $ sudo yum install boost-devel
+
+Not all development tools are required.  The following should be sufficient
+in place of "sudo yum groupinstall development-tools":
+
+   $ sudo yum install git gcc gcc-c++ autoconf automake libtool
+
+
 Compiling hashdb
 ----------------
-
 hashdb builds with the GNU auto tools. The maintainer has
 prevously run automake and autoconf to produce the script
 "configure". This script *should* be able to compile hashdb
@@ -37,75 +53,57 @@ We recommend compiling hashdb with -O3 and that is the
 default. You can disable all optimization flags by specifying the
 configure option --with-noopt.
 
-hashdb requires additional packages:
-    zeromq3-devel
-    libxml2-devel
-    openssl-devel
-    tre-devel
-    boost-devel
-
 To install on a Linux/MacOS system, use:
    $ ./configure
    $ make
    $ sudo make install
 
+If you do not wish to run sudo, please install hashdb on linux/MacOS
+under $HOME/local as follows:
+   $ ./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/
+   $ make
+   $ install
 
-Running "sudo make install" is not required.  In a default Fedora
-configuration, "make" creates executables here:
-   src/hashdb_manager
-   src/hashdb_checker/hashdb_checker
-   src/libhashdb/.libs/libhashdb.la
-   src/libhashdb/.libs/libhashdb.a
+The following files are installed:
+   bin/hashdb_manager
+   bin/hashdb_checker
+   include/hashdb.hpp
+   lib/libhashdb.la
+   lib/libhashdb.a
+   share/man/man1/hashdb_manager.1
+   share/man/man1/hashdb_checker.1
 
-In a default Fedora configuration, "sudo make install" installs
-files here:
-   /usr/local/bin/hashdb_manager
-   /usr/local/bin/hashdb_checker
-   /usr/local/lib/hashdb/libhashdb.la
-   /usr/local/lib/hashdb/libhashdb.a
+
+Linking hashdb into another application such as bulk_extractor
+--------------------------------------------------------------
+If you wish to install at default paths, which requires sudo, type this:
+   $ ./configure
+   $ make
+   $ sudo make install
+
+If you wish to install at $HOME/local, which does not require sudo, type this:
+   $ ./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/
+   $ make
+   $ install
 
 ================================================================
 
-INSTALLING DEPENDENCIES ON FEDORA
-For FC18, perform the following setup:
-
-   $ sudo yum update
-   $ sudo yum groupinstall development-tools
-   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
-   $ sudo yum install boost-devel
-
-Note: the following specific packages may be loaded instead of
-installing development-tools:
-   git
-   gcc
-   gcc-c++
-   autoconf
-   automake
-   libtool
-   openssl-devel
-
-To cross-compile from Fedora 18 to Windows, do the following:
+To cross-compile from Fedora 19 to Windows, do the following:
    1) Set up the mingw cross compiler environment:
-      $ cd src_win; ./CONFIGURE_F18.sh; cd ..
-   2) type "make win32" or "make win64" or, to also create a windows
-      installer, thpe "cd src_win; make".
+      $ cd src_win; ./CONFIGURE_F19.sh; cd ..
+   2) type "make win32" or "make win64", or to create a windows
+      installer, type "cd src_win; make".
 
 
 INSTALLING DEPENDENCIES ON UBUNTU:
 
-On Ubuntu 12.04, this may be sufficient:
-
-  $ sudo apt-get -y install gcc g++
-
-Also: libxml2-devel and zeromq3
+On Ubuntu 12.04, install packages using apt-get.
 
 INSTALLING DEPENDENCIES ON MAC:
 
 We recommend installing Mac dependencies using the MacPorts system. Once that is installed, try:
 
-  $ sudo port install autoconf automake
-
-Also: libxml2-devel and zeromq3
+  $ sudo port install autoconf automake libxml2-devel zeromq3
 
 Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
 to include /opt/local/bin.
