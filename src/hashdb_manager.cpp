@@ -49,7 +49,16 @@ uint32_t approximate_n_to_M(uint64_t n);
 
 std::string command_line;
 
-static std::string see_usage = "Please type 'hashdb_manager -h' for usage.";
+static const std::string see_usage = "Please type 'hashdb_manager -h' for usage.";
+
+// user commands, which are not the demultiplexed commands seen in commands.hpp
+static const std::string COMMAND_COPY = "copy";
+static const std::string COMMAND_REMOVE = "remove";
+static const std::string COMMAND_MERGE = "merge";
+static const std::string COMMAND_REBUILD_BLOOM = "rebuild_bloom";
+static const std::string COMMAND_EXPORT = "export";
+static const std::string COMMAND_INFO = "info";
+static const std::string COMMAND_SERVER = "server";
 
 // options
 static std::string repository_name = "";
@@ -84,7 +93,7 @@ void usage() {
   << "\n"
   << "hashdb_manager supports the following <command> options:\n"
   << "\n"
-  << "--copy [<hashdb tuning parameter>]+ [-r <repository name>] <input> <hashdb>\n"
+  << "copy [<hashdb tuning parameter>]+ [-r <repository name>] <input> <hashdb>\n"
   << "    Copies the hashes in the <input> into the <hashdb> hash database.\n"
   << "\n"
   << "    Options:\n"
@@ -112,7 +121,7 @@ void usage() {
   << "    <hashdb>   a hash database being created or a hash database being\n"
   << "               copied to\n"
   << "\n"
-  << "--remove [-r <repository name>] <input> <hashdb>\n"
+  << "remove [-r <repository name>] <input> <hashdb>\n"
   << "    Removes hashes in the <input> from the <hashdb> hash database.\n"
  << "\n"
   << "    Options:\n"
@@ -128,7 +137,7 @@ void usage() {
   << "    <hashdb>   a hash database in which hashes in the <input> will be\n"
   << "               removed\n"
   << "\n"
-  << "--merge [<hashdb tuning parameter>]+ <hashdb input 1> <hashdb input 2>\n"
+  << "merge [<hashdb tuning parameter>]+ <hashdb input 1> <hashdb input 2>\n"
   << "        <hashdb output>\n"
   << "    Merges hashes in the <hashdb input 1> and <hashdb input 2> databases\n"
   << "    into the new <hashdb output> database.\n"
@@ -147,7 +156,7 @@ void usage() {
   << "    <hashdb output>     a new hashdb hash database that will contain the\n"
   << "                        merged inputs\n"
   << "\n"
-  << "--rebuild_bloom [<bloom filter tuning parameter>]+ <hashdb>\n"
+  << "rebuild_bloom [<bloom filter tuning parameter>]+ <hashdb>\n"
   << "    Rebuilds the bloom filters in the <hashdb> hash database.\n"
   << "\n"
   << "    Options:\n"
@@ -158,21 +167,21 @@ void usage() {
   << "    Parameters:\n"
   << "    <hashdb>    a hash database for which the bloom filters will be rebuilt\n"
   << "\n"
-  << "--export <hashdb> <DFXML file>\n"
+  << "export <hashdb> <DFXML file>\n"
   << "    Exports the hashes in the <hashdb> hash database to a new <DFXML file>.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb input>   a hash database whose hash values are to be exported\n"
   << "    <dfxml output>   a DFXML file containing the hashes in the <hashdb input>\n"
   << "\n"
-  << "--info <hashdb>\n"
+  << "info <hashdb>\n"
   << "    Displays information about the <hashdb> hash database to stdout.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>         a hash database whose database information is to be\n"
   << "                     displayed\n"
   << "\n"
-  << "--server [-s] <server socket endpoint> <hashdb>\n"
+  << "server [-s] <server socket endpoint> <hashdb>\n"
   << "    Starts hashdb_manager as a query server service for supporting hashdb\n"
   << "    queries.\n"
   << "\n"
@@ -233,7 +242,7 @@ void detailed_usage() {
   << "Using the md5deep tool to generate hash data:\n"
   << "hashdb_manager imports hashes from DFXML files that contain cryptographic\n"
   << "hashes of hash blocks.  These files can be generated using the md5deep tool\n"
-  << "or by exporting a hash database using the hashdb_manager \"--export\" command.\n"
+  << "or by exporting a hash database using the hashdb_manager \"export\" command.\n"
   << "When using the md5deep tool to generate hash data, the \"-p <partition size>\"\n"
   << "option must be set to the desired hash block size.  This value must match\n"
   << "the hash block size that hashdb_manager expects or else no hashes will be\n"
@@ -364,7 +373,7 @@ void detailed_usage() {
   << "Examples:\n"
   << "This example uses the md5deep tool to generate cryptographic hashes from\n"
   << "hash blocks in a file, and is suitable for importing into a hash database\n"
-  << "using the hashdb_manager \"--copy\" command.  Specifically:\n"
+  << "using the hashdb_manager \"copy\" command.  Specifically:\n"
   << "\"-p 4096\" sets the hash block partition size to 4096 bytes.\n"
   << "\"-d\" instructs the md5deep tool to produce output in DFXML format.\n"
   << "\"my_file\" specifies the file that cryptographic hashes will be generated\n"
@@ -374,7 +383,7 @@ void detailed_usage() {
   << "\n"
   << "This example uses the md5deep tool to generate hashes recursively under\n"
   << "subdirectories, and is suitable for importing into a hash database using\n"
-  << "the hashdb_manager \"--copy\" command.  Specifically:\n"
+  << "the hashdb_manager \"copy\" command.  Specifically:\n"
   << "\"-p 4096\" sets the hash block partition size to 4096 bytes.\n"
   << "\"-d\" instructs the md5deep tool to produce output in DFXML format.\n"
   << "\"-r mydir\" specifies that hashes will be generated recursively under\n"
@@ -385,22 +394,22 @@ void detailed_usage() {
   << "This example copies hashes from DFXML input file my_dfxml_file to new hash\n"
   << "database my_hashdb, categorizing the hashes as sourced from repository\n"
   << "\"my repository\":\n"
-  << "    hashdb_manager --copy -r \"my repository\" my_dfxml_file my_hashdb\n"
+  << "    hashdb_manager copy -r \"my repository\" my_dfxml_file my_hashdb\n"
   << "\n"
   << "This example copies hashes from hash database my_hashdb1 to hash database\n"
   << "my_hashdb2.  If my_hashdb2 does not exist, it will be created.  If\n"
   << "my_hashdb2 exists, hashes from my_hashdb1 will be added to it.\n"
-  << "    hashdb_manager --copy my_hashdb1 my_hashdb2\n"
+  << "    hashdb_manager copy my_hashdb1 my_hashdb2\n"
   << "\n"
   << "This example copies hashes from my_hashdb1 to new hash database my_hashdb2,\n"
   << "but uses \"-m 5\" to copy only the first five duplicate hashes of each\n"
   << "duplicate hash value:\n"
-  << "    hashdb_manager --copy -m 5 my_hashdb1 my_hashdb2\n"
+  << "    hashdb_manager copy -m 5 my_hashdb1 my_hashdb2\n"
   << "\n"
   << "This example copies hashes from my_hashdb1 to new hash database my_hashdb2,\n"
   << "but uses \"-x 5\" to not copy any hashes from my_hashdb1 that have 5 or more\n"
   << "duplicates.\n"
-  << "    hashdb_manager --copy -x 5 my_hashdb1 my_hashdb2\n"
+  << "    hashdb_manager copy -x 5 my_hashdb1 my_hashdb2\n"
   << "\n"
   << "This example copies hashes from my_hashdb1 to new hash database my_hashdb2\n"
   << "using various tuning parameters.  Specifically:\n"
@@ -422,31 +431,31 @@ void detailed_usage() {
   << "\"--b2kM 4:32 enabled\" specifies that Bloom filter 2 will be configured to\n"
   << "have 4 hash functions and that the Bloom filter hash function size will be\n"
   << "32 bits, consuming 512MiB of disk space.\n"
-  << "    hashdb_manager --copy -p 512 -m 2 -t hash -n 4 -i 34 --b1 enabled\n"
+  << "    hashdb_manager copy -p 512 -m 2 -t hash -n 4 -i 34 --b1 enabled\n"
   << "                --b1n 50000000 --b2 enabled --b2kM 4:32 my_hashdb1 my_hashdb2\n"
   << "\n"
   << "This example removes hashes in my_dfxml_file from my_hashdb using a DFXML\n"
   << "repository source name of \"my repository\":\n"
-  << "    hashdb_manager --remove -r \"my repository\" my_dfxml_file my_hashdb\n"
+  << "    hashdb_manager remove -r \"my repository\" my_dfxml_file my_hashdb\n"
   << "\n"
   << "This example merges my_hashdb1 and my_hashdb2 into new hash database\n"
   << "my_hashdb3:\n"
-  << "    hashdb_manager --merge my_hashdb1 my_hashdb2 my_hashdb3\n"
+  << "    hashdb_manager merge my_hashdb1 my_hashdb2 my_hashdb3\n"
   << "\n"
   << "This example rebuilds the Bloom filters for hash database my_hashdb to\n"
   << "optimize it to work well with 50,000,000 different hash values:\n"
-  << "    hashdb_manager --rebuild_bloom --b1n 50000000 my_hashdb\n"
+  << "    hashdb_manager rebuild_bloom --b1n 50000000 my_hashdb\n"
   << "\n"
   << "This example exports hashes in my_hashdb to new DFXML file my_dfxml:\n"
-  << "    hashdb_manager --export my_hashdb my_dfxml\n"
+  << "    hashdb_manager export my_hashdb my_dfxml\n"
   << "\n"
   << "This example displays the history attribution log of hash database my_hashdb.\n"
   << "Output is directed to stdout.\n"
-  << "    hashdb_manager --info my_hashdb\n"
+  << "    hashdb_manager info my_hashdb\n"
   << "\n"
   << "This example starts hashdb_manager as a server service using socket endpoint\n"
   << "\"tcp://*:14501\".  It provides hash lookups using hash database my_hashdb:\n"
-  << "    hashdb_manager --server -s tcp://*:14501 my_hashdb\n"
+  << "    hashdb_manager server -s tcp://*:14501 my_hashdb\n"
   << "\n"
   << "This example uses bulk_extractor to run the hashid scanner to scan for\n"
   << "hash values in a media file where the hash queries are performed\n"
@@ -502,7 +511,7 @@ void detailed_usage() {
   << "file my_dfxml match hash values in the hashdb that is opened locally for\n"
   << "querying from.\n"
   << "Parameters to the hashdb_checker tool follow:\n"
-  << "\"--query_hash\" tells hashdb_checker to perform a hash query.\n"
+  << "\"query_hash\" tells hashdb_checker to perform a hash query.\n"
   << "\"-q use_socket\" directs the query to use a hash database query server.\n"
   << "service for performing the hash lookup.\n"
   << "\"-s tcp://localhost:14501\" specifies the client socket endpoint as\n"
@@ -513,25 +522,25 @@ void detailed_usage() {
   << "File \"my_dfxml\" is the name of the DFXML file containing hashes that will\n"
   << "be scanned for.\n"
   << "Output is directed to stdout.\n"
-  << "    hashdb_checker --query_hash -q use_socket -s tcp://localhost:14501 my_dfxml\n"
+  << "    hashdb_checker query_hash -q use_socket -s tcp://localhost:14501 my_dfxml\n"
   << "\n"
   << "This example uses the hashdb_checker tool to look up source information\n"
   << "in feature file \"identified_blocks.txt\" created by the hashid scanner\n"
   << "while running bulk_extractor.\n"
   << "Parameters to the hashdb_checker tool follow:\n"
-  << "\"--query_source\" tells hashdb_checker to perform a source lookup query.\n"
+  << "\"query_source\" tells hashdb_checker to perform a source lookup query.\n"
   << "\"-q use_path\" directs the query to perform the queries using a path to\n"
   << "a hashdb resident in the local filesystem.\n"
   << "\"-p my_hashdb\" specifies \"my_hshdb\" as the file path to the hash database.\n"
   << "\"identified_blocks.txt\" is the feature file containing the hash values\n"
   << "to look up source information for.\n"
   << "Output is directed to stdout.\n"
-  << "    hashdb_checker --query_source -q use_path -p my_hashdb identified_blocks.txt\n"
+  << "    hashdb_checker query_source -q use_path -p my_hashdb identified_blocks.txt\n"
   << "\n"
   << "This example uses the hashdb_checker tool to display information about\n"
   << "the hashdb being used by a server query service.\n"
   << "Parameters to the hashdb_checker tool follow:\n"
-  << "\"--query_hashdb_info\" tells hashdb_checker to return information about\n"
+  << "\"query_hashdb_info\" tells hashdb_checker to return information about\n"
   << "the hashdb that it is using.\n"
   << "\"-q use_socket\" directs the query to use a hash database query server.\n"
   << "\"-s tcp://localhost:14501\" specifies the client socket endpoint as\n"
@@ -540,7 +549,7 @@ void detailed_usage() {
   << "because a server service is not available.  Please see the example for\n"
   << "starting hashdb_manager as a server query service.\n"
   << "Output is directed to stdout.\n"
-  << "    hashdb_checker --query_hashdb_info -q use_socket -s tcp://localhost:14501\n"
+  << "    hashdb_checker query_hashdb_info -q use_socket -s tcp://localhost:14501\n"
   << "\n"
   ;
 }
@@ -753,15 +762,6 @@ void require_hash_block_sizes_match(const std::string& hashdb1, const std::strin
 int main(int argc,char **argv) {
   command_line = dfxml_writer::make_command_line(argc, argv);
 
-  // input parsing commands
-  int copy_flag = 0;
-  int remove_flag = 0;
-  int merge_flag = 0;
-  int rebuild_bloom_flag = 0;
-  int export_flag = 0;
-  int info_flag = 0;
-  int server_flag = 0;
-
   // manage when there are no arguments
   if(argc==1) {
       usage();
@@ -772,19 +772,10 @@ int main(int argc,char **argv) {
   int option_index; // not used
   while (1) {
 
-    static struct option long_options[] = {
+    const struct option long_options[] = {
       // general
       {"help", no_argument, 0, 'h'},
       {"Version", no_argument, 0, 'V'},
-
-      // commands
-      {"copy", no_argument, &copy_flag, 1},
-      {"remove", no_argument, &remove_flag, 1},
-      {"merge", no_argument, &merge_flag, 1},
-      {"rebuild_bloom", no_argument, &rebuild_bloom_flag, 1},
-      {"export", no_argument, &export_flag, 1},
-      {"info", no_argument, &info_flag, 1},
-      {"server", no_argument, &server_flag, 1},
 
       // command options
       {"repository", required_argument, 0, 'r'},
@@ -994,16 +985,6 @@ int main(int argc,char **argv) {
   // ************************************************************
   // prepare to run the command
   // ************************************************************
-  // check that there is exactly one command issued
-  int num_commands = copy_flag + remove_flag + merge_flag + rebuild_bloom_flag + export_flag + info_flag + server_flag;
-  if (num_commands == 0) {
-    std::cerr << "Error: missing command.  " << see_usage << "\n";
-    exit(1);
-  }
-  if (num_commands > 1) {
-    std::cerr << "Only one command may be requested.  " << see_usage << "\n";
-    exit(1);
-  }
 
   // check that bloom filter n or kM are selected but not both
   if ((has_b1n && has_b1kM) || (has_b2n && has_b2kM)) {
@@ -1029,17 +1010,28 @@ int main(int argc,char **argv) {
     exit(1);
   }
 
-  // manage arguments
-  int num_args = argc - optind;
-  std::string arg1 = "";
-  std::string arg2 = "";
-  std::string arg3 = "";
-  if (num_args >= 1) arg1 = argv[optind++];
-  if (num_args >= 2) arg2 = argv[optind++];
-  if (num_args >= 3) arg3 = argv[optind++];
+  // now parse tokens that are not consumed by options
+  argc -= optind;
+  argv += optind;
+
+  // get the command
+  if (argc < 1) {
+    std::cerr << "Error: a command must be provided.\n";
+    exit(1);
+  }
+  const std::string command(argv[0]);
+  argc--;
+  argv++;
+
+  // get any arguments
+  const int num_args = argc;
+  const std::string arg1((argc>=1) ? argv[0] : "");
+  const std::string arg2((argc>=2) ? argv[1] : "");
+  const std::string arg3((argc>=3) ? argv[2] : "");
 
   // generate usable repository name if one is not provided
-  // this works globally because all commands that use repository_name uniformly require arg1
+  // this works globally because all commands that use repository_name
+  // uniformly require arg1
   if (repository_name == "") {
     repository_name = "repository_" + arg1;
   }
@@ -1048,27 +1040,28 @@ int main(int argc,char **argv) {
   // run the command
   // ************************************************************
   // private
-  static std::string ACTION_COPY_DFXML_NEW("copy DFXML hashes to new hashdb");
-  static std::string ACTION_COPY_DFXML_EXISTING("copy DFXML hashes to existing hashdb");
-  static std::string ACTION_COPY_NEW("copy hashdb to new hashdb");
-  static std::string ACTION_COPY_NEW_EXCLUDE_DUPLICATES("copy hashdb to new hashdb excluding duplicates");
-  static std::string ACTION_COPY_EXISTING("copy hashdb to existing hashdb");
-  static std::string ACTION_REMOVE_DFXML("remove DFXML hashes from hashdb");
-  static std::string ACTION_REMOVE("remove hashdb from hashdb");
-  static std::string ACTION_MERGE("merge hashdb1 and hashdb2 to new hashdb3");
-  static std::string ACTION_REBUILD_BLOOM("rebuild bloom for hashdb");
-  static std::string ACTION_EXPORT("export hashdb to new DFXML");
-  static std::string ACTION_INFO("report info about hashdb to stdout");
-  static std::string ACTION_SERVER("start server using hashdb");
+  const std::string ACTION_COPY_DFXML_NEW("copy DFXML hashes to new hashdb");
+  const std::string ACTION_COPY_DFXML_EXISTING("copy DFXML hashes to existing hashdb");
+  const std::string ACTION_COPY_NEW("copy hashdb to new hashdb");
+  const std::string ACTION_COPY_NEW_EXCLUDE_DUPLICATES("copy hashdb to new hashdb excluding duplicates");
+  const std::string ACTION_COPY_EXISTING("copy hashdb to existing hashdb");
+  const std::string ACTION_REMOVE_DFXML("remove DFXML hashes from hashdb");
+  const std::string ACTION_REMOVE("remove hashdb from hashdb");
+  const std::string ACTION_MERGE("merge hashdb1 and hashdb2 to new hashdb3");
+  const std::string ACTION_REBUILD_BLOOM("rebuild bloom for hashdb");
+  const std::string ACTION_EXPORT("export hashdb to new DFXML");
+  const std::string ACTION_INFO("report info about hashdb to stdout");
+  const std::string ACTION_SERVER("start server using hashdb");
 
   // copy
   // copy hashes from dfxml or hashdb to new or existing hashdb
-  if (copy_flag) {
+  if (command == COMMAND_COPY) {
     // validate argument count
     if (num_args != 2) {
       std::cerr << "The copy command requires 2 parameters.  " << see_usage << "\n";
       exit(1);
     }
+std::cerr << "copy.a num args " << num_args << " arg1: '" << arg1 << "' arg2: '" << arg2 << "' arg3: '" << arg3 << "'\n";
 
     // copy dfxml to new hashdb
     if (is_dfxml(arg1) && !is_present(arg2)) {
@@ -1125,7 +1118,7 @@ int main(int argc,char **argv) {
 
   // remove
   // remove hashes in dfxml or hashdb from hashdb
-  } else if (remove_flag) {
+  } else if (command == COMMAND_REMOVE) {
     // validate argument count
     if (num_args != 2) {
       std::cerr << "The remove command requires 2 parameters.  " << see_usage << "\n";
@@ -1161,7 +1154,7 @@ int main(int argc,char **argv) {
 
   // merge
   // merge hashes in hashdb 1 and hashdb into new hashdb3
-  } else if (merge_flag) {
+  } else if (command == COMMAND_MERGE) {
     // validate argument count
     if (num_args != 3) {
       std::cerr << "The merge command requires 3 parameters.  " << see_usage << "\n";
@@ -1179,7 +1172,7 @@ int main(int argc,char **argv) {
 
   // rebuild bloom
   // rebuild hashdb bloom filters
-  } else if (rebuild_bloom_flag) {
+  } else if (command == COMMAND_REBUILD_BLOOM) {
     // validate argument count
     if (num_args != 1) {
       std::cerr << "The rebuild_bloom command requires 1 parameter.  " << see_usage << "\n";
@@ -1197,7 +1190,7 @@ int main(int argc,char **argv) {
 
   // export
   // export hashes in hashdb to dfxml
-  } else if (export_flag) {
+  } else if (command == COMMAND_EXPORT) {
     // validate argument count
     if (num_args != 2) {
       std::cerr << "The export command requires 2 parameters.  " << see_usage << "\n";
@@ -1214,7 +1207,7 @@ int main(int argc,char **argv) {
 
   // info
   // info for hashdb
-  } else if (info_flag) {
+  } else if (command == COMMAND_INFO) {
     // validate argument count
     if (num_args != 1) {
       std::cerr << "The info command requires 1 parameter.  " << see_usage << "\n";
@@ -1230,7 +1223,7 @@ int main(int argc,char **argv) {
 
   // server
   // server accessing hashdb
-  } else if (server_flag) {
+  } else if (command == COMMAND_SERVER) {
     // validate argument count
     if (num_args != 1) {
       std::cerr << "The server command requires 1 parameter.  " << see_usage << "\n";
@@ -1245,8 +1238,7 @@ int main(int argc,char **argv) {
     commands_t::do_server(arg1, server_socket_endpoint);
 
   } else {
-    // program error
-    assert(0);
+    std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }
 
   // done

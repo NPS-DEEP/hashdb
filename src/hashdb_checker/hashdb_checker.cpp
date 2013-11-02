@@ -69,7 +69,7 @@ void usage() {
   << "\n"
   << "hashdb_checker supports the following <command> options:\n"
   << "\n"
-  << "--query_hash [<query parameter>]+ <dfxml input>\n"
+  << "query_hash [<query parameter>]+ <dfxml input>\n"
   << "    Queries the hashdb specified by <query parameter> for hash values\n"
   << "    that match hash values in <dfxml input>.\n"
   << "\n"
@@ -80,7 +80,7 @@ void usage() {
   << "    Parameters:\n"
   << "        <dfxml input>  a DFXML file containing hashes to be looked up\n"
   << "\n"
-  << "--query_source [<query parameter>]+ <identified_blocks.txt input>\n"
+  << "query_source [<query parameter>]+ <identified_blocks.txt input>\n"
   << "    Queries the hashdb specified by <query parameter> for the repository\n"
   << "    name, filename, and file offset of where the hash values specified\n"
   << "    in <identified_blocks.txt input> are sourced.\n"
@@ -94,7 +94,7 @@ void usage() {
   << "        file created by bulk_extractor that contains hashes whose\n"
   << "        sources are to be looked up.\n"
   << "\n"
-  << "--query_hashdb_info [<query parameter>]+\n"
+  << "query_hashdb_info [<query parameter>]+\n"
   << "    Queries the hashdb specified by <query parameter> for information about\n"
   << "    the hashdb.\n"
   << "\n"
@@ -129,11 +129,6 @@ void usage() {
 int main(int argc,char **argv)
 {
 
-  // input parsing commands
-  int query_hashdb_info_flag = 0;
-  int query_hash_flag = 0;
-  int query_source_flag = 0;
-
   // defaults
   hashdb::query_type_t query_type = hashdb::QUERY_USE_PATH;
 
@@ -151,11 +146,6 @@ int main(int argc,char **argv)
       // general
       {"help", no_argument, 0, 'h'},
       {"Version", no_argument, 0, 'V'},
-
-      // commands
-      {"query_hashdb_info", no_argument, &query_hashdb_info_flag, 1},
-      {"query_hash", no_argument, &query_hash_flag, 1},
-      {"query_source", no_argument, &query_source_flag, 1},
 
       // command options
       {"query_type", required_argument, 0, 'l'},
@@ -210,17 +200,6 @@ int main(int argc,char **argv)
     }
   }
 
-  // check that there is exactly one command issued
-  int num_commands = query_hashdb_info_flag + query_hash_flag + query_source_flag;
-  if (num_commands == 0) {
-    std::cerr << "Error: missing command.  " << see_usage << "\n";
-    exit(1);
-  }
-  if (num_commands > 1) {
-    std::cerr << "Only one command may be requested.  " << see_usage << "\n";
-    exit(1);
-  }
-
   // set query path based on query type
   std::string query_path;
   switch(query_type) {
@@ -235,15 +214,34 @@ int main(int argc,char **argv)
     exit(1);
   }
 
- 
-  // allocate any mandatory arguments
-  std::string arg1 = "";
+  // now parse tokens that are not consumed by options
+  argc -= optind;
+  argv += optind;
+
+  // get the command
+  if (argc < 1) {
+    std::cerr << "Error: a command must be provided.\n";
+    exit(1);
+  }
+  const std::string command(argv[0]);
+  argc--;
+  argv++;
+
+  // get any arguments
+  const int num_args = argc;
+  const std::string arg1((argc>=1) ? argv[0] : "");
+  const std::string arg2((argc>=2) ? argv[1] : "");
+
+  // available commands
+  const std::string COMMAND_QUERY_HASHDB_INFO("query_hashdb_info");
+  const std::string COMMAND_QUERY_HASH("query_hash");
+  const std::string COMMAND_QUERY_SOURCE("query_source");
 
   // run the command
 
   // query hashdb info
-  if (query_hashdb_info_flag) {
-    if (argc - optind != 0) {
+  if (command == COMMAND_QUERY_HASHDB_INFO) {
+    if (num_args != 0) {
       std::cerr << "The query hashdb info command requires 0 additional parameters.  " << see_usage << "\n";
       exit(1);
     }
@@ -251,12 +249,11 @@ int main(int argc,char **argv)
     do_query_hashdb_info(query_type, query_path);
 
   // query hash
-  } else if (query_hash_flag) {
-    if (argc - optind != 1) {
+  } else if (command == COMMAND_QUERY_HASH) {
+    if (num_args != 1) {
       std::cerr << "The query_hash command requires 1 parameter.  " << see_usage << "\n";
       exit(1);
     }
-    arg1 = argv[optind++];
  
     if (has_client_hashdb_path && has_client_socket_endpoint) {
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";
@@ -265,12 +262,11 @@ int main(int argc,char **argv)
     do_query_hash_md5(query_type, query_path, arg1);
 
   // query source
-  } else if (query_source_flag) {
-    if (argc - optind != 1) {
+  } else if (command == COMMAND_QUERY_SOURCE) {
+    if (num_args != 1) {
       std::cerr << "The query_source command requires 1 parameter.  " << see_usage << "\n";
       exit(1);
     }
-    arg1 = argv[optind++];
  
     if (has_client_hashdb_path && has_client_socket_endpoint) {
       std::cerr << "A path or a socket may be selected, but not both.  " << see_usage << "\n";

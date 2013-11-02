@@ -446,7 +446,7 @@ Usage: hashdb_manager -h | -H | -V | <command>
 
 hashdb_manager supports the following <command> options:
 
---copy [<hashdb tuning parameter>]+ [-r <repository name>] <input> <hashdb>
+copy [<hashdb tuning parameter>]+ [-r <repository name>] <input> <hashdb>
     Copies the hashes in the <input> into the <hashdb> hash database.
 
     Options:
@@ -474,7 +474,7 @@ hashdb_manager supports the following <command> options:
     <hashdb>   a hash database being created or a hash database being
                copied to
 
---remove [-r <repository name>] <input> <hashdb>
+remove [-r <repository name>] <input> <hashdb>
     Removes hashes in the <input> from the <hashdb> hash database.
 
     Options:
@@ -491,7 +491,7 @@ hashdb_manager supports the following <command> options:
     <hashdb>   a hash database in which hashes in the <input> will be
                removed
 
---merge [<hashdb tuning parameter>]+ <hashdb input 1> <hashdb input 2>
+merge [<hashdb tuning parameter>]+ <hashdb input 1> <hashdb input 2>
         <hashdb output>
     Merges hashes in the <hashdb input 1> and <hashdb input 2> databases
     into the new <hashdb output> database.
@@ -510,7 +510,7 @@ hashdb_manager supports the following <command> options:
     <hashdb output>     a new hashdb hash database that will contain the
                         merged inputs
 
---rebuild_bloom [<bloom filter tuning parameter>]+ <hashdb>
+rebuild_bloom [<bloom filter tuning parameter>]+ <hashdb>
     Rebuilds the bloom filters in the <hashdb> hash database.
 
     Options:
@@ -521,21 +521,21 @@ hashdb_manager supports the following <command> options:
     Parameters:
     <hashdb>    a hash database for which the bloom filters will be rebuilt
 
---export <hashdb> <DFXML file>
+export <hashdb> <DFXML file>
     Exports the hashes in the <hashdb> hash database to a new <DFXML file>.
 
     Parameters:
     <hashdb input>   a hash database whose hash values are to be exported
     <dfxml output>   a DFXML file containing the hashes in the <hashdb input>
 
---info <hashdb>
+info <hashdb>
     Displays information about the <hashdb> hash database to stdout.
 
     Parameters:
     <hashdb>         a hash database whose database information is to be
                      displayed
 
---server [-s] <server socket endpoint> <hashdb>
+server [-s] <server socket endpoint> <hashdb>
     Starts hashdb_manager as a query server service for supporting hashdb
     queries.
 
@@ -590,7 +590,7 @@ Notes:
 Using the md5deep tool to generate hash data:
 hashdb_manager imports hashes from DFXML files that contain cryptographic
 hashes of hash blocks.  These files can be generated using the md5deep tool
-or by exporting a hash database using the hashdb_manager "--export" command.
+or by exporting a hash database using the hashdb_manager "export" command.
 When using the md5deep tool to generate hash data, the "-p <partition size>"
 option must be set to the desired hash block size.  This value must match
 the hash block size that hashdb_manager expects or else no hashes will be
@@ -721,7 +721,7 @@ btree.
 Examples:
 This example uses the md5deep tool to generate cryptographic hashes from
 hash blocks in a file, and is suitable for importing into a hash database
-using the hashdb_manager "--copy" command.  Specifically:
+using the hashdb_manager "copy" command.  Specifically:
 "-p 4096" sets the hash block partition size to 4096 bytes.
 "-d" instructs the md5deep tool to produce output in DFXML format.
 "my_file" specifies the file that cryptographic hashes will be generated
@@ -731,7 +731,7 @@ The output of md5deep is directed to file "my_dfxml_file".
 
 This example uses the md5deep tool to generate hashes recursively under
 subdirectories, and is suitable for importing into a hash database using
-the hashdb_manager "--copy" command.  Specifically:
+the hashdb_manager "copy" command.  Specifically:
 "-p 4096" sets the hash block partition size to 4096 bytes.
 "-d" instructs the md5deep tool to produce output in DFXML format.
 "-r mydir" specifies that hashes will be generated recursively under
@@ -742,22 +742,22 @@ The output of md5deep is directed to file "my_dfxml_file".
 This example copies hashes from DFXML input file my_dfxml_file to new hash
 database my_hashdb, categorizing the hashes as sourced from repository
 "my repository":
-    hashdb_manager --copy -r "my repository" my_dfxml_file my_hashdb
+    hashdb_manager copy -r "my repository" my_dfxml_file my_hashdb
 
 This example copies hashes from hash database my_hashdb1 to hash database
 my_hashdb2.  If my_hashdb2 does not exist, it will be created.  If
 my_hashdb2 exists, hashes from my_hashdb1 will be added to it.
-    hashdb_manager --copy my_hashdb1 my_hashdb2
+    hashdb_manager copy my_hashdb1 my_hashdb2
 
 This example copies hashes from my_hashdb1 to new hash database my_hashdb2,
 but uses "-m 5" to copy only the first five duplicate hashes of each
 duplicate hash value:
-    hashdb_manager --copy -m 5 my_hashdb1 my_hashdb2
+    hashdb_manager copy -m 5 my_hashdb1 my_hashdb2
 
 This example copies hashes from my_hashdb1 to new hash database my_hashdb2,
 but uses "-x 5" to not copy any hashes from my_hashdb1 that have 5 or more
 duplicates.
-    hashdb_manager --copy -x 5 my_hashdb1 my_hashdb2
+    hashdb_manager copy -x 5 my_hashdb1 my_hashdb2
 
 This example copies hashes from my_hashdb1 to new hash database my_hashdb2
 using various tuning parameters.  Specifically:
@@ -779,31 +779,31 @@ entries remaining for hash block offset values.
 "--b2kM 4:32 enabled" specifies that Bloom filter 2 will be configured to
 have 4 hash functions and that the Bloom filter hash function size will be
 32 bits, consuming 512MiB of disk space.
-    hashdb_manager --copy -p 512 -m 2 -t hash -n 4 -i 34 --b1 enabled
+    hashdb_manager copy -p 512 -m 2 -t hash -n 4 -i 34 --b1 enabled
                 --b1n 50000000 --b2 enabled --b2kM 4:32 my_hashdb1 my_hashdb2
 
 This example removes hashes in my_dfxml_file from my_hashdb using a DFXML
 repository source name of "my repository":
-    hashdb_manager --remove -r "my repository" my_dfxml_file my_hashdb
+    hashdb_manager remove -r "my repository" my_dfxml_file my_hashdb
 
 This example merges my_hashdb1 and my_hashdb2 into new hash database
 my_hashdb3:
-    hashdb_manager --merge my_hashdb1 my_hashdb2 my_hashdb3
+    hashdb_manager merge my_hashdb1 my_hashdb2 my_hashdb3
 
 This example rebuilds the Bloom filters for hash database my_hashdb to
 optimize it to work well with 50,000,000 different hash values:
-    hashdb_manager --rebuild_bloom --b1n 50000000 my_hashdb
+    hashdb_manager rebuild_bloom --b1n 50000000 my_hashdb
 
 This example exports hashes in my_hashdb to new DFXML file my_dfxml:
-    hashdb_manager --export my_hashdb my_dfxml
+    hashdb_manager export my_hashdb my_dfxml
 
 This example displays the history attribution log of hash database my_hashdb.
 Output is directed to stdout.
-    hashdb_manager --info my_hashdb
+    hashdb_manager info my_hashdb
 
 This example starts hashdb_manager as a server service using socket endpoint
 "tcp://*:14501".  It provides hash lookups using hash database my_hashdb:
-    hashdb_manager --server -s tcp://*:14501 my_hashdb
+    hashdb_manager server -s tcp://*:14501 my_hashdb
 
 This example uses bulk_extractor to run the hashid scanner to scan for
 hash values in a media file where the hash queries are performed
@@ -859,7 +859,7 @@ This example uses the hashdb_checker tool to determine if hash values in
 file my_dfxml match hash values in the hashdb that is opened locally for
 querying from.
 Parameters to the hashdb_checker tool follow:
-"--query_hash" tells hashdb_checker to perform a hash query.
+"query_hash" tells hashdb_checker to perform a hash query.
 "-q use_socket" directs the query to use a hash database query server.
 service for performing the hash lookup.
 "-s tcp://localhost:14501" specifies the client socket endpoint as
@@ -870,25 +870,25 @@ starting hashdb_manager as a server query service.
 File "my_dfxml" is the name of the DFXML file containing hashes that will
 be scanned for.
 Output is directed to stdout.
-    hashdb_checker --query_hash -q use_socket -s tcp://localhost:14501 my_dfxml
+    hashdb_checker query_hash -q use_socket -s tcp://localhost:14501 my_dfxml
 
 This example uses the hashdb_checker tool to look up source information
 in feature file "identified_blocks.txt" created by the hashid scanner
 while running bulk_extractor.
 Parameters to the hashdb_checker tool follow:
-"--query_source" tells hashdb_checker to perform a source lookup query.
+"query_source" tells hashdb_checker to perform a source lookup query.
 "-q use_path" directs the query to perform the queries using a path to
 a hashdb resident in the local filesystem.
 "-p my_hashdb" specifies "my_hshdb" as the file path to the hash database.
 "identified_blocks.txt" is the feature file containing the hash values
 to look up source information for.
 Output is directed to stdout.
-    hashdb_checker --query_source -q use_path -p my_hashdb identified_blocks.txt
+    hashdb_checker query_source -q use_path -p my_hashdb identified_blocks.txt
 
 This example uses the hashdb_checker tool to display information about
 the hashdb being used by a server query service.
 Parameters to the hashdb_checker tool follow:
-"--query_hashdb_info" tells hashdb_checker to return information about
+"query_hashdb_info" tells hashdb_checker to return information about
 the hashdb that it is using.
 "-q use_socket" directs the query to use a hash database query server.
 "-s tcp://localhost:14501" specifies the client socket endpoint as
@@ -897,7 +897,7 @@ at socket endpoint "tcp://*:14501" or else this example will fail
 because a server service is not available.  Please see the example for
 starting hashdb_manager as a server query service.
 Output is directed to stdout.
-    hashdb_checker --query_hashdb_info -q use_socket -s tcp://localhost:14501
+    hashdb_checker query_hashdb_info -q use_socket -s tcp://localhost:14501
 \end{verbatim}
 \end{small}
 
