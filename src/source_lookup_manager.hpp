@@ -177,7 +177,8 @@ class source_lookup_manager_t {
   }
 
   /**
-   * Insert the source lookup element else return false if already there.
+   * Insert the source lookup element using the next free source_lookup_index,
+   * else offer existing source_lookup_index and return false if already there.
    */
   bool insert_source_lookup_element(const std::string& repository_name,
                                     const std::string& filename,

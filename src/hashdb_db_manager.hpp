@@ -340,7 +340,7 @@ class hashdb_db_manager_t {
         return false;
       }
 
-      // false if no md5
+      // false if no md5 in hash store
       source_lookup_record_t source_lookup_record;
       if (!has_source_lookup_record(md5, source_lookup_record)) {
         // no md5, so no element
@@ -422,9 +422,12 @@ class hashdb_db_manager_t {
                                     hash_source_record.repository_name,
                                     hash_source_record.filename,
                                     source_lookup_index);
+
+      // both conditions are acceptable
       if (status == 0) {
-        // program error
-        assert(0);
+        // we just looked up an existing source lookup index
+      } else {
+        // we just received a source lookup index that was just created
       }
 
       // calculate hash block offset

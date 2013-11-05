@@ -326,7 +326,6 @@ void do_query_hash_md5(hashdb::query_type_t query_type,
                 << "count=" << it->duplicates_count
                 << ",source_query_index=" << it->source_query_index
                 << ",hash_block_offset_value=" << it->hash_block_offset_value
-                << ",from_map=" << source_map[it->id]
                 << "\n";
     }
   } else {

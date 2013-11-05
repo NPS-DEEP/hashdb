@@ -65,7 +65,7 @@ std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
       // READ_ONLY
       index_by_key   = new index_by_key_t(idx1_filename, dat_filename,
                                           boost::btree::flags::read_only);
-      index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
+      index_by_value = new index_by_value_t(idx2_filename, index_by_key->file(),
                                           boost::btree::flags::read_only,
                                           -1, typename BI_T::value_ordering());
     } else if (file_mode == RW_NEW) {
@@ -73,7 +73,7 @@ std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
       // RW_NEW
       index_by_key   = new index_by_key_t(idx1_filename, dat_filename,
                                           boost::btree::flags::truncate);
-      index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
+      index_by_value = new index_by_value_t(idx2_filename, index_by_key->file(),
                                           boost::btree::flags::truncate,
                                           -1, typename BI_T::value_ordering());
     } else if (file_mode == RW_MODIFY) {
@@ -81,7 +81,7 @@ std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
       // RW_MODIFY
       index_by_key   = new index_by_key_t(idx1_filename, dat_filename,
                                           boost::btree::flags::read_write);
-      index_by_value = new index_by_value_t(idx2_filename, idx1_filename,
+      index_by_value = new index_by_value_t(idx2_filename, index_by_key->file(),
                                           boost::btree::flags::read_write,
                                           -1, typename BI_T::value_ordering());
     }
