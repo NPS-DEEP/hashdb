@@ -301,3 +301,44 @@ What this means for hashdb:
  * We may request new "apply" interface to enable more efficient performance
    when changing a mapped_value.
 
+------------------------------------------------------------
+Hash database Statistics:
+The hash database is managed as a B-Tree map indexed by key = hash values.
+By iterating over the database by key, we can determine the following:
+ * Hash values with the highest repeat counts, for example:
+
+       hash value                            hash duplicate count
+       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1           40,000
+       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx2           500
+
+ * The number of hases that reflect a given repeat count value, for example:
+
+       hash duplicate count         # hashes with this hash duplicate count
+              1                            1,000,000
+              2                            50,000
+              3                            20,000
+              4                            500
+              5                            25
+              6                            8
+              7                            20
+
+A deeper statistical analysis of hash databases may be conducted by using
+an indexed multiset B-Tree with an indexed lookup for each field.  Fields are:
+ * Hash value
+ * Source repository name
+ * Source filename
+ * Source file offset
+
+Using this, we can generate statistical information about the prevalence
+of source repository names and filenames.
+
+An indexed multiset B-Tree would be created by copying a B-Tree map indexed
+by key.  The copy can take some time.
+
+It would be nice to use an indexed B-Tree set instead of a B-Tree map,
+but this hampers read speed.  So this will be an offline post-processing
+capability.
+
+Since it will be offline, it will likely not be part of the hashdb API.
+This implies that not all hashdb services will be wrapped into the hashdb API.
+
