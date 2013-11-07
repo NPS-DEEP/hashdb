@@ -283,6 +283,7 @@ class source_lookup_record_t {
       counter->overflow_indicator = std::numeric_limits<uint32_t>::max();
     }
 
+//zz this should be uint32_t get_count() because that is the size of the field.
     size_t get_count() {
       counter_t* counter = reinterpret_cast<counter_t*>(this);
       if (counter->overflow_indicator != std::numeric_limits<uint32_t>::max()) {

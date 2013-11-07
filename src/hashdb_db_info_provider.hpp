@@ -25,7 +25,9 @@
 #ifndef HASHDB_DB_INFO_PROVIDER_HPP
 #define HASHDB_DB_INFO_PROVIDER_HPP
 
-#include "hashdb_db_manager.hpp"
+//#include "hashdb_db_manager.hpp"
+#include "hash_store.hpp"
+#include "hashdb_settings.h"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -36,6 +38,25 @@
 class hashdb_db_info_provider_t {
   public:
   static int get_hashdb_info(const std::string& hashdb_dir, std::string& info) {
+    info = "";
+
+    // make output stream
+    std::stringstream ss;
+
+// zz not anymore    int status = get_history(hashdb_dir, ss);
+    int status = get_statistics(hashdb_dir, ss);
+
+    // return stream as string
+    info = ss.str();
+    return status;
+  }
+
+  private:
+  hashdb_db_info_provider_t();
+
+  private:
+  // history
+  static int get_history(const std::string& hashdb_dir, std::stringstream& ss) {
 
     // return history which serves as attribution and metadata information
 
@@ -55,9 +76,6 @@ class hashdb_db_info_provider_t {
       return -1;
     }
 
-    // make output stream
-    std::stringstream ss;
-
     // parse each line
     std::string line;
     bool error = false;
@@ -68,12 +86,91 @@ class hashdb_db_info_provider_t {
     // close resource
     in.close();
 
-    info = ss.str();
     return 0;
   }
 
-  private:
-  hashdb_db_info_provider_t();
+  // statistics
+  static int get_statistics(const std::string& hashdb_dir,
+                            std::stringstream& ss) {
+
+    // statistics come from the hash store rather than through the
+    // hashdb_db_manager
+
+    // total number of hashes in the database
+    uint64_t total_hashes = 0;
+
+    // number of unique hashes in the database
+    uint64_t unique_hashes = 0;
+
+    // <count,#hashes with this count>
+    std::map<uint32_t, uint64_t>* hash_repeats;
+    hash_repeats = new std::map<uint32_t, uint64_t>();
+
+    // <hash with highest count, its count>
+    std::pair<md5_t, uint32_t> hash_with_highest_count(md5_t(), 0);
+
+//zzTBD    // repositories and their counts
+//zzTBD    std::map<std::string, uint64_t>* repositories;
+//zzTBD    repositories = new std::map<std::string, uint64_t>();
+
+    // now start processing
+
+    // get hashdb settings
+    hashdb_settings_t settings = settings_reader_t::read_settings(hashdb_dir);
+
+    // path to hash store
+    std::string hash_store_path =
+               hashdb_filenames_t::hash_store_filename(hashdb_dir);
+  
+    hash_store_t* hash_store = new hash_store_t(
+                hash_store_path, READ_ONLY, settings.hash_store_settings);
+
+    // now generate statistics from the elements in hash_store
+    for (hash_store_t::hash_store_iterator_t it = hash_store->begin(); it!=hash_store->end(); ++it) {
+      source_lookup_record_t source_lookup_record = it->second;
+      uint32_t count = source_lookup_record.get_count();
+
+      // total hashes is the sum of count values from the hash store
+      total_hashes += count;
+
+      // unique hashes is the sum of hashes with count=1 in the hash store
+      if (count == 1) {
+        ++unique_hashes;
+      }
+
+      // hash repeats in map<count,#hashes with this count>
+      std::map<uint32_t, uint64_t>::iterator hash_repeats_it = hash_repeats.find(count);
+      if (hash_repeats_it == hash_repeats.end()) {
+        // first hash found with this count value
+        hash_repeats[count] = 1;
+      } else {
+        // increment #hashes with this count
+        uint64_t repeats = hash_repeats[count]
+        hash_repeats[count] = repeats + 1;
+      }
+
+      // hash and its count for the hash with the highest count
+      if (count > hash_with_highest_count.second) {
+        hash_with_highest_count = std::pair<md5_t, uint32_t>(it->first, count);
+      }
+
+      // repositories and their counts
+      // TBD
+    }
+
+    // now stream the statistics
+    ss << "total hashes: " << total_hashes << "\n";
+    ss << "unique hashes: " << unique_hashes << "\n";
+    ss << "count and #hashes with this count: \n";
+    for (hash_repeats_it = hash_repeats.begin(); hash_repeats_it < hash_repeats.end(); ++hash_repeats) {
+      ss << "  " << hash_repeats_it->first;
+      ss << "  " << hash_repeats_it->second << "\n";
+    }
+    ss << "hash with highest count: hash: " << hash_with_highest_count.first;
+    ss << ", count: " << hash_with_highest_count.second << "\n";
+
+    return 0;
+  }
 };
 
 #endif
