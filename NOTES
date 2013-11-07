@@ -223,3 +223,71 @@ because these tool services are no longer distinct; the hashdb API will
 support both read and write servcies.  Note that the hashdb_manager tool
 already uses the hashdb API.
 
+------------------------------------------------------------
+Here is a summary of design strategies and configurable B-Tree parameters
+that impact B-Tree performance:
+
+ * Key size.  The Key size used impacts performance the most because it
+   impacts the depth of the tree.  When the key size is small, more
+   child elements fit in a node, resulting in a shorter tree.
+
+   An indexed map can be used to minimize Key size, but each indexed map
+   lookup is paired with a flat-map lookup of the Key's value, so indexed
+   maps cannot have better performance than direct maps.
+
+ * Node size, default 4096.  Larger nodes hold more child nodes, shortening
+   the tree, specifically # child nodes = ( node size - overhead ) / Key size.
+   Larger node sizes permit shorter trees, but the extra data read is not used;
+   less than 4096 bytes of
+   information is needed from the node, and reading more than the
+   operating system's 4096-byte block size takes time, too.  In fact,
+   on a discontiguous block read, the cost of reading a second 4096-byte
+   block is equivalent to the cost of reading a node in the next branch of
+   the tree.
+
+   In other words, the node size should be the same as the block size used
+   by the OS, typically 4096.
+
+   The node size may be selected by passing it in to the btree constructor.
+
+ * Traits: Endian traits are configurable to big, little, or native endian.
+   Beman has chosen big-endian traits because this is portable and readable
+   and the choice makes no measurable effect on performance.
+
+   The traits used is selected by passing the desired traits class as a
+   template parameter to the desired btree type during class instantiation.
+
+ * Preload: Preload to OS file cache.  Enabled by flag in Open call.  This
+   does not load the btree cache, but btree can be changed so that it does.
+
+ * Cache branches: enable permanent cache of all branch nodes touched.
+   The btree buffer manager will never deallocate nodes that have been read.
+   Enabled by flag in Open call.
+
+   Unused buffers are deallocated based on an algorithm when buffers
+   reach max_cache_size.
+
+ * Caching: Amount of caching is selectable based on ratio of file size.
+   We will select "fastest".  We may select "least_memory" for testing
+   performance.  Selected by flag in Open call.
+
+   May also be changed during runtime via max_cache_size.
+
+ * reserve_default: Bytes to reserve for the flat file that is created when
+   using indexed sets and maps.  Not used for sets and maps that are not
+   indexed.
+
+Here are optimizing B-Tree design characteristics which are different from
+the classical B+ tree:
+ * New-node-on-full (lazy) rather than split on full for ordered inserts
+   allow 100% packing
+
+ * Free-at-empty (lazy) rather than rebalancing erases.
+
+Optimizations we may want to request:
+ * Add function "apply(key, mapped_value)" to insert if key not present,
+   or update mapped_valueu if present.
+
+   We change mapped_value for keys in the hash store when we add or remove
+   elements from the hash duplicates store.
+
