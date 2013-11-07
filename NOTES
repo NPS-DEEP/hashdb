@@ -264,14 +264,13 @@ that impact B-Tree performance:
    The btree buffer manager will never deallocate nodes that have been read.
    Enabled by flag in Open call.
 
-   Unused buffers are deallocated based on an algorithm when buffers
-   reach max_cache_size.
-
  * Caching: Amount of caching is selectable based on ratio of file size.
    We will select "fastest".  We may select "least_memory" for testing
-   performance.  Selected by flag in Open call.
+   performance.  Selected by flag in Open call.  May also be changed during
+   runtime via max_cache_size.
 
-   May also be changed during runtime via max_cache_size.
+   Unused buffers are deallocated based on an algorithm when buffers
+   reach max_cache_size.
 
  * reserve_default: Bytes to reserve for the flat file that is created when
    using indexed sets and maps.  Not used for sets and maps that are not
@@ -284,10 +283,21 @@ the classical B+ tree:
 
  * Free-at-empty (lazy) rather than rebalancing erases.
 
-Optimizations we may want to request:
+Implementation ptimizations we may want to request:
  * Add function "apply(key, mapped_value)" to insert if key not present,
-   or update mapped_valueu if present.
+   or update mapped_value if present.
 
    We change mapped_value for keys in the hash store when we add or remove
    elements from the hash duplicates store.
+
+What this means for hashdb:
+ * No user options; btree will be hardcoded for maximum speed and will use
+   lots of memory.
+ * Always open with "fastest" flag to maximize caching.
+ * Do not preload.
+ * Use default traits.
+ * Use default node size of 4096 bytes.
+ * Design with minimal key+value size, which we do.
+ * We may request new "apply" interface to enable more efficient performance
+   when changing a mapped_value.
 
