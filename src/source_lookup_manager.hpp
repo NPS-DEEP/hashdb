@@ -96,6 +96,9 @@ class source_lookup_manager_t {
    * Close and release resources.
    */
   ~source_lookup_manager_t() {
+    delete source_lookup_store;
+    delete repository_name_lookup_store;
+    delete filename_lookup_store;
   }
 
   /**

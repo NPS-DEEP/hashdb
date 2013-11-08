@@ -342,3 +342,14 @@ capability.
 Since it will be offline, it will likely not be part of the hashdb API.
 This implies that not all hashdb services will be wrapped into the hashdb API.
 
+------------------------------------------------------------
+Obscure boost::btree errors from programming errors:
+It would be nice if btree had more checks during instantiation in order
+to help with programming errors.  Currently, misuse results in segmentation
+faults from deep in Boost.  These errors are from my mistakes:
+1) Close after creating and modifying a new btree.  I failed to call delete
+after new.  After next open, read crashed.
+2) When opening an index file, pass index_by_key(file), not key_file.
+The compiler allows this because the method prototype is available.  But it
+is the wrong one.  I don't know if a check is possible for this error.
+

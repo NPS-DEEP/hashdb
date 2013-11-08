@@ -242,7 +242,7 @@ int main(int argc,char **argv)
   // query hashdb info
   if (command == COMMAND_QUERY_HASHDB_INFO) {
     if (num_args != 0) {
-      std::cerr << "The query hashdb info command requires 0 additional parameters.  " << see_usage << "\n";
+      std::cerr << "The query hashdb info command requires that there be no additional parameters.  " << see_usage << "\n";
       exit(1);
     }
  

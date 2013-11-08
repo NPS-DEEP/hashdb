@@ -38,7 +38,6 @@ using namespace boost::btree;
  */
 struct bi_data_64_sv_t {
   typedef uint64_t key_type;
-//  typedef std::pair<uint64_t, uint64_t> value_type;
   typedef boost::string_view value_type;
 
   key_type key;
@@ -139,6 +138,12 @@ inline bool operator<(uint64_t lhs, const bi_data_64_pair_t& rhs) {return lhs < 
 // stream inserter
 inline std::ostream& operator<<(std::ostream& os, const bi_data_64_pair_t& x) {
   os << "(" << x.key << ", (" << x.value.first << ", " << x.value.second << "))";
+  return os;
+}
+
+// also stream inserter for std::pair<uint64_t, uint64_t>
+inline std::ostream& operator<<(std::ostream& os, const std::pair<uint64_t, uint64_t>& x) {
+  os << "(" << x.first << ", " << x.second << ")";
   return os;
 }
 
