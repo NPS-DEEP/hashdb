@@ -214,9 +214,9 @@ exit.  Specifically, Boost exceptions will be caught and converted to error
 codes and any invocations of exit will be replaced by error codes.
 Currently, error codes are used, but they only return 0 or 1.
 
-Since the hashdb API interfaces will be functionally complete for all hashdb
-actions, the hashdb_manager tool will be changed to use the hashdb API
-rather than have code that replicates what the hashdb API does.
+The hashdb_manager tool will be changed to use the hashdb API uniformly
+for lookup and for add operations, rather than have code in the manager
+that replicates what the hashdb API does.
 
 The hashdb_checker tool will be merged into the hashdb_manager tool
 because these tool services are no longer distinct; the hashdb API will
@@ -291,8 +291,9 @@ Implementation ptimizations we may want to request:
    elements from the hash duplicates store.
 
 What this means for hashdb:
- * No user options; btree will be hardcoded for maximum speed and will use
-   lots of memory.
+ * May want preload option if opening as socket service well before use.
+ * No other user options; btree will be hardcoded for maximum speed and will
+   use lots of memory.
  * Always open with "fastest" flag to maximize caching.
  * Do not preload.
  * Use default traits.
@@ -361,4 +362,5 @@ Compiler warnings
    compiler flag.  A comparison warning still shows even with warnings
    disabled.
 
-At some point, these warnings should both be examined.
+At some point, these warnings should be examined.
+
