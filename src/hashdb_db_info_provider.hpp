@@ -139,14 +139,15 @@ class hashdb_db_info_provider_t {
       }
 
       // hash repeats in map<count,#hashes with this count>
-      std::map<uint32_t, uint64_t>::iterator hash_repeats_it = hash_repeats.find(count);
-      if (hash_repeats_it == hash_repeats.end()) {
+      std::map<uint32_t, uint64_t>::iterator hash_repeats_it = hash_repeats->find(count);
+      if (hash_repeats_it == hash_repeats->end()) {
         // first hash found with this count value
-        hash_repeats[count] = 1;
+        hash_repeats->insert(std::pair<uint32_t, uint64_t>(count, 1));
       } else {
         // increment #hashes with this count
-        uint64_t repeats = hash_repeats[count]
-        hash_repeats[count] = repeats + 1;
+        uint64_t old_number = hash_repeats_it->second;
+        hash_repeats->erase(count);
+        hash_repeats->insert(std::pair<uint32_t, uint64_t>(count, old_number + 1));
       }
 
       // hash and its count for the hash with the highest count
@@ -162,9 +163,10 @@ class hashdb_db_info_provider_t {
     ss << "total hashes: " << total_hashes << "\n";
     ss << "unique hashes: " << unique_hashes << "\n";
     ss << "count and #hashes with this count: \n";
-    for (hash_repeats_it = hash_repeats.begin(); hash_repeats_it < hash_repeats.end(); ++hash_repeats) {
-      ss << "  " << hash_repeats_it->first;
-      ss << "  " << hash_repeats_it->second << "\n";
+    std::map<uint32_t, uint64_t>::iterator hash_repeats_it2;
+    for (hash_repeats_it2 = hash_repeats->begin(); hash_repeats_it2 != hash_repeats->end(); ++hash_repeats_it2) {
+      ss << "  " << hash_repeats_it2->first;
+      ss << "  " << hash_repeats_it2->second << "\n";
     }
     ss << "hash with highest count: hash: " << hash_with_highest_count.first;
     ss << ", count: " << hash_with_highest_count.second << "\n";
