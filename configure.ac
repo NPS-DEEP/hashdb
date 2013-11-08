@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 0.9.0, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 0.9.1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE - src_win/Makefile is not automatically generated. This is necessary

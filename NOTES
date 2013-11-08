@@ -353,3 +353,12 @@ after new.  After next open, read crashed.
 The compiler allows this because the method prototype is available.  But it
 is the wrong one.  I don't know if a check is possible for this error.
 
+------------------------------------------------------------
+Compiler warnings
+ * bloom filter generates warnings so they are disabled with the -isystem
+   compiler flag.
+ * btree code generates warnings so warnings are disabled with the -isystem
+   compiler flag.  A comparison warning still shows even with warnings
+   disabled.
+
+At some point, these warnings should both be examined.
