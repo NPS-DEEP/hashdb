@@ -365,7 +365,10 @@ Compiler warnings
 At some point, these warnings should be examined.
 
 ------------------------------------------------------------
-Uploading to digitalcorpora
+Tagging a version and Uploading to digitalcorpora
+ * $ git tag -a v0.9.1 -m "v0.9.1
+   $ git push origin --tags
+
  * Upload to digitalcorpora.org/downloads/hashdb
    at ncr:/var/www/digitalcorpora/downloads/hashdb
 
