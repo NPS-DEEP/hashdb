@@ -1,34 +1,47 @@
-test input parameters.
-Inspect using export, settings.xml, and log.xml:
+Testing hashdb:
 
-Run examples in Usage.  Additionally:
+For basic interface testing, run the examples shown in detailed help,
+type "hashdb -H".
 
-define most parameters when creating a new hashdb:
-hashdb_manager --copy -p512 -m10 -thash -n2 -i33 --b1 disabled --b1n 10000 --b2 disabled --b2n 100000 -rmy_repo dfxml_in hashdb_out
+Inspect results:
+ * See if the number of hashes added or removed seems logical.
+ * See if database information seems appropriate for what has been added
+   or removed.
+ * Export the database and inspect content for correctness (for smaller DBs).
+ * Examine the settings.xml file to ensure that correct settings were accepted.
+ * Examine the log file to validate proper attribution management.
 
-hashdb_manager --rebuild_bloom --b1 enabled --b1kM 2:15 --b2 disabled --b2kM 4:22 hashdb_out
+The remaining tests target specific functionality.
 
-hashdb_manager --copy -rmy_repo dfxml_in hashdb_out
-hashdb_manager --export hashdb_out dfxml_out
-hashdb_manager --remove -rmy_repo dfxml_in hashdb_out
+------------------------------------------------------------
+Test many input parameters at once:
+
+Define most parameters when creating a new hashdb:
+hashdb_manager copy -p512 -m10 -thash -n2 -i33 --b1 disabled --b1n 10000 --b2 disabled --b2n 100000 -rmy_repo dfxml_in hashdb_out
+
+hashdb_manager rebuild_bloom --b1 enabled --b1kM 2:15 --b2 disabled --b2kM 4:22 hashdb_out
+
+hashdb_manager copy -rmy_repo dfxml_in hashdb_out
+hashdb_manager export hashdb_out dfxml_out
+hashdb_manager remove -rmy_repo dfxml_in hashdb_out
 
 
 ------------------------------------------------------------
-simple example sequence for testing bulk_extractor scanner scan_hashdb
+Simple example sequence for testing the scan_hashdb bulk_extractor scanner:
 Identify an image file to use, create a hashdb of it, and then scan it:
 
 $ mkdir test_scan_hashid
 $ cp Images/geotag-example.jpg test_scan_hashid/
 $ cd test_scan_hashid/
 $ md5deep -p 4096 -d geotag-example.jpg > geo_dfxml
-$ hashdb_manager --copy -r "myrep" geo_dfxml  geo_hashdb
+$ hashdb_manager copy -r "myrep" geo_dfxml  geo_hashdb
 $ bulk_extractor -S query_type=use_path -S path=geo_hashdb -o be4 geotag-example.jpg 
 
 Examine be4/identified_blocks.txt for hash content
 
 Now scan using Socket service:
 
-$ hashdb_manager --socket geo_hashdb
+$ hashdb_manager socket geo_hashdb
 $ bulk_extractor -S query_type=use_socket -o be5 geotag-example.jpg 
 
 Examine be5/identified_blocks.txt for hash content
@@ -45,26 +58,26 @@ md5deep -p 4096 -d myfile > my_dfxml
 
 # import dfxml file
 # b1 is disabled on Windows until Bloom works
-hashdb_manager --copy --b1 disabled -r "my repository" my_dfxml my_db
+hashdb_manager copy --b1 disabled -r "my repository" my_dfxml my_db
 
 # export dfxml file and validate by inspection
-hashdb_manager --export my_db temp_dfxml
+hashdb_manager export my_db temp_dfxml
 vi temp_dfxml
 
 # query_hash using the hashdb_checker tool using database
-hashdb_checker --query_hash -p my_db my_dfxml
+hashdb_checker query_hash -p my_db my_dfxml
 
 # start server for serving lookups from my_db using default socket
-hashdb_manager --server my_db
+hashdb_manager server my_db
 
 # query_hash using the hashdb_checker tool using default socket
-hashdb_checker --query_hash -q use_socket my_dfxml
+hashdb_checker query_hash -q use_socket my_dfxml
 
 # query_hash using the bulk_extractor scan_hashid scanner using database
 bulk_extractor -S query_hash_type=use_path -S path=my_db -o out1 myfile
 
 # start server for serving lookups from my_db using default socket
-hashdb_manager --server my_db
+hashdb_manager server my_db
 
 # query_hash using the bulk_extractor scan_hashid scanner using default socket
 bulk_extractor -S query_hash_type=use_socket -o out2 myfile

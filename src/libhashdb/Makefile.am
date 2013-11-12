@@ -35,7 +35,7 @@ AM_LDFLAGS = -static $(XML_LIBS)
 # ############################################################
 # for libhashdb sources
 # ############################################################
-QUERY_INCS = \
+HASHDB_INCS = \
 	../bi_data_types.hpp \
 	../bi_store.hpp \
 	../bloom_filter.hpp \
@@ -53,7 +53,6 @@ QUERY_INCS = \
 	../manager_modified.h \
 	../manager_modified_includes.h \
 	../manager_modified_multimap.h \
-	../manager_multi_index_container.h \
 	../query_by_path.hpp \
 	../query_by_socket.hpp \
 	../settings_reader.hpp \
@@ -106,7 +105,7 @@ ENDIAN_INCS = \
 	../endian/include/boost/endian/conversion.hpp
 
 libhashdb_la_SOURCES = \
-	$(QUERY_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)
+	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)
 
 include_HEADERS = ../hashdb.hpp
 

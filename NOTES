@@ -283,7 +283,7 @@ the classical B+ tree:
 
  * Free-at-empty (lazy) rather than rebalancing erases.
 
-Implementation ptimizations we may want to request:
+Implementation optimizations we may want to request:
  * Add function "apply(key, mapped_value)" to insert if key not present,
    or update mapped_value if present.
 
@@ -363,4 +363,9 @@ Compiler warnings
    disabled.
 
 At some point, these warnings should be examined.
+
+------------------------------------------------------------
+Uploading to digitalcorpora
+ * Upload to digitalcorpora.org/downloads/hashdb
+   at ncr:/var/www/digitalcorpora/downloads/hashdb
 
