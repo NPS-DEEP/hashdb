@@ -317,7 +317,7 @@ into a new hash database named \texttt{my\_hashdb}:
 
 \begin{small}
 \begin{verbatim}
-hashdb_manager --copy my_dfxml_file my_hashdb
+hashdb_manager copy my_dfxml_file my_hashdb
 \end{verbatim}
 \end{small}
 
@@ -370,7 +370,7 @@ because the \hdbm tool will keep the window busy.
 
 \begin{small}
 \begin{verbatim}
-hashdb_manager --server my_hashdb
+hashdb_manager server my_hashdb
 \end{verbatim}
 \end{small}
 
@@ -386,7 +386,7 @@ referencing the \hdb at path \texttt{my\_hashdb}:
 
 \begin{small}
 \begin{verbatim}
-hashdb_checker --query_source -q use_path -p my_hashdb identified_blocks.txt
+hashdb_checker query_source -q use_path -p my_hashdb identified_blocks.txt
 \end{verbatim}
 \end{small}
 
@@ -396,7 +396,7 @@ using the query service at the default socket rather than from a file path:
 
 \begin{small}
 \begin{verbatim}
-hashdb_checker --query_source -q use_socket identified_blocks.txt
+hashdb_checker query_source -q use_socket identified_blocks.txt
 \end{verbatim}
 \end{small}
 
@@ -913,7 +913,7 @@ Usage: hashdb_checker -h | -v | <command>
 
 hashdb_checker supports the following <command> options:
 
---query_hash [<query parameter>]+ <dfxml input>
+query_hash [<query parameter>]+ <dfxml input>
 
     Options:
     <query parameter>
@@ -922,7 +922,7 @@ hashdb_checker supports the following <command> options:
     Parameters:
         <dfxml input>  a DFXML file containing hashes to be looked up
 
---query_source [<query parameter>]+ <identified_blocks.txt input>
+query_source [<query parameter>]+ <identified_blocks.txt input>
 
     Options:
     <query parameter>
@@ -935,7 +935,7 @@ hashdb_checker supports the following <command> options:
         file created by bulk_extractor that contains hashes whose
         sources are to be looked up.
 
---query_hashdb_info [<query parameter>]+
+query_hashdb_info [<query parameter>]+
 
     Options:
     <query parameter>

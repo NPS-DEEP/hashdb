@@ -1,0 +1,14 @@
+		Announcing hashdb 0.9.1
+		  November 13, 2013
+
+hashdb Version 0.9.1 has been made available for Linux, MacOS and Windows.
+This version is provided for testing B-Tree v1.0.  In addition to
+introducing B-Tree v1.0, this release includes the following improvements:
+ * B-tree may now be threadsafe.
+ * Commands no longer use the "--" option prefix.
+ * Some metadata about the database is now available in the info command.
+
+bulk_extractor v1.4.1 requires configuration changes to use hashdb 0.9.1.
+Please download bulk_extractor v1.4.1 from the hashdb downloads, which have
+been modified to use hashdb 0.9.1.
+
