@@ -180,11 +180,11 @@ query_hashdb_info are fully implemented.
 We will update the query interface to provide "add hash" services.  The
 motivating use-case is to be able to generate whitelist hash values using
 bulk_extractor.  Specifically, we will import block hashes of disk image
-sectors into a hash database for multiple images, and then merging these
-hashes.  We then use hash values that are common to multiple images as
+sectors into a hash database for multiple images, and then merge these
+hashes.  We will treat hash values that are common to multiple images as
 whitelist hash values to be excluded from blacklist data.
 
-Query services will be adjusted and added to to support additional interfaces.
+Query services will be adjusted and added to support additional interfaces.
 Changes include:
 
 The hashdb API interfaces are incorrectly prefixed with "query_".  Term
@@ -200,8 +200,8 @@ the ability to add hashes will be supported: "hashdb_add_hash_elements".
 Existing code that accesses the hashdb databases is duplicated, once for
 server code that services ZMQ requests, and once for query code that
 bypasses ZMQ and accesses hashdb databases directly.  This will be changed
-so that accesses uniformly go through ZMQ, wheter the server side is local
-or remote.  This change needs to be made before more hashdb access functons
+so that accesses uniformly go through ZMQ, whether the server side is local
+or remote.  This change needs to be made before more hashdb access functions
 are added.
 
 A complication with ZMQ has been managing variable-sizd records because of
