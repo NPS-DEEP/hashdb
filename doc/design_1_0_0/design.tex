@@ -21,6 +21,8 @@
 \newcommand{\hdb}{\emph{hashdb}\xspace}
 \newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
 \newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\hmi}{\textbf{hashdb map iterator}\xspace}
+\newcommand{\hmmi}{\textbf{hashdb multimap iterator}\xspace}
 
 \begin{document}
 
@@ -31,9 +33,8 @@
 \begin{abstract}
 This document defines the design of the \hdb tool and library
 for \hdb v1.0.0, which is different from that of \hdb v0.9.1.
-The \hdb Checker and Manager are moved,
-the \hdb Library supports add capability,
-interfaces are renamed.
+The \hdb Checker and Manager are merged.
+the \hdb Library interfaces are changed and support more capability.
 \end{abstract}
 
 \section{\hdb Services}
@@ -44,11 +45,13 @@ interfaces are renamed.
 \item Import hashes from DFXML
 \item Export hashes to DFXML
 \item Add hashes
-\item Merge two databases into a third one
+\item Copy a database to a second
+\item Merge two databases into a third database
 \item Erase hashes
 \item Rebuild Bloom Filters
-\item Run as a Server service
+\item Get hash source information
 \item Get database information
+\item Run as a Server service
 \end{compactitem}
 
 \begin{compactitem}
@@ -57,25 +60,26 @@ Create a new empty \hdb given the tuning parameters.
 \item \texttt{import <repository name> <DFXML file> <hashdb>} \\
 Import hashes from the DFXML file into the existing \hdb
 using the given repository name.
-
-Uses the \hdb Library \texttt{insert\_hashes} interface.
 \item \texttt{export <hashdb> <DFXML file>} \\
 Export hashes from the hashdb to the new DFXML file.
 \item \texttt{add <hashdb 1> <hashdb 2>} \\
 Add database 1 into database 2
-using a \emph{hashdb multimap iterator} on database 1.
-Uses the \hdb Library \texttt{insert\_hashes} interface.
+using a \hmmi over database 1.
+\item \texttt{copy <hashdb 1> <hashdb 2>} \\
+Copy database 1 to existing database 2,
+possibly excluding some amount of duplicates,
+using a \hmmi over database 1.
 \item \texttt{merge <hashdb 1> <hashdb 2> <hashdb 3>} \\
 Merge databases 1 and 2 into existing database 3
-using \emph{hashdb multimap iterator}s on databases 1 and 2 in sorted order.
-Uses the \hdb Library \texttt{insert\_hashes} interface.
+using {\hmmi}s over databases 1 and 2 in sorted order.
 \item \texttt{erase <hashdb 1> <hashdb 2>} \\
 Erase hashes in database 1 from database 2
-using a \emph{hashdb multimap iterator} on database 1.
-Uses the \hdb Library \texttt{erase\_hashes} interface.
+using a \hmmi over database 1.
 \item \texttt{rebuild bloom <bloom filter parameters> <hashdb>} \\
 Rebuild the Bloom filters
-using a \emph{hashdb map iterator} on the given database.
+using a \hmi over the given database.
+\item \texttt{get\_hash\_source <identified\_blocks.txt>} \\
+Return source information for the hashes in the specified file.
 \item \texttt{get\_hashdb\_info <hashdb>} \\
 Retrieve information about the given database.
 \item \texttt{server <hashdb>} \\
@@ -177,12 +181,13 @@ typedef std::vector<find_md5_hash_t> find_md5_hashes_t;
 struct found_md5_hash_t {
     uint32_t id;
     uint8_t digest[16];
-    uint64_t source_lookup_record;
+    uint32_t count;
 };
 
 typedef std::vector<found_md5_hash_t> found_md5_hashes_t;
 \end{verbatim}
 \end{small}
+%zz    no: uint64_t source_lookup_record;
 
 % look up hash sources
 \subsubsection{Look Up Hash Sources}
@@ -220,6 +225,47 @@ Returns information about the opened database.
 \begin{small}
 \begin{verbatim}
 get_hashdb_info(std::string& information);
+\end{verbatim}
+\end{small}
+
+\section{The \hdb Database Module}
+The \texttt{hashdb\_db\_t} module
+provides all services required for working with \hdb databases
+on the element level.
+Interfaces are:
+\begin{compactitem}
+\item Instantiate a database as new, RW, or RO
+\item Insert a \hdb element.
+\item Remove a \hdb element.
+\item See if a hash value exists.
+\item Provide a \hmmi pointing to the first \hdb element
+containing a specified hash value.
+\item Provide a \hmi for iterating over hash values.
+\item Provide a \hmmi for iterating over all \hdb elements.
+\end{compactitem}
+
+\section{\hdb Data Structures}
+\subsection{\hdb Element}
+A \hdb element consists of the following:
+\begin{compactitem}
+\item A block hash value.
+\item A hash source record containing:
+  \begin{compactitem}
+  \item file offset
+  \item repository name
+  \item filename
+  \end{compactitem}
+\end{compactitem}
+
+Specifically:
+\begin{small}
+\begin{verbatim}
+struct hash_source_record_t {
+    std::string repository_name;
+    std::string filename;
+    uint64_t file_offset;
+
+typedef std::pair<md5_t, hash_source_record_t> hashdb_element_t;
 \end{verbatim}
 \end{small}
 
@@ -279,34 +325,112 @@ and to insert elements by specifying the repository name, filename,
 and \texttt{source\_lookup\_index}.
 \end{compactitem}
 
-\section{Mid-Level \hdb Database Module}
-This mid-level \texttt{hashdb\_db\_t} module
-provides all services for working with a \hdb database
-on the \hdb element level.
-A \hdb element consists of the following pair:
-\begin{compactitem}
-\item A block hash value.
-\item A hash source record containing:
-  \begin{compactitem}
-  \item file offset
-  \item repository name
-  \item filename
-  \end{compactitem}
-\end{compactitem}
+\section{Support Modules}
+\subsection{Change Logger}
+The change logger logs a change event such as hashes added to a database.
+A change log is created for each transaction with the \hdb Database Module
+that changes the database state.
+This is different from v0.9.1, which logged changes at the application level.
 
-Interfaces support the following:
-\begin{compactitem}
-\item Insert a \hdb element.
-\item Remove a \hdb element.
-\item See if a hash value exists.
-\item Get an iterator pointing to the first record of a specified hash value.
-\item Provide a \hdb map iterator for iterating over hash values.
-\item Provide a \hdb multi-map iterator for iterating over all \hdb elements.
-\end{compactitem}
+The change logger creates or adds a log at \hdb file \texttt{log}.
+The change logger is instantiated as follows:
+\begin{small}
+\begin{verbatim}
+change_log_t(std::string hashdb_dir);
+\end{verbatim}
+\end{small}
+Change state is set by setting public variables.
+The change log entry is added when the change log object is \textbf{delete}d.
 
 \section{Top-Level \hdb Modules}
-zzzzzz
+The \hdb tool and the \hdb library run on top of the \hdb Database Module
+in order to provide the \hdb services required by users.
 
+\subsection{The \hdb Tool}
+The interfaces that the \hdb tool provides is similar to the commands
+the user sees, but is more specific:
+\begin{compactitem}
+\item Create a new \hdb database
+\item Insert hashes
+\item Erase hashes
+\item Rebuild Bloom Filters
+\item Run as a Server service
+\item Get database information
+\end{compactitem}
+
+% instantiation
+\subsubsection{Open a \hdb Database}
+Open a \hdb database at the specified directory
+with a file mode of new, read-only, or read-write.
+Operations may be performed with this database as allowed by its mode.
+
+\begin{small}
+\begin{verbatim}
+hashdb_db_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
+\end{verbatim}
+\end{small}
+
+% insert hashes
+\subsubsection{Insert Hashes}
+Insert the specified vector of hashes.
+
+\begin{small}
+\begin{verbatim}
+insert_hashes(const insert_md5_hashes_t &insert_hashes);
+\end{verbatim}
+\end{small}
+
+% erase hashes
+\subsubsection{Erase Hashes}
+Insert the specified vector of hashes.
+
+\begin{small}
+\begin{verbatim}
+erase_hashes(const erase_md5_hashes_t &erase_hashes);
+\end{verbatim}
+\end{small}
+
+% find hashes
+\subsubsection{Find Hashes}
+Returns found hashes and their corresponding source count values.
+
+\begin{small}
+\begin{verbatim}
+find_hashes(const find_md5_hashes_t &find_hashes,
+            found_md5_hashes_t &found_hashes);
+\end{verbatim}
+\end{small}
+
+% look up hash sources
+\subsubsection{Look Up Hash Sources}
+Looks up and returns vectors of hash sources for the vector of hashes provided.
+
+\begin{small}
+\begin{verbatim}
+look_up_hash_sources(const look_up_hash_sources_t& look_up_hash_sources,
+                     looked_up_hash_sources_t& looked_up_hash_sources);
+\end{verbatim}
+\end{small}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{TBD}
 1) describe the zmq layer that libhashdb and checker services provides
 
 2) describe the \hdb tool
