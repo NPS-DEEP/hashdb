@@ -44,16 +44,17 @@ the \hdb Library interfaces are changed and support more capability.
 \item Create a \hdb database
 \item Import hashes from DFXML
 \item Export hashes to DFXML
-\item Add hashes
-\item Copy a database to a second
+\item Add hashes in DFXML into database
+\item Copy a database to a second database
 \item Merge two databases into a third database
-\item Erase hashes
-\item Rebuild Bloom Filters
+\item Erase hashes in DFXML from database
+\item Rebuild Bloom Filters for database
 \item Get hash source information
 \item Get database information
 \item Run as a Server service
 \end{compactitem}
 
+Specifically:
 \begin{compactitem}
 \item \texttt{create <tuning parameters> <hashdb>} \\
 Create a new empty \hdb given the tuning parameters.
@@ -95,6 +96,8 @@ remain the same.
 The user must create a database before using \texttt{add} or \texttt{merge}.
 Alternatively, \texttt{merge} could require parameters for creating
 a new database.
+\item The \hdb tool uses the \hdb library
+for services the \hdb library provides.
 \end{compactitem}
 
 \subsection{\hdb Library Interfaces}
@@ -126,7 +129,7 @@ hashdb_md5_h(const std::string &hashdb_service);
 % insert hashes
 \subsubsection{Insert Hashes}
 Insert the hashes and their associated source information
-into the opened database.
+into the opened database and log the change to file \texttt{log}.
 \begin{small}
 \begin{verbatim}
 insert_md5_hashes(const insert_md5_hashes_t &insert_hashes);
@@ -144,7 +147,8 @@ typedef std::vector<insert_md5_hash_t> insert_md5_hashes_t;
 
 % erase hashes
 \subsubsection{Erase Hashes}
-Removes hashes that exactly match the specified source information.
+Removes hashes that exactly match the specified source information
+and log the change to file \texttt{log}.
 The data structure required for erasing hashes
 is the same as that for inserting hashes.
 
@@ -228,15 +232,62 @@ get_hashdb_info(std::string& information);
 \end{verbatim}
 \end{small}
 
-\section{The \hdb Database Module}
-The \texttt{hashdb\_db\_t} module
-provides all services required for working with \hdb databases
-on the element level.
+\subsection{\hdb Server}
+The \hdb server services requests issued to the \hdb library.
+\hdb server actions are straightforward.
+
+When a \hdb library service or the \hdb tools need to use a \hdb server,
+and the service is at a local path rather than at a socket,
+it should perform the following steps:
+\begin{algorithmic}
+\STATE create the server service as a thread using the machine-local socket
+\STATE use the server service using the system-local socket
+\STATE destroy the locally running server service thread
+\end{algorithmic}
+
+Here is the basic flow for the \hdb server:
+\begin{algorithmic}
+\STATE Instantiate a \hdb element manager
+\WHILE{true}
+  \IF{add hashes}
+    \STATE create the change logger
+    \WHILE{hashes to add}
+      \STATE add hash using the \hdb element manager
+    \ENDWHILE
+  \ELSIF{remove hashes}
+    \STATE create the change logger
+    \WHILE{hashes to remove}
+      \STATE remove hash using the \hdb element manager
+    \ENDWHILE
+  \ELSIF{find hashes}
+    \WHILE{hashes to look up}
+      \IF{match}
+        \STATE add hash and count to response
+      \ENDIF
+    \ENDWHILE
+  \ELSIF{get info}
+    \STATE put info into response
+  \ENDIF
+\ENDWHILE
+\end{algorithmic}
+
+\section{\hdb Modules}
+\subsection{\hdb Element Manager}
+The \texttt{hashdb\_element\_manager\_t}
+provides all services required for working with \hdb elements.
+The \hdb library API drives this module directly.
+The \hdb tool drives this module directly,
+and, for some functions, specifically lookup, add, and delete,
+may also drive the \hdb library API.
+
+The \hdb element manager works with \hdb elements, described later.
+Changes to the \hdb are noted in the \hdb changed object.
+
 Interfaces are:
 \begin{compactitem}
-\item Instantiate a database as new, RW, or RO
-\item Insert a \hdb element.
-\item Remove a \hdb element.
+\item Open a \hdb database as new, RW, or RO
+\item Insert a \hdb element, noting the change.
+\item Remove a \hdb element, noting the change.
 \item See if a hash value exists.
 \item Provide a \hmmi pointing to the first \hdb element
 containing a specified hash value.
@@ -244,7 +295,104 @@ containing a specified hash value.
 \item Provide a \hmmi for iterating over all \hdb elements.
 \end{compactitem}
 
-\section{\hdb Data Structures}
+% instantiation
+\subsubsection{Open a \hdb Database}
+Open a \hdb database at the specified directory
+with a file mode of new, read-only, or read-write.
+Operations may be performed with this database as allowed by its mode.
+
+\begin{small}
+\begin{verbatim}
+hashdb_db_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
+\end{verbatim}
+\end{small}
+
+% insert hash
+\subsubsection{Insert Hash}
+Insert the specified hash, noting the change.
+
+\begin{small}
+\begin{verbatim}
+insert_hash(const hashdb_element_t &hashdb_element,
+            hashdb_change_object_t &hashdb_change_object);
+\end{verbatim}
+\end{small}
+
+% erase hash
+\subsubsection{Erase Hash}
+Insert the specified hash, noting the change.
+
+\begin{small}
+\begin{verbatim}
+erase_hash(const erase_md5_hash_t &erase_hash,
+           hashdb_change_object_t &hashdb_change_object);
+\end{verbatim}
+\end{small}
+
+% find hash count
+\subsubsection{Count}
+Returns the number of elements containing the given hash value.
+
+\begin{small}
+\begin{verbatim}
+uint32_t count(md5_t md5);
+\end{verbatim}
+\end{small}
+
+% equal range
+\subsubsection{Equal Range}
+Returns pair of \hmmi to lower bound
+(first element with key not less than value)
+and upper bound (first element with key greater than value or end).
+
+\begin{small}
+\begin{verbatim}
+pair<const_hashdb_multimap_iterator lower,
+    const_hashdb_multimap_iterator upper> equal_range(md5_t md5);
+\end{verbatim}
+\end{small}
+
+% hmi begin
+\subsubsection{\hmi Begin}
+Returns begin for \hmi.
+
+\begin{small}
+\begin{verbatim}
+const_hashdb_map_iterator hashdb_map_begin();
+\end{verbatim}
+\end{small}
+
+% hmi end
+\subsubsection{\hmi End}
+Returns end for \hmi.
+
+\begin{small}
+\begin{verbatim}
+const_hashdb_map_iterator hashdb_map_end();
+\end{verbatim}
+\end{small}
+
+% hmmi begin
+\subsubsection{\hmmi Begin}
+Returns begin for \hmmi.
+
+\begin{small}
+\begin{verbatim}
+const_hashdb_multimap_iterator hashdb_multimap_begin();
+\end{verbatim}
+\end{small}
+
+% hmmi end
+\subsubsection{\hmmi End}
+Returns end for \hmmi.
+
+\begin{small}
+\begin{verbatim}
+const_hashdb_multimap_iterator hashdb_multimap_end();
+\end{verbatim}
+\end{small}
+
+% \hdb element
 \subsection{\hdb Element}
 A \hdb element consists of the following:
 \begin{compactitem}
@@ -268,6 +416,179 @@ struct hash_source_record_t {
 typedef std::pair<md5_t, hash_source_record_t> hashdb_element_t;
 \end{verbatim}
 \end{small}
+
+\subsection{\hdb Change Logger}
+This structure is used for tracking changes to the change log.
+The \hdb Element Manager increments variables in a Change Logger
+as requests are made to insert or remove \hdb elements.
+
+\begin{small}
+\begin{verbatim}
+struct hashdb_change_logger_t {
+      // insert
+      uint32_t hashes_inserted;
+      uint32_t hashes_not_inserted_invalid_file_offset;
+      uint32_t hashes_not_inserted_wrong_hash_block_size;
+      uint32_t hashes_not_inserted_wrong_hashdigest_type;
+      uint32_t hashes_not_inserted_exceeds_max_duplicates;
+      uint32_t hashes_not_inserted_duplicate_source;
+
+      // remove
+      uint32_t hashes_removed;
+      uint32_t hashes_not_removed_invalid_file_offset;
+      uint32_t hashes_not_removed_wrong_hash_block_size;
+      uint32_t hashes_not_removed_wrong_hashdigest_type;
+      uint32_t hashes_not_removed_no_hash;
+      uint32_t hashes_not_removed_different_source;
+
+      // log to the log file in hashdb_dir
+      write_log(std::string hashdb_dir);
+};
+\end{verbatim}
+\end{small}
+
+Note that logs will be written at the \hdb library level
+for each invocation of the library,
+rather than at the tool level, which logged once
+for the invocation of the \hdb tool.
+This is different from v0.9.1.
+
+% source lookup manager
+\subsection{Source Lookup Manager}
+This module manages source lookups.
+\begin{compactitem}
+\item It wraps source lookup capability under one purposed interface.
+\item It manages the lookup store, filename store,
+and repository name store files required by the three B-Tree multisets: \\
+\texttt{
+source\_lookup\_store.dat \\
+source\_lookup\_store.idx1 \\
+source\_lookup\_store.idx2 \\
+source\_filename\_store.dat \\
+source\_filename\_store.idx1 \\
+source\_filename\_store.idx2 \\
+source\_repository\_name\_store.dat \\
+source\_repository\_name\_store.idx1 \\
+source\_repository\_name\_store.idx2
+}
+\item Provides Interfaces to get source information
+from \texttt{source\_lookup\_index},
+to get the \texttt{source\_lookup\_index} from source information,
+and to insert elements by specifying the repository name, filename,
+and \texttt{source\_lookup\_index}.
+\end{compactitem}
+
+Interfaces follow.
+% constructor
+\subsubsection{Constructor}
+Open the source lookup manager with file mode of new, RO, or RW.
+\begin{small}
+\begin{verbatim}
+source_lookup_manager_t(const std::string p_hashdb_dir,
+                        file_mode_type_t file_mode);
+\end{verbatim}
+\end{small}
+
+% get source location
+\subsubsection{Get Source Location}
+Return the repository name and filename from the source lookup index.
+\begin{small}
+\begin{verbatim}
+bool get_source_location(uint64_t source_lookup_index,
+                         std::string &repository_name,
+                         std::string &filename);
+\end{verbatim}
+\end{small}
+
+% get source lookup index
+\subsubsection{Get Source Lookup Index}
+Return the source lookup index from the repository name and filename.
+\begin{small}
+\begin{verbatim}
+bool get_source_lookup_index(const std::string &repository_name,
+                             const std::string &filename,
+                             uint64_t source_lookup_index);
+\end{verbatim}
+\end{small}
+
+% insert source lookup element
+\subsubsection{Insert Source Lookup Element}
+Add a source lookup element, specifically, a repository name and filename,
+and get back the new (or already existing) source lookup index.
+\begin{small}
+\begin{verbatim}
+bool insert_source_lookup_element(const std::string &repository_name,
+                                  const std::string &filename,
+                                  uint64_t &source_lookup_index);
+\end{verbatim}
+\end{small}
+
+\subsection{Bloom Filter}
+\hdb uses two Bloom filters.
+The Bloom Filter module manages one Bloom Filter instance.
+
+% instantiation
+\subsubsection{Instantiation}
+Create one Bloom filter.
+\begin{small}
+\begin{verbatim}
+bloom_filter_t(const std::string &filename,
+               file_mode_type_t file_mode,
+               const bloom_settings_t bloom_settings);
+\end{verbatim}
+\end{small}
+
+% add hash value
+\subsubsection{Add Hash Value}
+Add one hash value to the Bloom filter.
+\begin{small}
+\begin{verbatim}
+void add_hash_value(const md5_t &md5);
+\end{verbatim}
+\end{small}
+
+% is positive
+\subsubsection{Is Positive}
+Return true if the lookup is positive, indicating the hash value may be present.
+\begin{small}
+\begin{verbatim}
+is_positive(const md5_t &md5);
+\end{verbatim}
+\end{small}
+
+
+\subsection{\hdb Settings}
+Many of the storage types in the \hdb database use configurable settings.
+The \hdb Element Manager requires the proper \hdb settings
+in order to open most of the file-based resources properly.
+The settings manager is in charge of creating or copying a settings object
+or saving or loading one from a \texttt{settings} file.
+
+% instantiation
+\subsubsection{Instantiation}
+Create a \hdb settings object:
+
+\begin{small}
+\begin{verbatim}
+// new
+hashdb_settings_t();
+
+// from file
+hashdb_settings_t(std::string hashdb_dir);
+
+// make a copy
+hashdb_settings_t(hashdb_settings_t);
+\end{verbatim}
+\end{small}
+
+% instantiation
+\subsubsection{Save Settings}
+\begin{small}
+\begin{verbatim}
+save_settings(std::string hashdb_dir);
+\end{verbatim}
+\end{small}
+
 
 \section{Low-Level \hdb Modules}
 
@@ -299,143 +620,6 @@ This module manages storage for hash duplicates.
 \item Provides interfaces to insert, erase, and look up elements.
 \item No iterator is provided with this interface.
 \end{compactitem}
-
-% source lookup manager
-\subsection{Source Lookup Manager}
-This module manages source lookups.
-\begin{compactitem}
-\item It wraps three multiset files under one purposed interface.
-\item It manages the lookup store, filename store,
-and repository name store files: \\
-\texttt{
-source\_lookup\_store.dat \\
-source\_lookup\_store.idx1 \\
-source\_lookup\_store.idx2 \\
-source\_filename\_store.dat \\
-source\_filename\_store.idx1 \\
-source\_filename\_store.idx2 \\
-source\_repository\_name\_store.dat \\
-source\_repository\_name\_store.idx1 \\
-source\_repository\_name\_store.idx2 \\
-}
-\item Provides Interfaces to get source information
-from \texttt{source\_lookup\_index},
-to get the \texttt{source\_lookup\_index} from source information,
-and to insert elements by specifying the repository name, filename,
-and \texttt{source\_lookup\_index}.
-\end{compactitem}
-
-\section{Support Modules}
-\subsection{Change Logger}
-The change logger logs a change event such as hashes added to a database.
-A change log is created for each transaction with the \hdb Database Module
-that changes the database state.
-This is different from v0.9.1, which logged changes at the application level.
-
-The change logger creates or adds a log at \hdb file \texttt{log}.
-The change logger is instantiated as follows:
-\begin{small}
-\begin{verbatim}
-change_log_t(std::string hashdb_dir);
-\end{verbatim}
-\end{small}
-Change state is set by setting public variables.
-The change log entry is added when the change log object is \textbf{delete}d.
-
-\section{Top-Level \hdb Modules}
-The \hdb tool and the \hdb library run on top of the \hdb Database Module
-in order to provide the \hdb services required by users.
-
-\subsection{The \hdb Tool}
-The interfaces that the \hdb tool provides is similar to the commands
-the user sees, but is more specific:
-\begin{compactitem}
-\item Create a new \hdb database
-\item Insert hashes
-\item Erase hashes
-\item Rebuild Bloom Filters
-\item Run as a Server service
-\item Get database information
-\end{compactitem}
-
-% instantiation
-\subsubsection{Open a \hdb Database}
-Open a \hdb database at the specified directory
-with a file mode of new, read-only, or read-write.
-Operations may be performed with this database as allowed by its mode.
-
-\begin{small}
-\begin{verbatim}
-hashdb_db_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
-\end{verbatim}
-\end{small}
-
-% insert hashes
-\subsubsection{Insert Hashes}
-Insert the specified vector of hashes.
-
-\begin{small}
-\begin{verbatim}
-insert_hashes(const insert_md5_hashes_t &insert_hashes);
-\end{verbatim}
-\end{small}
-
-% erase hashes
-\subsubsection{Erase Hashes}
-Insert the specified vector of hashes.
-
-\begin{small}
-\begin{verbatim}
-erase_hashes(const erase_md5_hashes_t &erase_hashes);
-\end{verbatim}
-\end{small}
-
-% find hashes
-\subsubsection{Find Hashes}
-Returns found hashes and their corresponding source count values.
-
-\begin{small}
-\begin{verbatim}
-find_hashes(const find_md5_hashes_t &find_hashes,
-            found_md5_hashes_t &found_hashes);
-\end{verbatim}
-\end{small}
-
-% look up hash sources
-\subsubsection{Look Up Hash Sources}
-Looks up and returns vectors of hash sources for the vector of hashes provided.
-
-\begin{small}
-\begin{verbatim}
-look_up_hash_sources(const look_up_hash_sources_t& look_up_hash_sources,
-                     looked_up_hash_sources_t& looked_up_hash_sources);
-\end{verbatim}
-\end{small}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-\section{TBD}
-1) describe the zmq layer that libhashdb and checker services provides
-
-2) describe the \hdb tool
-
-
 
 \end{document}
 
