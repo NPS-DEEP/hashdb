@@ -37,6 +37,22 @@ The \hdb Checker and Manager are merged.
 the \hdb Library interfaces are changed and support more capability.
 \end{abstract}
 
+\section{Changes for v1.0.0}
+\paragraph{Database Types}
+Two parameters define the database type when creating a new database:
+\begin{compactitem}
+\item \textbf{Data Size} specifies the block size,
+or select 0 to store hashes of any size, useful for managing file hashes.
+\item \textbf{Hash Type} specifies the hash type, such as MD5 or SHA1.
+We do not mix hash types in a database because hash types have differing sizes.
+If mixing hash sizes is really desired, we can truncate or zero-fill
+hash values in the database.
+\end{compactitem}
+\paragraph{Remote Modify}
+We can add or remove hash elements remotely over a socket.
+\paragraph{Renamed Commands}
+Some \hdb tool commands are renamed to specifically indicate their function.
+
 \section{\hdb Services}
 \hdb services are provided by the \hdb tool and the \hdb library.
 \subsection{\hdb Tool Commands}
@@ -48,7 +64,7 @@ the \hdb Library interfaces are changed and support more capability.
 \item Copy a database to a second database
 \item Merge two databases into a third database
 \item Erase hashes in DFXML from database
-\item Rebuild Bloom Filters for database
+\item Rebuild Bloom filters for database
 \item Get hash source information
 \item Get database information
 \item Run as a Server service
@@ -165,7 +181,7 @@ typedef insert_md5_hashes_t erase_md5_hashes_t;
 % find hashes
 \subsubsection{Find Hashes}
 Finds matching hashes and returns the hashes that match,
-along with the \emph{source lookup record} value
+along with the \emph{source lookup encoding}
 associated with matching hashes.
 A hash index is used so that the callee can map responses back
 to their original request entries.
@@ -191,7 +207,6 @@ struct found_md5_hash_t {
 typedef std::vector<found_md5_hash_t> found_md5_hashes_t;
 \end{verbatim}
 \end{small}
-%zz    no: uint64_t source_lookup_record;
 
 % look up hash sources
 \subsubsection{Look Up Hash Sources}
@@ -459,7 +474,8 @@ This module manages source lookups.
 \begin{compactitem}
 \item It wraps source lookup capability under one purposed interface.
 \item It manages the lookup store, filename store,
-and repository name store files required by the three B-Tree multisets: \\
+and repository name store files required by the three B-Tree multisets,
+and uses these storage files: \\
 \texttt{
 source\_lookup\_store.dat \\
 source\_lookup\_store.idx1 \\
@@ -478,7 +494,7 @@ and to insert elements by specifying the repository name, filename,
 and \texttt{source\_lookup\_index}.
 \end{compactitem}
 
-Interfaces follow.
+Source lookup manager interfaces follow.
 % constructor
 \subsubsection{Constructor}
 Open the source lookup manager with file mode of new, RO, or RW.
@@ -525,7 +541,7 @@ bool insert_source_lookup_element(const std::string &repository_name,
 
 \subsection{Bloom Filter}
 \hdb uses two Bloom filters.
-The Bloom Filter module manages one Bloom Filter instance.
+The Bloom filter module manages one Bloom filter instance.
 
 % instantiation
 \subsubsection{Instantiation}
@@ -543,7 +559,7 @@ bloom_filter_t(const std::string &filename,
 Add one hash value to the Bloom filter.
 \begin{small}
 \begin{verbatim}
-void add_hash_value(const md5_t &md5);
+void add_hash_value(const uint8_t[SIZE] &hash);
 \end{verbatim}
 \end{small}
 
@@ -552,7 +568,7 @@ void add_hash_value(const md5_t &md5);
 Return true if the lookup is positive, indicating the hash value may be present.
 \begin{small}
 \begin{verbatim}
-is_positive(const md5_t &md5);
+is_positive(const uint8_t[SIZE] &hash);
 \end{verbatim}
 \end{small}
 
@@ -596,11 +612,11 @@ save_settings(std::string hashdb_dir);
 \subsection{Hash Store}
 This module manages mapped hash storage.
 \begin{compactitem}
-\item This provides a map of hashes (this is not a multimap).
+\item This provides a map of hashes (as opposed to a multimap).
 \item Elements consist of a
-\texttt{uint8\_t[16]} block hash key and a
-\texttt{source\_lookup\_record} value.
-\item The \texttt{source\_lookup\_record} consists of $32-40$ bits
+\texttt{uint8\_t[SIZE]} block hash key and a
+\texttt{uint64\_t}source lookup encoding value.
+\item The source lookup encoding consists of $32-40$ bits
 of source lookup index and $32-24$ bits of block offset value.
 \item Hash storage maps to the \texttt{hash\_store} file.
 \item Provides Interfaces to insert, erase, look up, and change elements.
@@ -612,14 +628,81 @@ for walking the hash store.
 \subsection{Hash Duplicates Store}
 This module manages storage for hash duplicates.
 \begin{compactitem}
-\item This provides a multi-map of hashes.
+\item This provides a multimap of hashes.
 \item Hash duplicates storage maps to the \texttt{hash\_duplicates\_store} file.
 \item Elements consist of a
-\texttt{uint8\_t[16]} block hash key and a
-\texttt{source\_lookup\_record} value.
+\texttt{uint8\_t[SIZE]} block hash key and a
+\texttt{uint64\_t} source lookup encoding value.
 \item Provides interfaces to insert, erase, and look up elements.
 \item No iterator is provided with this interface.
 \end{compactitem}
+
+% source lookup encoding
+\subsection{Source Lookup Encoding}
+The source lookup encoding is an overloaded bit-packed optimized
+\texttt{uint64\_t}
+data structure for looking up the source of a hash.
+Algorithms to work with the structure are
+implemented as class \texttt{source\_lookup\_encoding\_t}
+with static accessors.
+Here are some properties of the source lookup encoding:
+\begin{compactitem}
+\item If the embedded count value $=$ 1,
+the source lookup index and hash block offset value
+have valid source lookup values.
+The \texttt{uint64\_t} value is distributed between the
+source lookup index and hash block offset as follows:
+  \begin{compactitem}
+  \item number of index bits goes into the source lookup index.
+  \item 32 $-$ number of index bits goes into the hash block offset value.
+  \end{compactitem}
+\item If the embedded count value $>$ 1,
+the source lookup index and hash block offset value accessors
+are not used and return 0.
+\item If the hash is a file hash, the block offset value will be 0, as expected.
+\item If an attempt is made to compose a source lookup encoding
+from a source lookup index value or a hash block offset value
+that is too large, an error will be emitted to \texttt{stderr}
+and 0 will be returned.
+\item A count value is indicated when the most significant 32 bits
+of the \texttt{uint64\_t} $=$ \texttt{0xffff}.
+\end{compactitem}
+
+%% constructor
+%\subsubsection{Constructor}
+%Create a storable source lookup encoding:
+%\begin{small}
+%\begin{verbatim}
+%source_lookup_encoding_t(number_of_index_bits_type_t number_of_index_bits_type,
+%                         uint64_t source_lookup_index,
+%                         uint64_t hash_block_offset_value);
+% 
+%source_lookup_encoding_t(uint32_t count);
+%\end{verbatim}
+%\end{small}
+
+% accessors
+\subsubsection{Accessors}
+\begin{small}
+\begin{verbatim}
+static uint64_t get_source_lookup_encoding_t(
+                 uint8_t number_of_index_bits,
+                 uint64_t source_lookup_index,
+                 uint64_t hash_block_offset_value);
+
+static uint64_t get_source_lookup_encoding_t(uint32_t count);
+
+static uint32_t get_count(uint64_t source_lookup_encoding);
+
+static uint64_t get_source_lookup_index(
+                 uint8_t number_of_index_bits,
+                 uint64_t source_lookup_encoding);
+
+static uint64_t get_hash_block_offset_value(
+                 uint8_t number_of_index_bits,
+                 uint64_t source_lookup_encoding);
+\end{verbatim}
+\end{small}
 
 \end{document}
 
