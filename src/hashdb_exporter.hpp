@@ -26,14 +26,13 @@
 #define HASHDB_EXPORTER_HPP
 #include "hashdb_types.h"
 #include "dfxml/src/dfxml_writer.h"
+#include "command_line.hpp"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
-
-extern std::string command_line;
 
 /**
  * Provides the service of exporting the hashdb in DFXML format.
@@ -56,7 +55,7 @@ class hashdb_exporter_t {
       x.push("dfxml");
 
       // add creator information
-      x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line);
+      x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
     }
 
     void do_export(const hashdb_db_manager_t& hashdb_in) {

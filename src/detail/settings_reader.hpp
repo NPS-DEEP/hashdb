@@ -21,7 +21,7 @@
  * \file
  * Provides the service of reading settings used by the hashdb.
  *
- * Throws parse_error_t if the settings xml file is invalid.
+ * Throws std::runtime_error if the settings xml file is invalid.
  */
 
 /**
@@ -39,6 +39,7 @@
 #include <libxml/parser.h>
 #include "hashdb_types.h"
 #include "hashdb_settings.h"
+#include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
@@ -51,17 +52,6 @@
  */
 
 namespace hashdb_settings {
-
-class parse_error_t: public std::runtime_error {
-public:
-    final std::string text;
-    parse_error_t(std::string p_text) : text(p_text) {
-    }
-    virtual const char *what() const throw() {
-        return text;
-    }
-};
-
 
 // a class is used just to keep members private
 class settings_reader_t {
@@ -191,7 +181,7 @@ class settings_reader_t {
           std::ostringstream s;
           s << "settings_reader_t(): invalid index value: '"
             << index_string << "'\n" << "Cannot continue.\n";
-          throw hashdb_settings::parse_error_t(s.str());
+          throw std::runtime_error(s.str());
         }
       }
 
@@ -212,27 +202,27 @@ class settings_reader_t {
       std::ostringstream s;
       s << "settings_reader_t(): invalid number: '"
         << number_string << "'\n" << "Cannot continue.\n";
-      throw parse_error_t(s.str());
+      throw std::runtime_error(s.str());
     }
   }
 
   static void exit_invalid_state(std::string message) {
     std::ostringstream s;
     s << "Error: " << message << "\n" << "Cannot continue.\n";
-    throw parse_error_t(s.str());
+    throw std::runtime_error(s.str());
   }
 
   static void exit_invalid_text(std::string message, std::string text) {
     std::ostringstream s;
     s << "Error: " << message << ":'" << text << "'\n" << "Cannot continue.\n";
-    throw parse_error_t(s.str());
+    throw std::runtime_error(s.str());
   }
 
   static void exit_invalid_index(size_t index) {
     std::ostringstream s;
     s << "Error: invalid bloom filter index "
       << index << "\n" << "Cannot continue.\n";
-    throw parse_error_t(s.str());
+    throw std::runtime_error(s.str());
   }
 
   // ************************************************************
@@ -287,19 +277,19 @@ class settings_reader_t {
     switch(user_data.active_parent_node) {
       case NO_PARENT_NODE:
         if (user_data.active_node == HASHDB_VERSION) {
-          xmlChar_to_number(characters, len, user_data->settings.hashdb_version);
+          xmlChar_to_number(characters, len, user_data.settings->hashdb_version);
         } else if (user_data.active_node == HASH_BLOCK_SIZE) {
-          xmlChar_to_number(characters, len, user_data->settings.hash_block_size);
+          xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
         } else if (user_data.active_node == HASHDIGEST_TYPE) {
           // get hashdigest type
           std::string hashdigest_type_string;
           xmlChar_to_string(characters, len, hashdigest_type_string);
-          is_valid = string_to_hashdigest_type(hashdigest_type_string, user_data->settings.hashdigest_type);
+          is_valid = string_to_hashdigest_type(hashdigest_type_string, user_data.settings->hashdigest_type);
           if (!is_valid) {
             exit_invalid_text("invalid hashdigest type", hashdigest_type_string);
           }
         } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
-          xmlChar_to_number(characters, len, user_data->settings.maximum_hash_duplicates);
+          xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
         }
         break;
 
@@ -308,12 +298,12 @@ class settings_reader_t {
           // get map type
           std::string map_type_string;
           xmlChar_to_string(characters, len, map_type_string);
-          is_valid = string_to_map_type(map_type_string, user_data->settings.hash_store_settings.map_type);
+          is_valid = string_to_map_type(map_type_string, user_data.settings->hash_store_settings.map_type);
           if (!is_valid) {
             exit_invalid_text("invalid hash store map type", map_type_string);
           }
         } else if (user_data.active_node == SHARD_COUNT) {
-          xmlChar_to_number(characters, len, user_data->settings.hash_store_settings.shard_count);
+          xmlChar_to_number(characters, len, user_data.settings->hash_store_settings.shard_count);
         }
         break;
 
@@ -322,12 +312,12 @@ class settings_reader_t {
           // get duplicates map type
           std::string duplicates_map_type_string;
           xmlChar_to_string(characters, len, duplicates_map_type_string);
-          is_valid = string_to_multimap_type(duplicates_map_type_string, user_data->settings.hash_duplicates_store_settings.multimap_type);
+          is_valid = string_to_multimap_type(duplicates_map_type_string, user_data.settings->hash_duplicates_store_settings.multimap_type);
           if (!is_valid) {
             exit_invalid_text("invalid hash duplicates store", duplicates_map_type_string);
           }
         } else if (user_data.active_node == SHARD_COUNT) {
-          xmlChar_to_number(characters, len, user_data->settings.hash_duplicates_store_settings.shard_count);
+          xmlChar_to_number(characters, len, user_data.settings->hash_duplicates_store_settings.shard_count);
         }
         break;
 
@@ -336,7 +326,7 @@ class settings_reader_t {
           // get number of index bits type
           std::string number_of_index_bits_type_string;
           xmlChar_to_string(characters, len, number_of_index_bits_type_string);
-          is_valid = string_to_number_of_index_bits_type(number_of_index_bits_type_string, user_data-->settings.source_lookup_settings.number_of_index_bits_type);
+          is_valid = string_to_number_of_index_bits_type(number_of_index_bits_type_string, user_data.settings->source_lookup_settings.number_of_index_bits_type);
           if (!is_valid) {
             exit_invalid_text("invalid source lookup record type", number_of_index_bits_type_string);
           }
@@ -344,7 +334,7 @@ class settings_reader_t {
           // get multi_index container type
           std::string multi_index_container_type_string;
           xmlChar_to_string(characters, len, multi_index_container_type_string);
-          is_valid = string_to_multi_index_container_type(multi_index_container_type_string , user_data->settings.source_lookup_settings.multi_index_container_type);
+          is_valid = string_to_multi_index_container_type(multi_index_container_type_string , user_data.settings->source_lookup_settings.multi_index_container_type);
           if (!is_valid) {
             exit_invalid_text("invalid source lookup multi index container type", multi_index_container_type_string);
           }
@@ -360,16 +350,16 @@ class settings_reader_t {
           if (user_data.index == 1) {
             std::string bloom1_state_string;
             xmlChar_to_string(characters, len, bloom1_state_string);
-            is_valid = string_to_bloom_state(bloom1_state_string, user_data->settings.bloom1_settings.is_used);
+            is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_settings.is_used);
             if (!is_valid) {
-              exit_invalid_state("Error: invalid bloom 1 state\n";
+              exit_invalid_state("Error: invalid bloom 1 state\n");
             }
           } else if (user_data.index == 2) {
             std::string bloom2_state_string;
             xmlChar_to_string(characters, len, bloom2_state_string);
-            is_valid = string_to_bloom_state(bloom2_state_string, user_data->settings.bloom2_settings.is_used);
+            is_valid = string_to_bloom_state(bloom2_state_string, user_data.settings->bloom2_settings.is_used);
             if (!is_valid) {
-              exit_invalid_state("Error: invalid bloom 2 state\n";
+              exit_invalid_state("Error: invalid bloom 2 state\n");
             }
           } else {
             exit_invalid_index(user_data.index);
@@ -378,9 +368,9 @@ class settings_reader_t {
           uint32_t k;
           xmlChar_to_number(characters, len, k);
           if (user_data.index == 1) {
-            user_data->settings.bloom1_settings.k_hash_functions = k;
+            user_data.settings->bloom1_settings.k_hash_functions = k;
           } else if (user_data.index == 2) {
-            user_data->settings.bloom2_settings.k_hash_functions = k;
+            user_data.settings->bloom2_settings.k_hash_functions = k;
           } else {
             exit_invalid_index(user_data.index);
           }
@@ -388,9 +378,9 @@ class settings_reader_t {
           uint32_t M;
           xmlChar_to_number(characters, len, M);
           if (user_data.index == 1) {
-            user_data->settings.bloom1_settings.M_hash_size = M;
+            user_data.settings->bloom1_settings.M_hash_size = M;
           } else if (user_data.index == 2) {
-            user_data->settings.bloom2_settings.M_hash_size = M;
+            user_data.settings->bloom2_settings.M_hash_size = M;
           } else {
             exit_invalid_index(user_data.index);
           }
@@ -440,7 +430,7 @@ class settings_reader_t {
 
   public:
   /**
-   * read onto default hashdb settings or throw parse_error_t.
+   * read onto default hashdb settings or throw std::runtime_error.
    */
   static void read_settings(const std::string hashdb_dir,
                             hashdb_settings_t& settings) {
@@ -448,12 +438,12 @@ class settings_reader_t {
     // avoid obvious xml trouble by verifying that hashdb_dir exists
     bool dir_is_present = (access(hashdb_dir.c_str(),F_OK) == 0);
     if (!dir_is_present) {
-      std::ostringstream s;
-      s << "Error:\nHash database directory '"
+      std::ostringstream ss1;
+      ss1 << "Error:\nHash database directory '"
         << hashdb_dir << "' does not exist.\n"
         << "Is the path to the hash database correct?\n"
         << "Cannot continue.\n";
-      throw parse_error_t(s.str());
+      throw std::runtime_error(ss1.str());
     }
 
     // also make sure hashdb_dir is a directory
@@ -466,12 +456,12 @@ class settings_reader_t {
       }
     }
     if (!is_dir) {
-      std::ostringstream s;
-      s << "Error:\nHash database directory '"
-        << hashdb_dir << "' is not a directory.\n"
-        << "Is the path to the hash database correct?\n"
-        << "Cannot continue.\n";
-      throw parse_error_t(s.str());
+      std::ostringstream ss2;
+      ss2 << "Error:\nHash database directory '"
+          << hashdb_dir << "' is not a directory.\n"
+          << "Is the path to the hash database correct?\n"
+          << "Cannot continue.\n";
+      throw std::runtime_error(ss2.str());
     }
 
     // look up the settings filename
@@ -480,12 +470,12 @@ class settings_reader_t {
     // also verify that the settings file exists
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);
     if (!file_is_present) {
-      std::ostringstream s;
-      s << "Error:\nSettings file '"
-        << filename << "' does not exist.\n"
-        << "Is the path to the hash database correct?\n"
-        << "Cannot continue.\n";
-      throw parse_error_t(s.str());
+      std::ostringstream ss3;
+      ss3 << "Error:\nSettings file '"
+          << filename << "' does not exist.\n"
+          << "Is the path to the hash database correct?\n"
+          << "Cannot continue.\n";
+      throw std::runtime_error(ss3.str());
     }
 
     // set up the sax callback data structure with context-relavent handlers
@@ -531,9 +521,10 @@ class settings_reader_t {
       return;
     } else {
       // something went wrong
-      std::ostringstream s;
-      s << "malformed settings in file '" << filename << "'.  Unable to continue.\n";
-      throw parse_error_t(s.str());
+      std::ostringstream ss4;
+      ss4 << "malformed settings in file '" << filename
+          << "'.  Unable to continue.\n";
+      throw std::runtime_error(ss4.str());
     }
   }
 };

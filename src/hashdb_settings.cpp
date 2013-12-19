@@ -78,19 +78,19 @@
         source_lookup_settings(),
         bloom1_settings(true, 3, 28),
         bloom2_settings(false, 3, 28) {
-    }
       try {
-        hashdb_settings_t settings = hashdb_settings::read_settings(hashdb_dir, this);
-      } catch {
-        stderr << "Aborting.\n";
+        hashdb_settings::settings_reader_t::read_settings(hashdb_dir, *this);
+      } catch (const std::runtime_error &e) {
+        std::cerr << e.what() << "\nAborting.\n";
         exit(1);
       }
+    }
 
     /**
      * Save settings into hashdb_dir.
      */
     void hashdb_settings_t::save_settings(std::string hashdb_dir) const {
-      hashdb_settings::write_settings(hashdb_dir, this);
+      hashdb_settings::write_settings(hashdb_dir, *this);
     }
 
     void hashdb_settings_t::report_settings(std::ostream& os) const {

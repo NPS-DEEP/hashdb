@@ -47,8 +47,6 @@
 uint64_t approximate_M_to_n(uint32_t M);
 uint32_t approximate_n_to_M(uint64_t n);
 
-std::string command_line;
-
 static const std::string see_usage = "Please type 'hashdb_manager -h' for usage.";
 
 // user commands, which are not the demultiplexed commands seen in commands.hpp
@@ -759,7 +757,7 @@ void require_hash_block_sizes_match(const std::string& hashdb1, const std::strin
 // main
 // ************************************************************
 int main(int argc,char **argv) {
-  command_line = dfxml_writer::make_command_line(argc, argv);
+  command_line_t::command_line_string = dfxml_writer::make_command_line(argc, argv);
 
   // manage when there are no arguments
   if(argc==1) {

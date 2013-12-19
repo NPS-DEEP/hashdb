@@ -34,6 +34,7 @@
 #include "hashdb_exporter.hpp"
 #include "query_by_socket_server.hpp"
 #include "dfxml/src/dfxml_writer.h"
+#include "command_line.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -43,8 +44,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-
-extern std::string command_line;
 
 /**
  * Provides the commands that hashdb_manager can execute.
@@ -99,7 +98,7 @@ class commands_t {
     std::stringstream ss;
     ss << "command_type='" << command << "'";
     x->push("command", ss.str());
-    x->add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line);
+    x->add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
   }
 
   static void close_log() {

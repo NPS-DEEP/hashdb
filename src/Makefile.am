@@ -35,6 +35,7 @@ HASHDB_INCS = \
 	bi_store.hpp \
 	bloom_filter.hpp \
 	commands.hpp \
+	command_line.hpp \
 	dfxml_hashdigest_reader.hpp \
 	hashdb.cpp \
 	hashdb.hpp \
