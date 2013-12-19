@@ -19,16 +19,27 @@
 
 /**
  * \file
- * Offers command_line_string, used by dfxml_writer.
+ * holds the command line the program was started with.
  */
 
 #ifndef COMMAND_LINE_HPP
 #define COMMAND_LINE_HPP
 #include <string>
 
-namespace command_line_t {
-  std::string command_line_string = "not defined";
+class command_line_t {
+  public:
+  static std::string command_line_string;
+/*
+  static std::string get_command_line_string() {
+    return command_line_string;
+  }
+*/
+
+  private:
+  command_line_t();
 };
+
+// std::string command_line_t::command_line_string = "not defined";
 
 #endif
 

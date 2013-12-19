@@ -31,6 +31,7 @@
 #include "hashdb_types.h"
 #include "hashdb_db_manager.hpp"
 #include "commands.hpp"
+#include "command_line.hpp"
 
 // Standard includes
 #include <cstdlib>

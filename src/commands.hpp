@@ -98,6 +98,7 @@ class commands_t {
     std::stringstream ss;
     ss << "command_type='" << command << "'";
     x->push("command", ss.str());
+//    x->add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
     x->add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
   }
 

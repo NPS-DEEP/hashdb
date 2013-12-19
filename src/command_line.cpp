@@ -19,37 +19,11 @@
 
 /**
  * \file
- * Provides the service of writing settings to the hashdb.
+ * holds the command line the program was started with.
  */
 
-#ifndef SETTINGS_WRITER_HPP
-#define SETTINGS_WRITER_HPP
-#include "hashdb_types.h"
-#include "hashdb_settings.h"
 #include "command_line.hpp"
-#include <stdexcept>
-#include <iostream>
-#include <sstream>
 #include <string>
 
-#include "dfxml/src/dfxml_writer.h" // for writing dfxml
-
-/**
- * hashdb settings.
- */
-namespace hashdb_settings {
-  void write_settings(const std::string& hashdb_dir,
-                      const hashdb_settings_t& settings) {
-
-    std::string filename = hashdb_filenames_t::settings_filename(hashdb_dir);
-
-    dfxml_writer x(filename, false);
-    x.push("settings");
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
-    settings.report_settings(x);
-    x.pop();
-  }
-};
-
-#endif
+std::string command_line_t::command_line_string = "not defined";
 
