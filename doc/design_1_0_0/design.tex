@@ -296,7 +296,7 @@ and, for some functions, specifically lookup, add, and delete,
 may also drive the \hdb library API.
 
 The \hdb element manager works with \hdb elements, described later.
-Changes to the \hdb are noted in the \hdb changed object.
+Changes to the \hdb are noted in the \hdb change logger.
 
 Interfaces are:
 \begin{compactitem}
@@ -306,7 +306,10 @@ Interfaces are:
 \item See if a hash value exists.
 \item Provide a \hmmi pointing to the first \hdb element
 containing a specified hash value.
+\hmmi dereferences to \texttt{hashdb\_element\_t}.
 \item Provide a \hmi for iterating over hash values.
+\hmi dereferences to \texttt{std::pair<uint8\_t[SIZE], uint32\_t>}
+to provide hash and count values.
 \item Provide a \hmmi for iterating over all \hdb elements.
 \end{compactitem}
 
@@ -409,26 +412,16 @@ const_hashdb_multimap_iterator hashdb_multimap_end();
 
 % \hdb element
 \subsection{\hdb Element}
-A \hdb element consists of the following:
-\begin{compactitem}
-\item A block hash value.
-\item A hash source record containing:
-  \begin{compactitem}
-  \item file offset
-  \item repository name
-  \item filename
-  \end{compactitem}
-\end{compactitem}
-
+A \hdb element consists of a hash value and where it was sourced from.
 Specifically:
 \begin{small}
 \begin{verbatim}
-struct hash_source_record_t {
+struct hashdb_element_t {
+    uint8_t digest[SIZE];
     std::string repository_name;
     std::string filename;
     uint64_t file_offset;
-
-typedef std::pair<md5_t, hash_source_record_t> hashdb_element_t;
+};
 \end{verbatim}
 \end{small}
 
@@ -574,7 +567,8 @@ is_positive(const uint8_t[SIZE] &hash);
 
 
 \subsection{\hdb Settings}
-Many of the storage types in the \hdb database use configurable settings.
+The \hdb element manager and
+many of the storage types in the \hdb database use configurable \hdb settings.
 The \hdb Element Manager requires the proper \hdb settings
 in order to open most of the file-based resources properly.
 The settings manager is in charge of creating or copying a settings object

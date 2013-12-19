@@ -46,6 +46,7 @@ HASHDB_INCS = \
 	hashdb_manager.cpp \
 	hashdb_types.h \
 	hashdb_settings.h \
+	hashdb_settings.cpp \
 	hash_duplicates_store.hpp \
 	hash_duplicates_store.cpp \
 	hash_store.hpp \
@@ -57,10 +58,12 @@ HASHDB_INCS = \
 	query_by_path.hpp \
 	query_by_socket.hpp \
 	query_by_socket_server.hpp \
-	settings_reader.hpp \
-	settings_writer.hpp \
 	source_lookup_manager.hpp \
 	source_lookup_record.h
+
+DETAIL_INCS = \
+	detail/settings_reader.hpp \
+	detail/settings_writer.hpp
 
 DFXML_INCS = \
 	dfxml/src/hash_t.h \
@@ -109,5 +112,6 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/conversion.hpp
 
 hashdb_manager_SOURCES = \
-	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)
+	$(HASHDB_INCS) $(DETAIL_INCS) $(DFXML_INCS) $(MISC_INCS) \
+	$(BTREE_INCS) $(ENDIAN_INCS)
 

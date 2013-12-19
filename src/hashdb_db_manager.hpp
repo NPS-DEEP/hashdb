@@ -28,7 +28,8 @@
 #include "dfxml/src/hash_t.h"
 
 #include "hashdb_filenames.hpp"
-#include "settings_reader.hpp"
+//#include "settings_reader.hpp"
+#include "hashdb_settings.h"
 #include "hash_store.hpp"
 #include "hash_duplicates_store.hpp"
 #include "source_lookup_manager.hpp"
@@ -257,7 +258,7 @@ class hashdb_db_manager_t {
                         file_mode_type_t _file_mode_type) :
                             hashdb_dir(_hashdb_dir),
                             file_mode_type(_file_mode_type),
-                            hashdb_settings(settings_reader_t::read_settings(hashdb_dir)),
+                            hashdb_settings(hashdb_settings_t(hashdb_dir)),
                             hash_changes(),
                             use_bloom1(hashdb_settings.bloom1_settings.is_used),
                             use_bloom2(hashdb_settings.bloom2_settings.is_used),

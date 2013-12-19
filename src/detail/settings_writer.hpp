@@ -38,7 +38,7 @@ extern std::string command_line;
 /**
  * hashdb settings.
  */
-namespace settings_writer_t {
+namespace hashdb_settings {
   void write_settings(const std::string& hashdb_dir,
                       const hashdb_settings_t& settings) {
 

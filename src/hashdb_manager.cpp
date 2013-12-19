@@ -598,8 +598,8 @@ static void create_hashdb(const std::string& hashdb_dir,
   }
 #endif
 
-  // write the settings to the new settings file
-  settings_writer_t::write_settings(hashdb_dir, hashdb_tuning_settings);
+  // write the tuning settings to the new settings file
+  hashdb_tuning_settings.save_settings(hashdb_dir);
 }
 
 // determine that a path is to a hashdb
@@ -646,15 +646,14 @@ static void reset_bloom_filters(const std::string& hashdb,
   }
  
   // get existing hashdb tuning settings
-  hashdb_settings_t temp_hashdb_settings =
-                    settings_reader_t::read_settings(hashdb);
+  hashdb_settings_t temp_hashdb_settings(hashdb);
 
   // change the bloom filter settings
   temp_hashdb_settings.bloom1_settings = bloom1_settings;
   temp_hashdb_settings.bloom2_settings = bloom2_settings;
 
   // write back the changed settings
-  settings_writer_t::write_settings(hashdb, temp_hashdb_settings);
+  temp_hashdb_settings.save_settings(hashdb);
 
   // calculate the bloom filter filenames
   std::string bloom1_path = hashdb_filenames_t::bloom1_filename(hashdb);
@@ -745,8 +744,8 @@ void no_has_exclude_duplicates(const std::string& action) {
 }
 void require_hash_block_sizes_match(const std::string& hashdb1, const std::string& hashdb2,
                                const std::string& action) {
-  hashdb_settings_t settings1 = settings_reader_t::read_settings(hashdb1);
-  hashdb_settings_t settings2 = settings_reader_t::read_settings(hashdb2);
+  hashdb_settings_t settings1(hashdb1);
+  hashdb_settings_t settings2(hashdb2);
   if (settings1.hash_block_size != settings2.hash_block_size) {
     std::cerr << "Error: The hash block size for the databases do not match.\n";
     std::cerr << "The hash block size for " << hashdb1 << " is " << settings1.hash_block_size << "\n";

@@ -46,6 +46,7 @@ HASHDB_INCS = \
 	../hashdb_types.h \
 	../hashdb_db_manager.hpp \
 	../hashdb_settings.h \
+	../hashdb_settings.cpp \
 	../hash_duplicates_store.cpp \
 	../hash_duplicates_store.hpp \
 	../hash_store.cpp \
@@ -55,9 +56,11 @@ HASHDB_INCS = \
 	../manager_modified_multimap.h \
 	../query_by_path.hpp \
 	../query_by_socket.hpp \
-	../settings_reader.hpp \
 	../source_lookup_manager.hpp \
 	../source_lookup_record.h
+
+DETAIL_INCS = \
+	../detail/settings_reader.hpp
 
 DFXML_INCS = \
 	../dfxml/src/hash_t.h \
@@ -105,7 +108,8 @@ ENDIAN_INCS = \
 	../endian/include/boost/endian/conversion.hpp
 
 libhashdb_la_SOURCES = \
-	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) $(BTREE_INCS) $(ENDIAN_INCS)
+	$(DETAIL_INCS) $(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
+	$(BTREE_INCS) $(ENDIAN_INCS)
 
 include_HEADERS = ../hashdb.hpp
 

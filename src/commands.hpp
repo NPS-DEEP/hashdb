@@ -27,7 +27,7 @@
 #include "hashdb_types.h"
 #include "hashdb_settings.h"
 #include "hashdb_filenames.hpp"
-#include "settings_writer.hpp"
+//#include "settings_writer.hpp"
 #include "history_manager.hpp"
 #include "hashdb_db_manager.hpp"
 #include "dfxml_hashdigest_reader.hpp"
@@ -577,8 +577,7 @@ class commands_t {
     x->xmlout("hashdb_indir", hashdb_indir);
 
     // get hashdb tuning settings
-    hashdb_settings_t hashdb_settings =
-                    settings_reader_t::read_settings(hashdb_indir);
+    hashdb_settings_t hashdb_settings(hashdb_indir);
 
     // report the settings
     hashdb_settings.bloom1_settings.report_settings(*x, 1);
