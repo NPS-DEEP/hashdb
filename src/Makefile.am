@@ -40,6 +40,7 @@ HASHDB_INCS = \
 	dfxml_hashdigest_reader.hpp \
 	hashdb.cpp \
 	hashdb.hpp \
+	hashdb_change_logger.hpp \
 	hashdb_db_info_provider.hpp \
 	hashdb_db_manager.hpp \
 	hashdb_exporter.hpp \

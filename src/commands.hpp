@@ -79,6 +79,7 @@ class commands_t {
   static const std::string COMMAND_REBUILD_BLOOM("rebuild_bloom");
 */
 
+/*
   static void open_log(const std::string& hashdb_dir,
                        const std::string& command) {
 
@@ -114,6 +115,7 @@ class commands_t {
     x->pop(); // log
     delete x;
   }
+*/
 
   static void describe_none_inserted_dfxml() {
     std::cout << "No hashes were inserted from DFXML.  Possible causes:\n"
@@ -169,20 +171,21 @@ class commands_t {
                                 const std::string& repository_name,
                                 const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_NEW_DFXML);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_COPY_NEW_DFXML);
 
     // log control parameters
-    x->xmlout("dfxml_infile", dfxml_infile);
-    x->xmlout("repository_name", repository_name);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("dfxml_infile", dfxml_infile);
+    logger.add("dfxml_infile", dfxml_infile);
+    logger.add("repository_name", repository_name);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the new hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_NEW);
 
     // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+    logger.add_hashdb_settings(hashdb_out.hashdb_settings);
 
-    x->add_timestamp("opened new hashdb");
+    logger.add_timestamp("opened new hashdb");
 
     // create the inserter consumer
     inserter_consumer_t inserter_consumer(&hashdb_out);
@@ -191,14 +194,10 @@ class commands_t {
     dfxml_hashdigest_reader_t<inserter_consumer_t>::do_read(
                           dfxml_infile, repository_name, &inserter_consumer);
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
+    // log settings and state
     // provide log summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
 
     // explain if nothing happened
@@ -214,17 +213,17 @@ class commands_t {
                             const std::string& repository_name,
                             const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_DFXML);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_COPY_DFXML);
 
     // log control parameters
-    x->xmlout("dfxml_infile", dfxml_infile);
-    x->xmlout("repository_name", repository_name);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("dfxml_infile", dfxml_infile);
+    logger.add("repository_name", repository_name);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    x->add_timestamp("opened hashdb");
+    logger.add_timestamp("opened hashdb");
 
     // create the inserter consumer
     inserter_consumer_t inserter_consumer(&hashdb_out);
@@ -233,14 +232,9 @@ class commands_t {
     dfxml_hashdigest_reader_t<inserter_consumer_t>::do_read(
                            dfxml_infile, repository_name, &inserter_consumer);
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide log summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
 
     // explain if nothing happened
@@ -255,24 +249,24 @@ class commands_t {
   static void do_copy_new(const std::string& hashdb_indir,
                           const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_NEW);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_COPY_NEW);
 
     // log control parameters
-    x->xmlout("hashdb_indir", hashdb_indir);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("hashdb_indir", hashdb_indir);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
-    x->add_timestamp("opened source hashdb");
+    logger.add_timestamp("opened source hashdb");
 
     // open the new hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_NEW);
 
     // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+    logger.add_hashdb_settings(hashdb_out.hashdb_settings);
 
-    x->add_timestamp("opened new hashdb");
+    logger.add_timestamp("opened new hashdb");
 
     // establish iterators
     hashdb_db_manager_t::hashdb_iterator_t it = hashdb_in.begin();
@@ -284,14 +278,9 @@ class commands_t {
       ++it;
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
@@ -302,21 +291,21 @@ class commands_t {
   static void do_copy(const std::string& hashdb_indir,
                       const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_COPY);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_COPY);
 
     // log control parameters
-    x->xmlout("hashdb_indir", hashdb_indir);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("hashdb_indir", hashdb_indir);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
-    x->add_timestamp("opened source hashdb");
+    logger.add_timestamp("opened source hashdb");
 
     // open the hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    x->add_timestamp("opened hashdb");
+    logger.add_timestamp("opened hashdb");
 
     // establish iterators
     hashdb_db_manager_t::hashdb_iterator_t it = hashdb_in.begin();
@@ -328,14 +317,9 @@ class commands_t {
       ++it;
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
@@ -347,28 +331,25 @@ class commands_t {
                                              const std::string& hashdb_outdir,
                                              size_t exclude_duplicates_count) {
 
-    open_log(hashdb_outdir, COMMAND_COPY_EXCLUDE_DUPLICATES);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_COPY_EXCLUDE_DUPLICATES);
 
     // log control parameters
-    x->xmlout("hashdb_indir", hashdb_indir);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
-    x->xmlout("exclude_duplicates_count", exclude_duplicates_count);
-
-    // for completeness log this exclude_duplicates_count tag
-    x->xmlout("exclude_duplicates_count", exclude_duplicates_count);
+    logger.add("hashdb_indir", hashdb_indir);
+    logger.add("hashdb_outdir", hashdb_outdir);
+    logger.add("exclude_duplicates_count", exclude_duplicates_count);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
-    x->add_timestamp("opened source hashdb");
+    logger.add_timestamp("opened source hashdb");
 
     // open the new hashdb
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_NEW);
 
     // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+    logger.add_hashdb_settings(hashdb_out.hashdb_settings);
 
-    x->add_timestamp("opened new hashdb");
+    logger.add_timestamp("opened new hashdb");
 
     // establish iterators
     hashdb_db_manager_t::hashdb_iterator_t it = hashdb_in.begin();
@@ -395,16 +376,11 @@ class commands_t {
       ++it;
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    x->xmlout("hashes_not_inserted_excluded_duplicates", hashes_not_inserted_excluded_duplicates);
+    logger.add("hashes_not_inserted_excluded_duplicates", hashes_not_inserted_excluded_duplicates);
     std::cout << "hashes not inserted, excluded duplicates=" << hashes_not_inserted_excluded_duplicates << "\n";
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
@@ -416,17 +392,17 @@ class commands_t {
                               const std::string& repository_name,
                               const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_REMOVE_DFXML);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_REMOVE_DFXML);
 
     // log control parameters
-    x->xmlout("dfxml_infile", dfxml_infile);
-    x->xmlout("repository_name", repository_name);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("dfxml_infile", dfxml_infile);
+    logger.add("repository_name", repository_name);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    x->add_timestamp("opened hashdb");
+    logger.add_timestamp("opened hashdb");
 
     // create the remover consumer
     remover_consumer_t remover_consumer(&hashdb_out);
@@ -435,14 +411,9 @@ class commands_t {
     dfxml_hashdigest_reader_t<remover_consumer_t>::do_read(
                             dfxml_infile, repository_name, &remover_consumer);
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide log summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_remove_changes(*x);
-    hash_changes.report_remove_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
 
     // explain if nothing happened
@@ -457,21 +428,21 @@ class commands_t {
   static void do_remove(const std::string& hashdb_indir,
                         const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_REMOVE);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_REMOVE);
 
     // log control parameters
-    x->xmlout("hashdb_indir", hashdb_indir);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("hashdb_indir", hashdb_indir);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open the existing hashdb
     hashdb_db_manager_t hashdb_in(hashdb_indir, READ_ONLY);
 
-    x->add_timestamp("opened source hashdb");
+    logger.add_timestamp("opened source hashdb");
 
     // open the hashdb to be modified
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_MODIFY);
 
-    x->add_timestamp("opened hashdb");
+    logger.add_timestamp("opened hashdb");
 
     // establish iterators
     hashdb_db_manager_t::hashdb_iterator_t it = hashdb_in.begin();
@@ -483,14 +454,9 @@ class commands_t {
       ++it;
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_remove_changes(*x);
-    hash_changes.report_remove_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
@@ -501,30 +467,30 @@ class commands_t {
                        const std::string& hashdb_indir2,
                        const std::string& hashdb_outdir) {
 
-    open_log(hashdb_outdir, COMMAND_MERGE);
+    hashdb_change_logger_t logger(hashdb_outdir, COMMAND_MERGE);
 
     // log control parameters
-    x->xmlout("hashdb_indir1", hashdb_indir1);
-    x->xmlout("hashdb_indir2", hashdb_indir2);
-    x->xmlout("hashdb_outdir", hashdb_outdir);
+    logger.add("hashdb_indir1", hashdb_indir1);
+    logger.add("hashdb_indir2", hashdb_indir2);
+    logger.add("hashdb_outdir", hashdb_outdir);
 
     // open hashdb 1
     hashdb_db_manager_t hashdb_in1(hashdb_indir1, READ_ONLY);
 
-    x->add_timestamp("opened hashdb input");
+    logger.add_timestamp("opened hashdb input");
 
     // open hashdb 2
     hashdb_db_manager_t hashdb_in2(hashdb_indir2, READ_ONLY);
 
-    x->add_timestamp("opened second hashdb input");
+    logger.add_timestamp("opened second hashdb input");
 
     // create the new hashdb output
     hashdb_db_manager_t hashdb_out(hashdb_outdir, RW_NEW);
 
     // log the hashdb settings
-    hashdb_out.hashdb_settings.report_settings(*x);
+    logger.add_hashdb_settings(hashdb_out.hashdb_settings);
 
-    x->add_timestamp("created hashdb output");
+    logger.add_timestamp("created hashdb output");
 
     // establish iterators
     hashdb_db_manager_t::hashdb_iterator_t it1 = hashdb_in1.begin();
@@ -553,14 +519,9 @@ class commands_t {
       ++it2;
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    hashdb_db_manager_t::hash_changes_t hash_changes = hashdb_out.get_hash_changes();
-    hash_changes.report_insert_changes(*x);
-    hash_changes.report_insert_changes(std::cout);
-    hashdb_out.report_status(*x);
-    close_log();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir1, hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir2, hashdb_outdir);
@@ -571,10 +532,10 @@ class commands_t {
    */
   static void do_rebuild_bloom(const std::string& hashdb_indir) {
 
-    open_log(hashdb_indir, COMMAND_REBUILD_BLOOM);
+    hashdb_change_logger_t logger(hashdb_indir, COMMAND_REBUILD_BLOOM);
 
     // log control parameters
-    x->xmlout("hashdb_indir", hashdb_indir);
+    logger.add("hashdb_indir", hashdb_indir);
 
     // get hashdb tuning settings
     hashdb_settings_t hashdb_settings(hashdb_indir);
@@ -583,7 +544,7 @@ class commands_t {
     hashdb_settings.bloom1_settings.report_settings(*x, 1);
     hashdb_settings.bloom2_settings.report_settings(*x, 2);
 
-    x->add_timestamp("opened hashdb settings");
+    logger.add_timestamp("opened hashdb settings");
 
     // calculate the bloom filter filenames
     std::string bloom1_path =
@@ -595,11 +556,11 @@ class commands_t {
     bloom_filter_t bloom1(bloom1_path,
                           RW_NEW,
                           hashdb_settings.bloom1_settings);
-    x->add_timestamp("opened new Bloom filter 1");
+    logger.add_timestamp("opened new Bloom filter 1");
     bloom_filter_t bloom2(bloom2_path,
                           RW_NEW,
                           hashdb_settings.bloom2_settings);
-    x->add_timestamp("opened new Bloom filter 2");
+    logger.add_timestamp("opened new Bloom filter 2");
 
     // only do this if there is a Bloom filter to work on
     if (bloom1.is_used || bloom2.is_used) {
@@ -612,7 +573,7 @@ class commands_t {
                  READ_ONLY,
                  hashdb_settings.hash_store_settings);
 
-      x->add_timestamp("opened hash store input");
+      logger.add_timestamp("opened hash store input");
 
       // iterate over all hashes
       hash_store_t::hash_store_iterator_t it = hash_store.begin();
@@ -634,14 +595,11 @@ class commands_t {
       }
     }
 
-    x->add_timestamp("done");
+    logger.add_timestamp("done");
 
     // provide summary
-    hashdb_settings.bloom1_settings.report_settings(*x, 1);
-    bloom1.report_status(*x, 1);
-    hashdb_settings.bloom2_settings.report_settings(*x, 2);
-    bloom2.report_status(*x, 2);
-    close_log();
+    logger.add_bloom_state(hashdb_settings.bloom1_settings, 1);
+    logger.add_bloom_state(hashdb_settings.bloom2_settings, 2);
     history_manager_t::append_log_to_history(hashdb_indir);
   }
  

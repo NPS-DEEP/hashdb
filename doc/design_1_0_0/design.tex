@@ -426,13 +426,17 @@ struct hashdb_element_t {
 \end{small}
 
 \subsection{\hdb Change Logger}
-This structure is used for tracking changes to the change log.
-The \hdb Element Manager increments variables in a Change Logger
+This structure is used for tracking changes to the \hdb.
+The \hdb element manager increments variables
 as requests are made to insert or remove \hdb elements.
+Changes are written to file \texttt{log}
+when the change logger instance is destroyed.
+Additional interfaces permit additional logging,
+specifically, timestamp and settings.
 
 \begin{small}
 \begin{verbatim}
-struct hashdb_change_logger_t {
+class hashdb_change_logger_t {
       // insert
       uint32_t hashes_inserted;
       uint32_t hashes_not_inserted_invalid_file_offset;
@@ -449,13 +453,27 @@ struct hashdb_change_logger_t {
       uint32_t hashes_not_removed_no_hash;
       uint32_t hashes_not_removed_different_source;
 
-      // log to the log file in hashdb_dir
-      write_log(std::string hashdb_dir);
+      // constructor
+      hashdb_change_logger_t(const std::string &hashdb_dir,
+                             const std::string title);
+
+      // log timestamp
+      void add_timestamp(std::string text);
+
+      // log hashdb_settings
+      void add_hashdb_settings(const hashdb_settings_t &hashdb_settings);
+
+      // hashdb_db_manager state
+//      void add_hashdb_db_manager_state(const hashdb_db_manager_t &manager);
+      void add_hashdb_db_manager_state(); // TBD
+
+      // bloom state, this may be temporary
+      void add_bloom_state(const bloom_filter_t &bloom_filter, int index);
 };
 \end{verbatim}
 \end{small}
 
-Note that logs will be written at the \hdb library level
+Note that logs are now written at the \hdb library level
 for each invocation of the library,
 rather than at the tool level, which logged once
 for the invocation of the \hdb tool.

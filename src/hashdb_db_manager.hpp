@@ -34,6 +34,7 @@
 #include "hash_duplicates_store.hpp"
 #include "source_lookup_manager.hpp"
 #include "bloom_filter.hpp"
+#include "hashdb_change_logger.hpp"
 #include <vector>
 //#include <boost/iterator/iterator_facade.hpp>
 #include <unistd.h>
@@ -53,6 +54,7 @@ class hashdb_db_manager_t {
     const file_mode_type_t file_mode_type;
     const hashdb_settings_t hashdb_settings;
 
+/*
     struct hash_changes_t {
       uint64_t hashes_inserted;
       uint64_t hashes_not_inserted_invalid_file_offset;
@@ -147,17 +149,18 @@ class hashdb_db_manager_t {
         x.pop();
       }
     };
+*/
 
-    /**
-     * Return runtime statistics about adds and deletes.
-     */
-    hash_changes_t get_hash_changes() {
-      return hash_changes;
-    }
+//    /**
+//     * Return runtime statistics about adds and deletes.
+//     */
+//    hash_changes_t get_hash_changes() {
+//      return hash_changes;
+//    }
 
   private:
-    // runtime statistics about added and deleted hashes
-    hash_changes_t hash_changes;
+//    // runtime statistics about added and deleted hashes
+//    hash_changes_t hash_changes;
 
     // the hashdb settings that need retained
     bool use_bloom1;
@@ -259,7 +262,7 @@ class hashdb_db_manager_t {
                             hashdb_dir(_hashdb_dir),
                             file_mode_type(_file_mode_type),
                             hashdb_settings(hashdb_settings_t(hashdb_dir)),
-                            hash_changes(),
+//                            hash_changes(),
                             use_bloom1(hashdb_settings.bloom1_settings.is_used),
                             use_bloom2(hashdb_settings.bloom2_settings.is_used),
                             number_of_index_bits_type(hashdb_settings.source_lookup_settings.number_of_index_bits_type),
@@ -382,7 +385,8 @@ class hashdb_db_manager_t {
       }
     }
 
-    void insert_hash_element(const hashdb_element_t& hashdb_element) {
+    void insert_hash_element(const hashdb_element_t& hashdb_element,
+                             hashdb_change_logger_t& logger) {
 
       // get the hash source record from the pair
       const hash_source_record_t hash_source_record(hashdb_element.second);
@@ -390,14 +394,14 @@ class hashdb_db_manager_t {
       // validate the file offset
       if (hash_source_record.file_offset % hashdb_settings.hash_block_size != 0) {
         // invalid offset value
-        ++hash_changes.hashes_not_inserted_invalid_file_offset;
+        ++logger.hashes_not_inserted_invalid_file_offset;
         return;
       }
 
       // validate the hash block size
       if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
         // wrong hash block size
-        ++hash_changes.hashes_not_inserted_wrong_hash_block_size;
+        ++logger.hashes_not_inserted_wrong_hash_block_size;
         return;
       }
 
@@ -406,14 +410,14 @@ class hashdb_db_manager_t {
       bool has = string_to_hashdigest_type(hash_source_record.hashdigest_type_string, type);
       if (!(has && type == hashdb_settings.hashdigest_type)) {
         // wrong hashdigest type
-        ++hash_changes.hashes_not_inserted_wrong_hashdigest_type;
+        ++logger.hashes_not_inserted_wrong_hashdigest_type;
         return;
       }
 
       // verify that it has not already been added
       if (has_hash_element(hashdb_element)) {
         // element already added
-        ++hash_changes.hashes_not_inserted_duplicate_source;
+        ++logger.hashes_not_inserted_duplicate_source;
         return;
       }
 
@@ -470,7 +474,7 @@ class hashdb_db_manager_t {
          && existing_count >= hashdb_settings.maximum_hash_duplicates) {
 
           // there are too many hashes of this value so drop it
-          ++hash_changes.hashes_not_inserted_exceeds_max_duplicates;
+          ++logger.hashes_not_inserted_exceeds_max_duplicates;
           return;
         }
 
@@ -488,25 +492,26 @@ class hashdb_db_manager_t {
       }
 
       // added
-      ++hash_changes.hashes_inserted;
+      ++logger.hashes_inserted;
       return;
     }
 
-    void remove_hash_element(const hashdb_element_t& hashdb_element) {
+    void remove_hash_element(const hashdb_element_t& hashdb_element,
+                             hashdb_change_logger_t& logger) {
 
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
       // validate the file offset
       if (hash_source_record.file_offset % hashdb_settings.hash_block_size != 0) {
         // invalid offset value
-        ++hash_changes.hashes_not_removed_invalid_file_offset;
+        ++logger.hashes_not_removed_invalid_file_offset;
         return;
       }
 
       // validate the hash block size
       if (hash_source_record.hash_block_size != hashdb_settings.hash_block_size) {
         // wrong hash block size
-        ++hash_changes.hashes_not_removed_wrong_hash_block_size;
+        ++logger.hashes_not_removed_wrong_hash_block_size;
         return;
       }
 
@@ -515,7 +520,7 @@ class hashdb_db_manager_t {
       bool has = string_to_hashdigest_type(hash_source_record.hashdigest_type_string, type);
       if (!(has && type == hashdb_settings.hashdigest_type)) {
         // wrong hashdigest type
-        ++hash_changes.hashes_not_removed_wrong_hashdigest_type;
+        ++logger.hashes_not_removed_wrong_hashdigest_type;
         return;
       }
 
@@ -525,7 +530,7 @@ class hashdb_db_manager_t {
       has = hash_store->has_source_lookup_record(md5, existing_source_lookup_record);
       if (!has) {
         // there is no matching hash in the hash store to remove
-        ++hash_changes.hashes_not_removed_no_hash;
+        ++logger.hashes_not_removed_no_hash;
         return;
       }
 
@@ -538,7 +543,7 @@ class hashdb_db_manager_t {
 
       if (status == false) {
         // no hash_source_record, so no element
-        ++hash_changes.hashes_not_removed_different_source;
+        ++logger.hashes_not_removed_different_source;
         return;
       }
 
@@ -558,11 +563,11 @@ class hashdb_db_manager_t {
 
           // remove element from hash store
           hash_store->erase_hash_element(md5);
-          ++hash_changes.hashes_removed;
+          ++logger.hashes_removed;
           return;
         } else {
           // it is different because it has a different source location record
-          ++hash_changes.hashes_not_removed_different_source;
+          ++logger.hashes_not_removed_different_source;
           return;
         }
 
@@ -605,14 +610,14 @@ class hashdb_db_manager_t {
               source_lookup_record_t decremented_record(count - 1);
               hash_store->change_source_lookup_record(md5, decremented_record);
             }
-            ++hash_changes.hashes_removed;
+            ++logger.hashes_removed;
             return;
           }
         }
 
         // all the elements in the hash duplicates store are different
         // because they all have different source location records
-        ++hash_changes.hashes_not_removed_different_source;
+        ++logger.hashes_not_removed_different_source;
         return;
       }
     }

@@ -43,6 +43,7 @@ HASHDB_INCS = \
 	../command_line.hpp \
 	../hashdb.cpp \
 	../hashdb.hpp \
+	../hashdb_change_logger.hpp \
 	../hashdb_filenames.cpp \
 	../hashdb_filenames.hpp \
 	../hashdb_types.h \
