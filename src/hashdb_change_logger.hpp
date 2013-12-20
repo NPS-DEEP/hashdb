@@ -39,6 +39,7 @@ class hashdb_change_logger_t {
   const std::string hashdb_dir;
   const std::string title;
   dfxml_writer x;
+  bool closed;
 
   // don't allow copy
   hashdb_change_logger_t(const hashdb_change_logger_t& changes);
@@ -64,6 +65,7 @@ class hashdb_change_logger_t {
                      title(p_title),
                      // open the dfxml writer
                      x(hashdb_filenames_t::log_filename(hashdb_dir), false),
+                     closed(false),
 
                      hashes_inserted(0),
                      hashes_not_inserted_invalid_file_offset(0),
@@ -89,6 +91,22 @@ class hashdb_change_logger_t {
   }
 
   ~hashdb_change_logger_t() {
+    if (!closed) {
+      close();
+    }
+  }
+
+  /**
+   * You can close the logger and use the log before the logger is disposed
+   * by calling close.
+   * Do not use the logger after closing it; this will corrupt the log file.
+   */
+  void close() {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.close warning: already closed\n";
+      return;
+    }
 
     // log any insert changes to x
     x.push("hashdb_changes");
@@ -157,19 +175,35 @@ class hashdb_change_logger_t {
     if (hashes_not_removed_different_source)
       std::cout << "    hashes not removed, different source=" << hashes_not_removed_different_source << "\n";
     ;
+
+    // mark this logger as closed
+    x.flush();
+    closed = true;
   }
 
   /**
    * Emit a named timestamp.
    */
-  void add_timestamp(const std::string &name) {
+  void add_timestamp(const std::string& name) {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.add_timestamp warning: already closed\n";
+      return;
+    }
+
     x.add_timestamp(name);
   }
 
   /**
    * Add hashdb_settings to the log.
    */
-  void add_hashdb_settings(const hashdb_settings_t &settings) {
+  void add_hashdb_settings(const hashdb_settings_t& settings) {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.add_hashdb_settings warning: already closed\n";
+      return;
+    }
+
     settings.report_settings(x);
   }
 
@@ -184,20 +218,39 @@ class hashdb_change_logger_t {
   }
 */
   void add_hashdb_db_manager_state() {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.add_hashdb_db_manager_state warning: already closed\n";
+      return;
+    }
+
     x.xmlout("state", "TBD");
   }
 
   /**
-   * Add hashdb_settings to the log.
+   * Add bloom settings to the log.
    */
-  void add_bloom_state(bloom_filter_t bloom, int index) {
-    bloom.report_status(x, index);
+  void add_bloom_state(const bloom_settings_t& bloom_settings, int index) {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.add_bloom_state warning: already closed\n";
+      return;
+    }
+
+    bloom_settings.report_settings(x, index);
   }
 
   /**
-   * Add a tag, value pair.
+   * Add a tag, value pair for any type supported by xmlout.
    */
-  void add(const std::string &tag, std::string &value) {
+  template<typename T>
+  void add(const std::string& tag, const T& value) {
+    if (closed) {
+      // already closed
+      std::cout << "hashdb_change_logger.add warning: already closed\n";
+      return;
+    }
+
     x.xmlout(tag, value);
   }
 };

@@ -138,24 +138,30 @@ class commands_t {
   class inserter_consumer_t {
     private:
     hashdb_db_manager_t* hashdb_db_manager;
+    hashdb_change_logger_t* logger;
     public:
-    inserter_consumer_t(hashdb_db_manager_t* p_hashdb_db_manager) :
-                                 hashdb_db_manager(p_hashdb_db_manager){
+    inserter_consumer_t(hashdb_db_manager_t& p_hashdb_db_manager,
+                        hashdb_change_logger_t& p_logger) :
+                                 hashdb_db_manager(&p_hashdb_db_manager),
+                                 logger(&p_logger) {
     }
     void consume(const hashdb_element_t& hashdb_element) {
-      hashdb_db_manager->insert_hash_element(hashdb_element);
+      hashdb_db_manager->insert_hash_element(hashdb_element, *logger);
     }
   };
 
   class remover_consumer_t {
     private:
     hashdb_db_manager_t* hashdb_db_manager;
+    hashdb_change_logger_t* logger;
     public:
-    remover_consumer_t(hashdb_db_manager_t* p_hashdb_db_manager) :
-                                 hashdb_db_manager(p_hashdb_db_manager){
+    remover_consumer_t(hashdb_db_manager_t& p_hashdb_db_manager,
+                        hashdb_change_logger_t& p_logger) :
+                                 hashdb_db_manager(&p_hashdb_db_manager),
+                                 logger(&p_logger) {
     }
     void consume(const hashdb_element_t& hashdb_element) {
-      hashdb_db_manager->remove_hash_element(hashdb_element);
+      hashdb_db_manager->remove_hash_element(hashdb_element, *logger);
     }
   };
 
@@ -188,7 +194,7 @@ class commands_t {
     logger.add_timestamp("opened new hashdb");
 
     // create the inserter consumer
-    inserter_consumer_t inserter_consumer(&hashdb_out);
+    inserter_consumer_t inserter_consumer(hashdb_out, logger);
 
     // perform the import using the inserter consumer
     dfxml_hashdigest_reader_t<inserter_consumer_t>::do_read(
@@ -196,14 +202,14 @@ class commands_t {
 
     logger.add_timestamp("done");
 
-    // log settings and state
-    // provide log summary
-    history_manager_t::append_log_to_history(hashdb_outdir);
-
     // explain if nothing happened
-    if (hash_changes.hashes_inserted == 0) {
+    if (logger.hashes_inserted == 0) {
       describe_none_inserted_dfxml();
     }
+
+    // append log to history
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -226,7 +232,7 @@ class commands_t {
     logger.add_timestamp("opened hashdb");
 
     // create the inserter consumer
-    inserter_consumer_t inserter_consumer(&hashdb_out);
+    inserter_consumer_t inserter_consumer(hashdb_out, logger);
 
     // perform the import using the inserter consumer
     dfxml_hashdigest_reader_t<inserter_consumer_t>::do_read(
@@ -234,13 +240,14 @@ class commands_t {
 
     logger.add_timestamp("done");
 
-    // provide log summary
-    history_manager_t::append_log_to_history(hashdb_outdir);
-
     // explain if nothing happened
-    if (hash_changes.hashes_inserted == 0) {
+    if (logger.hashes_inserted == 0) {
       describe_none_inserted_dfxml();
     }
+
+    // append log to history
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -274,13 +281,14 @@ class commands_t {
 
     // copy all elements
     while (it != it_end) {
-      hashdb_out.insert_hash_element(*it);
+      hashdb_out.insert_hash_element(*it, logger);
       ++it;
     }
 
     logger.add_timestamp("done");
 
     // provide summary
+    logger.close();
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
@@ -313,13 +321,14 @@ class commands_t {
 
     // copy all elements
     while (it != it_end) {
-      hashdb_out.insert_hash_element(*it);
+      hashdb_out.insert_hash_element(*it, logger);
       ++it;
     }
 
     logger.add_timestamp("done");
 
     // provide summary
+    logger.close();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
@@ -368,7 +377,7 @@ class commands_t {
       }
       if (source_lookup_record.get_count() < exclude_duplicates_count) {
         // keep
-        hashdb_out.insert_hash_element(*it);
+        hashdb_out.insert_hash_element(*it, logger);
       } else {
         // throw away duplicate
         ++hashes_not_inserted_excluded_duplicates;
@@ -381,6 +390,9 @@ class commands_t {
     // provide summary
     logger.add("hashes_not_inserted_excluded_duplicates", hashes_not_inserted_excluded_duplicates);
     std::cout << "hashes not inserted, excluded duplicates=" << hashes_not_inserted_excluded_duplicates << "\n";
+
+    // append log to history
+    logger.close();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
@@ -405,7 +417,7 @@ class commands_t {
     logger.add_timestamp("opened hashdb");
 
     // create the remover consumer
-    remover_consumer_t remover_consumer(&hashdb_out);
+    remover_consumer_t remover_consumer(hashdb_out, logger);
 
     // perform the removal using the remover consumer
     dfxml_hashdigest_reader_t<remover_consumer_t>::do_read(
@@ -413,13 +425,14 @@ class commands_t {
 
     logger.add_timestamp("done");
 
-    // provide log summary
-    history_manager_t::append_log_to_history(hashdb_outdir);
-
     // explain if nothing happened
-    if (hash_changes.hashes_removed == 0) {
+    if (logger.hashes_removed == 0) {
       describe_none_removed_dfxml();
     }
+
+    // append log to history
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
   /**
@@ -450,13 +463,14 @@ class commands_t {
 
     // copy all elements
     while (it != it_end) {
-      hashdb_out.remove_hash_element(*it);
+      hashdb_out.remove_hash_element(*it, logger);
       ++it;
     }
 
     logger.add_timestamp("done");
 
-    // provide summary
+    // append log to history
+    logger.close();
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
@@ -501,27 +515,28 @@ class commands_t {
     // while elements are in both, insert ordered by key
     while ((it1 != it1_end) and (it2 != it2_end)) {
       if (it1->first < it2->first) {
-        hashdb_out.insert_hash_element(*it1);
+        hashdb_out.insert_hash_element(*it1, logger);
         ++it1;
       } else {
-        hashdb_out.insert_hash_element(*it2);
+        hashdb_out.insert_hash_element(*it2, logger);
         ++it2;
       }
     }
 
     // insert all remaining elements
     while (it1 != it1_end) {
-      hashdb_out.insert_hash_element(*it1);
+      hashdb_out.insert_hash_element(*it1, logger);
       ++it1;
     }
     while (it2 != it2_end) {
-      hashdb_out.insert_hash_element(*it2);
+      hashdb_out.insert_hash_element(*it2, logger);
       ++it2;
     }
 
     logger.add_timestamp("done");
 
-    // provide summary
+    // append log to history
+    logger.close();
     history_manager_t::append_log_to_history(hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir1, hashdb_outdir);
     history_manager_t::merge_history_to_history(hashdb_indir2, hashdb_outdir);
@@ -600,6 +615,9 @@ class commands_t {
     // provide summary
     logger.add_bloom_state(hashdb_settings.bloom1_settings, 1);
     logger.add_bloom_state(hashdb_settings.bloom2_settings, 2);
+
+    // append log to history
+    logger.close();
     history_manager_t::append_log_to_history(hashdb_indir);
   }
  

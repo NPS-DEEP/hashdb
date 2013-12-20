@@ -81,6 +81,12 @@ class history_manager_t {
   // strip named outer tag from lines
   static void strip_outer_tag(const std::string& tag,
                        std::vector<std::string>& lines) {
+
+//std::cout << "history_manager.strip_outer tag lines begin:\n";
+//for (int i=0; i<lines.size(); ++i) {
+//std::cout << "    '" << lines[i] << "'\n";
+//}
+
     std::string open_tag = "<" + tag + ">";
     std::string close_tag = "</" + tag + ">";
 
@@ -103,7 +109,8 @@ class history_manager_t {
 
     // remove close tag
     if (lines.back() != close_tag) {
-      std::cerr << "strip_outer_tag: no close tag\n";
+      std::cerr << "strip_outer_tag: no close tag,\n";
+      std::cerr << "'" << lines.back() << "' is not '" << close_tag << "'\n";
       throw history_manager_failure_exception_t();
     }
     lines.pop_back();
