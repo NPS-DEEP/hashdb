@@ -651,67 +651,55 @@ This module manages storage for hash duplicates.
 
 % source lookup encoding
 \subsection{Source Lookup Encoding}
-The source lookup encoding is an overloaded bit-packed optimized
+The source lookup encoding provides algorithms for working with a
 \texttt{uint64\_t}
-data structure for looking up the source of a hash.
-Algorithms to work with the structure are
-implemented as class \texttt{source\_lookup\_encoding\_t}
-with static accessors.
-Here are some properties of the source lookup encoding:
+as a source lookup encoding containing a source lookup index,
+a hash block offset, and a count value.
+These algorithms are
+implemented in namespace \texttt{source\_lookup\_encoding}.
+This encoding is an optimization for saving space in memory.
+Here are some properties of this encoding:
 \begin{compactitem}
 \item If the embedded count value $=$ 1,
-the source lookup index and hash block offset value
+the source lookup index and hash block offset
 have valid source lookup values.
 The \texttt{uint64\_t} value is distributed between the
 source lookup index and hash block offset as follows:
   \begin{compactitem}
   \item number of index bits goes into the source lookup index.
-  \item 32 $-$ number of index bits goes into the hash block offset value.
+  \item 32 $-$ number of index bits goes into the hash block offset.
   \end{compactitem}
 \item If the embedded count value $>$ 1,
-the source lookup index and hash block offset value accessors
+the source lookup index and hash block offset accessors
 are not used and return 0.
-\item If the hash is a file hash, the block offset value will be 0, as expected.
+\item If the hash is a file hash, the block offset will be 0, as expected.
 \item If an attempt is made to compose a source lookup encoding
-from a source lookup index value or a hash block offset value
+from a source lookup index or a hash block offset
 that is too large, an error will be emitted to \texttt{stderr}
 and 0 will be returned.
 \item A count value is indicated when the most significant 32 bits
 of the \texttt{uint64\_t} $=$ \texttt{0xffff}.
 \end{compactitem}
 
-%% constructor
-%\subsubsection{Constructor}
-%Create a storable source lookup encoding:
-%\begin{small}
-%\begin{verbatim}
-%source_lookup_encoding_t(number_of_index_bits_type_t number_of_index_bits_type,
-%                         uint64_t source_lookup_index,
-%                         uint64_t hash_block_offset_value);
-% 
-%source_lookup_encoding_t(uint32_t count);
-%\end{verbatim}
-%\end{small}
-
 % accessors
 \subsubsection{Accessors}
 \begin{small}
 \begin{verbatim}
-static uint64_t get_source_lookup_encoding_t(
-                 uint8_t number_of_index_bits,
+static uint64_t get_source_lookup_encoding(
+                 uint8_t source_lookup_index_bits,
                  uint64_t source_lookup_index,
-                 uint64_t hash_block_offset_value);
+                 uint64_t hash_block_offset);
 
-static uint64_t get_source_lookup_encoding_t(uint32_t count);
+static uint64_t get_source_lookup_encoding(uint32_t count);
 
 static uint32_t get_count(uint64_t source_lookup_encoding);
 
 static uint64_t get_source_lookup_index(
-                 uint8_t number_of_index_bits,
+                 uint8_t source_lookup_index_bits,
                  uint64_t source_lookup_encoding);
 
-static uint64_t get_hash_block_offset_value(
-                 uint8_t number_of_index_bits,
+static uint64_t get_hash_block_offset(
+                 uint8_t source_lookup_index_bits,
                  uint64_t source_lookup_encoding);
 \end{verbatim}
 \end{small}

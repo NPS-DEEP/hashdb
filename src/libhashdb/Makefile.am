@@ -60,6 +60,7 @@ HASHDB_INCS = \
 	../query_by_path.hpp \
 	../query_by_socket.hpp \
 	../source_lookup_manager.hpp \
+	../source_lookup_encoding.hpp \
 	../source_lookup_record.h
 
 DETAIL_INCS = \

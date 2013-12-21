@@ -90,6 +90,11 @@ inline std::ostream& operator<<(std::ostream& os,
 }
 
 class source_lookup_record_t {
+  public:
+uint64_t get_composite_value_for_transition_port() const {
+  return composite_value;
+}
+
   private:
     // the basic composite value for a source_lookup_record_t
     uint64_t composite_value;

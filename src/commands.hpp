@@ -35,6 +35,7 @@
 #include "query_by_socket_server.hpp"
 #include "dfxml/src/dfxml_writer.h"
 #include "command_line.hpp"
+#include "source_lookup_encoding.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -375,7 +376,9 @@ class commands_t {
         // program error
         assert(0);
       }
-      if (source_lookup_record.get_count() < exclude_duplicates_count) {
+      uint64_t source_lookup_encoding = source_lookup_record.get_composite_value_for_transition_port();
+      if (source_lookup_encoding::get_count(source_lookup_encoding)
+                                               < exclude_duplicates_count) {
         // keep
         hashdb_out.insert_hash_element(*it, logger);
       } else {
