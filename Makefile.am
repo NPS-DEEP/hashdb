@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 SRC_WIN = src_win
 include src_win/Makefile
 
-SUBDIRS = src src/libhashdb src/hashdb_checker man doc
+SUBDIRS = src src/libhashdb src/hashdb_checker src/test man doc
 
 SRC_WIN_DIST = \
 	src_win/build_installer.nsi \

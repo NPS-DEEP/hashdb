@@ -34,6 +34,8 @@
 #include <stdint.h>
 #include <cassert>
 #include <string>
+#include <sstream>
+#include <stdexcept>
 #include <iostream>
 #include <limits>
 
@@ -51,6 +53,7 @@ class source_lookup_encoding {
   // runtime error if source lookup index is too large
   static inline void check_source_lookup_index(uint8_t i, uint64_t index) {
     check_source_lookup_index_bits(i);
+std::cout << "csli index " << index << " >=? " << ((uint64_t)1<<i) << "\n";
     if (index >= (uint64_t)1<<i) {
       std::ostringstream ss;
       ss << "Error: The source lookup index has become too big for the current number of source lookup index bits specified, " << i << ".\n";
@@ -64,6 +67,7 @@ class source_lookup_encoding {
   // runtime error if hash block offset is too large
   static inline void check_hash_block_offset(uint8_t i, uint64_t offset) {
     check_source_lookup_index_bits(i);
+std::cout << "csli offset " << offset << " >=? " << ((uint64_t)1<<(64-i)) << "\n";
     if (offset >= (uint64_t)1<<(64 - i)) {
       std::ostringstream ss;
       ss << "Error: The hash block offset value is too large for the current number of source lookup index bits specified, " << i << ".\n";
@@ -93,7 +97,7 @@ class source_lookup_encoding {
     check_source_lookup_index(source_lookup_index_bits, source_lookup_index);
     check_hash_block_offset(source_lookup_index_bits, hash_block_offset);
 
-    return (source_lookup_index >> source_lookup_index_bits | hash_block_offset);
+    return (source_lookup_index << source_lookup_index_bits | hash_block_offset);
   }
 
   /**
