@@ -45,21 +45,26 @@ class source_lookup_encoding {
   // program error if source lookup index bits are out of range
   static inline void check_source_lookup_index_bits(uint8_t i) {
     if (i < 32 || i > 40) {
-      std::cerr << "invalid i " << (uint32_t)i << "\n";
-      assert(0);
+      std::ostringstream ss;
+      ss << "Error: The source lookup index provided, " << (uint32_t)i
+         << ", is not within the valid range\nof 32 to 40.\n";
+      ss << "Cannot continue.\n";
+      throw std::runtime_error(ss.str());
     }
   }
 
   // runtime error if source lookup index is too large
   static inline void check_source_lookup_index(uint8_t i, uint64_t index) {
     check_source_lookup_index_bits(i);
-std::cout << "csli index " << index << " >=? " << ((uint64_t)1<<i) << "\n";
-    if (index >= (uint64_t)1<<i) {
+    uint64_t max = ((uint64_t)1<<i) - 2;
+    if (index > max) {
       std::ostringstream ss;
-      ss << "Error: The source lookup index has become too big for the current number of source lookup index bits specified, " << i << ".\n";
+      ss << "Error: The source lookup index is too large for the "
+         << (uint32_t)i << " index bits\ncurrently specified.\n";
+      ss << "Specifically, requested index " << index << " > max " << max << ".\n";
       ss << "No more source lookup records can be allocated at this setting.\n";
-      ss << "Use a larger number of index bits.\n";
-      ss << "Cannot continue.  Aborting.\n";
+      ss << "Please rebuild the dataset using a larger number of index bits.\n";
+      ss << "Cannot continue.\n";
       throw std::runtime_error(ss.str());
     }
   }
@@ -67,14 +72,15 @@ std::cout << "csli index " << index << " >=? " << ((uint64_t)1<<i) << "\n";
   // runtime error if hash block offset is too large
   static inline void check_hash_block_offset(uint8_t i, uint64_t offset) {
     check_source_lookup_index_bits(i);
-std::cout << "csli offset " << offset << " >=? " << ((uint64_t)1<<(64-i)) << "\n";
-    if (offset >= (uint64_t)1<<(64 - i)) {
+    uint64_t max = ((uint64_t)1<<(64 - i)) - 2;
+    if (offset > max) {
       std::ostringstream ss;
-      ss << "Error: The hash block offset value is too large for the current number of source lookup index bits specified, " << i << ".\n";
+      ss << "Error: The hash block offset value is too large for the "
+         << (uint32_t)i << " index bits\ncurrently specified.\n";
+      ss << "Specifically, requested offset " << offset << " > max " << max << ".\n";
       ss << "No more source lookup records can be allocated at this setting.\n";
-      ss << "Use a number of index bits type with a higher capacity.\n";
-      ss << "Use a smaller number of index bits.\n";
-      ss << "Cannot continue.  Aborting.\n";
+      ss << "Please rebuild dataset using a smaller number of index bits.\n";
+      ss << "Cannot continue.\n";
       throw std::runtime_error(ss.str());
     }
   }
@@ -97,21 +103,21 @@ std::cout << "csli offset " << offset << " >=? " << ((uint64_t)1<<(64-i)) << "\n
     check_source_lookup_index(source_lookup_index_bits, source_lookup_index);
     check_hash_block_offset(source_lookup_index_bits, hash_block_offset);
 
-    return (source_lookup_index << source_lookup_index_bits | hash_block_offset);
+    return ((source_lookup_index << (64 - source_lookup_index_bits)) | hash_block_offset);
   }
 
   /**
    * Get the source lookup encoding for a count value.
    */
   static uint64_t get_source_lookup_encoding(uint32_t count) {
-    return ((uint64_t)count<<32 | 0x0000ffff);
+    return ((uint64_t)count<<32 | 0xffffffff);
   }
 
   /**
    * Get the count value represented by the source lookup encoding.
    */
   static uint32_t get_count(uint64_t source_lookup_encoding) {
-    if ((source_lookup_encoding & 0x0000ffff) == 0x0000ffff) {
+    if ((source_lookup_encoding & 0xffffffff) == 0xffffffff) {
       // the source lookup encoding indicates count mode, so return count value
       return source_lookup_encoding>>32;
     } else {
@@ -131,7 +137,7 @@ std::cout << "csli offset " << offset << " >=? " << ((uint64_t)1<<(64-i)) << "\n
     // validate request
     check_source_lookup_index_bits(source_lookup_index_bits);
 
-    return source_lookup_encoding >> source_lookup_index_bits;
+    return source_lookup_encoding >> (64 - source_lookup_index_bits);
   }
 
   /**

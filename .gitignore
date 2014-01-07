@@ -58,6 +58,7 @@ src/hashdb_manager
 src/hashdb_checker/hashdb_checker
 src/hashdb_manager.exe
 src/hashdb_checker/hashdb_checker.exe
+src/test/source_lookup_encoding_test
 hashdb*.tar.gz
 space
 doc/design/design.aux
