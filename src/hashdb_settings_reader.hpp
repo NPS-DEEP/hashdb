@@ -31,14 +31,14 @@
  * This stiplulation is easy to change, see dfxml_hashdigest_reader.hpp.
  */
 
-#ifndef SETTINGS_READER_HPP
-#define SETTINGS_READER_HPP
+#ifndef HASHDB_SETTINGS_READER_HPP
+#define HASHDB_SETTINGS_READER_HPP
 #ifdef WIN32
   #include "io.h"
 #endif
 #include <libxml/parser.h>
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -51,27 +51,19 @@
  * This file reads hashdb settings.
  */
 
-namespace hashdb_settings {
-
 // a class is used just to keep members private
-class settings_reader_t {
+class hashdb_settings_reader_t {
 
   private:
 
   // do not allow these
-  settings_reader_t();
-  settings_reader_t(const settings_reader_t&);
-  settings_reader_t& operator=(const settings_reader_t&);
+  hashdb_settings_reader_t();
+  hashdb_settings_reader_t(const hashdb_settings_reader_t&);
+  hashdb_settings_reader_t& operator=(const hashdb_settings_reader_t&);
 
   // ************************************************************
   // nodes
   // ************************************************************
-  // parent nodes
-  enum parent_node_type_t {NO_PARENT_NODE,
-                           HASH_STORE_SETTINGS,
-                           HASH_DUPLICATES_STORE_SETTINGS,
-                           SOURCE_LOOKUP_SETTINGS,
-                           BLOOM_FILTER_SETTINGS};
 
   // nodes
   // NOTE: use REGULAR_MAP_TYPE instead of MAP_TYPE because of a typedef
@@ -83,17 +75,17 @@ class settings_reader_t {
                     HASH_BLOCK_SIZE,
                     HASHDIGEST_TYPE,
                     MAXIMUM_HASH_DUPLICATES,
-                    // hash store, hash duplicates store
-                    REGULAR_MAP_TYPE,
-                    DUPLICATES_MAP_TYPE,
-                    SHARD_COUNT,
-                    // source lookup settings
                     NUMBER_OF_INDEX_BITS,
-                    MULTI_INDEX_CONTAINER_TYPE,
-                    // bloom filters
-                    STATUS,
-                    K_HASH_FUNCTIONS,
-                    M_HASH_SIZE};
+                    REGULAR_MAP_TYPE,
+                    MAP_SHARD_COUNT,
+                    MULTIMAP_TYPE,
+                    MULTIMAP_SHARD_COUNT,
+                    BLOOM1_USED,
+                    BLOOM1_K_HASH_FUNCTIONS,
+                    BLOOM1_M_HASH_SIZE,
+                    BLOOM2_USED,
+                    BLOOM2_K_HASH_FUNCTIONS,
+                    BLOOM2_M_HASH_SIZE};
 
   // ************************************************************
   // user data type for sax
@@ -102,12 +94,10 @@ class settings_reader_t {
 
     // parser state
     hashdb_settings_t* settings;
-    parent_node_type_t active_parent_node;
     node_type_t active_node;
     size_t index;
 
     user_data_t(hashdb_settings_t* p_settings) : settings(p_settings),
-                    active_parent_node(NO_PARENT_NODE),
                     active_node(NO_NODE),
                     index(0) {
     }
@@ -129,64 +119,24 @@ class settings_reader_t {
     s = std::string(temp_chars);
   }
 
-  // convert node name to parent node type
-  static parent_node_type_t xmlChar_to_parent_node_type(const xmlChar* name) {
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_store_settings"))) return HASH_STORE_SETTINGS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_duplicates_store_settings"))) return HASH_DUPLICATES_STORE_SETTINGS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("source_lookup_settings"))) return SOURCE_LOOKUP_SETTINGS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_filter_settings"))) return BLOOM_FILTER_SETTINGS;
-    return NO_PARENT_NODE;
-  }
-
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdb_version"))) return HASHDB_VERSION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("duplicates_map_type"))) return DUPLICATES_MAP_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("shard_count"))) return SHARD_COUNT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("number_of_index_bits"))) return NUMBER_OF_INDEX_BITS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multi_index_container_type"))) return MULTI_INDEX_CONTAINER_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("status"))) return STATUS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("k_hash_functions"))) return K_HASH_FUNCTIONS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("M_hash_size"))) return M_HASH_SIZE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_shard_count"))) return MAP_SHARD_COUNT;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_type"))) return MULTIMAP_TYPE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_shard_count"))) return MULTIMAP_SHARD_COUNT;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_k_hash_functions"))) return BLOOM1_K_HASH_FUNCTIONS;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_M_hash_size"))) return BLOOM1_M_HASH_SIZE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_used"))) return BLOOM2_USED;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_k_hash_functions"))) return BLOOM2_K_HASH_FUNCTIONS;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_M_hash_size"))) return BLOOM2_M_HASH_SIZE;
     return NO_NODE;
-  }
-
-  // parse a mandatory bloom filter index value
-  static size_t parse_bloom_filter_index(const xmlChar** attributes) {
-
-    if (attributes == NULL) {
-      // no attributes
-      exit_invalid_state("the tag requires an 'index' attribute but no attributes were provided");
-    }
-
-    // parse attributes
-    int i=0;
-    while (true) {
-      if (attributes[i] == NULL || attributes[i+1] == NULL) {
-      exit_invalid_state("the tag requires an 'index' attribute but it was not provided");
-      }
-
-      if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("index"))) {
-
-        std::string index_string((const char*)attributes[i+1]);
-        try {
-          size_t index = boost::lexical_cast<size_t>(index_string);
-          return index;
-        } catch(...) {
-          // abort
-          std::ostringstream s;
-          s << "settings_reader_t(): invalid index value: '"
-            << index_string << "'\n" << "Cannot continue.\n";
-          throw std::runtime_error(s.str());
-        }
-      }
-
-      i += 2;
-    }
   }
 
   // convert string to number or fail with exit
@@ -200,7 +150,7 @@ class settings_reader_t {
     } catch(...) {
       // abort
       std::ostringstream s;
-      s << "settings_reader_t(): invalid number: '"
+      s << "hashdb_settings_reader_t(): invalid number: '"
         << number_string << "'\n" << "Cannot continue.\n";
       throw std::runtime_error(s.str());
     }
@@ -244,28 +194,12 @@ class settings_reader_t {
 
     // identify active node type
     user_data.active_node = xmlChar_to_node_type(name);
-
-    // identify active parent node type
-    parent_node_type_t temp = xmlChar_to_parent_node_type(name);
-    if (temp != NO_PARENT_NODE) {
-      user_data.active_parent_node = temp;
-    }
-
-    // parse any relavent attributes for this node
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_filter_settings"))) {
-      user_data.index = parse_bloom_filter_index(attributes);
-    }
   }
 
   static void on_end_element(void* p_user_data,
                              const xmlChar* name) {
     user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
-
     user_data.active_node = NO_NODE;
-    if (xmlChar_to_parent_node_type(name) != NO_PARENT_NODE) {
-      // close parent node type too
-      user_data.active_parent_node = NO_PARENT_NODE;
-    }
   }
 
   static void on_characters(void* p_user_data,
@@ -274,125 +208,93 @@ class settings_reader_t {
     user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
 
     bool is_valid;
-    switch(user_data.active_parent_node) {
-      case NO_PARENT_NODE:
-        if (user_data.active_node == HASHDB_VERSION) {
-          xmlChar_to_number(characters, len, user_data.settings->hashdb_version);
-        } else if (user_data.active_node == HASH_BLOCK_SIZE) {
-          xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
-        } else if (user_data.active_node == HASHDIGEST_TYPE) {
-          // get hashdigest type
-          std::string hashdigest_type_string;
-          xmlChar_to_string(characters, len, hashdigest_type_string);
-          is_valid = string_to_hashdigest_type(hashdigest_type_string, user_data.settings->hashdigest_type);
-          if (!is_valid) {
-            exit_invalid_text("invalid hashdigest type", hashdigest_type_string);
-          }
-        } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
-          xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
-        }
-        break;
 
-      case HASH_STORE_SETTINGS:
-        if (user_data.active_node == REGULAR_MAP_TYPE) {
-          // get map type
-          std::string map_type_string;
-          xmlChar_to_string(characters, len, map_type_string);
-          is_valid = string_to_map_type(map_type_string, user_data.settings->hash_store_settings.map_type);
-          if (!is_valid) {
-            exit_invalid_text("invalid hash store map type", map_type_string);
-          }
-        } else if (user_data.active_node == SHARD_COUNT) {
-          xmlChar_to_number(characters, len, user_data.settings->hash_store_settings.shard_count);
-        }
-        break;
+    if (user_data.active_node == HASHDB_VERSION) {
+      xmlChar_to_number(characters, len, user_data.settings->hashdb_version);
+    } else if (user_data.active_node == HASH_BLOCK_SIZE) {
+      xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
+    } else if (user_data.active_node == HASHDIGEST_TYPE) {
+      // get hashdigest type
+      std::string hashdigest_type_string;
+      xmlChar_to_string(characters, len, hashdigest_type_string);
+      is_valid = string_to_hashdigest_type(hashdigest_type_string, user_data.settings->hashdigest_type);
+      if (!is_valid) {
+        exit_invalid_text("invalid hashdigest type", hashdigest_type_string);
+      }
+    } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
+      xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
 
-      case HASH_DUPLICATES_STORE_SETTINGS:
-        if (user_data.active_node == DUPLICATES_MAP_TYPE) {
-          // get duplicates map type
-          std::string duplicates_map_type_string;
-          xmlChar_to_string(characters, len, duplicates_map_type_string);
-          is_valid = string_to_multimap_type(duplicates_map_type_string, user_data.settings->hash_duplicates_store_settings.multimap_type);
-          if (!is_valid) {
-            exit_invalid_text("invalid hash duplicates store", duplicates_map_type_string);
-          }
-        } else if (user_data.active_node == SHARD_COUNT) {
-          xmlChar_to_number(characters, len, user_data.settings->hash_duplicates_store_settings.shard_count);
-        }
-        break;
+    } else if (user_data.active_node == NUMBER_OF_INDEX_BITS) {
+      // get number of index bits
+      uint32_t temp;
+      xmlChar_to_number(characters, len, temp);
+      if (temp > 64) {
+        assert(0);
+      }
+      user_data.settings->number_of_index_bits = (uint8_t)temp;
 
-      case SOURCE_LOOKUP_SETTINGS:
-        if (user_data.active_node == NUMBER_OF_INDEX_BITS) {
-          // get number of index bits
-uint32_t temp;
-xmlChar_to_number(characters, len, temp);
-if (temp > 64) {
-  assert(0);
-}
-user_data.settings->source_lookup_settings.number_of_index_bits = (uint8_t)temp;
+    } else if (user_data.active_node == REGULAR_MAP_TYPE) {
+      // get map type
+      std::string map_type_string;
+      xmlChar_to_string(characters, len, map_type_string);
+      is_valid = string_to_map_type(map_type_string, user_data.settings->map_type);
+      if (!is_valid) {
+        exit_invalid_text("invalid hash store map type", map_type_string);
+      }
+    } else if (user_data.active_node == MAP_SHARD_COUNT) {
+      xmlChar_to_number(characters, len, user_data.settings->map_shard_count);
 
-//          xmlChar_to_number(characters, len, user_data.settings->source_lookup_settings.number_of_index_bits);
-        } else if (user_data.active_node == MULTI_INDEX_CONTAINER_TYPE) {
-          // get multi_index container type
-          std::string multi_index_container_type_string;
-          xmlChar_to_string(characters, len, multi_index_container_type_string);
-          is_valid = string_to_multi_index_container_type(multi_index_container_type_string , user_data.settings->source_lookup_settings.multi_index_container_type);
-          if (!is_valid) {
-            exit_invalid_text("invalid source lookup multi index container type", multi_index_container_type_string);
-          }
-        }
-        break;
+    } else if (user_data.active_node == MULTIMAP_TYPE) {
+      // get multimap type
+      std::string multimap_type_string;
+      xmlChar_to_string(characters, len, multimap_type_string);
+      is_valid = string_to_multimap_type(multimap_type_string, user_data.settings->multimap_type);
+      if (!is_valid) {
+        exit_invalid_text("invalid hash duplicates store", multimap_type_string);
+      }
+    } else if (user_data.active_node == MULTIMAP_SHARD_COUNT) {
+      xmlChar_to_number(characters, len, user_data.settings->multimap_shard_count);
 
-      case BLOOM_FILTER_SETTINGS:
-        if (user_data.index != 1 && user_data.index != 2) {
-          // bad
-          exit_invalid_index(user_data.index);
-        }
-        if (user_data.active_node == STATUS) {
-          if (user_data.index == 1) {
-            std::string bloom1_state_string;
-            xmlChar_to_string(characters, len, bloom1_state_string);
-            is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_settings.is_used);
-            if (!is_valid) {
-              exit_invalid_state("Error: invalid bloom 1 state\n");
-            }
-          } else if (user_data.index == 2) {
-            std::string bloom2_state_string;
-            xmlChar_to_string(characters, len, bloom2_state_string);
-            is_valid = string_to_bloom_state(bloom2_state_string, user_data.settings->bloom2_settings.is_used);
-            if (!is_valid) {
-              exit_invalid_state("Error: invalid bloom 2 state\n");
-            }
-          } else {
-            exit_invalid_index(user_data.index);
-          }
-        } else if (user_data.active_node == K_HASH_FUNCTIONS) {
-          uint32_t k;
-          xmlChar_to_number(characters, len, k);
-          if (user_data.index == 1) {
-            user_data.settings->bloom1_settings.k_hash_functions = k;
-          } else if (user_data.index == 2) {
-            user_data.settings->bloom2_settings.k_hash_functions = k;
-          } else {
-            exit_invalid_index(user_data.index);
-          }
-        } else if (user_data.active_node == M_HASH_SIZE) {
-          uint32_t M;
-          xmlChar_to_number(characters, len, M);
-          if (user_data.index == 1) {
-            user_data.settings->bloom1_settings.M_hash_size = M;
-          } else if (user_data.index == 2) {
-            user_data.settings->bloom2_settings.M_hash_size = M;
-          } else {
-            exit_invalid_index(user_data.index);
-          }
-        }
-        break;
+    } else if (user_data.active_node == BLOOM1_USED) {
+      std::string bloom1_state_string;
+      xmlChar_to_string(characters, len, bloom1_state_string);
+      is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_is_used);
+      if (!is_valid) {
+        exit_invalid_state("Error: invalid bloom 1 selection\n");
+      }
+
+    } else if (user_data.active_node == BLOOM1_K_HASH_FUNCTIONS) {
+      uint32_t k;
+      xmlChar_to_number(characters, len, k);
+      user_data.settings->bloom1_k_hash_functions = k;
+
+    } else if (user_data.active_node == BLOOM1_M_HASH_SIZE) {
+      uint32_t M;
+      xmlChar_to_number(characters, len, M);
+      user_data.settings->bloom1_M_hash_size = M;
+
+    } else if (user_data.active_node == BLOOM2_USED) {
+      std::string bloom2_state_string;
+      xmlChar_to_string(characters, len, bloom2_state_string);
+      is_valid = string_to_bloom_state(bloom2_state_string, user_data.settings->bloom2_is_used);
+      if (!is_valid) {
+        exit_invalid_state("Error: invalid bloom 2 selection\n");
+      }
+
+    } else if (user_data.active_node == BLOOM2_K_HASH_FUNCTIONS) {
+      uint32_t k;
+      xmlChar_to_number(characters, len, k);
+      user_data.settings->bloom2_k_hash_functions = k;
+
+    } else if (user_data.active_node == BLOOM2_M_HASH_SIZE) {
+      uint32_t M;
+      xmlChar_to_number(characters, len, M);
+      user_data.settings->bloom2_M_hash_size = M;
     }
   }
 
   static void on_comment(void* p_user_data ATTRIBUTE_UNUSED) {
-  //    std::cout << "settings_reader_t::on_comment " << text << "\n";
+  //    std::cout << "hashdb_settings_reader_t::on_comment " << text << "\n";
   }
 
   static void on_warning(void* p_user_data ATTRIBUTE_UNUSED,
@@ -530,8 +432,6 @@ user_data.settings->source_lookup_settings.number_of_index_bits = (uint8_t)temp;
     }
   }
 };
-
-} // namespace hashdb_settings
 
 #endif
 

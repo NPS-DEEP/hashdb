@@ -26,7 +26,6 @@
 #ifndef HASH_DUPLICATES_STORE_HPP
 #define HASH_DUPLICATES_STORE_HPP
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
 #include "manager_modified_multimap.h"
 #include "dfxml/src/hash_t.h"
 #include <vector>
@@ -50,8 +49,8 @@ class hash_duplicates_store_t {
 
     const std::string filename;
     const file_mode_type_t file_mode_type;
-    const hash_duplicates_store_settings_t hash_duplicates_store_settings;
     const multimap_type_t multimap_type;
+    const uint32_t multimap_shard_count;
 
     const static uint64_t size = 1000000;
     const static uint64_t expected_size = 1000000;
@@ -63,7 +62,8 @@ class hash_duplicates_store_t {
   public:
     hash_duplicates_store_t (const std::string& _filename,
                              file_mode_type_t _file_mode_type,
-                             hash_duplicates_store_settings_t _hash_duplicates_store_settings);
+                             multimap_type_t _multimap_type,
+                             uint32_t _multimap_shard_count);
 
     ~hash_duplicates_store_t();
 

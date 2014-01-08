@@ -25,7 +25,7 @@
 #ifndef SOURCE_LOOKUP_STORE_HPP
 #define SOURCE_LOOKUP_STORE_HPP
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "bi_data_types.hpp"
 #include <boost/btree/support/string_view.hpp>
 #include "bi_store.hpp"

@@ -200,9 +200,9 @@ class query_by_socket_server_t {
         uint64_t id = request_array[i].id;
         uint32_t count = source_lookup_encoding::get_count(source_lookup_record);
         uint64_t source_lookup_index = (count == 1) ?
-                     source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
+                     source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.number_of_index_bits, source_lookup_record) : 0L;
         uint64_t hash_block_offset_value = (count == 1) ?
-                     source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
+                     source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.number_of_index_bits, source_lookup_record) : 0L;
 
         // construct hash response
         hashdb::hash_response_md5_t hash_response(id, digest, count, source_lookup_index, hash_block_offset_value);

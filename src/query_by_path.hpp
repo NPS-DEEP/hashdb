@@ -27,7 +27,7 @@
 #define QUERY_BY_PATH_HPP
 
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "hashdb_db_manager.hpp"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
@@ -132,9 +132,9 @@ class query_by_path_t {
         // get values associated with this hash
         uint32_t count = source_lookup_encoding::get_count(source_lookup_record);
         uint64_t source_lookup_index = (count == 1) ?
-                 source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
+                 source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.number_of_index_bits, source_lookup_record) : 0L;
         uint64_t hash_block_offset_value = (count == 1) ?
-                 source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
+                 source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.number_of_index_bits, source_lookup_record) : 0L;
 
         // construct hash response
         hashdb::hash_response_md5_t hash_response(it->id,

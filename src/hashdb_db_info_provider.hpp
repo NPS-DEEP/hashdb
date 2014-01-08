@@ -27,7 +27,7 @@
 
 //#include "hashdb_db_manager.hpp"
 #include "hash_store.hpp"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -116,14 +116,16 @@ class hashdb_db_info_provider_t {
     // now start processing
 
     // get hashdb settings
-    hashdb_settings_t settings(hashdb_dir);
+    hashdb_settings_t settings;
+    hashdb_settings_reader_t::read_settings(hashdb_dir, settings);
 
     // path to hash store
     std::string hash_store_path =
                hashdb_filenames_t::hash_store_filename(hashdb_dir);
   
     hash_store_t* hash_store = new hash_store_t(
-                hash_store_path, READ_ONLY, settings.hash_store_settings);
+                         hash_store_path, READ_ONLY,
+                         settings.map_type, settings.map_shard_count);
 
     // now generate statistics from the elements in hash_store
     for (hash_store_t::hash_store_iterator_t it = hash_store->begin(); it!=hash_store->end(); ++it) {

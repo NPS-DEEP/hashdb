@@ -26,7 +26,7 @@
 #include <config.h>
 #include "hash_store.hpp"
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "dfxml/src/hash_t.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "manager_modified.h"
@@ -44,15 +44,16 @@ const std::string MAP_BTREE_NAME =          "btree";
      */
     hash_store_t::hash_store_t (const std::string& _filename,
                   file_mode_type_t _file_mode_type,
-                  hash_store_settings_t _hash_store_settings) :
+                  map_type_t _map_type,
+                  uint32_t _map_shard_count) :
                         map_red_black_tree(0),
                         map_sorted_vector(0),
                         map_hash(0),
                         map_btree(0),
                         filename(_filename),
                         file_mode_type(_file_mode_type),
-                        hash_store_settings(_hash_store_settings),
-                        map_type(_hash_store_settings.map_type) {
+                        map_type(_map_type),
+                        map_shard_count(_map_shard_count) {
 
       // instantiate the map type being used
       switch(map_type) {
@@ -62,7 +63,7 @@ const std::string MAP_BTREE_NAME =          "btree";
                 filename, 
                 size,
                 expected_size,
-                hash_store_settings.shard_count,
+                map_shard_count,
                 file_mode_type);
         break;
         case MAP_SORTED_VECTOR:
@@ -71,7 +72,7 @@ const std::string MAP_BTREE_NAME =          "btree";
                 filename, 
                 size,
                 expected_size,
-                hash_store_settings.shard_count,
+                map_shard_count,
                 file_mode_type);
         break;
         case MAP_HASH:
@@ -80,7 +81,7 @@ const std::string MAP_BTREE_NAME =          "btree";
                 filename, 
                 size,
                 expected_size,
-                hash_store_settings.shard_count,
+                map_shard_count,
                 file_mode_type);
         break;
         case MAP_BTREE:
@@ -89,7 +90,7 @@ const std::string MAP_BTREE_NAME =          "btree";
                 filename, 
                 size,
                 expected_size,
-                hash_store_settings.shard_count,
+                map_shard_count,
                 file_mode_type);
         break;
         default:

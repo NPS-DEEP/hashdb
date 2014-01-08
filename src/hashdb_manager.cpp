@@ -32,6 +32,8 @@
 #include "hashdb_db_manager.hpp"
 #include "commands.hpp"
 #include "command_line.hpp"
+#include "hashdb_settings_reader.hpp"
+#include "hashdb_settings_writer.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -203,33 +205,33 @@ void usage() {
   << "    -t, --storage_type=<storage type>\n"
   << "        <storage type> to use in the hash database, where <storage type>\n"
   << "        is one of: btree | hash | red-black-tree | sorted-vector\n"
-  << "        (default " << s.hash_store_settings.map_type << ")\n"
+  << "        (default " << s.map_type << ")\n"
   << "\n"
   << "    -n, --shards=<number of shards>\n"
-  << "        <number of shards> to use (default " << s.hash_store_settings.shard_count << ")\n"
+  << "        <number of shards> to use (default " << s.map_shard_count << ")\n"
   << "\n"
   << "    -i, --bits=<number of index bits>\n"
   << "        <number of index bits> to use for the source lookup index, between\n"
-  << "        32 and 40 (default " << (uint32_t)s.source_lookup_settings.number_of_index_bits << ")\n"
+  << "        32 and 40 (default " << (uint32_t)s.number_of_index_bits << ")\n"
   << "        The number of bits used for the hash block offset value is\n"
   << "        (64 - <number of index bits>).\n"
   << "\n"
   << "<bloom filter tuning parameter> settings can help performance during hash\n"
   << "queries:\n"
   << "    --b1 <state>\n"
-  << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_settings.is_used) << ")\n"
+  << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
   << "    --b1n <n>\n"
-  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom1_settings.M_hash_size) << ")\n"
+  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
   << "    --b1kM <k:M>\n"
-  << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_settings.k_hash_functions << "\n"
-  << "        and <M>=" << s.bloom1_settings.M_hash_size << " or <M>=value calculated from value in --b1n)\n"
+  << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
+  << "        and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --b1n)\n"
   << "    --b2 <state>\n"
-  << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom2_settings.is_used) << ")\n"
+  << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom2_is_used) << ")\n"
   << "    --b2n <total>\n"
-  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom2_settings.M_hash_size) << ")\n"
+  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom2_M_hash_size) << ")\n"
   << "    --b2kM <k:M>\n"
-  << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom2_settings.k_hash_functions << "\n"
-  << "        and <M>=" << s.bloom2_settings.M_hash_size << " or <M>=value calculated from value in --b2n)\n"
+  << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom2_k_hash_functions << "\n"
+  << "        and <M>=" << s.bloom2_M_hash_size << " or <M>=value calculated from value in --b2n)\n"
   << "\n"
   ;
 }
@@ -598,7 +600,7 @@ static void create_hashdb(const std::string& hashdb_dir,
 #endif
 
   // write the tuning settings to the new settings file
-  hashdb_tuning_settings.save_settings(hashdb_dir);
+  settings_writer::write_settings(hashdb_dir, hashdb_tuning_settings);
 }
 
 // determine that a path is to a hashdb
@@ -631,32 +633,36 @@ static bool is_present(std::string path) {
 }
 
 // change existing bloom settings
-static void reset_bloom_filters(const std::string& hashdb,
-                                const bloom_settings_t& bloom1_settings,
-                                const bloom_settings_t& bloom2_settings) {
+static void reset_bloom_filters(const std::string& hashdb_dir,
+                                const hashdb_settings_t& new_hashdb_settings) {
 
-  // require hashdb
-  if (!is_hashdb(hashdb)) {
+  // require hashdb_dir
+  if (!is_hashdb(hashdb_dir)) {
     std::cerr << "Error:\nFile '"
-              << hashdb << "' does not exist.\n"
+              << hashdb_dir << "' does not exist.\n"
               << "The hash database does not exist.\n"
               << "Cannot continue.\n";
     exit(1);
   }
  
   // get existing hashdb tuning settings
-  hashdb_settings_t temp_hashdb_settings(hashdb);
+  hashdb_settings_t existing_hashdb_settings;
+  hashdb_settings_reader_t::read_settings(hashdb_dir, existing_hashdb_settings);
 
   // change the bloom filter settings
-  temp_hashdb_settings.bloom1_settings = bloom1_settings;
-  temp_hashdb_settings.bloom2_settings = bloom2_settings;
+  existing_hashdb_settings.bloom1_is_used = new_hashdb_settings.bloom1_is_used;
+  existing_hashdb_settings.bloom1_k_hash_functions = new_hashdb_settings.bloom1_k_hash_functions;
+  existing_hashdb_settings.bloom1_M_hash_size = new_hashdb_settings.bloom1_M_hash_size;
+  existing_hashdb_settings.bloom2_is_used = new_hashdb_settings.bloom2_is_used;
+  existing_hashdb_settings.bloom2_k_hash_functions = new_hashdb_settings.bloom2_k_hash_functions;
+  existing_hashdb_settings.bloom2_M_hash_size = new_hashdb_settings.bloom2_M_hash_size;
 
   // write back the changed settings
-  temp_hashdb_settings.save_settings(hashdb);
+  settings_writer::write_settings(hashdb_dir, existing_hashdb_settings);
 
   // calculate the bloom filter filenames
-  std::string bloom1_path = hashdb_filenames_t::bloom1_filename(hashdb);
-  std::string bloom2_path = hashdb_filenames_t::bloom2_filename(hashdb);
+  std::string bloom1_path = hashdb_filenames_t::bloom1_filename(hashdb_dir);
+  std::string bloom2_path = hashdb_filenames_t::bloom2_filename(hashdb_dir);
 
   // delete the existing bloom filter files
   delete_file(bloom1_path);
@@ -741,14 +747,17 @@ void no_has_exclude_duplicates(const std::string& action) {
     exit(1);
   }
 }
-void require_hash_block_sizes_match(const std::string& hashdb1, const std::string& hashdb2,
+void require_hash_block_sizes_match(const std::string& hashdb_dir1, const std::string& hashdb_dir2,
                                const std::string& action) {
-  hashdb_settings_t settings1(hashdb1);
-  hashdb_settings_t settings2(hashdb2);
+  hashdb_settings_t settings1;
+  hashdb_settings_reader_t::read_settings(hashdb_dir1, settings1);
+  hashdb_settings_t settings2;
+  hashdb_settings_reader_t::read_settings(hashdb_dir2, settings2);
+
   if (settings1.hash_block_size != settings2.hash_block_size) {
     std::cerr << "Error: The hash block size for the databases do not match.\n";
-    std::cerr << "The hash block size for " << hashdb1 << " is " << settings1.hash_block_size << "\n";
-    std::cerr << "but the hash block size for " << hashdb2 << " is " << settings2.hash_block_size << ".\n";
+    std::cerr << "The hash block size for " << hashdb_dir1 << " is " << settings1.hash_block_size << "\n";
+    std::cerr << "but the hash block size for " << hashdb_dir2 << " is " << settings2.hash_block_size << ".\n";
     std::cerr << "Aborting command to " << action << ".\n";
     exit(1);
   }
@@ -865,8 +874,8 @@ int main(int argc,char **argv) {
       }
       case 't': {	// storage type
         has_tuning = true;
-        bool is_ok_map = string_to_map_type(optarg, hashdb_settings.hash_store_settings.map_type);
-        bool is_ok_multimap = string_to_multimap_type(optarg, hashdb_settings.hash_duplicates_store_settings.multimap_type);
+        bool is_ok_map = string_to_map_type(optarg, hashdb_settings.map_type);
+        bool is_ok_multimap = string_to_multimap_type(optarg, hashdb_settings.multimap_type);
         if (!is_ok_map || !is_ok_multimap) {
           std::cerr << "Invalid value for storage type: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -876,8 +885,8 @@ int main(int argc,char **argv) {
       case 'n': {	// number of shards
         has_tuning = true;
         try {
-          hashdb_settings.hash_store_settings.shard_count = boost::lexical_cast<size_t>(optarg);
-          hashdb_settings.hash_duplicates_store_settings.shard_count = boost::lexical_cast<size_t>(optarg);
+          hashdb_settings.map_shard_count = boost::lexical_cast<size_t>(optarg);
+          hashdb_settings.multimap_shard_count = boost::lexical_cast<size_t>(optarg);
         } catch (...) {
           std::cerr << "Invalid value for number of shards: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -892,12 +901,12 @@ int main(int argc,char **argv) {
           std::cerr << "Invalid value for number of index bits: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
-        hashdb_settings.source_lookup_settings.number_of_index_bits = (uint8_t)temp;
+        hashdb_settings.number_of_index_bits = (uint8_t)temp;
         break;
       }
       case 'A': {	// b1 bloom 1 state
         has_tuning_bloom = true;
-        bool is_ok_bloom1_state = string_to_bloom_state(optarg, hashdb_settings.bloom1_settings.is_used);
+        bool is_ok_bloom1_state = string_to_bloom_state(optarg, hashdb_settings.bloom1_is_used);
         if (!is_ok_bloom1_state) {
           std::cerr << "Invalid value for bloom filter 1 state: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -909,8 +918,8 @@ int main(int argc,char **argv) {
         has_b1n = true;
         try {
           uint64_t n1 = boost::lexical_cast<uint64_t>(optarg);
-          hashdb_settings.bloom1_settings.k_hash_functions = 3;
-          hashdb_settings.bloom1_settings.M_hash_size = approximate_n_to_M(n1);
+          hashdb_settings.bloom1_k_hash_functions = 3;
+          hashdb_settings.bloom1_M_hash_size = approximate_n_to_M(n1);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 1 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -924,8 +933,8 @@ int main(int argc,char **argv) {
 
         if (params.size() == 2) {
           try {
-            hashdb_settings.bloom1_settings.k_hash_functions = boost::lexical_cast<uint32_t>(params[0]);
-            hashdb_settings.bloom1_settings.M_hash_size = boost::lexical_cast<uint32_t>(params[1]);
+            hashdb_settings.bloom1_k_hash_functions = boost::lexical_cast<uint32_t>(params[0]);
+            hashdb_settings.bloom1_M_hash_size = boost::lexical_cast<uint32_t>(params[1]);
             break;
           } catch (...) {
             // let fall through to failure
@@ -938,7 +947,7 @@ int main(int argc,char **argv) {
       }
       case 'D': {	// b2 bloom 2 state
         has_tuning_bloom = true;
-        bool is_ok_bloom2_state = string_to_bloom_state(optarg, hashdb_settings.bloom2_settings.is_used);
+        bool is_ok_bloom2_state = string_to_bloom_state(optarg, hashdb_settings.bloom2_is_used);
         if (!is_ok_bloom2_state) {
           std::cerr << "Invalid value for bloom filter 2 state: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -950,8 +959,8 @@ int main(int argc,char **argv) {
         has_b2n = true;
         try {
           uint64_t n2 = boost::lexical_cast<uint64_t>(optarg);
-          hashdb_settings.bloom2_settings.k_hash_functions = 3;
-          hashdb_settings.bloom2_settings.M_hash_size = approximate_n_to_M(n2);
+          hashdb_settings.bloom2_k_hash_functions = 3;
+          hashdb_settings.bloom2_M_hash_size = approximate_n_to_M(n2);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 2 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -964,8 +973,8 @@ int main(int argc,char **argv) {
         std::vector<std::string> params = split(std::string(optarg), ':');
         if (params.size() == 2) {
           try {
-            hashdb_settings.bloom2_settings.k_hash_functions = boost::lexical_cast<uint32_t>(params[0]);
-            hashdb_settings.bloom2_settings.M_hash_size = boost::lexical_cast<uint32_t>(params[1]);
+            hashdb_settings.bloom2_k_hash_functions = boost::lexical_cast<uint32_t>(params[0]);
+            hashdb_settings.bloom2_M_hash_size = boost::lexical_cast<uint32_t>(params[1]);
             break;
           } catch (...) {
             // let fall through to failure
@@ -995,8 +1004,8 @@ int main(int argc,char **argv) {
 
   // check that bloom hash size is compatible with the running system
   uint32_t temp_st = (sizeof(size_t) * 8) -1;
-  uint32_t temp_b1 = hashdb_settings.bloom1_settings.M_hash_size;
-  uint32_t temp_b2 = hashdb_settings.bloom2_settings.M_hash_size;
+  uint32_t temp_b1 = hashdb_settings.bloom1_M_hash_size;
+  uint32_t temp_b2 = hashdb_settings.bloom2_M_hash_size;
   if (temp_b1 > temp_st) {
     std::cerr << "Error: Bloom 1 bits per hash, " << temp_b1
               << ", exceeds " << temp_st
@@ -1185,7 +1194,7 @@ std::cerr << "copy.a num args " << num_args << " arg1: '" << arg1 << "' arg2: '"
     no_has_exclude_duplicates(ACTION_REBUILD_BLOOM);
 
     // change existing bloom settings
-    reset_bloom_filters(arg1, hashdb_settings.bloom1_settings, hashdb_settings.bloom2_settings);
+    reset_bloom_filters(arg1, hashdb_settings);
     commands_t::do_rebuild_bloom(arg1);
 
   // export

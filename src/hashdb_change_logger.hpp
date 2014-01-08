@@ -228,19 +228,6 @@ class hashdb_change_logger_t {
   }
 
   /**
-   * Add bloom settings to the log.
-   */
-  void add_bloom_state(const bloom_settings_t& bloom_settings, int index) {
-    if (closed) {
-      // already closed
-      std::cout << "hashdb_change_logger.add_bloom_state warning: already closed\n";
-      return;
-    }
-
-    bloom_settings.report_settings(x, index);
-  }
-
-  /**
    * Add a tag, value pair for any type supported by xmlout.
    */
   template<typename T>

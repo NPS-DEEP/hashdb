@@ -22,10 +22,10 @@
  * Provides the service of writing settings to the hashdb.
  */
 
-#ifndef SETTINGS_WRITER_HPP
-#define SETTINGS_WRITER_HPP
+#ifndef HASHDB_SETTINGS_WRITER_HPP
+#define HASHDB_SETTINGS_WRITER_HPP
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "command_line.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -37,7 +37,7 @@
 /**
  * hashdb settings.
  */
-namespace hashdb_settings {
+namespace settings_writer {
   void write_settings(const std::string& hashdb_dir,
                       const hashdb_settings_t& settings) {
 

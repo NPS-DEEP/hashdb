@@ -25,7 +25,7 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 #include "hashdb_types.h"
-#include "hashdb_settings.h"
+#include "hashdb_settings.hpp"
 #include "hashdb_filenames.hpp"
 //#include "settings_writer.hpp"
 #include "history_manager.hpp"
@@ -555,11 +555,11 @@ class commands_t {
     logger.add("hashdb_indir", hashdb_indir);
 
     // get hashdb tuning settings
-    hashdb_settings_t hashdb_settings(hashdb_indir);
+    hashdb_settings_t hashdb_settings;
+    hashdb_settings_reader_t::read_settings(hashdb_indir, hashdb_settings);
 
     // report the settings
-    hashdb_settings.bloom1_settings.report_settings(*x, 1);
-    hashdb_settings.bloom2_settings.report_settings(*x, 2);
+    logger.add_hashdb_settings(hashdb_settings);
 
     logger.add_timestamp("opened hashdb settings");
 
@@ -572,12 +572,14 @@ class commands_t {
     // open the new bloom filters
     bloom_filter_t bloom1(bloom1_path,
                           RW_NEW,
-                          hashdb_settings.bloom1_settings);
-    logger.add_timestamp("opened new Bloom filter 1");
+                          hashdb_settings.bloom1_is_used,
+                          hashdb_settings.bloom1_k_hash_functions,
+                          hashdb_settings.bloom1_M_hash_size);
     bloom_filter_t bloom2(bloom2_path,
                           RW_NEW,
-                          hashdb_settings.bloom2_settings);
-    logger.add_timestamp("opened new Bloom filter 2");
+                          hashdb_settings.bloom2_is_used,
+                          hashdb_settings.bloom2_k_hash_functions,
+                          hashdb_settings.bloom2_M_hash_size);
 
     // only do this if there is a Bloom filter to work on
     if (bloom1.is_used || bloom2.is_used) {
@@ -588,7 +590,8 @@ class commands_t {
       hash_store_t hash_store(
                  hash_store_path,
                  READ_ONLY,
-                 hashdb_settings.hash_store_settings);
+                 hashdb_settings.map_type,
+                 hashdb_settings.map_shard_count);
 
       logger.add_timestamp("opened hash store input");
 
@@ -615,8 +618,7 @@ class commands_t {
     logger.add_timestamp("done");
 
     // provide summary
-    logger.add_bloom_state(hashdb_settings.bloom1_settings, 1);
-    logger.add_bloom_state(hashdb_settings.bloom2_settings, 2);
+    logger.add_hashdb_settings(hashdb_settings);
 
     // append log to history
     logger.close();

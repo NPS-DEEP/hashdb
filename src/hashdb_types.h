@@ -155,7 +155,19 @@ inline std::ostream& operator<<(std::ostream& os,
   os << multi_index_container_type_to_string(t);
   return os;
 }
- 
+
+// bloom
+inline std::string bloom_state_to_string(bool state) {
+  return (state) ? "enabled" : "disabled";
+}
+
+inline bool string_to_bloom_state(std::string state_string, bool& state) {
+  if (state_string == "enabled")  { state = true;  return true; }
+  if (state_string == "disabled") { state = false; return true; }
+  state = false;
+  return false;
+}
+
 // ************************************************************
 // higher level types used internally
 // ************************************************************

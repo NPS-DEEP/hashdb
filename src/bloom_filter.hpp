@@ -41,22 +41,26 @@
 
 class bloom_filter_t {
   public:
-    const bool is_used;
-  private:
     const std::string filename;
     const file_mode_type_t file_mode_type;
-    const bloom_settings_t settings;
+    const bool is_used;
+    const uint32_t M_hash_size;
+    const uint32_t k_hash_functions;
+  private:
     NSRLBloom bloom;
     bloom_filter_t();
 
   public:
     bloom_filter_t (const std::string& _filename,
                     file_mode_type_t _file_mode_type,
-                    bloom_settings_t _settings) :
-                          is_used(_settings.is_used),
+                    bool _is_used,
+                    uint32_t _M_hash_size,
+                    uint32_t _k_hash_functions) :
                           filename(_filename),
                           file_mode_type(_file_mode_type),
-                          settings(_settings),
+                          is_used(_is_used),
+                          M_hash_size(_M_hash_size),
+                          k_hash_functions(_k_hash_functions),
                           bloom() {
       // bloom filter is not fully instantiated unless it is used
       if (is_used) {
@@ -78,8 +82,8 @@ class bloom_filter_t {
         case RW_NEW:
           success = bloom.create(filename.c_str(),
                        128,
-                       settings.M_hash_size,
-                       settings.k_hash_functions,
+                       M_hash_size,
+                       k_hash_functions,
                        "no message");
 
           // validate
@@ -133,7 +137,7 @@ class bloom_filter_t {
     void report_status(std::ostream& os, size_t index) const {
       if (is_used) {
         os << "bloom filter " << index << " status: ";
-        os << "status=" << bloom_state_to_string(settings.is_used);
+        os << "status=" << bloom_state_to_string(is_used);
         os << ", added items=" << bloom.added_items;
         os << ", unique added items=" << bloom.unique_added_items;
         os << ", aliased adds=" << bloom.aliased_adds;
@@ -146,7 +150,7 @@ class bloom_filter_t {
     void report_status(dfxml_writer& x, size_t index) const {
       x.push("bloom_filter_status");
       x.xmlout("index", index);
-      x.xmlout("status", bloom_state_to_string(settings.is_used));
+      x.xmlout("status", bloom_state_to_string(is_used));
       if (is_used) {
         x.xmlout("added_items", bloom.added_items);
         x.xmlout("unique_added_items", bloom.unique_added_items);
@@ -160,8 +164,8 @@ class bloom_filter_t {
 //      os << "(bloom_filter is_used=" << is_used
       os << "(is_used=" << is_used
          << ",filename=" << filename
-         << ",M_hash_size=" << settings.M_hash_size
-         << ",k_hash_functions=" << settings.k_hash_functions << ")";
+         << ",M_hash_size=" << M_hash_size
+         << ",k_hash_functions=" << k_hash_functions << ")";
       return os;
     }
 };

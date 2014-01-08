@@ -41,15 +41,16 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
     hash_duplicates_store_t::hash_duplicates_store_t (
              const std::string& _filename,
              file_mode_type_t _file_mode_type,
-             hash_duplicates_store_settings_t _hash_duplicates_store_settings) :
+             multimap_type_t _multimap_type,
+             uint32_t _multimap_shard_count) :
                 multimap_red_black_tree(0),
                 multimap_sorted_vector(0),
                 multimap_hash(0),
                 multimap_btree(0),
                 filename(_filename),
                 file_mode_type(_file_mode_type),
-                hash_duplicates_store_settings(_hash_duplicates_store_settings),
-                multimap_type(_hash_duplicates_store_settings.multimap_type) {
+                multimap_type(_multimap_type),
+                multimap_shard_count(_multimap_shard_count) {
 
       // instantiate the multimap type being used
       switch(multimap_type) {
@@ -59,7 +60,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
                 filename, 
                 size,
                 expected_size,
-                hash_duplicates_store_settings.shard_count,
+                multimap_shard_count,
                 file_mode_type);
         break;
         case MULTIMAP_SORTED_VECTOR:
@@ -68,7 +69,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
                 filename, 
                 size,
                 expected_size,
-                hash_duplicates_store_settings.shard_count,
+                multimap_shard_count,
                 file_mode_type);
         break;
         case MULTIMAP_HASH:
@@ -77,7 +78,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
                 filename, 
                 size,
                 expected_size,
-                hash_duplicates_store_settings.shard_count,
+                multimap_shard_count,
                 file_mode_type);
         break;
         case MULTIMAP_BTREE:
@@ -86,7 +87,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
                 filename, 
                 size,
                 expected_size,
-                hash_duplicates_store_settings.shard_count,
+                multimap_shard_count,
                 file_mode_type);
         break;
         default:

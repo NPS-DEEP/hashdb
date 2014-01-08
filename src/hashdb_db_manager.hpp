@@ -28,8 +28,8 @@
 #include "dfxml/src/hash_t.h"
 
 #include "hashdb_filenames.hpp"
-//#include "settings_reader.hpp"
-#include "hashdb_settings.h"
+#include "hashdb_settings_reader.hpp"
+#include "hashdb_settings.hpp"
 #include "hash_store.hpp"
 #include "hash_duplicates_store.hpp"
 #include "source_lookup_manager.hpp"
@@ -53,7 +53,7 @@ class hashdb_db_manager_t {
   public:
     const std::string hashdb_dir;
     const file_mode_type_t file_mode_type;
-    const hashdb_settings_t hashdb_settings;
+    hashdb_settings_t hashdb_settings;
 
   private:
     // the hashdb settings that need retained
@@ -153,16 +153,18 @@ class hashdb_db_manager_t {
                         file_mode_type_t _file_mode_type) :
                             hashdb_dir(_hashdb_dir),
                             file_mode_type(_file_mode_type),
-                            hashdb_settings(hashdb_settings_t(hashdb_dir)),
-//                            hash_changes(),
-                            use_bloom1(hashdb_settings.bloom1_settings.is_used),
-                            use_bloom2(hashdb_settings.bloom2_settings.is_used),
-                            number_of_index_bits(hashdb_settings.source_lookup_settings.number_of_index_bits),
+                            hashdb_settings(),
+                            use_bloom1(hashdb_settings.bloom1_is_used),
+                            use_bloom2(hashdb_settings.bloom2_is_used),
+                            number_of_index_bits(hashdb_settings.number_of_index_bits),
                             hash_store(0),
                             hash_duplicates_store(0),
                             source_lookup_manager(0),
                             bloom1(0),
                             bloom2(0) {
+
+      // load the settings
+      hashdb_settings_reader_t::read_settings(hashdb_dir, hashdb_settings);
 
       // calculate the filename for each hashdb resource
       std::string hash_store_path =
@@ -178,22 +180,28 @@ class hashdb_db_manager_t {
       hash_store = new hash_store_t(
                hash_store_path,
                file_mode_type,
-               hashdb_settings.hash_store_settings);
+               hashdb_settings.map_type,
+               hashdb_settings.map_shard_count);
       hash_duplicates_store = new hash_duplicates_store_t(
                hash_duplicates_store_path,
                file_mode_type,
-               hashdb_settings.hash_duplicates_store_settings);
+               hashdb_settings.multimap_type,
+               hashdb_settings.multimap_shard_count);
       source_lookup_manager = new source_lookup_manager_t(
                hashdb_dir,
                file_mode_type);
       bloom1 = new bloom_filter_t(
                bloom1_path,
                file_mode_type,
-               hashdb_settings.bloom1_settings);
+               hashdb_settings.bloom1_is_used,
+               hashdb_settings.bloom1_M_hash_size,
+               hashdb_settings.bloom1_k_hash_functions);
       bloom2 = new bloom_filter_t(
                bloom2_path,
                file_mode_type,
-               hashdb_settings.bloom2_settings);
+               hashdb_settings.bloom2_is_used,
+               hashdb_settings.bloom2_M_hash_size,
+               hashdb_settings.bloom2_k_hash_functions);
     }
 
     ~hashdb_db_manager_t() {
