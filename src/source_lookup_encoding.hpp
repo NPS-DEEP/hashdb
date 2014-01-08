@@ -157,24 +157,5 @@ class source_lookup_encoding {
   }
 };
 
-/*
-inline std::ostream& operator<<(std::ostream& os,
-                         const class source_lookup_record_t& lookup) {
-  os << "(source_lookup_record value=0x"
-     << std::hex << lookup.composite_value_exported_for_testing() << std::dec << ")";
-  return os;
-}
-
-// hash store element pair
-typedef std::pair<md5_t, source_lookup_record_t> hash_store_element_t;
-inline std::ostream& operator<<(std::ostream& os,
-                         const hash_store_element_t& hash_store_element) {
-  os << "(md5=" << hash_store_element.first.hexdigest()
-     << ",source_lookup_record=" << hash_store_element.second << ")";
-  return os;
-}
-*/
-
-
 #endif
 

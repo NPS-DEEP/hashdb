@@ -62,8 +62,7 @@ HASHDB_INCS = \
 	query_by_socket.hpp \
 	query_by_socket_server.hpp \
 	source_lookup_manager.hpp \
-	source_lookup_encoding.hpp \
-	source_lookup_record.h
+	source_lookup_encoding.hpp
 
 DETAIL_INCS = \
 	detail/settings_reader.hpp \

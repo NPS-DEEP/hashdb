@@ -25,7 +25,6 @@
 
 #include <config.h>
 #include "hashdb_types.h"
-#include "source_lookup_record.h"
 #include "dfxml/src/hash_t.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "manager_modified_multimap.h"
@@ -121,7 +120,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
      * Identify if the element is present in the map.
      */
     bool hash_duplicates_store_t::has_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record) {
+                          uint64_t source_lookup_record) {
 
       bool has;
       switch(multimap_type) {
@@ -150,7 +149,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
      * Add the element to the map else fail if already there.
      */
     void hash_duplicates_store_t::insert_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record) {
+                          uint64_t source_lookup_record) {
 //std::cout << "hash_duplicates_store.insert_hash_element md5:" << md5 << ", source_lookup_record:" << source_lookup_record << "\n";
       switch(multimap_type) {
         case MULTIMAP_RED_BLACK_TREE:
@@ -174,7 +173,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
      * Erase the element from the map else fail.
      */
     void hash_duplicates_store_t::erase_hash_element(const md5_t& md5,
-                       const source_lookup_record_t& source_lookup_record) {
+                       uint64_t source_lookup_record) {
 //std::cout << "hash_duplicates_store.erase_hash_element md5:" << md5 << ", source_lookup_record:" << source_lookup_record << "\n";
       switch(multimap_type) {
         case MULTIMAP_RED_BLACK_TREE:
@@ -195,7 +194,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
     }
 
     void hash_duplicates_store_t::get_source_lookup_record_vector(const md5_t& md5,
-             std::vector<source_lookup_record_t>& source_lookup_record_vector) {
+             std::vector<uint64_t>& source_lookup_record_vector) {
 
       // clear the recycled vector
       source_lookup_record_vector.clear();
@@ -218,7 +217,7 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
           assert(0);
       }
 //std::cout << "hash_duplicates_store.get_source_lookup_record_vector md5:" <<  md5 << " count " << source_lookup_record_vector.size() << "\n";
-//for (std::vector<source_lookup_record_t>::const_iterator it = source_lookup_record_vector.begin(); it!= source_lookup_record_vector.end(); ++it) {
+//for (std::vector<uint64_t>::const_iterator it = source_lookup_record_vector.begin(); it!= source_lookup_record_vector.end(); ++it) {
 //std::cout << "hash_duplicates_store.get_source_lookup_record#i:" << *it << "\n";
 //}
 

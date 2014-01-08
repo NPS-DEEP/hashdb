@@ -127,8 +127,8 @@ class hashdb_db_info_provider_t {
 
     // now generate statistics from the elements in hash_store
     for (hash_store_t::hash_store_iterator_t it = hash_store->begin(); it!=hash_store->end(); ++it) {
-      source_lookup_record_t source_lookup_record = it->second;
-      uint32_t count = source_lookup_record.get_count();
+      uint64_t source_lookup_record = it->second;
+      uint32_t count = source_lookup_encoding::get_count(source_lookup_record);
 
       // total hashes is the sum of count values from the hash store
       total_hashes += count;

@@ -183,7 +183,7 @@ class query_by_socket_server_t {
     hashdb::hashes_response_md5_t* response = new hashdb::hashes_response_md5_t();
 
     // perform lookups for each hash in request
-    source_lookup_record_t source_lookup_record;
+    uint64_t source_lookup_record;
     for (size_t i=0; i<request_count; i++) {
       // get digest into md5
       const uint8_t* digest = request_array[i].digest;
@@ -198,11 +198,11 @@ class query_by_socket_server_t {
       if (has_record) {
         // get values associated with this hash
         uint64_t id = request_array[i].id;
-        uint32_t count = source_lookup_record.get_count();
+        uint32_t count = source_lookup_encoding::get_count(source_lookup_record);
         uint64_t source_lookup_index = (count == 1) ?
-                     source_lookup_record.source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
+                     source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
         uint64_t hash_block_offset_value = (count == 1) ?
-                     source_lookup_record.hash_block_offset_value(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
+                     source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
 
         // construct hash response
         hashdb::hash_response_md5_t hash_response(id, digest, count, source_lookup_index, hash_block_offset_value);

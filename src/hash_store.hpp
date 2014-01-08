@@ -27,16 +27,17 @@
 #define HASH_STORE_HPP
 #include "hashdb_types.h"
 #include "hashdb_settings.h"
-#include "source_lookup_record.h"
 #include "dfxml/src/hash_t.h"
 #include "manager_modified.h"
 #include <boost/iterator/iterator_facade.hpp>
 
+typedef std::pair<md5_t, uint64_t> hash_store_element_t;
+
 // glue typedefs map burst_manager types for hash store
-typedef burst_manager_map<md5_t, source_lookup_record_t>           map_red_black_tree_t;
-typedef burst_manager_flat_map<md5_t, source_lookup_record_t>      map_sorted_vector_t;
-typedef burst_manager_unordered_map<md5_t, source_lookup_record_t> map_hash_t;
-typedef burst_manager_btree_map<md5_t, source_lookup_record_t>     map_btree_t;
+typedef burst_manager_map<md5_t, uint64_t>           map_red_black_tree_t;
+typedef burst_manager_flat_map<md5_t, uint64_t>      map_sorted_vector_t;
+typedef burst_manager_unordered_map<md5_t, uint64_t> map_hash_t;
+typedef burst_manager_btree_map<md5_t, uint64_t>     map_btree_t;
 
 /**
  * Provides interfaces to the hash store
@@ -86,7 +87,7 @@ class hash_store_t {
      * Add the element to the map else fail if already there.
      */
     void insert_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record);
+                          uint64_t source_lookup_record);
 
     /**
      * Erase the element from the map else fail.
@@ -98,14 +99,14 @@ class hash_store_t {
      * else fail if the source lookup record does not exist.
      */
     bool has_source_lookup_record(const md5_t& md5,
-                          source_lookup_record_t &source_lookup_record);
+                          uint64_t& source_lookup_record);
 
     /**
      * Change the existing value to a new value in the map,
      * failing if the element to be changed does not exist.
      */
     void change_source_lookup_record(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record);
+                          uint64_t source_lookup_record);
 
     /**
      * Report status to consumer.
@@ -116,7 +117,7 @@ class hash_store_t {
     /**
      * Iterator for the entire collection of hash store objects,
      * where dereferenced values are
-     * in the form of pair of md5_t and source_lookup_record_t.
+     * in the form of pair of md5_t and uint64_t.
      */
     class hash_store_iterator_t {
 

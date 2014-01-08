@@ -88,7 +88,7 @@ class settings_reader_t {
                     DUPLICATES_MAP_TYPE,
                     SHARD_COUNT,
                     // source lookup settings
-                    NUMBER_OF_INDEX_BITS_TYPE,
+                    NUMBER_OF_INDEX_BITS,
                     MULTI_INDEX_CONTAINER_TYPE,
                     // bloom filters
                     STATUS,
@@ -147,7 +147,7 @@ class settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("duplicates_map_type"))) return DUPLICATES_MAP_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("shard_count"))) return SHARD_COUNT;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("number_of_index_bits_type"))) return NUMBER_OF_INDEX_BITS_TYPE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("number_of_index_bits"))) return NUMBER_OF_INDEX_BITS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multi_index_container_type"))) return MULTI_INDEX_CONTAINER_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("status"))) return STATUS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("k_hash_functions"))) return K_HASH_FUNCTIONS;
@@ -322,14 +322,16 @@ class settings_reader_t {
         break;
 
       case SOURCE_LOOKUP_SETTINGS:
-        if (user_data.active_node == NUMBER_OF_INDEX_BITS_TYPE) {
-          // get number of index bits type
-          std::string number_of_index_bits_type_string;
-          xmlChar_to_string(characters, len, number_of_index_bits_type_string);
-          is_valid = string_to_number_of_index_bits_type(number_of_index_bits_type_string, user_data.settings->source_lookup_settings.number_of_index_bits_type);
-          if (!is_valid) {
-            exit_invalid_text("invalid source lookup record type", number_of_index_bits_type_string);
-          }
+        if (user_data.active_node == NUMBER_OF_INDEX_BITS) {
+          // get number of index bits
+uint32_t temp;
+xmlChar_to_number(characters, len, temp);
+if (temp > 64) {
+  assert(0);
+}
+user_data.settings->source_lookup_settings.number_of_index_bits = (uint8_t)temp;
+
+//          xmlChar_to_number(characters, len, user_data.settings->source_lookup_settings.number_of_index_bits);
         } else if (user_data.active_node == MULTI_INDEX_CONTAINER_TYPE) {
           // get multi_index container type
           std::string multi_index_container_type_string;

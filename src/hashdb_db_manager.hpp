@@ -33,6 +33,7 @@
 #include "hash_store.hpp"
 #include "hash_duplicates_store.hpp"
 #include "source_lookup_manager.hpp"
+#include "source_lookup_encoding.hpp"
 #include "bloom_filter.hpp"
 #include "hashdb_change_logger.hpp"
 #include <vector>
@@ -54,120 +55,13 @@ class hashdb_db_manager_t {
     const file_mode_type_t file_mode_type;
     const hashdb_settings_t hashdb_settings;
 
-/*
-    struct hash_changes_t {
-      uint64_t hashes_inserted;
-      uint64_t hashes_not_inserted_invalid_file_offset;
-      uint64_t hashes_not_inserted_wrong_hash_block_size;
-      uint64_t hashes_not_inserted_wrong_hashdigest_type;
-      uint64_t hashes_not_inserted_exceeds_max_duplicates;
-      uint64_t hashes_not_inserted_duplicate_source;
-
-      uint64_t hashes_removed;
-      uint64_t hashes_not_removed_invalid_file_offset;
-      uint64_t hashes_not_removed_wrong_hash_block_size;
-      uint64_t hashes_not_removed_wrong_hashdigest_type;
-      uint64_t hashes_not_removed_no_hash;
-      uint64_t hashes_not_removed_different_source;
-
-      // create with all fields zero
-      hash_changes_t() : hashes_inserted(0),
-                         hashes_not_inserted_invalid_file_offset(0),
-                         hashes_not_inserted_wrong_hash_block_size(0),
-                         hashes_not_inserted_wrong_hashdigest_type(0),
-                         hashes_not_inserted_exceeds_max_duplicates(0),
-                         hashes_not_inserted_duplicate_source(0),
-
-                         hashes_removed(0),
-                         hashes_not_removed_invalid_file_offset(0),
-                         hashes_not_removed_wrong_hash_block_size(0),
-                         hashes_not_removed_wrong_hashdigest_type(0),
-                         hashes_not_removed_no_hash(0),
-                         hashes_not_removed_different_source(0) {
-      }
-
-      // copy constructor
-      hash_changes_t(const hash_changes_t& hash_changes) :
-         hashes_inserted(hash_changes.hashes_inserted),
-         hashes_not_inserted_invalid_file_offset(hash_changes.hashes_not_inserted_invalid_file_offset),
-         hashes_not_inserted_wrong_hash_block_size(hash_changes.hashes_not_inserted_wrong_hash_block_size),
-         hashes_not_inserted_wrong_hashdigest_type(hash_changes.hashes_not_inserted_wrong_hashdigest_type),
-         hashes_not_inserted_exceeds_max_duplicates(hash_changes.hashes_not_inserted_exceeds_max_duplicates),
-         hashes_not_inserted_duplicate_source(hash_changes.hashes_not_inserted_duplicate_source),
-
-         hashes_removed(hash_changes.hashes_removed),
-         hashes_not_removed_invalid_file_offset(hash_changes.hashes_not_removed_invalid_file_offset),
-         hashes_not_removed_wrong_hash_block_size(hash_changes.hashes_not_removed_wrong_hash_block_size),
-         hashes_not_removed_wrong_hashdigest_type(hash_changes.hashes_not_removed_wrong_hashdigest_type),
-         hashes_not_removed_no_hash(hash_changes.hashes_not_removed_no_hash),
-         hashes_not_removed_different_source(hash_changes.hashes_not_removed_different_source) {
-      }
-
-      // generate reports to stream
-      void report_insert_changes(std::ostream& os) const {
-        os << "hashdb changes:\n"
-           << "    hashes inserted=" << hashes_inserted << "\n"
-           << "    hashes not inserted, invalid file offset=" << hashes_not_inserted_invalid_file_offset << "\n"
-           << "    hashes not inserted, wrong hash block size=" << hashes_not_inserted_wrong_hash_block_size << "\n"
-           << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n"
-           << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n"
-           << "    hashes not inserted, duplicate source=" << hashes_not_inserted_duplicate_source << "\n"
-        ;
-      }
-
-      void report_remove_changes(std::ostream& os) const {
-        os << "hashdb changes:\n"
-           << "    hashes removed=" << hashes_removed << "\n"
-           << "    hashes not removed, invalid file offset=" << hashes_not_removed_invalid_file_offset << "\n"
-           << "    hashes not removed, wrong hash block size=" << hashes_not_removed_wrong_hash_block_size << "\n"
-           << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n"
-           << "    hashes not removed, no hash=" << hashes_not_removed_no_hash << "\n"
-           << "    hashes not removed, different source=" << hashes_not_removed_different_source << "\n"
-        ;
-      }
-
-      // generate reports to dfxml
-      void report_insert_changes(dfxml_writer& x) const {
-        x.push("hashdb_changes");
-        x.xmlout("hashes_inserted", hashes_inserted);
-        x.xmlout("hashes_not_inserted_invalid_file_offset", hashes_not_inserted_invalid_file_offset);
-        x.xmlout("hashes_not_inserted_wrong_hash_block_size", hashes_not_inserted_wrong_hash_block_size);
-        x.xmlout("hashes_not_inserted_wrong_hashdigest_type", hashes_not_inserted_wrong_hashdigest_type);
-        x.xmlout("hashes_not_inserted_exceeds_max_duplicates", hashes_not_inserted_exceeds_max_duplicates);
-        x.xmlout("hashes_not_inserted_duplicate_source", hashes_not_inserted_duplicate_source);
-        x.pop();
-      }
-
-      void report_remove_changes(dfxml_writer& x) const {
-        x.push("hashdb_changes");
-        x.xmlout("hashes_removed", hashes_removed);
-        x.xmlout("hashes_not_removed_invalid_file_offset", hashes_not_removed_invalid_file_offset);
-        x.xmlout("hashes_not_removed_wrong_hash_block_size", hashes_not_removed_wrong_hash_block_size);
-        x.xmlout("hashes_not_removed_wrong_hashdigest_type", hashes_not_removed_wrong_hashdigest_type);
-        x.xmlout("hashes_not_removed_no_hash", hashes_not_removed_no_hash);
-        x.xmlout("hashes_not_removed_different_source", hashes_not_removed_different_source);
-        x.pop();
-      }
-    };
-*/
-
-//    /**
-//     * Return runtime statistics about adds and deletes.
-//     */
-//    hash_changes_t get_hash_changes() {
-//      return hash_changes;
-//    }
-
   private:
-//    // runtime statistics about added and deleted hashes
-//    hash_changes_t hash_changes;
-
     // the hashdb settings that need retained
     bool use_bloom1;
     bool use_bloom2;
 
     // convenience variable
-    number_of_index_bits_type_t number_of_index_bits_type;
+    uint8_t number_of_index_bits;
 
     // hashdb components
     hash_store_t *hash_store;
@@ -185,19 +79,19 @@ class hashdb_db_manager_t {
      * else fail.
      */
     void source_lookup_record_to_hash_source_record(
-             const source_lookup_record_t& source_lookup_record,
+             const uint64_t source_lookup_record,
              hash_source_record_t& hash_source_record) const {
 
       // get the file offset
       uint64_t hash_block_offset_value =
-                    source_lookup_record.hash_block_offset_value(
-                         number_of_index_bits_type);
+                    source_lookup_encoding::get_hash_block_offset(
+                         number_of_index_bits, source_lookup_record);
       uint64_t file_offset = hash_block_offset_value *
                          hashdb_settings.hash_block_size;
 
       // get the source lookup index
-      uint64_t source_lookup_index = source_lookup_record.source_lookup_index(
-                         number_of_index_bits_type);
+      uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(
+                         number_of_index_bits, source_lookup_record);
 
       // get the repository name and the filename
       std::string repository_name;
@@ -220,11 +114,11 @@ class hashdb_db_manager_t {
 
     /**
      * Obtain the source lookup record corresponding to the repository name
-     * and filename in the hash source record else false.
+     * and filename in the hash source record else fail.
      */
     void hash_source_record_to_source_lookup_record(
              const hash_source_record_t& hash_source_record,
-             source_lookup_record_t& source_lookup_record) const {
+             uint64_t& source_lookup_record) const {
 
       uint64_t source_lookup_index;
       bool status = source_lookup_manager->get_source_lookup_index(
@@ -248,12 +142,10 @@ class hashdb_db_manager_t {
                  hash_source_record.file_offset / hashdb_settings.hash_block_size;
 
       // now compose the source lookup record
-      source_lookup_record_t composed_source_lookup_record(
-               number_of_index_bits_type,
-               source_lookup_index,
-               hash_block_offset);
-
-      source_lookup_record = composed_source_lookup_record;
+      source_lookup_record = source_lookup_encoding::get_source_lookup_encoding(
+                                    number_of_index_bits,
+                                    source_lookup_index,
+                                    hash_block_offset);
     }
 
   public:
@@ -265,7 +157,7 @@ class hashdb_db_manager_t {
 //                            hash_changes(),
                             use_bloom1(hashdb_settings.bloom1_settings.is_used),
                             use_bloom2(hashdb_settings.bloom2_settings.is_used),
-                            number_of_index_bits_type(hashdb_settings.source_lookup_settings.number_of_index_bits_type),
+                            number_of_index_bits(hashdb_settings.source_lookup_settings.number_of_index_bits),
                             hash_store(0),
                             hash_duplicates_store(0),
                             source_lookup_manager(0),
@@ -313,7 +205,7 @@ class hashdb_db_manager_t {
     }
 
     bool has_source_lookup_record(const md5_t& md5,
-                      source_lookup_record_t& source_lookup_record) const {
+                      uint64_t& source_lookup_record) const {
 
       // first check for negative in active bloom filters
       if ((use_bloom1) && !bloom1->is_positive(md5)) {
@@ -329,6 +221,7 @@ class hashdb_db_manager_t {
 
     // has hash and also the same source
     bool has_hash_element(const hashdb_element_t& hashdb_element) const {
+std::cout << "has_hash_element.a\n";
       const md5_t md5(hashdb_element.first);
       const hash_source_record_t hash_source_record(hashdb_element.second);
 
@@ -337,6 +230,7 @@ class hashdb_db_manager_t {
         return false;
       }
 
+std::cout << "has_hash_element.b\n";
       // stop if the hash digest type is wrong for this database
       hashdigest_type_t type;
       bool has = string_to_hashdigest_type(hash_source_record.hashdigest_type_string, type);
@@ -344,13 +238,15 @@ class hashdb_db_manager_t {
         return false;
       }
 
+std::cout << "has_hash_element.c\n";
       // false if no md5 in hash store
-      source_lookup_record_t source_lookup_record;
+      uint64_t source_lookup_record;
       if (!has_source_lookup_record(md5, source_lookup_record)) {
         // no md5, so no element
         return false;
       }
 
+std::cout << "has_hash_element.d\n";
       // false if the source lookup store has no source location record
       uint64_t source_lookup_index;
       bool status = source_lookup_manager->get_source_lookup_index(
@@ -363,13 +259,16 @@ class hashdb_db_manager_t {
         return false;
       }
 
+std::cout << "has_hash_element.e\n";
       // look up the expected source lookup record
-      source_lookup_record_t expected_source_lookup_record;
+      uint64_t expected_source_lookup_record;
       hash_source_record_to_source_lookup_record(
                        hash_source_record, expected_source_lookup_record);
+std::cout << "source lookup record: " << source_lookup_record << "\n";
+std::cout << "expected source lookup record: " << expected_source_lookup_record << "\n";
 
       // check the source lookup record against the expected value
-      if (source_lookup_record.get_count() == 1) {
+      if (source_lookup_encoding::get_count(source_lookup_record) == 1) {
         // the hash store has the only source lookup record
         if (source_lookup_record == expected_source_lookup_record) {
           // the source lookup record portion matches
@@ -440,14 +339,15 @@ class hashdb_db_manager_t {
                  hash_source_record.file_offset / hashdb_settings.hash_block_size;
 
       // now compose the source lookup record
-      source_lookup_record_t source_lookup_record(
-               number_of_index_bits_type,
-               source_lookup_index,
-               hash_block_offset);
+      uint64_t source_lookup_record =
+                       source_lookup_encoding::get_source_lookup_encoding(
+                                      number_of_index_bits,
+                                      source_lookup_index,
+                                      hash_block_offset);
 
       // add element to hash store or hash duplicates store
       const md5_t md5(hashdb_element.first);
-      source_lookup_record_t existing_source_lookup_record;
+      uint64_t existing_source_lookup_record;
       if (!hash_store->has_source_lookup_record(md5, existing_source_lookup_record)) {
 
         // the cryptographic hash is new so add it to the hash store
@@ -467,7 +367,7 @@ class hashdb_db_manager_t {
         // changing the hash store as needed
 
         // identify the existing count
-        uint32_t existing_count = existing_source_lookup_record.get_count();
+        uint32_t existing_count = source_lookup_encoding::get_count(existing_source_lookup_record);
 
         // stop if count is at max but let 0 mean no max
         if (hashdb_settings.maximum_hash_duplicates != 0
@@ -487,7 +387,7 @@ class hashdb_db_manager_t {
         hash_duplicates_store->insert_hash_element(md5, source_lookup_record);
 
         // increment the existing record count
-        source_lookup_record_t incremented_record(existing_count + 1);
+        uint64_t incremented_record = existing_count + 1;
         hash_store->change_source_lookup_record(md5, incremented_record);
       }
 
@@ -526,7 +426,7 @@ class hashdb_db_manager_t {
 
       // see if the hash store has the hash value
       const md5_t md5(hashdb_element.first);
-      source_lookup_record_t existing_source_lookup_record;
+      uint64_t existing_source_lookup_record;
       has = hash_store->has_source_lookup_record(md5, existing_source_lookup_record);
       if (!has) {
         // there is no matching hash in the hash store to remove
@@ -551,11 +451,11 @@ class hashdb_db_manager_t {
       // but an element matching this hash and source may not exist
 
       // get the source lookup record
-      source_lookup_record_t source_lookup_record;
+      uint64_t source_lookup_record;
       hash_source_record_to_source_lookup_record(
                                   hash_source_record, source_lookup_record);
 
-      if (existing_source_lookup_record.get_count() == 1) {
+      if (source_lookup_encoding::get_count(existing_source_lookup_record) == 1) {
         // check the hash store
 
         // validate that the source lookup record matches
@@ -575,17 +475,17 @@ class hashdb_db_manager_t {
         // check the hash duplicates store
 
         // get the records from the hash duplicates store
-        std::vector<source_lookup_record_t> records;
+        std::vector<uint64_t> records;
         hash_duplicates_store->get_source_lookup_record_vector(md5, records);
 
         // ensure that the number of records match the expected amount
-        if (existing_source_lookup_record.get_count() != records.size()) {
+        if (source_lookup_encoding::get_count(existing_source_lookup_record) != records.size()) {
           // program error
           assert(0);
         }
 
         // remove the matching element, adjusting if count drops to 1
-        for (std::vector<source_lookup_record_t>::iterator it = records.begin();
+        for (std::vector<uint64_t>::iterator it = records.begin();
                      it != records.end(); it++) {
           if (*it == source_lookup_record) {
             // remove the element
@@ -596,18 +496,18 @@ class hashdb_db_manager_t {
             // if the duplicates store ends up with one remaining record,
             // remove it
             // and put its source lookup record back into the hash store
-            if (existing_source_lookup_record.get_count() == 2) {
+            if (source_lookup_encoding::get_count(existing_source_lookup_record) == 2) {
 
               // move back the last hash value from the hash duplicates store
               records.erase(it);
-              source_lookup_record_t remaining_record = records[0];
+              uint64_t remaining_record = records[0];
 
               hash_store->change_source_lookup_record(md5, remaining_record);
               hash_duplicates_store->erase_hash_element(md5, remaining_record);
             } else {
               // decrement the count in the hash store
-              uint32_t count = existing_source_lookup_record.get_count();
-              source_lookup_record_t decremented_record(count - 1);
+              uint32_t count = source_lookup_encoding::get_count(existing_source_lookup_record);
+              uint64_t decremented_record = count - 1;
               hash_store->change_source_lookup_record(md5, decremented_record);
             }
             ++logger.hashes_removed;
@@ -629,22 +529,22 @@ class hashdb_db_manager_t {
       hash_source_records.clear();
 
       // get the one source lookup record from the hash store
-      source_lookup_record_t record;
+      uint64_t record;
       bool has = hash_store->has_source_lookup_record(md5, record);
       if (!has) {
         return false;
       }
 
       hash_source_record_t hash_source_record;
-      if (record.get_count() == 1) {
+      if (source_lookup_encoding::get_count(record) == 1) {
         // get one element from the hash store
         source_lookup_record_to_hash_source_record(record, hash_source_record);
         hash_source_records.push_back(hash_source_record);
       } else {
         // get multiple source lookup records from the hash duplicates store
-        std::vector<source_lookup_record_t> records;
+        std::vector<uint64_t> records;
         hash_duplicates_store->get_source_lookup_record_vector(md5, records);
-        for (std::vector<source_lookup_record_t>::iterator it = records.begin();
+        for (std::vector<uint64_t>::iterator it = records.begin();
                      it != records.end(); it++) {
           source_lookup_record_to_hash_source_record(*it, hash_source_record);
           hash_source_records.push_back(hash_source_record);
@@ -665,8 +565,8 @@ class hashdb_db_manager_t {
       const hashdb_db_manager_t* hashdb_db_manager;
       hash_store_t::hash_store_iterator_t hash_store_iterator;
       bool use_duplicates;
-      std::vector<source_lookup_record_t> duplicates;
-      std::vector<source_lookup_record_t>::iterator duplicates_iterator;
+      std::vector<uint64_t> duplicates;
+      std::vector<uint64_t>::iterator duplicates_iterator;
       hashdb_element_t hashdb_element;
       bool at_end;
 
@@ -694,10 +594,10 @@ class hashdb_db_manager_t {
 
         // evaluate hash store element
         md5_t md5 = hash_store_iterator->first;
-        source_lookup_record_t source_lookup_record = hash_store_iterator->second;
+        uint64_t source_lookup_record = hash_store_iterator->second;
 
         // set state based on count
-        if (source_lookup_record.get_count() == 1) {
+        if (source_lookup_encoding::get_count(source_lookup_record) == 1) {
           // use hash store
           use_duplicates = false;
         } else {
@@ -719,7 +619,7 @@ class hashdb_db_manager_t {
           return;
         }
 
-        source_lookup_record_t source_lookup_record;
+        uint64_t source_lookup_record;
 
         if (!use_duplicates) {
           // use hash store

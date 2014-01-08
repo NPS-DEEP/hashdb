@@ -123,7 +123,7 @@ const std::string MAP_BTREE_NAME =          "btree";
      * Add the element to the map else fail if already there.
      */
     void hash_store_t::insert_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record) {
+                          uint64_t source_lookup_record) {
 //std::cout << "hash_store.insert_hash_element md5:" << md5 << ", source_lookup_record:" << source_lookup_record << "\n";
       switch(map_type) {
         case MAP_RED_BLACK_TREE:
@@ -170,7 +170,7 @@ const std::string MAP_BTREE_NAME =          "btree";
      * Get the source lookup record from the map if it exists.
      */
     bool hash_store_t::has_source_lookup_record(const md5_t& md5,
-                          source_lookup_record_t &source_lookup_record) {
+                          uint64_t& source_lookup_record) {
       bool has;
       switch(map_type) {
         case MAP_RED_BLACK_TREE:
@@ -198,7 +198,7 @@ const std::string MAP_BTREE_NAME =          "btree";
      * failing if the element to be changed does not exist.
      */
     void hash_store_t::change_source_lookup_record(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record) {
+                          uint64_t source_lookup_record) {
 
 //std::cout << "hash_store.change_source_lookup_record md5:" << md5 << ", source_lookup_record:" << source_lookup_record << "\n";
       switch(map_type) {

@@ -25,7 +25,6 @@
 #ifndef    hashdb_types_h
 #define    hashdb_types_h
 
-#include "source_lookup_record.h"
 #include <stdint.h>
 #include <cassert>
 #include <string.h> // for memcmp

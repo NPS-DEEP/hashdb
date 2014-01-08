@@ -25,7 +25,6 @@
 #include <config.h>
 #include "hashdb_settings.h"
 #include "hashdb_types.h"
-#include "source_lookup_record.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "detail/settings_reader.hpp"
 #include "detail/settings_writer.hpp"

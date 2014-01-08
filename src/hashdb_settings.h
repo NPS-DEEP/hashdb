@@ -34,7 +34,6 @@
 #define    hashdb_settings_h
 
 #include "hashdb_types.h"
-#include "source_lookup_record.h"
 #include "dfxml/src/dfxml_writer.h"
 //#include "detail/settings_reader.hpp"
 //#include "detail/settings_writer.hpp"
@@ -131,34 +130,34 @@ inline std::ostream& operator<<(std::ostream& os,
 
 // source lookup
 struct source_lookup_settings_t {
-    number_of_index_bits_type_t number_of_index_bits_type;
+    uint8_t number_of_index_bits;
     multi_index_container_type_t multi_index_container_type;
 
     source_lookup_settings_t(const source_lookup_settings_t& settings) :
-        number_of_index_bits_type(settings.number_of_index_bits_type),
+        number_of_index_bits(settings.number_of_index_bits),
         multi_index_container_type(settings.multi_index_container_type) {
     }
 
     source_lookup_settings_t() :
-        number_of_index_bits_type(NUMBER_OF_INDEX_BITS32),
+        number_of_index_bits(32),
         multi_index_container_type(BIDIRECTIONAL_BTREE) {
     }
 
     void report_settings(std::ostream& os) const {
       os << "source lookup settings: ";
-      os << "number of index bits type=" << number_of_index_bits_type_to_string(number_of_index_bits_type);
+      os << "number of index bits type=" << (uint32_t)number_of_index_bits;
       os << ", multi index container type=" << multi_index_container_type_to_string(multi_index_container_type);
     }
 
     void report_settings(dfxml_writer& x) const {
       x.push("source_lookup_settings");
-      x.xmlout("number_of_index_bits_type", number_of_index_bits_type_to_string(number_of_index_bits_type));
+      x.xmlout("number_of_index_bits", (uint32_t)number_of_index_bits);
       x.xmlout("multi_index_container_type", multi_index_container_type_to_string(multi_index_container_type));
       x.pop();
     }
 
     source_lookup_settings_t& operator=(const source_lookup_settings_t& other) {
-      number_of_index_bits_type = other.number_of_index_bits_type;
+      number_of_index_bits = other.number_of_index_bits;
       multi_index_container_type = other.multi_index_container_type;
       return *this;
     }
@@ -166,7 +165,7 @@ struct source_lookup_settings_t {
 
 inline std::ostream& operator<<(std::ostream& os,
                          const class source_lookup_settings_t& settings) {
-  os << "(number_of_index_bits_type=" << settings.number_of_index_bits_type
+  os << "(number_of_index_bits=" << settings.number_of_index_bits
      << ",multi_index_container_type=" << settings.multi_index_container_type
   ;
   return os;

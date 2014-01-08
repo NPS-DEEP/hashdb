@@ -368,7 +368,7 @@ class commands_t {
     // copy all elements that do not have duplicates
     // this solution can be reworked for efficiency
     uint64_t hashes_not_inserted_excluded_duplicates = 0;
-    source_lookup_record_t source_lookup_record;
+    uint64_t source_lookup_record;
     while (it != it_end) {
       md5_t md5 = it->first;
       bool has = hashdb_in.has_source_lookup_record(md5, source_lookup_record);
@@ -376,8 +376,7 @@ class commands_t {
         // program error
         assert(0);
       }
-      uint64_t source_lookup_encoding = source_lookup_record.get_composite_value_for_transition_port();
-      if (source_lookup_encoding::get_count(source_lookup_encoding)
+      if (source_lookup_encoding::get_count(source_lookup_record)
                                                < exclude_duplicates_count) {
         // keep
         hashdb_out.insert_hash_element(*it, logger);

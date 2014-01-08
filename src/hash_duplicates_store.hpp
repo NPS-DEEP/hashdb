@@ -27,16 +27,15 @@
 #define HASH_DUPLICATES_STORE_HPP
 #include "hashdb_types.h"
 #include "hashdb_settings.h"
-#include "source_lookup_record.h"
 #include "manager_modified_multimap.h"
 #include "dfxml/src/hash_t.h"
 #include <vector>
 
 // define glue typedefs
-typedef burst_manager_multimap<md5_t, source_lookup_record_t>           multimap_red_black_tree_t;
-typedef burst_manager_flat_multimap<md5_t, source_lookup_record_t>      multimap_sorted_vector_t;
-typedef burst_manager_unordered_multimap<md5_t, source_lookup_record_t> multimap_hash_t;
-typedef burst_manager_btree_multimap<md5_t, source_lookup_record_t>     multimap_btree_t;
+typedef burst_manager_multimap<md5_t, uint64_t>           multimap_red_black_tree_t;
+typedef burst_manager_flat_multimap<md5_t, uint64_t>      multimap_sorted_vector_t;
+typedef burst_manager_unordered_multimap<md5_t, uint64_t> multimap_hash_t;
+typedef burst_manager_btree_multimap<md5_t, uint64_t>     multimap_btree_t;
 
 /**
  * Provides interfaces to the hash duplicates store
@@ -72,26 +71,26 @@ class hash_duplicates_store_t {
      * Identify if the element is present in the map.
      */
     bool has_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record);
+                          uint64_t source_lookup_record);
 
     /**
      * Insert a hash element; the element must not already be there.
      */
     void insert_hash_element(const md5_t& md5,
-                          const source_lookup_record_t& source_lookup_record);
+                          uint64_t source_lookup_record);
 
     /**
      * Remove a hash element; the element must be there.
      */
     void erase_hash_element(const md5_t& md5,
-                       const source_lookup_record_t& source_lookup_record);
+                       uint64_t source_lookup_record);
 
     /**
      * Obtain the vector of source lookup records,
      * failing if there are less than two.
      */
     void get_source_lookup_record_vector(const md5_t& md5,
-             std::vector<source_lookup_record_t>& source_lookup_record_vector);
+             std::vector<uint64_t>& source_lookup_record_vector);
 
     /**
      * Get the number of elements that match this md5.

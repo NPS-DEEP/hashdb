@@ -210,7 +210,7 @@ void usage() {
   << "\n"
   << "    -i, --bits=<number of index bits>\n"
   << "        <number of index bits> to use for the source lookup index, between\n"
-  << "        32 and 40 (default " << s.source_lookup_settings.number_of_index_bits_type << ")\n"
+  << "        32 and 40 (default " << (uint32_t)s.source_lookup_settings.number_of_index_bits << ")\n"
   << "        The number of bits used for the hash block offset value is\n"
   << "        (64 - <number of index bits>).\n"
   << "\n"
@@ -886,11 +886,13 @@ int main(int argc,char **argv) {
       }
       case 'i': {	// number of index bits
         has_tuning = true;
-        bool is_ok_index_bits = string_to_number_of_index_bits_type(optarg, hashdb_settings.source_lookup_settings.number_of_index_bits_type);
-        if (!is_ok_index_bits) {
+        // boost can't cast to uint8_t
+        uint32_t temp = boost::lexical_cast<uint32_t>(optarg);
+        if (temp < 32 || temp > 40) {
           std::cerr << "Invalid value for number of index bits: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
+        hashdb_settings.source_lookup_settings.number_of_index_bits = (uint8_t)temp;
         break;
       }
       case 'A': {	// b1 bloom 1 state

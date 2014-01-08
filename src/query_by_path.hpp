@@ -116,7 +116,7 @@ class query_by_path_t {
     }
 
     // perform query for each hash
-    source_lookup_record_t source_lookup_record;
+    uint64_t source_lookup_record;
     response.clear();
     for (std::vector<hashdb::hash_request_md5_t>::const_iterator it = request.begin(); it != request.end(); ++it) {
       
@@ -130,11 +130,11 @@ class query_by_path_t {
 
       if (has_record) {
         // get values associated with this hash
-        uint32_t count = source_lookup_record.get_count();
+        uint32_t count = source_lookup_encoding::get_count(source_lookup_record);
         uint64_t source_lookup_index = (count == 1) ?
-                 source_lookup_record.source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
+                 source_lookup_encoding::get_source_lookup_index(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
         uint64_t hash_block_offset_value = (count == 1) ?
-                 source_lookup_record.hash_block_offset_value(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits_type) : 0L;
+                 source_lookup_encoding::get_hash_block_offset(hashdb_db_manager->hashdb_settings.source_lookup_settings.number_of_index_bits, source_lookup_record) : 0L;
 
         // construct hash response
         hashdb::hash_response_md5_t hash_response(it->id,
