@@ -22,6 +22,7 @@
  * Test the source lookup encoding module.
  */
 
+#include <config.h>
 #include "source_lookup_encoding.hpp"
 #include <iostream>
 #include <boost/detail/lightweight_main.hpp>

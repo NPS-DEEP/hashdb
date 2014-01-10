@@ -19,7 +19,9 @@
 
 # This file assists in building test programs.
 
-bin_PROGRAMS = source_lookup_encoding_test
+bin_PROGRAMS = \
+	source_lookup_encoding_test \
+	red_black_tree_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -111,5 +113,13 @@ ENDIAN_INCS = \
 # ############################################################
 source_lookup_encoding_test_SOURCES = \
 	../source_lookup_encoding.hpp \
+	boost_fix.hpp \
 	source_lookup_encoding_test.cpp
+
+red_black_tree_test_SOURCES = \
+	../map_red_black_tree.hpp \
+        ../map_stats.hpp \
+	../dfxml/src/dfxml_writer.h \
+	boost_fix.hpp \
+	red_black_tree_test.cpp
 
