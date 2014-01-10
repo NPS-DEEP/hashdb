@@ -92,9 +92,11 @@ using {\hmmi}s over databases 1 and 2 in sorted order.
 \item \texttt{erase <hashdb 1> <hashdb 2>} \\
 Erase hashes in database 1 from database 2
 using a \hmmi over database 1.
-\item \texttt{rebuild bloom <bloom filter parameters> <hashdb>} \\
+\item \texttt{rebuild\_bloom <bloom filter parameters> <hashdb>} \\
 Rebuild the Bloom filters
 using a \hmi over the given database.
+\item \texttt{query\_hash <hashdb> <DFXML file>} \\
+Print out hashes in the \hdb that match hashes in the DFXML file.
 \item \texttt{get\_hash\_source <identified\_blocks.txt>} \\
 Return source information for the hashes in the specified file.
 \item \texttt{get\_hashdb\_info <hashdb>} \\
@@ -587,10 +589,8 @@ is_positive(const uint8_t[SIZE] &hash);
 \subsection{\hdb Settings}
 The \hdb element manager and
 many of the storage types in the \hdb database use configurable \hdb settings.
-The \hdb Element Manager requires the proper \hdb settings
-in order to open most of the file-based resources properly.
-The settings manager is in charge of creating or copying a settings object
-or saving or loading one from a \texttt{settings} file.
+Refer to \texttt{hashdb\_settings}, \texttt{hashdb\_settings\_reader},
+\texttt{hashdb\_settings\_writer}. 
 
 % instantiation
 \subsubsection{Instantiation}
@@ -620,34 +620,64 @@ save_settings(std::string hashdb_dir);
 
 \section{Low-Level \hdb Modules}
 
-% hash store
-\subsection{Hash Store}
+% hash map store
+\subsection{Hash Map Manager}
 This module manages mapped hash storage.
+It has been renamed from \textit{Hash Store}.
 \begin{compactitem}
-\item This provides a map of hashes (as opposed to a multimap).
-\item Elements consist of a
-\texttt{uint8\_t[SIZE]} block hash key and a
-\texttt{uint64\_t}source lookup encoding value.
+\item The key is the \texttt{uint8\_t[SIZE]} hash digest,
+such as md5,
+and the value is the \texttt{uint64\_t} source lookup encoding.
 \item The source lookup encoding consists of $32-40$ bits
-of source lookup index and $32-24$ bits of block offset value.
-\item Hash storage maps to the \texttt{hash\_store} file.
+of source lookup index and $32-24$ bits of block offset value,
+but this detail does not matter at this low storage level.
+\item The hash map maps to the \texttt{hash\_map\_store} file.
 \item Provides Interfaces to insert, erase, look up, and change elements.
-\item Iterator \texttt{hash\_store\_iterator\_t} is available
-for walking the hash store.
+\item A \texttt{const\_iterator} is available for walking the hash map.
 \end{compactitem}
 
-% hash duplicates store
-\subsection{Hash Duplicates Store}
-This module manages storage for hash duplicates.
+Here are the interfaces:
+\begin{small}
+\begin{verbatim}
+pair<hash_map_manager_t::const_iterator, bool> insert(md5, uint64_t);
+size_t erase(md5);
+pair<hash_map_manager_t::const_iterator, bool> change(md5, uint64_t);
+hash_map_manager_t::const_iterator find(md5);
+bool has(md5);   // faster than find()
+iterator begin();
+iterator end();
+size_t size();
+\end{verbatim}
+\end{small}
+
+% hash multmap store
+\subsection{Hash Multimap Manager}
+This module manages multimap hash storage.
+It has been renamed from \textit{Hash duplicates Store}.
 \begin{compactitem}
-\item This provides a multimap of hashes.
-\item Hash duplicates storage maps to the \texttt{hash\_duplicates\_store} file.
-\item Elements consist of a
-\texttt{uint8\_t[SIZE]} block hash key and a
-\texttt{uint64\_t} source lookup encoding value.
-\item Provides interfaces to insert, erase, and look up elements.
-\item No iterator is provided with this interface.
+\item The key is the \texttt{uint8\_t[SIZE]} hash digest,
+such as md5,
+and the value is the \texttt{uint64\_t} source lookup encoding.
+\item The source lookup encoding consists of $32-40$ bits
+of source lookup index and $32-24$ bits of block offset value,
+but this detail does not matter at this low storage level.
+\item The hash multimap maps to the \texttt{hash\_multimap\_store} file.
+\item Provides Interfaces to insert, erase, and look up elements.
+\item A \texttt{const\_iterator} is available for walking the hash multimap.
 \end{compactitem}
+
+Here are the interfaces:
+\begin{small}
+\begin{verbatim}
+pair<hash_multimap_manager_t::const_iterator, bool> insert(md5, uint64_t);
+size_t erase(md5);
+hash_multimap_manager_t::const_iterator find(md5, uint64_t);
+bool has(md5, uint64_t);   // faster than find()
+iterator begin();
+iterator end();
+size_t size();
+\end{verbatim}
+\end{small}
 
 % source lookup encoding
 \subsection{Source Lookup Encoding}

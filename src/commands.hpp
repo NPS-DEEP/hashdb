@@ -27,7 +27,6 @@
 #include "hashdb_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_filenames.hpp"
-//#include "settings_writer.hpp"
 #include "history_manager.hpp"
 #include "hashdb_db_manager.hpp"
 #include "dfxml_hashdigest_reader.hpp"

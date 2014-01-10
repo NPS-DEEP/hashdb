@@ -600,7 +600,7 @@ static void create_hashdb(const std::string& hashdb_dir,
 #endif
 
   // write the tuning settings to the new settings file
-  settings_writer::write_settings(hashdb_dir, hashdb_tuning_settings);
+  hashdb_settings_writer::write_settings(hashdb_dir, hashdb_tuning_settings);
 }
 
 // determine that a path is to a hashdb
@@ -658,7 +658,7 @@ static void reset_bloom_filters(const std::string& hashdb_dir,
   existing_hashdb_settings.bloom2_M_hash_size = new_hashdb_settings.bloom2_M_hash_size;
 
   // write back the changed settings
-  settings_writer::write_settings(hashdb_dir, existing_hashdb_settings);
+  hashdb_settings_writer::write_settings(hashdb_dir, existing_hashdb_settings);
 
   // calculate the bloom filter filenames
   std::string bloom1_path = hashdb_filenames_t::bloom1_filename(hashdb_dir);

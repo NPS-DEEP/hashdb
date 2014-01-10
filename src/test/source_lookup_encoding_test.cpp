@@ -26,46 +26,7 @@
 #include <iostream>
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
-
-// boost must allow exceptions for BOOST_TEST_THROWS
-#ifdef BOOST_NO_EXCEPTIONS
-  #error boost must allow exceptions for BOOST_TEST_THROWS
-#endif
-
-// BOOST_TEST_THROWS isn't available until boost v1.54, so add it here
-#ifndef BOOST_TEST_THROWS
-namespace boost {
-namespace detail {
-inline void throw_failed_impl(char const * excep, char const * file, int line, char const * function)
-{
-   BOOST_LIGHTWEIGHT_TEST_OSTREAM
-    << file << "(" << line << "): Exception '" << excep << "' not thrown in function '"
-    << function << "'" << std::endl;
-   ++test_errors();
-}
-} // detail
-} // boost
-
-#ifndef BOOST_NO_EXCEPTIONS
-   #define BOOST_TEST_THROWS( EXPR, EXCEP )                    \
-      try {                                                    \
-         EXPR;                                                 \
-         ::boost::detail::throw_failed_impl                    \
-         (#EXCEP, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION); \
-      }                                                        \
-      catch(EXCEP const&) {                                    \
-      }                                                        \
-      catch(...) {                                             \
-         ::boost::detail::throw_failed_impl                    \
-         (#EXCEP, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION); \
-      }                                                        \
-   //
-#else
-   #define BOOST_TEST_THROWS( EXPR, EXCEP )
-#endif
-#endif
-namespace {
-}
+#include "boost_fix.hpp"
 
 int cpp_main(int argc, char* argv[]) {
 

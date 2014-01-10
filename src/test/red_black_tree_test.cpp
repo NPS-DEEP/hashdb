@@ -19,37 +19,24 @@
 
 /**
  * \file
- * Provides the service of writing settings to the hashdb.
+ * Test the red-black tree map.
  */
 
-#ifndef HASHDB_SETTINGS_WRITER_HPP
-#define HASHDB_SETTINGS_WRITER_HPP
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
-#include "command_line.hpp"
-#include <stdexcept>
+#include "map_red_black_tree.hpp"
 #include <iostream>
-#include <sstream>
-#include <string>
+#include <boost/detail/lightweight_main.hpp>
+#include <boost/detail/lightweight_test.hpp>
+#include "boost_fix.hpp"
+#include "hashdb_types.h"
+#include "map_red_black_tree.hpp"
 
-#include "dfxml/src/dfxml_writer.h" // for writing dfxml
+int cpp_main(int argc, char* argv[]) {
 
-/**
- * hashdb settings.
- */
-namespace hashdb_settings_writer {
-  void write_settings(const std::string& hashdb_dir,
-                      const hashdb_settings_t& settings) {
-
-    std::string filename = hashdb_filenames_t::settings_filename(hashdb_dir);
-
-    dfxml_writer x(filename, false);
-    x.push("settings");
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
-    settings.report_settings(x);
-    x.pop();
-  }
-};
-
-#endif
+  // for now, just get map_red_black_tree.hpp to compile.  Then add tests.
+  map *map_red_black_tree_t<uint8_t[16], uint64_t>
+     = new map *map_red_black_tree_t<uint8_t[16], uint64_t>
+       ("temp_rbtree", "rbtree", 10000, 10000, RW_NEW);
+  delete map;
+  std::cout << "Done.\n";
+}
 
