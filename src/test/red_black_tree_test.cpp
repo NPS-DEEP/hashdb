@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the red-black tree map.
+ * Test the maps and multimaps.
  */
 
 #include <config.h>
@@ -31,24 +31,23 @@
 #include "boost_fix.hpp"
 #include "hashdb_types.h"
 #include "map_red_black_tree.hpp"
+#include "map_hash.hpp"
 
-int cpp_main(int argc, char* argv[]) {
-  // red-black tree
-  //  typedef map_red_black_tree_t<uint8_t[16], uint64_t> red_black_tree_t;
-  typedef map_red_black_tree_t<uint64_t, uint64_t> red_black_tree_t;
-  typedef std::pair<red_black_tree_t::map_const_iterator, bool> rbtree_pair_t;
+template<typename T>
+void run_map_tests() {
+  typedef std::pair<class T::map_const_iterator, bool> map_pair_t;
 
-  red_black_tree_t* map;
+  T* map;
   map_stats_t map_stats;
-  rbtree_pair_t rbtree_pair; 
+  map_pair_t map_pair; 
   size_t num_erased;
-  red_black_tree_t::map_const_iterator rbtree_it;
+  class T::map_const_iterator map_it;
 
   // clean up from any previous run
-  remove("temp_rbtree");
+  remove("temp_map");
 
   // create new map
-  map = new red_black_tree_t("temp_rbtree", RW_NEW);
+  map = new T("temp_map", RW_NEW);
 
   // populate with 1,000,000 entries
   for (uint64_t i=0; i< 1000000; ++i) {
@@ -63,12 +62,12 @@ int cpp_main(int argc, char* argv[]) {
   BOOST_TEST_EQ(map_stats.count_size, 1000000);
 
   // add duplicate
-  rbtree_pair = map->emplace(1000005, 0);
-  BOOST_TEST_EQ(rbtree_pair.second, false);
+  map_pair = map->emplace(1000005, 0);
+  BOOST_TEST_EQ(map_pair.second, false);
 
   // add new
-  rbtree_pair = map->emplace(2000005, 0);
-  BOOST_TEST_EQ(rbtree_pair.second, true);
+  map_pair = map->emplace(2000005, 0);
+  BOOST_TEST_EQ(map_pair.second, true);
 
   // check count
   map_stats = map->get_map_stats();
@@ -91,25 +90,25 @@ int cpp_main(int argc, char* argv[]) {
   BOOST_TEST_EQ(map_stats.count_size, 1000000);
 
   // change entry
-  rbtree_pair = map->change(1000006, 60);
-  BOOST_TEST_EQ(rbtree_pair.second, true);
+  map_pair = map->change(1000006, 60);
+  BOOST_TEST_EQ(map_pair.second, true);
 
   // change entry invalid
-  rbtree_pair = map->change(6000006, 60);
-  BOOST_TEST_EQ(rbtree_pair.second, false);
+  map_pair = map->change(6000006, 60);
+  BOOST_TEST_EQ(map_pair.second, false);
 
   // check count stayed same
   map_stats = map->get_map_stats();
   BOOST_TEST_EQ(map_stats.count_size, 1000000);
 
   // validate map integrity by looking for keys using find
-  rbtree_it = map->find(1000003);
-  BOOST_TEST_EQ(rbtree_it->second, 3);
-  rbtree_it = map->find(2000003); // should = map->end()
+  map_it = map->find(1000003);
+  BOOST_TEST_EQ(map_it->second, 3);
+  map_it = map->find(2000003); // should = map->end()
 
   // compiler can't handle this, so use simpler alternative.
-  // BOOST_TEST_EQ(rbtree_it, map->end());
-  bool temp = (rbtree_it == map->end());
+  // BOOST_TEST_EQ(map_it, map->end());
+  bool temp = (map_it == map->end());
   BOOST_TEST_EQ(temp, true);
 
   // validate map integrity by looking for keys using has
@@ -122,7 +121,7 @@ int cpp_main(int argc, char* argv[]) {
   // ************************************************************
   // RO tests
   // ************************************************************
-  map = new red_black_tree_t("temp_rbtree", READ_ONLY);
+  map = new T("temp_map", READ_ONLY);
 
   // check count
   map_stats = map->get_map_stats();
@@ -133,13 +132,22 @@ int cpp_main(int argc, char* argv[]) {
   BOOST_TEST_EQ(map->has(2000003), false);
 
   // try to edit the RO map
-  BOOST_TEST_THROWS(rbtree_pair = map->emplace(0, 0), std::runtime_error);
+  BOOST_TEST_THROWS(map_pair = map->emplace(0, 0), std::runtime_error);
   BOOST_TEST_THROWS(num_erased = map->erase(0), std::runtime_error);
-  BOOST_TEST_THROWS(rbtree_pair = map->change(0, 0), std::runtime_error);
+  BOOST_TEST_THROWS(map_pair = map->change(0, 0), std::runtime_error);
+}
 
-  // ************************************************************
+char map_red_black_tree[] = "map_red_black_tree";
+char map_hash[] = "map_hash";
+
+int cpp_main(int argc, char* argv[]) {
+  // red-black-tree map
+  run_map_tests<class map_red_black_tree_t<uint64_t, uint64_t, map_red_black_tree> >();
+
+  // hash map
+  run_map_tests<class map_hash_t<uint64_t, uint64_t, map_hash> >();
+
   // done
-  // ************************************************************
   int status = boost::report_errors();
   return status;
 }

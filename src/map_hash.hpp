@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Glue to red-black-tree map.
+ * Glue to map.
  */
 
-#ifndef MAP_RED_BLACK_TREE_HPP
-#define MAP_RED_BLACK_TREE_HPP
+#ifndef MAP_HASH_HPP
+#define MAP_HASH_HPP
 
 #include <vector>
 #include <string>
@@ -34,15 +34,31 @@
 // TR1 includes:
 #include <tr1/cmath>     // log2
 
+#include "fcntl.h" // zzzzzzzzzzzzzzzz ?
+
 // Boost includes
 #include <boost/functional/hash.hpp>
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/containers/map.hpp>
+#include <boost/unordered/unordered_map.hpp>
 
 #include "hashdb_types.h"
 #include "map_stats.hpp"
+
+// NOTE: you must provide a boost_hash_value function
+// for every KEY_T, PAY_T expected.
+/*
+// unordered map requires this formula for generating a map hash value
+inline std::size_t hash_value(const uint8_t digest[16]) {
+  return boost::hash_value<unsigned char,16>(digest);
+}
+
+// unsigned long long from boost should work
+inline std::size_t hash_value(const uint64_t& digest) { // for testing
+  return boost::hash_value<unsigned char,8>(digest);
+}
+*/
 
 // managed the mapped file during creation.  Allows for growing the 
 // mapped file.
@@ -50,7 +66,8 @@
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
 template<typename KEY_T, typename PAY_T, char* NAME>
-class map_red_black_tree_t {
+
+class map_hash_t {
   private:
     typedef boost::interprocess::managed_mapped_file   segment_t;
 
@@ -60,8 +77,10 @@ class map_red_black_tree_t {
               segment_t::segment_manager>              allocator_t;
       
     // Map to be stored in memory mapped file
-    typedef boost::interprocess::map<
-              KEY_T, PAY_T, std::less<KEY_T>, 
+    typedef boost::unordered_map<
+              KEY_T, PAY_T,
+              boost::hash<KEY_T>,
+              std::equal_to<KEY_T>,
               allocator_t>                             map_t;
 
   public:
@@ -95,21 +114,22 @@ class map_red_black_tree_t {
       // (recursively through grow) retry.
       try {
         map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                (std::less<KEY_T>(), *allocator);
+                (100000, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                *allocator);
       } catch (...) {
         grow();
       }
     }
 
     // do not allow copy or assignment
-    map_red_black_tree_t(const map_red_black_tree_t&);
-    map_red_black_tree_t& operator=(const map_red_black_tree_t&);
+    map_hash_t(const map_hash_t&);
+    map_hash_t& operator=(const map_hash_t&);
 
   public:
 
     // access to new store based on file_mode_type_t in hashdb_types.h,
     // specifically: READ_ONLY, RW_NEW, RW_MODIFY
-    map_red_black_tree_t(const std::string& p_filename,
+    map_hash_t(const std::string& p_filename,
                          file_mode_type_t p_file_mode) : 
           filename(p_filename)
          ,file_mode(p_file_mode)
@@ -146,14 +166,15 @@ class map_red_black_tree_t {
         // (recursively through grow) retry.
         try {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                  (std::less<KEY_T>(), *allocator);
+                (100000, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                *allocator);
         } catch (...) {
           grow();
         }
       }
     }
 
-    ~map_red_black_tree_t() {
+    ~map_hash_t() {
       // Don't delete the map as it needs to live inside the mapped file
       delete allocator;
       delete segment;

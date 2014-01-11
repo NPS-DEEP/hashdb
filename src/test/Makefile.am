@@ -117,9 +117,10 @@ source_lookup_encoding_test_SOURCES = \
 	source_lookup_encoding_test.cpp
 
 red_black_tree_test_SOURCES = \
-	../map_red_black_tree.hpp \
+	boost_fix.hpp \
         ../map_stats.hpp \
 	../dfxml/src/dfxml_writer.h \
-	boost_fix.hpp \
+	../map_red_black_tree.hpp \
+	../map_hash.hpp \
 	red_black_tree_test.cpp
 
