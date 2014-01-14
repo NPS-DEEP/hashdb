@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Glue to red-black-tree map.
+ * Glue to sorted vector map, aka flat map.
  */
 
-#ifndef MAP_RED_BLACK_TREE_HPP
-#define MAP_RED_BLACK_TREE_HPP
+#ifndef MAP_FLAT_SORTED_VECTOR_HPP
+#define MAP_FLAT_SORTED_VECTOR_HPP
 
 #include <vector>
 #include <string>
@@ -39,7 +39,8 @@
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/containers/map.hpp>
+#include <map>
+#include <boost/interprocess/containers/flat_map.hpp>
 
 #include "hashdb_types.h"
 #include "map_stats.hpp"
@@ -50,7 +51,7 @@
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
 template<typename KEY_T, typename PAY_T>
-class map_red_black_tree_t {
+class map_flat_sorted_vector_t {
   private:
     typedef boost::interprocess::managed_mapped_file   segment_t;
 
@@ -60,7 +61,7 @@ class map_red_black_tree_t {
               segment_t::segment_manager>              allocator_t;
       
     // Map to be stored in memory mapped file
-    typedef boost::interprocess::map<
+    typedef boost::interprocess::flat_map<
               KEY_T, PAY_T, std::less<KEY_T>, 
               allocator_t>                             map_t;
 
@@ -71,6 +72,7 @@ class map_red_black_tree_t {
     const std::string filename;
     const file_mode_type_t file_mode;
     const std::string data_type_name;
+    size_t expected_size;  // expected size of container
     size_t size;
     segment_t* segment;
     allocator_t* allocator;
@@ -96,24 +98,27 @@ class map_red_black_tree_t {
       try {
         map = segment->find_or_construct<map_t>(data_type_name.c_str())
                 (std::less<KEY_T>(), *allocator);
+        // specific to sorted vector:
+        map->reserve(expected_size);
       } catch (...) {
         grow();
       }
     }
 
     // do not allow copy or assignment
-    map_red_black_tree_t(const map_red_black_tree_t&);
-    map_red_black_tree_t& operator=(const map_red_black_tree_t&);
+    map_flat_sorted_vector_t(const map_flat_sorted_vector_t&);
+    map_flat_sorted_vector_t& operator=(const map_flat_sorted_vector_t&);
 
   public:
 
     // access to new store based on file_mode_type_t in hashdb_types.h,
     // specifically: READ_ONLY, RW_NEW, RW_MODIFY
-    map_red_black_tree_t(const std::string& p_filename,
+    map_flat_sorted_vector_t(const std::string& p_filename,
                          file_mode_type_t p_file_mode) : 
           filename(p_filename)
          ,file_mode(p_file_mode)
-         ,data_type_name("map_red_black_tree")
+         ,data_type_name("map_flat_sorted_vector")
+         ,expected_size(100000) 
          ,size(100000) 
          ,segment(0)
          ,allocator(0)
@@ -147,13 +152,21 @@ class map_red_black_tree_t {
         try {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
                   (std::less<KEY_T>(), *allocator);
+        // specific to sorted vector:
+        map->reserve(expected_size);
         } catch (...) {
           grow();
         }
       }
     }
 
-    ~map_red_black_tree_t() {
+    ~map_flat_sorted_vector_t() {
+      // for sorted vector
+      if (file_mode != READ_ONLY) {
+        // specific to sorted vector
+        map->shrink_to_fit();
+      }
+
       // Don't delete the map as it needs to live inside the mapped file
       delete allocator;
       delete segment;

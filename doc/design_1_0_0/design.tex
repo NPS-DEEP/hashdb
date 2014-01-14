@@ -670,7 +670,7 @@ Here are the interfaces:
 \begin{small}
 \begin{verbatim}
 pair<hash_multimap_manager_t::const_iterator, bool> insert(md5, uint64_t);
-size_t erase(md5);
+size_t erase(md5, uint64_t);
 hash_multimap_manager_t::const_iterator find(md5, uint64_t);
 bool has(md5, uint64_t);   // faster than find()
 iterator begin();

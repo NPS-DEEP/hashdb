@@ -21,7 +21,7 @@
 
 bin_PROGRAMS = \
 	source_lookup_encoding_test \
-	red_black_tree_test
+	map_and_multimap_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -116,11 +116,14 @@ source_lookup_encoding_test_SOURCES = \
 	boost_fix.hpp \
 	source_lookup_encoding_test.cpp
 
-red_black_tree_test_SOURCES = \
+map_and_multimap_test_SOURCES = \
 	boost_fix.hpp \
         ../map_stats.hpp \
 	../dfxml/src/dfxml_writer.h \
 	../map_red_black_tree.hpp \
 	../map_hash.hpp \
-	red_black_tree_test.cpp
+	../map_sorted_vector.hpp \
+	../map_btree.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	map_and_multimap_test.cpp
 

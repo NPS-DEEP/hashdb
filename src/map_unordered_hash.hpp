@@ -22,8 +22,8 @@
  * Glue to map.
  */
 
-#ifndef MAP_HASH_HPP
-#define MAP_HASH_HPP
+#ifndef MAP_UNORDERED_HASH_HPP
+#define MAP_UNORDERED_HASH_HPP
 
 #include <vector>
 #include <string>
@@ -65,9 +65,9 @@ inline std::size_t hash_value(const uint64_t& digest) { // for testing
 //
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
-template<typename KEY_T, typename PAY_T, char* NAME>
+template<typename KEY_T, typename PAY_T>
 
-class map_hash_t {
+class map_unordered_hash_t {
   private:
     typedef boost::interprocess::managed_mapped_file   segment_t;
 
@@ -91,6 +91,7 @@ class map_hash_t {
     const file_mode_type_t file_mode;
     const std::string data_type_name;
     size_t size;
+    size_t expected_size;
     segment_t* segment;
     allocator_t* allocator;
     map_t* map;
@@ -114,27 +115,29 @@ class map_hash_t {
       // (recursively through grow) retry.
       try {
         map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                (100000, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
                 *allocator);
+        map->reserve(expected_size);
       } catch (...) {
         grow();
       }
     }
 
     // do not allow copy or assignment
-    map_hash_t(const map_hash_t&);
-    map_hash_t& operator=(const map_hash_t&);
+    map_unordered_hash_t(const map_unordered_hash_t&);
+    map_unordered_hash_t& operator=(const map_unordered_hash_t&);
 
   public:
 
     // access to new store based on file_mode_type_t in hashdb_types.h,
     // specifically: READ_ONLY, RW_NEW, RW_MODIFY
-    map_hash_t(const std::string& p_filename,
+    map_unordered_hash_t(const std::string& p_filename,
                          file_mode_type_t p_file_mode) : 
           filename(p_filename)
          ,file_mode(p_file_mode)
-         ,data_type_name(NAME)
+         ,data_type_name("map_unordered_hash")
          ,size(100000) 
+         ,expected_size(100000) 
          ,segment(0)
          ,allocator(0)
          ,map(0) {
@@ -166,15 +169,16 @@ class map_hash_t {
         // (recursively through grow) retry.
         try {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                (100000, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
                 *allocator);
+        map->reserve(expected_size);
         } catch (...) {
           grow();
         }
       }
     }
 
-    ~map_hash_t() {
+    ~map_unordered_hash_t() {
       // Don't delete the map as it needs to live inside the mapped file
       delete allocator;
       delete segment;

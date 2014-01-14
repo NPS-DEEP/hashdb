@@ -59,8 +59,8 @@ src/hashdb_checker/hashdb_checker
 src/hashdb_manager.exe
 src/hashdb_checker/hashdb_checker.exe
 src/test/source_lookup_encoding_test
-src/test/red_black_tree_test
-src/test/temp_map
+src/test/map_and_multimap_test
+src/test/temp_file
 hashdb*.tar.gz
 space
 doc/design/design.aux
