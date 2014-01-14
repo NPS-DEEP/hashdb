@@ -29,6 +29,10 @@
 #include "map_unordered_hash.hpp"
 #include "map_flat_sorted_vector.hpp"
 #include "map_btree.hpp"
+#include "multimap_red_black_tree.hpp"
+#include "multimap_unordered_hash.hpp"
+#include "multimap_flat_sorted_vector.hpp"
+#include "multimap_btree.hpp"
 #include <iostream>
 #include <cstdio>
 #include <boost/detail/lightweight_main.hpp>
@@ -159,8 +163,8 @@ void run_multimap_tests() {
   map_pair_t map_pair; 
   size_t num_erased;
   class T::map_const_iterator map_it;
+  class T::map_const_iterator end_it;
   class T::map_const_iterator_range map_it_range;
-  bool has;
 
   // clean up from any previous run
   remove(temp_file);
@@ -170,6 +174,7 @@ void run_multimap_tests() {
 
   // populate with 1,000,000 entries
   for (uint64_t i=0; i< 1000000; ++i) {
+
     map->emplace(i+1000000, i);
   }
 
@@ -194,22 +199,24 @@ void run_multimap_tests() {
 
   // range operation, 1 key, 1 value
   map_it_range = map->equal_range(1000000);
-  BOOST_TEST_EQ(map_it_range.first != map->>end());
-  BOOST_TEST_EQ(map_it_range.first == map_it_range.second);
+  BOOST_TEST(map_it_range.first != map->end());
+  ++map_it_range.first;
+  BOOST_TEST(map_it_range.first == map_it_range.second);
 
   // range operation, 1 key, 3 values
   map_it_range = map->equal_range(1000005);
-  BOOST_TEST_EQ(map_it_range.first != map->>end());
-  BOOST_TEST_EQ(map_it_range.first != map_it_range.second);
+  BOOST_TEST(map_it_range.first != map->end());
+  BOOST_TEST(map_it_range.first != map_it_range.second);
   ++map_it_range.first;
   ++map_it_range.first;
-  BOOST_TEST_EQ(map_it_range.first != map->>end());
-  BOOST_TEST_EQ(map_it_range.first == map_it_range.second);
+  BOOST_TEST(map_it_range.first != map->end());
+  ++map_it_range.first;
+  BOOST_TEST(map_it_range.first == map_it_range.second);
 
   // range operation, no key
   map_it_range = map->equal_range(2000005);
-  BOOST_TEST_EQ(map_it_range.first == map->>end());
-  BOOST_TEST_EQ(map_it_range.second == map->>end());
+  BOOST_TEST(map_it_range.first == map->end());
+  BOOST_TEST(map_it_range.second == map->end());
 
   // count for key
   BOOST_TEST_EQ(map->count(2000005), 0);
@@ -218,13 +225,13 @@ void run_multimap_tests() {
 
   // find
   map_it = map->find(1000005, 0);
-  BOOST_TEST_EQ(map_it != map->end());
+  BOOST_TEST(map_it != map->end());
   map_it = map->find(1000005, 1);
-  BOOST_TEST_EQ(map_it != map->end());
+  BOOST_TEST(map_it != map->end());
   map_it = map->find(1000005, 5);
-  BOOST_TEST_EQ(map_it != map->end());
+  BOOST_TEST(map_it != map->end());
   map_it = map->find(1000005, 6);
-  BOOST_TEST_EQ(map_it != map=>end());
+  BOOST_TEST(map_it == map->end());
 
   // has
   BOOST_TEST_EQ(map->has(1000005, 0), true);
@@ -233,28 +240,30 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map->has(1000005, 6), false);
 
   // erase
-  num_erased = erase(1000004, 4); // valid
+  num_erased = map->erase(1000004, 4); // valid
   BOOST_TEST_EQ(num_erased, 1);
-  num_erased = erase(1000004, 4); // not valid now
+  num_erased = map->erase(1000004, 4); // not valid now
   BOOST_TEST_EQ(num_erased, 0);
-  num_erased = erase(2000004, 4); // never valid
+  num_erased = map->erase(2000004, 4); // never valid
   BOOST_TEST_EQ(num_erased, 0);
 
+  // put back 1000004, 4
+  map_pair = map->emplace(1000004, 4);
+  BOOST_TEST_EQ(map_pair.second, true);
+
   // erase same key multiple values
-  num_erased = erase(1000005, 0);
+  num_erased = map->erase(1000005, 0);
   BOOST_TEST_EQ(map->count(1000005), 2);
-  num_erased = erase(1000005, 1);
+  num_erased = map->erase(1000005, 1);
   BOOST_TEST_EQ(map->count(1000005), 1);
-  num_erased = erase(1000005, 5);
+  num_erased = map->erase(1000005, 5);
   BOOST_TEST_EQ(map->count(1000005), 0);
-  num_erased = erase(1000005, 6);
+  num_erased = map->erase(1000005, 6);
   BOOST_TEST_EQ(map->count(1000005), 0);
 
   // put back 1000005, 5
   map_pair = map->emplace(1000005, 5);
   BOOST_TEST_EQ(map_pair.second, true);
-
-
 
   // end RW tests
   delete map;
@@ -269,13 +278,13 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map_stats.count_size, 1000000);
 
   // validate map integrity by looking for keys
-  BOOST_TEST_EQ(map->has(1000003), true);
-  BOOST_TEST_EQ(map->has(2000003), false);
+  BOOST_TEST_EQ(map->has(1000003, 3), true);
+  BOOST_TEST_EQ(map->has(1000003, 4), false);
+  BOOST_TEST_EQ(map->has(2000003, 0), false);
 
   // try to edit the RO map
   BOOST_TEST_THROWS(map_pair = map->emplace(0, 0), std::runtime_error);
   BOOST_TEST_THROWS(num_erased = map->erase(0, 0), std::runtime_error);
-  BOOST_TEST_THROWS(map_pair = map->change(0, 0), std::runtime_error);
 
   // NOTE: btree assert failure if exit without delete.
 
@@ -284,6 +293,10 @@ void run_multimap_tests() {
 }
 
 int cpp_main(int argc, char* argv[]) {
+/*
+  // ************************************************************
+  // map
+  // ************************************************************
   // red-black-tree map
   run_map_tests<class map_red_black_tree_t<uint64_t, uint64_t> >();
 
@@ -296,9 +309,25 @@ int cpp_main(int argc, char* argv[]) {
   // btree map
   run_map_tests<class map_btree_t<uint64_t, uint64_t> >();
 
+  // ************************************************************
+  // multimap
+  // ************************************************************
   // red-black-tree multimap
   run_multimap_tests<class multimap_red_black_tree_t<uint64_t, uint64_t> >();
 
+  // unordered hash multimap
+  run_multimap_tests<class multimap_unordered_hash_t<uint64_t, uint64_t> >();
+
+  // flat sorted vector multimap
+  run_multimap_tests<class multimap_flat_sorted_vector_t<uint64_t, uint64_t> >();
+*/
+
+  // btree multimap
+  run_multimap_tests<class multimap_btree_t<uint64_t, uint64_t> >();
+
+  // ************************************************************
+  // done
+  // ************************************************************
   // done
   int status = boost::report_errors();
   return status;

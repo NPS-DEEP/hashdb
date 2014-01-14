@@ -117,7 +117,7 @@ class map_unordered_hash_t {
         map = segment->find_or_construct<map_t>(data_type_name.c_str())
                 (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
                 *allocator);
-        map->reserve(expected_size);
+//        map->reserve(expected_size);
       } catch (...) {
         grow();
       }
@@ -171,7 +171,7 @@ class map_unordered_hash_t {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
                 (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
                 *allocator);
-        map->reserve(expected_size);
+//        map->reserve(expected_size);
         } catch (...) {
           grow();
         }

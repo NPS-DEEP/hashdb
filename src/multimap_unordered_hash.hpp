@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Glue to red-black-tree multimap.
+ * Glue to unordered hash multimap.
  */
 
-#ifndef MULTIMAP_RED_BLACK_TREE_HPP
-#define MULTIMAP_RED_BLACK_TREE_HPP
+#ifndef MULTIMAP_UNORDERED_HASH_HPP
+#define MULTIMAP_UNORDERED_HASH_HPP
 
 #include <vector>
 #include <string>
@@ -39,7 +39,7 @@
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/containers/map.hpp>
+#include <boost/unordered/unordered_map.hpp>
 
 #include "hashdb_types.h"
 #include "map_stats.hpp"
@@ -50,7 +50,7 @@
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
 template<typename KEY_T, typename PAY_T>
-class multimap_red_black_tree_t {
+class multimap_unordered_hash_t {
   private:
     typedef boost::interprocess::managed_mapped_file   segment_t;
 
@@ -60,8 +60,10 @@ class multimap_red_black_tree_t {
               segment_t::segment_manager>              allocator_t;
       
     // Map to be stored in memory mapped file
-    typedef boost::interprocess::multimap<
-              KEY_T, PAY_T, std::less<KEY_T>, 
+    typedef boost::unordered_multimap<
+              KEY_T, PAY_T,
+              boost::hash<KEY_T>,
+              std::equal_to<KEY_T>,
               allocator_t>                             map_t;
 
   public:
@@ -73,6 +75,7 @@ class multimap_red_black_tree_t {
     const file_mode_type_t file_mode;
     const std::string data_type_name;
     size_t size;
+    size_t expected_size;
     segment_t* segment;
     allocator_t* allocator;
     map_t* map;
@@ -96,26 +99,28 @@ class multimap_red_black_tree_t {
       // (recursively through grow) retry.
       try {
         map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                (std::less<KEY_T>(), *allocator);
+                (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                *allocator);
       } catch (...) {
         grow();
       }
     }
 
     // do not allow copy or assignment
-    multimap_red_black_tree_t(const multimap_red_black_tree_t&);
-    multimap_red_black_tree_t& operator=(const multimap_red_black_tree_t&);
+    multimap_unordered_hash_t(const multimap_unordered_hash_t&);
+    multimap_unordered_hash_t& operator=(const multimap_unordered_hash_t&);
 
   public:
 
     // access to new store based on file_mode_type_t in hashdb_types.h,
     // specifically: READ_ONLY, RW_NEW, RW_MODIFY
-    multimap_red_black_tree_t(const std::string& p_filename,
+    multimap_unordered_hash_t(const std::string& p_filename,
                          file_mode_type_t p_file_mode) : 
           filename(p_filename)
          ,file_mode(p_file_mode)
-         ,data_type_name("multimap_red_black_tree")
+         ,data_type_name("multimap_unordered_hash")
          ,size(100000) 
+         ,expected_size(100000) 
          ,segment(0)
          ,allocator(0)
          ,map(0) {
@@ -147,14 +152,15 @@ class multimap_red_black_tree_t {
         // (recursively through grow) retry.
         try {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
-                  (std::less<KEY_T>(), *allocator);
+                (expected_size, boost::hash<KEY_T>(), std::equal_to<KEY_T>(),
+                *allocator);
         } catch (...) {
           grow();
         }
       }
     }
 
-    ~multimap_red_black_tree_t() {
+    ~multimap_unordered_hash_t() {
       // Don't delete the multimap as it needs to live inside the multimapped file
       delete allocator;
       delete segment;
@@ -166,9 +172,8 @@ class multimap_red_black_tree_t {
   public:
     // range for key
     map_const_iterator_range equal_range(const KEY_T& key) const {
-      typename map_t::const_iterator lower = map->lower_bound(key);
-      typename map_t::const_iterator upper = map->upper_bound(key);
-      return map_const_iterator_range(lower, upper);
+      map_const_iterator_range it = map->equal_range(key);
+      return it;
     }
 
     // count for key
@@ -176,7 +181,7 @@ class multimap_red_black_tree_t {
       return map->count(key);
     }
     
-    // insert
+    // emplace
     std::pair<class map_t::const_iterator, bool>
     emplace(const KEY_T& key, const PAY_T& pay) {
       if (file_mode == READ_ONLY) {
@@ -214,11 +219,12 @@ class multimap_red_black_tree_t {
       }
 
       // find the uniquely identified element
-      typename map_t::const_iterator lower = map->lower_bound(key);
+      map_const_iterator_range it = map->equal_range(key);
+      typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return 0;
       }
-      const typename map_t::const_iterator upper = map->upper_bound(key);
+      const typename map_t::const_iterator upper = it.second;
       for (; lower != upper; ++lower) {
         if (lower->second == pay) {
           // found it so erase it
@@ -233,11 +239,12 @@ class multimap_red_black_tree_t {
     // find
     typename map_t::const_iterator find(const KEY_T& key, const PAY_T& pay) const {
       // find the uniquely identified element
-      typename map_t::const_iterator lower = map->lower_bound(key);
+      map_const_iterator_range it = map->equal_range(key);
+      typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return map->end();
       }
-      const typename map_t::const_iterator upper = map->upper_bound(key);
+      const typename map_t::const_iterator upper = it.second;
       for (; lower != upper; ++lower) {
         if (lower->second == pay) {
           // found it
@@ -251,11 +258,12 @@ class multimap_red_black_tree_t {
     // has
     bool has(const KEY_T& key, const PAY_T& pay) const {
       // find the uniquely identified element
-      typename map_t::const_iterator lower = map->lower_bound(key);
+      map_const_iterator_range it = map->equal_range(key);
+      typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return false;
       }
-      const typename map_t::const_iterator upper = map->upper_bound(key);
+      const typename map_t::const_iterator upper = it.second;
       for (; lower != upper; ++lower) {
         if (lower->second == pay) {
           // found it

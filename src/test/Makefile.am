@@ -121,9 +121,13 @@ map_and_multimap_test_SOURCES = \
         ../map_stats.hpp \
 	../dfxml/src/dfxml_writer.h \
 	../map_red_black_tree.hpp \
-	../map_hash.hpp \
-	../map_sorted_vector.hpp \
+	../map_unordered_hash.hpp \
+	../map_flat_sorted_vector.hpp \
 	../map_btree.hpp \
+	../multimap_red_black_tree.hpp \
+	../multimap_unordered_hash.hpp \
+	../multimap_flat_sorted_vector.hpp \
+	../multimap_btree.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	map_and_multimap_test.cpp
 

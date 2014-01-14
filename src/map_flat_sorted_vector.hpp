@@ -152,8 +152,8 @@ class map_flat_sorted_vector_t {
         try {
           map = segment->find_or_construct<map_t>(data_type_name.c_str())
                   (std::less<KEY_T>(), *allocator);
-        // specific to sorted vector:
-        map->reserve(expected_size);
+          // specific to sorted vector:
+          map->reserve(expected_size);
         } catch (...) {
           grow();
         }
