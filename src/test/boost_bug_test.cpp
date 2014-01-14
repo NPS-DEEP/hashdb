@@ -19,19 +19,11 @@
 
 /**
  * \file
- * Test the maps and multimaps.
- * Map and multimap tests are linked together here to ensure that the
- * compiler can handle them all at once.
+ * Manifest the use_count bug, 1/14/2014
  */
 
 #include <config.h>
-#include "map_red_black_tree.hpp"
-#include "map_unordered_hash.hpp"
-#include "map_flat_sorted_vector.hpp"
 #include "map_btree.hpp"
-#include "multimap_red_black_tree.hpp"
-#include "multimap_unordered_hash.hpp"
-#include "multimap_flat_sorted_vector.hpp"
 #include "multimap_btree.hpp"
 #include <iostream>
 #include <cstdio>
@@ -293,39 +285,13 @@ void run_multimap_tests() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-  // ************************************************************
-  // map
-  // ************************************************************
-  // red-black-tree map
-  run_map_tests<class map_red_black_tree_t<uint64_t, uint64_t> >();
-
-  // unordered hash map
-  run_map_tests<class map_unordered_hash_t<uint64_t, uint64_t> >();
-
-  // flat sorted vector map
-  run_map_tests<class map_flat_sorted_vector_t<uint64_t, uint64_t> >();
 
   // btree map
   run_map_tests<class map_btree_t<uint64_t, uint64_t> >();
 
-  // ************************************************************
-  // multimap
-  // ************************************************************
-  // red-black-tree multimap
-  run_multimap_tests<class multimap_red_black_tree_t<uint64_t, uint64_t> >();
-
-  // unordered hash multimap
-  run_multimap_tests<class multimap_unordered_hash_t<uint64_t, uint64_t> >();
-
-  // flat sorted vector multimap
-  run_multimap_tests<class multimap_flat_sorted_vector_t<uint64_t, uint64_t> >();
-
   // btree multimap
   run_multimap_tests<class multimap_btree_t<uint64_t, uint64_t> >();
 
-  // ************************************************************
-  // done
-  // ************************************************************
   // done
   int status = boost::report_errors();
   return status;
