@@ -23,8 +23,8 @@
  * storage maps used.
  */
 
-#ifndef HASH_MAP_MANAGER_HPP
-#define HASH_MAP_MANAGER_HPP
+#ifndef MAP_MANAGER_HPP
+#define MAP_MANAGER_HPP
 #include "hashdb_types.h"
 #include "hashdb_settings.hpp"
 #include "dfxml/src/hash_t.h"

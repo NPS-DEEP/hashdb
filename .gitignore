@@ -60,7 +60,7 @@ src/hashdb_manager.exe
 src/hashdb_checker/hashdb_checker.exe
 src/test/source_lookup_encoding_test
 src/test/map_and_multimap_test
-src/test/boost_bug_test
+src/test/btree_bug_test
 src/test/temp_file
 hashdb*.tar.gz
 space

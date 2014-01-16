@@ -39,8 +39,8 @@
 
 #include <boost/btree/btree_map.hpp>
 
-#include "hashdb_types.h"
-#include "map_stats.hpp"
+//#include "hashdb_types.h"
+//#include "map_stats.hpp"
 
 // managed the mapped file during creation.  Allows for growing the 
 // mapped file.
@@ -51,17 +51,19 @@ template<typename KEY_T, typename PAY_T>
 class map_btree_t {
   private:
     // btree map
-    typedef boost::btree::btree_map<
-              KEY_T, PAY_T>                            map_t;
+    typedef boost::btree::btree_map<KEY_T, PAY_T> map_t;
 
   public:
+    // btree map iterator
     typedef class map_t::const_iterator map_const_iterator;
+
+    // pair returned by emplace
+    typedef class std::pair<map_const_iterator, bool> map_const_iterator_bool_pair;
 
   private:
     const std::string filename;
     const file_mode_type_t file_mode;
     const std::string data_type_name;
-//    size_t size;
     map_t* map;
     
     // do not allow copy or assignment
@@ -167,6 +169,11 @@ class map_btree_t {
     // stats
     map_stats_t get_map_stats() {
       return map_stats_t(filename, file_mode, "map_btree", 0, map->size());
+    }
+
+    // number of elements
+    size_t size() {
+      return map->size();
     }
 };
 

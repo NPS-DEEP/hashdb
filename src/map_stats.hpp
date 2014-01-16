@@ -25,13 +25,10 @@
 #ifndef MAP_STATS_HPP
 #define MAP_STATS_HPP
 
-#include <vector>
+#include "file_modes.h"
 #include <string>
 #include <sstream>
 #include <cstdio>
-
-#include <../dfxml/src/dfxml_writer.h>
-#include "hashdb_types.h"
 
 // allow query stats
 struct map_stats_t {
@@ -56,16 +53,6 @@ struct map_stats_t {
                           segment_size(p_segment_size),
                           count_size(p_count_size) {
   }
-
-  void report_stats(dfxml_writer& x) const {
-    x.push("map_stats");
-    x.xmlout("filename", filename);
-    x.xmlout("file_mode", file_mode_type_to_string(file_mode));
-    x.xmlout("data_type_name", data_type_name);
-    x.xmlout("segment_size",segment_size);
-    x.xmlout("count_size",count_size);
-    x.pop();
-  }
 };
 
 inline std::ostream& operator<<(std::ostream& os,
@@ -78,6 +65,18 @@ inline std::ostream& operator<<(std::ostream& os,
      << ")";
   return os;
 }
+
+/*
+  void report_stats(dfxml_writer& x) const {
+    x.push("map_stats");
+    x.xmlout("filename", filename);
+    x.xmlout("file_mode", file_mode_type_to_string(file_mode));
+    x.xmlout("data_type_name", data_type_name);
+    x.xmlout("segment_size",segment_size);
+    x.xmlout("count_size",count_size);
+    x.pop();
+  }
+*/
 
 #endif
 

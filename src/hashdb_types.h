@@ -25,41 +25,13 @@
 #ifndef    hashdb_types_h
 #define    hashdb_types_h
 
+#include "file_modes.h"
 #include <stdint.h>
 #include <cassert>
 #include <string.h> // for memcmp
 #include <string>
 #include <iostream>
 #include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
-
-// ************************************************************
-// file mode types
-// ************************************************************
-enum file_mode_type_t {READ_ONLY,
-                       RW_NEW,
-                       RW_MODIFY};
-
-inline std::string file_mode_type_to_string(file_mode_type_t type) {
-  switch(type) {
-    case READ_ONLY: return "read_only";
-    case RW_NEW: return "rw_new";
-    case RW_MODIFY: return "rw_modify";
-    default: assert(0); return "";
-  }
-}
-
-inline bool string_to_file_mode_type(const std::string& name, file_mode_type_t& type) {
-  if (name == "read_only") { type = READ_ONLY; return true; }
-  if (name == "rw_new")    { type = RW_NEW;    return true; }
-  if (name == "rw_modify") { type = RW_MODIFY; return true; }
-  type = READ_ONLY;
-  return false;
-}
-
-inline std::ostream& operator<<(std::ostream& os, const file_mode_type_t& t) {
-  os << file_mode_type_to_string(t);
-  return os;
-}
 
 // ************************************************************
 // map type enumerators for map, multimap, and multi_index_container
@@ -122,37 +94,6 @@ inline bool string_to_multimap_type(const std::string& name, multimap_type_t& ty
 
 inline std::ostream& operator<<(std::ostream& os, const multimap_type_t& t) {
   os << multimap_type_to_string(t);
-  return os;
-}
-
-// variable length value reversible value lookup map type
-enum multi_index_container_type_t {MULTI_INDEX_CONTAINER,
-                                   BIDIRECTIONAL_BTREE};
-
-inline std::string multi_index_container_type_to_string(multi_index_container_type_t type) {
-  switch(type) {
-    case MULTI_INDEX_CONTAINER: return "multi-index-container";
-    case BIDIRECTIONAL_BTREE: return "bidirectional-btree";
-    default: assert(0); return "";
-  }
-}
-
-inline bool string_to_multi_index_container_type(const std::string& name, multi_index_container_type_t& type) {
-  if (name == "multi-index-container") {
-    type = MULTI_INDEX_CONTAINER;
-    return true;
-  }
-  if (name == "bidirectional-btree") {
-    type = BIDIRECTIONAL_BTREE;
-    return true;
-  }
-  type = BIDIRECTIONAL_BTREE;
-  return false;
-}
-
-inline std::ostream& operator<<(std::ostream& os,
-                         const multi_index_container_type_t& t) {
-  os << multi_index_container_type_to_string(t);
   return os;
 }
 
