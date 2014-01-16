@@ -30,9 +30,7 @@
 #include <sstream>
 #include <cstdio>
 #include <cassert>
-
-// TR1 includes:
-#include <tr1/cmath>     // log2
+#include "file_modes.h"
 
 // Boost includes
 #include <boost/functional/hash.hpp>
@@ -42,9 +40,6 @@
 #include "hashdb_types.h"
 #include "map_stats.hpp"
 
-// managed the mapped file during creation.  Allows for growing the 
-// mapped file.
-//
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
 template<typename KEY_T, typename PAY_T>

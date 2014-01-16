@@ -22,7 +22,8 @@
 bin_PROGRAMS = \
 	source_lookup_encoding_test \
 	map_and_multimap_test \
-	btree_bug_test
+	btree_bug_test \
+	map_manager_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -120,6 +121,7 @@ source_lookup_encoding_test_SOURCES = \
 map_and_multimap_test_SOURCES = \
 	boost_fix.hpp \
         ../map_stats.hpp \
+        ../file_modes.h \
 	../dfxml/src/dfxml_writer.h \
 	../map_red_black_tree.hpp \
 	../map_unordered_hash.hpp \
@@ -138,4 +140,8 @@ btree_bug_test_SOURCES = \
 	../multimap_btree.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	btree_bug_test.cpp
+
+map_manager_test_SOURCES = \
+	../map_manager.hpp \
+	map_manager_test.cpp
 

@@ -33,6 +33,7 @@
 #include <iostream>
 #include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 // ************************************************************
 // map type enumerators for map, multimap, and multi_index_container
 // ************************************************************
@@ -96,6 +97,7 @@ inline std::ostream& operator<<(std::ostream& os, const multimap_type_t& t) {
   os << multimap_type_to_string(t);
   return os;
 }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 // bloom
 inline std::string bloom_state_to_string(bool state) {

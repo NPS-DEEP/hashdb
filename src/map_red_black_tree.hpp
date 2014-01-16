@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Glue to red-black-tree map.
+ * Glue to map.
  */
 
 #ifndef MAP_RED_BLACK_TREE_HPP
@@ -30,9 +30,10 @@
 #include <sstream>
 #include <cstdio>
 #include <cassert>
+#include "file_modes.h"
 
 // TR1 includes:
-#include <tr1/cmath>     // log2
+//#include <tr1/cmath>     // log2
 
 // Boost includes
 #include <boost/functional/hash.hpp>
@@ -201,11 +202,23 @@ class map_red_black_tree_t {
         throw std::runtime_error("Error: change called in RO mode");
       }
 
+      // get original key
+      class map_t::const_iterator itr = map->find(key);
+      if (itr == map->end()) {
+        // the old element did not exist
+        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
+      }
+      if (itr->second == pay) {
+        // the payload value is the same
+        return std::pair<class map_t::const_iterator, bool>(itr, false);
+      }
+
       // erase the old element
       size_t num_erased = erase(key);
       if (num_erased != 1) {
-        // erase failed
-        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
+        assert(0);
+//        // erase failed
+//        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
       } else {
         // put in new
         return map->emplace(key, pay);

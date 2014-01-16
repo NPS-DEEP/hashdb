@@ -16,10 +16,9 @@
 //
 // Released into the public domain on February 25, 2013 by Bruce Allen.
 
-
 /**
  * \file
- * Glue to red-black-tree map.
+ * Glue to map.
  */
 
 #ifndef MAP_BTREE_HPP
@@ -30,9 +29,10 @@
 #include <sstream>
 #include <cstdio>
 #include <cassert>
+#include "file_modes.h"
 
 // TR1 includes:
-#include <tr1/cmath>     // log2
+//#include <tr1/cmath>     // log2
 
 // Boost includes
 #include <boost/functional/hash.hpp>
@@ -42,9 +42,6 @@
 //#include "hashdb_types.h"
 //#include "map_stats.hpp"
 
-// managed the mapped file during creation.  Allows for growing the 
-// mapped file.
-//
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
 template<typename KEY_T, typename PAY_T>
@@ -103,7 +100,7 @@ class map_btree_t {
     }
 
   public:
-    // insert
+    // emplace
     std::pair<class map_t::const_iterator, bool>
     emplace(const KEY_T& key, const PAY_T& pay) {
       if (file_mode == READ_ONLY) {
@@ -130,11 +127,23 @@ class map_btree_t {
         throw std::runtime_error("Error: change called in RO mode");
       }
 
+      // get original key
+      class map_t::const_iterator itr = map->find(key);
+      if (itr == map->end()) {
+        // the old element did not exist
+        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
+      }
+      if (itr->second == pay) {
+        // the payload value is the same
+        return std::pair<class map_t::const_iterator, bool>(itr, false);
+      }
+
       // erase the old element
       size_t num_erased = erase(key);
       if (num_erased != 1) {
-        // erase failed
-        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
+        assert(0);
+//        // erase failed
+//        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
       } else {
         // put in new
         return map->emplace(key, pay);

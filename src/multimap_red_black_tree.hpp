@@ -30,9 +30,7 @@
 #include <sstream>
 #include <cstdio>
 #include <cassert>
-
-// TR1 includes:
-#include <tr1/cmath>     // log2
+#include "file_modes.h"
 
 // Boost includes
 #include <boost/functional/hash.hpp>

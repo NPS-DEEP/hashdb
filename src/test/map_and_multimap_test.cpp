@@ -39,7 +39,7 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
-#include "hashdb_types.h"
+#include "file_modes.h"
 #include "dfxml/src/hash_t.h"
 
 static const char temp_file[] = "temp_file";
@@ -326,7 +326,6 @@ int cpp_main(int argc, char* argv[]) {
   // btree map
   run_map_tests<class map_btree_t<my_key_t, val_t> >();
 
-/*
   // ************************************************************
   // multimap
   // ************************************************************
@@ -341,7 +340,6 @@ int cpp_main(int argc, char* argv[]) {
 
   // btree multimap
   run_multimap_tests<class multimap_btree_t<my_key_t, val_t> >();
-*/
 
   // ************************************************************
   // done
