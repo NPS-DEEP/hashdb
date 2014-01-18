@@ -39,8 +39,8 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/unordered/unordered_map.hpp>
 
-#include "hashdb_types.h"
-#include "map_stats.hpp"
+//#include "hashdb_types.h"
+//#include "map_stats.hpp"
 
 // managed the multimapped file during creation.  Allows for growing the 
 // multimapped file.
@@ -72,7 +72,7 @@ class multimap_unordered_hash_t {
     const std::string filename;
     const file_mode_type_t file_mode;
     const std::string data_type_name;
-    size_t size;
+    size_t segment_size;
     size_t expected_size;
     segment_t* segment;
     allocator_t* allocator;
@@ -85,12 +85,12 @@ class multimap_unordered_hash_t {
       delete segment;
 
       // increase the file size
-      segment_t::grow(filename.c_str(), size/2);
+      segment_t::grow(filename.c_str(), segment_size/2);
 
       // open the new segment and allocator
       segment = new segment_t(boost::interprocess::open_only,
                               filename.c_str());
-      size = segment->get_size();
+      segment_size = segment->get_size();
       allocator = new allocator_t(segment->get_segment_manager());
 
       // if file isn't big enough, we need to grow the file and 
@@ -117,7 +117,7 @@ class multimap_unordered_hash_t {
           filename(p_filename)
          ,file_mode(p_file_mode)
          ,data_type_name("multimap_unordered_hash")
-         ,size(100000) 
+         ,segment_size(100000) 
          ,expected_size(100000) 
          ,segment(0)
          ,allocator(0)
@@ -127,7 +127,7 @@ class multimap_unordered_hash_t {
         // open RO
         segment = new segment_t(boost::interprocess::open_read_only,
                                 filename.c_str());
-        size = segment->get_size();
+        segment_size = segment->get_size();
         allocator = new allocator_t(segment->get_segment_manager());
         map = segment->find<map_t>(data_type_name.c_str()).first; 
 
@@ -136,14 +136,14 @@ class multimap_unordered_hash_t {
         if (file_mode == RW_NEW) {
           segment = new segment_t(boost::interprocess::create_only,
                                   filename.c_str(),
-                                  size);
+                                  segment_size);
         } else if (file_mode == RW_MODIFY) {
           segment = new segment_t(boost::interprocess::open_only,
                                   filename.c_str());
         } else {
           assert(0);
         }
-        size = segment->get_size();
+        segment_size = segment->get_size();
         allocator = new allocator_t(segment->get_segment_manager());
 
         // if file isn't big enough, we need to grow the file and 
@@ -282,11 +282,18 @@ class multimap_unordered_hash_t {
       return map->end();
     }
 
+    // number of elements
+    size_t size() {
+      return map->size();
+    }
+
+/*
     // stats
     map_stats_t get_map_stats() {
       return map_stats_t(filename, file_mode, data_type_name,
                          segment->get_size(), map->size());
     }
+*/
 };
 
 #endif

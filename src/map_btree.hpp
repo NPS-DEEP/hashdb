@@ -35,12 +35,9 @@
 //#include <tr1/cmath>     // log2
 
 // Boost includes
-#include <boost/functional/hash.hpp>
+//#include <boost/functional/hash.hpp>
 
 #include <boost/btree/btree_map.hpp>
-
-//#include "hashdb_types.h"
-//#include "map_stats.hpp"
 
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
@@ -175,10 +172,12 @@ class map_btree_t {
       return map->end();
     }
 
+/*
     // stats
     map_stats_t get_map_stats() {
       return map_stats_t(filename, file_mode, "map_btree", 0, map->size());
     }
+*/
 
     // number of elements
     size_t size() {

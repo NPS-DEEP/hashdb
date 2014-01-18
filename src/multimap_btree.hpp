@@ -33,12 +33,12 @@
 #include "file_modes.h"
 
 // Boost includes
-#include <boost/functional/hash.hpp>
+//#include <boost/functional/hash.hpp>
 
 #include <boost/btree/btree_map.hpp>
 
-#include "hashdb_types.h"
-#include "map_stats.hpp"
+//#include "hashdb_types.h"
+//#include "map_stats.hpp"
 
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory
@@ -57,7 +57,6 @@ class multimap_btree_t {
     const std::string filename;
     const file_mode_type_t file_mode;
     const std::string data_type_name;
-//    size_t size;
     map_t* map;
     
     // do not allow copy or assignment
@@ -198,10 +197,17 @@ class multimap_btree_t {
       return map->end();
     }
 
+    // number of elements
+    size_t size() {
+      return map->size();
+    }
+
+/*
     // stats
     map_stats_t get_map_stats() {
       return map_stats_t(filename, file_mode, "multimap_btree", 0, map->size());
     }
+*/
 };
 
 #endif

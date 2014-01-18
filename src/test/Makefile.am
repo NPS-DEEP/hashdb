@@ -142,6 +142,19 @@ btree_bug_test_SOURCES = \
 	btree_bug_test.cpp
 
 map_manager_test_SOURCES = \
+        ../file_modes.h \
+        ../map_types.h \
+        ../hash_algorithm_types.h \
+	../dfxml/src/dfxml_writer.h \
+	../map_red_black_tree.hpp \
+	../map_unordered_hash.hpp \
+	../map_flat_sorted_vector.hpp \
+	../map_btree.hpp \
+	../multimap_red_black_tree.hpp \
+	../multimap_unordered_hash.hpp \
+	../multimap_flat_sorted_vector.hpp \
+	../multimap_btree.hpp \
 	../map_manager.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
 	map_manager_test.cpp
 

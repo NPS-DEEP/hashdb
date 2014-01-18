@@ -1,7 +1,6 @@
 // Test to manifest the use_count bug, 1/15/2014
 
 #include "file_modes.h"
-#include "map_stats.hpp"
 #include "map_btree.hpp"
 #include <iostream>
 #include <cstdio>

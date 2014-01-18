@@ -32,19 +32,16 @@
 #include <cassert>
 #include "file_modes.h"
 
-// TR1 includes:
-//#include <tr1/cmath>     // log2
-
 // Boost includes
-#include <boost/functional/hash.hpp>
+//#include <boost/functional/hash.hpp>
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <map>
 #include <boost/interprocess/containers/flat_map.hpp>
 
-#include "hashdb_types.h"
-#include "map_stats.hpp"
+//#include "hashdb_types.h"
+//#include "map_stats.hpp"
 
 // managed the mapped file during creation.  Allows for growing the 
 // mapped file.
@@ -74,7 +71,7 @@ class map_flat_sorted_vector_t {
     const file_mode_type_t file_mode;
     const std::string data_type_name;
     size_t expected_size;  // expected size of container
-    size_t size;
+    size_t segment_size;
     segment_t* segment;
     allocator_t* allocator;
     map_t* map;
@@ -86,12 +83,12 @@ class map_flat_sorted_vector_t {
       delete segment;
 
       // increase the file size
-      segment_t::grow(filename.c_str(), size/2);
+      segment_t::grow(filename.c_str(), segment_size/2);
 
       // open the new segment and allocator
       segment = new segment_t(boost::interprocess::open_only,
                               filename.c_str());
-      size = segment->get_size();
+      segment_size = segment->get_size();
       allocator = new allocator_t(segment->get_segment_manager());
 
       // if file isn't big enough, we need to grow the file and 
@@ -120,7 +117,7 @@ class map_flat_sorted_vector_t {
          ,file_mode(p_file_mode)
          ,data_type_name("map_flat_sorted_vector")
          ,expected_size(100000) 
-         ,size(100000) 
+         ,segment_size(100000) 
          ,segment(0)
          ,allocator(0)
          ,map(0) {
@@ -129,7 +126,7 @@ class map_flat_sorted_vector_t {
         // open RO
         segment = new segment_t(boost::interprocess::open_read_only,
                                 filename.c_str());
-        size = segment->get_size();
+        segment_size = segment->get_size();
         allocator = new allocator_t(segment->get_segment_manager());
         map = segment->find<map_t>(data_type_name.c_str()).first; 
 
@@ -138,14 +135,14 @@ class map_flat_sorted_vector_t {
         if (file_mode == RW_NEW) {
           segment = new segment_t(boost::interprocess::create_only,
                                   filename.c_str(),
-                                  size);
+                                  segment_size);
         } else if (file_mode == RW_MODIFY) {
           segment = new segment_t(boost::interprocess::open_only,
                                   filename.c_str());
         } else {
           assert(0);
         }
-        size = segment->get_size();
+        segment_size = segment->get_size();
         allocator = new allocator_t(segment->get_segment_manager());
 
         // if file isn't big enough, we need to grow the file and 
@@ -263,11 +260,18 @@ class map_flat_sorted_vector_t {
       return map->end();
     }
 
+    // number of elements
+    size_t size() {
+      return map->size();
+    }
+
+/*
     // stats
     map_stats_t get_map_stats() {
       return map_stats_t(filename, file_mode, data_type_name,
                          segment->get_size(), map->size());
     }
+*/
 };
 
 #endif

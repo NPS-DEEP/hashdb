@@ -62,7 +62,6 @@ void run_map_tests() {
   typedef std::pair<class T::map_const_iterator, bool> map_pair_t;
 
   T* map;
-  map_stats_t map_stats;
   map_pair_t map_pair; 
   size_t num_erased;
   class T::map_const_iterator map_it;
@@ -79,14 +78,13 @@ void run_map_tests() {
   }
 
 // force failed test just to see the output
-//BOOST_TEST_EQ(map_stats.count_size, 1000001);
+//BOOST_TEST_EQ(map->size(), 1000001);
 
   // ************************************************************
   // RW tests
   // ************************************************************
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // add duplicate
   map_pair = map->emplace(to_key(1000005), 0);
@@ -97,24 +95,21 @@ void run_map_tests() {
   BOOST_TEST_EQ(map_pair.second, true);
 
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000001);
+  BOOST_TEST_EQ(map->size(), 1000001);
 
   // remove entry positive
   num_erased = map->erase(to_key(1000005));
   BOOST_TEST_EQ(num_erased, 1);
 
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // remove entry false
   num_erased = map->erase(to_key(1000005));
   BOOST_TEST_EQ(num_erased, 0);
 
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // change entry
   map_pair = map->change(to_key(1000006), 60);
@@ -125,8 +120,7 @@ void run_map_tests() {
   BOOST_TEST_EQ(map_pair.second, false);
 
   // check count stayed same
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // validate map integrity by looking for keys using find
   map_it = map->find(to_key(1000003));
@@ -151,8 +145,7 @@ void run_map_tests() {
   map = new T(temp_file, READ_ONLY);
 
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // validate map integrity by looking for keys
   BOOST_TEST_EQ(map->has(to_key(1000003)), true);
@@ -174,7 +167,6 @@ void run_multimap_tests() {
   typedef std::pair<class T::map_const_iterator, bool> map_pair_t;
 
   T* map;
-  map_stats_t map_stats;
   map_pair_t map_pair; 
   size_t num_erased;
   class T::map_const_iterator map_it;
@@ -196,8 +188,7 @@ void run_multimap_tests() {
   // RW tests
   // ************************************************************
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // add same key, different value
   map_pair = map->emplace(to_key(1000005), 0);
@@ -288,8 +279,7 @@ void run_multimap_tests() {
   map = new T(temp_file, READ_ONLY);
 
   // check count
-  map_stats = map->get_map_stats();
-  BOOST_TEST_EQ(map_stats.count_size, 1000000);
+  BOOST_TEST_EQ(map->size(), 1000000);
 
   // validate map integrity by looking for keys
   BOOST_TEST_EQ(map->has(to_key(1000003), 3), true);
