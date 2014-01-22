@@ -63,6 +63,7 @@ src/test/map_and_multimap_test
 src/test/map_manager_test
 src/test/btree_bug_test
 src/test/temp_file
+src/test/temp_dir
 hashdb*.tar.gz
 space
 doc/design/design.aux

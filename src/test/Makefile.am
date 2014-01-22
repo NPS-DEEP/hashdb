@@ -142,6 +142,7 @@ btree_bug_test_SOURCES = \
 	btree_bug_test.cpp
 
 map_manager_test_SOURCES = \
+	boost_fix.hpp \
         ../file_modes.h \
         ../map_types.h \
         ../hash_algorithm_types.h \

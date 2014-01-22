@@ -51,19 +51,19 @@ inline std::size_t hash_value(const sha256_t& key) {
 }
 
 // make one of these for each hash type to test
-void to_key(uint64_t i, md5_t key) {
+void to_key(uint64_t i, md5_t& key) {
   std::ostringstream ss;
   ss << std::setw(16*2) << std::setfill('0') << std::hex << i;
   key = md5_t::fromhex(ss.str());
 }
 
-void to_key(uint64_t i, sha1_t key) {
+void to_key(uint64_t i, sha1_t& key) {
   std::ostringstream ss;
   ss << std::setw(20*2) << std::setfill('0') << std::hex << i;
   key = sha1_t::fromhex(ss.str());
 }
 
-void to_key(uint64_t i, sha256_t key) {
+void to_key(uint64_t i, sha256_t& key) {
   std::ostringstream ss;
   ss << std::setw(32*2) << std::setfill('0') << std::hex << i;
   key = sha256_t::fromhex(ss.str());
@@ -92,7 +92,7 @@ void run_map_tests() {
   }
 
 // force failed test just to see the output
-//BOOST_TEST_EQ(map_stats.count_size, 101);
+//  BOOST_TEST_EQ(map_manager->size(), 101);
 
   // ************************************************************
   // RW tests
@@ -160,6 +160,7 @@ void run_map_tests() {
   to_key(203, key);
   BOOST_TEST_EQ(map_manager->has(key), false);
 
+std::cout << "about to delete map_manager.\n";
   // end RW tests
   delete map_manager;
 
@@ -327,20 +328,6 @@ void run_multimap_tests() {
 }
 */
 
-/*
-void run_temp_test() {
-  std::cout << "start run_temp_test\n";
-
-  map_manager_t<md5_t>* map_manager_md5;
-  map_manager_md5 = new map_manager_t<md5_t>(temp_dir, RW_NEW, MAP_BTREE);
-
-  map_iterator_t<md5_t> map_iterator_md5();
-
-  delete map_manager_md5;
-}
-*/
-  
-
 int cpp_main(int argc, char* argv[]) {
 
   // map tests
@@ -350,6 +337,7 @@ int cpp_main(int argc, char* argv[]) {
 
   // done
   int status = boost::report_errors();
+  std::cout << "map_manager_test done.\n";
   return status;
 }
 

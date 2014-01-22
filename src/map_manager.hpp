@@ -127,8 +127,6 @@ class map_manager_t {
        map_flat_sorted_vector(0),
        map_red_black_tree(0),
        map_unordered_hash(0) {
-return;
-/*
 
     switch(map_type) {
       case MAP_BTREE:
@@ -144,15 +142,14 @@ return;
         map_unordered_hash = new map_unordered_hash_t<T, uint64_t>(filename, file_mode);
         return;
     }
-*/
   }
 
   ~map_manager_t() {
     switch(map_type) {
-      case MAP_BTREE: delete map_btree;
-      case MAP_FLAT_SORTED_VECTOR: delete map_flat_sorted_vector;
-      case MAP_RED_BLACK_TREE: delete map_red_black_tree;
-      case MAP_UNORDERED_HASH: delete map_unordered_hash;
+      case MAP_BTREE: delete map_btree; return;
+      case MAP_FLAT_SORTED_VECTOR: delete map_flat_sorted_vector; return;
+      case MAP_RED_BLACK_TREE: delete map_red_black_tree; return;
+      case MAP_UNORDERED_HASH: delete map_unordered_hash; return;
 
       default:
         assert(0);
