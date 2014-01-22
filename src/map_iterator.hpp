@@ -35,17 +35,17 @@
 #include "map_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hash_algorithm_types.h"
-#include <boost/iterator/iterator_facade.hpp>
 #include <boost/functional/hash.hpp>
 
-template<class T>
-class map_iterator_t : public boost::iterator_facade<
-                               map_iterator_t<T>,
-                               std::pair<T, uint64_t>,
-                               boost::forward_traversal_tag
-                              > {
 //template<class T>
-//class map_iterator_t 
+//class map_iterator_t : public boost::iterator_facade<
+//                               map_iterator_t<T>,
+//                               std::pair<T, uint64_t>,
+//                               boost::forward_traversal_tag
+//                              > 
+
+template<class T>
+class map_iterator_t {
   private:
   friend class boost::iterator_core_access;
 
@@ -59,7 +59,6 @@ class map_iterator_t : public boost::iterator_facade<
                                       unordered_hash_const_iterator_t;
 
   map_type_t map_type;
-//  const bool at_end;
 
   // the four iterators, one of which will be used, depending on map_type
   btree_const_iterator_t               btree_const_iterator;
@@ -69,6 +68,52 @@ class map_iterator_t : public boost::iterator_facade<
 
   // the dereferenced value, specifically, std::pair<T, uint64_t>
   std::pair<T, uint64_t> dereferenced_value;
+
+  // elemental forward iterator accessors are increment, equal, and dereference
+  // increment
+  void increment() {
+    switch(map_type) {
+      case MAP_BTREE: dereferenced_value = *(++btree_const_iterator); return;
+      case MAP_FLAT_SORTED_VECTOR: dereferenced_value = *(++flat_sorted_vector_const_iterator); return;
+      case MAP_RED_BLACK_TREE: dereferenced_value = *(++red_black_tree_const_iterator); return;
+      case MAP_UNORDERED_HASH: dereferenced_value = *(++unordered_hash_const_iterator); return;
+      default: assert(0);
+    }
+  }
+
+  // equal
+  bool equal(map_iterator_t<T> const& other) const {
+    switch(map_type) {
+      case MAP_BTREE: return this->btree_const_iterator ==
+                             other.btree_const_iterator;
+      case MAP_FLAT_SORTED_VECTOR: return this->flat_sorted_vector_const_iterator ==
+                             other.flat_sorted_vector_const_iterator;
+      case MAP_RED_BLACK_TREE: return this-> red_black_tree_const_iterator ==
+                             other.red_black_tree_const_iterator;
+      case MAP_UNORDERED_HASH: return this-> unordered_hash_const_iterator ==
+                             other.unordered_hash_const_iterator;
+      default: assert(0);
+    }
+  }
+
+  // dereference
+  std::pair<T, uint64_t>& dereference() {
+    switch(map_type) {
+      case MAP_BTREE:
+        dereferenced_value = *btree_const_iterator;
+        return dereferenced_value;
+      case MAP_FLAT_SORTED_VECTOR:
+        dereferenced_value = *flat_sorted_vector_const_iterator;
+        return dereferenced_value;
+      case MAP_RED_BLACK_TREE:
+        dereferenced_value = *red_black_tree_const_iterator;
+        return dereferenced_value;
+      case MAP_UNORDERED_HASH:
+        dereferenced_value = *unordered_hash_const_iterator;
+        return dereferenced_value;
+      default: assert(0);
+    }
+  }
 
   public:
   // the constructors for each map type using native map iterators
@@ -86,7 +131,8 @@ class map_iterator_t : public boost::iterator_facade<
                       btree_const_iterator(),
                       flat_sorted_vector_const_iterator(p_it),
                       red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator() {
+                      unordered_hash_const_iterator(),
+                      dereferenced_value() {
   }
 
   map_iterator_t(red_black_tree_const_iterator_t p_it) :
@@ -94,7 +140,8 @@ class map_iterator_t : public boost::iterator_facade<
                       btree_const_iterator(),
                       flat_sorted_vector_const_iterator(),
                       red_black_tree_const_iterator(p_it),
-                      unordered_hash_const_iterator() {
+                      unordered_hash_const_iterator(),
+                      dereferenced_value() {
   }
 
   map_iterator_t(unordered_hash_const_iterator_t p_it) :
@@ -102,16 +149,18 @@ class map_iterator_t : public boost::iterator_facade<
                       btree_const_iterator(),
                       flat_sorted_vector_const_iterator(),
                       red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator(p_it) {
+                      unordered_hash_const_iterator(p_it),
+                      dereferenced_value() {
   }
 
-  // useless default constructor is required by std::pair
+  // this useless default constructor is required by std::pair
   map_iterator_t() :
                       map_type(MAP_BTREE),   // had to pick one
                       btree_const_iterator(),
                       flat_sorted_vector_const_iterator(),
                       red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator() {
+                      unordered_hash_const_iterator(),
+                      dereferenced_value() {
   }
 
   // copy capability is required by std::pair
@@ -121,59 +170,33 @@ class map_iterator_t : public boost::iterator_facade<
     flat_sorted_vector_const_iterator = other.flat_sorted_vector_const_iterator;
     red_black_tree_const_iterator = other.red_black_tree_const_iterator;
     unordered_hash_const_iterator = other.unordered_hash_const_iterator;
+    dereferenced_value = other.dereferenced_value; // not necessary.
     return *this;
   }
 
-/* no
-  // keep warning quiet even though this is a POD
-  ~map_iterator_t() {
+  // the Forward Iterator concept consits of ++, *, ->, ==, !=
+  map_iterator_t& operator++() {
+    increment();
+    return *this;
   }
-*/
-
-  // for iterator_facade
-  void increment() {
-    switch(map_type) {
-      case MAP_BTREE:              ++btree_const_iterator; return;
-      case MAP_FLAT_SORTED_VECTOR: ++flat_sorted_vector_const_iterator; return;
-      case MAP_RED_BLACK_TREE:     ++red_black_tree_const_iterator; return;
-      case MAP_UNORDERED_HASH:     ++unordered_hash_const_iterator; return;
-      default: assert(0);
-    }
+  map_iterator_t operator++(int) {  // c++11 delete would be better.
+    map_iterator_t temp(this);
+    increment();
+    return temp;
   }
-
-  // for iterator_facade
-  bool equal(map_iterator_t<T> const& other) const {
-    switch(map_type) {
-      case MAP_BTREE: return this->btree_const_iterator ==
-                             other.btree_const_iterator;
-      case MAP_FLAT_SORTED_VECTOR: return this->flat_sorted_vector_const_iterator ==
-                             other.flat_sorted_vector_const_iterator;
-      case MAP_RED_BLACK_TREE: return this-> red_black_tree_const_iterator ==
-                             other.red_black_tree_const_iterator;
-      case MAP_UNORDERED_HASH: return this-> unordered_hash_const_iterator ==
-                             other.unordered_hash_const_iterator;
-      default: assert(0);
-    }
+  std::pair<T, uint64_t>& operator*() {
+    dereference();
+    return dereferenced_value;
   }
-
-  // for iterator_facade
-  std::pair<T, uint64_t>& dereference() const {
-std::pair<T, uint64_t> temp;
-    switch(map_type) {
-      case MAP_BTREE:
-        temp = *btree_const_iterator; return temp;
-      case MAP_FLAT_SORTED_VECTOR:
-        temp = *flat_sorted_vector_const_iterator; return temp;
-      case MAP_RED_BLACK_TREE:
-        temp = *red_black_tree_const_iterator; return temp;
-      case MAP_UNORDERED_HASH:
-        temp = *unordered_hash_const_iterator; return temp;
-//      case MAP_BTREE: return *btree_const_iterator;
-//      case MAP_FLAT_SORTED_VECTOR: return *flat_sorted_vector_const_iterator;
-//      case MAP_RED_BLACK_TREE: return *red_black_tree_const_iterator;
-//      case MAP_UNORDERED_HASH: return *unordered_hash_const_iterator;
-      default: assert(0);
-    }
+  std::pair<T, uint64_t>* operator->() {
+    dereference();
+    return &dereferenced_value;
+  }
+  bool operator==(const map_iterator_t& other) const {
+    return equal(other);
+  }
+  bool operator!=(const map_iterator_t& other) const {
+    return !equal(other);
   }
 };
 

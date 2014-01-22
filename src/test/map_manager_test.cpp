@@ -145,10 +145,7 @@ void run_map_tests() {
   // validate map manager integrity by looking for keys using find
   to_key(103, key);
   map_it = map_manager->find(key);
-std::pair<md5_t, uint64_t> temp(*map_it);
-//uint64_t temp = map_it
   BOOST_TEST_EQ((*map_it).second, 3);
-/*
   to_key(203, key);
   map_it = map_manager->find(key); // should = map_manager->end()
 
@@ -156,7 +153,6 @@ std::pair<md5_t, uint64_t> temp(*map_it);
   // BOOST_TEST_EQ(map_it, map_manager->end());
   bool temp = (map_it == map_manager->end());
   BOOST_TEST_EQ(temp, true);
-*/
 
   // validate map manager integrity by looking for keys using has
   to_key(103, key);
@@ -182,12 +178,10 @@ std::pair<md5_t, uint64_t> temp(*map_it);
   BOOST_TEST_EQ(map_manager->has(key), false);
 
   // try to edit the RO map manager
-/*
   to_key(0, key);
   BOOST_TEST_THROWS(map_pair = map_manager->emplace(key, 0), std::runtime_error);
   BOOST_TEST_THROWS(num_erased = map_manager->erase(key), std::runtime_error);
   BOOST_TEST_THROWS(map_pair = map_manager->change(key, 0), std::runtime_error);
-*/
 
   // NOTE: btree assert failure if exit without delete.
 
