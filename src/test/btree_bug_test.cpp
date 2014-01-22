@@ -13,7 +13,7 @@ int cpp_main(int argc, char* argv[]) {
 
   map_t* map;
   size_t size __attribute__((unused));
-  map_t::map_const_iterator_bool_pair it_bool_pair; 
+  map_t::map_pair_it_bool_t pair_it_bool; 
 
   // clean up from any previous run
   remove(temp_file);
@@ -25,7 +25,7 @@ int cpp_main(int argc, char* argv[]) {
   size = map->size();
 
   // change entry invalid
-  it_bool_pair = map->change(6000006, 60);
+  pair_it_bool = map->change(6000006, 60);
 
   // check count stayed same
   size = map->size();

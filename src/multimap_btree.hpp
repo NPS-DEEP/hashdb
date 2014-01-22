@@ -50,8 +50,8 @@ class multimap_btree_t {
               KEY_T, PAY_T>                            map_t;
 
   public:
-    typedef class map_t::const_iterator map_const_iterator;
-    typedef class std::pair<map_const_iterator, map_const_iterator> map_const_iterator_range;
+    typedef class map_t::const_iterator map_const_iterator_t;
+    typedef class std::pair<map_const_iterator_t, map_const_iterator_t> map_const_iterator_range_t;
 
   private:
     const std::string filename;
@@ -97,8 +97,8 @@ class multimap_btree_t {
 
   public:
     // range for key
-    map_const_iterator_range equal_range(const KEY_T& key) const {
-      map_const_iterator_range it = map->equal_range(key);
+    map_const_iterator_range_t equal_range(const KEY_T& key) const {
+      map_const_iterator_range_t it = map->equal_range(key);
       return it;
     }
 
@@ -132,7 +132,7 @@ class multimap_btree_t {
       }
 
       // find the uniquely identified element
-      map_const_iterator_range it = map->equal_range(key);
+      map_const_iterator_range_t it = map->equal_range(key);
       typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return 0;
@@ -152,7 +152,7 @@ class multimap_btree_t {
     // find
     typename map_t::const_iterator find(const KEY_T& key, const PAY_T& pay) const {
       // find the uniquely identified element
-      map_const_iterator_range it = map->equal_range(key);
+      map_const_iterator_range_t it = map->equal_range(key);
       typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return map->end();
@@ -171,7 +171,7 @@ class multimap_btree_t {
     // has
     bool has(const KEY_T& key, const PAY_T& pay) const {
       // find the uniquely identified element
-      map_const_iterator_range it = map->equal_range(key);
+      map_const_iterator_range_t it = map->equal_range(key);
       typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
         return false;

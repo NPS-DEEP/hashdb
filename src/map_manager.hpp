@@ -37,9 +37,10 @@
 #include "map_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hash_algorithm_types.h"
-//#include "map_manager_iterator.hpp"
+#include "map_iterator.hpp"
 #include <boost/functional/hash.hpp>
 
+/*
 // provide these for the unordered hash map and multimap
 inline std::size_t hash_value(const md5_t& key) {
   return boost::hash_value<unsigned char,16>(key.digest);
@@ -50,77 +51,65 @@ inline std::size_t hash_value(const sha1_t& key) {
 inline std::size_t hash_value(const sha256_t& key) {
   return boost::hash_value<unsigned char,32>(key.digest);
 }
+*/
 
 /**
  * Provides interfaces to the hash map store that use glue to the actual
  * storage maps used.
  */
+template<class T>  // hash type used as key in maps
 class map_manager_t {
-
-  private:
-  enum storage_type_t {
-    BTREE_MD5,
-    FLAT_SORTED_VECTOR_MD5,
-    RED_BLACK_TREE_MD5,
-    UNORDERED_HASH_MD5,
-    BTREE_SHA1,
-    FLAT_SORTED_VECTOR_SHA1,
-    RED_BLACK_TREE_SHA1,
-    UNORDERED_HASH_SHA1,
-    BTREE_SHA256,
-    FLAT_SORTED_VECTOR_SHA256,
-    RED_BLACK_TREE_SHA256,
-    UNORDERED_HASH_SHA256
-  };
-
-  // get storage type for internal usage
-  static storage_type_t get_storage_type(map_type_t map_type, hash_algorithm_type_t hash_algorithm_type) {
-    if (map_type == MAP_BTREE && hash_algorithm_type == HASH_ALGORITHM_MD5) return BTREE_MD5;
-    if (map_type == MAP_FLAT_SORTED_VECTOR && hash_algorithm_type == HASH_ALGORITHM_MD5) return FLAT_SORTED_VECTOR_MD5;
-    if (map_type == MAP_RED_BLACK_TREE && hash_algorithm_type == HASH_ALGORITHM_MD5) return RED_BLACK_TREE_MD5;
-    if (map_type == MAP_UNORDERED_HASH && hash_algorithm_type == HASH_ALGORITHM_MD5) return UNORDERED_HASH_MD5;
-
-    if (map_type == MAP_BTREE && hash_algorithm_type == HASH_ALGORITHM_SHA1) return BTREE_SHA1;
-    if (map_type == MAP_FLAT_SORTED_VECTOR && hash_algorithm_type == HASH_ALGORITHM_SHA1) return FLAT_SORTED_VECTOR_SHA1;
-    if (map_type == MAP_RED_BLACK_TREE && hash_algorithm_type == HASH_ALGORITHM_SHA1) return RED_BLACK_TREE_SHA1;
-    if (map_type == MAP_UNORDERED_HASH && hash_algorithm_type == HASH_ALGORITHM_SHA1) return UNORDERED_HASH_SHA1;
-
-    if (map_type == MAP_BTREE && hash_algorithm_type == HASH_ALGORITHM_SHA256) return BTREE_SHA256;
-    if (map_type == MAP_FLAT_SORTED_VECTOR && hash_algorithm_type == HASH_ALGORITHM_SHA256) return FLAT_SORTED_VECTOR_SHA256;
-    if (map_type == MAP_RED_BLACK_TREE && hash_algorithm_type == HASH_ALGORITHM_SHA256) return RED_BLACK_TREE_SHA256;
-    if (map_type == MAP_UNORDERED_HASH && hash_algorithm_type == HASH_ALGORITHM_SHA256) return UNORDERED_HASH_SHA256;
-
-    assert(0);
-  }
 
   // hash_map_manager properties
   const std::string filename;
   const file_mode_type_t file_mode;
-  const storage_type_t storage_type;
+  const map_type_t map_type;
 
-public:
-  // md5 map models
-  map_btree_t<md5_t, uint64_t>*                 map_btree_md5;
-  map_flat_sorted_vector_t<md5_t, uint64_t>*    map_flat_sorted_vector_md5;
-  map_red_black_tree_t<md5_t, uint64_t>*        map_red_black_tree_md5;
-  map_unordered_hash_t<md5_t, uint64_t>*        map_unordered_hash_md5;
+  // map models
+  map_btree_t<T, uint64_t>*                 map_btree;
+  map_flat_sorted_vector_t<T, uint64_t>*    map_flat_sorted_vector;
+  map_red_black_tree_t<T, uint64_t>*        map_red_black_tree;
+  map_unordered_hash_t<T, uint64_t>*        map_unordered_hash;
 
-  // sha1 map models
-  map_btree_t<sha1_t, uint64_t>*                map_btree_sha1;
-  map_flat_sorted_vector_t<sha1_t, uint64_t>*   map_flat_sorted_vector_sha1;
-  map_red_black_tree_t<sha1_t, uint64_t>*       map_red_black_tree_sha1;
-  map_unordered_hash_t<sha1_t, uint64_t>*       map_unordered_hash_sha1;
-
-  // sha256 map models
-  map_btree_t<sha256_t, uint64_t>*              map_btree_sha256;
-  map_flat_sorted_vector_t<sha256_t, uint64_t>* map_flat_sorted_vector_sha256;
-  map_red_black_tree_t<sha256_t, uint64_t>*     map_red_black_tree_sha256;
-  map_unordered_hash_t<sha256_t, uint64_t>*     map_unordered_hash_sha256;
-private:
-
-  // disallow copy and assignment methods
+  // disallow copy and assignment
   map_manager_t(const map_manager_t&);
   map_manager_t& operator=(const map_manager_t&);
+
+  // helper to translate a specific iterator, bool pair to a generic pair
+  std::pair<map_iterator_t<T>, bool> map_pair(
+          class map_btree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+//class map_btree_t<T, uint64_t>::map_pair_it_bool_t temp_pair = pair_it_bool;
+
+    // make generic iterator from specific iterator
+    map_iterator_t<T> map_it(pair_it_bool.first);
+    // make generic pair from generic iterator and specific bool
+    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
+    return generic_pair;
+  }
+  std::pair<map_iterator_t<T>, bool> map_pair(
+          class map_flat_sorted_vector_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+    // make generic iterator from specific iterator
+    map_iterator_t<T> map_it(pair_it_bool.first);
+    // make generic pair from generic iterator and specific bool
+    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
+    return generic_pair;
+  }
+  std::pair<map_iterator_t<T>, bool> map_pair(
+          class map_red_black_tree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+    // make generic iterator from specific iterator
+    map_iterator_t<T> map_it(pair_it_bool.first);
+    // make generic pair from generic iterator and specific bool
+    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
+    return generic_pair;
+  }
+  std::pair<map_iterator_t<T>, bool> map_pair(
+          class map_unordered_hash_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+    // make generic iterator from specific iterator
+    map_iterator_t<T> map_it(pair_it_bool.first);
+    // make generic pair from generic iterator and specific bool
+    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
+    return generic_pair;
+  }
 
   public:
 
@@ -129,255 +118,125 @@ private:
    */
   map_manager_t (const std::string& p_hashdb_dir,
                  file_mode_type_t p_file_mode,
-                 map_type_t p_map_type,
-                 hash_algorithm_type_t p_hash_algorithm_type) :
+                 map_type_t p_map_type) :
        filename(p_hashdb_dir + "/hash_store"),
        file_mode(p_file_mode),
-       storage_type(get_storage_type(p_map_type, p_hash_algorithm_type)),
+       map_type(p_map_type),
 
-       map_btree_md5(0),
-       map_flat_sorted_vector_md5(0),
-       map_red_black_tree_md5(0),
-       map_unordered_hash_md5(0),
-       map_btree_sha1(0),
-       map_flat_sorted_vector_sha1(0),
-       map_red_black_tree_sha1(0),
-       map_unordered_hash_sha1(0),
-       map_btree_sha256(0),
-       map_flat_sorted_vector_sha256(0),
-       map_red_black_tree_sha256(0),
-       map_unordered_hash_sha256(0) {
+       map_btree(0),
+       map_flat_sorted_vector(0),
+       map_red_black_tree(0),
+       map_unordered_hash(0) {
+return;
+/*
 
-    switch(storage_type) {
-      case BTREE_MD5:
-           map_btree_md5 = new map_btree_t<md5_t, uint64_t>(filename, file_mode); return;
-      case FLAT_SORTED_VECTOR_MD5:
-           map_flat_sorted_vector_md5 = new map_flat_sorted_vector_t<md5_t, uint64_t>(filename, file_mode); return;
-      case RED_BLACK_TREE_MD5:
-           map_red_black_tree_md5 = new map_red_black_tree_t<md5_t, uint64_t>(filename, file_mode); return;
-      case UNORDERED_HASH_MD5:
-           map_unordered_hash_md5 = new map_unordered_hash_t<md5_t, uint64_t>(filename, file_mode); return;
-
-      case BTREE_SHA1:
-           map_btree_sha1 = new map_btree_t<sha1_t, uint64_t>(filename, file_mode); return;
-      case FLAT_SORTED_VECTOR_SHA1:
-           map_flat_sorted_vector_sha1 = new map_flat_sorted_vector_t<sha1_t, uint64_t>(filename, file_mode); return;
-      case RED_BLACK_TREE_SHA1:
-           map_red_black_tree_sha1 = new map_red_black_tree_t<sha1_t, uint64_t>(filename, file_mode); return;
-      case UNORDERED_HASH_SHA1:
-           map_unordered_hash_sha1 = new map_unordered_hash_t<sha1_t, uint64_t>(filename, file_mode); return;
-
-      case BTREE_SHA256:
-           map_btree_sha256 = new map_btree_t<sha256_t, uint64_t>(filename, file_mode); return;
-      case FLAT_SORTED_VECTOR_SHA256:
-           map_flat_sorted_vector_sha256 = new map_flat_sorted_vector_t<sha256_t, uint64_t>(filename, file_mode); return;
-      case RED_BLACK_TREE_SHA256:
-           map_red_black_tree_sha256 = new map_red_black_tree_t<sha256_t, uint64_t>(filename, file_mode); return;
-      case UNORDERED_HASH_SHA256:
-           map_unordered_hash_sha256 = new map_unordered_hash_t<sha256_t, uint64_t>(filename, file_mode); return;
-
-      default:
-        assert(0);
+    switch(map_type) {
+      case MAP_BTREE:
+        map_btree = new map_btree_t<T, uint64_t>(filename, file_mode);
+        return;
+      case MAP_FLAT_SORTED_VECTOR:
+        map_flat_sorted_vector = new map_flat_sorted_vector_t<T, uint64_t>(filename, file_mode);
+        return;
+      case MAP_RED_BLACK_TREE:
+        map_red_black_tree = new map_red_black_tree_t<T, uint64_t>(filename, file_mode);
+        return;
+      case MAP_UNORDERED_HASH:
+        map_unordered_hash = new map_unordered_hash_t<T, uint64_t>(filename, file_mode);
+        return;
     }
+*/
   }
 
   ~map_manager_t() {
-    switch(storage_type) {
-      case BTREE_MD5: delete map_btree_md5; return;
-      case FLAT_SORTED_VECTOR_MD5: delete map_flat_sorted_vector_md5; return;
-      case RED_BLACK_TREE_MD5: delete map_red_black_tree_md5; return;
-      case UNORDERED_HASH_MD5: delete map_unordered_hash_md5; return;
-
-      case BTREE_SHA1: delete map_btree_sha1; return;
-      case FLAT_SORTED_VECTOR_SHA1: delete map_flat_sorted_vector_sha1; return;
-      case RED_BLACK_TREE_SHA1: delete map_red_black_tree_sha1; return;
-      case UNORDERED_HASH_SHA1: delete map_unordered_hash_sha1; return;
-
-      case BTREE_SHA256: delete map_btree_sha256; return;
-      case FLAT_SORTED_VECTOR_SHA256: delete map_flat_sorted_vector_sha256; return;
-      case RED_BLACK_TREE_SHA256: delete map_red_black_tree_sha256; return;
-      case UNORDERED_HASH_SHA256: delete map_unordered_hash_sha256; return;
+    switch(map_type) {
+      case MAP_BTREE: delete map_btree;
+      case MAP_FLAT_SORTED_VECTOR: delete map_flat_sorted_vector;
+      case MAP_RED_BLACK_TREE: delete map_red_black_tree;
+      case MAP_UNORDERED_HASH: delete map_unordered_hash;
 
       default:
         assert(0);
     }
   }
 
-/*
-  // insert
-  std::pair<map_manager_iterator_md5, bool> insert(const& md5_t md5, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->insert(md5, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->insert(md5, source_lookup_encoding);
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->insert(md5, source_lookup_encoding);
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->insert(md5, source_lookup_encoding);
+  // emplace
+  // return pair from composed map iterator and actual map's bool
+  std::pair<map_iterator_t<T>, bool> emplace(const T& key, uint64_t source_lookup_encoding) {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_pair(map_btree->emplace(key, source_lookup_encoding));
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_pair(map_flat_sorted_vector->emplace(key, source_lookup_encoding));
+      case MAP_RED_BLACK_TREE:
+        return map_pair(map_red_black_tree->emplace(key, source_lookup_encoding));
+      case MAP_UNORDERED_HASH:
+        return map_pair(map_unordered_hash->emplace(key, source_lookup_encoding));
 
       default:
         assert(0);
     }
   }
-  std::pair<map_manager_iterator_sha1, bool> insert(const& sha1_t sha1, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_SHA1: return map_btree_sha1->insert(sha1, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->insert(sha1, source_lookup_encoding);
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->insert(sha1, source_lookup_encoding);
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->insert(sha1, source_lookup_encoding);
-
-      default:
-        assert(0);
-    }
-  }
-  std::pair<map_manager_iterator_sha256, bool> insert(const& sha256_t sha256, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_SHA256: return map_btree_sha256->insert(sha256, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->insert(sha256, source_lookup_encoding);
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->insert(sha256, source_lookup_encoding);
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->insert(sha256, source_lookup_encoding);
-
-      default:
-        assert(0);
-    }
-  }
-*/
 
   // erase
-  size_t erase(const md5_t& key) {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->erase(key);
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->erase(key);
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->erase(key);
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->erase(key);
-
-      default:
-        assert(0);
-    }
-  }
-  size_t erase(const sha1_t& key) {
-    switch(storage_type) {
-      case BTREE_SHA1: return map_btree_sha1->erase(key);
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->erase(key);
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->erase(key);
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->erase(key);
-
-      default:
-        assert(0);
-    }
-  }
-  size_t erase(const sha256_t& key) {
-    switch(storage_type) {
-      case BTREE_SHA256: return map_btree_sha256->erase(key);
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->erase(key);
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->erase(key);
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->erase(key);
+  size_t erase(const T& key) {
+    switch(map_type) {
+      case MAP_BTREE: return map_btree->erase(key);
+      case MAP_FLAT_SORTED_VECTOR: return map_flat_sorted_vector->erase(key);
+      case MAP_RED_BLACK_TREE: return map_red_black_tree->erase(key);
+      case MAP_UNORDERED_HASH: return map_unordered_hash->erase(key);
 
       default:
         assert(0);
     }
   }
 
-/*
   // change
-  std::pair<map_manager_iterator_md5, bool> change(const& md5_t md5, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->change(md5, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->change(md5, source_lookup_encoding);
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->change(md5, source_lookup_encoding);
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->change(md5, source_lookup_encoding);
+  // return pair from composed map iterator and actual map's bool
+  std::pair<map_iterator_t<T>, bool> change(const T& key, uint64_t source_lookup_encoding) {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_pair(map_btree->change(key, source_lookup_encoding));
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_pair(map_flat_sorted_vector->change(key, source_lookup_encoding));
+      case MAP_RED_BLACK_TREE:
+        return map_pair(map_red_black_tree->change(key, source_lookup_encoding));
+      case MAP_UNORDERED_HASH:
+        return map_pair(map_unordered_hash->change(key, source_lookup_encoding));
 
       default:
         assert(0);
     }
   }
-  std::pair<map_manager_iterator_sha1, bool> change(const& sha1_t sha1, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_SHA1: return map_btree_sha1->change(sha1, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->change(sha1, source_lookup_encoding);
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->change(sha1, source_lookup_encoding);
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->change(sha1, source_lookup_encoding);
 
-      default:
-        assert(0);
-    }
-  }
-  std::pair<map_manager_iterator_sha256, bool> change(const& sha256_t sha256, uint64_t source_lookup_encoding) {
-    switch(storage_type) {
-      case BTREE_SHA256: return map_btree_sha256->change(sha256, source_lookup_encoding);
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->change(sha256, source_lookup_encoding);
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->change(sha256, source_lookup_encoding);
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->change(sha256, source_lookup_encoding);
 
-      default:
-        assert(0);
-    }
-  }
-*/
-
-/*
   // find
-  map_manager_iterator_md5 find(const md5_t& pay) {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->find(pay);
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->find(pay);
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->find(pay);
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->find(pay);
+  map_iterator_t<T> find(const T& key) {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_iterator_t<T>(map_btree->find(key));
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_iterator_t<T>(map_flat_sorted_vector->find(key));
+      case MAP_RED_BLACK_TREE:
+        return map_iterator_t<T>(map_red_black_tree->find(key));
+      case MAP_UNORDERED_HASH:
+        return map_iterator_t<T>(map_unordered_hash->find(key));
 
       default:
         assert(0);
     }
   }
-  map_manager_iterator_sha1 find(const sha1_t& pay) {
-    switch(storage_type) {
-      case BTREE_SHA1: return map_btree_sha1->find(pay);
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->find(pay);
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->find(pay);
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->find(pay);
-
-      default:
-        assert(0);
-    }
-  }
-  map_manager_iterator_sha256 find(const sha256_t& pay) {
-    switch(storage_type) {
-      case BTREE_SHA256: return map_btree_sha256->find(pay);
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->find(pay);
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->find(pay);
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->find(pay);
-
-      default:
-        assert(0);
-    }
-  }
-*/
 
   // has
-  bool has(const md5_t& pay) {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->has(pay);
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->has(pay);
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->has(pay);
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->has(pay);
-
-      default:
-        assert(0);
-    }
-  }
-  bool has(const sha1_t& pay) {
-    switch(storage_type) {
-      case BTREE_SHA1: return map_btree_sha1->has(pay);
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->has(pay);
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->has(pay);
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->has(pay);
-
-      default:
-        assert(0);
-    }
-  }
-  bool has(const sha256_t& pay) {
-    switch(storage_type) {
-      case BTREE_SHA256: return map_btree_sha256->has(pay);
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->has(pay);
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->has(pay);
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->has(pay);
+  bool has(const T& key) {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_btree->has(key);
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_flat_sorted_vector->has(key);
+      case MAP_RED_BLACK_TREE:
+        return map_red_black_tree->has(key);
+      case MAP_UNORDERED_HASH:
+        return map_unordered_hash->has(key);
 
       default:
         assert(0);
@@ -386,21 +245,15 @@ private:
 
   // size
   size_t size() {
-    switch(storage_type) {
-      case BTREE_MD5: return map_btree_md5->size();
-      case FLAT_SORTED_VECTOR_MD5: return map_flat_sorted_vector_md5->size();
-      case RED_BLACK_TREE_MD5: return map_red_black_tree_md5->size();
-      case UNORDERED_HASH_MD5: return map_unordered_hash_md5->size();
-
-      case BTREE_SHA1: return map_btree_sha1->size();
-      case FLAT_SORTED_VECTOR_SHA1: return map_flat_sorted_vector_sha1->size();
-      case RED_BLACK_TREE_SHA1: return map_red_black_tree_sha1->size();
-      case UNORDERED_HASH_SHA1: return map_unordered_hash_sha1->size();
-
-      case BTREE_SHA256: return map_btree_sha256->size();
-      case FLAT_SORTED_VECTOR_SHA256: return map_flat_sorted_vector_sha256->size();
-      case RED_BLACK_TREE_SHA256: return map_red_black_tree_sha256->size();
-      case UNORDERED_HASH_SHA256: return map_unordered_hash_sha256->size();
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_btree->size();
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_flat_sorted_vector->size();
+      case MAP_RED_BLACK_TREE:
+        return map_red_black_tree->size();
+      case MAP_UNORDERED_HASH:
+        return map_unordered_hash->size();
 
       default:
         assert(0);
@@ -431,8 +284,38 @@ inline std::ostream& operator<<(std::ostream& os,
   }
 */
 
-//  const begin() const;
-//  const end() const;
+  // begin
+  map_iterator_t<T> const begin() const {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_iterator_t<T>(map_btree->begin());
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_iterator_t<T>(map_flat_sorted_vector->begin());
+      case MAP_RED_BLACK_TREE:
+        return map_iterator_t<T>(map_red_black_tree->begin());
+      case MAP_UNORDERED_HASH:
+        return map_iterator_t<T>(map_unordered_hash->begin());
 
+      default:
+        assert(0);
+    }
+  }
+
+  // end
+  map_iterator_t<T> const end() const {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_iterator_t<T>(map_btree->end());
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_iterator_t<T>(map_flat_sorted_vector->end());
+      case MAP_RED_BLACK_TREE:
+        return map_iterator_t<T>(map_red_black_tree->end());
+      case MAP_UNORDERED_HASH:
+        return map_iterator_t<T>(map_unordered_hash->end());
+
+      default:
+        assert(0);
+    }
+  }
 };
 #endif

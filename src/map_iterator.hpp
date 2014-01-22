@@ -39,32 +39,27 @@
 #include <boost/functional/hash.hpp>
 
 template<class T>
-class map_iterator__ : public boost::iterator_facade<
-                               map_iterator__<T>,
+class map_iterator_t : public boost::iterator_facade<
+                               map_iterator_t<T>,
                                std::pair<T, uint64_t>,
                                boost::forward_traversal_tag
                               > {
 //template<class T>
-//class map_iterator__ {
+//class map_iterator_t 
   private:
   friend class boost::iterator_core_access;
 
-  typedef map_btree_t<T, uint64_t>                  btree_t;
-  typedef map_flat_sorted_vector_t<T, uint64_t>     flat_sorted_vector_t;
-  typedef map_red_black_tree_t<T, uint64_t>         red_black_tree_t;
-  typedef map_unordered_hash_t<T, uint64_t>         unordered_hash_t;
+  typedef typename map_btree_t<T, uint64_t>::map_const_iterator_t
+                                      btree_const_iterator_t;
+  typedef typename map_flat_sorted_vector_t<T, uint64_t>::map_const_iterator_t
+                                      flat_sorted_vector_const_iterator_t;
+  typedef typename map_red_black_tree_t<T, uint64_t>::map_const_iterator_t
+                                      red_black_tree_const_iterator_t;
+  typedef typename map_unordered_hash_t<T, uint64_t>::map_const_iterator_t
+                                      unordered_hash_const_iterator_t;
 
-  typedef typename btree_t::map_const_iterator
-                                     btree_const_iterator_t;
-  typedef typename flat_sorted_vector_t::map_const_iterator
-                                     flat_sorted_vector_const_iterator_t;
-  typedef typename red_black_tree_t::map_const_iterator
-                                     red_black_tree_const_iterator_t;
-  typedef typename unordered_hash_t::map_const_iterator
-                                     unordered_hash_const_iterator_t;
-
-  const map_type_t map_type;
-  const bool at_end;
+  map_type_t map_type;
+//  const bool at_end;
 
   // the four iterators, one of which will be used, depending on map_type
   btree_const_iterator_t               btree_const_iterator;
@@ -72,53 +67,68 @@ class map_iterator__ : public boost::iterator_facade<
   red_black_tree_const_iterator_t      red_black_tree_const_iterator;
   unordered_hash_const_iterator_t      unordered_hash_const_iterator;
 
+  // the dereferenced value, specifically, std::pair<T, uint64_t>
+  std::pair<T, uint64_t> dereferenced_value;
+
   public:
-  map_iterator__(const map_type_t p_map_type,
-                 const bool p_at_end,
-                 const btree_t*              p_map_btree,
-                 const flat_sorted_vector_t* p_map_flat_sorted_vector,
-                 const red_black_tree_t*     p_map_red_black_tree,
-                 const unordered_hash_t*     p_map_unordered_hash) :
-                          map_type(p_map_type),
-                          at_end(p_at_end),
-                          btree_const_iterator(),
-                          flat_sorted_vector_const_iterator(),
-                          red_black_tree_const_iterator(),
-                          unordered_hash_const_iterator() {
-
-    if (!at_end) {
-      // set to begin
-      switch(map_type) {
-        case MAP_BTREE: btree_const_iterator =
-                          p_map_btree->begin(); return;
-        case MAP_FLAT_SORTED_VECTOR: flat_sorted_vector_const_iterator =
-                          p_map_flat_sorted_vector->begin(); return;
-        case MAP_RED_BLACK_TREE: red_black_tree_const_iterator =
-                          p_map_red_black_tree->begin(); return;
-        case MAP_UNORDERED_HASH: unordered_hash_const_iterator =
-                          p_map_unordered_hash->begin(); return;
-        default: assert(0);
-      }
-
-    } else {
-      // set to end
-      switch(map_type) {
-        case MAP_BTREE: btree_const_iterator =
-                          p_map_btree->end(); return;
-        case MAP_FLAT_SORTED_VECTOR: flat_sorted_vector_const_iterator =
-                          p_map_flat_sorted_vector->end(); return;
-        case MAP_RED_BLACK_TREE: red_black_tree_const_iterator =
-                          p_map_red_black_tree->end(); return;
-        case MAP_UNORDERED_HASH: unordered_hash_const_iterator =
-                          p_map_unordered_hash->end(); return;
-        default: assert(0);
-      }
-    }
+  // the constructors for each map type using native map iterators
+  map_iterator_t(btree_const_iterator_t p_it) :
+                      map_type(MAP_BTREE),
+                      btree_const_iterator(p_it),
+                      flat_sorted_vector_const_iterator(),
+                      red_black_tree_const_iterator(),
+                      unordered_hash_const_iterator(),
+                      dereferenced_value() {
   }
 
+  map_iterator_t(flat_sorted_vector_const_iterator_t p_it) :
+                      map_type(MAP_FLAT_SORTED_VECTOR),
+                      btree_const_iterator(),
+                      flat_sorted_vector_const_iterator(p_it),
+                      red_black_tree_const_iterator(),
+                      unordered_hash_const_iterator() {
+  }
+
+  map_iterator_t(red_black_tree_const_iterator_t p_it) :
+                      map_type(MAP_RED_BLACK_TREE),
+                      btree_const_iterator(),
+                      flat_sorted_vector_const_iterator(),
+                      red_black_tree_const_iterator(p_it),
+                      unordered_hash_const_iterator() {
+  }
+
+  map_iterator_t(unordered_hash_const_iterator_t p_it) :
+                      map_type(MAP_UNORDERED_HASH),
+                      btree_const_iterator(),
+                      flat_sorted_vector_const_iterator(),
+                      red_black_tree_const_iterator(),
+                      unordered_hash_const_iterator(p_it) {
+  }
+
+  // useless default constructor is required by std::pair
+  map_iterator_t() :
+                      map_type(MAP_BTREE),   // had to pick one
+                      btree_const_iterator(),
+                      flat_sorted_vector_const_iterator(),
+                      red_black_tree_const_iterator(),
+                      unordered_hash_const_iterator() {
+  }
+
+  // copy capability is required by std::pair
+  map_iterator_t& operator=(const map_iterator_t& other) {
+    map_type = other.map_type;
+    btree_const_iterator = other.btree_const_iterator;
+    flat_sorted_vector_const_iterator = other.flat_sorted_vector_const_iterator;
+    red_black_tree_const_iterator = other.red_black_tree_const_iterator;
+    unordered_hash_const_iterator = other.unordered_hash_const_iterator;
+    return *this;
+  }
+
+/* no
   // keep warning quiet even though this is a POD
-  ~map_iterator__() {
+  ~map_iterator_t() {
   }
+*/
 
   // for iterator_facade
   void increment() {
@@ -132,7 +142,7 @@ class map_iterator__ : public boost::iterator_facade<
   }
 
   // for iterator_facade
-  bool equal(map_iterator__<T> const& other) const {
+  bool equal(map_iterator_t<T> const& other) const {
     switch(map_type) {
       case MAP_BTREE: return this->btree_const_iterator ==
                              other.btree_const_iterator;
@@ -148,19 +158,30 @@ class map_iterator__ : public boost::iterator_facade<
 
   // for iterator_facade
   std::pair<T, uint64_t>& dereference() const {
+std::pair<T, uint64_t> temp;
     switch(map_type) {
-      case MAP_BTREE: return *btree_const_iterator;
-      case MAP_FLAT_SORTED_VECTOR: return *flat_sorted_vector_const_iterator;
-      case MAP_RED_BLACK_TREE: return *red_black_tree_const_iterator;
-      case MAP_UNORDERED_HASH: return *unordered_hash_const_iterator;
+      case MAP_BTREE:
+        temp = *btree_const_iterator; return temp;
+      case MAP_FLAT_SORTED_VECTOR:
+        temp = *flat_sorted_vector_const_iterator; return temp;
+      case MAP_RED_BLACK_TREE:
+        temp = *red_black_tree_const_iterator; return temp;
+      case MAP_UNORDERED_HASH:
+        temp = *unordered_hash_const_iterator; return temp;
+//      case MAP_BTREE: return *btree_const_iterator;
+//      case MAP_FLAT_SORTED_VECTOR: return *flat_sorted_vector_const_iterator;
+//      case MAP_RED_BLACK_TREE: return *red_black_tree_const_iterator;
+//      case MAP_UNORDERED_HASH: return *unordered_hash_const_iterator;
       default: assert(0);
     }
   }
 };
 
+/*
 typedef map_iterator__<md5_t> map_iterator_md5_t;
 typedef map_iterator__<sha1_t> map_iterator_sha1_t;
 typedef map_iterator__<sha256_t> map_iterator_sha256_t;
+*/
 
 #endif
 

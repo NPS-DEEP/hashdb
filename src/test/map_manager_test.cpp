@@ -39,6 +39,17 @@
 static const char temp_dir[] = "temp_dir";
 static const char temp_file[] = "temp_dir/temp_file";
 
+// provide these for the unordered hash map and multimap
+inline std::size_t hash_value(const md5_t& key) {
+  return boost::hash_value<unsigned char,16>(key.digest);
+}
+inline std::size_t hash_value(const sha1_t& key) {
+  return boost::hash_value<unsigned char,20>(key.digest);
+}
+inline std::size_t hash_value(const sha256_t& key) {
+  return boost::hash_value<unsigned char,32>(key.digest);
+}
+
 // make one of these for each hash type to test
 void to_key(uint64_t i, md5_t key) {
   std::ostringstream ss;
@@ -62,25 +73,22 @@ template<typename T>
 void run_map_tests() {
 
   T key;
-  map_manager_t* map_manager;
-/*
-  std::pair<map_manager_iterator_md5_t, bool> map_pair_t
-  map_pair_t map_pair
-*/
+  map_manager_t<md5_t>* map_manager;
+  typedef std::pair<map_iterator_t<T>, bool> map_pair_t;
+  map_pair_t map_pair;
   size_t num_erased;
+  class map_iterator_t<md5_t> map_it;
 
   // clean up from any previous run
   remove(temp_file);
 
   // create new map manager
-  map_manager = new map_manager_t(temp_dir, RW_NEW, MAP_BTREE, HASH_ALGORITHM_MD5);
+  map_manager = new map_manager_t<md5_t>(temp_dir, RW_NEW, MAP_BTREE);
 
   // populate with 100 entries
   for (uint64_t n=0; n< 100; ++n) {
     to_key(n+100, key);
-/*
     map_manager->emplace(key, n);
-*/
   }
 
 // force failed test just to see the output
@@ -92,7 +100,6 @@ void run_map_tests() {
   // check count
   BOOST_TEST_EQ(map_manager->size(), 100);
 
-/*
   // add duplicate
   to_key(105, key);
   map_pair = map_manager->emplace(key, 0);
@@ -102,7 +109,6 @@ void run_map_tests() {
   to_key(205, key);
   map_pair = map_manager->emplace(key, 0);
   BOOST_TEST_EQ(map_pair.second, true);
-*/
 
   // check count
   BOOST_TEST_EQ(map_manager->size(), 101);
@@ -123,7 +129,6 @@ void run_map_tests() {
   // check count
   BOOST_TEST_EQ(map_manager->size(), 100);
 
-/*
   // change entry
   to_key(106, key);
   map_pair = map_manager->change(key, 60);
@@ -133,16 +138,17 @@ void run_map_tests() {
   to_key(106, key);
   map_pair = map_manager->change(key, 60);
   BOOST_TEST_EQ(map_pair.second, false);
-*/
 
   // check count stayed same
   BOOST_TEST_EQ(map_manager->size(), 100);
 
-/*
   // validate map manager integrity by looking for keys using find
   to_key(103, key);
   map_it = map_manager->find(key);
-  BOOST_TEST_EQ(map_it->second, 3);
+std::pair<md5_t, uint64_t> temp(*map_it);
+//uint64_t temp = map_it
+  BOOST_TEST_EQ((*map_it).second, 3);
+/*
   to_key(203, key);
   map_it = map_manager->find(key); // should = map_manager->end()
 
@@ -164,7 +170,7 @@ void run_map_tests() {
   // ************************************************************
   // RO tests
   // ************************************************************
-  map_manager = new map_manager_t(temp_dir, READ_ONLY, MAP_BTREE, HASH_ALGORITHM_MD5);
+  map_manager = new map_manager_t<md5_t>(temp_dir, READ_ONLY, MAP_BTREE);
 
   // check count
   BOOST_TEST_EQ(map_manager->size(), 100);
@@ -327,27 +333,25 @@ void run_multimap_tests() {
 }
 */
 
+/*
 void run_temp_test() {
+  std::cout << "start run_temp_test\n";
 
-  map_manager_t* map_manager;
-  map_manager = new map_manager_t(
-                          temp_dir, RW_NEW, MAP_BTREE, HASH_ALGORITHM_MD5);
+  map_manager_t<md5_t>* map_manager_md5;
+  map_manager_md5 = new map_manager_t<md5_t>(temp_dir, RW_NEW, MAP_BTREE);
 
-  map_iterator_md5_t map_iterator_md5(MAP_BTREE, false,
-                                    map_manager->map_btree_md5,
-                                    map_manager->map_flat_sorted_vector_md5,
-                                    map_manager->map_red_black_tree_md5,
-                                    map_manager->map_unordered_hash_md5);
+  map_iterator_t<md5_t> map_iterator_md5();
 
-  delete map_manager;
+  delete map_manager_md5;
 }
+*/
   
 
 int cpp_main(int argc, char* argv[]) {
 
   // map tests
-  run_temp_test();
-//  run_map_tests<md5_t>();
+//  run_temp_test();
+  run_map_tests<md5_t>();
 //  run_map_tests<sha1_t>();
 
   // done

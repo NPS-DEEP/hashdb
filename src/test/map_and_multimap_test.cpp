@@ -59,12 +59,12 @@ inline std::size_t hash_value(const md5_t& md5) {
 
 template<typename T>
 void run_map_tests() {
-  typedef std::pair<class T::map_const_iterator, bool> map_pair_t;
+  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
 
   T* map;
   map_pair_t map_pair; 
   size_t num_erased;
-  class T::map_const_iterator map_it;
+  class T::map_const_iterator_t map_it;
 
   // clean up from any previous run
   remove(temp_file);
@@ -164,14 +164,14 @@ void run_map_tests() {
 
 template<typename T>
 void run_multimap_tests() {
-  typedef std::pair<class T::map_const_iterator, bool> map_pair_t;
+  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
 
   T* map;
   map_pair_t map_pair; 
   size_t num_erased;
-  class T::map_const_iterator map_it;
-  class T::map_const_iterator end_it;
-  class T::map_const_iterator_range map_it_range;
+  class T::map_const_iterator_t map_it;
+  class T::map_const_iterator_t end_it;
+  class T::map_const_iterator_range_t map_it_range;
 
   // clean up from any previous run
   remove(temp_file);

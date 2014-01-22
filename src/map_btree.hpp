@@ -49,10 +49,10 @@ class map_btree_t {
 
   public:
     // btree map iterator
-    typedef class map_t::const_iterator map_const_iterator;
+    typedef class map_t::const_iterator map_const_iterator_t;
 
     // pair returned by emplace
-    typedef class std::pair<map_const_iterator, bool> map_const_iterator_bool_pair;
+    typedef class std::pair<map_const_iterator_t, bool> map_pair_it_bool_t;
 
   private:
     const std::string filename;

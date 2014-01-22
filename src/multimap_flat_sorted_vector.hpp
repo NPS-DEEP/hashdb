@@ -64,8 +64,8 @@ class multimap_flat_sorted_vector_t {
               allocator_t>                             map_t;
 
   public:
-    typedef class map_t::const_iterator map_const_iterator;
-    typedef class std::pair<map_const_iterator, map_const_iterator> map_const_iterator_range;
+    typedef class map_t::const_iterator map_const_iterator_t;
+    typedef class std::pair<map_const_iterator_t, map_const_iterator_t> map_const_iterator_range_t;
 
   private:
     const std::string filename;
@@ -176,10 +176,10 @@ class multimap_flat_sorted_vector_t {
 
   public:
     // range for key
-    map_const_iterator_range equal_range(const KEY_T& key) const {
+    map_const_iterator_range_t equal_range(const KEY_T& key) const {
       typename map_t::const_iterator lower = map->lower_bound(key);
       typename map_t::const_iterator upper = map->upper_bound(key);
-      return map_const_iterator_range(lower, upper);
+      return map_const_iterator_range_t(lower, upper);
     }
 
     // count for key

@@ -41,6 +41,8 @@ enum map_type_t {
           MAP_FLAT_SORTED_VECTOR,
           MAP_RED_BLACK_TREE,
           MAP_UNORDERED_HASH
+//          MAP_NONE // provided since there must be a default map_iterator
+//                   // constructor for std::pair
 };
 
 inline std::string map_type_to_string(map_type_t type) {
