@@ -37,7 +37,7 @@
 #include "map_iterator.hpp"
 
 static const char temp_dir[] = "temp_dir";
-static const char temp_file[] = "temp_dir/temp_file";
+static const char temp_file[] = "temp_dir/hash_store";
 
 // provide these for the unordered hash map and multimap
 inline std::size_t hash_value(const md5_t& key) {
@@ -70,20 +70,20 @@ void to_key(uint64_t i, sha256_t& key) {
 }
 
 template<typename T>
-void run_map_tests() {
+void run_map_tests(map_type_t map_type) {
 
   T key;
-  map_manager_t<md5_t>* map_manager;
+  map_manager_t<T>* map_manager;
   typedef std::pair<map_iterator_t<T>, bool> map_pair_t;
   map_pair_t map_pair;
   size_t num_erased;
-  class map_iterator_t<md5_t> map_it;
+  class map_iterator_t<T> map_it;
 
   // clean up from any previous run
   remove(temp_file);
 
   // create new map manager
-  map_manager = new map_manager_t<md5_t>(temp_dir, RW_NEW, MAP_BTREE);
+  map_manager = new map_manager_t<T>(temp_dir, RW_NEW, map_type);
 
   // populate with 100 entries
   for (uint64_t n=0; n< 100; ++n) {
@@ -160,14 +160,31 @@ void run_map_tests() {
   to_key(203, key);
   BOOST_TEST_EQ(map_manager->has(key), false);
 
-std::cout << "about to delete map_manager.\n";
+  // validate iterator
+  map_it = map_manager->begin();
+  class map_iterator_t<T> map_it2 = map_manager->end();
+  bool temp_equals = (map_it == map_it2);
+  BOOST_TEST_EQ(temp_equals, false);
+  temp_equals = (map_it != map_it2);
+  BOOST_TEST_EQ(temp_equals, true);
+  map_it++; map_it++; map_it++; map_it++;  // +4
+/* not for unordered
+  BOOST_TEST_EQ(map_it->second, 4);
+  BOOST_TEST_EQ((*map_it).second, 4);
+*/
+  int i=4;
+  for (; map_it != map_manager->end(); ++map_it) {
+    i++;
+  }
+  BOOST_TEST_EQ(i, 100);
+
   // end RW tests
   delete map_manager;
 
   // ************************************************************
   // RO tests
   // ************************************************************
-  map_manager = new map_manager_t<md5_t>(temp_dir, READ_ONLY, MAP_BTREE);
+  map_manager = new map_manager_t<T>(temp_dir, READ_ONLY, map_type);
 
   // check count
   BOOST_TEST_EQ(map_manager->size(), 100);
@@ -187,6 +204,7 @@ std::cout << "about to delete map_manager.\n";
   // NOTE: btree assert failure if exit without delete.
 
   // end RO tests
+  std::cout << "about to delete map_manager RO.\n";
   delete map_manager;
 }
 
@@ -331,9 +349,18 @@ void run_multimap_tests() {
 int cpp_main(int argc, char* argv[]) {
 
   // map tests
-//  run_temp_test();
-  run_map_tests<md5_t>();
-//  run_map_tests<sha1_t>();
+//  run_map_tests<md5_t>(MAP_BTREE);
+//  run_map_tests<sha1_t>(MAP_BTREE);
+//  run_map_tests<sha256_t>(MAP_BTREE);
+  run_map_tests<md5_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_tests<md5_t>(MAP_RED_BLACK_TREE);
+  run_map_tests<sha1_t>(MAP_RED_BLACK_TREE);
+  run_map_tests<sha256_t>(MAP_RED_BLACK_TREE);
+  run_map_tests<md5_t>(MAP_UNORDERED_HASH);
+  run_map_tests<sha1_t>(MAP_UNORDERED_HASH);
+  run_map_tests<sha256_t>(MAP_UNORDERED_HASH);
 
   // done
   int status = boost::report_errors();

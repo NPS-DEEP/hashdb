@@ -37,13 +37,6 @@
 #include "hash_algorithm_types.h"
 #include <boost/functional/hash.hpp>
 
-//template<class T>
-//class map_iterator_t : public boost::iterator_facade<
-//                               map_iterator_t<T>,
-//                               std::pair<T, uint64_t>,
-//                               boost::forward_traversal_tag
-//                              > 
-
 template<class T>
 class map_iterator_t {
   private:
@@ -73,10 +66,10 @@ class map_iterator_t {
   // increment
   void increment() {
     switch(map_type) {
-      case MAP_BTREE: dereferenced_value = *(++btree_const_iterator); return;
-      case MAP_FLAT_SORTED_VECTOR: dereferenced_value = *(++flat_sorted_vector_const_iterator); return;
-      case MAP_RED_BLACK_TREE: dereferenced_value = *(++red_black_tree_const_iterator); return;
-      case MAP_UNORDERED_HASH: dereferenced_value = *(++unordered_hash_const_iterator); return;
+      case MAP_BTREE:              ++btree_const_iterator; return;
+      case MAP_FLAT_SORTED_VECTOR: ++flat_sorted_vector_const_iterator; return;
+      case MAP_RED_BLACK_TREE:     ++red_black_tree_const_iterator; return;
+      case MAP_UNORDERED_HASH:     ++unordered_hash_const_iterator; return;
       default: assert(0);
     }
   }
@@ -97,20 +90,16 @@ class map_iterator_t {
   }
 
   // dereference
-  std::pair<T, uint64_t>& dereference() {
+  void dereference() {
     switch(map_type) {
       case MAP_BTREE:
-        dereferenced_value = *btree_const_iterator;
-        return dereferenced_value;
+        dereferenced_value = *btree_const_iterator; return;
       case MAP_FLAT_SORTED_VECTOR:
-        dereferenced_value = *flat_sorted_vector_const_iterator;
-        return dereferenced_value;
+        dereferenced_value = *flat_sorted_vector_const_iterator; return;
       case MAP_RED_BLACK_TREE:
-        dereferenced_value = *red_black_tree_const_iterator;
-        return dereferenced_value;
+        dereferenced_value = *red_black_tree_const_iterator; return;
       case MAP_UNORDERED_HASH:
-        dereferenced_value = *unordered_hash_const_iterator;
-        return dereferenced_value;
+        dereferenced_value = *unordered_hash_const_iterator; return;
       default: assert(0);
     }
   }
@@ -180,7 +169,7 @@ class map_iterator_t {
     return *this;
   }
   map_iterator_t operator++(int) {  // c++11 delete would be better.
-    map_iterator_t temp(this);
+    map_iterator_t temp(*this);
     increment();
     return temp;
   }
@@ -199,12 +188,6 @@ class map_iterator_t {
     return !equal(other);
   }
 };
-
-/*
-typedef map_iterator__<md5_t> map_iterator_md5_t;
-typedef map_iterator__<sha1_t> map_iterator_sha1_t;
-typedef map_iterator__<sha256_t> map_iterator_sha256_t;
-*/
 
 #endif
 

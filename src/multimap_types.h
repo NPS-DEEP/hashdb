@@ -22,41 +22,41 @@
  * This file defines basic types required for working with a hashdb.
  */
 
-#ifndef    MAP_TYPES_H
-#define    MAP_TYPES_H
+#ifndef    MULTIMAP_TYPES_H
+#define    MULTIMAP_TYPES_H
 
 #include <string>
 #include <iostream>
 
-// map types
-enum map_type_t {
-          MAP_BTREE,
-          MAP_FLAT_SORTED_VECTOR,
-          MAP_RED_BLACK_TREE,
-          MAP_UNORDERED_HASH
+// multimap types
+enum multimap_type_t {
+          MULTIMAP_BTREE,
+          MULTIMAP_FLAT_SORTED_VECTOR,
+          MULTIMAP_RED_BLACK_TREE,
+          MULTIMAP_UNORDERED_HASH
 };
 
-inline std::string map_type_to_string(map_type_t type) {
+inline std::string multimap_type_to_string(multimap_type_t type) {
   switch(type) {
-    case MAP_BTREE:              return "btree";
-    case MAP_FLAT_SORTED_VECTOR: return "flat-sorted-vector";
-    case MAP_RED_BLACK_TREE:     return "red-black-tree";
-    case MAP_UNORDERED_HASH:     return "unordered-hash";
+    case MULTIMAP_BTREE:              return "btree";
+    case MULTIMAP_FLAT_SORTED_VECTOR: return "flat-sorted-vector";
+    case MULTIMAP_RED_BLACK_TREE:     return "red-black-tree";
+    case MULTIMAP_UNORDERED_HASH:     return "unordered-hash";
     default: assert(0); return "";
   }
 }
 
-inline bool string_to_map_type(const std::string& name, map_type_t& type) {
-  if (name == "btree")               { type = MAP_BTREE; return true; }
-  if (name == "flat_sorted-vector")  { type = MAP_FLAT_SORTED_VECTOR; return true; }
-  if (name == "red-black-tree")      { type = MAP_RED_BLACK_TREE; return true; }
-  if (name == "unordered_hash")      { type = MAP_UNORDERED_HASH; return true; }
-  type = MAP_BTREE;
+inline bool string_to_multimap_type(const std::string& name, multimap_type_t& type) {
+  if (name == "btree")               { type = MULTIMAP_BTREE; return true; }
+  if (name == "flat_sorted-vector")  { type = MULTIMAP_FLAT_SORTED_VECTOR; return true; }
+  if (name == "red-black-tree")      { type = MULTIMAP_RED_BLACK_TREE; return true; }
+  if (name == "unordered_hash")      { type = MULTIMAP_UNORDERED_HASH; return true; }
+  type = MULTIMAP_BTREE;
   return false;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const map_type_t& t) {
-  os << map_type_to_string(t);
+inline std::ostream& operator<<(std::ostream& os, const multimap_type_t& t) {
+  os << multimap_type_to_string(t);
   return os;
 }
 

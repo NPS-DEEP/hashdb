@@ -63,7 +63,7 @@ Some \hdb tool commands are renamed to specifically indicate their function.
 \item Add hashes in DFXML into database
 \item Copy a database to a second database
 \item Merge two databases into a third database
-\item Erase hashes in DFXML from database
+\item Remove hashes in DFXML from database
 \item Rebuild Bloom filters for database
 \item Get hash source information
 \item Get database information
@@ -79,9 +79,6 @@ Import hashes from the DFXML file into the existing \hdb
 using the given repository name.
 \item \texttt{export <hashdb> <DFXML file>} \\
 Export hashes from the hashdb to the new DFXML file.
-\item \texttt{add <hashdb 1> <hashdb 2>} \\
-Add database 1 into database 2
-using a \hmmi over database 1.
 \item \texttt{copy <hashdb 1> <hashdb 2>} \\
 Copy database 1 to existing database 2,
 possibly excluding some amount of duplicates,
@@ -89,9 +86,11 @@ using a \hmmi over database 1.
 \item \texttt{merge <hashdb 1> <hashdb 2> <hashdb 3>} \\
 Merge databases 1 and 2 into existing database 3
 using {\hmmi}s over databases 1 and 2 in sorted order.
-\item \texttt{erase <hashdb 1> <hashdb 2>} \\
-Erase hashes in database 1 from database 2
+\item \texttt{remove <hashdb 1> <hashdb 2>} \\
+Remove hashes in database 1 from database 2
 using a \hmmi over database 1.
+\item \texttt{deduplicate<hashdb 1> <count>} \\
+Removes all but count duplicates, or all, if count is zero.
 \item \texttt{rebuild\_bloom <bloom filter parameters> <hashdb>} \\
 Rebuild the Bloom filters
 using a \hmi over the given database.
@@ -122,7 +121,7 @@ for services the \hdb library provides.
 \begin{compactitem}
 \item Open
 \item Insert hashes
-\item Erase hashes
+\item Remove hashes
 \item Find hashes
 \item Look up hash sources
 \item Get \hdb information
@@ -163,8 +162,8 @@ typedef std::vector<insert_md5_hash_t> insert_md5_hashes_t;
 \end{verbatim}
 \end{small}
 
-% erase hashes
-\subsubsection{Erase Hashes}
+% remove hashes
+\subsubsection{Remove Hashes}
 Removes hashes that exactly match the specified source information
 and log the change to file \texttt{log}.
 The data structure required for erasing hashes
@@ -172,11 +171,11 @@ is the same as that for inserting hashes.
 
 \begin{small}
 \begin{verbatim}
-erase_md5_hashes(const erase_md5_hashes_t& erase_hashes);
+remove_md5_hashes(const remove_md5_hashes_t& remove_hashes);
 
-typedef insert_md5_hash_t erase_md5_hash_t;
+typedef insert_md5_hash_t remove_md5_hash_t;
 
-typedef insert_md5_hashes_t erase_md5_hashes_t;
+typedef insert_md5_hashes_t remove_md5_hashes_t;
 \end{verbatim}
 \end{small}
 
@@ -338,13 +337,13 @@ insert_hash(const hashdb_element_t &hashdb_element,
 \end{verbatim}
 \end{small}
 
-% erase hash
-\subsubsection{Erase Hash}
+% remove hash
+\subsubsection{Remove Hash}
 Insert the specified hash, noting the change.
 
 \begin{small}
 \begin{verbatim}
-erase_hash(const erase_md5_hash_t &erase_hash,
+remove_hash(const remove_md5_hash_t &remove_hash,
            hashdb_change_object_t &hashdb_change_object);
 \end{verbatim}
 \end{small}
@@ -625,8 +624,8 @@ save_settings(std::string hashdb_dir);
 This module manages mapped hash storage.
 It has been renamed from \textit{Hash Store}.
 \begin{compactitem}
-\item The key is the \texttt{uint8\_t[SIZE]} hash digest,
-such as md5,
+\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest,
+such as T,
 and the value is the \texttt{uint64\_t} source lookup encoding.
 \item The source lookup encoding consists of $32-40$ bits
 of source lookup index and $32-24$ bits of block offset value,
@@ -639,13 +638,13 @@ but this detail does not matter at this low storage level.
 Here are the interfaces:
 \begin{small}
 \begin{verbatim}
-pair<hash_map_manager_t::const_iterator, bool> insert(md5, uint64_t);
-size_t erase(md5);
-pair<hash_map_manager_t::const_iterator, bool> change(md5, uint64_t);
-hash_map_manager_t::const_iterator find(md5);
-bool has(md5);   // faster than find()
-iterator begin();
-iterator end();
+pair<map_iterator_t<T>, bool> emplace(T, uint64_t);
+size_t erase(T);
+pair<map_iterator_t<T>, bool> change(T, uint64_t);
+map_iterator_t<T> find(T);
+bool has(T);   // faster than find()
+map_iterator_t<T> iterator begin();
+map_iterator_t<T> iterator end();
 size_t size();
 \end{verbatim}
 \end{small}
@@ -655,7 +654,7 @@ size_t size();
 This module manages multimap hash storage.
 It has been renamed from \textit{Hash duplicates Store}.
 \begin{compactitem}
-\item The key is the \texttt{uint8\_t[SIZE]} hash digest,
+\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest,
 such as md5,
 and the value is the \texttt{uint64\_t} source lookup encoding.
 \item The source lookup encoding consists of $32-40$ bits
@@ -663,18 +662,18 @@ of source lookup index and $32-24$ bits of block offset value,
 but this detail does not matter at this low storage level.
 \item The hash multimap maps to the \texttt{hash\_multimap\_store} file.
 \item Provides Interfaces to insert, erase, and look up elements.
-\item A \texttt{const\_iterator} is available for walking the hash multimap.
+\item A \texttt{const\_iterator} is available for walking
+between elements \texttt{[a,b)} of a key in the hash multimap.
+\item Begin and end accessors are not provided.
 \end{compactitem}
 
 Here are the interfaces:
 \begin{small}
 \begin{verbatim}
-pair<hash_multimap_manager_t::const_iterator, bool> insert(md5, uint64_t);
+bool insert(md5, uint64_t);
 size_t erase(md5, uint64_t);
-hash_multimap_manager_t::const_iterator find(md5, uint64_t);
-bool has(md5, uint64_t);   // faster than find()
-iterator begin();
-iterator end();
+bool has(md5, uint64_t);
+pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
 size_t size();
 \end{verbatim}
 \end{small}
