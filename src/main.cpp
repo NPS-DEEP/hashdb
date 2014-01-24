@@ -88,10 +88,10 @@ static hashdb_runtime_options_t hashdb_runtime_options = hashdb_runtime_options_
 
 // option state used to assure options are not specified when they should not be
 // option categories
-static bool has_create_options = false;
-static bool has_bloom_options = false;
+//static bool has_create_options = false;
+//static bool has_bloom_options = false;
 static bool has_repository_name = false;
-static bool has_server_options = false;
+static bool has_server_path_or_socket = false;
 
 // bloom filter validation
 bool has_b1n = false;
@@ -102,8 +102,6 @@ bool has_b2kM = false;
 //zz these go away
 bool has_tuning = false;
 bool has_tuning_bloom = false;
-//bool has_repository_name = false;
-bool has_server_socket_endpoint = false;
 bool has_exclude_duplicates = false;
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
@@ -142,7 +140,7 @@ void no_has_repository_name(const std::string& action) {
   }
 }
 void no_has_server_socket_endpoint(const std::string& action) {
-  if (has_server_socket_endpoint) {
+  if (has_server_path_or_socket) {
     std::cerr << "The \"--socket\" option is not allowed in command to " << action << ".\n";
     exit(1);
   }
@@ -248,8 +246,8 @@ int main(int argc,char **argv) {
         break;
       }
       case 's': {	// server socket endpoint
-        has_server_socket_endpoint = true;
-        hashdb_runtime_options.server_socket_endpoint = optarg;
+        has_server_path_or_socket = true;
+        hashdb_runtime_options.server_path_or_socket = optarg;
         break;
       }
       case 'x': {	// remove duplicates during copy
@@ -265,7 +263,7 @@ int main(int argc,char **argv) {
       case 'p': {	// hash block size
         has_tuning = true;
         try {
-          hashdb_options.hash_block_size = boost::lexical_cast<size_t>(optarg);
+          hashdb_settings.hash_block_size = boost::lexical_cast<size_t>(optarg);
         } catch (...) {
           std::cerr << "Invalid value for hash_block_size: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -445,7 +443,7 @@ int main(int argc,char **argv) {
   argv++;
 
   // get any arguments
-  const int num_args = argc;
+//zz not yet  const int num_args = argc;
   const std::string arg1((argc>=1) ? argv[0] : "");
   const std::string arg2((argc>=2) ? argv[1] : "");
   const std::string arg3((argc>=3) ? argv[2] : "");

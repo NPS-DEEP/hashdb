@@ -21,8 +21,8 @@
 \newcommand{\hdb}{\emph{hashdb}\xspace}
 \newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
 \newcommand{\mdd}{\emph{md5deep}\xspace}
-\newcommand{\hmi}{\textbf{hashdb map iterator}\xspace}
-\newcommand{\hmmi}{\textbf{hashdb multimap iterator}\xspace}
+\newcommand{\mi}{\textbf{map iterator}\xspace}
+\newcommand{\mmi}{\textbf{multimap iterator}\xspace}
 
 \begin{document}
 
@@ -72,37 +72,39 @@ Some \hdb tool commands are renamed to specifically indicate their function.
 
 Specifically:
 \begin{compactitem}
-\item \texttt{create <tuning parameters> <hashdb>} \\
-Create a new empty \hdb given the tuning parameters.
-\item \texttt{import <repository name> <DFXML file> <hashdb>} \\
+\item \texttt{create <hashdb settings> <bloom filter settings> <hashdb>} \\
+Create a new empty \hdb given the specified settings.
+\item \texttt{import [-r <repository name>] <DFXML file> <hashdb>} \\
 Import hashes from the DFXML file into the existing \hdb
 using the given repository name.
 \item \texttt{export <hashdb> <DFXML file>} \\
 Export hashes from the hashdb to the new DFXML file.
 \item \texttt{copy <hashdb 1> <hashdb 2>} \\
-Copy database 1 to existing database 2,
-possibly excluding some amount of duplicates,
-using a \hmmi over database 1.
+Copy hashes in database 1 into database 2
+using a \mmi over database 1.
 \item \texttt{merge <hashdb 1> <hashdb 2> <hashdb 3>} \\
-Merge databases 1 and 2 into existing database 3
-using {\hmmi}s over databases 1 and 2 in sorted order.
+Merge databases 1 and 2 into 3
+using {\mmi}s over databases 1 and 2 in sorted order.
 \item \texttt{remove <hashdb 1> <hashdb 2>} \\
 Remove hashes in database 1 from database 2
-using a \hmmi over database 1.
-\item \texttt{deduplicate<hashdb 1> <count>} \\
-Removes all but count duplicates, or all, if count is zero.
-\item \texttt{rebuild\_bloom <bloom filter parameters> <hashdb>} \\
-Rebuild the Bloom filters
-using a \hmi over the given database.
-\item \texttt{query\_hash <hashdb> <DFXML file>} \\
-Print out hashes in the \hdb that match hashes in the DFXML file.
-\item \texttt{get\_hash\_source <identified\_blocks.txt>} \\
-Return source information for the hashes in the specified file.
-\item \texttt{get\_hashdb\_info <hashdb>} \\
-Retrieve information about the given database.
-\item \texttt{server <hashdb>} \\
-Start the \hdb tool as a server service using the specified database.
+using a \mmi over database 1.
+\item \texttt{remove\_dfxml <DFXML file> <hashdb>} \\
+Remove hashes in the DFXML file from the database.
+\item \texttt{deduplicate <hashdb>} \\
+Removes all duplicates.
+\item \texttt{rebuild\_bloom <bloom filter settings> <hashdb>} \\
+Rebuild the Bloom filters with new settings
+using a \mi over the given database.
+\item \texttt{server <hashdb> <socket>} \\
+Start the \hdb tool as a server service using the database
+at the specified socket.
 This service uses all \hdb Library interfaces.
+\item \texttt{query\_hash <path or socket> <DFXML file>} \\
+Print out hashes in the \hdb that match hashes in the DFXML file.
+\item \texttt{get\_hash\_source <path or socket> <identified\_blocks.txt> <output text file>} \\
+Create output file from input, showing full source intormation.
+\item \texttt{get\_hashdb\_info <path or socket>} \\
+Print out information about the given database.
 \end{compactitem}
 
 \subsubsection{Changes from \hdb v0.9.1}
@@ -305,13 +307,13 @@ Interfaces are:
 \item Insert a \hdb element, noting the change.
 \item Remove a \hdb element, noting the change.
 \item See if a hash value exists.
-\item Provide a \hmmi pointing to the first \hdb element
+\item Provide a \mmi pointing to the first \hdb element
 containing a specified hash value.
-\hmmi dereferences to \texttt{hashdb\_element\_t}.
-\item Provide a \hmi for iterating over hash values.
-\hmi dereferences to \texttt{std::pair<uint8\_t[SIZE], uint32\_t>}
+\mmi dereferences to \texttt{hashdb\_element\_t}.
+\item Provide a \mi for iterating over hash values.
+\mi dereferences to \texttt{std::pair<uint8\_t[SIZE], uint32\_t>}
 to provide hash and count values.
-\item Provide a \hmmi for iterating over all \hdb elements.
+\item Provide a \mmi for iterating over all \hdb elements.
 \end{compactitem}
 
 % instantiation
@@ -360,7 +362,7 @@ uint32_t count(md5_t md5);
 
 % equal range
 \subsubsection{Equal Range}
-Returns pair of \hmmi to lower bound
+Returns pair of \mmi to lower bound
 (first element with key not less than value)
 and upper bound (first element with key greater than value or end).
 
@@ -371,9 +373,9 @@ pair<const_hashdb_multimap_iterator lower,
 \end{verbatim}
 \end{small}
 
-% hmi begin
-\subsubsection{\hmi Begin}
-Returns begin for \hmi.
+% mi begin
+\subsubsection{\mi Begin}
+Returns begin for \mi.
 
 \begin{small}
 \begin{verbatim}
@@ -381,9 +383,9 @@ const_hashdb_map_iterator hashdb_map_begin();
 \end{verbatim}
 \end{small}
 
-% hmi end
-\subsubsection{\hmi End}
-Returns end for \hmi.
+% mi end
+\subsubsection{\mi End}
+Returns end for \mi.
 
 \begin{small}
 \begin{verbatim}
@@ -391,9 +393,9 @@ const_hashdb_map_iterator hashdb_map_end();
 \end{verbatim}
 \end{small}
 
-% hmmi begin
-\subsubsection{\hmmi Begin}
-Returns begin for \hmmi.
+% mmi begin
+\subsubsection{\mmi Begin}
+Returns begin for \mmi.
 
 \begin{small}
 \begin{verbatim}
@@ -401,9 +403,9 @@ const_hashdb_multimap_iterator hashdb_multimap_begin();
 \end{verbatim}
 \end{small}
 
-% hmmi end
-\subsubsection{\hmmi End}
-Returns end for \hmmi.
+% mmi end
+\subsubsection{\mmi End}
+Returns end for \mmi.
 
 \begin{small}
 \begin{verbatim}

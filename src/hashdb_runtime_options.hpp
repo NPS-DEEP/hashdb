@@ -40,16 +40,14 @@
 struct hashdb_runtime_options_t {
   std::string repository_name;
   size_t exclude_duplicates_count;
-  std::string server_service_type;
-  std::string server_path;
-  std::string server_socket;
+  std::string server_path_or_socket; // tcp://*:14500 for server
+                                     // and tcp://localhost:14500 for client
 
   hashdb_runtime_options_t() :
          repository_name(""),
          exclude_duplicates_count(0),
-         server_service_type("path"), // not "socket"
-         server_path(""),
-         server_socket("tcp://*:14500") {
+//         server_path_or_socket("tcp://*:14500")
+         server_path_or_socket("") {
   }
 };
 
