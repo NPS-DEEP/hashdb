@@ -645,8 +645,8 @@ size_t erase(T);
 pair<map_iterator_t<T>, bool> change(T, uint64_t);
 map_iterator_t<T> find(T);
 bool has(T);   // faster than find()
-map_iterator_t<T> iterator begin();
-map_iterator_t<T> iterator end();
+map_iterator_t<T> begin();
+map_iterator_t<T> end();
 size_t size();
 \end{verbatim}
 \end{small}
@@ -672,10 +672,10 @@ between elements \texttt{[a,b)} of a key in the hash multimap.
 Here are the interfaces:
 \begin{small}
 \begin{verbatim}
-bool insert(md5, uint64_t);
+bool emplace(md5, uint64_t);
 size_t erase(md5, uint64_t);
-bool has(md5, uint64_t);
 pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
+bool has(md5, uint64_t);
 size_t size();
 \end{verbatim}
 \end{small}

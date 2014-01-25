@@ -108,8 +108,7 @@ class multimap_btree_t {
     }
 
     // emplace
-    std::pair<class map_t::const_iterator, bool>
-    emplace(const KEY_T& key, const PAY_T& pay) {
+    bool emplace(const KEY_T& key, const PAY_T& pay) {
       if (file_mode == READ_ONLY) {
         throw std::runtime_error("Error: emplace called in RO mode");
       }
@@ -117,12 +116,16 @@ class multimap_btree_t {
       // see if element already exists
       typename map_t::const_iterator it = find(key, pay);
       if (it != map->end()) {
-        return std::pair<class map_t::const_iterator, bool>(it, false);
+        return false;
       }
 
       // insert the element
-      typename map_t::const_iterator it2 = map->emplace(key, pay);
-      return std::pair<class map_t::const_iterator, bool>(it2, true);
+//      typename map_t::const_iterator it2 = map->emplace(key, pay);
+      map->emplace(key, pay);
+//      if (it == map->end()) {
+//        assert(0);
+//      }
+      return true;
     }
 
     // erase

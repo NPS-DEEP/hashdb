@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides map manager iterator.
+ * Provides map iterator.
  */
 
 #ifndef MAP_ITERATOR_HPP
@@ -28,19 +28,11 @@
 #include "map_flat_sorted_vector.hpp"
 #include "map_red_black_tree.hpp"
 #include "map_unordered_hash.hpp"
-#include "multimap_btree.hpp"
-#include "multimap_flat_sorted_vector.hpp"
-#include "multimap_red_black_tree.hpp"
-#include "multimap_unordered_hash.hpp"
 #include "map_types.h"
-#include "dfxml/src/hash_t.h"
-#include "hash_algorithm_types.h"
-#include <boost/functional/hash.hpp>
 
 template<class T>
 class map_iterator_t {
   private:
-  friend class boost::iterator_core_access;
 
   typedef typename map_btree_t<T, uint64_t>::map_const_iterator_t
                                       btree_const_iterator_t;
@@ -76,6 +68,11 @@ class map_iterator_t {
 
   // equal
   bool equal(map_iterator_t<T> const& other) const {
+    // it is a program error to check equality of differing map types
+    if (this->map_type != other.map_type) {
+      assert(0);
+    }
+
     switch(map_type) {
       case MAP_BTREE: return this->btree_const_iterator ==
                              other.btree_const_iterator;

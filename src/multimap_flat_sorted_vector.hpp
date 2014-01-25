@@ -187,9 +187,8 @@ class multimap_flat_sorted_vector_t {
       return map->count(key);
     }
     
-    // insert
-    std::pair<class map_t::const_iterator, bool>
-    emplace(const KEY_T& key, const PAY_T& pay) {
+    // emplace
+    bool emplace(const KEY_T& key, const PAY_T& pay) {
       if (file_mode == READ_ONLY) {
         throw std::runtime_error("Error: emplace called in RO mode");
       }
@@ -197,17 +196,17 @@ class multimap_flat_sorted_vector_t {
       // see if element already exists
       typename map_t::const_iterator it = find(key, pay);
       if (it != map->end()) {
-        return std::pair<class map_t::const_iterator, bool>(it, false);
+        return false;
       }
 
       // insert the element
-      bool    done = true;
+      bool done = true;
       do { // if item doesn't exist, may need to grow multimap
         done = true;
         try {
-          class map_t::iterator it2 =
-                          map->emplace(std::pair<KEY_T, PAY_T>(key, pay));
-          return std::pair<class map_t::iterator, bool>(it2, true);
+          map->emplace(std::pair<KEY_T, PAY_T>(key, pay));
+
+          return true;
 
         } catch(boost::interprocess::interprocess_exception& ex) {
           grow();

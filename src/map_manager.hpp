@@ -29,16 +29,12 @@
 #include "map_flat_sorted_vector.hpp"
 #include "map_red_black_tree.hpp"
 #include "map_unordered_hash.hpp"
-#include "multimap_btree.hpp"
-#include "multimap_flat_sorted_vector.hpp"
-#include "multimap_red_black_tree.hpp"
-#include "multimap_unordered_hash.hpp"
 #include "file_modes.h"
 #include "map_types.h"
-#include "dfxml/src/hash_t.h"
-#include "hash_algorithm_types.h"
+//#include "dfxml/src/hash_t.h"
+//#include "hash_algorithm_types.h"
 #include "map_iterator.hpp"
-#include <boost/functional/hash.hpp>
+//#include <boost/functional/hash.hpp>
 
 /*
 // provide these for the unordered hash map and multimap
@@ -60,7 +56,7 @@ inline std::size_t hash_value(const sha256_t& key) {
 template<class T>  // hash type used as key in maps
 class map_manager_t {
 
-  // hash_map_manager properties
+  // map_manager properties
   const std::string filename;
   const file_mode_type_t file_mode;
   const map_type_t map_type;

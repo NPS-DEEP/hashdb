@@ -62,6 +62,7 @@ src/hashdb_checker/hashdb_checker.exe
 src/test/source_lookup_encoding_test
 src/test/map_and_multimap_test
 src/test/map_manager_test
+src/test/multimap_manager_test
 src/test/btree_bug_test
 src/test/temp_file
 src/test/temp_dir

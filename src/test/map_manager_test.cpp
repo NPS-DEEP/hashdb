@@ -19,9 +19,7 @@
 
 /**
  * \file
- * Test the maps and multimaps.
- * Map and multimap tests are linked together here to ensure that the
- * compiler can handle them all at once.
+ * Test the map manager
  */
 
 #include <config.h>
@@ -70,7 +68,7 @@ void to_key(uint64_t i, sha256_t& key) {
 }
 
 template<typename T>
-void run_map_tests(map_type_t map_type) {
+void run_map_manager_tests(map_type_t map_type) {
 
   T key;
   map_manager_t<T>* map_manager;
@@ -349,18 +347,18 @@ void run_multimap_tests() {
 int cpp_main(int argc, char* argv[]) {
 
   // map tests
-//  run_map_tests<md5_t>(MAP_BTREE);
-//  run_map_tests<sha1_t>(MAP_BTREE);
-//  run_map_tests<sha256_t>(MAP_BTREE);
-  run_map_tests<md5_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_tests<md5_t>(MAP_RED_BLACK_TREE);
-  run_map_tests<sha1_t>(MAP_RED_BLACK_TREE);
-  run_map_tests<sha256_t>(MAP_RED_BLACK_TREE);
-  run_map_tests<md5_t>(MAP_UNORDERED_HASH);
-  run_map_tests<sha1_t>(MAP_UNORDERED_HASH);
-  run_map_tests<sha256_t>(MAP_UNORDERED_HASH);
+//  run_map_manager_tests<md5_t>(MAP_BTREE);
+//  run_map_manager_tests<sha1_t>(MAP_BTREE);
+//  run_map_manager_tests<sha256_t>(MAP_BTREE);
+  run_map_manager_tests<md5_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_manager_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_manager_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR);
+  run_map_manager_tests<md5_t>(MAP_RED_BLACK_TREE);
+  run_map_manager_tests<sha1_t>(MAP_RED_BLACK_TREE);
+  run_map_manager_tests<sha256_t>(MAP_RED_BLACK_TREE);
+  run_map_manager_tests<md5_t>(MAP_UNORDERED_HASH);
+  run_map_manager_tests<sha1_t>(MAP_UNORDERED_HASH);
+  run_map_manager_tests<sha256_t>(MAP_UNORDERED_HASH);
 
   // done
   int status = boost::report_errors();

@@ -172,6 +172,7 @@ void run_multimap_tests() {
   class T::map_const_iterator_t map_it;
   class T::map_const_iterator_t end_it;
   class T::map_const_iterator_range_t map_it_range;
+  bool did_emplace;
 
   // clean up from any previous run
   remove(temp_file);
@@ -191,16 +192,16 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map->size(), 1000000);
 
   // add same key, different value
-  map_pair = map->emplace(to_key(1000005), 0);
-  BOOST_TEST_EQ(map_pair.second, true);
+  did_emplace = map->emplace(to_key(1000005), 0);
+  BOOST_TEST_EQ(did_emplace, true);
 
   // add same key, different value
-  map_pair = map->emplace(to_key(1000005), 1);
-  BOOST_TEST_EQ(map_pair.second, true);
+  did_emplace = map->emplace(to_key(1000005), 1);
+  BOOST_TEST_EQ(did_emplace, true);
 
   // doesn't add same key, same value
-  map_pair = map->emplace(to_key(1000005), 1);
-  BOOST_TEST_EQ(map_pair.second, false);
+  did_emplace = map->emplace(to_key(1000005), 1);
+  BOOST_TEST_EQ(did_emplace, false);
 
   // range operation, 1 key, 1 value
   map_it_range = map->equal_range(to_key(1000000));
@@ -253,8 +254,8 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(num_erased, 0);
 
   // put back 1000004, 4
-  map_pair = map->emplace(to_key(1000004), 4);
-  BOOST_TEST_EQ(map_pair.second, true);
+  did_emplace = map->emplace(to_key(1000004), 4);
+  BOOST_TEST_EQ(did_emplace, true);
 
   // erase same key multiple values
   num_erased = map->erase(to_key(1000005), 0);
@@ -267,8 +268,8 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map->count(to_key(1000005)), 0);
 
   // put back 1000005, 5
-  map_pair = map->emplace(to_key(1000005), 5);
-  BOOST_TEST_EQ(map_pair.second, true);
+  did_emplace = map->emplace(to_key(1000005), 5);
+  BOOST_TEST_EQ(did_emplace, true);
 
   // end RW tests
   delete map;
@@ -287,7 +288,7 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map->has(to_key(2000003), 0), false);
 
   // try to edit the RO map
-  BOOST_TEST_THROWS(map_pair = map->emplace(0, 0), std::runtime_error);
+  BOOST_TEST_THROWS(did_emplace = map->emplace(0, 0), std::runtime_error);
   BOOST_TEST_THROWS(num_erased = map->erase(0, 0), std::runtime_error);
 
   // NOTE: btree assert failure if exit without delete.
