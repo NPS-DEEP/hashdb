@@ -118,7 +118,7 @@ class multimap_manager_t {
   }
 
   // erase
-  size_t erase(const T& key, uint64_t source_lookup_encoding) {
+  bool erase(const T& key, uint64_t source_lookup_encoding) {
     switch(multimap_type) {
       case MULTIMAP_BTREE: return multimap_btree->erase(key, source_lookup_encoding);
       case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase(key, source_lookup_encoding);

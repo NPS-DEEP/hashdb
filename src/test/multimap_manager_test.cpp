@@ -72,9 +72,8 @@ void run_multimap_manager_tests(multimap_type_t multimap_type) {
 
   T key;
   multimap_manager_t<T>* multimap_manager;
-  typedef std::pair<multimap_iterator_t<T>, bool> multimap_pair_t;
-  multimap_pair_t multimap_pair;
-  size_t num_erased;
+  bool did_emplace;
+  bool did_erase;
   class multimap_iterator_t<T> multimap_it;
 
   // clean up from any previous run
@@ -97,45 +96,35 @@ void run_multimap_manager_tests(multimap_type_t multimap_type) {
   // check count
   BOOST_TEST_EQ(multimap_manager->size(), 100);
 
-/*
   // add duplicate
   to_key(105, key);
-  multimap_pair = multimap_manager->emplace(key, 0);
-  BOOST_TEST_EQ(multimap_pair.second, false);
+  did_emplace = multimap_manager->emplace(key, 0);
+  BOOST_TEST_EQ(did_emplace, false);
 
   // add new
   to_key(205, key);
-  multimap_pair = multimap_manager->emplace(key, 0);
-  BOOST_TEST_EQ(multimap_pair.second, true);
+  did_emplace = multimap_manager->emplace(key, 0);
+  BOOST_TEST_EQ(did_emplace, true);
 
   // check count
   BOOST_TEST_EQ(multimap_manager->size(), 101);
 
   // remove entry positive
   to_key(105, key);
-  num_erased = multimap_manager->erase(key);
-  BOOST_TEST_EQ(num_erased, 1);
+  did_erase = multimap_manager->erase(key, 5);
+  BOOST_TEST_EQ(did_erase, true);
 
+/*
   // check count
   BOOST_TEST_EQ(multimap_manager->size(), 100);
 
   // remove entry false
   to_key(105, key);
-  num_erased = multimap_manager->erase(key);
-  BOOST_TEST_EQ(num_erased, 0);
+  did_erase = multimap_manager->erase(key, 5);
+  BOOST_TEST_EQ(did_erase, false);
 
   // check count
   BOOST_TEST_EQ(multimap_manager->size(), 100);
-
-  // change entry
-  to_key(106, key);
-  multimap_pair = multimap_manager->change(key, 60);
-  BOOST_TEST_EQ(multimap_pair.second, true);
-
-  // change entry invalid
-  to_key(106, key);
-  multimap_pair = multimap_manager->change(key, 60);
-  BOOST_TEST_EQ(multimap_pair.second, false);
 
   // check count stayed same
   BOOST_TEST_EQ(multimap_manager->size(), 100);
@@ -195,9 +184,9 @@ void run_multimap_manager_tests(multimap_type_t multimap_type) {
 
   // try to edit the RO multimap manager
   to_key(0, key);
-  BOOST_TEST_THROWS(multimap_pair = multimap_manager->emplace(key, 0), std::runtime_error);
-  BOOST_TEST_THROWS(num_erased = multimap_manager->erase(key), std::runtime_error);
-  BOOST_TEST_THROWS(multimap_pair = multimap_manager->change(key, 0), std::runtime_error);
+  BOOST_TEST_THROWS(did_emplace = multimap_manager->emplace(key, 0), std::runtime_error);
+  BOOST_TEST_THROWS(did_erase = multimap_manager->erase(key, 0), std::runtime_error);
+  BOOST_TEST_THROWS(did_emplace = multimap_manager->change(key, 0), std::runtime_error);
 
   // NOTE: btree assert failure if exit without delete.
 

@@ -168,7 +168,7 @@ void run_multimap_tests() {
 
   T* map;
   map_pair_t map_pair; 
-  size_t num_erased;
+  bool did_erase;
   class T::map_const_iterator_t map_it;
   class T::map_const_iterator_t end_it;
   class T::map_const_iterator_range_t map_it_range;
@@ -246,25 +246,25 @@ void run_multimap_tests() {
   BOOST_TEST_EQ(map->has(to_key(1000005), 6), false);
 
   // erase
-  num_erased = map->erase(to_key(1000004), 4); // valid
-  BOOST_TEST_EQ(num_erased, 1);
-  num_erased = map->erase(to_key(1000004), 4); // not valid now
-  BOOST_TEST_EQ(num_erased, 0);
-  num_erased = map->erase(to_key(2000004), 4); // never valid
-  BOOST_TEST_EQ(num_erased, 0);
+  did_erase = map->erase(to_key(1000004), 4); // valid
+  BOOST_TEST_EQ(did_erase, true);
+  did_erase = map->erase(to_key(1000004), 4); // not valid now
+  BOOST_TEST_EQ(did_erase, false);
+  did_erase = map->erase(to_key(2000004), 4); // never valid
+  BOOST_TEST_EQ(did_erase, false);
 
   // put back 1000004, 4
   did_emplace = map->emplace(to_key(1000004), 4);
   BOOST_TEST_EQ(did_emplace, true);
 
   // erase same key multiple values
-  num_erased = map->erase(to_key(1000005), 0);
+  did_erase = map->erase(to_key(1000005), 0);
   BOOST_TEST_EQ(map->count(to_key(1000005)), 2);
-  num_erased = map->erase(to_key(1000005), 1);
+  did_erase = map->erase(to_key(1000005), 1);
   BOOST_TEST_EQ(map->count(to_key(1000005)), 1);
-  num_erased = map->erase(to_key(1000005), 5);
+  did_erase = map->erase(to_key(1000005), 5);
   BOOST_TEST_EQ(map->count(to_key(1000005)), 0);
-  num_erased = map->erase(to_key(1000005), 6);
+  did_erase = map->erase(to_key(1000005), 6);
   BOOST_TEST_EQ(map->count(to_key(1000005)), 0);
 
   // put back 1000005, 5
@@ -289,7 +289,7 @@ void run_multimap_tests() {
 
   // try to edit the RO map
   BOOST_TEST_THROWS(did_emplace = map->emplace(0, 0), std::runtime_error);
-  BOOST_TEST_THROWS(num_erased = map->erase(0, 0), std::runtime_error);
+  BOOST_TEST_THROWS(did_erase = map->erase(0, 0), std::runtime_error);
 
   // NOTE: btree assert failure if exit without delete.
 

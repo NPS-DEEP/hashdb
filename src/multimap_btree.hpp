@@ -129,7 +129,7 @@ class multimap_btree_t {
     }
 
     // erase
-    size_t erase(const KEY_T& key, const PAY_T& pay) {
+    bool erase(const KEY_T& key, const PAY_T& pay) {
       if (file_mode == READ_ONLY) {
         throw std::runtime_error("Error: erase called in RO mode");
       }
@@ -138,18 +138,18 @@ class multimap_btree_t {
       map_const_iterator_range_t it = map->equal_range(key);
       typename map_t::const_iterator lower = it.first;
       if (lower == map->end()) {
-        return 0;
+        return false;
       }
       const typename map_t::const_iterator upper = it.second;
       for (; lower != upper; ++lower) {
         if (lower->second == pay) {
           // found it so erase it
           map->erase(lower);
-          return 1;
+          return true;
         }
       }
       // pay is not a member in range of key
-      return 0;
+      return false;
     }
 
     // find
