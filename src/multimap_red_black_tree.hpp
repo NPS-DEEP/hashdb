@@ -226,6 +226,15 @@ class multimap_red_black_tree_t {
       return false;
     }
 
+    // erase range
+    size_t erase_range(const KEY_T& key) {
+      if (file_mode == READ_ONLY) {
+        throw std::runtime_error("Error: erase_range called in RO mode");
+      }
+
+      return map->erase(key);
+    }
+
     // find
     typename map_t::const_iterator find(const KEY_T& key, const PAY_T& pay) const {
       // find the uniquely identified element
@@ -262,6 +271,18 @@ class multimap_red_black_tree_t {
       return false;
     }
 
+    // has range
+    bool has_range(const KEY_T& key) const {
+      // find the key
+      map_const_iterator_t it = map->find(key);
+      if (it == map->end()) {
+        return false;
+      } else {
+        // found at least one
+        return true;
+      }
+    }
+
     // begin
     typename map_t::const_iterator begin() const {
       return map->begin();
@@ -276,36 +297,7 @@ class multimap_red_black_tree_t {
     size_t size() {
       return map->size();
     }
-
-/*
-    // stats
-    map_stats_t get_map_stats() {
-      return map_stats_t(filename, file_mode, data_type_name,
-                         segment->get_size(), map->size());
-    }
-*/
 };
 
 #endif
-
-/*
-zz this one is not used
-    // change
-    std::pair<class map_t::const_iterator, bool>
-    change(const KEY_T& key, const PAY_T& pay) {
-      if (file_mode == READ_ONLY) {
-        throw std::runtime_error("Error: change called in RO mode");
-      }
-
-      // first, erase the old
-      size_t count = map->erase(key, pay);
-      if (count != 1) {
-        // erasure failed
-        return pair<class map_t::const_iterator, bool>(map->end(), false);
-      }
-
-      // now put in the new
-      return emplace(key, pay);
-    }
-*/
 

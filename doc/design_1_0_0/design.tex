@@ -674,8 +674,10 @@ Here are the interfaces:
 \begin{verbatim}
 bool emplace(md5, uint64_t);
 bool erase(md5, uint64_t);
+size_t erase_range(md5);
 pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
 bool has(md5, uint64_t);
+bool has_range(md5);
 size_t size();
 \end{verbatim}
 \end{small}

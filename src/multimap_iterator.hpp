@@ -20,8 +20,9 @@
 /**
  * \file
  * Provides multimap iterator.
- * Constructor takes pair from equal_range, and whether to use first or
- * second.  Both are managed to detect program errors.
+ * Constructor takes pair from equal_range.
+ * If not an end iterator, then it can increment from begin to end of range.
+ * If an end iterator, then it will be at end of range, and cannot increment.
  */
 
 #ifndef MULTIMAP_ITERATOR_HPP
@@ -37,33 +38,36 @@ class multimap_iterator_t {
   private:
 
   typedef typename multimap_btree_t<T, uint64_t>::map_const_iterator_t
-                                      btree_const_iterator_t;
+                                      btree_it_t;
   typedef typename multimap_flat_sorted_vector_t<T, uint64_t>::map_const_iterator_t
-                                      flat_sorted_vector_const_iterator_t;
+                                      flat_sorted_vector_it_t;
   typedef typename multimap_red_black_tree_t<T, uint64_t>::map_const_iterator_t
-                                      red_black_tree_const_iterator_t;
+                                      red_black_tree_it_t;
   typedef typename multimap_unordered_hash_t<T, uint64_t>::map_const_iterator_t
-                                      unordered_hash_const_iterator_t;
+                                      unordered_hash_it_t;
 
-  typedef typename std::pair<btree_const_iterator_t, btree_const_iterator_t>
+  typedef typename std::pair<btree_it_t, btree_it_t>
                                       btree_it_pair_t;
-  typedef typename std::pair<flat_sorted_vector_const_iterator_t, flat_sorted_vector_const_iterator_t>
+  typedef typename std::pair<flat_sorted_vector_it_t, flat_sorted_vector_it_t>
                                       flat_sorted_vector_it_pair_t;
-  typedef typename std::pair<red_black_tree_const_iterator_t, red_black_tree_const_iterator_t>
+  typedef typename std::pair<red_black_tree_it_t, red_black_tree_it_t>
                                       red_black_tree_it_pair_t;
-  typedef typename std::pair<unordered_hash_const_iterator_t, unordered_hash_const_iterator_t>
+  typedef typename std::pair<unordered_hash_it_t, unordered_hash_it_t>
                                       unordered_hash_it_pair_t;
+
+
 
   multimap_type_t map_type;
 
-  // the four iterator pairs, one of which will be used, depending on map_type
-  btree_it_pair_t                btree_it_pair;
-  flat_sorted_vector_it_pair_t   flat_sorted_vector_it_pair;
-  red_black_tree_it_pair_t       red_black_tree_it_pair;
-  unordered_hash_it_pair_t       unordered_hash_it_pair;
-
-  // whether this iterator is the end iterator, solely to detect program error
-  bool is_end;
+  // the four iterator sets, one of which will be used, depending on map_type
+  btree_it_t                btree_it;
+  btree_it_t                btree_end_it;
+  flat_sorted_vector_it_t   flat_sorted_vector_it;
+  flat_sorted_vector_it_t   flat_sorted_vector_end_it;
+  red_black_tree_it_t       red_black_tree_it;
+  red_black_tree_it_t       red_black_tree_end_it;
+  unordered_hash_it_t       unordered_hash_it;
+  unordered_hash_it_t       unordered_hash_end_it;
 
   // the dereferenced value, specifically, std::pair<T, uint64_t>
   std::pair<T, uint64_t> dereferenced_value;
@@ -71,42 +75,37 @@ class multimap_iterator_t {
   // elemental forward iterator accessors are increment, equal, and dereference
   // increment
   void increment() {
-    // program error to increment the end iterator
-    if (is_end) {
-      assert(0);
-    }
-
     switch(map_type) {
       case MULTIMAP_BTREE: {
         // program error to increment begin iterator when it is at end
-        if (btree_it_pair.first == btree_it_pair.second) {
+        if (btree_it == btree_end_it) {
           assert(0);
         }
-        ++btree_it_pair.first;
+        ++btree_it;
         return;
       }
       case MULTIMAP_FLAT_SORTED_VECTOR: {
         // program error to increment begin iterator when it is at end
-        if (flat_sorted_vector_it_pair.first == flat_sorted_vector_it_pair.second) {
+        if (flat_sorted_vector_it == flat_sorted_vector_end_it) {
           assert(0);
         }
-        ++flat_sorted_vector_it_pair.first;
+        ++flat_sorted_vector_it;
         return;
       }
       case MULTIMAP_RED_BLACK_TREE: {
         // program error to increment begin iterator when it is at end
-        if (red_black_tree_it_pair.first == red_black_tree_it_pair.second) {
+        if (red_black_tree_it == red_black_tree_end_it) {
           assert(0);
         }
-        ++red_black_tree_it_pair.first;
+        ++red_black_tree_it;
         return;
       }
       case MULTIMAP_UNORDERED_HASH: {
         // program error to increment begin iterator when it is at end
-        if (unordered_hash_it_pair.first == unordered_hash_it_pair.second) {
+        if (unordered_hash_it == unordered_hash_end_it) {
           assert(0);
         }
-        ++unordered_hash_it_pair.first;
+        ++unordered_hash_it;
         return;
       }
       default: assert(0);
@@ -121,55 +120,51 @@ class multimap_iterator_t {
     }
 
     switch(map_type) {
-      case MULTIMAP_BTREE: return this->btree_it_pair ==
-                             other.btree_it_pair;
-      case MULTIMAP_FLAT_SORTED_VECTOR: return this->flat_sorted_vector_it_pair ==
-                             other.flat_sorted_vector_it_pair;
-      case MULTIMAP_RED_BLACK_TREE: return this-> red_black_tree_it_pair ==
-                             other.red_black_tree_it_pair;
-      case MULTIMAP_UNORDERED_HASH: return this-> unordered_hash_it_pair ==
-                             other.unordered_hash_it_pair;
+      case MULTIMAP_BTREE:
+        return this->btree_it == other.btree_it;
+      case MULTIMAP_FLAT_SORTED_VECTOR:
+        return this->flat_sorted_vector_it == other.flat_sorted_vector_it;
+      case MULTIMAP_RED_BLACK_TREE:
+        return this->red_black_tree_it == other.red_black_tree_it;
+      case MULTIMAP_UNORDERED_HASH:
+        return this->unordered_hash_it == other.unordered_hash_it;
       default: assert(0);
     }
   }
 
   // dereference
   void dereference() {
-    // program error to dereference the end iterator
-    if (is_end) {
-      assert(0);
-    }
     switch(map_type) {
       case MULTIMAP_BTREE: {
         // program error to increment begin iterator when it is at end
-        if (btree_it_pair.first == btree_it_pair.second) {
+        if (btree_it == btree_end_it) {
           assert(0);
         }
-        dereferenced_value = *(btree_it_pair.first);
+        dereferenced_value = *btree_it;
         return;
       }
       case MULTIMAP_FLAT_SORTED_VECTOR: {
         // program error to increment begin iterator when it is at end
-        if (flat_sorted_vector_it_pair.first == flat_sorted_vector_it_pair.second) {
+        if (flat_sorted_vector_it == flat_sorted_vector_end_it) {
           assert(0);
         }
-        dereferenced_value = *(flat_sorted_vector_it_pair.first);
+        dereferenced_value = *flat_sorted_vector_it;
         return;
       }
       case MULTIMAP_RED_BLACK_TREE: {
         // program error to increment begin iterator when it is at end
-        if (red_black_tree_it_pair.first == red_black_tree_it_pair.second) {
+        if (red_black_tree_it == red_black_tree_end_it) {
           assert(0);
         }
-        dereferenced_value = *(red_black_tree_it_pair.first);
+        dereferenced_value = *red_black_tree_it;
         return;
       }
       case MULTIMAP_UNORDERED_HASH: {
         // program error to increment begin iterator when it is at end
-        if (unordered_hash_it_pair.first == unordered_hash_it_pair.second) {
+        if (unordered_hash_it == unordered_hash_end_it) {
           assert(0);
         }
-        dereferenced_value = *(unordered_hash_it_pair.first);
+        dereferenced_value = *unordered_hash_it;
         return;
       }
       default: assert(0);
@@ -180,63 +175,81 @@ class multimap_iterator_t {
   // the constructors for each map type using native map iterators
   multimap_iterator_t(btree_it_pair_t p_it, bool p_is_end) :
                       map_type(MULTIMAP_BTREE),
-                      btree_it_pair(p_it),
-                      flat_sorted_vector_it_pair(),
-                      red_black_tree_it_pair(),
-                      unordered_hash_it_pair(),
-                      is_end(p_is_end),
+                      btree_it((p_is_end) ? p_it.second : p_it.first),
+                      btree_end_it(p_it.second),
+                      flat_sorted_vector_it(),
+                      flat_sorted_vector_end_it(),
+                      red_black_tree_it(),
+                      red_black_tree_end_it(),
+                      unordered_hash_it(),
+                      unordered_hash_end_it(),
                       dereferenced_value() {
   }
 
   multimap_iterator_t(flat_sorted_vector_it_pair_t p_it, bool p_is_end) :
                       map_type(MULTIMAP_FLAT_SORTED_VECTOR),
-                      btree_it_pair(),
-                      flat_sorted_vector_it_pair(p_it),
-                      red_black_tree_it_pair(),
-                      unordered_hash_it_pair(),
-                      is_end(p_is_end),
+                      btree_it(),
+                      btree_end_it(),
+                      flat_sorted_vector_it((p_is_end) ? p_it.second : p_it.first),
+                      flat_sorted_vector_end_it(p_it.second),
+                      red_black_tree_it(),
+                      red_black_tree_end_it(),
+                      unordered_hash_it(),
+                      unordered_hash_end_it(),
                       dereferenced_value() {
   }
 
   multimap_iterator_t(red_black_tree_it_pair_t p_it, bool p_is_end) :
                       map_type(MULTIMAP_RED_BLACK_TREE),
-                      btree_it_pair(),
-                      flat_sorted_vector_it_pair(),
-                      red_black_tree_it_pair(p_it),
-                      unordered_hash_it_pair(),
-                      is_end(p_is_end),
+                      btree_it(),
+                      btree_end_it(),
+                      flat_sorted_vector_it(),
+                      flat_sorted_vector_end_it(),
+                      red_black_tree_it((p_is_end) ? p_it.second : p_it.first),
+                      red_black_tree_end_it(p_it.second),
+                      unordered_hash_it(),
+                      unordered_hash_end_it(),
                       dereferenced_value() {
   }
 
   multimap_iterator_t(unordered_hash_it_pair_t p_it, bool p_is_end) :
                       map_type(MULTIMAP_UNORDERED_HASH),
-                      btree_it_pair(),
-                      flat_sorted_vector_it_pair(),
-                      red_black_tree_it_pair(),
-                      unordered_hash_it_pair(p_it),
-                      is_end(p_is_end),
+                      btree_it(),
+                      btree_end_it(),
+                      flat_sorted_vector_it(),
+                      flat_sorted_vector_end_it(),
+                      red_black_tree_it(),
+                      red_black_tree_end_it(),
+                      unordered_hash_it((p_is_end) ? p_it.second : p_it.first),
+                      unordered_hash_end_it(p_it.second),
                       dereferenced_value() {
   }
 
   // this useless default constructor is required by std::pair
   multimap_iterator_t() :
                       map_type(MULTIMAP_BTREE),   // had to pick one
-                      btree_it_pair(),
-                      flat_sorted_vector_it_pair(),
-                      red_black_tree_it_pair(),
-                      unordered_hash_it_pair(),
-                      is_end(false),
+                      btree_it(),
+                      btree_end_it(),
+                      flat_sorted_vector_it(),
+                      flat_sorted_vector_end_it(),
+                      red_black_tree_it(),
+                      red_black_tree_end_it(),
+                      unordered_hash_it(),
+                      unordered_hash_end_it(),
                       dereferenced_value() {
   }
 
   // copy capability is required by std::pair
   multimap_iterator_t& operator=(const multimap_iterator_t& other) {
     map_type = other.map_type;
-    btree_it_pair = other.btree_it_pair;
-    flat_sorted_vector_it_pair = other.flat_sorted_vector_it_pair;
-    red_black_tree_it_pair = other.red_black_tree_it_pair;
-    unordered_hash_it_pair = other.unordered_hash_it_pair;
-    is_end = other.is_end;
+    btree_it = other.btree_it;
+    btree_end_it = other.btree_end_it;
+    flat_sorted_vector_it = other.flat_sorted_vector_it;
+    flat_sorted_vector_end_it = other.flat_sorted_vector_end_it;
+    red_black_tree_it = other.red_black_tree_it;
+    red_black_tree_end_it = other.red_black_tree_end_it;
+    unordered_hash_it = other.unordered_hash_it;
+    unordered_hash_end_it = other.unordered_hash_end_it;
     dereferenced_value = other.dereferenced_value; // not necessary.
     return *this;
   }

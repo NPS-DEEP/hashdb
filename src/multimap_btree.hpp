@@ -120,11 +120,7 @@ class multimap_btree_t {
       }
 
       // insert the element
-//      typename map_t::const_iterator it2 = map->emplace(key, pay);
       map->emplace(key, pay);
-//      if (it == map->end()) {
-//        assert(0);
-//      }
       return true;
     }
 
@@ -150,6 +146,15 @@ class multimap_btree_t {
       }
       // pay is not a member in range of key
       return false;
+    }
+
+    // erase range
+    size_t erase_range(const KEY_T& key) {
+      if (file_mode == READ_ONLY) {
+        throw std::runtime_error("Error: erase_range called in RO mode");
+      }
+
+      return map->erase(key);
     }
 
     // find
@@ -190,6 +195,18 @@ class multimap_btree_t {
       return false;
     }
 
+    // has range
+    bool has_range(const KEY_T& key) const {
+      // find the key
+      map_const_iterator_t it = map->find(key);
+      if (it == map->end()) {
+        return false;
+      } else {
+        // found at least one
+        return true;
+      }
+    }
+
     // begin
     typename map_t::const_iterator begin() const {
       return map->begin();
@@ -204,34 +221,7 @@ class multimap_btree_t {
     size_t size() {
       return map->size();
     }
-
-/*
-    // stats
-    map_stats_t get_map_stats() {
-      return map_stats_t(filename, file_mode, "multimap_btree", 0, map->size());
-    }
-*/
 };
 
 #endif
-
-/*
-    // change
-    std::pair<class map_t::const_iterator, bool>
-    change(const KEY_T& key, const PAY_T& pay) {
-      if (file_mode == READ_ONLY) {
-        throw std::runtime_error("Error: change called in RO mode");
-      }
-
-      // erase the old element
-      size_t num_erased = erase(key);
-      if (num_erased != 1) {
-        // erase failed
-        return std::pair<class map_t::const_iterator, bool>(map->end(), false);
-      } else {
-        // put in new
-        return map->emplace(key, pay);
-      }
-    }
-*/
 

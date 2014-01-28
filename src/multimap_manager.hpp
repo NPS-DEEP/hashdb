@@ -63,7 +63,7 @@ class multimap_manager_t {
   multimap_manager_t (const std::string& p_hashdb_dir,
                  file_mode_type_t p_file_mode,
                  multimap_type_t p_map_type) :
-       filename(p_hashdb_dir + "/hash_store"),
+       filename(p_hashdb_dir + "/hash_duplicates_store"),
        file_mode(p_file_mode),
        multimap_type(p_map_type),
 
@@ -130,6 +130,19 @@ class multimap_manager_t {
     }
   }
 
+  // erase_range
+  bool erase_range(const T& key) {
+    switch(multimap_type) {
+      case MULTIMAP_BTREE: return multimap_btree->erase_range(key);
+      case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase_range(key);
+      case MULTIMAP_RED_BLACK_TREE: return multimap_red_black_tree->erase_range(key);
+      case MULTIMAP_UNORDERED_HASH: return multimap_unordered_hash->erase_range(key);
+
+      default:
+        assert(0);
+    }
+  }
+
   // equal_range
   std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > equal_range(const T& key) {
     switch(multimap_type) {
@@ -137,29 +150,29 @@ class multimap_manager_t {
         typename multimap_btree_t<T, uint64_t>::map_const_iterator_range_t it1 =
                   multimap_btree->equal_range(key);
         return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it1.first, false),
-                  multimap_iterator_t<T>(it1.second, true));
+                  multimap_iterator_t<T>(it1, false),
+                  multimap_iterator_t<T>(it1, true));
       }
       case MULTIMAP_FLAT_SORTED_VECTOR: {
         typename multimap_flat_sorted_vector_t<T, uint64_t>::map_const_iterator_range_t it2 =
                   multimap_flat_sorted_vector->equal_range(key);
         return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it2.first, false),
-                  multimap_iterator_t<T>(it2.second, true));
+                  multimap_iterator_t<T>(it2, false),
+                  multimap_iterator_t<T>(it2, true));
       }
       case MULTIMAP_RED_BLACK_TREE: {
         typename multimap_red_black_tree_t<T, uint64_t>::map_const_iterator_range_t it3 =
                   multimap_red_black_tree->equal_range(key);
         return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it3.first, false),
-                  multimap_iterator_t<T>(it3.second, true));
+                  multimap_iterator_t<T>(it3, false),
+                  multimap_iterator_t<T>(it3, true));
       }
       case MULTIMAP_UNORDERED_HASH: {
         typename multimap_unordered_hash_t<T, uint64_t>::map_const_iterator_range_t it4 =
                   multimap_unordered_hash->equal_range(key);
         return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it4.first, false),
-                  multimap_iterator_t<T>(it4.second, true));
+                  multimap_iterator_t<T>(it4, false),
+                  multimap_iterator_t<T>(it4, true));
       }
 
       default:
@@ -178,6 +191,23 @@ class multimap_manager_t {
         return multimap_red_black_tree->has(key, source_lookup_encoding);
       case MULTIMAP_UNORDERED_HASH:
         return multimap_unordered_hash->has(key, source_lookup_encoding);
+
+      default:
+        assert(0);
+    }
+  }
+
+  // has_range
+  bool has_range(const T& key) {
+    switch(multimap_type) {
+      case MULTIMAP_BTREE:
+        return multimap_btree->has_range(key);
+      case MULTIMAP_FLAT_SORTED_VECTOR:
+        return multimap_flat_sorted_vector->has_range(key);
+      case MULTIMAP_RED_BLACK_TREE:
+        return multimap_red_black_tree->has_range(key);
+      case MULTIMAP_UNORDERED_HASH:
+        return multimap_unordered_hash->has_range(key);
 
       default:
         assert(0);
