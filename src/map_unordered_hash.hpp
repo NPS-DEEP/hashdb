@@ -34,6 +34,7 @@
 
 // Boost includes
 #include <boost/functional/hash.hpp>
+#include "hash_values.hpp"
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>

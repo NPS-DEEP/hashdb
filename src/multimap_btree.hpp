@@ -33,12 +33,7 @@
 #include "file_modes.h"
 
 // Boost includes
-//#include <boost/functional/hash.hpp>
-
 #include <boost/btree/btree_map.hpp>
-
-//#include "hashdb_types.h"
-//#include "map_stats.hpp"
 
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)
 // both KEY_T and PAY_T must not use dynamic memory

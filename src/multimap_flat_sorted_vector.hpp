@@ -33,15 +33,10 @@
 #include "file_modes.h"
 
 // Boost includes
-//#include <boost/functional/hash.hpp>
-
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <map>
 #include <boost/interprocess/containers/flat_map.hpp>
-
-//#include "hashdb_types.h"
-//#include "map_stats.hpp"
 
 // managed the multimapped file during creation.  Allows for growing the 
 // multimapped file.

@@ -24,7 +24,8 @@ bin_PROGRAMS = \
 	map_and_multimap_test \
 	btree_bug_test \
 	map_manager_test \
-	multimap_manager_test
+	multimap_manager_test \
+        hashdb_iterator_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -121,6 +122,7 @@ source_lookup_encoding_test_SOURCES = \
 
 map_and_multimap_test_SOURCES = \
 	boost_fix.hpp \
+	to_key_helper.hpp \
         ../map_stats.hpp \
         ../file_modes.h \
 	../dfxml/src/dfxml_writer.h \
@@ -165,4 +167,23 @@ multimap_manager_test_SOURCES = \
 	../multimap_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	multimap_manager_test.cpp
+
+hashdb_iterator_test_SOURCES = \
+	boost_fix.hpp \
+        ../file_modes.h \
+        ../map_types.h \
+	../map_red_black_tree.hpp \
+	../map_unordered_hash.hpp \
+	../map_flat_sorted_vector.hpp \
+	../map_btree.hpp \
+	../map_manager.hpp \
+        ../multimap_types.h \
+	../multimap_red_black_tree.hpp \
+	../multimap_unordered_hash.hpp \
+	../multimap_flat_sorted_vector.hpp \
+	../multimap_btree.hpp \
+	../multimap_manager.hpp \
+	../hashdb_iterator.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	hashdb_iterator_test.cpp
 

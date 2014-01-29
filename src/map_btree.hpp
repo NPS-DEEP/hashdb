@@ -31,12 +31,7 @@
 #include <cassert>
 #include "file_modes.h"
 
-// TR1 includes:
-//#include <tr1/cmath>     // log2
-
 // Boost includes
-//#include <boost/functional/hash.hpp>
-
 #include <boost/btree/btree_map.hpp>
 
 // KEY_T must be something that is a lot like md5_t (nothing with pointers)

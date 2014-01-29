@@ -36,14 +36,9 @@
 //#include <tr1/cmath>     // log2
 
 // Boost includes
-//#include <boost/functional/hash.hpp>
-
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/containers/map.hpp>
-
-//#include "hashdb_types.h"
-//#include "map_stats.hpp"
 
 // managed the mapped file during creation.  Allows for growing the 
 // mapped file.

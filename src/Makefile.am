@@ -55,6 +55,7 @@ HASHDB_INCS = \
 	hash_duplicates_store.cpp \
 	hash_store.hpp \
 	hash_store.cpp \
+	hash_values.hpp \
 	history_manager.hpp \
 	manager_modified.h \
 	manager_modified_includes.h \

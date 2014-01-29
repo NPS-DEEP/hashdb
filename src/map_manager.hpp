@@ -31,23 +31,7 @@
 #include "map_unordered_hash.hpp"
 #include "file_modes.h"
 #include "map_types.h"
-//#include "dfxml/src/hash_t.h"
-//#include "hash_algorithm_types.h"
 #include "map_iterator.hpp"
-//#include <boost/functional/hash.hpp>
-
-/*
-// provide these for the unordered hash map and multimap
-inline std::size_t hash_value(const md5_t& key) {
-  return boost::hash_value<unsigned char,16>(key.digest);
-}
-inline std::size_t hash_value(const sha1_t& key) {
-  return boost::hash_value<unsigned char,20>(key.digest);
-}
-inline std::size_t hash_value(const sha256_t& key) {
-  return boost::hash_value<unsigned char,32>(key.digest);
-}
-*/
 
 /**
  * Provides interfaces to the hash map store that use glue to the actual

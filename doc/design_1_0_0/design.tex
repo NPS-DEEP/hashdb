@@ -290,30 +290,22 @@ Here is the basic flow for the \hdb server:
 \end{algorithmic}
 
 \section{\hdb Modules}
-\subsection{\hdb Element Manager}
-The \texttt{hashdb\_element\_manager\_t}
-provides all services required for working with \hdb elements.
-The \hdb library API drives this module directly.
-The \hdb tool drives this module directly,
-and, for some functions, specifically lookup, add, and delete,
-may also drive the \hdb library API.
-
-The \hdb element manager works with \hdb elements, described later.
+\subsection{\hdb Manager}
+The \texttt{hashdb\_manager\_t}
+provides services required for accessing the hash database
+as a whole.  It hides the map manager, multimap manager, and bloom filter.
 Changes to the \hdb are noted in the \hdb change logger.
 
 Interfaces are:
 \begin{compactitem}
-\item Open a \hdb database as new, RW, or RO
-\item Insert a \hdb element, noting the change.
-\item Remove a \hdb element, noting the change.
-\item See if a hash value exists.
-\item Provide a \mmi pointing to the first \hdb element
-containing a specified hash value.
-\mmi dereferences to \texttt{hashdb\_element\_t}.
-\item Provide a \mi for iterating over hash values.
-\mi dereferences to \texttt{std::pair<uint8\_t[SIZE], uint32\_t>}
-to provide hash and count values.
-\item Provide a \mmi for iterating over all \hdb elements.
+\item Open a hash database as new, RW, or RO
+\item Insert a \texttt{T, uint64\_t} entry noting the change.
+\item Remove a \texttt{T, uint64\_t} entry noting the change.
+\item Remove all elements of \texttt{<T>}, noting the change.
+\item See if a hash of type \texttt{<T>} exists.
+\item Provide a \hdb iterator via begin() and end()
+for iterating over all hash values.
+Iterator dereferences to \texttt{pair<T, uint64\_t>>}.
 \end{compactitem}
 
 % instantiation
@@ -324,7 +316,7 @@ Operations may be performed with this database as allowed by its mode.
 
 \begin{small}
 \begin{verbatim}
-hashdb_db_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
+hashdb_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
 \end{verbatim}
 \end{small}
 
@@ -334,82 +326,86 @@ Insert the specified hash, noting the change.
 
 \begin{small}
 \begin{verbatim}
-insert_hash(const hashdb_element_t &hashdb_element,
-            hashdb_change_object_t &hashdb_change_object);
+insert(const <T> &key, uint64_t pay,
+       hashdb_change_object_t &hashdb_change_object);
 \end{verbatim}
 \end{small}
 
 % remove hash
 \subsubsection{Remove Hash}
-Insert the specified hash, noting the change.
+Remove the specified hash, noting the change.
 
 \begin{small}
 \begin{verbatim}
-remove_hash(const remove_md5_hash_t &remove_hash,
-           hashdb_change_object_t &hashdb_change_object);
+remove(const <T> &key, uint64_t pay,
+      hashdb_change_object_t &hashdb_change_object);
+
+remove(const <T> &key,
+      hashdb_change_object_t &hashdb_change_object);
 \end{verbatim}
 \end{small}
 
-% find hash count
-\subsubsection{Count}
-Returns the number of elements containing the given hash value.
+% has
+\subsubsection{Has Hash}
+Check for hash, checking Bloom filter first.
 
 \begin{small}
 \begin{verbatim}
-uint32_t count(md5_t md5);
+has(const <T> &key);
 \end{verbatim}
 \end{small}
+
+% size
+% no, provide a complete stat report elsewhere.
+%\subsubsection{Count}
+%Returns the number of elements containing the given hash value.
+%
+%\begin{small}
+%\begin{verbatim}
+%uint32_t count(md5_t md5);
+%\end{verbatim}
+%\end{small}
 
 % equal range
-\subsubsection{Equal Range}
-Returns pair of \mmi to lower bound
-(first element with key not less than value)
-and upper bound (first element with key greater than value or end).
-
-\begin{small}
-\begin{verbatim}
-pair<const_hashdb_multimap_iterator lower,
-    const_hashdb_multimap_iterator upper> equal_range(md5_t md5);
-\end{verbatim}
-\end{small}
+% no, not at this layer
+%\subsubsection{Equal Range}
+%Returns pair of \mmi to lower bound
+%(first element with key not less than value)
+%and upper bound (first element with key greater than value or end).
+%
+%\begin{small}
+%\begin{verbatim}
+%pair<const_hashdb_multimap_iterator lower,
+%    const_hashdb_multimap_iterator upper> equal_range(md5_t md5);
+%\end{verbatim}
+%\end{small}
 
 % mi begin
 \subsubsection{\mi Begin}
-Returns begin for \mi.
+Returns begin for \hdb iterator.
 
 \begin{small}
 \begin{verbatim}
-const_hashdb_map_iterator hashdb_map_begin();
+hashdb_iterator_t<T> begin();
 \end{verbatim}
 \end{small}
 
 % mi end
 \subsubsection{\mi End}
-Returns end for \mi.
+Returns end for \hdb iterator.
 
 \begin{small}
 \begin{verbatim}
-const_hashdb_map_iterator hashdb_map_end();
+hashdb_iterator_t<T> end();
 \end{verbatim}
 \end{small}
 
-% mmi begin
-\subsubsection{\mmi Begin}
-Returns begin for \mmi.
+\subsection{\hdb Iterator}
+Provide an iterator over all \hdb elements, not just map.
 
 \begin{small}
 \begin{verbatim}
-const_hashdb_multimap_iterator hashdb_multimap_begin();
-\end{verbatim}
-\end{small}
-
-% mmi end
-\subsubsection{\mmi End}
-Returns end for \mmi.
-
-\begin{small}
-\begin{verbatim}
-const_hashdb_multimap_iterator hashdb_multimap_end();
+hashdb_iterator<T>(map_manager_t, multimap_manager_t);
 \end{verbatim}
 \end{small}
 

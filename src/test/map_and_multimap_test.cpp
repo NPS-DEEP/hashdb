@@ -39,134 +39,142 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "to_key_helper.hpp"
 #include "file_modes.h"
 #include "dfxml/src/hash_t.h"
 
 static const char temp_file[] = "temp_file";
 
-// make one of these for each hash type to test
-md5_t to_key(uint64_t i) {
-  std::ostringstream ss;
-  ss << std::setw(32) << std::setfill('0') << std::hex << i;
-  std::string temp = ss.str();
-  return md5_t::fromhex(temp);
-}
-
-// provide this for the unordered hash map and multimap
-inline std::size_t hash_value(const md5_t& md5) {
-  return boost::hash_value<unsigned char,16>(md5.digest);
-}
-
-template<typename T>
-void run_map_tests() {
+template<typename T, typename K>
+void run_map_rw_tests() {
   typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
-
-  T* map;
-  map_pair_t map_pair; 
-  size_t num_erased;
-  class T::map_const_iterator_t map_it;
+  K key;
 
   // clean up from any previous run
   remove(temp_file);
 
-  // create new map
-  map = new T(temp_file, RW_NEW);
+  T map(temp_file, RW_NEW);
+
+  map_pair_t map_pair; 
+  size_t num_erased;
+  class T::map_const_iterator_t map_it;
 
   // populate with 1,000,000 entries
   for (uint64_t n=0; n< 1000000; ++n) {
-    map->emplace(to_key(n+1000000), n);
+    to_key(n+1000000, key);
+    map.emplace(key, n);
   }
 
 // force failed test just to see the output
-//BOOST_TEST_EQ(map->size(), 1000001);
+//BOOST_TEST_EQ(map.size(), 1000001);
 
   // ************************************************************
   // RW tests
   // ************************************************************
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // add duplicate
-  map_pair = map->emplace(to_key(1000005), 0);
+  to_key(1000005, key);
+  map_pair = map.emplace(key, 0);
   BOOST_TEST_EQ(map_pair.second, false);
 
   // add new
-  map_pair = map->emplace(to_key(2000005), 0);
+  to_key(2000005, key);
+  map_pair = map.emplace(key, 0);
   BOOST_TEST_EQ(map_pair.second, true);
 
   // check count
-  BOOST_TEST_EQ(map->size(), 1000001);
+  BOOST_TEST_EQ(map.size(), 1000001);
 
   // remove entry positive
-  num_erased = map->erase(to_key(1000005));
+  to_key(1000005, key);
+  num_erased = map.erase(key);
   BOOST_TEST_EQ(num_erased, 1);
 
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // remove entry false
-  num_erased = map->erase(to_key(1000005));
+  to_key(1000005, key);
+  num_erased = map.erase(key);
   BOOST_TEST_EQ(num_erased, 0);
 
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // change entry
-  map_pair = map->change(to_key(1000006), 60);
+  to_key(1000006, key);
+  map_pair = map.change(key, 60);
   BOOST_TEST_EQ(map_pair.second, true);
 
   // change entry invalid
-  map_pair = map->change(to_key(1000006), 60);
+  to_key(1000006, key);
+  map_pair = map.change(key, 60);
   BOOST_TEST_EQ(map_pair.second, false);
 
   // check count stayed same
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // validate map integrity by looking for keys using find
-  map_it = map->find(to_key(1000003));
+  to_key(1000003, key);
+  map_it = map.find(key);
   BOOST_TEST_EQ(map_it->second, 3);
-  map_it = map->find(to_key(2000003)); // should = map->end()
+  to_key(2000003, key);
+  map_it = map.find(key); // should = map.end()
 
   // compiler can't handle this, so use simpler alternative.
-  // BOOST_TEST_EQ(map_it, map->end());
-  bool temp = (map_it == map->end());
+  // BOOST_TEST_EQ(map_it, map.end());
+  bool temp = (map_it == map.end());
   BOOST_TEST_EQ(temp, true);
 
   // validate map integrity by looking for keys using has
-  BOOST_TEST_EQ(map->has(to_key(1000003)), true);
-  BOOST_TEST_EQ(map->has(to_key(2000003)), false);
+  to_key(1000003, key);
+  BOOST_TEST_EQ(map.has(key), true);
+  to_key(2000003, key);
+  BOOST_TEST_EQ(map.has(key), false);
+}
 
-  // end RW tests
-  delete map;
+template<typename T, typename K>
+void run_map_ro_tests() {
+std::cout << "run_map_ro_tests\n";
 
+  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
-  map = new T(temp_file, READ_ONLY);
+  map_pair_t map_pair; 
+  class T::map_const_iterator_t map_it;
+  K key;
+
+  T map(temp_file, READ_ONLY);
 
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // validate map integrity by looking for keys
-  BOOST_TEST_EQ(map->has(to_key(1000003)), true);
-  BOOST_TEST_EQ(map->has(to_key(2000003)), false);
+  to_key(1000003, key);
+  BOOST_TEST_EQ(map.has(key), true);
+  to_key(2000003, key);
+  BOOST_TEST_EQ(map.has(key), false);
 
   // try to edit the RO map
-  BOOST_TEST_THROWS(map_pair = map->emplace(to_key(0), 0), std::runtime_error);
-  BOOST_TEST_THROWS(num_erased = map->erase(to_key(0)), std::runtime_error);
-  BOOST_TEST_THROWS(map_pair = map->change(to_key(0), 0), std::runtime_error);
-
-  // NOTE: btree assert failure if exit without delete.
-
-  // end RO tests
-  delete map;
+  to_key(0, key);
+  BOOST_TEST_THROWS(map_pair = map.emplace(key, 0), std::runtime_error);
+  BOOST_TEST_THROWS(map.erase(key), std::runtime_error);
+  BOOST_TEST_THROWS(map_pair = map.change(key, 0), std::runtime_error);
 }
 
-template<typename T>
-void run_multimap_tests() {
+template<typename T, typename K>
+void run_multimap_rw_tests() {
+std::cout << "run_multimap_rw_tests\n";
   typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
 
-  T* map;
+  // clean up from any previous run
+  remove(temp_file);
+
+  T map(temp_file, RW_NEW);
+  K key;
   map_pair_t map_pair; 
   bool did_erase;
   class T::map_const_iterator_t map_it;
@@ -174,127 +182,146 @@ void run_multimap_tests() {
   class T::map_const_iterator_range_t map_it_range;
   bool did_emplace;
 
-  // clean up from any previous run
-  remove(temp_file);
-
-  // create new map
-  map = new T(temp_file, RW_NEW);
-
   // populate with 1,000,000 entries
   for (uint64_t n=0; n< 1000000; ++n) {
-    map->emplace(to_key(n+1000000), n);
+    to_key(n+1000000, key);
+    map.emplace(key, n);
   }
 
   // ************************************************************
   // RW tests
   // ************************************************************
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // add same key, different value
-  did_emplace = map->emplace(to_key(1000005), 0);
+  to_key(1000005, key);
+  did_emplace = map.emplace(key, 0);
   BOOST_TEST_EQ(did_emplace, true);
 
   // add same key, different value
-  did_emplace = map->emplace(to_key(1000005), 1);
+  to_key(1000005, key);
+  did_emplace = map.emplace(key, 1);
   BOOST_TEST_EQ(did_emplace, true);
 
   // doesn't add same key, same value
-  did_emplace = map->emplace(to_key(1000005), 1);
+  to_key(1000005, key);
+  did_emplace = map.emplace(key, 1);
   BOOST_TEST_EQ(did_emplace, false);
 
   // range operation, 1 key, 1 value
-  map_it_range = map->equal_range(to_key(1000000));
-  BOOST_TEST(map_it_range.first != map->end());
+  to_key(1000000, key);
+  map_it_range = map.equal_range(key);
+  BOOST_TEST(map_it_range.first != map.end());
   ++map_it_range.first;
   BOOST_TEST(map_it_range.first == map_it_range.second);
 
   // range operation, 1 key, 3 values
-  map_it_range = map->equal_range(to_key(1000005));
-  BOOST_TEST(map_it_range.first != map->end());
+  to_key(1000005, key);
+  map_it_range = map.equal_range(key);
+  BOOST_TEST(map_it_range.first != map.end());
   BOOST_TEST(map_it_range.first != map_it_range.second);
   ++map_it_range.first;
   ++map_it_range.first;
-  BOOST_TEST(map_it_range.first != map->end());
+  BOOST_TEST(map_it_range.first != map.end());
   ++map_it_range.first;
   BOOST_TEST(map_it_range.first == map_it_range.second);
 
   // range operation, no key
-  map_it_range = map->equal_range(to_key(2000005));
-  BOOST_TEST(map_it_range.first == map->end());
-  BOOST_TEST(map_it_range.second == map->end());
+  to_key(2000005, key);
+  map_it_range = map.equal_range(key);
+  BOOST_TEST(map_it_range.first == map.end());
+  BOOST_TEST(map_it_range.second == map.end());
 
   // count for key
-  BOOST_TEST_EQ(map->count(to_key(2000005)), 0);
-  BOOST_TEST_EQ(map->count(to_key(1000004)), 1);
-  BOOST_TEST_EQ(map->count(to_key(1000005)), 3);
+  to_key(2000005, key);
+  BOOST_TEST_EQ(map.count(key), 0);
+  to_key(1000004, key);
+  BOOST_TEST_EQ(map.count(key), 1);
+  to_key(1000005, key);
+  BOOST_TEST_EQ(map.count(key), 3);
 
   // find
-  map_it = map->find(to_key(1000005), 0);
-  BOOST_TEST(map_it != map->end());
-  map_it = map->find(to_key(1000005), 1);
-  BOOST_TEST(map_it != map->end());
-  map_it = map->find(to_key(1000005), 5);
-  BOOST_TEST(map_it != map->end());
-  map_it = map->find(to_key(1000005), 6);
-  BOOST_TEST(map_it == map->end());
+  to_key(1000005, key);
+  map_it = map.find(key, 0);
+  BOOST_TEST(map_it != map.end());
+  map_it = map.find(key, 1);
+  BOOST_TEST(map_it != map.end());
+  map_it = map.find(key, 5);
+  BOOST_TEST(map_it != map.end());
+  map_it = map.find(key, 6);
+  BOOST_TEST(map_it == map.end());
 
   // has
-  BOOST_TEST_EQ(map->has(to_key(1000005), 0), true);
-  BOOST_TEST_EQ(map->has(to_key(1000005), 1), true);
-  BOOST_TEST_EQ(map->has(to_key(1000005), 5), true);
-  BOOST_TEST_EQ(map->has(to_key(1000005), 6), false);
+  to_key(1000005, key);
+  BOOST_TEST_EQ(map.has(key, 0), true);
+  BOOST_TEST_EQ(map.has(key, 1), true);
+  BOOST_TEST_EQ(map.has(key, 5), true);
+  BOOST_TEST_EQ(map.has(key, 6), false);
 
   // erase
-  did_erase = map->erase(to_key(1000004), 4); // valid
+  to_key(1000004, key);
+  did_erase = map.erase(key, 4); // valid
   BOOST_TEST_EQ(did_erase, true);
-  did_erase = map->erase(to_key(1000004), 4); // not valid now
+  to_key(1000004, key);
+  did_erase = map.erase(key, 4); // not valid now
   BOOST_TEST_EQ(did_erase, false);
-  did_erase = map->erase(to_key(2000004), 4); // never valid
+  to_key(2000004, key);
+  did_erase = map.erase(key, 4); // never valid
   BOOST_TEST_EQ(did_erase, false);
 
   // put back 1000004, 4
-  did_emplace = map->emplace(to_key(1000004), 4);
+  to_key(1000004, key);
+  did_emplace = map.emplace(key, 4);
   BOOST_TEST_EQ(did_emplace, true);
 
   // erase same key multiple values
-  did_erase = map->erase(to_key(1000005), 0);
-  BOOST_TEST_EQ(map->count(to_key(1000005)), 2);
-  did_erase = map->erase(to_key(1000005), 1);
-  BOOST_TEST_EQ(map->count(to_key(1000005)), 1);
-  did_erase = map->erase(to_key(1000005), 5);
-  BOOST_TEST_EQ(map->count(to_key(1000005)), 0);
-  did_erase = map->erase(to_key(1000005), 6);
-  BOOST_TEST_EQ(map->count(to_key(1000005)), 0);
+  to_key(1000005, key);
+  did_erase = map.erase(key, 0);
+  BOOST_TEST_EQ(map.count(key), 2);
+  did_erase = map.erase(key, 1);
+  BOOST_TEST_EQ(map.count(key), 1);
+  did_erase = map.erase(key, 5);
+  BOOST_TEST_EQ(map.count(key), 0);
+  did_erase = map.erase(key, 6);
+  BOOST_TEST_EQ(map.count(key), 0);
 
   // put back 1000005, 5
-  did_emplace = map->emplace(to_key(1000005), 5);
+  to_key(1000005, key);
+  did_emplace = map.emplace(key, 5);
   BOOST_TEST_EQ(did_emplace, true);
+}
 
-  // end RW tests
-  delete map;
-
+template<typename T, typename K>
+void run_multimap_ro_tests() {
+std::cout << "run_multimap_ro_tests\n";
+  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
-  map = new T(temp_file, READ_ONLY);
+  T map(temp_file, READ_ONLY);
+  K key;
+
+  map_pair_t map_pair; 
+  class T::map_const_iterator_t map_it;
+  class T::map_const_iterator_t end_it;
+  class T::map_const_iterator_range_t map_it_range;
 
   // check count
-  BOOST_TEST_EQ(map->size(), 1000000);
+  BOOST_TEST_EQ(map.size(), 1000000);
 
   // validate map integrity by looking for keys
-  BOOST_TEST_EQ(map->has(to_key(1000003), 3), true);
-  BOOST_TEST_EQ(map->has(to_key(1000003), 4), false);
-  BOOST_TEST_EQ(map->has(to_key(2000003), 0), false);
+  to_key(1000003, key);
+  BOOST_TEST_EQ(map.has(key, 3), true);
+  to_key(1000003, key);
+  BOOST_TEST_EQ(map.has(key, 4), false);
+  to_key(2000003, key);
+  BOOST_TEST_EQ(map.has(key, 0), false);
 
   // try to edit the RO map
-  BOOST_TEST_THROWS(did_emplace = map->emplace(0, 0), std::runtime_error);
-  BOOST_TEST_THROWS(did_erase = map->erase(0, 0), std::runtime_error);
-
-  // NOTE: btree assert failure if exit without delete.
-
-  // end RO tests
-  delete map;
+  to_key(0, key);
+  BOOST_TEST_THROWS(map.emplace(key, 0), std::runtime_error);
+  BOOST_TEST_THROWS(map.erase(key, 0), std::runtime_error);
 }
 
 //  typedef uint64_t my_key_t;
@@ -306,31 +333,39 @@ int cpp_main(int argc, char* argv[]) {
   // map
   // ************************************************************
   // red-black-tree map
-  run_map_tests<class map_red_black_tree_t<my_key_t, val_t> >();
+  run_map_rw_tests<class map_red_black_tree_t<my_key_t, val_t>, my_key_t >();
+  run_map_ro_tests<class map_red_black_tree_t<my_key_t, val_t>, my_key_t >();
 
   // unordered hash map
-  run_map_tests<class map_unordered_hash_t<my_key_t, val_t> >();
+  run_map_rw_tests<class map_unordered_hash_t<my_key_t, val_t>, my_key_t >();
+  run_map_ro_tests<class map_unordered_hash_t<my_key_t, val_t>, my_key_t >();
 
   // flat sorted vector map
-  run_map_tests<class map_flat_sorted_vector_t<my_key_t, val_t> >();
+  run_map_rw_tests<class map_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
+  run_map_ro_tests<class map_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
 
   // btree map
-  run_map_tests<class map_btree_t<my_key_t, val_t> >();
+  run_map_rw_tests<class map_btree_t<my_key_t, val_t>, my_key_t >();
+  run_map_ro_tests<class map_btree_t<my_key_t, val_t>, my_key_t >();
 
   // ************************************************************
   // multimap
   // ************************************************************
   // red-black-tree multimap
-  run_multimap_tests<class multimap_red_black_tree_t<my_key_t, val_t> >();
+  run_multimap_rw_tests<class multimap_red_black_tree_t<my_key_t, val_t>, my_key_t >();
+  run_multimap_ro_tests<class multimap_red_black_tree_t<my_key_t, val_t>, my_key_t >();
 
   // unordered hash multimap
-  run_multimap_tests<class multimap_unordered_hash_t<my_key_t, val_t> >();
+  run_multimap_rw_tests<class multimap_unordered_hash_t<my_key_t, val_t>, my_key_t >();
+  run_multimap_ro_tests<class multimap_unordered_hash_t<my_key_t, val_t>, my_key_t >();
 
   // flat sorted vector multimap
-  run_multimap_tests<class multimap_flat_sorted_vector_t<my_key_t, val_t> >();
+  run_multimap_rw_tests<class multimap_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
+  run_multimap_ro_tests<class multimap_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
 
   // btree multimap
-  run_multimap_tests<class multimap_btree_t<my_key_t, val_t> >();
+  run_multimap_rw_tests<class multimap_btree_t<my_key_t, val_t>, my_key_t >();
+  run_multimap_ro_tests<class multimap_btree_t<my_key_t, val_t>, my_key_t >();
 
   // ************************************************************
   // done
