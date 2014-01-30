@@ -1,0 +1,117 @@
+
+%\documentclass[10pt,twoside,twocolumn]{article}
+\documentclass[12pt,twoside]{article}
+\usepackage[bf,small]{caption}
+\usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
+\usepackage{paralist} % comapctitem, compactdesc, compactenum
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{./graphics/}}
+\usepackage{xspace}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{float}
+\hyphenation{Sub-Bytes Shift-Rows Mix-Col-umns Add-Round-Key}
+
+\setlength{\parskip}{12pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+\newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hashid}{\emph{hashid}\xspace}
+\newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\bev}{\emph{bulk\_extractor Viewer}\xspace}
+
+\begin{document}
+
+\begin{center}
+\Large Find Part of a Video File in a Media Image \\
+\Large Using \bulk and \hdb
+\end{center}
+
+Run \bulk to scan the Media Image for parts of a vidio file:
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.5]{drawings/scan_hashid}
+  \caption*{Scan the Media Image for parts of a Video file.}
+  \label{fig:scan_hashid}
+\end{figure}
+
+Download the data files required for the demo:
+\begin{compactitem}
+\item Hash Database containing hash blocks of Video Files:
+\url{www.digitalcorpora.org/downloads/hashdb/examples/db\_of\_video\_hashes}
+\item Media Image containing a fragment of a Video File:
+\url{www.digitalcorpora.org/downloads/hashdb/examples/media\_image\_with\_fragment}
+\end{compactitem}
+Download \bulk compiled with the the \hashid v0.9.1 scanner:
+\begin{compactitem}
+\item \bulk with the \hdb \hashid scanner:
+\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}
+\end{compactitem}
+
+Steps:
+\begin{compactenum}
+\item Install \bulk.
+\item From the command line, run \bulk,
+specifying the paths to the hash database and the media image:
+\begin{verbatim}
+$ bulk_extractor -o outdir -S query_type=use_path \
+  -S path=db_of_video_hashes media_image_with_fragment
+\end{verbatim}
+\item View the feature file using an editor or \bev.
+For example type:
+\begin{verbatim}
+$ vi outdir/identified\_blocks.txt
+\end{verbatim}
+An example of a hash block match looks like this:
+\begin{verbatim}
+102400    a2929e2d838b88973b4c4f3d7a96c6d9    1
+\end{verbatim}
+\end{compactenum}
+
+Seeing hash \texttt{a2929e2d...} at Forensic path \texttt{102400}
+shows that a hash block match was found, but what file does it match?
+We find the file that contains the hash using a source lookup:
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.5]{drawings/source_lookup}
+  \caption*{Look up the file that has the hash.}
+  \label{fig:source_lookup}
+\end{figure}
+
+Download the \hdb v0.9.1 tool to perform the post-processing:
+\begin{compactitem}
+\item The \hdb tool: 
+\url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1-windowsinstaller.exe}
+\end{compactitem}
+
+Steps:
+\begin{compactenum}
+\item Run the \hdb tool to obtain the lookup:
+\begin{verbatim}
+$ hashdb_checker --query_source \
+  -p get_hash_source outdir/identified_blocks.txt \
+  > identified_sources.txt
+\end{verbatim}
+\end{compactenum}
+
+Now we view file \texttt{identified\_sources.txt} to see
+features containing source information.
+This example line:
+\begin{verbatim}
+102400    a2929e2d838b88973b4c4f3d7a96c6d9    repository \
+incriminating_video.mpg    8120000
+\end{verbatim}
+
+indicates that the block at Forensic path \texttt{102400}
+matches the block \texttt{8120000} bytes into the
+\texttt{incriminating\_video.mpg} video file.
+
+\end{document}
+

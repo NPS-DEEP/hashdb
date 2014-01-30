@@ -63,6 +63,7 @@ src/test/source_lookup_encoding_test
 src/test/map_and_multimap_test
 src/test/map_manager_test
 src/test/multimap_manager_test
+src/test/hashdb_iterator_test
 src/test/btree_bug_test
 src/test/temp_file
 src/test/temp_dir
@@ -79,3 +80,6 @@ doc/design_1_0_0/design.pdf
 doc/hashdb_user_guide/hashdb_user_guide.aux
 doc/hashdb_user_guide/hashdb_user_guide.out
 doc/hashdb_user_guide/hashdb_user_guide.pdf
+doc/scanner_demo/scanner_demo.aux
+doc/scanner_demo/scanner_demo.out
+doc/scanner_demo/scanner_demo.pdf
