@@ -68,8 +68,30 @@ class hashdb_iterator_t {
   }
 
   // equal
-  bool equal(map_iterator_t<T> const& other) const {
-    return *this == other;
+  bool equal(hashdb_iterator_t<T> const& other) const {
+if (map_manager == other.map_manager) {
+std::cout << "hashdb_iterator.equal.a\n";
+}
+if (multimap_manager == other.multimap_manager) {
+std::cout << "hashdb_iterator.equal.b\n";
+}
+//std::cout << "hashdb_iterator.map_iterator->second " << map_iterator->second << "\n";
+//std::cout << "hashdb_iterator.other.map_iterator->second " << other.map_iterator->second << "\n";
+if (map_iterator == other.map_iterator) {
+std::cout << "hashdb_iterator.equal.c\n";
+}
+if (multimap_iterator == other.multimap_iterator) {
+std::cout << "hashdb_iterator.equal.d\n";
+}
+    if (map_manager == other.map_manager &&
+        multimap_manager == other.multimap_manager &&
+        map_iterator == other.map_iterator &&
+        multimap_iterator == other.multimap_iterator &&
+        in_multimap_iterator == other.in_multimap_iterator) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   // dereference
@@ -89,11 +111,12 @@ class hashdb_iterator_t {
       } else {
         // set up to use the multimap_iterator
         in_multimap_iterator = true;
-        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > it_pair =
-                  multimap_manager.equal_range(map_iterator->first);
+        T key = map_iterator->first;
+        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > it_pair(
+                  multimap_manager->equal_range(key));
 
         // program error if multimap_iterator is empty
-        if (it_pair->first != it_pair->second) {
+        if (it_pair.first != it_pair.second) {
           assert(0);
         }
 

@@ -22,8 +22,8 @@
  * Provides usage and detailed usage for the hashdb tool.
  */
 
-#ifndef HASHDB_USAGE_HPP
-#define HASHDB_USAGE_HPP
+#ifndef USAGE_HPP
+#define USAGE_HPP
 
 #include <config.h>
 
@@ -312,9 +312,9 @@ void detailed_usage() {
   << "                      be specified as a path or a socket, such as \"my_hashdb\"\n"
   << "                      or \"tcp://localhost:14500\".\n"
   << "\n"
-  << "    hashdb_action     The action the hashid scanner will take, \"query_hash\"\n"
+  << "    hashdb_action     The action the hashid scanner will take, \"scan\"\n"
   << "                      to scan for matching hash values, or \"import\" to import\n"
-  << "                      hashes into the database (default \"query_hash\").\n"
+  << "                      hashes into the database (default \"scan\").\n"
   << "\n"
   << "    hashdb_hash_alg   The cryptographic hash algorithm to use, \"md5\", \"sha1\",\n"
   << "                      or \"sha256\" (default \"md5\").\n"
@@ -324,10 +324,10 @@ void detailed_usage() {
   << "\n"
   << "    sector_size       Sector size, in bytes, for generating hashes\n"
   << "                      (default 512).\n"
-  << "                      Used only in action \"query_hash\".\n"
+  << "                      Used only in hashdb_action \"scan\".\n"
   << "\n"
   << "    repository_name   Repository name to use when importing.\n"
-  << "                      Used only in action \"import\".\n"
+  << "                      Used only in hashdb_action \"import\".\n"
   << "\n"
   << "Improving startup speed by keeping a hash database open:\n"
   << "In the future, a dedicated provision may be created for this, but for now,\n"

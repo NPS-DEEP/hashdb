@@ -118,6 +118,6 @@ hashdb_manager_SOURCES = \
 
 hashdb_SOURCES = \
 	main.cpp \
-	hashdb_usage.hpp \
+	usage.hpp \
 	command_line.cpp \
 	command_line.hpp

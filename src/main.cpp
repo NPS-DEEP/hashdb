@@ -33,7 +33,7 @@
 // zz not yet #include "multimap_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_runtime_options.hpp"
-#include "hashdb_usage.hpp"
+#include "usage.hpp"
 #include "command_line.hpp" // zz make this better
 
 // Standard includes
