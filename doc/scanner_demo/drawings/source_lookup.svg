@@ -66,10 +66,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="382.71429"
+     inkscape:cx="384.71429"
      inkscape:cy="637.9309"
      inkscape:document-units="px"
-     inkscape:current-layer="g3369"
+     inkscape:current-layer="g3356"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -135,11 +135,15 @@
            id="tspan3352"
            y="320.86218"
            x="362.80997"
-           sodipodi:role="line">hashdb tool</tspan><tspan
+           sodipodi:role="line">hashdb</tspan><tspan
            y="348.36218"
            x="362.80997"
            sodipodi:role="line"
-           id="tspan3034">source lookup</tspan></text>
+           id="tspan3034">source lookup</tspan><tspan
+           y="375.86218"
+           x="362.80997"
+           sodipodi:role="line"
+           id="tspan3015">tool</tspan></text>
       <rect
          transform="translate(0,62.362161)"
          y="230"

@@ -24,32 +24,32 @@
 \newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
 \newcommand{\hashid}{\emph{hashid}\xspace}
 \newcommand{\mdd}{\emph{md5deep}\xspace}
-\newcommand{\bev}{\emph{bulk\_extractor Viewer}\xspace}
+\newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
 
 \begin{document}
 
 \begin{center}
-\Large Find Part of a Video File in a Media Image \\
-\Large Using \bulk and \hdb
+\Large Demo: Finding Part of a Video File in Media \\
+\large Using \bulk and \hdb
 \end{center}
 
-Run \bulk to scan the Media Image for parts of a vidio file:
+Run \bulk to scan the Media for parts of a vidio file:
 
 \begin{figure}[H]
   \center
-  \includegraphics[scale=0.5]{drawings/scan_hashid}
-  \caption*{Scan the Media Image for parts of a Video file.}
+  \includegraphics[scale=0.6]{drawings/scan_hashid}
+  \caption*{Scan the Media for parts of a Video file.}
   \label{fig:scan_hashid}
 \end{figure}
 
-Download the data files required for the demo:
+Download the data files required for the demo into a working directory:
 \begin{compactitem}
-\item Hash Database containing hash blocks of Video Files:
-\url{www.digitalcorpora.org/downloads/hashdb/examples/db\_of\_video\_hashes}
-\item Media Image containing a fragment of a Video File:
-\url{www.digitalcorpora.org/downloads/hashdb/examples/media\_image\_with\_fragment}
+\item The \hdb hash database containing hash blocks of the demo Video File:
+\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_db.zip}
+\item Media containing a fragment of a Video File:
+\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_redacted.mp4}
 \end{compactitem}
-Download \bulk compiled with the the \hashid v0.9.1 scanner:
+Download \bulk v1.4.1 compiled with the the \hashid v0.9.1 scanner:
 \begin{compactitem}
 \item \bulk with the \hdb \hashid scanner:
 \url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}
@@ -57,61 +57,66 @@ Download \bulk compiled with the the \hashid v0.9.1 scanner:
 
 Steps:
 \begin{compactenum}
-\item Install \bulk.
-\item From the command line, run \bulk,
-specifying the paths to the hash database and the media image:
+\item Install \bulk by running the
+\texttt{bulk\_extractor-1.4.1-windowsinstaler.exe} Windows installer.
+\item Extract the demo database
+by unzipig the \texttt{demo\_video\_db.zip} file.
+\item At the command line, go to your working directory and then run \bulk,
+specifying the paths to the hash database and the media:
 \begin{verbatim}
 $ bulk_extractor -o outdir -S query_type=use_path \
-  -S path=db_of_video_hashes media_image_with_fragment
+  -S path=demo_video_db demo_video_redacted.mp4
 \end{verbatim}
-\item View the feature file using an editor or \bev.
+\item View the feature file using an editor or use the \bev tool.
 For example type:
 \begin{verbatim}
-$ vi outdir/identified\_blocks.txt
+$ vi outdir/identified_blocks.txt
 \end{verbatim}
-An example of a hash block match looks like this:
+An example hash block match looks like this:
 \begin{verbatim}
-102400    a2929e2d838b88973b4c4f3d7a96c6d9    1
+10485760    3b6b477d391f73f67c1c01e2141dbb17    1
 \end{verbatim}
 \end{compactenum}
 
-Seeing hash \texttt{a2929e2d...} at Forensic path \texttt{102400}
+Seeing hash \texttt{3b6b477...} at Forensic path \texttt{10485760}
 shows that a hash block match was found, but what file does it match?
-We find the file that contains the hash using a source lookup:
+We find the file that contains the hash using a \hdb source lookup:
 \begin{figure}[H]
   \center
-  \includegraphics[scale=0.5]{drawings/source_lookup}
+  \includegraphics[scale=0.6]{drawings/source_lookup}
   \caption*{Look up the file that has the hash.}
   \label{fig:source_lookup}
 \end{figure}
 
 Download the \hdb v0.9.1 tool to perform the post-processing:
 \begin{compactitem}
-\item The \hdb tool: 
+\item The \hdb tool used for post-processing:
 \url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1-windowsinstaller.exe}
 \end{compactitem}
 
 Steps:
 \begin{compactenum}
-\item Run the \hdb tool to obtain the lookup:
+\item Run the \hdb tool to find where the identified hashes were sourced from:
 \begin{verbatim}
 $ hashdb_checker --query_source \
-  -p get_hash_source outdir/identified_blocks.txt \
+  -p demo_video_db outdir/identified_blocks.txt \
   > identified_sources.txt
 \end{verbatim}
 \end{compactenum}
 
-Now we view file \texttt{identified\_sources.txt} to see
+Now we view file \texttt{outdir/identified\_sources.txt} to see
 features containing source information.
 This example line:
 \begin{verbatim}
-102400    a2929e2d838b88973b4c4f3d7a96c6d9    repository \
-incriminating_video.mpg    8120000
+10485760    3b6b477d391f73f67c1c01e2141dbb17 \
+repository_name=repository_demo_video_dfxml, \
+filename=/home/bdallen/demo/demo_video.mp4, \
+file_offset=10485760
 \end{verbatim}
 
-indicates that the block at Forensic path \texttt{102400}
-matches the block \texttt{8120000} bytes into the
-\texttt{incriminating\_video.mpg} video file.
+indicates that the block at Forensic path \texttt{10485760}
+matches the block \texttt{10485760} bytes into the
+\texttt{demo\_video.mpg} video file.
 
 \end{document}
 
