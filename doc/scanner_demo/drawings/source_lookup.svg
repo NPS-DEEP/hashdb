@@ -66,10 +66,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="384.71429"
+     inkscape:cx="388.71429"
      inkscape:cy="637.9309"
      inkscape:document-units="px"
-     inkscape:current-layer="g3356"
+     inkscape:current-layer="g3369"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -168,7 +168,7 @@
            id="tspan3122-5"
            y="232.36217"
            x="610"
-           sodipodi:role="line">identified_blocks.txt</tspan><tspan
+           sodipodi:role="line">identified_sources.txt</tspan><tspan
            id="tspan3159"
            y="259.86218"
            x="610"
@@ -180,7 +180,7 @@
            id="tspan3163"
            y="314.86218"
            x="610"
-           sodipodi:role="line">hash sources</tspan></text>
+           sodipodi:role="line">matching hash sources</tspan></text>
       <rect
          transform="translate(0,62.362161)"
          y="140"
