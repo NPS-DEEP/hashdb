@@ -40,36 +40,43 @@
 #include "source_lookup_encoding.hpp"
 
 static const char temp_dir[] = "temp_dir";
-static const char temp_map[] = "temp_dir/temp_map";
-static const char temp_multimap[] = "temp_dir/temp_multimap";
+static const char temp_map[] = "temp_dir/hash_store";
+static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
 
 template<typename T>
 void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
+std::cout << "rw.a\n";
 
   T key;
   uint64_t pay;
   hashdb_iterator_t<T> it;
   hashdb_iterator_t<T> it_end;
+  std::pair<map_iterator_t<T>, bool> map_action_pair;
   bool is_done;
 
   // clean up from any previous run
   remove(temp_map);
   remove(temp_multimap);
 
+std::cout << "rw.b\n";
   // create map manager
-  map_manager_t<T> map_manager(temp_map, RW_NEW, map_type);
+  map_manager_t<T> map_manager(temp_dir, RW_NEW, map_type);
 
+std::cout << "rw.c\n";
   // create multimap manager
-  multimap_manager_t<T> multimap_manager(temp_multimap, RW_NEW, multimap_type);
+  multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW, multimap_type);
+std::cout << "rw.d\n";
 
   // put 1 element into map
   to_key(101, key);
-  map_manager.emplace(key, 1);
+  map_action_pair = map_manager.emplace(key, 1);
+  BOOST_TEST_EQ(map_action_pair.second, true);
+  map_action_pair = map_manager.emplace(key, 1);
+  BOOST_TEST_EQ(map_action_pair.second, false);
 
   // walk map of 1 element
   it = hashdb_iterator_t<T>(&map_manager, &multimap_manager, false);
   it_end = hashdb_iterator_t<T>(&map_manager, &multimap_manager, true);
-  
   BOOST_TEST_EQ(it->second, 1);
   is_done = (it == it_end);
   BOOST_TEST_EQ(is_done, false);
@@ -80,7 +87,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   // have element in map forward to element in multimap
   to_key(101, key);
   pay = source_lookup_encoding::get_source_lookup_encoding(2);
-  map_manager.emplace(key, pay);
+  map_action_pair = map_manager.change(key, pay);
+  BOOST_TEST_EQ(map_action_pair.second, true);
   multimap_manager.emplace(key, 201);
 
   // walk multimap of 1 element
@@ -97,6 +105,7 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
 template<typename T>
 void run_ro_tests(map_type_t map_type, multimap_type_t multimap_type) {
+std::cout << "ro.a\n";
   // no action
 }
 

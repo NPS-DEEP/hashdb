@@ -55,39 +55,33 @@ class hashdb_iterator_t {
       // increment the multimap iterator
       ++multimap_iterator;
       if (multimap_iterator == multimap_end_iterator) {
-        // that's it for multimap iterator, go back to using map iterator
-        in_multimap_iterator = false;
+        // that's it for multimap iterator, go back to the map iterator
         ++map_iterator;
+        set_multimap_iterator_state();
       }
       return;
     } else {
       // increment the map iterator
       ++map_iterator;
+      set_multimap_iterator_state();
       return;
     }
   }
 
   // equal
   bool equal(hashdb_iterator_t<T> const& other) const {
-if (map_manager == other.map_manager) {
-std::cout << "hashdb_iterator.equal.a\n";
-}
-if (multimap_manager == other.multimap_manager) {
-std::cout << "hashdb_iterator.equal.b\n";
-}
-//std::cout << "hashdb_iterator.map_iterator->second " << map_iterator->second << "\n";
-//std::cout << "hashdb_iterator.other.map_iterator->second " << other.map_iterator->second << "\n";
-if (map_iterator == other.map_iterator) {
-std::cout << "hashdb_iterator.equal.c\n";
-}
-if (multimap_iterator == other.multimap_iterator) {
-std::cout << "hashdb_iterator.equal.d\n";
-}
-    if (map_manager == other.map_manager &&
-        multimap_manager == other.multimap_manager &&
-        map_iterator == other.map_iterator &&
-        multimap_iterator == other.multimap_iterator &&
-        in_multimap_iterator == other.in_multimap_iterator) {
+
+    if (map_manager != other.map_manager ||
+        multimap_manager != other.multimap_manager) {
+      // program error, wrong manager
+      assert(0);
+    }
+
+    // do not compare multimap iterator unless it is in use
+    // because it may not be defined
+    if (map_iterator == other.map_iterator &&
+        (!in_multimap_iterator ||
+         (multimap_iterator == other.multimap_iterator))) {
       return true;
     } else {
       return false;
@@ -102,26 +96,36 @@ std::cout << "hashdb_iterator.equal.d\n";
     } else {
       // dereference the map iterator
       dereferenced_value = *map_iterator;
+    }
+  }
 
-      // see if the dereferenced second indicates using multimap
-      uint32_t count = source_lookup_encoding::get_count(dereferenced_value.second);
+  // call this after changing the map iterator
+  void set_multimap_iterator_state() {
+    if (map_iterator == map_manager->end()) {
+      // done
+      in_multimap_iterator = false;
+
+    } else {
+      // see if this map entry uses the multimap
+      uint32_t count = source_lookup_encoding::get_count(map_iterator->second);
       if (count == 1) {
-        // great, use the dereferenced_value from map_iterator
-        return;
+        // use map
+        in_multimap_iterator = false;
       } else {
-        // set up to use the multimap_iterator
+        // use multimap
         in_multimap_iterator = true;
-        T key = map_iterator->first;
-        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > it_pair(
-                  multimap_manager->equal_range(key));
+        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >
+                      multimap_range =
+                      multimap_manager->equal_range(map_iterator->first);
+        multimap_iterator = multimap_range.first;
+        multimap_end_iterator = multimap_range.second;
 
-        // program error if multimap_iterator is empty
-        if (it_pair.first != it_pair.second) {
+        // by design, count >= 2 elements, but it is computationally cheap
+        // to make sure count > 0
+        if (multimap_iterator == multimap_end_iterator) {
           assert(0);
         }
 
-        // set the dereferenced value from the multimap iterator
-        dereferenced_value = *multimap_iterator;
       }
     }
   }
@@ -145,6 +149,8 @@ std::cout << "hashdb_iterator.equal.d\n";
       // set up with begin iterator
       map_iterator = map_manager->begin();
     }
+    // set state for the multimap iterator
+    set_multimap_iterator_state();
   }
 
   // zz this is bad because it can live longer than the map zzzzzzzzzzzzzz
