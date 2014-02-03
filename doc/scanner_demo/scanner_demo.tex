@@ -78,11 +78,11 @@ $ notepad outdir/identified_blocks.txt
 \end{verbatim}
 An example hash block match looks like this:
 \begin{verbatim}
-10485760    3b6b477d391f73f67c1c01e2141dbb17    1
+12452352    3b6b477d391f73f67c1c01e2141dbb17    1
 \end{verbatim}
 \end{compactenum}
 
-Seeing hash \texttt{3b6b477...} at Forensic path \texttt{10485760}
+Seeing hash \texttt{3b6b477...} at Forensic path \texttt{12452352}
 shows that a hash block match was found, but what file does it match?
 We find the file that contains the hash by using a \hdb source lookup:
 \begin{figure}[H]
@@ -114,13 +114,13 @@ $ hashdb_checker --query_source -p demo_video_db_win \
 features containing source information.
 This example line:
 \begin{verbatim}
-10485760    3b6b477d391f73f67c1c01e2141dbb17 \
+12452352    3b6b477d391f73f67c1c01e2141dbb17 \
 repository_name=repository_demo_video_dfxml, \
 filename=/home/bdallen/demo/demo_video.mp4, \
 file_offset=10485760
 \end{verbatim}
 
-states that the block at Forensic path \texttt{10485760}
+states that the block at Forensic path \texttt{12452352}
 matches the block \texttt{10485760} bytes into the
 \texttt{demo\_video.mp4} video file
 in the hash database,
