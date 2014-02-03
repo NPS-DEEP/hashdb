@@ -45,7 +45,6 @@ static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
 
 template<typename T>
 void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
-std::cout << "rw.a\n";
 
   T key;
   uint64_t pay;
@@ -58,14 +57,11 @@ std::cout << "rw.a\n";
   remove(temp_map);
   remove(temp_multimap);
 
-std::cout << "rw.b\n";
   // create map manager
   map_manager_t<T> map_manager(temp_dir, RW_NEW, map_type);
 
-std::cout << "rw.c\n";
   // create multimap manager
   multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW, multimap_type);
-std::cout << "rw.d\n";
 
   // put 1 element into map
   to_key(101, key);
@@ -105,8 +101,7 @@ std::cout << "rw.d\n";
 
 template<typename T>
 void run_ro_tests(map_type_t map_type, multimap_type_t multimap_type) {
-std::cout << "ro.a\n";
-  // no action
+  // no action defined for RO tests
 }
 
 int cpp_main(int argc, char* argv[]) {
@@ -138,7 +133,6 @@ int cpp_main(int argc, char* argv[]) {
 
   // done
   int status = boost::report_errors();
-  std::cout << "multimap_manager_test done.\n";
   return status;
 }
 
