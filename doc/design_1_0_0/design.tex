@@ -289,6 +289,179 @@ Here is the basic flow for the \hdb server:
 \ENDWHILE
 \end{algorithmic}
 
+\section{File Modules - Mid-Level Database File Drivers}
+File modules manage access to database files.
+They are typically initialized with \texttt{hashdb\_dir} and file access mode
+\texttt{RW\_NEW}, {RW\_MODIFY}, or {READ\_ONLY}.
+They require hash key type \texttt{<T>}.
+
+\begin{compactitem}
+\item Map Manager
+\item Map Iterator
+\item Multmiap Manager
+\item Multimap Iterator
+\item Source Lookup Manager
+\item Bloom Filter Manager
+\item \hdb settings
+\end{compactitem}
+
+% map manager
+\subsection{Map Manager}
+This module manages mapped hash storage.
+It has been renamed from \textit{Hash Store}.
+\begin{compactitem}
+\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest such as MD5,
+and the payload value is the \texttt{uint64\_t} source lookup encoding.
+\item The source lookup encoding consists of $32-40$ bits
+of source lookup index and $32-24$ bits of block offset value,
+but this detail does not matter to the Map Manager.
+\item The hash map maps to the \texttt{hash\_map\_store} file.
+\item Provides Interfaces to insert, erase, look up, and change elements.
+\item An iterator is available for walking the hash map.
+\end{compactitem}
+
+Here are the interfaces:
+\begin{small}
+\begin{verbatim}
+pair<map_iterator_t<T>, bool> emplace(T, uint64_t);
+size_t erase(T);
+pair<map_iterator_t<T>, bool> change(T, uint64_t);
+map_iterator_t<T> find(T);
+bool has(T);   // faster than find()
+map_iterator_t<T> begin();
+map_iterator_t<T> end();
+size_t size();
+\end{verbatim}
+\end{small}
+
+% map iterator
+\subsection{Map Iterator}
+\texttt{map\_iterator\_t} dereferences to
+key, source lookup index pair\texttt{<T, uint64\_t>}.
+
+% multimap manager
+\subsection{Multimap Manager}
+This module manages multimap hash storage.
+It has been renamed from \textit{Hash duplicates Store}.
+\begin{compactitem}
+\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest such as MD5,
+and the payload value is the \texttt{uint64\_t} source lookup encoding.
+\item The source lookup encoding consists of $32-40$ bits
+of source lookup index and $32-24$ bits of block offset value,
+but this detail does not matter at this low storage level.
+\item The hash multimap maps to the \texttt{hash\_multimap\_store} file.
+\item Provides Interfaces to insert, erase, and look up elements.
+\item An iterator is available for walking
+between elements \texttt{[a,b)} of a key in the hash multimap.
+\item Begin and end accessors are not provided.
+\end{compactitem}
+
+Here are the interfaces:
+\begin{small}
+\begin{verbatim}
+bool emplace(md5, uint64_t);
+bool erase(md5, uint64_t);
+size_t erase_range(md5);
+pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
+bool has(md5, uint64_t);
+bool has_range(md5);
+size_t size();
+\end{verbatim}
+\end{small}
+
+% multimap iterator
+\subsection{Multimap Iterator}
+\texttt{multimap\_iterator\_t} dereferences to
+key, source lookup index pair\texttt{<T, uint64\_t>}.
+
+% source lookup manager
+\subsection{Source Lookup Manager}
+This module manages source lookups.
+\begin{compactitem}
+\item It wraps source lookup capability under one purposed interface.
+\item It manages the lookup store, filename store,
+and repository name store files required by the three B-Tree multisets,
+and uses these storage files: \\
+\texttt{
+source\_lookup\_store.dat \\
+source\_lookup\_store.idx1 \\
+source\_lookup\_store.idx2 \\
+source\_filename\_store.dat \\
+source\_filename\_store.idx1 \\
+source\_filename\_store.idx2 \\
+source\_repository\_name\_store.dat \\
+source\_repository\_name\_store.idx1 \\
+source\_repository\_name\_store.idx2
+}
+\item Provides Interfaces to get source information
+from \texttt{source\_lookup\_index},
+to get the \texttt{source\_lookup\_index} from source information,
+and to insert elements by specifying the repository name, filename,
+and \texttt{source\_lookup\_index}.
+\end{compactitem}
+
+Here are the interfaces:
+
+\begin{small}
+\begin{verbatim}
+source_lookup_manager_t<T>(const std::string p_hashdb_dir,
+                           file_mode_type_t file_mode);
+
+bool get_source_location(uint64_t source_lookup_index,
+                         std::string& repository_name,
+                         std::string& filename);
+
+bool get_source_lookup_index(const std::string& repository_name,
+                             const std::string& filename,
+                             uint64_t source_lookup_index);
+
+bool insert_source_lookup_element(const std::string& repository_name,
+                                  const std::string& filename,
+                                  uint64_t& source_lookup_index);
+\end{verbatim}
+\end{small}
+
+\subsection{Bloom Filter Manager}
+\begin{compactitem}
+\item Two Bloom filters are managed, Bloom1 and Bloom2.
+\item Initialization parameters set the enabled state and runtime state of both.
+\item The \hdb manager uses this to set or check for hashes.
+\item Bloom filters help performance by indicating when a hash is not present.
+\end{compactitem}
+
+Here are the interfaces:
+
+\begin{small}
+\begin{verbatim}
+bloom_filter_t<T>(const std::string& filename,
+               file_mode_type_t file_mode,
+               const lots of settings);
+
+void add_hash_value(const T& key);
+
+is_positive(const T& key);
+\end{verbatim}
+\end{small}
+
+
+\subsection{\hdb Settings}
+The \hdb element manager and
+many of the storage types in the \hdb database use configurable \hdb settings.
+Refer to \texttt{hashdb\_settings}, \texttt{hashdb\_settings\_reader},
+\texttt{hashdb\_settings\_writer}. 
+
+Here are the interfaces:
+
+\begin{small}
+\begin{verbatim}
+// new
+hashdb_settings_t();
+
+hashdb_settings_t(std::string hashdb_dir);
+void write_settings(std::string hashdb_dir);
+\end{verbatim}
+\end{small}
+
 \section{\hdb Modules}
 \subsection{\hdb Manager}
 The \texttt{hashdb\_manager\_t}
@@ -296,118 +469,46 @@ provides services required for accessing the hash database
 as a whole.  It hides the map manager, multimap manager, and bloom filter.
 Changes to the \hdb are noted in the \hdb change logger.
 
-Interfaces are:
+Actions:
 \begin{compactitem}
 \item Open a hash database as new, RW, or RO
 \item Insert a \texttt{T, uint64\_t} entry noting the change.
 \item Remove a \texttt{T, uint64\_t} entry noting the change.
 \item Remove all elements of \texttt{<T>}, noting the change.
-\item See if a hash of type \texttt{<T>} exists.
+\item See if a hash of type \texttt{<T>} exists, checking Bloom first.
 \item Provide a \hdb iterator via begin() and end()
 for iterating over all hash values.
-Iterator dereferences to \texttt{pair<T, uint64\_t>>}.
+Iterator dereferences to
+key, source lookup index pair\texttt{<T, uint64\_t>}.
 \end{compactitem}
 
-% instantiation
-\subsubsection{Open a \hdb Database}
-Open a \hdb database at the specified directory
-with a file mode of new, read-only, or read-write.
-Operations may be performed with this database as allowed by its mode.
+Interfaces:
 
 \begin{small}
 \begin{verbatim}
 hashdb_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
-\end{verbatim}
-\end{small}
 
-% insert hash
-\subsubsection{Insert Hash}
-Insert the specified hash, noting the change.
-
-\begin{small}
-\begin{verbatim}
 insert(const <T> &key, uint64_t pay,
        hashdb_change_object_t &hashdb_change_object);
-\end{verbatim}
-\end{small}
 
-% remove hash
-\subsubsection{Remove Hash}
-Remove the specified hash, noting the change.
-
-\begin{small}
-\begin{verbatim}
 remove(const <T> &key, uint64_t pay,
       hashdb_change_object_t &hashdb_change_object);
 
 remove(const <T> &key,
       hashdb_change_object_t &hashdb_change_object);
-\end{verbatim}
-\end{small}
 
-% has
-\subsubsection{Has Hash}
-Check for hash, checking Bloom filter first.
-
-\begin{small}
-\begin{verbatim}
 has(const <T> &key);
-\end{verbatim}
-\end{small}
 
-% size
-% no, provide a complete stat report elsewhere.
-%\subsubsection{Count}
-%Returns the number of elements containing the given hash value.
-%
-%\begin{small}
-%\begin{verbatim}
-%uint32_t count(md5_t md5);
-%\end{verbatim}
-%\end{small}
-
-% equal range
-% no, not at this layer
-%\subsubsection{Equal Range}
-%Returns pair of \mmi to lower bound
-%(first element with key not less than value)
-%and upper bound (first element with key greater than value or end).
-%
-%\begin{small}
-%\begin{verbatim}
-%pair<const_hashdb_multimap_iterator lower,
-%    const_hashdb_multimap_iterator upper> equal_range(md5_t md5);
-%\end{verbatim}
-%\end{small}
-
-% mi begin
-\subsubsection{\mi Begin}
-Returns begin for \hdb iterator.
-
-\begin{small}
-\begin{verbatim}
 hashdb_iterator_t<T> begin();
-\end{verbatim}
-\end{small}
 
-% mi end
-\subsubsection{\mi End}
-Returns end for \hdb iterator.
-
-\begin{small}
-\begin{verbatim}
 hashdb_iterator_t<T> end();
 \end{verbatim}
 \end{small}
 
+% hashdb iterator
 \subsection{\hdb Iterator}
-Provide an iterator over all \hdb elements, not just map.
-
-\begin{small}
-\begin{verbatim}
-hashdb_iterator<T>(map_manager_t, multimap_manager_t);
-\end{verbatim}
-\end{small}
+\texttt{hashdb\_iterator\_t} dereferences to
+key, source lookup index pair\texttt{<T, uint64\_t>}.
 
 % \hdb element
 \subsection{\hdb Element}
@@ -415,8 +516,8 @@ A \hdb element consists of a hash value and where it was sourced from.
 Specifically:
 \begin{small}
 \begin{verbatim}
-struct hashdb_element_t {
-    uint8_t digest[SIZE];
+struct hashdb_element_t<T> {
+    T key;
     std::string repository_name;
     std::string filename;
     uint64_t file_offset;
@@ -432,6 +533,12 @@ Changes are written to file \texttt{log}
 when the change logger instance is destroyed.
 Additional interfaces permit additional logging,
 specifically, timestamp and settings.
+
+Logs are now written at the \hdb library level
+for each invocation of the library,
+rather than at the tool level, which logged once
+for the invocation of the \hdb tool.
+This is different from v0.9.1.
 
 \begin{small}
 \begin{verbatim}
@@ -472,212 +579,6 @@ class hashdb_change_logger_t {
 \end{verbatim}
 \end{small}
 
-Note that logs are now written at the \hdb library level
-for each invocation of the library,
-rather than at the tool level, which logged once
-for the invocation of the \hdb tool.
-This is different from v0.9.1.
-
-% source lookup manager
-\subsection{Source Lookup Manager}
-This module manages source lookups.
-\begin{compactitem}
-\item It wraps source lookup capability under one purposed interface.
-\item It manages the lookup store, filename store,
-and repository name store files required by the three B-Tree multisets,
-and uses these storage files: \\
-\texttt{
-source\_lookup\_store.dat \\
-source\_lookup\_store.idx1 \\
-source\_lookup\_store.idx2 \\
-source\_filename\_store.dat \\
-source\_filename\_store.idx1 \\
-source\_filename\_store.idx2 \\
-source\_repository\_name\_store.dat \\
-source\_repository\_name\_store.idx1 \\
-source\_repository\_name\_store.idx2
-}
-\item Provides Interfaces to get source information
-from \texttt{source\_lookup\_index},
-to get the \texttt{source\_lookup\_index} from source information,
-and to insert elements by specifying the repository name, filename,
-and \texttt{source\_lookup\_index}.
-\end{compactitem}
-
-Source lookup manager interfaces follow.
-% constructor
-\subsubsection{Constructor}
-Open the source lookup manager with file mode of new, RO, or RW.
-\begin{small}
-\begin{verbatim}
-source_lookup_manager_t(const std::string p_hashdb_dir,
-                        file_mode_type_t file_mode);
-\end{verbatim}
-\end{small}
-
-% get source location
-\subsubsection{Get Source Location}
-Return the repository name and filename from the source lookup index.
-\begin{small}
-\begin{verbatim}
-bool get_source_location(uint64_t source_lookup_index,
-                         std::string &repository_name,
-                         std::string &filename);
-\end{verbatim}
-\end{small}
-
-% get source lookup index
-\subsubsection{Get Source Lookup Index}
-Return the source lookup index from the repository name and filename.
-\begin{small}
-\begin{verbatim}
-bool get_source_lookup_index(const std::string &repository_name,
-                             const std::string &filename,
-                             uint64_t source_lookup_index);
-\end{verbatim}
-\end{small}
-
-% insert source lookup element
-\subsubsection{Insert Source Lookup Element}
-Add a source lookup element, specifically, a repository name and filename,
-and get back the new (or already existing) source lookup index.
-\begin{small}
-\begin{verbatim}
-bool insert_source_lookup_element(const std::string &repository_name,
-                                  const std::string &filename,
-                                  uint64_t &source_lookup_index);
-\end{verbatim}
-\end{small}
-
-\subsection{Bloom Filter}
-\hdb uses two Bloom filters.
-The Bloom filter module manages one Bloom filter instance.
-
-% instantiation
-\subsubsection{Instantiation}
-Create one Bloom filter.
-\begin{small}
-\begin{verbatim}
-bloom_filter_t(const std::string &filename,
-               file_mode_type_t file_mode,
-               const bloom_settings_t bloom_settings);
-\end{verbatim}
-\end{small}
-
-% add hash value
-\subsubsection{Add Hash Value}
-Add one hash value to the Bloom filter.
-\begin{small}
-\begin{verbatim}
-void add_hash_value(const uint8_t[SIZE] &hash);
-\end{verbatim}
-\end{small}
-
-% is positive
-\subsubsection{Is Positive}
-Return true if the lookup is positive, indicating the hash value may be present.
-\begin{small}
-\begin{verbatim}
-is_positive(const uint8_t[SIZE] &hash);
-\end{verbatim}
-\end{small}
-
-
-\subsection{\hdb Settings}
-The \hdb element manager and
-many of the storage types in the \hdb database use configurable \hdb settings.
-Refer to \texttt{hashdb\_settings}, \texttt{hashdb\_settings\_reader},
-\texttt{hashdb\_settings\_writer}. 
-
-% instantiation
-\subsubsection{Instantiation}
-Create a \hdb settings object:
-
-\begin{small}
-\begin{verbatim}
-// new
-hashdb_settings_t();
-
-// from file
-hashdb_settings_t(std::string hashdb_dir);
-
-// make a copy
-hashdb_settings_t(hashdb_settings_t);
-\end{verbatim}
-\end{small}
-
-% instantiation
-\subsubsection{Save Settings}
-\begin{small}
-\begin{verbatim}
-save_settings(std::string hashdb_dir);
-\end{verbatim}
-\end{small}
-
-
-\section{Low-Level \hdb Modules}
-
-% map manager
-\subsection{Map Manager}
-This module manages mapped hash storage.
-It has been renamed from \textit{Hash Store}.
-\begin{compactitem}
-\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest,
-such as T,
-and the value is the \texttt{uint64\_t} source lookup encoding.
-\item The source lookup encoding consists of $32-40$ bits
-of source lookup index and $32-24$ bits of block offset value,
-but this detail does not matter at this low storage level.
-\item The hash map maps to the \texttt{hash\_map\_store} file.
-\item Provides Interfaces to insert, erase, look up, and change elements.
-\item A \texttt{const\_iterator} is available for walking the hash map.
-\end{compactitem}
-
-Here are the interfaces:
-\begin{small}
-\begin{verbatim}
-pair<map_iterator_t<T>, bool> emplace(T, uint64_t);
-size_t erase(T);
-pair<map_iterator_t<T>, bool> change(T, uint64_t);
-map_iterator_t<T> find(T);
-bool has(T);   // faster than find()
-map_iterator_t<T> begin();
-map_iterator_t<T> end();
-size_t size();
-\end{verbatim}
-\end{small}
-
-% multimap manager
-\subsection{Multimap Manager}
-This module manages multimap hash storage.
-It has been renamed from \textit{Hash duplicates Store}.
-\begin{compactitem}
-\item The key \texttt{T} is the \texttt{uint8\_t[SIZE]} hash digest,
-such as md5,
-and the value is the \texttt{uint64\_t} source lookup encoding.
-\item The source lookup encoding consists of $32-40$ bits
-of source lookup index and $32-24$ bits of block offset value,
-but this detail does not matter at this low storage level.
-\item The hash multimap maps to the \texttt{hash\_multimap\_store} file.
-\item Provides Interfaces to insert, erase, and look up elements.
-\item A \texttt{const\_iterator} is available for walking
-between elements \texttt{[a,b)} of a key in the hash multimap.
-\item Begin and end accessors are not provided.
-\end{compactitem}
-
-Here are the interfaces:
-\begin{small}
-\begin{verbatim}
-bool emplace(md5, uint64_t);
-bool erase(md5, uint64_t);
-size_t erase_range(md5);
-pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
-bool has(md5, uint64_t);
-bool has_range(md5);
-size_t size();
-\end{verbatim}
-\end{small}
-
 % source lookup encoding
 \subsection{Source Lookup Encoding}
 The source lookup encoding provides algorithms for working with a
@@ -710,8 +611,7 @@ and 0 will be returned.
 of the \texttt{uint64\_t} $=$ \texttt{0xffff}.
 \end{compactitem}
 
-% accessors
-\subsubsection{Accessors}
+Here are the interfaces:
 \begin{small}
 \begin{verbatim}
 static uint64_t get_source_lookup_encoding(
@@ -732,6 +632,8 @@ static uint64_t get_hash_block_offset(
                  uint64_t source_lookup_encoding);
 \end{verbatim}
 \end{small}
+
+
 
 \end{document}
 
