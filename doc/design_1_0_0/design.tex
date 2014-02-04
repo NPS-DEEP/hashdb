@@ -303,7 +303,7 @@ They require hash key type \texttt{<T>}.
 \item no: Source Lookup Manager
 \item Bloom Filter Manager
 \item no: Settings Manager
-\item \hdb Change Logger
+\item Logger
 \end{compactitem}
 
 % map manager
@@ -381,19 +381,13 @@ This module manages source lookups.
 \begin{compactitem}
 \item It wraps source lookup capability under one purposed interface.
 \item It manages the lookup store, filename store,
-and repository name store files required by the three B-Tree multisets,
-and uses these storage files: \\
-\texttt{
-source\_lookup\_store.dat \\
-source\_lookup\_store.idx1 \\
-source\_lookup\_store.idx2 \\
-source\_filename\_store.dat \\
-source\_filename\_store.idx1 \\
-source\_filename\_store.idx2 \\
-source\_repository\_name\_store.dat \\
-source\_repository\_name\_store.idx1 \\
-source\_repository\_name\_store.idx2
-}
+and repository name store files required by the three B-Tree multisets
+and uses
+\texttt{source\_lookup\_store},
+\texttt{source\_filename\_store}, and
+\texttt{source\_repository\_name\_store}
+filenames, each one with
+\texttt{.dat}, \texttt{.idx1}, and \texttt{.idx2} extensions.
 \item Provides Interfaces to get source information
 from \texttt{source\_lookup\_index},
 to get the \texttt{source\_lookup\_index} from source information,
@@ -541,16 +535,13 @@ struct hashdb_element_t<T> {
 \end{verbatim}
 \end{small}
 
-\subsection{\hdb Change Logger}
+\subsection{\hdb Changes}
 This structure is used for tracking changes to the \hdb.
-The \hdb element manager increments variables
+The \hdb manager increments these variables
 as requests are made to insert or remove \hdb elements.
-Changes are written to file \texttt{log}
-when the change logger instance is destroyed.
-Additional interfaces permit additional logging,
-specifically, timestamp and settings.
+Use the \texttt{logger} to log \hdb changes.
 
-Logs are now written at the \hdb library level
+Note that logs are now written at the \hdb library level
 for each invocation of the library,
 rather than at the tool level, which logged once
 for the invocation of the \hdb tool.
@@ -558,7 +549,7 @@ This is different from v0.9.1.
 
 \begin{small}
 \begin{verbatim}
-class hashdb_change_logger_t {
+class hashdb_changes_t {
       // insert
       uint32_t hashes_inserted;
       uint32_t hashes_not_inserted_invalid_file_offset;
@@ -574,23 +565,6 @@ class hashdb_change_logger_t {
       uint32_t hashes_not_removed_wrong_hashdigest_type;
       uint32_t hashes_not_removed_no_hash;
       uint32_t hashes_not_removed_different_source;
-
-      // constructor
-      hashdb_change_logger_t(const std::string &hashdb_dir,
-                             const std::string title);
-
-      // log timestamp
-      void add_timestamp(std::string text);
-
-      // log hashdb_settings
-      void add_hashdb_settings(const hashdb_settings_t &hashdb_settings);
-
-      // hashdb_db_manager state
-//      void add_hashdb_db_manager_state(const hashdb_db_manager_t &manager);
-      void add_hashdb_db_manager_state(); // TBD
-
-      // bloom state, this may be temporary
-      void add_bloom_state(const bloom_filter_t &bloom_filter, int index);
 };
 \end{verbatim}
 \end{small}
