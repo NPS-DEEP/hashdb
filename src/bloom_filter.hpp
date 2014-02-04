@@ -31,7 +31,9 @@
 #include "hashdb_types.h"
 #include "bloom.h"
 //#include "file_mapper.hpp"
+#include "dfxml/src/dfxml_writer.h"
 #include "dfxml/src/hash_t.h"
+#include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cassert>

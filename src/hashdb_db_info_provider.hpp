@@ -117,7 +117,7 @@ class hashdb_db_info_provider_t {
 
     // get hashdb settings
     hashdb_settings_t settings;
-    hashdb_settings_reader_t::read_settings(hashdb_dir, settings);
+    hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", settings);
 
     // path to hash store
     std::string hash_store_path =

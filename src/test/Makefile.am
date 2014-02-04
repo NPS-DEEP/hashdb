@@ -26,7 +26,9 @@ bin_PROGRAMS = \
 	map_manager_test \
 	multimap_manager_test \
 	hashdb_iterator_test \
-	bloom_filter_manager_test
+	bloom_filter_manager_test \
+	settings_manager_test \
+	logger_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -194,4 +196,22 @@ bloom_filter_manager_test_SOURCES = \
 	../bloom_filter_manager.hpp \
 	$(BLOOM_INCS) \
 	bloom_filter_manager_test.cpp
+
+settings_manager_test_SOURCES = \
+	boost_fix.hpp \
+	../settings_manager.hpp \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(DFXML_INCS) \
+	settings_manager_test.cpp
+
+logger_test_SOURCES = \
+	boost_fix.hpp \
+	../logger.hpp \
+	../hashdb_changes.hpp \
+	../hashdb_settings.hpp \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(DFXML_INCS) \
+	logger_test.cpp
 

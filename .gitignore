@@ -66,6 +66,8 @@ src/test/multimap_manager_test
 src/test/hashdb_iterator_test
 src/test/bloom_filter_manager_test
 src/test/btree_bug_test
+src/test/settings_manager_test
+src/test/logger_test
 src/test/temp_file
 src/test/temp_dir
 hashdb*.tar.gz

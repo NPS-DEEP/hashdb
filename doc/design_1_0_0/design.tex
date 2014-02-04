@@ -292,7 +292,7 @@ Here is the basic flow for the \hdb server:
 \section{File Modules - Mid-Level Database File Drivers}
 File modules manage access to database files.
 They are typically initialized with \texttt{hashdb\_dir} and file access mode
-\texttt{RW\_NEW}, {RW\_MODIFY}, or {READ\_ONLY}.
+\texttt{RW\_NEW}, \texttt{RW\_MODIFY}, or \texttt{READ\_ONLY}.
 They require hash key type \texttt{<T>}.
 
 \begin{compactitem}
@@ -300,9 +300,10 @@ They require hash key type \texttt{<T>}.
 \item Map Iterator
 \item Multmiap Manager
 \item Multimap Iterator
-\item Source Lookup Manager
+\item no: Source Lookup Manager
 \item Bloom Filter Manager
-\item \hdb settings
+\item no: Settings Manager
+\item \hdb Change Logger
 \end{compactitem}
 
 % map manager
@@ -443,22 +444,36 @@ is_positive(const T& key);
 \end{verbatim}
 \end{small}
 
-
-\subsection{\hdb Settings}
-The \hdb element manager and
-many of the storage types in the \hdb database use configurable \hdb settings.
-Refer to \texttt{hashdb\_settings}, \texttt{hashdb\_settings\_reader},
-\texttt{hashdb\_settings\_writer}. 
+\subsection{Settings Manager}
+Many of the storage types in the \hdb database use configurable \hdb settings.
+Refer to \texttt{hashdb\_settings\_t}.
 
 Here are the interfaces:
 
 \begin{small}
 \begin{verbatim}
-// new
-hashdb_settings_t();
+static hashdb_settings_t read_settings(const std::string& hashdb_dir);
 
-hashdb_settings_t(std::string hashdb_dir);
-void write_settings(std::string hashdb_dir);
+static void write_settings(const std::string& hashdb_dir,
+                           const hashdb_settings_t& settings);
+\end{verbatim}
+\end{small}
+
+\subsection{Logger}
+The logger manages logging to the \hdb \texttt{log.xml} file.
+The log is created when the logger object opens,
+and is closed by close or when the logger is destroyed,
+for example by losing scope.
+ 
+Here are the interfaces:
+
+\begin{small}
+\begin{verbatim}
+logger_t(hashdb_dir, title);
+void add_timestamp(name);
+void add_hashdb_settings(const hashdb_settings_t& settings);
+void add_hashdb_changes(const hashdb_changes_t& changes);
+template<typename T> void add(const std::string& tag, const T& value);
 \end{verbatim}
 \end{small}
 
@@ -471,7 +486,8 @@ Changes to the \hdb are noted in the \hdb change logger.
 
 Actions:
 \begin{compactitem}
-\item Open a hash database as new, RW, or RO
+\item Open a hash database as
+\texttt{RW\_NEW}, \texttt{RW\_MODIFY}, or \texttt{READ\_ONLY}.
 \item Insert a \texttt{T, uint64\_t} entry noting the change.
 \item Remove a \texttt{T, uint64\_t} entry noting the change.
 \item Remove all elements of \texttt{<T>}, noting the change.
@@ -488,16 +504,16 @@ Interfaces:
 \begin{verbatim}
 hashdb_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
 
-insert(const <T> &key, uint64_t pay,
-       hashdb_change_object_t &hashdb_change_object);
+bool insert(const <T> &key, uint64_t pay,
+            hashdb_change_object_t &hashdb_change_object);
 
-remove(const <T> &key, uint64_t pay,
-      hashdb_change_object_t &hashdb_change_object);
+bool remove(const <T> &key, uint64_t pay,
+           hashdb_change_object_t &hashdb_change_object);
 
-remove(const <T> &key,
-      hashdb_change_object_t &hashdb_change_object);
+bool remove(const <T> &key,
+           hashdb_change_object_t &hashdb_change_object);
 
-has(const <T> &key);
+bool has(const <T> &key);
 
 hashdb_iterator_t<T> begin();
 

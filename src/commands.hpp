@@ -555,7 +555,7 @@ class commands_t {
 
     // get hashdb tuning settings
     hashdb_settings_t hashdb_settings;
-    hashdb_settings_reader_t::read_settings(hashdb_indir, hashdb_settings);
+    hashdb_settings_reader_t::read_settings(hashdb_indir+"settings.xml", hashdb_settings);
 
     // report the settings
     logger.add_hashdb_settings(hashdb_settings);

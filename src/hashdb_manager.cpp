@@ -647,7 +647,7 @@ static void reset_bloom_filters(const std::string& hashdb_dir,
  
   // get existing hashdb tuning settings
   hashdb_settings_t existing_hashdb_settings;
-  hashdb_settings_reader_t::read_settings(hashdb_dir, existing_hashdb_settings);
+  hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", existing_hashdb_settings);
 
   // change the bloom filter settings
   existing_hashdb_settings.bloom1_is_used = new_hashdb_settings.bloom1_is_used;
@@ -750,9 +750,9 @@ void no_has_exclude_duplicates(const std::string& action) {
 void require_hash_block_sizes_match(const std::string& hashdb_dir1, const std::string& hashdb_dir2,
                                const std::string& action) {
   hashdb_settings_t settings1;
-  hashdb_settings_reader_t::read_settings(hashdb_dir1, settings1);
+  hashdb_settings_reader_t::read_settings(hashdb_dir1+"settings.xml", settings1);
   hashdb_settings_t settings2;
-  hashdb_settings_reader_t::read_settings(hashdb_dir2, settings2);
+  hashdb_settings_reader_t::read_settings(hashdb_dir2+"settings.xml", settings2);
 
   if (settings1.hash_block_size != settings2.hash_block_size) {
     std::cerr << "Error: The hash block size for the databases do not match.\n";

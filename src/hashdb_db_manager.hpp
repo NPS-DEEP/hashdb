@@ -164,7 +164,7 @@ class hashdb_db_manager_t {
                             bloom2(0) {
 
       // load the settings
-      hashdb_settings_reader_t::read_settings(hashdb_dir, hashdb_settings);
+      hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", hashdb_settings);
 
       // calculate the filename for each hashdb resource
       std::string hash_store_path =

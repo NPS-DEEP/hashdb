@@ -22,32 +22,25 @@
  * The hashdb manager provides access to the hashdb.
  */
 
-#ifndef HASHDB_DB_MANAGER_HPP
-#define HASHDB_DB_MANAGER_HPP
-#include "hashdb_types.h"
-#include "dfxml/src/hash_t.h"
+#ifndef HASHDB_MANAGER_HPP
+#define HASHDB_MANAGER_HPP
+//#include "hashdb_types.h"
 
-#include "hashdb_filenames.hpp"
-#include "hashdb_settings_reader.hpp"
-#include "hashdb_settings.hpp"
-#include "hash_store.hpp"
-#include "hash_duplicates_store.hpp"
-#include "source_lookup_manager.hpp"
-#include "source_lookup_encoding.hpp"
-#include "bloom_filter.hpp"
+#include "map_manager.hpp"
+#include "map_iterator.hpp"
+#include "multimap_manager.hpp"
+#include "multimap_iterator.hpp"
+#include "bloom_filter_manager.hpp"
 #include "hashdb_change_logger.hpp"
 #include <vector>
-//#include <boost/iterator/iterator_facade.hpp>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <cassert>
 
 /**
- * The hashdb DB manager controls access to the hashdb
- * by providing services for accessing and updating the hashdb.
- *
- * Note that hashes are not added if count reaches maximum_hash_duplicates.
+ * The hashdb manager provides interfaces for working with the hashdb
+ * that runs on top of modules that support access to individual database files.
  */
 class hashdb_db_manager_t {
   public:
@@ -164,7 +157,7 @@ class hashdb_db_manager_t {
                             bloom2(0) {
 
       // load the settings
-      hashdb_settings_reader_t::read_settings(hashdb_dir, hashdb_settings);
+      hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", hashdb_settings);
 
       // calculate the filename for each hashdb resource
       std::string hash_store_path =

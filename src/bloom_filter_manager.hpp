@@ -121,8 +121,8 @@ class bloom_filter_manager_t {
                           bool p_bloom2_is_used,
                           uint32_t p_bloom2_M_hash_size,
                           uint32_t p_bloom2_k_hash_functions) :
-          filename1(p_hashdb_dir + "/bloom1"),
-          filename2(p_hashdb_dir + "/bloom2"),
+          filename1(p_hashdb_dir + "/bloom_filter_1"),
+          filename2(p_hashdb_dir + "/bloom_filter_2"),
           file_mode(p_file_mode),
 
           bloom1_is_used(p_bloom1_is_used),

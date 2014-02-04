@@ -336,42 +336,10 @@ class hashdb_settings_reader_t {
   /**
    * read onto default hashdb settings or throw std::runtime_error.
    */
-  static void read_settings(const std::string hashdb_dir,
+  static void read_settings(const std::string filename,
                             hashdb_settings_t& settings) {
 
-    // avoid obvious xml trouble by verifying that hashdb_dir exists
-    bool dir_is_present = (access(hashdb_dir.c_str(),F_OK) == 0);
-    if (!dir_is_present) {
-      std::ostringstream ss1;
-      ss1 << "Error:\nHash database directory '"
-        << hashdb_dir << "' does not exist.\n"
-        << "Is the path to the hash database correct?\n"
-        << "Cannot continue.\n";
-      throw std::runtime_error(ss1.str());
-    }
-
-    // also make sure hashdb_dir is a directory
-    struct stat s;
-    bool is_dir = false;
-    if (stat(hashdb_dir.c_str(), &s) == 0) {
-      if (s.st_mode & S_IFDIR) {
-        // good
-        is_dir = true;
-      }
-    }
-    if (!is_dir) {
-      std::ostringstream ss2;
-      ss2 << "Error:\nHash database directory '"
-          << hashdb_dir << "' is not a directory.\n"
-          << "Is the path to the hash database correct?\n"
-          << "Cannot continue.\n";
-      throw std::runtime_error(ss2.str());
-    }
-
-    // look up the settings filename
-    std::string filename(hashdb_filenames_t::settings_filename(hashdb_dir));
-
-    // also verify that the settings file exists
+    // verify that the settings file exists
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);
     if (!file_is_present) {
       std::ostringstream ss3;
