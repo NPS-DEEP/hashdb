@@ -25,7 +25,8 @@ bin_PROGRAMS = \
 	btree_bug_test \
 	map_manager_test \
 	multimap_manager_test \
-        hashdb_iterator_test
+	hashdb_iterator_test \
+	bloom_filter_manager_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -73,7 +74,7 @@ DFXML_INCS = \
 	../dfxml/src/dfxml_writer.h \
 	../dfxml/src/cppmutex.h
 
-MISC_INCS = \
+BLOOM_INCS = \
 	../misc/bloom.c \
 	../misc/bloom.h \
 	../misc/file_mapper.cpp \
@@ -158,8 +159,8 @@ map_manager_test_SOURCES = \
 
 multimap_manager_test_SOURCES = \
 	boost_fix.hpp \
-        ../file_modes.h \
-        ../multimap_types.h \
+	../file_modes.h \
+	../multimap_types.h \
 	../multimap_red_black_tree.hpp \
 	../multimap_unordered_hash.hpp \
 	../multimap_flat_sorted_vector.hpp \
@@ -186,4 +187,11 @@ hashdb_iterator_test_SOURCES = \
 	../hashdb_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	hashdb_iterator_test.cpp
+
+bloom_filter_manager_test_SOURCES = \
+	boost_fix.hpp \
+	../file_modes.h \
+	../bloom_filter_manager.hpp \
+	$(BLOOM_INCS) \
+	bloom_filter_manager_test.cpp
 
