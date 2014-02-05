@@ -32,7 +32,6 @@
 #include "command_line.hpp"
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
-#include <sstream>
 #include <iostream>
 
 /**
@@ -49,17 +48,19 @@ class logger_t {
 
   public:
 
-  logger_t(std::string hashdb_dir, std::string title) :
+  logger_t(std::string hashdb_dir) :
                     x(hashdb_dir+"/log.xml", false),
                     closed(false) {
 
     // log the preamble
     x.push("log");
 
-    std::stringstream ss;
-    ss << "command_type='" << title << "'";
-    x.push("command", ss.str());
+    x.push("command");
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
+  }
+
+  // create a "closed" logger
+  logger_t() : x(), closed(true) {
   }
 
   ~logger_t() {
@@ -75,8 +76,8 @@ class logger_t {
    */
   void close() {
     if (closed) {
-      // already closed
-      std::cout << "hashdb_change_logger.close warning: already closed\n";
+      // logger closed
+      std::cout << "hashdb_change_logger.close warning: logger closed\n";
       return;
     }
 
@@ -91,8 +92,8 @@ class logger_t {
    */
   void add_timestamp(const std::string& name) {
     if (closed) {
-      // already closed
-      std::cout << "logger.add_timestamp warning: already closed\n";
+      // logger closed
+      std::cout << "logger.add_timestamp warning: logger closed\n";
       return;
     }
 
@@ -101,8 +102,8 @@ class logger_t {
 
   void add_hashdb_settings(const hashdb_settings_t& settings) {
     if (closed) {
-      // already closed
-      std::cout << "logger.add_hashdb_settings warning: already closed\n";
+      // logger closed
+      std::cout << "logger.add_hashdb_settings warning: logger closed\n";
       return;
     }
 
@@ -111,8 +112,8 @@ class logger_t {
 
   void add_hashdb_changes(const hashdb_changes_t& changes) {
     if (closed) {
-      // already closed
-      std::cout << "logger.add_hashdb_changes warning: already closed\n";
+      // logger closed
+      std::cout << "logger.add_hashdb_changes warning: logger closed\n";
       return;
     }
 
@@ -131,8 +132,8 @@ class logger_t {
 */
   void add_hashdb_db_manager_state() {
     if (closed) {
-      // already closed
-      std::cout << "hashdb_change_logger.add_hashdb_db_manager_state warning: already closed\n";
+      // logger closed
+      std::cout << "hashdb_change_logger.add_hashdb_db_manager_state warning: logger closed\n";
       return;
     }
 
@@ -145,8 +146,8 @@ class logger_t {
   template<typename T>
   void add(const std::string& tag, const T& value) {
     if (closed) {
-      // already closed
-      std::cout << "hashdb_change_logger.add warning: already closed\n";
+      // logger closed
+      std::cout << "hashdb_change_logger.add warning: logger closed\n";
       return;
     }
 

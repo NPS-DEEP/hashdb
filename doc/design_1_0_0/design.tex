@@ -324,13 +324,18 @@ but this detail does not matter to the Map Manager.
 Here are the interfaces:
 \begin{small}
 \begin{verbatim}
-pair<map_iterator_t<T>, bool> emplace(T, uint64_t);
-size_t erase(T);
-pair<map_iterator_t<T>, bool> change(T, uint64_t);
-map_iterator_t<T> find(T);
-bool has(T);   // faster than find()
-map_iterator_t<T> begin();
-map_iterator_t<T> end();
+map_manager_t<class T>(const std::string& hashdb_dir,
+                       file_mode_type_t file_mode,
+                       map_type_t map_type);
+pair<map_iterator_t<T>, bool> emplace(const T& key,
+                                      uint64_t source_lookup_encoding);
+size_t erase(const T& key);
+pair<map_iterator_t<T>, bool> change(const T& key,
+                                      uint64_t source_lookup_encoding);
+map_iterator_t<T> find(const T& key);
+bool has(const T& key);   // faster than find()
+map_iterator_t<T> begin() const;
+map_iterator_t<T> end() const;
 size_t size();
 \end{verbatim}
 \end{small}
@@ -360,13 +365,16 @@ between elements \texttt{[a,b)} of a key in the hash multimap.
 Here are the interfaces:
 \begin{small}
 \begin{verbatim}
-bool emplace(md5, uint64_t);
-bool erase(md5, uint64_t);
-size_t erase_range(md5);
-pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(T);
-bool has(md5, uint64_t);
-bool has_range(md5);
-size_t size();
+multimap_manager_t<class T>(string& hashdb_dir,
+                            file_mode_type_t file_mode,
+                            multimap_type_t multimap_type);
+bool emplace(const T& key, uint64_t source_lookup_encoding);
+bool erase(const T& key, uint64_t source_lookup_encoding);
+size_t erase_range(const& key T);
+pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(key T);
+bool has(const T& key, uint64_t source_lookup_encoding);
+bool has_range(const T& key);
+size_t size() const;
 \end{verbatim}
 \end{small}
 
@@ -463,7 +471,7 @@ Here are the interfaces:
 
 \begin{small}
 \begin{verbatim}
-logger_t(hashdb_dir, title);
+logger_t(hashdb_dir);
 void add_timestamp(name);
 void add_hashdb_settings(const hashdb_settings_t& settings);
 void add_hashdb_changes(const hashdb_changes_t& changes);
@@ -482,55 +490,65 @@ Actions:
 \begin{compactitem}
 \item Open a hash database as
 \texttt{RW\_NEW}, \texttt{RW\_MODIFY}, or \texttt{READ\_ONLY}.
-\item Insert a \texttt{T, uint64\_t} entry noting the change.
-\item Remove a \texttt{T, uint64\_t} entry noting the change.
-\item Remove all elements of \texttt{<T>}, noting the change.
-\item See if a hash of type \texttt{<T>} exists, checking Bloom first.
+\item Insert a \texttt{hashdb\_element\_t} entry noting the change.
+\item Remove a \texttt{hashdb\_element\_t} entry noting the change.
+\item Remove all elements of a key
+specified in a \texttt{hashdb\_element\_t} entry noting the change.
+\item See if a hash identified by key in
+type \texttt{hashdb\_element\_t} exists, checking Bloom first.
 \item Provide a \hdb iterator via begin() and end()
 for iterating over all hash values.
-Iterator dereferences to
-key, source lookup index pair\texttt{<T, uint64\_t>}.
+Iterator dereferences to \texttt{hashdb\_element\_t}.
 \end{compactitem}
 
 Interfaces:
 
 \begin{small}
 \begin{verbatim}
-hashdb_manager_t(const std::string &hashdb_dir, file_mode_t file_mode_type);
+hashdb_manager_t(const std::string& hashdb_dir,
+                 file_mode_t file_mode_type);
 
-bool insert(const <T> &key, uint64_t pay,
+bool insert(const hashdb_element_t& element,
             hashdb_change_object_t &hashdb_change_object);
 
-bool remove(const <T> &key, uint64_t pay,
-           hashdb_change_object_t &hashdb_change_object);
+bool remove(const hashdb_element_t& element,
+            hashdb_change_object_t& hashdb_change_object);
 
-bool remove(const <T> &key,
-           hashdb_change_object_t &hashdb_change_object);
+bool remove_key(const hashdb_element_t& element,
+                hashdb_change_object_t& hashdb_change_object);
 
-bool has(const <T> &key);
+bool has_key(const hashdb_element_t& element)
 
-hashdb_iterator_t<T> begin();
+hashdb_element_t<T> begin() const;
 
-hashdb_iterator_t<T> end();
+hashdb_element_t<T> end() const;
 \end{verbatim}
 \end{small}
 
 % hashdb iterator
 \subsection{\hdb Iterator}
-\texttt{hashdb\_iterator\_t} dereferences to
-key, source lookup index pair\texttt{<T, uint64\_t>}.
+\texttt{hashdb\_iterator\_t} dereferences to \texttt{hashdb\_element\_t}.
 
 % \hdb element
 \subsection{\hdb Element}
-A \hdb element consists of a hash value and where it was sourced from.
+A \texttt{hashdb\_element\_t} is what the user wants to see
+about a hash and its source.
+\begin{compactitem}
+\item It has all the fields of a hash source.
+\item The \texttt{hashdigest} is a string so that we don't need to use
+\texttt{<T>}.
+\end{compactitem}
+
 Specifically:
 \begin{small}
 \begin{verbatim}
-struct hashdb_element_t<T> {
-    T key;
+struct hashdb_element_t {
+    std::string hashdigest;
+    std::string hashdigest_type;    // MD5, SHA1, etc.
+    uint32_t block_size;            // e.g. 4096
+    uint64_t file_offset;
     std::string repository_name;
     std::string filename;
-    uint64_t file_offset;
 };
 \end{verbatim}
 \end{small}

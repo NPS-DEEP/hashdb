@@ -43,11 +43,14 @@ void run_test() {
   hashdb_settings_t settings;
   hashdb_changes_t changes;
 
-  logger_t logger(temp_dir, "logger test");
+  logger_t logger(temp_dir);
   logger.add_timestamp("my_timestamp");
   logger.add_hashdb_settings(settings);
   logger.add_hashdb_changes(changes);
   logger.add("add_by_itself", 3);
+
+  logger_t closed_logger;
+  closed_logger.close(); // logger may emit a warning
 }
 
 int cpp_main(int argc, char* argv[]) {
