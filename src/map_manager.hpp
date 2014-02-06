@@ -155,12 +155,16 @@ class map_manager_t {
   }
 
   // erase
-  size_t erase(const T& key) {
+  bool erase(const T& key) {
     switch(map_type) {
-      case MAP_BTREE: return map_btree->erase(key);
-      case MAP_FLAT_SORTED_VECTOR: return map_flat_sorted_vector->erase(key);
-      case MAP_RED_BLACK_TREE: return map_red_black_tree->erase(key);
-      case MAP_UNORDERED_HASH: return map_unordered_hash->erase(key);
+      case MAP_BTREE:
+        return (map_btree->erase(key) == 1) ? true : false;
+      case MAP_FLAT_SORTED_VECTOR:
+        return (map_flat_sorted_vector->erase(key) == 1) ? true : false;
+      case MAP_RED_BLACK_TREE:
+        return (map_red_black_tree->erase(key) == 1) ? true : false;
+      case MAP_UNORDERED_HASH:
+        return (map_unordered_hash->erase(key) == 1) ? true : false;
 
       default:
         assert(0);

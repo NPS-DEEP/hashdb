@@ -28,7 +28,8 @@ bin_PROGRAMS = \
 	hashdb_iterator_test \
 	bloom_filter_manager_test \
 	settings_manager_test \
-	logger_test
+	logger_test \
+	hashdb_element_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -214,4 +215,10 @@ logger_test_SOURCES = \
 	../command_line.hpp \
 	$(DFXML_INCS) \
 	logger_test.cpp
+
+hashdb_element_test_SOURCES = \
+	boost_fix.hpp \
+	../hashdb_element.hpp \
+	$(DFXML_INCS) \
+	hashdb_element_test.cpp
 

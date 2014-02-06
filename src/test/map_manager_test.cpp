@@ -44,7 +44,7 @@ void run_map_manager_rw_tests(map_type_t map_type) {
   T key;
   typedef std::pair<map_iterator_t<T>, bool> map_pair_t;
   map_pair_t map_pair;
-  size_t num_erased;
+  bool did_erase;
   class map_iterator_t<T> map_it;
 
   // clean up from any previous run
@@ -83,16 +83,16 @@ void run_map_manager_rw_tests(map_type_t map_type) {
 
   // remove entry positive
   to_key(105, key);
-  num_erased = map_manager.erase(key);
-  BOOST_TEST_EQ(num_erased, 1);
+  did_erase = map_manager.erase(key);
+  BOOST_TEST_EQ(did_erase, true);
 
   // check count
   BOOST_TEST_EQ(map_manager.size(), 100);
 
   // remove entry false
   to_key(105, key);
-  num_erased = map_manager.erase(key);
-  BOOST_TEST_EQ(num_erased, 0);
+  did_erase = map_manager.erase(key);
+  BOOST_TEST_EQ(did_erase, false);
 
   // check count
   BOOST_TEST_EQ(map_manager.size(), 100);

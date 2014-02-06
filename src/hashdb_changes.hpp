@@ -42,14 +42,14 @@ class hashdb_changes_t {
   uint32_t hashes_not_inserted_wrong_hash_block_size;
   uint32_t hashes_not_inserted_wrong_hashdigest_type;
   uint32_t hashes_not_inserted_exceeds_max_duplicates;
-  uint32_t hashes_not_inserted_duplicate_source;
+  uint32_t hashes_not_inserted_duplicate_element;
 
   uint32_t hashes_removed;
   uint32_t hashes_not_removed_invalid_file_offset;
   uint32_t hashes_not_removed_wrong_hash_block_size;
   uint32_t hashes_not_removed_wrong_hashdigest_type;
   uint32_t hashes_not_removed_no_hash;
-  uint32_t hashes_not_removed_different_source;
+  uint32_t hashes_not_removed_no_element;
 
   hashdb_changes_t() :
 
@@ -58,14 +58,14 @@ class hashdb_changes_t {
                      hashes_not_inserted_wrong_hash_block_size(0),
                      hashes_not_inserted_wrong_hashdigest_type(0),
                      hashes_not_inserted_exceeds_max_duplicates(0),
-                     hashes_not_inserted_duplicate_source(0),
+                     hashes_not_inserted_duplicate_element(0),
 
                      hashes_removed(0),
                      hashes_not_removed_invalid_file_offset(0),
                      hashes_not_removed_wrong_hash_block_size(0),
                      hashes_not_removed_wrong_hashdigest_type(0),
                      hashes_not_removed_no_hash(0),
-                     hashes_not_removed_different_source(0) {
+                     hashes_not_removed_no_element(0) {
   }
 
   void report_changes(dfxml_writer& x) const {
@@ -83,8 +83,8 @@ class hashdb_changes_t {
       x.xmlout("hashes_not_inserted_wrong_hashdigest_type", hashes_not_inserted_wrong_hashdigest_type);
     if (hashes_not_inserted_exceeds_max_duplicates)
       x.xmlout("hashes_not_inserted_exceeds_max_duplicates", hashes_not_inserted_exceeds_max_duplicates);
-    if (hashes_not_inserted_duplicate_source)
-      x.xmlout("hashes_not_inserted_duplicate_source", hashes_not_inserted_duplicate_source);
+    if (hashes_not_inserted_duplicate_element)
+      x.xmlout("hashes_not_inserted_duplicate_element", hashes_not_inserted_duplicate_element);
 
     // log any remove changes to x
     if (hashes_removed)
@@ -97,8 +97,8 @@ class hashdb_changes_t {
       x.xmlout("hashes_not_removed_wrong_hashdigest_type", hashes_not_removed_wrong_hashdigest_type);
     if (hashes_not_removed_no_hash)
       x.xmlout("hashes_not_removed_no_hash", hashes_not_removed_no_hash);
-    if (hashes_not_removed_different_source)
-      x.xmlout("hashes_not_removed_different_source", hashes_not_removed_different_source);
+    if (hashes_not_removed_no_element)
+      x.xmlout("hashes_not_removed_no_element", hashes_not_removed_no_element);
 
     x.pop();
   }
@@ -117,8 +117,8 @@ class hashdb_changes_t {
      std::cout << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n";
     if (hashes_not_inserted_exceeds_max_duplicates)
      std::cout << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n";
-    if (hashes_not_inserted_duplicate_source)
-     std::cout << "    hashes not inserted, duplicate source=" << hashes_not_inserted_duplicate_source << "\n";
+    if (hashes_not_inserted_duplicate_element)
+     std::cout << "    hashes not inserted, duplicate element=" << hashes_not_inserted_duplicate_element << "\n";
 
     // log any remove changes to stdout
       std::cout << "hashdb changes:\n";
@@ -132,8 +132,8 @@ class hashdb_changes_t {
       std::cout << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n";
     if (hashes_not_removed_no_hash)
       std::cout << "    hashes not removed, no hash=" << hashes_not_removed_no_hash << "\n";
-    if (hashes_not_removed_different_source)
-      std::cout << "    hashes not removed, different source=" << hashes_not_removed_different_source << "\n";
+    if (hashes_not_removed_no_element)
+      std::cout << "    hashes not removed, no element=" << hashes_not_removed_no_element << "\n";
   }
 };
 

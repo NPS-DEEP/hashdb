@@ -329,7 +329,7 @@ map_manager_t<class T>(const std::string& hashdb_dir,
                        map_type_t map_type);
 pair<map_iterator_t<T>, bool> emplace(const T& key,
                                       uint64_t source_lookup_encoding);
-size_t erase(const T& key);
+bool erase(const T& key);
 pair<map_iterator_t<T>, bool> change(const T& key,
                                       uint64_t source_lookup_encoding);
 map_iterator_t<T> find(const T& key);
@@ -479,6 +479,68 @@ template<typename T> void add(const std::string& tag, const T& value);
 \end{verbatim}
 \end{small}
 
+\section{Map-Multimap Abstraction Layer}
+\begin{compactitem}
+\item The Map-Multimap abstraction layer
+provides a unified \hdb treatment of the map and multimap
+while still using lower-level \texttt{T key}
+and \texttt{uint64\_t source\_lookup\_encoding} types
+rather than the higher-level \texttt{hashdb\_element\_t} class.
+\item The Map-Multimap abstraction layer fits above the file modules
+and below the \hdb modules.
+\item It consists of \texttt{map\_multimap\_manager\_t<T>}
+and \texttt{map\_multimap\_iterator\_t<T>}.
+\end{compactitem}
+
+\subsection{Map-Multimap Manager}
+The \texttt{map\_multimap\_manager\_t}
+provides services required for accessing the hash database
+as a whole.  It hides the map manager, multimap manager, and bloom filter.
+Changes to the \hdb are noted in \texttt{hashdb\_changes\_t}.
+
+Actions:
+\begin{compactitem}
+\item Open a hash database as
+\texttt{RW\_NEW}, \texttt{RW\_MODIFY}, or \texttt{READ\_ONLY}.
+\item Emplace a \texttt{T, source\_lookup\_encoding} entry noting the change.
+\item Remove a \texttt{T, source\_lookup\_encoding} entry noting the change.
+\item Remove a \texttt{T} entry noting the change.
+\item See if T key exists, checking Bloom first.
+\item Provide a \texttt{map\_multimap\_iterator} via begin() and end()
+for iterating over all hash values.
+Iterator dereferences to \texttt{pair<T, uint64\_t}.
+\end{compactitem}
+
+Interfaces:
+
+\begin{small}
+\begin{verbatim}
+map_multimap_manager_t(const std::string& hashdb_dir,
+                       file_mode_t file_mode_type);
+
+void emplace(const T& key, uint64_t source_lookup_encoding,
+             hashdb_changes_t &hashdb_changes);
+
+void remove(const T& key, uint64_t source_lookup_encoding,
+            hashdb_changes_t& hashdb_changes);
+
+void remove_key(const T& key, hashdb_changes_t& hashdb_changes);
+
+bool has_key(const T& key);
+
+size_t size();
+
+pair<T, uint64_t> begin() const;
+
+pair<T, uint64_t> end() const;
+\end{verbatim}
+\end{small}
+
+% map_multimap iterator
+\subsection{Map-Multimap Iterator}
+\texttt{map\_multimap\_iterator\_t} dereferences to \\
+\texttt{pair(T key, uint64\_t source\_lookup\_encoding\_t)}.
+
 \section{\hdb Modules}
 \subsection{\hdb Manager}
 The \texttt{hashdb\_manager\_t}
@@ -509,13 +571,13 @@ hashdb_manager_t(const std::string& hashdb_dir,
                  file_mode_t file_mode_type);
 
 bool insert(const hashdb_element_t& element,
-            hashdb_change_object_t &hashdb_change_object);
+            hashdb_changes_t &hashdb_changes);
 
 bool remove(const hashdb_element_t& element,
-            hashdb_change_object_t& hashdb_change_object);
+            hashdb_changes_t& hashdb_changes);
 
 bool remove_key(const hashdb_element_t& element,
-                hashdb_change_object_t& hashdb_change_object);
+                hashdb_changes_t& hashdb_changes);
 
 bool has_key(const hashdb_element_t& element)
 
@@ -534,9 +596,8 @@ hashdb_element_t<T> end() const;
 A \texttt{hashdb\_element\_t} is what the user wants to see
 about a hash and its source.
 \begin{compactitem}
-\item It has all the fields of a hash source.
-\item The \texttt{hashdigest} is a string so that we don't need to use
-\texttt{<T>}.
+\item It has all the fields required to fully define a hash source.
+\item The \texttt{hashdigest} is a string, so we don't to use \texttt{<T>}.
 \end{compactitem}
 
 Specifically:
@@ -546,9 +607,9 @@ struct hashdb_element_t {
     std::string hashdigest;
     std::string hashdigest_type;    // MD5, SHA1, etc.
     uint32_t block_size;            // e.g. 4096
-    uint64_t file_offset;
     std::string repository_name;
     std::string filename;
+    uint64_t file_offset;
 };
 \end{verbatim}
 \end{small}
@@ -574,7 +635,7 @@ class hashdb_changes_t {
       uint32_t hashes_not_inserted_wrong_hash_block_size;
       uint32_t hashes_not_inserted_wrong_hashdigest_type;
       uint32_t hashes_not_inserted_exceeds_max_duplicates;
-      uint32_t hashes_not_inserted_duplicate_source;
+      uint32_t hashes_not_inserted_duplicate_element;
 
       // remove
       uint32_t hashes_removed;
@@ -582,7 +643,7 @@ class hashdb_changes_t {
       uint32_t hashes_not_removed_wrong_hash_block_size;
       uint32_t hashes_not_removed_wrong_hashdigest_type;
       uint32_t hashes_not_removed_no_hash;
-      uint32_t hashes_not_removed_different_source;
+      uint32_t hashes_not_removed_no_element;
 };
 \end{verbatim}
 \end{small}
