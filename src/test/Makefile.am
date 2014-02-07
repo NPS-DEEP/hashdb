@@ -30,7 +30,8 @@ bin_PROGRAMS = \
 	settings_manager_test \
 	logger_test \
 	hashdb_element_test \
-	map_multimap_manager_test
+	map_multimap_manager_test \
+	source_lookup_index_manager_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -229,4 +230,11 @@ map_multimap_manager_test_SOURCES = \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	map_multimap_manager_test.cpp
+
+source_lookup_index_manager_test_SOURCES = \
+	boost_fix.hpp \
+        ../file_modes.h \
+        ../source_lookup_index_manager.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	source_lookup_index_manager_test.cpp
 

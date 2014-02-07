@@ -383,9 +383,10 @@ size_t size() const;
 \texttt{multimap\_iterator\_t} dereferences to
 key, source lookup index pair\texttt{<T, uint64\_t>}.
 
-% source lookup manager
-\subsection{Source Lookup Manager}
-This module manages source lookups.
+% source lookup index manager
+\subsection{Source Lookup Index Manager}
+This module manages the association between an index
+and its associated repository\_name, filename pair.
 \begin{compactitem}
 \item It wraps source lookup capability under one purposed interface.
 \item It manages the lookup store, filename store,
@@ -396,31 +397,23 @@ and uses
 \texttt{source\_repository\_name\_store}
 filenames, each one with
 \texttt{.dat}, \texttt{.idx1}, and \texttt{.idx2} extensions.
-\item Provides Interfaces to get source information
-from \texttt{source\_lookup\_index},
-to get the \texttt{source\_lookup\_index} from source information,
-and to insert elements by specifying the repository name, filename,
-and \texttt{source\_lookup\_index}.
+\item Provides Interfaces to insert indexes
+and to find indexes or repository name, filename pairs.
 \end{compactitem}
 
 Here are the interfaces:
 
 \begin{small}
 \begin{verbatim}
-source_lookup_manager_t<T>(const std::string p_hashdb_dir,
-                           file_mode_type_t file_mode);
+source_lookup_index_manager_t(hashdb_dir, file_mode);
 
-bool get_source_location(uint64_t source_lookup_index,
-                         std::string& repository_name,
-                         std::string& filename);
+pair<bool, uint64_t> insert(const std::string& repository_name,
+                            const std::string& filename);
 
-bool get_source_lookup_index(const std::string& repository_name,
-                             const std::string& filename,
-                             uint64_t source_lookup_index);
+pair<bool, uint64_t> find(const std::string& repository_name,
+                          const std::string& filename);
 
-bool insert_source_lookup_element(const std::string& repository_name,
-                                  const std::string& filename,
-                                  uint64_t& source_lookup_index);
+pair<string rep_name, string filename> find(uint64_t source_lookup_index);
 \end{verbatim}
 \end{small}
 

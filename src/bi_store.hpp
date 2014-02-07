@@ -26,6 +26,7 @@
 #define BI_STORE_HPP
 #include <string>
 //#include "indexed_string_t.hpp"
+#include "file_modes.h"
 #include "boost/btree/btree_index_set.hpp"
 
 template<typename BI_T>
@@ -52,7 +53,6 @@ class bi_store_t {
               file_mode_type_t p_file_mode) :
       filename_prefix(p_filename_prefix), file_mode(p_file_mode),
       index_by_key(0), index_by_value(0) {
-std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
 
     // data store filenames
     std::string dat_filename  = filename_prefix + ".dat";
@@ -105,15 +105,12 @@ std::cout << "bi_store filename_prefix " << filename_prefix << "\n";
   /**
    * Get value from key or return false.
    */
-  bool get_value(const typename BI_T::key_type& key, typename BI_T::value_type& value) {
-std::cout << "bi_store get_value from key '" << key << "'\n";
+  bool get_value(const typename BI_T::key_type& key, typename BI_T::value_type& value) const {
     typename index_by_key_t::iterator it = index_by_key->find(key);
     if (it == index_by_key->end()) {
-std::cout << "bi_store get_value key not present\n";
       return false;
     } else {
       value = it->value;
-std::cout << "bi_store get_value from key, value '" << value << "'\n";
       return true;
     }
   }
@@ -121,15 +118,12 @@ std::cout << "bi_store get_value from key, value '" << value << "'\n";
   /**
    * Get key from value or return false.
    */
-  bool get_key(const typename BI_T::value_type& value, typename BI_T::key_type& key) {
-std::cout << "bi_store get_key from value '" << value << "'\n";
+  bool get_key(const typename BI_T::value_type& value, typename BI_T::key_type& key) const {
     typename index_by_value_t::iterator it = index_by_value->find(value);
     if (it == index_by_value->end()) {
-std::cout << "bi_store get_key value not present\n";
       return false;
     } else {
       key = it->key;
-std::cout << "bi_store get_key from value, key '" << key << "'\n";
       return true;
     }
   }
@@ -138,7 +132,6 @@ std::cout << "bi_store get_key from value, key '" << key << "'\n";
    * Insert new element returning new key, else assert program error.
    */
   typename BI_T::key_type insert_value(const typename BI_T::value_type& value) {
-std::cout << "bi_store insert_value.a\n";
 
     // btree must be writable
     if (file_mode == READ_ONLY) {
@@ -147,26 +140,21 @@ std::cout << "bi_store insert_value.a\n";
 
     // key must not exist
     typename BI_T::key_type key;
-std::cout << "bi_store insert_value. start get_key check\n";
     bool status1 = get_key(value, key);
-std::cout << "bi_store insert_value. end get_key check\n";
     if (status1 == true) {
       assert(0);
     }
 
     // get new key, which is last added key + 1
     if (index_by_value->empty()) {
-std::cout << "bi_store insert_value start new key\n";
-      // no elements, use 0
-      key = 0;
+      // no elements, use 1 as first element index
+      key = 1;
     } else {
-std::cout << "bi_store insert_value use last key plus one\n";
       // use 1 + last key
       typename index_by_value_t::const_reverse_iterator rit = index_by_value->crbegin();
 //      key = rit->key + 1;
       key = (*rit).key + 1;
     }
-std::cout << "bi_store insert_value.b key " << key << "\n";
 
     // add new element
     typename index_by_key_t::file_position pos;

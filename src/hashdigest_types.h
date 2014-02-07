@@ -25,12 +25,12 @@
 #ifndef HASHDIGEST_TYPES_H
 #define HASHDIGEST_TYPES_H
 
-#include <stdint.h>
-#include <cassert>
-#include <string.h> // for memcmp
+//#include <stdint.h>
+//#include <cassert>
+//#include <string.h> // for memcmp
 #include <string>
 #include <iostream>
-#include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
+//#include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
 
 
 // ************************************************************
@@ -38,11 +38,16 @@
 // ************************************************************
 // hash types
 enum hashdigest_type_t {HASHDIGEST_UNDEFINED,
-                        HASHDIGEST_MD5};
+                        HASHDIGEST_MD5,
+                        HASHDIGEST_SHA1,
+                        HASHDIGEST_SHA256,
+};
 
 inline std::string hashdigest_type_to_string(hashdigest_type_t type) {
   switch(type) {
     case HASHDIGEST_MD5: return "MD5";
+    case HASHDIGEST_SHA1: return "SHA1";
+    case HASHDIGEST_SHA256: return "SHA256";
     default: return "undefined";
   }
 }
@@ -50,6 +55,14 @@ inline std::string hashdigest_type_to_string(hashdigest_type_t type) {
 inline bool string_to_hashdigest_type(const std::string& name, hashdigest_type_t& type) {
   if (name == "MD5") {
     type = HASHDIGEST_MD5;
+    return true;
+  }
+  if (name == "SHA1") {
+    type = HASHDIGEST_SHA1;
+    return true;
+  }
+  if (name == "SHA256") {
+    type = HASHDIGEST_SHA256;
     return true;
   }
   std::cerr << "wrong hashdigest type '" << name << "'\n";
