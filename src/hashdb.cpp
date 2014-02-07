@@ -30,6 +30,7 @@
 #endif
 #include "hashdb.hpp"
 #include "hashdigest_types.h"                  // for hashdigest_type_t
+#include "hashdb_types.h"                  // for other types
 #include "file_modes.h"
 #include "query_by_path.hpp"
 #include "query_by_socket.hpp"

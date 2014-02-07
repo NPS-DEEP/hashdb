@@ -32,7 +32,11 @@
 #include <string>
 #include <iostream>
 #include "dfxml/src/hash_t.h" // defines the hash block's cryptographic hash type
+#include "map_types.h"
+#include "multimap_types.h"
+#include "hashdigest_types.h"
 
+/*
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 // ************************************************************
 // map type enumerators for map, multimap, and multi_index_container
@@ -134,6 +138,7 @@ inline bool string_to_hashdigest_type(const std::string& name, hashdigest_type_t
   type = HASHDIGEST_UNDEFINED;
   return false;
 }
+*/
 
 // hash source record
 struct hash_source_record_t {

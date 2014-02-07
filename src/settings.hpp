@@ -42,6 +42,10 @@ inline bool string_to_bloom_state(std::string state_string, bool& state) {
   return false;
 }
 
+inline std::string bloom_state_to_string(bool state) {
+  return ((state==true) ? "enabled" : "disabled");
+}
+
 // hashdb tuning options
 struct settings_t {
 
@@ -95,11 +99,11 @@ struct settings_t {
     os << "multimap type=" << multimap_type_to_string(multimap_type) << ", ";
     os << "multimap_shard count=" << multimap_shard_count << "\n";
 
-    os << "bloom 1 used=" << ((bloom1_is_used) ? "true" : "false");
+    os << "bloom 1 used=" << bloom_state_to_string(bloom1_is_used);
     os << ", bloom 1 k hash functions=" << bloom1_k_hash_functions;
     os << ", bloom 1 M hash size=" << bloom1_M_hash_size << "\n";
  
-    os << "bloom 2 used=" << ((bloom2_is_used) ? "true" : "false");
+    os << "bloom 2 used=" << bloom_state_to_string(bloom2_is_used);
     os << ", bloom 2 k hash functions=" << bloom2_k_hash_functions;
     os << ", bloom 2 M hash size=" << bloom2_M_hash_size << "\n";
   }
@@ -115,11 +119,11 @@ struct settings_t {
     x.xmlout("multimap_type", multimap_type_to_string(multimap_type));
     x.xmlout("multimap_shard_count", multimap_shard_count);
 
-    x.xmlout("bloom1_used", ((bloom1_is_used) ? "true" : "false"));
+    x.xmlout("bloom1_used", bloom_state_to_string(bloom1_is_used));
     x.xmlout("bloom1_k_hash_functions", (uint64_t)bloom1_k_hash_functions);
     x.xmlout("bloom1_M_hash_size", (uint64_t)bloom1_M_hash_size);
  
-    x.xmlout("bloom2_used", ((bloom2_is_used) ? "true" : "false"));
+    x.xmlout("bloom2_used", bloom_state_to_string(bloom2_is_used));
     x.xmlout("bloom2_k_hash_functions", (uint64_t)bloom2_k_hash_functions);
     x.xmlout("bloom2_M_hash_size", (uint64_t)bloom2_M_hash_size);
   }

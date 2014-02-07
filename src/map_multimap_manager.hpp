@@ -159,6 +159,14 @@ class map_multimap_manager_t {
     // key was in map, so add key to multimap, potentially changing pay in map
     uint32_t count = source_lookup_encoding::get_count(map_iterator->second);
     if (count == 1) {
+
+      // check if element is already in map
+      if (map_iterator->second == source_lookup_encoding) {
+        // this element is already in map
+        ++changes.hashes_not_inserted_duplicate_element;
+        return;
+      }
+
       // move element in map to multimap
       multimap_emplace(key, map_iterator->second);
       map_change(key, source_lookup_encoding::get_source_lookup_encoding(2));
@@ -168,6 +176,14 @@ class map_multimap_manager_t {
       ++changes.hashes_inserted;
 
     } else {
+
+      // check if element is already in multimap
+      if (multimap_manager.has(key, source_lookup_encoding)) {
+        // this element is already in multimap
+        ++changes.hashes_not_inserted_duplicate_element;
+        return;
+      }
+
       // increment count in map
       map_change(key,
              source_lookup_encoding::get_source_lookup_encoding(count + 1));

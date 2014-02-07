@@ -46,9 +46,10 @@
 
 static const char temp_dir[] = "temp_dir";
 //static const char temp_hash_store[] = "temp_dir/hash_store";
+static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
 
 template<typename T>
-void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
+void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   T k1;
   T k2;
@@ -64,6 +65,7 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   // clean up from any previous run
 //  remove(temp_hash_store);
+  remove(temp_bloom_filter_1);
 
   // create working settings
   settings_t settings;
@@ -128,6 +130,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   manager.remove_key(k1, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_hash, 1);
   manager.remove_key(k2, changes);
+  BOOST_TEST_EQ(changes.hashes_removed, 3);
+  manager.remove_key(k2, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_hash, 2);
   manager.remove_key(k3, changes);
   BOOST_TEST_EQ(changes.hashes_removed, 6);
@@ -142,10 +146,27 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
 int cpp_main(int argc, char* argv[]) {
 
+// map types:
+// MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
+// file modes:
+// READ_ONLY, RW_NEW, RW_MODIFY
+
   // map tests
-  run_rw_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
-//  run_rw_tests<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
-//  run_rw_tests<sha256_t>(MAP_BTREE, MULTIMAP_BTREE);
+  rw_new_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
+  rw_new_tests<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
+  rw_new_tests<sha256_t>(MAP_BTREE, MULTIMAP_BTREE);
+
+  rw_new_tests<md5_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+  rw_new_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+  rw_new_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+
+  rw_new_tests<md5_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+  rw_new_tests<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+  rw_new_tests<sha256_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+
+  rw_new_tests<md5_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+  rw_new_tests<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+  rw_new_tests<sha256_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
 
   // done
   int status = boost::report_errors();

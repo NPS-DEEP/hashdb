@@ -33,8 +33,8 @@
 
 // map names
 const std::string MULTIMAP_RED_BLACK_TREE_NAME = "red_black_tree_duplicates";
-const std::string MULTIMAP_SORTED_VECTOR_NAME =  "sorted_vector_duplicates";
-const std::string MULTIMAP_HASH_NAME =           "hash_duplicates";
+const std::string MULTIMAP_FLAT_SORTED_VECTOR_NAME =  "sorted_vector_duplicates";
+const std::string MULTIMAP_UNORDERED_HASH_NAME =           "hash_duplicates";
 const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
 
 
@@ -63,18 +63,18 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
                 multimap_shard_count,
                 file_mode_type);
         break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           multimap_sorted_vector = new multimap_sorted_vector_t(
-                MULTIMAP_SORTED_VECTOR_NAME,
+                MULTIMAP_FLAT_SORTED_VECTOR_NAME,
                 filename, 
                 size,
                 expected_size,
                 multimap_shard_count,
                 file_mode_type);
         break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           multimap_hash = new multimap_hash_t(
-                MULTIMAP_HASH_NAME,
+                MULTIMAP_UNORDERED_HASH_NAME,
                 filename, 
                 size,
                 expected_size,
@@ -103,10 +103,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           delete multimap_red_black_tree;
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           delete multimap_sorted_vector;
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           delete multimap_hash;
           break;
         case MULTIMAP_BTREE:
@@ -128,10 +128,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           has = multimap_red_black_tree->has_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           has = multimap_sorted_vector->has_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           has = multimap_hash->has_element(md5, source_lookup_record);
           break;
         case MULTIMAP_BTREE:
@@ -156,10 +156,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           multimap_red_black_tree->insert_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           multimap_sorted_vector->insert_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           multimap_hash->insert_element(md5, source_lookup_record);
           break;
         case MULTIMAP_BTREE:
@@ -180,10 +180,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           multimap_red_black_tree->erase_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           multimap_sorted_vector->erase_element(md5, source_lookup_record);
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           multimap_hash->erase_element(md5, source_lookup_record);
           break;
         case MULTIMAP_BTREE:
@@ -205,10 +205,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           multimap_red_black_tree->append_pay_vector(md5, source_lookup_record_vector);
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           multimap_sorted_vector->append_pay_vector(md5, source_lookup_record_vector);
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           multimap_hash->append_pay_vector(md5, source_lookup_record_vector);
           break;
         case MULTIMAP_BTREE:
@@ -234,9 +234,9 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
       switch(multimap_type) {
         case MULTIMAP_RED_BLACK_TREE:
           return multimap_red_black_tree->get_match_count(md5);
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           return multimap_sorted_vector->get_match_count(md5);
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           return multimap_hash->get_match_count(md5);
         case MULTIMAP_BTREE:
           return multimap_btree->get_match_count(md5);
@@ -257,10 +257,10 @@ const std::string MULTIMAP_BTREE_NAME =          "btree_duplicates";
         case MULTIMAP_RED_BLACK_TREE:
           multimap_red_black_tree->report_status(consumer);
           break;
-        case MULTIMAP_SORTED_VECTOR:
+        case MULTIMAP_FLAT_SORTED_VECTOR:
           multimap_sorted_vector->report_status(consumer);
           break;
-        case MULTIMAP_HASH:
+        case MULTIMAP_UNORDERED_HASH:
           multimap_hash->report_status(consumer);
           break;
         case MULTIMAP_BTREE:

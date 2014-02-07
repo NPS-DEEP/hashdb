@@ -40,7 +40,7 @@ class settings_manager_t {
   static settings_t read_settings(const std::string& hashdb_dir) {
     // create a settings object, read into it, and return it
     settings_t settings;
-    std::string filename = hashdb_dir + "settings.xml";
+    std::string filename = hashdb_dir + "/settings.xml";
     hashdb_settings_reader_t::read_settings(filename, settings);
     return settings;
   }
@@ -48,7 +48,7 @@ class settings_manager_t {
   // write settings using dfxml_writer
   static void write_settings(const std::string& hashdb_dir,
                              const settings_t& settings) {
-    std::string filename = hashdb_dir + "settings.xml";
+    std::string filename = hashdb_dir + "/settings.xml";
 
     dfxml_writer x(filename, false);
     x.push("settings");

@@ -28,7 +28,7 @@
 
 #ifndef BLOOM_FILTER_HPP
 #define BLOOM_FILTER_HPP
-//#include "hashdb_types.h"
+#include "settings.hpp" // for report_status
 #include "file_modes.h"
 #include "bloom.h"
 //#include "file_mapper.hpp"
@@ -140,7 +140,7 @@ class bloom_filter_t {
     void report_status(std::ostream& os, size_t index) const {
       if (is_used) {
         os << "bloom filter " << index << " status: ";
-        os << "status=" << ((is_used) ? "true" : "false");
+        os << "status=" << (bloom_state_to_string(is_used));
         os << ", added items=" << bloom.added_items;
         os << ", unique added items=" << bloom.unique_added_items;
         os << ", aliased adds=" << bloom.aliased_adds;
@@ -153,7 +153,7 @@ class bloom_filter_t {
     void report_status(dfxml_writer& x, size_t index) const {
       x.push("bloom_filter_status");
       x.xmlout("index", index);
-      x.xmlout("status", ((is_used) ? "true" : "false"));
+      x.xmlout("status", bloom_state_to_string(is_used));
       if (is_used) {
         x.xmlout("added_items", bloom.added_items);
         x.xmlout("unique_added_items", bloom.unique_added_items);
