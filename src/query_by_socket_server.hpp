@@ -24,7 +24,7 @@
 
 #ifndef QUERY_BY_SOCKET_SERVER
 #define QUERY_BY_SOCKET_SERVER
-#include "hashdb_types.h"
+#include "hashdigest_types.h"
 #include "query_by_socket.hpp"
 //#ifdef WIN32
 //  // including winsock2.h keeps windows.h from complaining in zmq.h

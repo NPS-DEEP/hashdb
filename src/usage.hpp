@@ -38,7 +38,7 @@
 #include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include "hashdb_runtime_options.hpp"
 
 // approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
@@ -62,7 +62,7 @@ uint32_t approximate_n_to_M(uint64_t n) {
 }
 
 void usage() {
-  hashdb_settings_t s;
+  settings_t s;
   hashdb_runtime_options_t o;
 
   // print usage
@@ -240,7 +240,7 @@ void usage() {
 }
 
 void detailed_usage() {
-  hashdb_settings_t s;
+  settings_t s;
   hashdb_runtime_options_t o;
 
   // print usage notes and examples

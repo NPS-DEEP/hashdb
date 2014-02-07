@@ -131,7 +131,7 @@ class multimap_manager_t {
   }
 
   // erase_range
-  bool erase_range(const T& key) {
+  size_t erase_range(const T& key) {
     switch(multimap_type) {
       case MULTIMAP_BTREE: return multimap_btree->erase_range(key);
       case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase_range(key);

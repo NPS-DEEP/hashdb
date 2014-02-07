@@ -509,6 +509,8 @@ Actions:
 \item Provide a \texttt{map\_multimap\_iterator} via begin() and end()
 for iterating over all hash values.
 Iterator dereferences to \texttt{pair<T, uint64\_t}.
+\item Provide zero-overhead size functions for map and multimap,
+more for completeness than for usefulness.
 \end{compactitem}
 
 Interfaces:
@@ -528,11 +530,13 @@ void remove_key(const T& key, hashdb_changes_t& hashdb_changes);
 
 bool has_key(const T& key);
 
-size_t size();
-
 pair<T, uint64_t> begin() const;
 
 pair<T, uint64_t> end() const;
+
+size_t map_size();
+
+size_t multimap_size();
 \end{verbatim}
 \end{small}
 

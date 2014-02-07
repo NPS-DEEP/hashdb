@@ -31,7 +31,7 @@
 #include "bloom_filter.hpp"
 #include "command_line.hpp"
 #include "hashdb_changes.hpp"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include <iostream>
 
 /**
@@ -100,7 +100,7 @@ class logger_t {
     x.add_timestamp(name);
   }
 
-  void add_hashdb_settings(const hashdb_settings_t& settings) {
+  void add_hashdb_settings(const settings_t& settings) {
     if (closed) {
       // logger closed
       std::cout << "logger.add_hashdb_settings warning: logger closed\n";

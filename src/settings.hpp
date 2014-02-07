@@ -25,15 +25,25 @@
 #ifndef    hashdb_settings_hpp
 #define    hashdb_settings_hpp
 
-#include "hashdb_types.h"
+//#include "hashdb_types.h"
+#include "map_types.h"
+#include "multimap_types.h"
+#include "hashdigest_types.h"
 #include "dfxml/src/dfxml_writer.h"
 #include <string>
 #include <sstream>
 #include <stdint.h>
 #include <iostream>
 
+inline bool string_to_bloom_state(std::string state_string, bool& state) {
+  if (state_string == "enabled")  { state = true;  return true; }
+  if (state_string == "disabled") { state = false; return true; }
+  state = false;
+  return false;
+}
+
 // hashdb tuning options
-struct hashdb_settings_t {
+struct settings_t {
 
   uint32_t hashdb_version;
   uint32_t hash_block_size;
@@ -54,7 +64,7 @@ struct hashdb_settings_t {
 
   // note: POD, so permit default copy and equals
 
-  hashdb_settings_t() :
+  settings_t() :
         hashdb_version(2),
         hash_block_size(4096),
         hashdigest_type(HASHDIGEST_MD5),
@@ -85,11 +95,11 @@ struct hashdb_settings_t {
     os << "multimap type=" << multimap_type_to_string(multimap_type) << ", ";
     os << "multimap_shard count=" << multimap_shard_count << "\n";
 
-    os << "bloom 1 used=" << bloom_state_to_string(bloom1_is_used);
+    os << "bloom 1 used=" << ((bloom1_is_used) ? "true" : "false");
     os << ", bloom 1 k hash functions=" << bloom1_k_hash_functions;
     os << ", bloom 1 M hash size=" << bloom1_M_hash_size << "\n";
  
-    os << "bloom 2 used=" << bloom_state_to_string(bloom2_is_used);
+    os << "bloom 2 used=" << ((bloom2_is_used) ? "true" : "false");
     os << ", bloom 2 k hash functions=" << bloom2_k_hash_functions;
     os << ", bloom 2 M hash size=" << bloom2_M_hash_size << "\n";
   }
@@ -105,18 +115,18 @@ struct hashdb_settings_t {
     x.xmlout("multimap_type", multimap_type_to_string(multimap_type));
     x.xmlout("multimap_shard_count", multimap_shard_count);
 
-    x.xmlout("bloom1_used", bloom_state_to_string(bloom1_is_used));
+    x.xmlout("bloom1_used", ((bloom1_is_used) ? "true" : "false"));
     x.xmlout("bloom1_k_hash_functions", (uint64_t)bloom1_k_hash_functions);
     x.xmlout("bloom1_M_hash_size", (uint64_t)bloom1_M_hash_size);
  
-    x.xmlout("bloom2_used", bloom_state_to_string(bloom2_is_used));
+    x.xmlout("bloom2_used", ((bloom2_is_used) ? "true" : "false"));
     x.xmlout("bloom2_k_hash_functions", (uint64_t)bloom2_k_hash_functions);
     x.xmlout("bloom2_M_hash_size", (uint64_t)bloom2_M_hash_size);
   }
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-                         const class hashdb_settings_t& settings) {
+                         const class settings_t& settings) {
   settings.report_settings(os);
   return os;
 }

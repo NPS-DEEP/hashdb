@@ -25,7 +25,8 @@
 
 #ifndef HASH_DUPLICATES_STORE_HPP
 #define HASH_DUPLICATES_STORE_HPP
-#include "hashdb_types.h"
+//#include "hashdb_types.h"
+#include "hashdigest_types.h"
 #include "manager_modified_multimap.h"
 #include "dfxml/src/hash_t.h"
 #include <vector>

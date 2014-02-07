@@ -24,12 +24,12 @@
 
 #ifndef HASHDB_DB_MANAGER_HPP
 #define HASHDB_DB_MANAGER_HPP
-#include "hashdb_types.h"
+//#include "hashdb_types.h"
 #include "dfxml/src/hash_t.h"
 
 #include "hashdb_filenames.hpp"
 #include "hashdb_settings_reader.hpp"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include "hash_store.hpp"
 #include "hash_duplicates_store.hpp"
 #include "source_lookup_manager.hpp"
@@ -53,7 +53,7 @@ class hashdb_db_manager_t {
   public:
     const std::string hashdb_dir;
     const file_mode_type_t file_mode_type;
-    hashdb_settings_t hashdb_settings;
+    settings_t hashdb_settings;
 
   private:
     // the hashdb settings that need retained

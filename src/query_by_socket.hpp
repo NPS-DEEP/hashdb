@@ -33,8 +33,8 @@
 #define QUERY_BY_SOCKET_HPP
 
 #include <config.h>
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+#include "hashdigest_types.h"
+#include "settings.hpp"
 #include "hashdb_db_manager.hpp"
 #include "hashdb.hpp"
 #include "hashdb_db_info_provider.hpp"

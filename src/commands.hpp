@@ -25,7 +25,7 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 #include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include "hashdb_filenames.hpp"
 #include "history_manager.hpp"
 #include "hashdb_db_manager.hpp"
@@ -554,7 +554,7 @@ class commands_t {
     logger.add("hashdb_indir", hashdb_indir);
 
     // get hashdb tuning settings
-    hashdb_settings_t hashdb_settings;
+    settings_t hashdb_settings;
     hashdb_settings_reader_t::read_settings(hashdb_indir+"settings.xml", hashdb_settings);
 
     // report the settings

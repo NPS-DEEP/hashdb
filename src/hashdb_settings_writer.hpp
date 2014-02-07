@@ -24,8 +24,8 @@
 
 #ifndef HASHDB_SETTINGS_WRITER_HPP
 #define HASHDB_SETTINGS_WRITER_HPP
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+//#include "hashdb_types.h"
+#include "settings.hpp"
 #include "command_line.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -39,7 +39,7 @@
  */
 namespace hashdb_settings_writer {
   void write_settings(const std::string& hashdb_dir,
-                      const hashdb_settings_t& settings) {
+                      const settings_t& settings) {
 
     std::string filename = hashdb_filenames_t::settings_filename(hashdb_dir);
 

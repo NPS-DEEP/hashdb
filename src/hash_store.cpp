@@ -26,7 +26,7 @@
 #include <config.h>
 #include "hash_store.hpp"
 #include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include "dfxml/src/hash_t.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "manager_modified.h"

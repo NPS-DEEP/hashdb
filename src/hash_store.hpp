@@ -25,8 +25,9 @@
 
 #ifndef HASH_STORE_HPP
 #define HASH_STORE_HPP
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+//#include "hashdb_types.h"
+#include "hashdigest_types.h"
+#include "settings.hpp"
 #include "dfxml/src/hash_t.h"
 #include "manager_modified.h"
 #include <boost/iterator/iterator_facade.hpp>

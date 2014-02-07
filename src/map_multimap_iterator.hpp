@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Provides hashdb iterator, encapsulating map and multimap.
+ * Provides map_multimap iterator, encapsulating map and multimap.
  */
 
-#ifndef HASHDB_ITERATOR_HPP
-#define HASHDB_ITERATOR_HPP
+#ifndef MAP_MULTIMAP_ITERATOR_HPP
+#define MAP_MULTIMAP_ITERATOR_HPP
 #include "map_manager.hpp"
 #include "map_iterator.hpp"
 #include "multimap_manager.hpp"
@@ -31,7 +31,7 @@
 #include "source_lookup_encoding.hpp" // to obtain count from payload
 
 template<class T>
-class hashdb_iterator_t {
+class map_multimap_iterator_t {
   private:
 
   // multimap manager
@@ -69,7 +69,7 @@ class hashdb_iterator_t {
   }
 
   // equal
-  bool equal(hashdb_iterator_t<T> const& other) const {
+  bool equal(map_multimap_iterator_t<T> const& other) const {
 
     if (map_manager != other.map_manager ||
         multimap_manager != other.multimap_manager) {
@@ -132,7 +132,7 @@ class hashdb_iterator_t {
 
   public:
   // the constructors for each map type using native map iterators
-  hashdb_iterator_t(map_manager_t<T>* p_map_manager,
+  map_multimap_iterator_t(map_manager_t<T>* p_map_manager,
                     multimap_manager_t<T>* p_multimap_manager,
                     bool p_is_end) :
                              map_manager(p_map_manager),
@@ -154,7 +154,7 @@ class hashdb_iterator_t {
   }
 
   // zz this is bad because it can live longer than the map zzzzzzzzzzzzzz
-  hashdb_iterator_t(const hashdb_iterator_t& other) :
+  map_multimap_iterator_t(const map_multimap_iterator_t& other) :
                              map_manager(other.map_manager),
                              multimap_manager(other.multimap_manager),
                              map_iterator(other.map_iterator),
@@ -165,7 +165,7 @@ class hashdb_iterator_t {
   }
 
   // this useless default constructor is required by std::pair
-  hashdb_iterator_t() :
+  map_multimap_iterator_t() :
                              map_manager(0),
                              multimap_manager(0),
                              map_iterator(),
@@ -176,7 +176,7 @@ class hashdb_iterator_t {
   }
 
   // copy capability is required by std::pair
-  hashdb_iterator_t& operator=(const hashdb_iterator_t& other) {
+  map_multimap_iterator_t& operator=(const map_multimap_iterator_t& other) {
     map_manager = other.map_manager;
     multimap_manager = other.multimap_manager;
     map_iterator = other.map_iterator;
@@ -187,12 +187,12 @@ class hashdb_iterator_t {
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=
-  hashdb_iterator_t& operator++() {
+  map_multimap_iterator_t& operator++() {
     increment();
     return *this;
   }
-  hashdb_iterator_t operator++(int) {  // c++11 delete would be better.
-    hashdb_iterator_t temp(*this);
+  map_multimap_iterator_t operator++(int) {  // c++11 delete would be better.
+    map_multimap_iterator_t temp(*this);
     increment();
     return temp;
   }
@@ -204,10 +204,10 @@ class hashdb_iterator_t {
     dereference();
     return &dereferenced_value;
   }
-  bool operator==(const hashdb_iterator_t& other) const {
+  bool operator==(const map_multimap_iterator_t& other) const {
     return equal(other);
   }
-  bool operator!=(const hashdb_iterator_t& other) const {
+  bool operator!=(const map_multimap_iterator_t& other) const {
     return !equal(other);
   }
 };

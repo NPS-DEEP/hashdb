@@ -29,6 +29,7 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "settings.hpp"
 #include "settings_manager.hpp"
 
 static const char temp_dir[] = "temp_dir";
@@ -39,7 +40,7 @@ void run_test() {
 
   remove(temp_settings);
 
-  hashdb_settings_t settings;
+  settings_t settings;
 
   // read, write first
   settings.hashdb_version = 1;

@@ -27,7 +27,7 @@
 
 //#include "hashdb_db_manager.hpp"
 #include "hash_store.hpp"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -116,7 +116,7 @@ class hashdb_db_info_provider_t {
     // now start processing
 
     // get hashdb settings
-    hashdb_settings_t settings;
+    settings_t settings;
     hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", settings);
 
     // path to hash store

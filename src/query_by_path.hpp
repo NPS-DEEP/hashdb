@@ -26,8 +26,8 @@
 #ifndef QUERY_BY_PATH_HPP
 #define QUERY_BY_PATH_HPP
 
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+//#include "hashdb_types.h"
+#include "settings.hpp"
 #include "hashdb_db_manager.hpp"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"

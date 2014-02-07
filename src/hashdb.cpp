@@ -29,7 +29,8 @@
   #include <winsock2.h>
 #endif
 #include "hashdb.hpp"
-#include "hashdb_types.h"                  // for hashdigest_type_t
+#include "hashdigest_types.h"                  // for hashdigest_type_t
+#include "file_modes.h"
 #include "query_by_path.hpp"
 #include "query_by_socket.hpp"
 

@@ -197,7 +197,7 @@ class hashdb_change_logger_t {
   /**
    * Add hashdb_settings to the log.
    */
-  void add_hashdb_settings(const hashdb_settings_t& settings) {
+  void add_hashdb_settings(const settings_t& settings) {
     if (closed) {
       // already closed
       std::cout << "hashdb_change_logger.add_hashdb_settings warning: already closed\n";

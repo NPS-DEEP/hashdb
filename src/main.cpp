@@ -31,7 +31,7 @@
 #include "file_modes.h"
 // zz not yet #include "map_types.h"
 // zz not yet #include "multimap_types.h"
-#include "hashdb_settings.hpp"
+#include "settings.hpp"
 #include "hashdb_runtime_options.hpp"
 #include "usage.hpp"
 #include "command_line.hpp" // zz make this better
@@ -83,7 +83,7 @@ static const std::string COMMAND_GET_HASHDB_INFO = "get_hashdb_info";
 static const std::string COMMAND_SERVER = "server";
 
 // settings and options
-static hashdb_settings_t hashdb_settings = hashdb_settings_t();
+static settings_t hashdb_settings = settings_t();
 static hashdb_runtime_options_t hashdb_runtime_options = hashdb_runtime_options_t();
 
 // option state used to assure options are not specified when they should not be
@@ -156,9 +156,9 @@ void no_has_exclude_duplicates(const std::string& action) {
 /*
 void require_hash_block_sizes_match(const std::string& hashdb_dir1, const std::string& hashdb_dir2,
                                const std::string& action) {
-  hashdb_settings_t settings1;
+  settings_t settings1;
   hashdb_settings_reader_t::read_settings(hashdb_dir1+"settings.xml", settings1);
-  hashdb_settings_t settings2;
+  settings_t settings2;
   hashdb_settings_reader_t::read_settings(hashdb_dir2+"settings.xml", settings2);
 
   if (settings1.hash_block_size != settings2.hash_block_size) {

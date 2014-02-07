@@ -37,8 +37,8 @@
   #include "io.h"
 #endif
 #include <libxml/parser.h>
-#include "hashdb_types.h"
-#include "hashdb_settings.hpp"
+//#include "hashdb_types.h"
+#include "settings.hpp"
 #include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -53,7 +53,6 @@
 
 // a class is used just to keep members private
 class hashdb_settings_reader_t {
-
   private:
 
   // do not allow these
@@ -93,11 +92,11 @@ class hashdb_settings_reader_t {
   struct user_data_t {
 
     // parser state
-    hashdb_settings_t* settings;
+    settings_t* settings;
     node_type_t active_node;
     size_t index;
 
-    user_data_t(hashdb_settings_t* p_settings) : settings(p_settings),
+    user_data_t(settings_t* p_settings) : settings(p_settings),
                     active_node(NO_NODE),
                     index(0) {
     }
@@ -259,6 +258,7 @@ class hashdb_settings_reader_t {
       std::string bloom1_state_string;
       xmlChar_to_string(characters, len, bloom1_state_string);
       is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_is_used);
+      is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_is_used);
       if (!is_valid) {
         exit_invalid_state("Error: invalid bloom 1 selection\n");
       }
@@ -337,7 +337,7 @@ class hashdb_settings_reader_t {
    * read onto default hashdb settings or throw std::runtime_error.
    */
   static void read_settings(const std::string filename,
-                            hashdb_settings_t& settings) {
+                            settings_t& settings) {
 
     // verify that the settings file exists
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);

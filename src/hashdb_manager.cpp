@@ -64,7 +64,7 @@ static const std::string COMMAND_SERVER = "server";
 // options
 static std::string repository_name = "";
 static std::string server_socket_endpoint = "tcp://*:14500";
-static hashdb_settings_t hashdb_settings;
+static settings_t hashdb_settings;
 static size_t exclude_duplicates_count = 0;
 
 // option state used to assure options are not specified when they should not be
@@ -82,7 +82,7 @@ bool has_b2kM = false;
 
 void usage() {
   // default settings
-  const hashdb_settings_t s;
+  const settings_t s;
 
   // print usage
   std::cout
@@ -575,7 +575,7 @@ static void delete_file(const std::string& file) {
 
 // create the new hashdb or fail
 static void create_hashdb(const std::string& hashdb_dir,
-                          const hashdb_settings_t& hashdb_tuning_settings) {
+                          const settings_t& hashdb_tuning_settings) {
   // make sure the new hashdb directory does not exist
   bool is_present = (access(hashdb_dir.c_str(),F_OK) == 0);
   if (is_present) {
@@ -634,7 +634,7 @@ static bool is_present(std::string path) {
 
 // change existing bloom settings
 static void reset_bloom_filters(const std::string& hashdb_dir,
-                                const hashdb_settings_t& new_hashdb_settings) {
+                                const settings_t& new_hashdb_settings) {
 
   // require hashdb_dir
   if (!is_hashdb(hashdb_dir)) {
@@ -646,7 +646,7 @@ static void reset_bloom_filters(const std::string& hashdb_dir,
   }
  
   // get existing hashdb tuning settings
-  hashdb_settings_t existing_hashdb_settings;
+  settings_t existing_hashdb_settings;
   hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", existing_hashdb_settings);
 
   // change the bloom filter settings
@@ -749,9 +749,9 @@ void no_has_exclude_duplicates(const std::string& action) {
 }
 void require_hash_block_sizes_match(const std::string& hashdb_dir1, const std::string& hashdb_dir2,
                                const std::string& action) {
-  hashdb_settings_t settings1;
+  settings_t settings1;
   hashdb_settings_reader_t::read_settings(hashdb_dir1+"settings.xml", settings1);
-  hashdb_settings_t settings2;
+  settings_t settings2;
   hashdb_settings_reader_t::read_settings(hashdb_dir2+"settings.xml", settings2);
 
   if (settings1.hash_block_size != settings2.hash_block_size) {

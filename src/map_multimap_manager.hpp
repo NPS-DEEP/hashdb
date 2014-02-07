@@ -19,17 +19,22 @@
 
 /**
  * \file
- * The hashdb manager provides access to the hashdb.
+ * The map_multimap manager provides unified accesses to the hash
+ * database as a whole.
  */
 
 #ifndef MAP_MULTIMAP_MANAGER_HPP
 #define MAP_MULTIMAP_MANAGER_HPP
 
+#include "settings.hpp"
+#include "hashdb_changes.hpp"
 #include "map_manager.hpp"
 #include "map_iterator.hpp"
 #include "multimap_manager.hpp"
 #include "multimap_iterator.hpp"
+#include "map_multimap_iterator.hpp"
 #include "bloom_filter_manager.hpp"
+#include "source_lookup_encoding.hpp"
 #include "file_modes.h"
 #include <vector>
 #include <unistd.h>
@@ -45,9 +50,9 @@ template<class T>
 class map_multimap_manager_t {
   private:
   const std::string hashdb_dir;
-  const file_mode_type_t file_mode_type;
+  const file_mode_type_t file_mode;
 
-  const hashdb_settings_t settings;
+  const settings_t settings;
   map_manager_t<T> map_manager;
   multimap_manager_t<T> multimap_manager;
   bloom_filter_manager_t<T> bloom_filter_manager;
@@ -103,12 +108,22 @@ class map_multimap_manager_t {
     }
   }
 
+  // helper
+  size_t multimap_erase_range(const T& key) {
+    size_t count = multimap_manager.erase_range(key);
+    if (count < 2) {
+      // really bad if multimap state is broken
+      throw std::runtime_error("multimap erase failure in count");
+    }
+    return count;
+  }
+
   public:
   map_multimap_manager_t(const std::string& p_hashdb_dir,
-                   file_mode_t p_file_mode_type) :
+                   file_mode_type_t p_file_mode) :
           hashdb_dir(p_hashdb_dir),
-          file_mode(p_file_mode_type),
-          settings(hashdb_dir),
+          file_mode(p_file_mode),
+          settings(settings_manager_t::read_settings(hashdb_dir)),
           map_manager(hashdb_dir, file_mode, settings.map_type),
           multimap_manager(hashdb_dir, file_mode, settings.multimap_type),
           bloom_filter_manager(hashdb_dir, file_mode,
@@ -155,7 +170,7 @@ class map_multimap_manager_t {
     } else {
       // increment count in map
       map_change(key,
-                 source_lookup_encoding::get_source_lookup_encoding(count + 1);
+             source_lookup_encoding::get_source_lookup_encoding(count + 1));
 
       // add key to multimap
       multimap_emplace(key, source_lookup_encoding);
@@ -188,18 +203,18 @@ class map_multimap_manager_t {
 
     } else if (count == 2) {
       // remove element from multimap if pay matches
-      bool did_erase = multimap.erase(key, source_lookup_encoding);
+      bool did_erase = multimap_manager.erase(key, source_lookup_encoding);
       if (did_erase) {
         ++changes.hashes_removed;
 
         // also move last remaining element in multimap to map
         std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >
-                                                        equal_range(key);
-        map_replace(equal_range.first->first, equal_range.first->second);
+                              equal_range(multimap_manager.equal_range(key));
+        map_change(equal_range.first->first, equal_range.first->second);
         multimap_erase(equal_range.first->first, equal_range.first->second);
 
         // lets also verify that multimap is now empty for this key
-        if (multimap.has_range(key) {
+        if (multimap_manager.has_range(key)) {
           throw std::runtime_error("corrupted multimap state failure");
         }
       } else {
@@ -208,7 +223,7 @@ class map_multimap_manager_t {
       }
     } else {
       // count > 2 so just try to remove element from multimap
-      bool did_erase2 = multimap.erase(key, source_lookup_encoding);
+      bool did_erase2 = multimap_manager.erase(key, source_lookup_encoding);
       if (did_erase2 == true) {
         ++changes.hashes_removed;
       } else {
@@ -223,7 +238,7 @@ class map_multimap_manager_t {
     map_iterator_t<T> map_iterator = map_manager.find(key);
     if (map_iterator == map_manager.end()) {
       // no key
-      ++changes.hashes_not_removed_no_key;
+      ++changes.hashes_not_removed_no_hash;
       return;
     }
 
@@ -233,7 +248,15 @@ class map_multimap_manager_t {
       map_erase(key);
     } else {
       // remove multiple elements from multimap
-      multimap_erase(key);
+      size_t range_count = multimap_erase_range(key);
+
+      if (count != range_count) {
+        // really bad if the count does not line up
+        throw std::runtime_error("multimap remove key failure");
+      }
+
+      // remove element whose pay was count from the map
+      map_erase(key);
     }
     changes.hashes_removed += count;
   }
@@ -246,19 +269,23 @@ class map_multimap_manager_t {
     }
 
     // check for presence in map
-    return map.has(key);
+    return map_manager.has(key);
   }
 
-  size_t size() {
-    return map.size();
-  }
-
-  hashdb_iterator_t<T> begin() {
+  map_multimap_iterator_t<T> begin() {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
   }
 
-  hashdb_iterator_t<T> end() {
+  map_multimap_iterator_t<T> end() {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+  }
+
+  size_t map_size() {
+    return map_manager.size();
+  }
+
+  size_t multimap_size() {
+    return multimap_manager.size();
   }
 };
 

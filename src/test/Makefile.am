@@ -25,11 +25,12 @@ bin_PROGRAMS = \
 	btree_bug_test \
 	map_manager_test \
 	multimap_manager_test \
-	hashdb_iterator_test \
+	map_multimap_iterator_test \
 	bloom_filter_manager_test \
 	settings_manager_test \
 	logger_test \
-	hashdb_element_test
+	hashdb_element_test \
+	map_multimap_manager_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -57,7 +58,7 @@ HASHDB_INCS = \
 	../hashdb_filenames.hpp \
 	../hashdb_types.h \
 	../hashdb_db_manager.hpp \
-	../hashdb_settings.hpp \
+	../settings.hpp \
 	../hashdb_settings_reader.hpp
 	../hash_duplicates_store.cpp \
 	../hash_duplicates_store.hpp \
@@ -172,24 +173,16 @@ multimap_manager_test_SOURCES = \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	multimap_manager_test.cpp
 
-hashdb_iterator_test_SOURCES = \
+map_multimap_iterator_test_SOURCES = \
 	boost_fix.hpp \
         ../file_modes.h \
         ../map_types.h \
-	../map_red_black_tree.hpp \
-	../map_unordered_hash.hpp \
-	../map_flat_sorted_vector.hpp \
-	../map_btree.hpp \
 	../map_manager.hpp \
         ../multimap_types.h \
-	../multimap_red_black_tree.hpp \
-	../multimap_unordered_hash.hpp \
-	../multimap_flat_sorted_vector.hpp \
-	../multimap_btree.hpp \
 	../multimap_manager.hpp \
 	../hashdb_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	hashdb_iterator_test.cpp
+	map_multimap_iterator_test.cpp
 
 bloom_filter_manager_test_SOURCES = \
 	boost_fix.hpp \
@@ -200,6 +193,7 @@ bloom_filter_manager_test_SOURCES = \
 
 settings_manager_test_SOURCES = \
 	boost_fix.hpp \
+	../settings.hpp \
 	../settings_manager.hpp \
 	../command_line.cpp \
 	../command_line.hpp \
@@ -210,7 +204,7 @@ logger_test_SOURCES = \
 	boost_fix.hpp \
 	../logger.hpp \
 	../hashdb_changes.hpp \
-	../hashdb_settings.hpp \
+	../settings.hpp \
 	../command_line.cpp \
 	../command_line.hpp \
 	$(DFXML_INCS) \
@@ -221,4 +215,18 @@ hashdb_element_test_SOURCES = \
 	../hashdb_element.hpp \
 	$(DFXML_INCS) \
 	hashdb_element_test.cpp
+
+map_multimap_manager_test_SOURCES = \
+	boost_fix.hpp \
+        ../file_modes.h \
+        ../map_types.h \
+        ../multimap_types.h \
+	../map_multimap_manager.hpp \
+	../map_multimap_iterator.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(BLOOM_INCS) \
+	$(DFXML_INCS) \
+	map_multimap_manager_test.cpp
 

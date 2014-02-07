@@ -31,7 +31,7 @@
 
 #ifndef DFXML_HASHDIGEST_READER_HPP
 #define DFXML_HASHDIGEST_READER_HPP
-#include "hashdb_types.h"
+//#include "hashdb_types.h"
 
 #include <libxml/parser.h>
 #include <iostream>

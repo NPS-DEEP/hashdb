@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the hashdb iterator
+ * Test the map_multimap iterator
  */
 
 #include <config.h>
@@ -36,7 +36,7 @@
 #include "multimap_types.h"
 #include "map_manager.hpp"
 #include "multimap_manager.hpp"
-#include "hashdb_iterator.hpp"
+#include "map_multimap_iterator.hpp"
 #include "source_lookup_encoding.hpp"
 
 static const char temp_dir[] = "temp_dir";
@@ -48,8 +48,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   T key;
   uint64_t pay;
-  hashdb_iterator_t<T> it;
-  hashdb_iterator_t<T> it_end;
+  map_multimap_iterator_t<T> it;
+  map_multimap_iterator_t<T> it_end;
   std::pair<map_iterator_t<T>, bool> map_action_pair;
   bool is_done;
 
@@ -71,8 +71,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ(map_action_pair.second, false);
 
   // walk map of 1 element
-  it = hashdb_iterator_t<T>(&map_manager, &multimap_manager, false);
-  it_end = hashdb_iterator_t<T>(&map_manager, &multimap_manager, true);
+  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
+  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
   BOOST_TEST_EQ(it->second, 1);
   is_done = (it == it_end);
   BOOST_TEST_EQ(is_done, false);
@@ -88,8 +88,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   multimap_manager.emplace(key, 201);
 
   // walk multimap of 1 element
-  it = hashdb_iterator_t<T>(&map_manager, &multimap_manager, false);
-  it_end = hashdb_iterator_t<T>(&map_manager, &multimap_manager, true);
+  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
+  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
   
   BOOST_TEST_EQ(it->second, 201);
   is_done = (it == it_end);

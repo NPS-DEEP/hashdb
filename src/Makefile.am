@@ -48,9 +48,6 @@ HASHDB_INCS = \
 	hashdb_filenames.hpp \
 	hashdb_manager.cpp \
 	hashdb_types.h \
-	hashdb_settings.hpp \
-	hashdb_settings_reader.hpp \
-	hashdb_settings_writer.hpp \
 	hash_duplicates_store.hpp \
 	hash_duplicates_store.cpp \
 	hash_store.hpp \
@@ -63,6 +60,9 @@ HASHDB_INCS = \
 	query_by_path.hpp \
 	query_by_socket.hpp \
 	query_by_socket_server.hpp \
+	settings.hpp \
+	hashdb_settings_reader.hpp \
+	hashdb_settings_writer.hpp \
 	source_lookup_manager.hpp \
 	source_lookup_encoding.hpp
 
