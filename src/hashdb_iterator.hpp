@@ -19,169 +19,131 @@
 
 /**
  * \file
- * Provides map iterator.
+ * Provides a hashdb iterator which wraps map_multimap_iterator_t<T>.
+ * Dereferences to pair<hexdigest_string, source_lookup_encoding>
  */
 
-#ifndef MAP_ITERATOR_HPP
-#define MAP_ITERATOR_HPP
-#include "map_btree.hpp"
-#include "map_flat_sorted_vector.hpp"
-#include "map_red_black_tree.hpp"
-#include "map_unordered_hash.hpp"
-#include "map_types.h"
+#ifndef HASHDB_ITERATOR_HPP
+#define HASHDB_ITERATOR_HPP
+#include "map_multimap_iterator.hpp"
+#include "dfxml/src/hash_t.h"
+#include "hashdigest_types.h"
 
-template<class T>
-class map_iterator_t {
+class hashdb_iterator_t {
   private:
 
-  typedef typename map_btree_t<T, uint64_t>::map_const_iterator_t
-                                      btree_const_iterator_t;
-  typedef typename map_flat_sorted_vector_t<T, uint64_t>::map_const_iterator_t
-                                      flat_sorted_vector_const_iterator_t;
-  typedef typename map_red_black_tree_t<T, uint64_t>::map_const_iterator_t
-                                      red_black_tree_const_iterator_t;
-  typedef typename map_unordered_hash_t<T, uint64_t>::map_const_iterator_t
-                                      unordered_hash_const_iterator_t;
+  // the hashdigest type that this iterator will be using
+  hashdigest_type_t hashdigest_type;
 
-  map_type_t map_type;
+  // the hashdigest-specific iterators, one of which will be used,
+  // based on how hashdb_iterator_t is instantiated
+  map_multimap_iterator_t<md5_t> md5_iterator;
+  map_multimap_iterator_t<sha1_t> sha1_iterator;
+  map_multimap_iterator_t<sha256_t> sha256_iterator;
 
-  // the four iterators, one of which will be used, depending on map_type
-  btree_const_iterator_t               btree_const_iterator;
-  flat_sorted_vector_const_iterator_t  flat_sorted_vector_const_iterator;
-  red_black_tree_const_iterator_t      red_black_tree_const_iterator;
-  unordered_hash_const_iterator_t      unordered_hash_const_iterator;
-
-  // the dereferenced value, specifically, std::pair<T, uint64_t>
-  std::pair<T, uint64_t> dereferenced_value;
+  // the dereferenced value of hexdigest string, source_lookup_encoding
+  std::pair<std::string, uint64_t> dereferenced_value;
 
   // elemental forward iterator accessors are increment, equal, and dereference
   // increment
   void increment() {
-    switch(map_type) {
-      case MAP_BTREE:              ++btree_const_iterator; return;
-      case MAP_FLAT_SORTED_VECTOR: ++flat_sorted_vector_const_iterator; return;
-      case MAP_RED_BLACK_TREE:     ++red_black_tree_const_iterator; return;
-      case MAP_UNORDERED_HASH:     ++unordered_hash_const_iterator; return;
+    switch(hashdigest_type) {
+      case HASHDIGEST_MD5:     ++md5_iterator; return;
+      case HASHDIGEST_SHA1:    ++sha1_iterator; return;
+      case HASHDIGEST_SHA256:  ++sha256_iterator; return;
       default: assert(0);
     }
   }
 
   // equal
-  bool equal(map_iterator_t<T> const& other) const {
-    // it is a program error to check equality of differing map types
-    if (this->map_type != other.map_type) {
+  bool equal(hashdb_iterator_t const& other) const {
+    // it is a program error if hashdigest types differ
+    if (this->hashdigest_type != other.hashdigest_type) {
       assert(0);
     }
 
-    switch(map_type) {
-      case MAP_BTREE: return this->btree_const_iterator ==
-                             other.btree_const_iterator;
-      case MAP_FLAT_SORTED_VECTOR: return this->flat_sorted_vector_const_iterator ==
-                             other.flat_sorted_vector_const_iterator;
-      case MAP_RED_BLACK_TREE: return this-> red_black_tree_const_iterator ==
-                             other.red_black_tree_const_iterator;
-      case MAP_UNORDERED_HASH: return this-> unordered_hash_const_iterator ==
-                             other.unordered_hash_const_iterator;
+    switch(hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return this->md5_iterator == other.md5_iterator;
+      case HASHDIGEST_SHA1:
+        return this->sha1_iterator == other.sha1_iterator;
+      case HASHDIGEST_SHA256:
+        return this->sha256_iterator == other.sha256_iterator;
       default: assert(0);
     }
   }
 
   // dereference
   void dereference() {
-    switch(map_type) {
-      case MAP_BTREE:
-        dereferenced_value = *btree_const_iterator; return;
-      case MAP_FLAT_SORTED_VECTOR:
-        dereferenced_value = *flat_sorted_vector_const_iterator; return;
-      case MAP_RED_BLACK_TREE:
-        dereferenced_value = *red_black_tree_const_iterator; return;
-      case MAP_UNORDERED_HASH:
-        dereferenced_value = *unordered_hash_const_iterator; return;
+    std::string hexdigest_string;
+    switch(hashdigest_type) {
+      case HASHDIGEST_MD5:
+        dereferenced_value = std::pair<std::string, uint64_t>(
+                    md5_iterator->first.hexdigest(),
+                    md5_iterator->second); break;
+      case HASHDIGEST_SHA1:
+        dereferenced_value = std::pair<std::string, uint64_t>(
+                    sha1_iterator->first.hexdigest(),
+                    sha1_iterator->second); break;
+      case HASHDIGEST_SHA256:
+        dereferenced_value = std::pair<std::string, uint64_t>(
+                    sha256_iterator->first.hexdigest(),
+                    sha256_iterator->second); break;
       default: assert(0);
     }
   }
 
   public:
-  // the constructors for each map type using native map iterators
-  map_iterator_t(btree_const_iterator_t p_it) :
-                      map_type(MAP_BTREE),
-                      btree_const_iterator(p_it),
-                      flat_sorted_vector_const_iterator(),
-                      red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator(),
-                      dereferenced_value() {
-  }
-
-  map_iterator_t(flat_sorted_vector_const_iterator_t p_it) :
-                      map_type(MAP_FLAT_SORTED_VECTOR),
-                      btree_const_iterator(),
-                      flat_sorted_vector_const_iterator(p_it),
-                      red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator(),
-                      dereferenced_value() {
-  }
-
-  map_iterator_t(red_black_tree_const_iterator_t p_it) :
-                      map_type(MAP_RED_BLACK_TREE),
-                      btree_const_iterator(),
-                      flat_sorted_vector_const_iterator(),
-                      red_black_tree_const_iterator(p_it),
-                      unordered_hash_const_iterator(),
-                      dereferenced_value() {
-  }
-
-  map_iterator_t(unordered_hash_const_iterator_t p_it) :
-                      map_type(MAP_UNORDERED_HASH),
-                      btree_const_iterator(),
-                      flat_sorted_vector_const_iterator(),
-                      red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator(p_it),
+  // the constructors for each map_multimap type using native iterators
+  hashdb_iterator_t(map_multimap_iterator_t<md5_t> p_it) :
+                      hashdigest_type(HASHDIGEST_MD5),
+                      md5_iterator(p_it),
+                      sha1_iterator(),
+                      sha256_iterator(),
                       dereferenced_value() {
   }
 
   // this useless default constructor is required by std::pair
-  map_iterator_t() :
-                      map_type(MAP_BTREE),   // had to pick one
-                      btree_const_iterator(),
-                      flat_sorted_vector_const_iterator(),
-                      red_black_tree_const_iterator(),
-                      unordered_hash_const_iterator(),
+  hashdb_iterator_t() :
+                      hashdigest_type(HASHDIGEST_UNDEFINED),
+                      md5_iterator(),
+                      sha1_iterator(),
+                      sha256_iterator(),
                       dereferenced_value() {
   }
 
   // copy capability is required by std::pair
-  map_iterator_t& operator=(const map_iterator_t& other) {
-    map_type = other.map_type;
-    btree_const_iterator = other.btree_const_iterator;
-    flat_sorted_vector_const_iterator = other.flat_sorted_vector_const_iterator;
-    red_black_tree_const_iterator = other.red_black_tree_const_iterator;
-    unordered_hash_const_iterator = other.unordered_hash_const_iterator;
-    dereferenced_value = other.dereferenced_value; // not necessary.
+  hashdb_iterator_t& operator=(const hashdb_iterator_t& other) {
+    hashdigest_type = other.hashdigest_type;
+    md5_iterator = other.md5_iterator;
+    sha1_iterator = other.sha1_iterator;
+    sha256_iterator = other.sha256_iterator;
+    dereferenced_value = other.dereferenced_value;
     return *this;
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=
-  map_iterator_t& operator++() {
+  hashdb_iterator_t& operator++() {
     increment();
     return *this;
   }
-  map_iterator_t operator++(int) {  // c++11 delete would be better.
-    map_iterator_t temp(*this);
+  hashdb_iterator_t operator++(int) {  // c++11 delete would be better.
+    hashdb_iterator_t temp(*this);
     increment();
     return temp;
   }
-  std::pair<T, uint64_t>& operator*() {
+  std::pair<std::string, uint64_t>& operator*() {
     dereference();
     return dereferenced_value;
   }
-  std::pair<T, uint64_t>* operator->() {
+  std::pair<std::string, uint64_t>* operator->() {
     dereference();
     return &dereferenced_value;
   }
-  bool operator==(const map_iterator_t& other) const {
+  bool operator==(const hashdb_iterator_t& other) const {
     return equal(other);
   }
-  bool operator!=(const map_iterator_t& other) const {
+  bool operator!=(const hashdb_iterator_t& other) const {
     return !equal(other);
   }
 };
