@@ -510,8 +510,8 @@ Interfaces:
 
 \begin{small}
 \begin{verbatim}
-map_multimap_manager_t(const std::string& hashdb_dir,
-                       file_mode_t file_mode_type);
+map_multimap_manager_t<T>(const std::string& hashdb_dir,
+                          file_mode_t file_mode_type);
 
 void emplace(const T& key, uint64_t source_lookup_encoding,
              hashdb_changes_t &hashdb_changes);
@@ -535,7 +535,7 @@ size_t multimap_size();
 
 % map_multimap iterator
 \subsection{Map-Multimap Iterator}
-\texttt{map\_multimap\_iterator\_t} dereferences to \\
+\texttt{map\_multimap\_iterator\_t<T>} dereferences to \\
 \texttt{pair(T key, uint64\_t source\_lookup\_encoding\_t)}.
 
 \section{\hdb Modules}
@@ -557,7 +557,8 @@ specified in a \texttt{hashdb\_element\_t} entry noting the change.
 type \texttt{hashdb\_element\_t} exists, checking Bloom first.
 \item Provide a \hdb iterator via begin() and end()
 for iterating over all hash values.
-Iterator dereferences to \texttt{hashdb\_element\_t}.
+Iterator dereferences to \\
+\texttt{pair<hashdigest\_t hashdigest, uint64\_t source\_lookup\_encoding>}.
 \end{compactitem}
 
 Interfaces:
@@ -565,29 +566,47 @@ Interfaces:
 \begin{small}
 \begin{verbatim}
 hashdb_manager_t(const std::string& hashdb_dir,
-                 file_mode_t file_mode_type);
+                 file_mode_t file_mode);
 
-bool insert(const hashdb_element_t& element,
+void insert(const hashdigest_t&, uint64_t, 
             hashdb_changes_t &hashdb_changes);
 
-bool remove(const hashdb_element_t& element,
+void remove(const hashdigest_t&, uint64_t, 
             hashdb_changes_t& hashdb_changes);
 
-bool remove_key(const hashdb_element_t& element,
+void remove_key(const hashdigest_t&, uint64_t, 
                 hashdb_changes_t& hashdb_changes);
 
-bool has_key(const hashdb_element_t& element)
+bool has_key(const hashdigest_t&, uint64_t);
 
-hashdb_element_t<T> begin() const;
+hashdb_iterator_t begin() const;
 
-hashdb_element_t<T> end() const;
+hashdb_iterator_t end() const;
 \end{verbatim}
 \end{small}
 
 % hashdb iterator
 \subsection{\hdb Iterator}
 \texttt{hashdb\_iterator\_t} dereferences to \\
-\texttt{pair<string hexdigest, uint64\_t source\_lookup\_encoding>}.
+\texttt{pair<hashdigest\_t hashdigest, uint64\_t source\_lookup\_encoding>}.
+
+% hashdigest type
+\subsection{Hashdigest Type}
+\texttt{hashdigest\_t} contains a hash value and its type
+as strings, unbound from its native hash type.
+\begin{small}
+\begin{verbatim}
+struct hashdigest_t {
+  std::string hashdigest;
+  std::string hashdigest_type;    // MD5, SHA1, etc.
+
+  hashdigest_t(string hashdigest, string hashdigest_type);
+  hashdigest_t(md5_t);
+  hashdigest_t(sha1_t);
+  hashdigest_t(sha256_t);
+};
+\end{verbatim}
+\end{small}
 
 % \hdb element
 \subsection{\hdb Element}

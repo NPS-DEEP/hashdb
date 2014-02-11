@@ -96,25 +96,11 @@ class hashdb_iterator_t {
 
   public:
   // the constructors for each map_multimap type using native iterators
-  hashdb_iterator_t(map_multimap_iterator_t<md5_t> map_multimap_iterator) :
+  hashdb_iterator_t(map_multimap_iterator_t<md5_t> p_it) :
                       hashdigest_type(HASHDIGEST_MD5),
-                      md5_iterator(map_multimap_iterator),
+                      md5_iterator(p_it),
                       sha1_iterator(),
                       sha256_iterator(),
-                      dereferenced_value() {
-  }
-  hashdb_iterator_t(map_multimap_iterator_t<sha1_t> map_multimap_iterator) :
-                      hashdigest_type(HASHDIGEST_SHA1),
-                      md5_iterator(),
-                      sha1_iterator(map_multimap_iterator),
-                      sha256_iterator(),
-                      dereferenced_value() {
-  }
-  hashdb_iterator_t(map_multimap_iterator_t<sha256_t> map_multimap_iterator) :
-                      hashdigest_type(HASHDIGEST_SHA256),
-                      md5_iterator(),
-                      sha1_iterator(),
-                      sha256_iterator(map_multimap_iterator),
                       dereferenced_value() {
   }
 

@@ -82,8 +82,8 @@ void run_tests() {
 int cpp_main(int argc, char* argv[]) {
 
   run_tests<md5_t>();
-//  run_tests<sha1_t>();
-//  run_tests<sha256_t>();
+  run_tests<sha1_t>();
+  run_tests<sha256_t>();
 
   // done
   int status = boost::report_errors();
