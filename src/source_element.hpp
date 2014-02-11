@@ -32,7 +32,10 @@
 #include <iostream>
 
 /**
- * A hashdb element fully describes a hash source.
+ * The hashdb change logger holds all possible change values,
+ * and is used for reporting changes to the database.
+ *
+ * It can be optimized later without disrupting the interface.
  */
 class hashdb_element_t {
 
@@ -46,11 +49,11 @@ class hashdb_element_t {
   uint64_t file_offset;        // should be a multiple of block_size
   
   // fully specified
-  hashdb_element_t(const std::string p_hashdigest,
-                   const std::string p_hashdigest_type,
+  hashdb_element_t(std::string p_hashdigest,
+                   std::string p_hashdigest_type,
                    uint32_t p_block_size,
-                   const std::string p_repository_name,
-                   const std::string p_filename,
+                   std::string p_repository_name,
+                   std::string p_filename,
                    uint64_t p_file_offset) :
           hashdigest(p_hashdigest),
           hashdigest_type(p_hashdigest_type),

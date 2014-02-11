@@ -608,10 +608,9 @@ struct hashdigest_t {
 \end{verbatim}
 \end{small}
 
-% \hdb element
-\subsection{\hdb Element}
-A \texttt{hashdb\_element\_t} is what the user wants to see
-about a hash and its source.
+% source element
+\subsection{Source Element}
+A \texttt{source\_element\_t} is a fully qualified source element.
 \begin{compactitem}
 \item It has all the fields required to fully define a hash source.
 \item The \texttt{hashdigest} is a string, so we don't to use \texttt{<T>}.
@@ -620,7 +619,7 @@ about a hash and its source.
 Specifically:
 \begin{small}
 \begin{verbatim}
-struct hashdb_element_t {
+struct source_element_t {
     std::string hashdigest;
     std::string hashdigest_type;    // MD5, SHA1, etc.
     uint32_t block_size;            // e.g. 4096

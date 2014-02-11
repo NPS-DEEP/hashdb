@@ -38,6 +38,10 @@
 #include "multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
 #include "hashdb_iterator.hpp"
+#include "source_lookup_index_manager.hpp"
+#include "hashdb_element.hpp"
+#include "hashdb_element_lookup.hpp"
+#include "settings.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_map[] = "temp_dir/hash_store";
@@ -59,9 +63,18 @@ void run_tests() {
   // create multimap manager
   multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW, MULTIMAP_BTREE);
 
+  // create resources so iterator works
+  source_lookup_index_manager_t source_lookup_index_manager(temp_dir, RW_NEW);
+  settings_t settings;
+  hashdb_element_lookup_t hashdb_element_lookup(&source_lookup_index_manager,
+                                                &settings);
+
   // put 1 element into map
   to_key(101, key);
   map_action_pair = map_manager.emplace(key, 1);
+
+  // put something for "1" in the source lookup index manager
+  source_lookup_index_manager.insert("rep1", "file1");
 
   // create map_multimap iterator
   map_multimap_iterator_t<T> map_multimap_it =
@@ -70,11 +83,11 @@ void run_tests() {
            map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
 
   // create hashdb_iterator from map_multimap iterator
-  hashdb_iterator_t hashdb_it(map_multimap_it);
-  hashdb_iterator_t hashdb_end_it(map_multimap_end_it);
+  hashdb_iterator_t hashdb_it(map_multimap_it, hashdb_element_lookup);
+  hashdb_iterator_t hashdb_end_it(map_multimap_end_it, hashdb_element_lookup);
 
   // validate iterator value
-  BOOST_TEST_EQ(hashdb_it->second, 1);
+  BOOST_TEST_EQ(hashdb_it->repository_name, "rep1");
   ++hashdb_it;
   BOOST_TEST_EQ((hashdb_it == hashdb_end_it), true);
 }

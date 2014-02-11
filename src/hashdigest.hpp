@@ -34,20 +34,20 @@ struct hashdigest_t {
   std::string hashdigest;
   std::string hashdigest_type;
 
-  hashdigest_t(std::string p_hashdigest, std::string p_hashdigest_type) :
+  hashdigest_t(const std::string& p_hashdigest, std::string p_hashdigest_type) :
                    hashdigest(p_hashdigest),
                    hashdigest_type(p_hashdigest_type) {
   }
 
-  hashdigest_t(md5_t key) :
+  hashdigest_t(const md5_t& key) :
                    hashdigest(key.hexdigest()),
                    hashdigest_type(std::string("MD5")) {
   }
-  hashdigest_t(sha1_t key) :
+  hashdigest_t(const sha1_t& key) :
                    hashdigest(key.hexdigest()),
                    hashdigest_type(std::string("SHA1")) {
   }
-  hashdigest_t(sha256_t key) :
+  hashdigest_t(const sha256_t& key) :
                    hashdigest(key.hexdigest()),
                    hashdigest_type(std::string("SHA256")) {
   }

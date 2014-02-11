@@ -20,8 +20,8 @@ AC_CONFIG_FILES([Makefile
                  doc/Makefile])
 
 # define CC and CXX as desired for alternate compilers
-#CC=clang
-#CXX=clang++
+CC=clang
+CXX=clang++
 
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE

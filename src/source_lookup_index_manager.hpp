@@ -172,7 +172,7 @@ class source_lookup_index_manager_t {
    * It is an error for the source lookup index to be invalid.
    */
   
-  std::pair<std::string, std::string> find(uint64_t source_lookup_index) {
+  std::pair<std::string, std::string> find(uint64_t source_lookup_index) const {
 
     // get the lookup pair from the index
     std::pair<uint64_t, uint64_t> lookup_pair;
