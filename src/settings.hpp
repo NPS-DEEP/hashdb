@@ -130,7 +130,7 @@ struct settings_t {
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-                         const class settings_t& settings) {
+                         const struct settings_t& settings) {
   settings.report_settings(os);
   return os;
 }

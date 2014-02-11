@@ -57,8 +57,8 @@ class map_manager_t {
 
   // helper to translate a specific iterator, bool pair to a generic pair
   std::pair<map_iterator_t<T>, bool> map_pair(
-          class map_btree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
-//class map_btree_t<T, uint64_t>::map_pair_it_bool_t temp_pair = pair_it_bool;
+          typename map_btree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+//typename map_btree_t<T, uint64_t>::map_pair_it_bool_t temp_pair = pair_it_bool;
 
     // make generic iterator from specific iterator
     map_iterator_t<T> map_it(pair_it_bool.first);
@@ -67,7 +67,7 @@ class map_manager_t {
     return generic_pair;
   }
   std::pair<map_iterator_t<T>, bool> map_pair(
-          class map_flat_sorted_vector_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+          typename map_flat_sorted_vector_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
     // make generic iterator from specific iterator
     map_iterator_t<T> map_it(pair_it_bool.first);
     // make generic pair from generic iterator and specific bool
@@ -75,7 +75,7 @@ class map_manager_t {
     return generic_pair;
   }
   std::pair<map_iterator_t<T>, bool> map_pair(
-          class map_red_black_tree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+          typename map_red_black_tree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
     // make generic iterator from specific iterator
     map_iterator_t<T> map_it(pair_it_bool.first);
     // make generic pair from generic iterator and specific bool
@@ -83,7 +83,7 @@ class map_manager_t {
     return generic_pair;
   }
   std::pair<map_iterator_t<T>, bool> map_pair(
-          class map_unordered_hash_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
+          typename map_unordered_hash_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
     // make generic iterator from specific iterator
     map_iterator_t<T> map_it(pair_it_bool.first);
     // make generic pair from generic iterator and specific bool

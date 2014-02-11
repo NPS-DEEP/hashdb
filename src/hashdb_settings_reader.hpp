@@ -155,19 +155,19 @@ class hashdb_settings_reader_t {
     }
   }
 
-  static void exit_invalid_state(std::string message) {
+  __attribute__((noreturn)) static void exit_invalid_state(std::string message) {
     std::ostringstream s;
     s << "Error: " << message << "\n" << "Cannot continue.\n";
     throw std::runtime_error(s.str());
   }
 
-  static void exit_invalid_text(std::string message, std::string text) {
+  __attribute__((noreturn)) static void exit_invalid_text(std::string message, std::string text) {
     std::ostringstream s;
     s << "Error: " << message << ":'" << text << "'\n" << "Cannot continue.\n";
     throw std::runtime_error(s.str());
   }
 
-  static void exit_invalid_index(size_t index) {
+  __attribute__((noreturn)) static void exit_invalid_index(size_t index) {
     std::ostringstream s;
     s << "Error: invalid bloom filter index "
       << index << "\n" << "Cannot continue.\n";

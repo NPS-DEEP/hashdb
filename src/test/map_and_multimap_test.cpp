@@ -47,7 +47,7 @@ static const char temp_file[] = "temp_file";
 
 template<typename T, typename K>
 void run_map_rw_tests() {
-  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
   K key;
 
   // clean up from any previous run
@@ -57,7 +57,7 @@ void run_map_rw_tests() {
 
   map_pair_t map_pair; 
   size_t num_erased;
-  class T::map_const_iterator_t map_it;
+  typename T::map_const_iterator_t map_it;
 
   // populate with 1,000,000 entries
   for (uint64_t n=0; n< 1000000; ++n) {
@@ -139,12 +139,12 @@ template<typename T, typename K>
 void run_map_ro_tests() {
 std::cout << "run_map_ro_tests\n";
 
-  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
   map_pair_t map_pair; 
-  class T::map_const_iterator_t map_it;
+  typename T::map_const_iterator_t map_it;
   K key;
 
   T map(temp_file, READ_ONLY);
@@ -168,7 +168,7 @@ std::cout << "run_map_ro_tests\n";
 template<typename T, typename K>
 void run_multimap_rw_tests() {
 std::cout << "run_multimap_rw_tests\n";
-  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
 
   // clean up from any previous run
   remove(temp_file);
@@ -177,9 +177,9 @@ std::cout << "run_multimap_rw_tests\n";
   K key;
   map_pair_t map_pair; 
   bool did_erase;
-  class T::map_const_iterator_t map_it;
-  class T::map_const_iterator_t end_it;
-  class T::map_const_iterator_range_t map_it_range;
+  typename T::map_const_iterator_t map_it;
+  typename T::map_const_iterator_t end_it;
+  typename T::map_const_iterator_range_t map_it_range;
   bool did_emplace;
 
   // populate with 1,000,000 entries
@@ -295,7 +295,7 @@ std::cout << "run_multimap_rw_tests\n";
 template<typename T, typename K>
 void run_multimap_ro_tests() {
 std::cout << "run_multimap_ro_tests\n";
-  typedef std::pair<class T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
@@ -303,9 +303,9 @@ std::cout << "run_multimap_ro_tests\n";
   K key;
 
   map_pair_t map_pair; 
-  class T::map_const_iterator_t map_it;
-  class T::map_const_iterator_t end_it;
-  class T::map_const_iterator_range_t map_it_range;
+  typename T::map_const_iterator_t map_it;
+  typename T::map_const_iterator_t end_it;
+  typename T::map_const_iterator_range_t map_it_range;
 
   // check count
   BOOST_TEST_EQ(map.size(), 1000000);

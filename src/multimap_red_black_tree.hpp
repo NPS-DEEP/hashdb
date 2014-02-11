@@ -58,8 +58,8 @@ class multimap_red_black_tree_t {
               allocator_t>                             map_t;
 
   public:
-    typedef class map_t::const_iterator map_const_iterator_t;
-    typedef class std::pair<map_const_iterator_t, map_const_iterator_t> map_const_iterator_range_t;
+    typedef typename map_t::const_iterator map_const_iterator_t;
+    typedef typename std::pair<map_const_iterator_t, map_const_iterator_t> map_const_iterator_range_t;
 
   private:
     const std::string filename;
