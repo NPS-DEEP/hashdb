@@ -40,6 +40,7 @@ class hashdb_changes_t {
   uint32_t hashes_inserted;
   uint32_t hashes_not_inserted_invalid_file_offset;
   uint32_t hashes_not_inserted_wrong_hash_block_size;
+  uint32_t hashes_not_inserted_file_offset_not_aligned;
   uint32_t hashes_not_inserted_wrong_hashdigest_type;
   uint32_t hashes_not_inserted_exceeds_max_duplicates;
   uint32_t hashes_not_inserted_duplicate_element;
@@ -47,6 +48,7 @@ class hashdb_changes_t {
   uint32_t hashes_removed;
   uint32_t hashes_not_removed_invalid_file_offset;
   uint32_t hashes_not_removed_wrong_hash_block_size;
+  uint32_t hashes_not_removed_file_offset_not_aligned;
   uint32_t hashes_not_removed_wrong_hashdigest_type;
   uint32_t hashes_not_removed_no_hash;
   uint32_t hashes_not_removed_no_element;

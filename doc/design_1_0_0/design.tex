@@ -300,9 +300,9 @@ They require hash key type \texttt{<T>}.
 \item Map Iterator
 \item Multmiap Manager
 \item Multimap Iterator
-\item no: Source Lookup Manager
+\item Source Lookup Index Manager
 \item Bloom Filter Manager
-\item no: Settings Manager
+\item Settings Manager
 \item Logger
 \end{compactitem}
 
@@ -368,7 +368,9 @@ Here are the interfaces:
 multimap_manager_t<class T>(string& hashdb_dir,
                             file_mode_type_t file_mode,
                             multimap_type_t multimap_type);
-bool emplace(const T& key, uint64_t source_lookup_encoding);
+bool emplace(const T& key,
+             uint32_t max_duplicates,
+             uint64_t source_lookup_encoding);
 bool erase(const T& key, uint64_t source_lookup_encoding);
 size_t erase_range(const& key T);
 pair<multimap_iterator_t<T>, multimap_iterator_t<T>> equal_range(key T);
@@ -552,13 +554,11 @@ Actions:
 \item Insert a \texttt{hashdb\_element\_t} entry noting the change.
 \item Remove a \texttt{hashdb\_element\_t} entry noting the change.
 \item Remove all elements of a key
-specified in a \texttt{hashdb\_element\_t} entry noting the change.
+specified by \texttt{hashdigest\_t}, noting the change.
 \item See if a hash identified by key in
-type \texttt{hashdb\_element\_t} exists, checking Bloom first.
+type \texttt{hashdigest\_t} exists, checking Bloom first.
 \item Provide a \hdb iterator via begin() and end()
 for iterating over all hash values.
-Iterator dereferences to \\
-\texttt{pair<hashdigest\_t hashdigest, uint64\_t source\_lookup\_encoding>}.
 \end{compactitem}
 
 Interfaces:
@@ -568,16 +568,13 @@ Interfaces:
 hashdb_manager_t(const std::string& hashdb_dir,
                  file_mode_t file_mode);
 
-void insert(const hashdigest_t&, uint64_t, 
-            hashdb_changes_t &hashdb_changes);
+void insert(const hashdb_element_t&, hashdb_changes_t&);
 
-void remove(const hashdigest_t&, uint64_t, 
-            hashdb_changes_t& hashdb_changes);
+void remove(const hashdb_element_t&, hashdb_changes_t&);
 
-void remove_key(const hashdigest_t&, uint64_t, 
-                hashdb_changes_t& hashdb_changes);
+void remove_key(const hashdigest_t&, hashdb_changes_t&);
 
-bool has_key(const hashdigest_t&, uint64_t);
+bool has_key(const hashdigest_t&);
 
 hashdb_iterator_t begin() const;
 
@@ -587,8 +584,7 @@ hashdb_iterator_t end() const;
 
 % hashdb iterator
 \subsection{\hdb Iterator}
-\texttt{hashdb\_iterator\_t} dereferences to \\
-\texttt{pair<hashdigest\_t hashdigest, uint64\_t source\_lookup\_encoding>}.
+\hdb iterator dereferences to \texttt{hashdb\_element\_t}.
 
 % hashdigest type
 \subsection{Hashdigest Type}
@@ -608,9 +604,9 @@ struct hashdigest_t {
 \end{verbatim}
 \end{small}
 
-% source element
-\subsection{Source Element}
-A \texttt{source\_element\_t} is a fully qualified source element.
+% hashdb element
+\subsection{Hashdb Element}
+A \texttt{hashdb\_element\_t} fully qualifies a hash source.
 \begin{compactitem}
 \item It has all the fields required to fully define a hash source.
 \item The \texttt{hashdigest} is a string, so we don't to use \texttt{<T>}.
@@ -619,7 +615,7 @@ A \texttt{source\_element\_t} is a fully qualified source element.
 Specifically:
 \begin{small}
 \begin{verbatim}
-struct source_element_t {
+struct hashdb_element_t {
     std::string hashdigest;
     std::string hashdigest_type;    // MD5, SHA1, etc.
     uint32_t block_size;            // e.g. 4096
@@ -649,6 +645,7 @@ class hashdb_changes_t {
       uint32_t hashes_inserted;
       uint32_t hashes_not_inserted_invalid_file_offset;
       uint32_t hashes_not_inserted_wrong_hash_block_size;
+      uint32_t hashes_not_inserted_file_offset_not_aligned;
       uint32_t hashes_not_inserted_wrong_hashdigest_type;
       uint32_t hashes_not_inserted_exceeds_max_duplicates;
       uint32_t hashes_not_inserted_duplicate_element;
@@ -657,6 +654,7 @@ class hashdb_changes_t {
       uint32_t hashes_removed;
       uint32_t hashes_not_removed_invalid_file_offset;
       uint32_t hashes_not_removed_wrong_hash_block_size;
+      uint32_t hashes_not_removed_file_offset_not_aligned;
       uint32_t hashes_not_removed_wrong_hashdigest_type;
       uint32_t hashes_not_removed_no_hash;
       uint32_t hashes_not_removed_no_element;

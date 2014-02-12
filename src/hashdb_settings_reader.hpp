@@ -74,7 +74,7 @@ class hashdb_settings_reader_t {
                     HASH_BLOCK_SIZE,
                     HASHDIGEST_TYPE,
                     MAXIMUM_HASH_DUPLICATES,
-                    NUMBER_OF_INDEX_BITS,
+                    SOURCE_LOOKUP_INDEX_BITS,
                     REGULAR_MAP_TYPE,
                     MAP_SHARD_COUNT,
                     MULTIMAP_TYPE,
@@ -124,7 +124,7 @@ class hashdb_settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("number_of_index_bits"))) return NUMBER_OF_INDEX_BITS;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("source_lookup_index_bits"))) return SOURCE_LOOKUP_INDEX_BITS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_shard_count"))) return MAP_SHARD_COUNT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_type"))) return MULTIMAP_TYPE;
@@ -223,14 +223,14 @@ class hashdb_settings_reader_t {
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
       xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
 
-    } else if (user_data.active_node == NUMBER_OF_INDEX_BITS) {
+    } else if (user_data.active_node == SOURCE_LOOKUP_INDEX_BITS) {
       // get number of index bits
       uint32_t temp;
       xmlChar_to_number(characters, len, temp);
       if (temp > 64) {
         assert(0);
       }
-      user_data.settings->number_of_index_bits = (uint8_t)temp;
+      user_data.settings->source_lookup_index_bits = (uint8_t)temp;
 
     } else if (user_data.active_node == REGULAR_MAP_TYPE) {
       // get map type

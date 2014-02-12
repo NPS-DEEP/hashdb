@@ -19,133 +19,250 @@
 
 /**
  * \file
- * Provides a hashdb iterator which wraps map_multimap_iterator_t<T>.
- * Dereferences to pair<hexdigest_string, source_lookup_encoding>
+ * Provides services for accessing hashdb as a whole.
+ * Hides map_multimap_manager and bloom filter.
+ * Notes hashdb changes in provided hashdb_changes.
  */
 
-#ifndef HASHDB_ITERATOR_HPP
-#define HASHDB_ITERATOR_HPP
-#include "map_multimap_iterator.hpp"
-#include "dfxml/src/hash_t.h"
-#include "hashdigest.hpp" // for string style hashdigest and hashdigest type
+#ifndef HASHDB_MANAGER_HPP
+#define HASHDB_MANAGER_HPP
+#include "file_modes.h"
 #include "hashdigest_types.h"
+#include "map_multimap_manager.hpp"
+#include "map_multimap_iterator.hpp"
+#include "hashdb_iterator.hpp"
+//#include "dfxml/src/hash_t.h"
+#include "hashdigest.hpp" // for string style hashdigest and hashdigest type
+//#include "hashdigest_types.h"
 
-class hashdb_iterator_t {
+class hashdb_manager_t {
   private:
+  const std::string hashdb_dir;
+  const file_mode_t file_mode;
+  const settings_t settings;
+  hashdb_changes_t changes;
 
-  // the hashdigest type that this iterator will be using
-  hashdigest_type_t hashdigest_type;
-
-  // the hashdigest-specific iterators, one of which will be used,
-  // based on how hashdb_iterator_t is instantiated
-  map_multimap_iterator_t<md5_t> md5_iterator;
-  map_multimap_iterator_t<sha1_t> sha1_iterator;
-  map_multimap_iterator_t<sha256_t> sha256_iterator;
-
-  // the dereferenced value of hexdigest string, source_lookup_encoding
-  std::pair<hashdigest_t, uint64_t> dereferenced_value;
-
-  // elemental forward iterator accessors are increment, equal, and dereference
-  // increment
-  void increment() {
-    switch(hashdigest_type) {
-      case HASHDIGEST_MD5:     ++md5_iterator; return;
-      case HASHDIGEST_SHA1:    ++sha1_iterator; return;
-      case HASHDIGEST_SHA256:  ++sha256_iterator; return;
-      default: assert(0);
-    }
-  }
-
-  // equal
-  bool equal(hashdb_iterator_t const& other) const {
-    // it is a program error if hashdigest types differ
-    if (this->hashdigest_type != other.hashdigest_type) {
-      assert(0);
-    }
-
-    switch(hashdigest_type) {
-      case HASHDIGEST_MD5:
-        return this->md5_iterator == other.md5_iterator;
-      case HASHDIGEST_SHA1:
-        return this->sha1_iterator == other.sha1_iterator;
-      case HASHDIGEST_SHA256:
-        return this->sha256_iterator == other.sha256_iterator;
-      default: assert(0);
-    }
-  }
-
-  // dereference
-  void dereference() {
-    std::string hexdigest_string;
-    switch(hashdigest_type) {
-      case HASHDIGEST_MD5:
-        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(md5_iterator->first), md5_iterator->second);
-        break;
-      case HASHDIGEST_SHA1:
-        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(sha1_iterator->first), sha1_iterator->second);
-        break;
-      case HASHDIGEST_SHA256:
-        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(sha256_iterator->first), sha256_iterator->second);
-        break;
-      default: assert(0);
-    }
-  }
+  source_lookup_index_manager_t source_lookup_index_manager;
+  const hashdb_element_lookup_t hashdb_element_lookup;
+  map_multimap_manager_t<md5_t> md5_manager;
+  map_multimap_manager_t<sha1_t> sha1_manager;
+  map_multimap_manager_t<sha256_t> sha256_manager;
 
   public:
-  // the constructors for each map_multimap type using native iterators
-  hashdb_iterator_t(map_multimap_iterator_t<md5_t> p_it) :
-                      hashdigest_type(HASHDIGEST_MD5),
-                      md5_iterator(p_it),
-                      sha1_iterator(),
-                      sha256_iterator(),
-                      dereferenced_value() {
+  hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_t p_file_mode) :
+                      hashdb_dir(p_hashdb_dir),
+                      file_mode(p_file_mode),
+                      settings(settings_t::read_settings(hashdb_dir)),
+                      changes(),
+                      source_lookup_index_manager(hashdb_dir, file_mode),
+                      hashdb_element_manager(&source_lookup_index_manager,
+                                             &settings),
+                      md5_manager(),
+                      sha1_manager(),
+                      sha256_manager() {
+
+    // initialize the map_multimap_manager appropriate for the settings
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        md5_manager = map_multimap_manager_t<md5_t>(hashdb_dir, file_mode);
+        return;
+      case HASHDIGEST_SHA1:
+        sha1_manager = map_multimap_manager_t<sha1_t>(hashdb_dir, file_mode);
+        return;
+      case HASHDIGEST_SHA256:
+        sha256_manager = map_multimap_manager_t<sha256_t>(hashdb_dir, file_mode);
+        return;
+      default: assert(0);
+    }
   }
 
-  // this useless default constructor is required by std::pair
-  hashdb_iterator_t() :
-                      hashdigest_type(HASHDIGEST_UNDEFINED),
-                      md5_iterator(),
-                      sha1_iterator(),
-                      sha256_iterator(),
-                      dereferenced_value() {
+  // insert
+  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t changes) {
+    // validate the hashdigest type
+    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+      ++changes.hashes_not_inserted_wrong_hashdigest_type;
+      return;
+    }
+
+    // validate block size
+    if (hashdb_element.block_size != settings.block_size) {
+      ++changes.hashes_not_inserted_wrong_hash_block_size;
+      return;
+    }
+
+    // validate the file offset
+    if (hashdb_element.file_offset % settings.block_size != 0) {
+      ++changes.hashes_not_inserted_file_offset_not_aligned;
+      return;
+    }
+
+    // checks passed, insert or find reason not to insert
+
+    // acquire existing or new source lookup index
+    std::pair<bool, uint64_t> lookup_pair =
+         source_lookup_index_manager.insert(hashdb_element.repository_name,
+                                            hashdb_element.filename);
+    uint64_t source_lookup_index = lookup_pair.second;
+
+    // compose the source lookup encoding
+    uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
+                           settings.source_lookup_index_bits,
+                           source_lookup_index);
+
+    // insert or note reason not to insert
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        md5_manager.emplace(md5_t(settings.hashdigest),
+                            encoding,
+                            settings.maximum_hash_duplicates,
+                            changes);
+        return;
+      case HASHDIGEST_SHA1:
+        sha1_manager.emplace(sha1_t(settings.hashdigest),
+                            encoding,
+                            settings.maximum_hash_duplicates,
+                            changes);
+        return;
+      case HASHDIGEST_SHA256:
+        sha256_manager.emplace(sha256_t(settings.hashdigest),
+                            encoding,
+                            settings.maximum_hash_duplicates,
+                            changes);
+        return;
+      default: assert(0);
+    }
   }
 
-  // copy capability is required by std::pair
-  hashdb_iterator_t& operator=(const hashdb_iterator_t& other) {
-    hashdigest_type = other.hashdigest_type;
-    md5_iterator = other.md5_iterator;
-    sha1_iterator = other.sha1_iterator;
-    sha256_iterator = other.sha256_iterator;
-    dereferenced_value = other.dereferenced_value;
-    return *this;
+  // remove
+  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t changes) {
+    // validate the hashdigest type
+    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+      ++changes.hashes_not_removed_wrong_hashdigest_type;
+      return;
+    }
+
+    // validate block size
+    if (hashdb_element.block_size != settings.block_size) {
+      ++changes.hashes_not_removed_wrong_hash_block_size;
+      return;
+    }
+
+    // validate the file offset
+    if (hashdb_element.file_offset % settings.block_size != 0) {
+      ++changes.hashes_not_removed_file_offset_not_aligned;
+      return;
+    }
+
+    // find source lookup index
+    std::pair<bool, uint64_t> lookup_pair =
+         source_lookup_index_manager.find(hashdb_element.repository_name,
+                                          hashdb_element.filename);
+    if (lookup_pair.first == false) {
+      ++changes.hashes_not_removed_no_element; // because there was no source
+      return;
+    }
+
+    uint64_t source_lookup_index = lookup_pair.second;
+
+    // compose the source lookup encoding
+    uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
+                           settings.source_lookup_index_bits,
+                           source_lookup_index);
+
+    // checks passed, remove or find reason not to remove
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        md5_manager.remove(md5_t(settings.hashdigest),
+                            encoding,
+                            changes);
+        return;
+      case HASHDIGEST_SHA1:
+        sha1_manager.remove(sha1_t(settings.hashdigest),
+                            encoding,
+                            changes);
+        return;
+      case HASHDIGEST_SHA256:
+        sha256_manager.remove(sha256_t(settings.hashdigest),
+                            encoding,
+                            changes);
+        return;
+      default: assert(0);
+    }
   }
 
-  // the Forward Iterator concept consits of ++, *, ->, ==, !=
-  hashdb_iterator_t& operator++() {
-    increment();
-    return *this;
+  // remove key
+  void remove_key(const hashdigest_t& hashdigest, hashdb_changes_t changes) {
+    // validate the hashdigest type
+    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+      ++changes.hashes_not_removed_wrong_hashdigest_type;
+      return;
+    }
+
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        md5_manager.remove_key(md5_t(settings.hashdigest),
+                            changes);
+        return;
+      case HASHDIGEST_SHA1:
+        sha1_manager.remove_key(sha1_t(settings.hashdigest),
+                            changes);
+        return;
+      case HASHDIGEST_SHA256:
+        sha256_manager.remove_key(sha256_t(settings.hashdigest),
+                            changes);
+        return;
+      default: assert(0);
+    }
   }
-  hashdb_iterator_t operator++(int) {  // c++11 delete would be better.
-    hashdb_iterator_t temp(*this);
-    increment();
-    return temp;
+
+  // has key
+  bool has_key(const hashdigest_t& hashdigest) {
+    // validate the hashdigest type
+    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+      return false;
+    }
+
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return md5_manager.has_key(md5_t(settings.hashdigest));
+      case HASHDIGEST_SHA1:
+        return sha1_manager.has_key(sha1_t(settings.hashdigest));
+      case HASHDIGEST_SHA256:
+        return sha256_manager.has_key(sha256_t(settings.hashdigest));
+      default: assert(0);
+    }
   }
-  std::pair<hashdigest_t, uint64_t>& operator*() {
-    dereference();
-    return dereferenced_value;
+
+  // begin
+  hashdb_iterator_t begin() const {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return map_multimap_iterator_t<md5_t>(&md5_manager.begin(),
+                                              hashdb_element_lookup);
+      case HASHDIGEST_SHA1:
+        return map_multimap_iterator_t<sha1_t>(&sha1_manager.begin(),
+                                              hashdb_element_lookup);
+      case HASHDIGEST_SHA256:
+        return map_multimap_iterator_t<sha256_t>(&sha256_manager.begin(),
+                                              hashdb_element_lookup);
+      default: assert(0);
+    }
   }
-  std::pair<hashdigest_t, uint64_t>* operator->() {
-    dereference();
-    return &dereferenced_value;
-  }
-  bool operator==(const hashdb_iterator_t& other) const {
-    return equal(other);
-  }
-  bool operator!=(const hashdb_iterator_t& other) const {
-    return !equal(other);
+
+  // end
+  hashdb_iterator_t begin() const {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return map_multimap_iterator_t<md5_t>(&md5_manager.begin(),
+                                              hashdb_element_lookup);
+      case HASHDIGEST_SHA1:
+        return map_multimap_iterator_t<sha1_t>(&sha1_manager.begin(),
+                                              hashdb_element_lookup);
+      case HASHDIGEST_SHA256:
+        return map_multimap_iterator_t<sha256_t>(&sha256_manager.begin(),
+                                              hashdb_element_lookup);
+      default: assert(0);
+    }
   }
 };
 

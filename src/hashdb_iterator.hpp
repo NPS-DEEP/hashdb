@@ -106,7 +106,7 @@ class hashdb_iterator_t {
       default: assert(0);
     }
 
-    dereferenced_value = hashdb_element_lookup.do_lookup(hashdb_pair);
+    dereferenced_value = hashdb_element_lookup(hashdb_pair);
     dereferenced_value_is_cached = true;
   }
 
@@ -143,6 +143,7 @@ class hashdb_iterator_t {
                    dereferenced_value() {
   }
 
+/*
   // this useless default constructor is required by std::pair
   hashdb_iterator_t() :
                       hashdigest_type(HASHDIGEST_UNDEFINED),
@@ -153,6 +154,7 @@ class hashdb_iterator_t {
                       dereferenced_value_is_cached(false),
                       dereferenced_value() {
   }
+*/
 
 /*
   // Beware that I am not properly managing pointers here.

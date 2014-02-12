@@ -53,7 +53,7 @@ struct settings_t {
   uint32_t hash_block_size;
   hashdigest_type_t hashdigest_type;
   uint32_t maximum_hash_duplicates;
-  uint8_t number_of_index_bits;
+  uint8_t source_lookup_index_bits;
   map_type_t map_type;
   uint32_t map_shard_count;
   multimap_type_t multimap_type;
@@ -73,7 +73,7 @@ struct settings_t {
         hash_block_size(4096),
         hashdigest_type(HASHDIGEST_MD5),
         maximum_hash_duplicates(0),
-        number_of_index_bits(32),
+        source_lookup_index_bits(32),
         map_type(MAP_BTREE),
         map_shard_count(1),
         multimap_type(MULTIMAP_BTREE),
@@ -93,7 +93,7 @@ struct settings_t {
     os << "hashdigest type=" << hashdigest_type_to_string(hashdigest_type) << ", ";
     os << "maximum hash duplicates=" << maximum_hash_duplicates << ", ";
 
-    os << "number of index bits type=" << (uint32_t)number_of_index_bits << "\n";
+    os << "number of index bits type=" << (uint32_t)source_lookup_index_bits << "\n";
     os << "map type=" << map_type_to_string(map_type) << ", ";
     os << "map shard count=" << map_shard_count << "\n";
     os << "multimap type=" << multimap_type_to_string(multimap_type) << ", ";
@@ -113,7 +113,7 @@ struct settings_t {
     x.xmlout("hashdigest_type", hashdigest_type_to_string(hashdigest_type));
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
-    x.xmlout("number_of_index_bits", (uint32_t)number_of_index_bits);
+    x.xmlout("source_lookup_index_bits", (uint32_t)source_lookup_index_bits);
     x.xmlout("map_type", map_type_to_string(map_type));
     x.xmlout("map_shard_count", map_shard_count);
     x.xmlout("multimap_type", multimap_type_to_string(multimap_type));

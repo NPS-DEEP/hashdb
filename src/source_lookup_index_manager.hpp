@@ -89,8 +89,8 @@ class source_lookup_index_manager_t {
   }
 
   /**
-   * Insert and return the next source lookup index
-   * else return existing source_lookup_index if already there.
+   * Insert and return true and the next source lookup index
+   * else return false and existing source_lookup_index if already there.
    */
   std::pair<bool, uint64_t> insert(const std::string& repository_name,
                                    const std::string& filename) {
@@ -134,7 +134,8 @@ class source_lookup_index_manager_t {
   }
 
   /**
-   * Find the source lookup index from the repository name and the filename.
+   * Find the source lookup index from the repository name and the filename,
+   * returning pair(false, 0) if not present.
    */
   std::pair<bool, uint64_t> find(const std::string& repository_name,
                             const std::string& filename) const {

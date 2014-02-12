@@ -136,6 +136,7 @@ class map_multimap_manager_t {
   }
 
   void emplace(const T& key, uint64_t source_lookup_encoding,
+               uint32_t maximum_hash_duplicates,
                hashdb_changes_t& changes) {
 
     // if key not in bloom filter then emplace directly
@@ -181,6 +182,12 @@ class map_multimap_manager_t {
       if (multimap_manager.has(key, source_lookup_encoding)) {
         // this element is already in multimap
         ++changes.hashes_not_inserted_duplicate_element;
+        return;
+      }
+
+      // don't add if it exceeds max duplicates, 0 means disable
+      if (maximum_hash_duplicates != 0 && count > maximum_hash_duplicates) {
+        ++changes.hashes_not_inserted_exceeds_max_duplicates;
         return;
       }
 

@@ -212,7 +212,7 @@ void usage() {
   << "\n"
   << "    -i, --bits=<number of index bits>\n"
   << "        <number of index bits> to use for the source lookup index, between\n"
-  << "        32 and 40 (default " << (uint32_t)s.number_of_index_bits << ")\n"
+  << "        32 and 40 (default " << (uint32_t)s.source_lookup_index_bits << ")\n"
   << "        The number of bits used for the hash block offset value is\n"
   << "        (64 - <number of index bits>).\n"
   << "\n"

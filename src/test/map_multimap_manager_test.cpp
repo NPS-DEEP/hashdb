@@ -88,21 +88,21 @@ void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   // populate with test data
   // checks: emplace, changes.hashes_inserted
-  manager.emplace(k1, v1, changes);
+  manager.emplace(k1, v1, 0, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 1);
 
-  manager.emplace(k2, v2, changes);
+  manager.emplace(k2, v2, 0, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 2);
-  manager.emplace(k2, v2, changes);
+  manager.emplace(k2, v2, 0, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1); // map
-  manager.emplace(k2, v3, changes);
+  manager.emplace(k2, v3, 0, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 3);
-  manager.emplace(k2, v3, changes);
+  manager.emplace(k2, v3, 0, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 2); // multimap
 
-  manager.emplace(k3, v1, changes);
-  manager.emplace(k3, v2, changes);
-  manager.emplace(k3, v3, changes);
+  manager.emplace(k3, v1, 0, changes);
+  manager.emplace(k3, v2, 0, changes);
+  manager.emplace(k3, v3, 0, changes);
 
   BOOST_TEST_EQ(manager.map_size(), 3);
   BOOST_TEST_EQ(manager.multimap_size(), 5);
