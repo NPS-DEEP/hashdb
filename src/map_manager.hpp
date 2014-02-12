@@ -191,7 +191,7 @@ class map_manager_t {
 
 
   // find
-  map_iterator_t<T> find(const T& key) {
+  map_iterator_t<T> find(const T& key) const {
     switch(map_type) {
       case MAP_BTREE:
         return map_iterator_t<T>(map_btree->find(key));
@@ -208,7 +208,7 @@ class map_manager_t {
   }
 
   // has
-  bool has(const T& key) {
+  bool has(const T& key) const {
     switch(map_type) {
       case MAP_BTREE:
         return map_btree->has(key);
@@ -225,7 +225,7 @@ class map_manager_t {
   }
 
   // size
-  size_t size() {
+  size_t size() const {
     switch(map_type) {
       case MAP_BTREE:
         return map_btree->size();

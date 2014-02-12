@@ -32,7 +32,8 @@ bin_PROGRAMS = \
 	hashdb_element_test \
 	map_multimap_manager_test \
 	source_lookup_index_manager_test \
-	hashdb_iterator_test
+	hashdb_iterator_test \
+	hashdb_manager_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -253,4 +254,20 @@ hashdb_iterator_test_SOURCES = \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdb_iterator_test.cpp
+
+hashdb_manager_test_SOURCES = \
+	boost_fix.hpp \
+        ../file_modes.h \
+        ../map_types.h \
+        ../multimap_types.h \
+	../map_multimap_manager.hpp \
+	../map_multimap_iterator.hpp \
+	../hashdb_iterator.hpp \
+	../hashdb_manager.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(BLOOM_INCS) \
+	$(DFXML_INCS) \
+	hashdb_manager_test.cpp
 

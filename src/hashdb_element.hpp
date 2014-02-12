@@ -40,10 +40,10 @@ class hashdb_element_t {
 
   std::string hashdigest;
   std::string hashdigest_type; // "MD5", etc.
-  uint32_t block_size;         // typically 4096
+  uint32_t hash_block_size;         // typically 4096
   std::string repository_name;
   std::string filename;
-  uint64_t file_offset;        // should be a multiple of block_size
+  uint64_t file_offset;        // should be a multiple of hash_block_size
   
   // fully specified
   hashdb_element_t(const std::string p_hashdigest,
@@ -54,7 +54,7 @@ class hashdb_element_t {
                    uint64_t p_file_offset) :
           hashdigest(p_hashdigest),
           hashdigest_type(p_hashdigest_type),
-          block_size(p_block_size),
+          hash_block_size(p_block_size),
           repository_name(p_repository_name),
           filename(p_filename),
           file_offset(p_file_offset) {
@@ -64,7 +64,7 @@ class hashdb_element_t {
   hashdb_element_t(const md5_t& key) :
           hashdigest(key.hexdigest()),
           hashdigest_type("MD5"),
-          block_size(0),
+          hash_block_size(0),
           repository_name(""),
           filename(""),
           file_offset(0) {
@@ -72,7 +72,7 @@ class hashdb_element_t {
   hashdb_element_t(const sha1_t& key) :
           hashdigest(key.hexdigest()),
           hashdigest_type("SHA1"),
-          block_size(0),
+          hash_block_size(0),
           repository_name(""),
           filename(""),
           file_offset(0) {
@@ -80,7 +80,7 @@ class hashdb_element_t {
   hashdb_element_t(const sha256_t& key) :
           hashdigest(key.hexdigest()),
           hashdigest_type("SHA256"),
-          block_size(0),
+          hash_block_size(0),
           repository_name(""),
           filename(""),
           file_offset(0) {
@@ -90,7 +90,7 @@ class hashdb_element_t {
   hashdb_element_t() :
           hashdigest(""),
           hashdigest_type(""),
-          block_size(0),
+          hash_block_size(0),
           repository_name(""),
           filename(""),
           file_offset(0) {

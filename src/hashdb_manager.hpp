@@ -38,60 +38,67 @@
 class hashdb_manager_t {
   private:
   const std::string hashdb_dir;
-  const file_mode_t file_mode;
+  const file_mode_type_t file_mode;
   const settings_t settings;
-  hashdb_changes_t changes;
 
   source_lookup_index_manager_t source_lookup_index_manager;
   const hashdb_element_lookup_t hashdb_element_lookup;
-  map_multimap_manager_t<md5_t> md5_manager;
-  map_multimap_manager_t<sha1_t> sha1_manager;
-  map_multimap_manager_t<sha256_t> sha256_manager;
+  map_multimap_manager_t<md5_t>* md5_manager;
+  map_multimap_manager_t<sha1_t>* sha1_manager;
+  map_multimap_manager_t<sha256_t>* sha256_manager;
 
   public:
-  hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_t p_file_mode) :
+  hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_type_t p_file_mode) :
                       hashdb_dir(p_hashdb_dir),
                       file_mode(p_file_mode),
-                      settings(settings_t::read_settings(hashdb_dir)),
-                      changes(),
+                      settings(settings_manager_t::read_settings(hashdb_dir)),
                       source_lookup_index_manager(hashdb_dir, file_mode),
-                      hashdb_element_manager(&source_lookup_index_manager,
-                                             &settings),
-                      md5_manager(),
-                      sha1_manager(),
-                      sha256_manager() {
+                      hashdb_element_lookup(&source_lookup_index_manager,
+                                            &settings),
+                      md5_manager(0),
+                      sha1_manager(0),
+                      sha256_manager(0) {
 
     // initialize the map_multimap_manager appropriate for the settings
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        md5_manager = map_multimap_manager_t<md5_t>(hashdb_dir, file_mode);
+        md5_manager = new map_multimap_manager_t<md5_t>(hashdb_dir, file_mode);
         return;
       case HASHDIGEST_SHA1:
-        sha1_manager = map_multimap_manager_t<sha1_t>(hashdb_dir, file_mode);
+        sha1_manager = new map_multimap_manager_t<sha1_t>(hashdb_dir, file_mode);
         return;
       case HASHDIGEST_SHA256:
-        sha256_manager = map_multimap_manager_t<sha256_t>(hashdb_dir, file_mode);
+        sha256_manager = new map_multimap_manager_t<sha256_t>(hashdb_dir, file_mode);
         return;
       default: assert(0);
     }
   }
 
+  ~hashdb_manager_t() {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5: delete md5_manager; return;
+      case HASHDIGEST_SHA1: delete sha1_manager; return;
+      case HASHDIGEST_SHA256: delete sha256_manager; return;
+      default: assert(0);
+    }
+  }
+
   // insert
-  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t changes) {
+  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
     // validate the hashdigest type
-    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
       ++changes.hashes_not_inserted_wrong_hashdigest_type;
       return;
     }
 
     // validate block size
-    if (hashdb_element.block_size != settings.block_size) {
+    if (hashdb_element.hash_block_size != settings.hash_block_size) {
       ++changes.hashes_not_inserted_wrong_hash_block_size;
       return;
     }
 
     // validate the file offset
-    if (hashdb_element.file_offset % settings.block_size != 0) {
+    if (hashdb_element.file_offset % settings.hash_block_size != 0) {
       ++changes.hashes_not_inserted_file_offset_not_aligned;
       return;
     }
@@ -106,49 +113,50 @@ class hashdb_manager_t {
 
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
-                           settings.source_lookup_index_bits,
-                           source_lookup_index);
+                       settings.source_lookup_index_bits,
+                       source_lookup_index,
+                       hashdb_element.file_offset / settings.hash_block_size);
 
     // insert or note reason not to insert
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        md5_manager.emplace(md5_t(settings.hashdigest),
-                            encoding,
-                            settings.maximum_hash_duplicates,
-                            changes);
+        md5_manager->emplace(md5_t::fromhex(hashdb_element.hashdigest),
+                             encoding,
+                             settings.maximum_hash_duplicates,
+                             changes);
         return;
       case HASHDIGEST_SHA1:
-        sha1_manager.emplace(sha1_t(settings.hashdigest),
-                            encoding,
-                            settings.maximum_hash_duplicates,
-                            changes);
+        sha1_manager->emplace(sha1_t::fromhex(hashdb_element.hashdigest),
+                             encoding,
+                             settings.maximum_hash_duplicates,
+                             changes);
         return;
       case HASHDIGEST_SHA256:
-        sha256_manager.emplace(sha256_t(settings.hashdigest),
-                            encoding,
-                            settings.maximum_hash_duplicates,
-                            changes);
+        sha256_manager->emplace(sha256_t::fromhex(hashdb_element.hashdigest),
+                             encoding,
+                             settings.maximum_hash_duplicates,
+                             changes);
         return;
       default: assert(0);
     }
   }
 
   // remove
-  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t changes) {
+  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
     // validate the hashdigest type
-    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+    if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
       ++changes.hashes_not_removed_wrong_hashdigest_type;
       return;
     }
 
     // validate block size
-    if (hashdb_element.block_size != settings.block_size) {
+    if (hashdb_element.hash_block_size != settings.hash_block_size) {
       ++changes.hashes_not_removed_wrong_hash_block_size;
       return;
     }
 
     // validate the file offset
-    if (hashdb_element.file_offset % settings.block_size != 0) {
+    if (hashdb_element.file_offset % settings.hash_block_size != 0) {
       ++changes.hashes_not_removed_file_offset_not_aligned;
       return;
     }
@@ -166,23 +174,24 @@ class hashdb_manager_t {
 
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
-                           settings.source_lookup_index_bits,
-                           source_lookup_index);
+                       settings.source_lookup_index_bits,
+                       source_lookup_index,
+                       hashdb_element.file_offset / settings.hash_block_size);
 
     // checks passed, remove or find reason not to remove
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        md5_manager.remove(md5_t(settings.hashdigest),
+        md5_manager->remove(md5_t::fromhex(hashdb_element.hashdigest),
                             encoding,
                             changes);
         return;
       case HASHDIGEST_SHA1:
-        sha1_manager.remove(sha1_t(settings.hashdigest),
+        sha1_manager->remove(sha1_t::fromhex(hashdb_element.hashdigest),
                             encoding,
                             changes);
         return;
       case HASHDIGEST_SHA256:
-        sha256_manager.remove(sha256_t(settings.hashdigest),
+        sha256_manager->remove(sha256_t::fromhex(hashdb_element.hashdigest),
                             encoding,
                             changes);
         return;
@@ -191,24 +200,24 @@ class hashdb_manager_t {
   }
 
   // remove key
-  void remove_key(const hashdigest_t& hashdigest, hashdb_changes_t changes) {
+  void remove_key(const hashdigest_t& hashdigest, hashdb_changes_t& changes) {
     // validate the hashdigest type
-    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
       ++changes.hashes_not_removed_wrong_hashdigest_type;
       return;
     }
 
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        md5_manager.remove_key(md5_t(settings.hashdigest),
+        md5_manager->remove_key(md5_t::fromhex(hashdigest.hashdigest),
                             changes);
         return;
       case HASHDIGEST_SHA1:
-        sha1_manager.remove_key(sha1_t(settings.hashdigest),
+        sha1_manager->remove_key(sha1_t::fromhex(hashdigest.hashdigest),
                             changes);
         return;
       case HASHDIGEST_SHA256:
-        sha256_manager.remove_key(sha256_t(settings.hashdigest),
+        sha256_manager->remove_key(sha256_t::fromhex(hashdigest.hashdigest),
                             changes);
         return;
       default: assert(0);
@@ -218,17 +227,17 @@ class hashdb_manager_t {
   // has key
   bool has_key(const hashdigest_t& hashdigest) {
     // validate the hashdigest type
-    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type) {
+    if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
       return false;
     }
 
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        return md5_manager.has_key(md5_t(settings.hashdigest));
+        return md5_manager->has_key(md5_t::fromhex(hashdigest.hashdigest));
       case HASHDIGEST_SHA1:
-        return sha1_manager.has_key(sha1_t(settings.hashdigest));
+        return sha1_manager->has_key(sha1_t::fromhex(hashdigest.hashdigest));
       case HASHDIGEST_SHA256:
-        return sha256_manager.has_key(sha256_t(settings.hashdigest));
+        return sha256_manager->has_key(sha256_t::fromhex(hashdigest.hashdigest));
       default: assert(0);
     }
   }
@@ -237,33 +246,60 @@ class hashdb_manager_t {
   hashdb_iterator_t begin() const {
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        return map_multimap_iterator_t<md5_t>(&md5_manager.begin(),
+        return hashdb_iterator_t(md5_manager->begin(),
                                               hashdb_element_lookup);
       case HASHDIGEST_SHA1:
-        return map_multimap_iterator_t<sha1_t>(&sha1_manager.begin(),
+        return hashdb_iterator_t(sha1_manager->begin(),
                                               hashdb_element_lookup);
       case HASHDIGEST_SHA256:
-        return map_multimap_iterator_t<sha256_t>(&sha256_manager.begin(),
+        return hashdb_iterator_t(sha256_manager->begin(),
                                               hashdb_element_lookup);
       default: assert(0);
     }
   }
 
   // end
-  hashdb_iterator_t begin() const {
+  hashdb_iterator_t end() const {
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        return map_multimap_iterator_t<md5_t>(&md5_manager.begin(),
+        return hashdb_iterator_t(md5_manager->end(),
                                               hashdb_element_lookup);
       case HASHDIGEST_SHA1:
-        return map_multimap_iterator_t<sha1_t>(&sha1_manager.begin(),
+        return hashdb_iterator_t(sha1_manager->end(),
                                               hashdb_element_lookup);
       case HASHDIGEST_SHA256:
-        return map_multimap_iterator_t<sha256_t>(&sha256_manager.begin(),
+        return hashdb_iterator_t(sha256_manager->end(),
                                               hashdb_element_lookup);
       default: assert(0);
     }
   }
+
+  // quick easy statistic
+  size_t map_size() const {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return md5_manager->map_size();
+      case HASHDIGEST_SHA1:
+        return sha1_manager->map_size();
+      case HASHDIGEST_SHA256:
+        return sha256_manager->map_size();
+      default: assert(0);
+    }
+  }
+
+  // quick easy statistic
+  size_t multimap_size() const {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return md5_manager->multimap_size();
+      case HASHDIGEST_SHA1:
+        return sha1_manager->multimap_size();
+      case HASHDIGEST_SHA256:
+        return sha256_manager->multimap_size();
+      default: assert(0);
+    }
+  }
+
 };
 
 #endif

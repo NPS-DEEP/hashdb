@@ -134,6 +134,20 @@ class map_multimap_manager_t {
                                settings.bloom2_M_hash_size,
                                settings.bloom2_k_hash_functions) {
   }
+  /**
+   * Blank map_multimap_manager.
+   */
+/* zz
+  map_multimap_manager_t() :
+          hashdb_dir(""),
+          file_mode(READ_ONLY),
+          settings(),
+          map_manager(),
+          multimap_manager(),
+          bloom_filter_manager() {
+    // hashdb_manager creates blanks for unused map_multimap
+  }
+*/
 
   void emplace(const T& key, uint64_t source_lookup_encoding,
                uint32_t maximum_hash_duplicates,
@@ -303,11 +317,11 @@ class map_multimap_manager_t {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
   }
 
-  size_t map_size() {
+  size_t map_size() const {
     return map_manager.size();
   }
 
-  size_t multimap_size() {
+  size_t multimap_size() const {
     return multimap_manager.size();
   }
 };

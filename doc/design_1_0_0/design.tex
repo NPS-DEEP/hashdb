@@ -563,6 +563,7 @@ for iterating over all hash values.
 
 Interfaces:
 
+% hashdb manager
 \begin{small}
 \begin{verbatim}
 hashdb_manager_t(const std::string& hashdb_dir,
@@ -575,6 +576,10 @@ void remove(const hashdb_element_t&, hashdb_changes_t&);
 void remove_key(const hashdigest_t&, hashdb_changes_t&);
 
 bool has_key(const hashdigest_t&);
+
+size_t map_size();
+
+size_t multimap_size();
 
 hashdb_iterator_t begin() const;
 
@@ -643,7 +648,6 @@ This is different from v0.9.1.
 class hashdb_changes_t {
       // insert
       uint32_t hashes_inserted;
-      uint32_t hashes_not_inserted_invalid_file_offset;
       uint32_t hashes_not_inserted_wrong_hash_block_size;
       uint32_t hashes_not_inserted_file_offset_not_aligned;
       uint32_t hashes_not_inserted_wrong_hashdigest_type;
@@ -652,7 +656,6 @@ class hashdb_changes_t {
 
       // remove
       uint32_t hashes_removed;
-      uint32_t hashes_not_removed_invalid_file_offset;
       uint32_t hashes_not_removed_wrong_hash_block_size;
       uint32_t hashes_not_removed_file_offset_not_aligned;
       uint32_t hashes_not_removed_wrong_hashdigest_type;

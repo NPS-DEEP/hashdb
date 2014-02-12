@@ -131,7 +131,7 @@ class multimap_manager_t {
   }
 
   // erase_range
-  size_t erase_range(const T& key) {
+  size_t erase_range(const T& key) const {
     switch(multimap_type) {
       case MULTIMAP_BTREE: return multimap_btree->erase_range(key);
       case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase_range(key);
@@ -144,7 +144,7 @@ class multimap_manager_t {
   }
 
   // equal_range
-  std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > equal_range(const T& key) {
+  std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > equal_range(const T& key) const {
     switch(multimap_type) {
       case MULTIMAP_BTREE: {
         typename multimap_btree_t<T, uint64_t>::map_const_iterator_range_t it1 =
@@ -181,7 +181,7 @@ class multimap_manager_t {
   }
 
   // has
-  bool has(const T& key, uint64_t source_lookup_encoding) {
+  bool has(const T& key, uint64_t source_lookup_encoding) const {
     switch(multimap_type) {
       case MULTIMAP_BTREE:
         return multimap_btree->has(key, source_lookup_encoding);
@@ -198,7 +198,7 @@ class multimap_manager_t {
   }
 
   // has_range
-  bool has_range(const T& key) {
+  bool has_range(const T& key) const {
     switch(multimap_type) {
       case MULTIMAP_BTREE:
         return multimap_btree->has_range(key);
@@ -215,7 +215,7 @@ class multimap_manager_t {
   }
 
   // size
-  size_t size() {
+  size_t size() const {
     switch(multimap_type) {
       case MULTIMAP_BTREE:
         return multimap_btree->size();

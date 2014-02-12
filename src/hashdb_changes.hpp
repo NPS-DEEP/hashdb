@@ -38,7 +38,6 @@ class hashdb_changes_t {
 
   public:
   uint32_t hashes_inserted;
-  uint32_t hashes_not_inserted_invalid_file_offset;
   uint32_t hashes_not_inserted_wrong_hash_block_size;
   uint32_t hashes_not_inserted_file_offset_not_aligned;
   uint32_t hashes_not_inserted_wrong_hashdigest_type;
@@ -46,7 +45,6 @@ class hashdb_changes_t {
   uint32_t hashes_not_inserted_duplicate_element;
 
   uint32_t hashes_removed;
-  uint32_t hashes_not_removed_invalid_file_offset;
   uint32_t hashes_not_removed_wrong_hash_block_size;
   uint32_t hashes_not_removed_file_offset_not_aligned;
   uint32_t hashes_not_removed_wrong_hashdigest_type;
@@ -56,15 +54,15 @@ class hashdb_changes_t {
   hashdb_changes_t() :
 
                      hashes_inserted(0),
-                     hashes_not_inserted_invalid_file_offset(0),
                      hashes_not_inserted_wrong_hash_block_size(0),
+                     hashes_not_inserted_file_offset_not_aligned(0),
                      hashes_not_inserted_wrong_hashdigest_type(0),
                      hashes_not_inserted_exceeds_max_duplicates(0),
                      hashes_not_inserted_duplicate_element(0),
 
                      hashes_removed(0),
-                     hashes_not_removed_invalid_file_offset(0),
                      hashes_not_removed_wrong_hash_block_size(0),
+                     hashes_not_removed_file_offset_not_aligned(0),
                      hashes_not_removed_wrong_hashdigest_type(0),
                      hashes_not_removed_no_hash(0),
                      hashes_not_removed_no_element(0) {
@@ -77,10 +75,10 @@ class hashdb_changes_t {
 
     if (hashes_inserted)
       x.xmlout("hashes_inserted", hashes_inserted);
-    if (hashes_not_inserted_invalid_file_offset)
-      x.xmlout("hashes_not_inserted_invalid_file_offset", hashes_not_inserted_invalid_file_offset);
     if (hashes_not_inserted_wrong_hash_block_size)
       x.xmlout("hashes_not_inserted_wrong_hash_block_size", hashes_not_inserted_wrong_hash_block_size);
+    if (hashes_not_inserted_file_offset_not_aligned)
+      x.xmlout("hashes_not_inserted_file_offset_not_aligned", hashes_not_inserted_file_offset_not_aligned);
     if (hashes_not_inserted_wrong_hashdigest_type)
       x.xmlout("hashes_not_inserted_wrong_hashdigest_type", hashes_not_inserted_wrong_hashdigest_type);
     if (hashes_not_inserted_exceeds_max_duplicates)
@@ -91,10 +89,10 @@ class hashdb_changes_t {
     // log any remove changes to x
     if (hashes_removed)
       x.xmlout("hashes_removed", hashes_removed);
-    if (hashes_not_removed_invalid_file_offset)
-      x.xmlout("hashes_not_removed_invalid_file_offset", hashes_not_removed_invalid_file_offset);
     if (hashes_not_removed_wrong_hash_block_size)
       x.xmlout("hashes_not_removed_wrong_hash_block_size", hashes_not_removed_wrong_hash_block_size);
+    if (hashes_not_removed_file_offset_not_aligned)
+      x.xmlout("hashes_not_removed_file_offset_not_aligned", hashes_not_removed_file_offset_not_aligned);
     if (hashes_not_removed_wrong_hashdigest_type)
       x.xmlout("hashes_not_removed_wrong_hashdigest_type", hashes_not_removed_wrong_hashdigest_type);
     if (hashes_not_removed_no_hash)
@@ -111,10 +109,10 @@ class hashdb_changes_t {
     std::cout << "hashdb changes:\n";
     if (hashes_inserted)
      std::cout << "    hashes inserted=" << hashes_inserted << "\n";
-    if (hashes_not_inserted_invalid_file_offset)
-     std::cout << "    hashes not inserted, invalid file offset=" << hashes_not_inserted_invalid_file_offset << "\n";
     if (hashes_not_inserted_wrong_hash_block_size)
      std::cout << "    hashes not inserted, wrong hash block size=" << hashes_not_inserted_wrong_hash_block_size << "\n";
+    if (hashes_not_inserted_file_offset_not_aligned)
+     std::cout << "    hashes not inserted, file offset not aligned=" << hashes_not_inserted_file_offset_not_aligned << "\n";
     if (hashes_not_inserted_wrong_hashdigest_type)
      std::cout << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n";
     if (hashes_not_inserted_exceeds_max_duplicates)
@@ -126,10 +124,10 @@ class hashdb_changes_t {
       std::cout << "hashdb changes:\n";
     if (hashes_removed)
       std::cout << "    hashes removed=" << hashes_removed << "\n";
-    if (hashes_not_removed_invalid_file_offset)
-      std::cout << "    hashes not removed, invalid file offset=" << hashes_not_removed_invalid_file_offset << "\n";
     if (hashes_not_removed_wrong_hash_block_size)
       std::cout << "    hashes not removed, wrong hash block size=" << hashes_not_removed_wrong_hash_block_size << "\n";
+    if (hashes_not_removed_file_offset_not_aligned)
+      std::cout << "    hashes not removed, file offset not aligned=" << hashes_not_removed_file_offset_not_aligned << "\n";
     if (hashes_not_removed_wrong_hashdigest_type)
       std::cout << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n";
     if (hashes_not_removed_no_hash)

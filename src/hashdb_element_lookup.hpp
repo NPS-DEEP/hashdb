@@ -40,8 +40,8 @@ class hashdb_element_lookup_t {
 
   public:
   hashdb_element_lookup_t(
-            source_lookup_index_manager_t* p_source_lookup_index_manager,
-            settings_t* p_settings) :
+            const source_lookup_index_manager_t* p_source_lookup_index_manager,
+            const settings_t* p_settings) :
                    source_lookup_index_manager(p_source_lookup_index_manager),
                    settings(p_settings) {
   }

@@ -33,7 +33,7 @@
 void run_test() {
 
   hashdb_element_t element;
-  BOOST_TEST_EQ(element.block_size, 0);
+  BOOST_TEST_EQ(element.hash_block_size, 0);
 //  element("7", "MD5_misspelled", 2, "rep", "file", 3);
 //  BOOST_TEST_EQ(element.block_size, 2);
   md5_t temp;
