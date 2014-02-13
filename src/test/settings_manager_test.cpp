@@ -29,8 +29,8 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
-#include "settings.hpp"
-#include "settings_manager.hpp"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_settings[] = "temp_dir/settings.xml";
@@ -40,23 +40,23 @@ void run_test() {
 
   remove(temp_settings);
 
-  settings_t settings;
+  hashdb_settings_t settings;
 
   // read, write first
   settings.hashdb_version = 1;
-  settings_manager_t::write_settings(temp_dir, settings);
-  settings = settings_manager_t::read_settings(temp_dir);
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+  settings = hashdb_settings_manager_t::read_settings(temp_dir);
   BOOST_TEST_EQ(settings.hashdb_version, 1);
 
   // read, write second
   settings.hashdb_version = 2;
-  settings_manager_t::write_settings(temp_dir, settings);
-  settings = settings_manager_t::read_settings(temp_dir);
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+  settings = hashdb_settings_manager_t::read_settings(temp_dir);
   BOOST_TEST_EQ(settings.hashdb_version, 2);
 
   // attempt to read an invalid filename
   BOOST_TEST_THROWS(
-        settings = settings_manager_t::read_settings(invalid_filename),
+        settings = hashdb_settings_manager_t::read_settings(invalid_filename),
         std::runtime_error);
 }
 

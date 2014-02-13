@@ -38,7 +38,7 @@
 #endif
 #include <libxml/parser.h>
 //#include "hashdb_types.h"
-#include "settings.hpp"
+#include "hashdb_settings.hpp"
 #include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
@@ -92,11 +92,11 @@ class hashdb_settings_reader_t {
   struct user_data_t {
 
     // parser state
-    settings_t* settings;
+    hashdb_settings_t* settings;
     node_type_t active_node;
     size_t index;
 
-    user_data_t(settings_t* p_settings) : settings(p_settings),
+    user_data_t(hashdb_settings_t* p_settings) : settings(p_settings),
                     active_node(NO_NODE),
                     index(0) {
     }
@@ -337,7 +337,7 @@ class hashdb_settings_reader_t {
    * read onto default hashdb settings or throw std::runtime_error.
    */
   static void read_settings(const std::string filename,
-                            settings_t& settings) {
+                            hashdb_settings_t& settings) {
 
     // verify that the settings file exists
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);

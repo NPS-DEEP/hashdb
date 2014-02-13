@@ -30,8 +30,6 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "source_lookup_index_manager.hpp"
-//#include "settings.hpp"
-//#include "settings_manager.hpp"
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir";

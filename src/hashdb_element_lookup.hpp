@@ -29,19 +29,20 @@
 #include <stdint.h>
 #include "source_lookup_index_manager.hpp"
 #include "hashdigest.hpp"
-#include "settings_manager.hpp"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 #include "hashdb_element.hpp"
 #include <iostream>
 
 class hashdb_element_lookup_t {
   private:
   const source_lookup_index_manager_t* source_lookup_index_manager;
-  const settings_t* settings;
+  const hashdb_settings_t* settings;
 
   public:
   hashdb_element_lookup_t(
             const source_lookup_index_manager_t* p_source_lookup_index_manager,
-            const settings_t* p_settings) :
+            const hashdb_settings_t* p_settings) :
                    source_lookup_index_manager(p_source_lookup_index_manager),
                    settings(p_settings) {
   }

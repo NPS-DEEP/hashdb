@@ -30,8 +30,8 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
-#include "settings.hpp"
-#include "settings_manager.hpp"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 #include "map_types.h"
 #include "multimap_types.h"
 #include "hashdigest_types.h"
@@ -78,12 +78,12 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   remove(temp_bloom_filter_1);
 
   // create working settings
-  settings_t settings;
+  hashdb_settings_t settings;
   settings.hashdigest_type = HASHDIGEST_SHA1;
   settings.map_type = MAP_BTREE;
   settings.multimap_type = MULTIMAP_BTREE;
   settings.maximum_hash_duplicates = 2;
-  settings_manager_t::write_settings(temp_dir, settings);
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
 
   // create working changes object
   hashdb_changes_t changes;

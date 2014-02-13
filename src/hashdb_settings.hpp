@@ -47,7 +47,7 @@ inline std::string bloom_state_to_string(bool state) {
 }
 
 // hashdb tuning options
-struct settings_t {
+struct hashdb_settings_t {
 
   uint32_t hashdb_version;
   uint32_t hash_block_size;
@@ -68,7 +68,7 @@ struct settings_t {
 
   // note: POD, so permit default copy and equals
 
-  settings_t() :
+  hashdb_settings_t() :
         hashdb_version(2),
         hash_block_size(4096),
         hashdigest_type(HASHDIGEST_MD5),
@@ -130,7 +130,7 @@ struct settings_t {
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-                         const struct settings_t& settings) {
+                         const struct hashdb_settings_t& settings) {
   settings.report_settings(os);
   return os;
 }

@@ -41,7 +41,7 @@
 #include "source_lookup_index_manager.hpp"
 #include "hashdb_element.hpp"
 #include "hashdb_element_lookup.hpp"
-#include "settings.hpp"
+#include "hashdb_settings.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_map[] = "temp_dir/hash_store";
@@ -65,7 +65,7 @@ void run_tests() {
 
   // create resources so iterator works
   source_lookup_index_manager_t source_lookup_index_manager(temp_dir, RW_NEW);
-  settings_t settings;
+  hashdb_settings_t settings;
   hashdb_element_lookup_t hashdb_element_lookup(&source_lookup_index_manager,
                                                 &settings);
 

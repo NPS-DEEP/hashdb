@@ -28,7 +28,7 @@
 
 #ifndef BLOOM_FILTER_HPP
 #define BLOOM_FILTER_HPP
-#include "settings.hpp" // for report_status
+#include "hashdb_settings.hpp" // for state_to_string
 #include "file_modes.h"
 #include "bloom.h"
 //#include "file_mapper.hpp"

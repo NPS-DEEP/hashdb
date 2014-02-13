@@ -26,7 +26,7 @@
 #ifndef MAP_MULTIMAP_MANAGER_HPP
 #define MAP_MULTIMAP_MANAGER_HPP
 
-#include "settings.hpp"
+#include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "map_manager.hpp"
 #include "map_iterator.hpp"
@@ -52,7 +52,7 @@ class map_multimap_manager_t {
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
 
-  const settings_t settings;
+  const hashdb_settings_t settings;
   map_manager_t<T> map_manager;
   multimap_manager_t<T> multimap_manager;
   bloom_filter_manager_t<T> bloom_filter_manager;
@@ -123,7 +123,7 @@ class map_multimap_manager_t {
                    file_mode_type_t p_file_mode) :
           hashdb_dir(p_hashdb_dir),
           file_mode(p_file_mode),
-          settings(settings_manager_t::read_settings(hashdb_dir)),
+          settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
           map_manager(hashdb_dir, file_mode, settings.map_type),
           multimap_manager(hashdb_dir, file_mode, settings.multimap_type),
           bloom_filter_manager(hashdb_dir, file_mode,
@@ -134,20 +134,6 @@ class map_multimap_manager_t {
                                settings.bloom2_M_hash_size,
                                settings.bloom2_k_hash_functions) {
   }
-  /**
-   * Blank map_multimap_manager.
-   */
-/* zz
-  map_multimap_manager_t() :
-          hashdb_dir(""),
-          file_mode(READ_ONLY),
-          settings(),
-          map_manager(),
-          multimap_manager(),
-          bloom_filter_manager() {
-    // hashdb_manager creates blanks for unused map_multimap
-  }
-*/
 
   void emplace(const T& key, uint64_t source_lookup_encoding,
                uint32_t maximum_hash_duplicates,

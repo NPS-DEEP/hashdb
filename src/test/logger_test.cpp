@@ -31,7 +31,7 @@
 #include "boost_fix.hpp"
 #include "logger.hpp"
 #include "hashdb_changes.hpp"
-#include "settings.hpp"
+#include "hashdb_settings.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_log[] = "temp_dir/log.xml";
@@ -40,7 +40,7 @@ void run_test() {
 
   remove(temp_log);
 
-  settings_t settings;
+  hashdb_settings_t settings;
   hashdb_changes_t changes;
 
   logger_t logger(temp_dir);

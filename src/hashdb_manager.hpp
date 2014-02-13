@@ -31,15 +31,16 @@
 #include "map_multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
 #include "hashdb_iterator.hpp"
-//#include "dfxml/src/hash_t.h"
 #include "hashdigest.hpp" // for string style hashdigest and hashdigest type
-//#include "hashdigest_types.h"
+#include "hashdigest_types.h"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 
 class hashdb_manager_t {
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
-  const settings_t settings;
+  const hashdb_settings_t settings;
 
   source_lookup_index_manager_t source_lookup_index_manager;
   const hashdb_element_lookup_t hashdb_element_lookup;
@@ -49,15 +50,15 @@ class hashdb_manager_t {
 
   public:
   hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_type_t p_file_mode) :
-                      hashdb_dir(p_hashdb_dir),
-                      file_mode(p_file_mode),
-                      settings(settings_manager_t::read_settings(hashdb_dir)),
-                      source_lookup_index_manager(hashdb_dir, file_mode),
-                      hashdb_element_lookup(&source_lookup_index_manager,
-                                            &settings),
-                      md5_manager(0),
-                      sha1_manager(0),
-                      sha256_manager(0) {
+                hashdb_dir(p_hashdb_dir),
+                file_mode(p_file_mode),
+                settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
+                source_lookup_index_manager(hashdb_dir, file_mode),
+                hashdb_element_lookup(&source_lookup_index_manager,
+                                      &settings),
+                md5_manager(0),
+                sha1_manager(0),
+                sha256_manager(0) {
 
     // initialize the map_multimap_manager appropriate for the settings
     switch(settings.hashdigest_type) {
