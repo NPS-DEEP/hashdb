@@ -49,16 +49,21 @@ void run_test() {
   logger.add_hashdb_changes(changes);
   logger.add("add_by_itself", 3);
 
-  logger_t closed_logger;
-  closed_logger.close(); // logger may emit a warning
+  // emits xml to stdout.
+//  logger_t closed_logger;
+
+  // This may emit an "already closed" warning.
+//  closed_logger.close(); // logger may emit a warning
 }
 
 int cpp_main(int argc, char* argv[]) {
+//  std::cout << "logger_test correctly emits an xml tag, a close warning, and a request to inspect log.xml.\n";
+
   run_test();
 
   // done
-//  int status = boost::report_errors();
-  std::cout << "inspect temp_dir/log.xml if desired.\n";
+  std::cout << "Logger test completed.\n";
+//  std::cout << "inspect temp_dir/log.xml if desired.\n";
   return 0;
 }
 

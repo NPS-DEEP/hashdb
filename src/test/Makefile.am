@@ -68,7 +68,7 @@ HASHDB_INCS = \
 	../hashdb_types.h \
 	../hashdb_db_manager.hpp \
 	../settings.hpp \
-	../hashdb_settings_reader.hpp
+	../hashdb_settings_reader.hpp \
 	../hash_duplicates_store.cpp \
 	../hash_duplicates_store.hpp \
 	../hash_store.cpp \

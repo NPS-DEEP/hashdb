@@ -35,8 +35,8 @@
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir";
-static const char temp_bloom1[] = "temp_dir/bloom1";
-static const char temp_bloom2[] = "temp_dir/bloom2";
+static const char temp_bloom1[] = "temp_dir/bloom_filter_1";
+static const char temp_bloom2[] = "temp_dir/bloom_filter_2";
 
 template<typename T>
 void run_rw_tests(std::string& hashdb_dir,
