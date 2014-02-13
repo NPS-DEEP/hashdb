@@ -45,6 +45,12 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 
 AM_LDFLAGS = -static $(XML_LIBS)
 
+run_tests:
+	for test in $(bin_PROGRAMS); do \
+	  echo $$test ... ; \
+	  ./$$test; \
+	done
+
 # ############################################################
 # potentially useful include files
 # ############################################################
@@ -270,4 +276,6 @@ hashdb_manager_test_SOURCES = \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdb_manager_test.cpp
+
+.PHONY: run_tests
 
