@@ -139,13 +139,13 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
                              4096, "rep1", "file1", 4096 * 2);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 2);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 1);
 
   // insert, duplicate element
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 2);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1);
 
   // remove, no element
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -172,8 +172,9 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ(changes.hashes_inserted, 3);
 
   // remove_key successfully
+  BOOST_TEST_EQ(changes.hashes_removed, 1);
   manager.remove_key(d1, changes);
-  BOOST_TEST_EQ(changes.hashes_removed, 5);
+  BOOST_TEST_EQ(changes.hashes_removed, 3);
 
   // remove_key no hash
   manager.remove_key(d1, changes);
@@ -201,19 +202,50 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   element = hashdb_element_t(d2.hashdigest, d2.hashdigest_type,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 1);
+  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 3);
 
-  // insert
+  // ************************************************************
+  // has_key, size, iterator
+  // ************************************************************
+  BOOST_TEST_EQ(manager.has_key(d1), false);
+  BOOST_TEST_EQ(manager.has_key(d1_md5), false);
+
+  // setup with one element to make iterator simple
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_inserted, 1);
+  BOOST_TEST_EQ(manager.map_size(), 1);
+  BOOST_TEST_EQ(manager.multimap_size(), 0);
+  hashdb_iterator_t it(manager.begin());
+  BOOST_TEST_EQ(it->hashdigest, "0000000000000000000000000000000000000001");
+  BOOST_TEST_EQ(it->hashdigest_type, "SHA1");
+  BOOST_TEST_EQ(it->hash_block_size, 4096);
+  BOOST_TEST_EQ(it->repository_name, "rep1");
+  BOOST_TEST_EQ(it->filename, "file1");
+  BOOST_TEST_EQ(it->file_offset, 0);
+  BOOST_TEST_EQ((*it).file_offset, 0);
+  ++it;
+  BOOST_TEST_EQ((it == manager.end()), true);
 
-  // remove, no element
+
+  // setup with two elements under one key and one element under another key
+  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+                             4096, "second_rep1", "file1", 0);
+  manager.insert(element, changes);
   element = hashdb_element_t(d2.hashdigest, d2.hashdigest_type,
-                             4096, "rep1", "file1", 4096);
-  manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 2);
+                             4096, "rep1", "file1", 0);
+  manager.insert(element, changes);
+
+  BOOST_TEST_EQ(manager.has_key(d1), true);
+  BOOST_TEST_EQ(manager.map_size(), 2);
+  BOOST_TEST_EQ(manager.multimap_size(), 2);
+
+  hashdb_iterator_t it2(manager.begin());
+  ++it2;
+  it2++;
+  ++it2;
+
+  BOOST_TEST_EQ((it2 == manager.end()), true);
 }
 
 int cpp_main(int argc, char* argv[]) {

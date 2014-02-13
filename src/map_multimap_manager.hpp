@@ -200,7 +200,7 @@ class map_multimap_manager_t {
       }
 
       // don't add if it exceeds max duplicates, 0 means disable
-      if (maximum_hash_duplicates != 0 && count > maximum_hash_duplicates) {
+      if (maximum_hash_duplicates != 0 && count >= maximum_hash_duplicates) {
         ++changes.hashes_not_inserted_exceeds_max_duplicates;
         return;
       }
