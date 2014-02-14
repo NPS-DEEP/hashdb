@@ -48,14 +48,16 @@ class logger_t {
 
   public:
 
-  logger_t(std::string hashdb_dir) :
+  logger_t(std::string hashdb_dir, std::string name) :
                     x(hashdb_dir+"/log.xml", false),
                     closed(false) {
 
     // log the preamble
     x.push("log");
 
-    x.push("command");
+    std::stringstream ss;
+    ss << "name='" << name << "'";
+    x.push("command", ss.str());
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
   }
 

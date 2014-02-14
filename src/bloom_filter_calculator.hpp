@@ -19,37 +19,40 @@
 
 /**
  * \file
- * Provides the main entry for the hashdb_manager tool.
+ * Calculate optimum settings based on expected size.
  */
 
-#ifndef HASHDB_RUNTIME_OPTIONS_HPP
-#define HASHDB_RUNTIME_OPTIONS_HPP
+#ifndef BLOOM_FILTER_CALCULATOR_HPP
+#define BLOOM_FILTER_CALCULATOR_HPP
 
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <cassert>
-#include <boost/lexical_cast.hpp>
-#include <getopt.h>
 
-struct hashdb_runtime_options_t {
-  std::string repository_name;
-  size_t exclude_duplicates_count;
-  std::string server_path_or_socket; // tcp://*:14500 for server
-                                     // and tcp://localhost:14500 for client
+namespace bloom_filter_calculator {
 
-  hashdb_runtime_options_t() :
-         repository_name(""),
-         exclude_duplicates_count(0),
-//         server_path_or_socket("tcp://*:14500")
-         server_path_or_socket("") {
+// approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
+uint64_t approximate_M_to_n(uint32_t M) {
+  uint64_t m = (uint64_t)1<<M;
+  uint64_t n = m * 0.17;
+//std::cout << "Bloom filter conversion: for M=" << M << " use n=" << n << "\n";
+  return n;
+}
+
+// approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
+uint32_t approximate_n_to_M(uint64_t n) {
+  uint64_t m = n / 0.17;
+  uint32_t M = 1;
+  // fix with actual math formula, but this works
+  while ((m = m/2) > 0) {
+    M++;
   }
-};
+//std::cout << "Bloom filter conversion: for n=" << n << " use M=" << M << "\n";
+  return M;
+}
+
+} // namespace
 
 #endif
 

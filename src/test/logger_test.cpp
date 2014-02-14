@@ -43,7 +43,7 @@ void run_test() {
   hashdb_settings_t settings;
   hashdb_changes_t changes;
 
-  logger_t logger(temp_dir);
+  logger_t logger(temp_dir, "logger test");
   logger.add_timestamp("my_timestamp");
   logger.add_hashdb_settings(settings);
   logger.add_hashdb_changes(changes);

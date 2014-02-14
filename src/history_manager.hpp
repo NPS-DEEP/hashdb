@@ -171,8 +171,7 @@ class history_manager_t {
     try {
 
       // read the old history lines, if available
-      const std::string history_filename =
-                            hashdb_filenames_t::history_filename(hashdb_dir);
+      const std::string history_filename = hashdb_dir + "/history.xml";
       std::vector<std::string> history_lines;
       bool has_history = (access(history_filename.c_str(), F_OK) == 0);
       if (has_history) {
@@ -184,8 +183,7 @@ class history_manager_t {
       }
 
       // read the log lines
-      const std::string log_filename =
-                            hashdb_filenames_t::log_filename(hashdb_dir);
+      const std::string log_filename = hashdb_dir + "/log.xml";
       std::vector<std::string> log_lines;
       read_lines(log_filename, log_lines);
 
@@ -237,8 +235,7 @@ class history_manager_t {
     try {
 
       // read the old history lines
-      const std::string old_history_filename =
-                        hashdb_filenames_t::history_filename(old_hashdb_dir);
+      const std::string old_history_filename = old_hashdb_dir + "/history.xml";
       std::vector<std::string> old_history_lines;
       read_lines(old_history_filename, old_history_lines);
 
@@ -250,8 +247,7 @@ class history_manager_t {
       embed_in_tag("old_history", old_history_lines);
 
       // read any new history lines, if available
-      const std::string new_history_filename =
-                        hashdb_filenames_t::history_filename(new_hashdb_dir);
+      const std::string new_history_filename = new_hashdb_dir + "/history.xml";
       std::vector<std::string> new_history_lines;
       bool has_new_history = (access(new_history_filename.c_str(), F_OK) == 0);
       if (has_new_history) {

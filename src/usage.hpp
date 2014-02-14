@@ -38,32 +38,11 @@
 #include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
-#include "settings.hpp"
-#include "hashdb_runtime_options.hpp"
-
-// approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
-uint64_t approximate_M_to_n(uint32_t M) {
-  uint64_t m = (uint64_t)1<<M;
-  uint64_t n = m * 0.17;
-//std::cout << "Bloom filter conversion: for M=" << M << " use n=" << n << "\n";
-  return n;
-}
-
-// approximate bloom conversions for k=3 and p false positive = ~ 1.1% to 6.4%
-uint32_t approximate_n_to_M(uint64_t n) {
-  uint64_t m = n / 0.17;
-  uint32_t M = 1;
-  // fix with actual math formula, but this works
-  while ((m = m/2) > 0) {
-    M++;
-  }
-//std::cout << "Bloom filter conversion: for n=" << n << " use M=" << M << "\n";
-  return M;
-}
+#include "bloom_filter_calculator.hpp"
+#include "hashdb_settings.hpp"
 
 void usage() {
-  settings_t s;
-  hashdb_runtime_options_t o;
+  hashdb_settings_t s;
 
   // print usage
   std::cout
@@ -122,14 +101,32 @@ void usage() {
   << "    <destination hashdb>  the hash database to copy hashes into\n"
   << "\n"
   << "remove <hashdb 1> <hashdb 2>\n"
-  << "    Remove hashes in <hashdb 1> from <hashdb 2>, leaving <hashdb 1> unchanged.\n"
+  << "    Remove exact matches of sourced hashes in <hashdb 1> from <hashdb 2>,\n"
+  << "    leaving <hashdb 1> unchanged.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb 1>     the input hash database containing hashes to be removed\n"
   << "    <hashdb 2>     the hash database to remove matching hashes from\n"
   << "\n"
-  << "remove_dfxml <DFXML file> <hashdb>\n"
-  << "    Remove all hashes in the <DFXML file> from the <hashdb>, if present.\n"
+  << "remove_all <hashdb 1> <hashdb 2>\n"
+  << "    Remove all matching hashes in <hashdb 1> from <hashdb 2>, even if\n"
+  << "    source repository names and filenames do not match.  <hashdb 1> is\n"
+  << "    left unchanged.\n"
+  << "\n"
+  << "    Parameters:\n"
+  << "    <hashdb 1>     the input hash database containing hashes to be removed\n"
+  << "    <hashdb 2>     the hash database to remove matching hashes from\n"
+  << "\n"
+  << "remove_dfxml [-r <repository name>] <DFXML file> <hashdb>\n"
+  << "    Remove exact matches of sourced hashes in the <DFXML file> from <hashdb>.\n"
+  << "\n"
+  << "    Parameters:\n"
+  << "    <DFXML file>   the DFXML file containing hashes to be removed\n"
+  << "    <hashdb>       the hash database to remove matching hashes from\n"
+  << "\n"
+  << "remove_all_dfxml <DFXML file> <hashdb>\n"
+  << "    Remove all matching hashes in the <DFXML file> from <hashdb>, even\n"
+  << "    if source repository names and filenames do not match.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <DFXML file>   the DFXML file containing hashes to be removed\n"
@@ -210,27 +207,27 @@ void usage() {
 //  << "        (default " << s.map_type << ")\n"
   << "        (default md5)\n"
   << "\n"
-  << "    -i, --bits=<number of index bits>\n"
-  << "        <number of index bits> to use for the source lookup index, between\n"
-  << "        32 and 40 (default " << (uint32_t)s.source_lookup_index_bits << ")\n"
+  << "    -b, --bits=<number>\n"
+  << "        <number> of source lookup index bits to use for the source lookup\n"
+  << "        index, between 32 and 40 (default " << (uint32_t)s.source_lookup_index_bits << ")\n"
   << "        The number of bits used for the hash block offset value is\n"
-  << "        (64 - <number of index bits>).\n"
+  << "        (64 - <number>).\n"
   << "\n"
   << "<bloom filter settings> tune performance during hash queries:\n"
-  << "    --b1 <state>\n"
+  << "    --bloom1 <state>\n"
   << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
-  << "    --b1n <n>\n"
-  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
-  << "    --b1kM <k:M>\n"
+  << "    --bloom1_n <n>\n"
+  << "        expected total number <n> of unique hashes (default " << bloom_filter_calculator::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
+  << "    --bloom1_kM <k:M>\n"
   << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
   << "        and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --b1n)\n"
-  << "    --b2 <state>\n"
+  << "    --bloom2 <state>\n"
   << "        sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom2_is_used) << ")\n"
-  << "    --b2n <total>\n"
-  << "        expected total number <n> of unique hashes (default " << approximate_M_to_n(s.bloom2_M_hash_size) << ")\n"
-  << "    --b2kM <k:M>\n"
+  << "    --bloom2_n <total>\n"
+  << "        expected total number <n> of unique hashes (default " << bloom_filter_calculator::approximate_M_to_n(s.bloom2_M_hash_size) << ")\n"
+  << "    --bloom2_kM <k:M>\n"
   << "        number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom2_k_hash_functions << "\n"
-  << "        and <M>=" << s.bloom2_M_hash_size << " or <M>=value calculated from value in --b2n)\n"
+  << "        and <M>=" << s.bloom2_M_hash_size << " or <M>=value calculated from value in --bloom2_n)\n"
   << "\n"
   << "<path or socket> selects how to connect to the hashdb server service.\n"
   << "    Valid paths are filesystem paths.\n"
@@ -240,8 +237,7 @@ void usage() {
 }
 
 void detailed_usage() {
-  settings_t s;
-  hashdb_runtime_options_t o;
+  hashdb_settings_t s;
 
   // print usage notes and examples
   std::cout
@@ -465,20 +461,18 @@ void detailed_usage() {
   << "type algorithm.\n"
   << "\"-a sha1\" specifies that SHA1 hashes will be stored in the hash database.\n"
   << "type algorithm.\n"
-  << "\"-n 4\" specifies that, internal to the hash database, hash values will be\n"
-  << "sharded across four files.\n"
-  << "\"-i 34\" specifies that 34 bits are allocated for the source lookup index,\n"
+  << "\"-b 34\" specifies that 34 bits are allocated for the source lookup index,\n"
   << "allowing 2^34 entries of source lookup data.  Note that this leaves 2^30\n"
   << "entries remaining for hash block offset values.\n"
-  << "\"--b1 enabled\" specifies that Bloom filter 1 is enabled.\n"
-  << "\"--b1n 50000000\" specifies that Bloom filter 1 should be sized to expect\n"
+  << "\"--bloom1 enabled\" specifies that Bloom filter 1 is enabled.\n"
+  << "\"--bloom1_n 50000000\" specifies that Bloom filter 1 should be sized to expect\n"
   << "50,000,000 different hash values.\n"
-  << "\"--b2 enabled\" specifies that Bloom filter 2 is enabled.\n"
-  << "\"--b2kM 4:32 enabled\" specifies that Bloom filter 2 will be configured to\n"
+  << "\"--bloom2 enabled\" specifies that Bloom filter 2 is enabled.\n"
+  << "\"--bloom2_kM 4:32 enabled\" specifies that Bloom filter 2 will be configured to\n"
   << "have 4 hash functions and that the Bloom filter hash function size will be\n"
   << "32 bits, consuming 512MiB of disk space.\n"
-  << "    hashdb create -p 512 -m 2 -t hash -a sha1 -n 4 -i 34 --b1 enabled\n"
-  << "    --b1n 50000000 --b2 enabled --b2kM 4:32 my_hashdb1 my_hashdb2\n"
+  << "    hashdb create -p 512 -m 2 -t hash -a sha1 -b 34 --bloom1 enabled\n"
+  << "    --bloom1_n 50000000 --bloom2 enabled --bloom2_kM 4:32 my_hashdb1 my_hashdb2\n"
   ;
 }
 

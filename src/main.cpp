@@ -31,10 +31,11 @@
 #include "file_modes.h"
 // zz not yet #include "map_types.h"
 // zz not yet #include "multimap_types.h"
-#include "settings.hpp"
-#include "hashdb_runtime_options.hpp"
+#include "hashdb_settings.hpp"
 #include "usage.hpp"
+#include "bloom_filter_calculator.hpp"
 #include "command_line.hpp" // zz make this better
+#include "commands.hpp" // zz make this better
 
 // Standard includes
 #include <cstdlib>
@@ -48,26 +49,9 @@
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
 
-//uint64_t approximate_M_to_n(uint32_t M);
-//uint32_t approximate_n_to_M(uint64_t n);
-
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
-// user commands, which are not the demultiplexed commands seen in commands.hpp
-// create       a new hashdb
-// import       hashes from DFXML to hashdb
-// export       hashdb to a DFXML file
-// copy         hashdb to second hashdb
-// merge        hashdb1 and hashdb2 into hashdb3
-// remove       hashes in hashdb1 from hashdb2
-// remove_dfxml hashes in dfxml from hashdb
-// deduplicate  some or all hash duplicates
-// rebuild_bloom rebuild bloom filters
-// query_hash   print hashes in DFXML file that match hashdb
-// get_hash_source create file with hash sources from identified_blocks.txt
-// get_hashdb_info show hashdb database statistics
-// server       run as server
-
+/*
 static const std::string COMMAND_CREATE = "create";
 static const std::string COMMAND_IMPORT = "import";
 static const std::string COMMAND_EXPORT = "export";
@@ -81,28 +65,28 @@ static const std::string COMMAND_QUERY_HASH = "query_hash";
 static const std::string COMMAND_GET_HASH_SOURCE = "get_hash_source";
 static const std::string COMMAND_GET_HASHDB_INFO = "get_hashdb_info";
 static const std::string COMMAND_SERVER = "server";
+*/
 
-// settings and options
-static settings_t hashdb_settings = settings_t();
-static hashdb_runtime_options_t hashdb_runtime_options = hashdb_runtime_options_t();
+// settings
+static hashdb_settings_t hashdb_settings;
 
-// option state used to assure options are not specified when they should not be
+// option state used to assure settings are not specified when they should not be
 // option categories
-//static bool has_create_options = false;
-//static bool has_bloom_options = false;
+static bool has_hashdb_settings = false;
+static bool has_bloom_filter_settings = false;
 static bool has_repository_name = false;
-static bool has_server_path_or_socket = false;
+static size_t parameter_count = 0;
 
 // bloom filter validation
-bool has_b1n = false;
-bool has_b1kM = false;
-bool has_b2n = false;
-bool has_b2kM = false;
+bool has_bloom1 = false;
+bool has_bloom1_n = false;
+bool has_bloom1_kM = false;
+bool has_bloom2 = false;
+bool has_bloom2_n = false;
+bool has_bloom2_kM = false;
 
-//zz these go away
-bool has_tuning = false;
-bool has_tuning_bloom = false;
-bool has_exclude_duplicates = false;
+// repository name
+static std::string repository_name = "";
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
 // copied from bulk_extractor file support.cpp
@@ -120,56 +104,30 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return split(s, delim, elems);
 }
 
-/*
-void no_has_tuning(const std::string& action) {
-  if (has_tuning) {
-    std::cerr << "hashdb tuning parameters are not allowed in command to " << action << ".\n";
+void require_no_hashdb_settings() {
+  if (has_hashdb_settings) {
+    std::cerr << "hashdb settings are not allowed in this command.\n";
     exit(1);
   }
 }
-void no_has_tuning_bloom(const std::string& action) {
-  if (has_tuning_bloom) {
-    std::cerr << "Bloom filter tuning parameters are not allowed in command to " << action << ".\n";
+void require_no_bloom_filter_settings() {
+  if (has_hashdb_settings) {
+    std::cerr << "bloom filter settings are not allowed in this command.\n";
     exit(1);
   }
 }
-void no_has_repository_name(const std::string& action) {
-  if (has_repository_name) {
-    std::cerr << "The \"--repository\" option is not allowed in command to " << action << ".\n";
+void require_no_repository_name() {
+  if (has_hashdb_settings) {
+    std::cerr << "Repository name not allowed in this command.\n";
     exit(1);
   }
 }
-void no_has_server_socket_endpoint(const std::string& action) {
-  if (has_server_path_or_socket) {
-    std::cerr << "The \"--socket\" option is not allowed in command to " << action << ".\n";
+void require_parameter_count(size_t count) {
+  if (count != parameter_count) {
+    std::cerr << "Incorrect number of parameters provided in this command.\n";
     exit(1);
   }
 }
-void no_has_exclude_duplicates(const std::string& action) {
-  if (has_exclude_duplicates) {
-    std::cerr << "The \"--exclude_duplicates\" option is not allowed in command to " << action << ".\n";
-    exit(1);
-  }
-}
-*/
-
-/*
-void require_hash_block_sizes_match(const std::string& hashdb_dir1, const std::string& hashdb_dir2,
-                               const std::string& action) {
-  settings_t settings1;
-  hashdb_settings_reader_t::read_settings(hashdb_dir1+"settings.xml", settings1);
-  settings_t settings2;
-  hashdb_settings_reader_t::read_settings(hashdb_dir2+"settings.xml", settings2);
-
-  if (settings1.hash_block_size != settings2.hash_block_size) {
-    std::cerr << "Error: The hash block size for the databases do not match.\n";
-    std::cerr << "The hash block size for " << hashdb_dir1 << " is " << settings1.hash_block_size << "\n";
-    std::cerr << "but the hash block size for " << hashdb_dir2 << " is " << settings2.hash_block_size << ".\n";
-    std::cerr << "Aborting command to " << action << ".\n";
-    exit(1);
-  }
-}
-*/
 
 // ************************************************************
 // main
@@ -192,29 +150,29 @@ int main(int argc,char **argv) {
       {"help", no_argument, 0, 'h'},
       {"Version", no_argument, 0, 'V'},
 
-      // command options
-      {"repository", required_argument, 0, 'r'},
-      {"socket", required_argument, 0, 's'},
-      {"exclude_duplicates", required_argument, 0, 'x'},
-
-      // tuning
+      // hashdb settings
       {"hash_block_size", required_argument, 0, 'p'},
       {"max_duplicates", required_argument, 0, 'm'},
       {"storage_type", required_argument, 0, 't'},
-      {"shards", required_argument, 0, 'n'},
-      {"bits", required_argument, 0, 'i'},
+      {"algorithm", required_argument, 0, 'a'},
+      {"bits", required_argument, 0, 'b'},
 
-      // bloom tuning
-      {"b1", required_argument, 0, 'A'},
-      {"b1n", required_argument, 0, 'B'},
-      {"b1kM", required_argument, 0, 'C'},
-      {"b2", required_argument, 0, 'D'},
-      {"b2n", required_argument, 0, 'E'},
-      {"b2kM", required_argument, 0, 'F'},
+      // bloom filter settings
+      {"bloom1", required_argument, 0, 'A'},
+      {"bloom1_n", required_argument, 0, 'B'},
+      {"bloom1_kM", required_argument, 0, 'C'},
+      {"bloom2", required_argument, 0, 'D'},
+      {"bloom2_n", required_argument, 0, 'E'},
+      {"bloom2_kM", required_argument, 0, 'F'},
+
+      // repository
+      {"repository", required_argument, 0, 'r'},
+
+      // end
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHVr:s:x:p:m:t:n:i:A:B:C:D:E:F", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHVp:m:t:a:b:A:B:C:D:E:F:r", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -240,28 +198,10 @@ int main(int argc,char **argv) {
         exit(0);
         break;
       }
-      case 'r': {	// repository name
-        has_repository_name = true;
-        hashdb_runtime_options.repository_name = optarg;
-        break;
-      }
-      case 's': {	// server socket endpoint
-        has_server_path_or_socket = true;
-        hashdb_runtime_options.server_path_or_socket = optarg;
-        break;
-      }
-      case 'x': {	// remove duplicates during copy
-        has_exclude_duplicates = true;
-        try {
-          hashdb_runtime_options.exclude_duplicates_count = boost::lexical_cast<size_t>(optarg);
-        } catch (...) {
-          std::cerr << "Invalid value for exclude duplicates count: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        break;
-      }
+
+      // hashdb_settings
       case 'p': {	// hash block size
-        has_tuning = true;
+        has_hashdb_settings = true;
         try {
           hashdb_settings.hash_block_size = boost::lexical_cast<size_t>(optarg);
         } catch (...) {
@@ -271,7 +211,7 @@ int main(int argc,char **argv) {
         break;
       }
       case 'm': {	// maximum hash duplicates
-        has_tuning = true;
+        has_hashdb_settings = true;
         try {
           hashdb_settings.maximum_hash_duplicates = boost::lexical_cast<size_t>(optarg);
         } catch (...) {
@@ -281,7 +221,7 @@ int main(int argc,char **argv) {
         break;
       }
       case 't': {	// storage type
-        has_tuning = true;
+        has_hashdb_settings = true;
         bool is_ok_map = string_to_map_type(optarg, hashdb_settings.map_type);
         bool is_ok_multimap = string_to_multimap_type(optarg, hashdb_settings.multimap_type);
         if (!is_ok_map || !is_ok_multimap) {
@@ -290,30 +230,30 @@ int main(int argc,char **argv) {
         }
         break;
       }
-      case 'n': {	// number of shards
-        has_tuning = true;
-        try {
-          hashdb_settings.map_shard_count = boost::lexical_cast<size_t>(optarg);
-          hashdb_settings.multimap_shard_count = boost::lexical_cast<size_t>(optarg);
-        } catch (...) {
-          std::cerr << "Invalid value for number of shards: '" << optarg << "'.  " << see_usage << "\n";
+      case 'a': {	// hash algorithm
+        has_hashdb_settings = true;
+        bool is_ok_hashdigest_type = string_to_hashdigest_type(optarg, hashdb_settings.hashdigest_type);
+        if (!is_ok_hashdigest_type) {
+          std::cerr << "Invalid value for hashdigest type: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
       }
-      case 'i': {	// number of index bits
-        has_tuning = true;
+      case 'b': {	// number of index bits
+        has_hashdb_settings = true;
         // boost can't cast to uint8_t
         uint32_t temp = boost::lexical_cast<uint32_t>(optarg);
         if (temp < 32 || temp > 40) {
           std::cerr << "Invalid value for number of index bits: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
-        hashdb_settings.number_of_index_bits = (uint8_t)temp;
+        hashdb_settings.source_lookup_index_bits = (uint8_t)temp;
         break;
       }
+
+      // bloom filter settings
       case 'A': {	// b1 bloom 1 state
-        has_tuning_bloom = true;
+        has_bloom_filter_settings = true;
         bool is_ok_bloom1_state = string_to_bloom_state(optarg, hashdb_settings.bloom1_is_used);
         if (!is_ok_bloom1_state) {
           std::cerr << "Invalid value for bloom filter 1 state: '" << optarg << "'.  " << see_usage << "\n";
@@ -322,12 +262,12 @@ int main(int argc,char **argv) {
         break;
       }
       case 'B': {	// b1n bloom 1 expected total number of hashes
-        has_tuning_bloom = true;
-        has_b1n = true;
+        has_bloom_filter_settings = true;
+        has_bloom1_n = true;
         try {
           uint64_t n1 = boost::lexical_cast<uint64_t>(optarg);
           hashdb_settings.bloom1_k_hash_functions = 3;
-          hashdb_settings.bloom1_M_hash_size = approximate_n_to_M(n1);
+          hashdb_settings.bloom1_M_hash_size = bloom_filter_calculator::approximate_n_to_M(n1);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 1 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -335,8 +275,8 @@ int main(int argc,char **argv) {
         break;
       }
       case 'C': {	// b1kM bloom 1 k hash functions and M hash size
-        has_tuning_bloom = true;
-        has_b1kM = true;
+        has_bloom_filter_settings = true;
+        has_bloom1_kM = true;
         std::vector<std::string> params = split(std::string(optarg), ':');
 
         if (params.size() == 2) {
@@ -354,7 +294,7 @@ int main(int argc,char **argv) {
         break;
       }
       case 'D': {	// b2 bloom 2 state
-        has_tuning_bloom = true;
+        has_bloom_filter_settings = true;
         bool is_ok_bloom2_state = string_to_bloom_state(optarg, hashdb_settings.bloom2_is_used);
         if (!is_ok_bloom2_state) {
           std::cerr << "Invalid value for bloom filter 2 state: '" << optarg << "'.  " << see_usage << "\n";
@@ -363,12 +303,12 @@ int main(int argc,char **argv) {
         break;
       }
       case 'E': {	// b2n bloom 2 expected total number of hashes
-        has_tuning_bloom = true;
-        has_b2n = true;
+        has_bloom_filter_settings = true;
+        has_bloom2_n = true;
         try {
           uint64_t n2 = boost::lexical_cast<uint64_t>(optarg);
           hashdb_settings.bloom2_k_hash_functions = 3;
-          hashdb_settings.bloom2_M_hash_size = approximate_n_to_M(n2);
+          hashdb_settings.bloom2_M_hash_size = bloom_filter_calculator::approximate_n_to_M(n2);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 2 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -376,8 +316,8 @@ int main(int argc,char **argv) {
         break;
       }
       case 'F': {	// b2kM bloom 2 k hash functions and M hash size
-        has_tuning_bloom = true;
-        has_b2kM = true;
+        has_bloom_filter_settings = true;
+        has_bloom2_kM = true;
         std::vector<std::string> params = split(std::string(optarg), ':');
         if (params.size() == 2) {
           try {
@@ -393,6 +333,20 @@ int main(int argc,char **argv) {
         exit(1);
         break;
       }
+
+      // repository name option
+      case 'r': {	// repository name
+        has_repository_name = true;
+        repository_name = optarg;
+        break;
+      }
+/*
+      case 's': {	// server socket endpoint
+        has_server_path_or_socket = true;
+        zz server_path_or_socket = optarg;
+        break;
+      }
+*/
       default:
 //        std::cerr << "unexpected command character " << ch << "\n";
         exit(1);
@@ -400,12 +354,32 @@ int main(int argc,char **argv) {
   }
 
   // ************************************************************
-  // prepare to run the command
+  // parse the command
   // ************************************************************
 
-/*
+  // parse the remaining tokens that were not consumed by options
+  argc -= optind;
+  argv += optind;
+
+  // get the command
+  if (argc < 1) {
+    std::cerr << "Error: a command must be provided.\n";
+    exit(1);
+  }
+  const std::string command(argv[0]);
+  argc--;
+  argv++;
+
+  // get any arguments
+  const std::string arg1((argc>=1) ? argv[0] : "");
+  const std::string arg2((argc>=2) ? argv[1] : "");
+  const std::string arg3((argc>=3) ? argv[2] : "");
+
+  // ************************************************************
+  // post-process the options
+  // ************************************************************
   // check that bloom filter n or kM are selected but not both
-  if ((has_b1n && has_b1kM) || (has_b2n && has_b2kM)) {
+  if ((has_bloom1_n && has_bloom1_kM) || (has_bloom2_n && has_bloom2_kM)) {
     std::cerr << "Error: either a Bloom filter n value or a bloom filter k:M value may be\n";
     std::cerr << "specified, but not both.  " << see_usage << "\n";
     exit(1);
@@ -427,244 +401,110 @@ int main(int argc,char **argv) {
               << ", which is the limit on this system.\n";
     exit(1);
   }
-*/
-
-  // now parse tokens that are not consumed by options
-  argc -= optind;
-  argv += optind;
-
-  // get the command
-  if (argc < 1) {
-    std::cerr << "Error: a command must be provided.\n";
-    exit(1);
-  }
-  const std::string command(argv[0]);
-  argc--;
-  argv++;
-
-  // get any arguments
-//zz not yet  const int num_args = argc;
-  const std::string arg1((argc>=1) ? argv[0] : "");
-  const std::string arg2((argc>=2) ? argv[1] : "");
-  const std::string arg3((argc>=3) ? argv[2] : "");
 
   // generate usable repository name if one is not provided
-  // this works globally because all commands that use hashdb_runtime_options.repository_name
+  // this works globally because all commands that use repository_name
   // uniformly require arg1
-  if (hashdb_runtime_options.repository_name == "") {
-    hashdb_runtime_options.repository_name = "repository_" + arg1;
+  if (repository_name == "") {
+    repository_name = "repository_" + arg1;
   }
 
   // ************************************************************
   // run the command
+//    require_no_hashdb_settings();
+//    require_no_bloom_filter_settings();
+//    require_no_repository_name();
+//    require_parameter_count(1);
   // ************************************************************
-// create       a new hashdb
-// import       hashes from DFXML to hashdb
-// export       hashdb to a DFXML file
-// copy         hashdb to second hashdb
-// merge        hashdb1 and hashdb2 into hashdb3
-// remove       hashes in hashdb1 from hashdb2
-// remove_dfxml hashes in dfxml from hashdb
-// deduplicate  some or all hash duplicates
-// rebuild_bloom rebuild bloom filters
-// query_hash   print hashes in DFXML file that match hashdb
-// get_hash_source create file with hash sources from identified_blocks.txt
-// get_hashdb_info show hashdb database statistics
-// server       run as server
 
   if (command == "create") {
-    // etc.
-  }
-
-/*
-  // copy
-  // copy hashes from dfxml or hashdb to new or existing hashdb
-  if (command == COMMAND_COPY) {
-    // validate argument count
-    if (num_args != 2) {
-      std::cerr << "The copy command requires 2 parameters.  " << see_usage << "\n";
-      exit(1);
-    }
-std::cerr << "copy.a num args " << num_args << " arg1: '" << arg1 << "' arg2: '" << arg2 << "' arg3: '" << arg3 << "'\n";
-
-    // copy dfxml to new hashdb
-    if (is_dfxml(arg1) && !is_present(arg2)) {
-      no_has_server_socket_endpoint(ACTION_COPY_DFXML_NEW);
-      no_has_exclude_duplicates(ACTION_COPY_DFXML_NEW);
-
-      create_hashdb(arg2, hashdb_settings);
-      commands_t::do_copy_new_dfxml(arg1, hashdb_runtime_options.repository_name, arg2);
-
-    // copy dfxml modifying existing hashdb
-    } else if (is_dfxml(arg1) && is_hashdb(arg2)) {
-      no_has_tuning(ACTION_COPY_DFXML_EXISTING);
-      no_has_tuning_bloom(ACTION_COPY_DFXML_EXISTING);
-      no_has_server_socket_endpoint(ACTION_COPY_DFXML_EXISTING);
-      no_has_exclude_duplicates(ACTION_COPY_DFXML_EXISTING);
-
-      commands_t::do_copy_dfxml(arg1, hashdb_runtime_options.repository_name, arg2);
-
-    // copy hashdb to new hashdb
-    } else if (is_hashdb(arg1) && !is_present(arg2) && !has_exclude_duplicates) {
-      no_has_repository_name(ACTION_COPY_NEW);
-      no_has_server_socket_endpoint(ACTION_COPY_NEW);
-
-      create_hashdb(arg2, hashdb_settings);
-      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_NEW);
-      commands_t::do_copy_new(arg1, arg2);
-
-    // copy hashdb to new hashdb, excluding all duplicates
-    } else if (is_hashdb(arg1) && !is_present(arg2) && has_exclude_duplicates) {
-      no_has_repository_name(ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
-      no_has_server_socket_endpoint(ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
-
-      create_hashdb(arg2, hashdb_settings);
-      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_NEW_EXCLUDE_DUPLICATES);
-      commands_t::do_copy_new_exclude_duplicates(arg1, arg2, hashdb_runtime_options.exclude_duplicates_count);
-
-    // copy hashdb to existing hashdb
-    } else if (is_hashdb(arg1) && is_hashdb(arg2)) {
-      no_has_tuning(ACTION_COPY_EXISTING);
-      no_has_tuning_bloom(ACTION_COPY_EXISTING);
-      no_has_repository_name(ACTION_COPY_EXISTING);
-      no_has_server_socket_endpoint(ACTION_COPY_EXISTING);
-      no_has_exclude_duplicates(ACTION_COPY_EXISTING);
-
-      require_hash_block_sizes_match(arg1, arg2, ACTION_COPY_EXISTING);
-      commands_t::do_copy(arg1, arg2);
-
-    // else something went wrong
-    } else {
-      // program error if here
-      std::cerr << "The copy command failed.  Please check the filenames provided.\n";
-      exit(1);
-    }
-
-  // remove
-  // remove hashes in dfxml or hashdb from hashdb
-  } else if (command == COMMAND_REMOVE) {
-    // validate argument count
-    if (num_args != 2) {
-      std::cerr << "The remove command requires 2 parameters.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    // remove dfxml from hashdb
-    if (is_dfxml(arg1) && is_hashdb(arg2)) {
-      no_has_tuning(ACTION_REMOVE_DFXML);
-      no_has_tuning_bloom(ACTION_REMOVE_DFXML);
-      no_has_server_socket_endpoint(ACTION_REMOVE_DFXML);
-      no_has_exclude_duplicates(ACTION_REMOVE_DFXML);
-
-      commands_t::do_remove_dfxml(arg1, hashdb_runtime_options.repository_name, arg2);
-
-    // remove hashdb from hashdb
-    } else if (is_hashdb(arg1) && is_hashdb(arg2)) {
-      no_has_tuning(ACTION_REMOVE);
-      no_has_tuning_bloom(ACTION_REMOVE);
-      no_has_repository_name(ACTION_REMOVE);
-      no_has_server_socket_endpoint(ACTION_REMOVE);
-      no_has_exclude_duplicates(ACTION_REMOVE);
-
-      require_hash_block_sizes_match(arg1, arg2, ACTION_REMOVE);
-      commands_t::do_remove(arg1, arg2);
-
-    // else something went wrong
-    } else {
-      // program error if here
-      std::cerr << "The remove command failed.  Please check the filenames provided.\n";
-      exit(1);
-    }
-
-  // merge
-  // merge hashes in hashdb 1 and hashdb into new hashdb3
-  } else if (command == COMMAND_MERGE) {
-    // validate argument count
-    if (num_args != 3) {
-      std::cerr << "The merge command requires 3 parameters.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    no_has_repository_name(ACTION_MERGE);
-    no_has_server_socket_endpoint(ACTION_MERGE);
-    no_has_exclude_duplicates(ACTION_MERGE);
-
-    create_hashdb(arg3, hashdb_settings);
-    require_hash_block_sizes_match(arg1, arg2, ACTION_MERGE);
-    require_hash_block_sizes_match(arg1, arg3, ACTION_MERGE);
-    commands_t::do_merge(arg1, arg2, arg3);
-
-  // rebuild bloom
-  // rebuild hashdb bloom filters
-  } else if (command == COMMAND_REBUILD_BLOOM) {
-    // validate argument count
-    if (num_args != 1) {
-      std::cerr << "The rebuild_bloom command requires 1 parameter.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    no_has_tuning(ACTION_REBUILD_BLOOM);
-    no_has_repository_name(ACTION_REBUILD_BLOOM);
-    no_has_server_socket_endpoint(ACTION_REBUILD_BLOOM);
-    no_has_exclude_duplicates(ACTION_REBUILD_BLOOM);
-
-    // change existing bloom settings
-    reset_bloom_filters(arg1, hashdb_settings);
-    commands_t::do_rebuild_bloom(arg1);
-
-  // export
-  // export hashes in hashdb to dfxml
-  } else if (command == COMMAND_EXPORT) {
-    // validate argument count
-    if (num_args != 2) {
-      std::cerr << "The export command requires 2 parameters.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    no_has_tuning(ACTION_EXPORT);
-    no_has_tuning_bloom(ACTION_EXPORT);
-    no_has_repository_name(ACTION_EXPORT);
-    no_has_server_socket_endpoint(ACTION_EXPORT);
-    no_has_exclude_duplicates(ACTION_EXPORT);
-
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::create(hashdb_settings, arg1);
+  } else if (command == "import") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_parameter_count(2);
+    commands_t::import(repository_name, arg1, arg2);
+  } else if (command == "export") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
     commands_t::do_export(arg1, arg2);
-
-  // info
-  // info for hashdb
-  } else if (command == COMMAND_INFO) {
-    // validate argument count
-    if (num_args != 1) {
-      std::cerr << "The info command requires 1 parameter.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    no_has_tuning(ACTION_INFO);
-    no_has_tuning_bloom(ACTION_INFO);
-    no_has_repository_name(ACTION_INFO);
-    no_has_exclude_duplicates(ACTION_INFO);
-
-    commands_t::do_info(arg1);
-
-  // server
-  // server accessing hashdb
-  } else if (command == COMMAND_SERVER) {
-    // validate argument count
-    if (num_args != 1) {
-      std::cerr << "The server command requires 1 parameter.  " << see_usage << "\n";
-      exit(1);
-    }
-
-    no_has_tuning(ACTION_SERVER);
-    no_has_tuning_bloom(ACTION_SERVER);
-    no_has_repository_name(ACTION_SERVER);
-    no_has_exclude_duplicates(ACTION_SERVER);
-
-    commands_t::do_server(arg1, hashdb_runtime_options.server_socket_endpoint);
-
+  } else if (command == "copy") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::copy(arg1, arg2);
+  } else if (command == "merge") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(3);
+    commands_t::merge(arg1, arg2, arg3);
+  } else if (command == "remove") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::remove(arg1, arg2);
+  } else if (command == "remove_all") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::remove_all(arg1, arg2);
+  } else if (command == "remove_dfxml") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_parameter_count(2);
+    commands_t::remove_dfxml(repository_name, arg1, arg2);
+  } else if (command == "remove_all_dfxml") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::remove_all_dfxml(arg1, arg2);
+  } else if (command == "deduplicate") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::deduplicate(arg1);
+  } else if (command == "rebuild_bloom") {
+    require_no_hashdb_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::rebuild_bloom(hashdb_settings, arg1);
+  } else if (command == "server") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::server(arg1, arg2);
+  } else if (command == "query_hash") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::query_hash(arg1, arg2);
+  } else if (command == "get_hash_source") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(3);
+    commands_t::get_hash_source(arg1, arg2, arg3);
+  } else if (command == "get_hashdb_info") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::get_hashdb_info(arg1);
   } else {
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }
-*/
 
   // done
   return 0;

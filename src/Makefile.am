@@ -19,7 +19,7 @@
 
 # This file assists in building the hashdb_manager tool.
 
-bin_PROGRAMS = hashdb_manager hashdb
+bin_PROGRAMS = hashdb
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -112,9 +112,9 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
 
-hashdb_manager_SOURCES = \
-	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
-	$(BTREE_INCS) $(ENDIAN_INCS)
+#hashdb_manager_SOURCES = \
+#	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
+#	$(BTREE_INCS) $(ENDIAN_INCS)
 
 hashdb_SOURCES = \
 	main.cpp \

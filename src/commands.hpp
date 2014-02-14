@@ -24,17 +24,22 @@
 
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-#include "hashdb_types.h"
-#include "settings.hpp"
-#include "hashdb_filenames.hpp"
+//#include "hashdb_types.h"
+#include "command_line.hpp"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 #include "history_manager.hpp"
-#include "hashdb_db_manager.hpp"
+#include "hashdb_manager.hpp"
+#include "logger.hpp"
+//#include "hashdb_db_manager.hpp"
+
+/*
 #include "dfxml_hashdigest_reader.hpp"
 #include "hashdb_exporter.hpp"
 #include "query_by_socket_server.hpp"
 #include "dfxml/src/dfxml_writer.h"
-#include "command_line.hpp"
 #include "source_lookup_encoding.hpp"
+*/
 
 // Standard includes
 #include <cstdlib>
@@ -50,34 +55,100 @@
  * This totally static class is a class rather than an namespace
  * so it can have private members.
  */
+
+// file modes:
+// READ_ONLY, RW_NEW, RW_MODIFY
+
 class commands_t {
-  private:
-  static bool is_new;
-  static dfxml_writer* x;
+  public:
 
-  static const std::string COMMAND_COPY_NEW_DFXML;
-  static const std::string COMMAND_COPY_NEW;
-  static const std::string COMMAND_COPY_DFXML;
-  static const std::string COMMAND_COPY;
-  static const std::string COMMAND_COPY_EXCLUDE_DUPLICATES;
-  static const std::string COMMAND_REMOVE_DFXML;
-  static const std::string COMMAND_REMOVE;
-  static const std::string COMMAND_MERGE;
-  static const std::string COMMAND_REBUILD_BLOOM;
-/*
-  static bool is_new = false;
-  static dfxml_writer* x = 0;
+  // create
+  static void create(const hashdb_settings_t& settings,
+                     const std::string& hashdb_dir) {
+    hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_NEW);
 
-  static const std::string COMMAND_COPY_NEW_DFXML("copy_new_dfxml");
-  static const std::string COMMAND_COPY_NEW("copy_new");
-  static const std::string COMMAND_COPY_DFXML("copy_dfxml");
-  static const std::string COMMAND_COPY("copy");
-  static const std::string COMMAND_COPY_EXCLUDE_DUPLICATES("copy_exclude_duplicates");
-  static const std::string COMMAND_REMOVE_DFXML("remove_dfxml");
-  static const std::string COMMAND_REMOVE("remove");
-  static const std::string COMMAND_MERGE("merge");
-  static const std::string COMMAND_REBUILD_BLOOM("rebuild_bloom");
-*/
+    logger_t logger(hashdb_dir, "create");
+    logger.add_hashdb_settings(settings);
+  }
+
+  // import
+  static void import(const std::string& repository_name,
+                     const std::string& dfxml_file,
+                     const std::string& hashdb_dir) {
+
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+
+
+  }
+
+  // export
+  static void do_export(const std::string& hashdb_dir,
+                        const std::string& dfxml_file) {
+  }
+
+  // copy
+  static void copy(const std::string& hashdb_dir1,
+                   const std::string& hashdb_dir2) {
+  }
+
+  // merge
+  static void merge(const std::string& hashdb_dir1,
+                    const std::string& hashdb_dir2,
+                    const std::string& hashdb_dir3) {
+  }
+
+  // remove
+  static void remove(const std::string& hashdb_dir1,
+                     const std::string& hashdb_dir2) {
+  }
+
+  // remove all
+  static void remove_all(const std::string& hashdb_dir1,
+                         const std::string& hashdb_dir2) {
+  }
+
+  // remove dfxml
+  static void remove_dfxml(const std::string& repository_name,
+                           const std::string& dfxml_file,
+                           const std::string& hashdb_dir) {
+  }
+
+  // remove all dfxml
+  static void remove_all_dfxml(const std::string& dfxml_file,
+                               const std::string& hashdb_dir) {
+  }
+
+  // deduplicate
+  static void deduplicate(const std::string& hashdb_dir) {
+  }
+
+  // rebuild bloom
+  static void rebuild_bloom(const hashdb_settings_t& settings,
+                            const std::string& hashdb_dir) {
+  }
+
+  // server
+  static void server(const std::string& hashdb_dir,
+                     const std::string& path_or_socket) {
+  }
+
+  // query hash
+  static void query_hash(const std::string& path_or_socket,
+                         const std::string& hashdb_dir) {
+  }
+
+  // get hash source
+  static void get_hash_source(const std::string& path_or_socket,
+                              const std::string& identified_blocks,
+                              const std::string& identified_sources) {
+  }
+
+  // get hashdb info
+  static void get_hashdb_info(const std::string& path_or_socket) {
+  }
+
+
 
 /*
   static void open_log(const std::string& hashdb_dir,
@@ -117,6 +188,7 @@ class commands_t {
   }
 */
 
+/*
   static void describe_none_inserted_dfxml() {
     std::cout << "No hashes were inserted from DFXML.  Possible causes:\n"
               << "    The \"-p\" option was not used by md5deep.\n"
@@ -164,15 +236,15 @@ class commands_t {
       hashdb_db_manager->remove_hash_element(hashdb_element, *logger);
     }
   };
+*/
 
   // ************************************************************
   // commands
   // ************************************************************
+/*
   public:
 
-  /**
-   * Import from DFXML to new hashdb
-   */
+  // * Import from DFXML to new hashdb
   static void do_copy_new_dfxml(const std::string& dfxml_infile,
                                 const std::string& repository_name,
                                 const std::string& hashdb_outdir) {
@@ -212,9 +284,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
-  /**
-   * Import from DFXML to existing hashdb
-   */
+  // * Import from DFXML to existing hashdb
   static void do_copy_dfxml(const std::string& dfxml_infile,
                             const std::string& repository_name,
                             const std::string& hashdb_outdir) {
@@ -250,9 +320,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
-  /**
-   * copy hashdb to new hashdb
-   */
+  // * copy hashdb to new hashdb
   static void do_copy_new(const std::string& hashdb_indir,
                           const std::string& hashdb_outdir) {
 
@@ -293,9 +361,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
-  /**
-   * copy hashdb to existing hashdb
-   */
+  // * copy hashdb to existing hashdb
   static void do_copy(const std::string& hashdb_indir,
                       const std::string& hashdb_outdir) {
 
@@ -333,9 +399,7 @@ class commands_t {
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
 
-  /**
-   * copy hashdb to new hashdb discarding duplicates
-   */
+  // * copy hashdb to new hashdb discarding duplicates
   static void do_copy_new_exclude_duplicates(const std::string& hashdb_indir,
                                              const std::string& hashdb_outdir,
                                              size_t exclude_duplicates_count) {
@@ -398,9 +462,7 @@ class commands_t {
     history_manager_t::merge_history_to_history(hashdb_indir, hashdb_outdir);
   }
 
-  /**
-   * remove DFXML hashes from existing hashdb
-   */
+  // * remove DFXML hashes from existing hashdb
   static void do_remove_dfxml(const std::string& dfxml_infile,
                               const std::string& repository_name,
                               const std::string& hashdb_outdir) {
@@ -436,9 +498,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
-  /**
-   * remove hashes in hashdb from existing hashdb
-   */
+  // * remove hashes in hashdb from existing hashdb
   static void do_remove(const std::string& hashdb_indir,
                         const std::string& hashdb_outdir) {
 
@@ -475,9 +535,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_outdir);
   }
 
-  /**
-   * Merge hashdb indir1 and hashdb indir2 into new hashdb outdir
-   */
+  // * Merge hashdb indir1 and hashdb indir2 into new hashdb outdir
   static void do_merge(const std::string& hashdb_indir1,
                        const std::string& hashdb_indir2,
                        const std::string& hashdb_outdir) {
@@ -543,9 +601,7 @@ class commands_t {
     history_manager_t::merge_history_to_history(hashdb_indir2, hashdb_outdir);
   }
 
-  /**
-   * Rebuild the Bloom filters
-   */
+  // * Rebuild the Bloom filters
   static void do_rebuild_bloom(const std::string& hashdb_indir) {
 
     hashdb_change_logger_t logger(hashdb_indir, COMMAND_REBUILD_BLOOM);
@@ -624,9 +680,7 @@ class commands_t {
     history_manager_t::append_log_to_history(hashdb_indir);
   }
  
-  /**
-   * export hashdb to dfxml
-   */
+  // * export hashdb to dfxml
   static void do_export(const std::string& hashdb_infile,
                         const std::string& dfxml_outfile) {
 
@@ -640,9 +694,7 @@ class commands_t {
     exporter.do_export(hashdb_in);
   }
 
-  /**
-   * information about hashdb including settings and usage statistics
-   */
+  // * information about hashdb including settings and usage statistics
   static void do_info(const std::string& hashdb_indir) {
 
     // get info
@@ -657,9 +709,7 @@ class commands_t {
     std::cout << info;
   }
 
-  /**
-   * provide server service
-   */
+  // * provide server service
   static void do_server(const std::string& hashdb_indir,
                         const std::string& socket_endpoint) {
 
@@ -677,7 +727,6 @@ class commands_t {
       }
     }
   }
-};
 
 bool commands_t::is_new = false;
 dfxml_writer* commands_t::x = 0;
@@ -691,6 +740,9 @@ const std::string commands_t::COMMAND_REMOVE_DFXML("remove_dfxml");
 const std::string commands_t::COMMAND_REMOVE("remove");
 const std::string commands_t::COMMAND_MERGE("merge");
 const std::string commands_t::COMMAND_REBUILD_BLOOM("rebuild_bloom");
+*/
+
+};
 
 #endif
 

@@ -24,8 +24,8 @@
  * and its associated repository_name, filename pair.
  */
 
-#ifndef SOURCE_LOOKUP_STORE_HPP
-#define SOURCE_LOOKUP_STORE_HPP
+#ifndef SOURCE_LOOKUP_INDEX_MANAGER_HPP
+#define SOURCE_LOOKUP_INDEX_MANAGER_HPP
 //#include "hashdb_types.h"
 //#include "settings.hpp"
 #include "dfxml/src/dfxml_writer.h"
