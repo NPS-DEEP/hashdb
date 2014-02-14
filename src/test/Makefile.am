@@ -33,7 +33,8 @@ bin_PROGRAMS = \
 	map_multimap_manager_test \
 	source_lookup_index_manager_test \
 	hashdb_iterator_test \
-	hashdb_manager_test
+	hashdb_manager_test \
+	dfxml_hashdigest_reader_iterator_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -276,6 +277,11 @@ hashdb_manager_test_SOURCES = \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdb_manager_test.cpp
+
+dfxml_hashdigest_reader_iterator_test_SOURCES = \
+	boost_fix.hpp \
+	../dfxml_hashdigest_reader.hpp \
+	dfxml_hashdigest_reader_iterator_test.cpp
 
 .PHONY: run_tests
 

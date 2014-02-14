@@ -71,7 +71,7 @@ class dfxml_hashdigest_reader_t {
     std::string repository_name;
     std::string filename;
     uint64_t byte_run_file_offset_attribute;
-    uint64_t byte_run_len_attribute;
+    uint32_t byte_run_len_attribute;
     std::string hashdigest_type_attribute;
     std::string hashdigest;
 
@@ -103,29 +103,29 @@ class dfxml_hashdigest_reader_t {
   // static sax handler helpers
   // ************************************************************
 
-  static void save_hashdigest(user_data_t& user_data) {
+  static void consume_hashdigest(user_data_t& user_data) {
 
-    // create hash source record with available attribute information in it
+    // pull together fields for the hashdb element
+
+    std::string hashdigest = user_data.hashdigest;
+    std::string hashdigest_type = user_data.hashdigest_type_attribute;
+    uint32_t hash_block_size = user_data.byte_run_len_attribute;
 
     // get the repository name from xml or use default
     std::string selected_repository_name = (user_data.has_repository_name) ?
                 user_data.repository_name : user_data.default_repository_name;
 
-    // create hash source record
-    hash_source_record_t hash_source_record(
-               user_data.byte_run_file_offset_attribute,
-               user_data.byte_run_len_attribute,
-               user_data.hashdigest_type_attribute,
+    std::string filename = user_data.filename;
+    uint64_t file_offset = user_data.byte_run_file_offset_attribute;
+
+    // create the hashdb element
+    hashdb_element_t hashdb_element(
+               hashdigest,
+               hashdigest_type,
+               hash_block_size,
                selected_repository_name,
-               user_data.filename);
-
-    // retype hashdigest to md5_t
-    md5_t md5=md5_t(md5_t::fromhex(user_data.hashdigest));
-
-//std::cout << "dfxml_hashdigest_reader_t::save_hashdigest hash source record " << md5 << ", " << hash_source_record << "\n";
-
-    // create hash element to be submitted to consumer
-    hashdb_element_t hashdb_element(md5, hash_source_record);
+               filename,
+               file_offset);
 
     // call the consumer
     user_data.consumer->consume(hashdb_element);
@@ -164,7 +164,7 @@ class dfxml_hashdigest_reader_t {
       } else if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("len"))) {
         std::string len_string((const char*)attributes[i+1]);
         try {
-          user_data.byte_run_len_attribute = boost::lexical_cast<size_t>(len_string);
+          user_data.byte_run_len_attribute = boost::lexical_cast<uint32_t>(len_string);
           user_data.has_byte_run_len_attribute = true;
         } catch(...) {
           // abort
@@ -286,8 +286,8 @@ class dfxml_hashdigest_reader_t {
       hashdigest_chars[len] = (char)NULL;
       user_data.hashdigest = std::string(hashdigest_chars);
 
-      // save hashdigest
-      save_hashdigest(user_data);
+      // consume hashdigest
+      consume_hashdigest(user_data);
 
       // hashdigest consumed the byte_run information
       user_data.has_byte_run_file_offset_attribute = false;

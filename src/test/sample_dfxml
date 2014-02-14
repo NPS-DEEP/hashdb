@@ -1,0 +1,279 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml xmloutputversion='1.0'>
+  <metadata 
+  xmlns='http://md5deep.sourceforge.net/md5deep/' 
+  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+  xmlns:dc='http://purl.org/dc/elements/1.1/'>
+    <dc:type>Hash List</dc:type>
+  </metadata>
+  <creator version='1.0'>
+    <program>MD5DEEP</program>
+    <version>4.3</version>
+    <build_environment>
+      <compiler>GCC 4.7</compiler>
+    </build_environment>
+    <execution_environment>
+      <os_sysname>Linux</os_sysname>
+      <os_release>3.8.9-200.fc18.x86_64</os_release>
+      <os_version>#1 SMP Fri Apr 26 12:50:07 UTC 2013</os_version>
+      <host>localhost.localdomain</host>
+      <arch>x86_64</arch>
+      <command_line>md5deep -p 4096 -d geotag-example.jpg</command_line>
+      <uid>1000</uid>
+      <start_time>2013-05-21T19:29:52Z</start_time>
+    </execution_environment>
+  </creator>
+  <configuration>
+    <algorithms>
+      <algorithm name='md5' enabled='1'/>
+      <algorithm name='sha1' enabled='0'/>
+      <algorithm name='sha256' enabled='0'/>
+      <algorithm name='tiger' enabled='0'/>
+      <algorithm name='whirlpool' enabled='0'/>
+    </algorithms>
+  </configuration>
+  <fileobject>
+    <filename>/home/bdallen/test_scan_sectorid/geotag-example.jpg</filename>
+    <filesize>304930</filesize>
+    <ctime>2013-05-21T19:28:26Z</ctime>
+    <mtime>2013-05-21T19:28:26Z</mtime>
+    <atime>2013-05-21T19:28:26Z</atime>
+    <byte_run file_offset='0' len='4096'>   
+      <hashdigest type='MD5'>f2b533fa7a01166798cbfcef3d8e940d</hashdigest>
+    </byte_run>
+    <byte_run file_offset='4096' len='4096'>   
+      <hashdigest type='MD5'>2d88a905a2dc14d8a562e95dc85188ab</hashdigest>
+    </byte_run>
+    <byte_run file_offset='8192' len='4096'>   
+      <hashdigest type='MD5'>3d43041dfbecf67e24681b968bb2c4d9</hashdigest>
+    </byte_run>
+    <byte_run file_offset='12288' len='4096'>   
+      <hashdigest type='MD5'>d11d6f95011d78bdf4cdd503304d95a1</hashdigest>
+    </byte_run>
+    <byte_run file_offset='16384' len='4096'>   
+      <hashdigest type='MD5'>a7ba44cf38056f1885ec7ce04c852627</hashdigest>
+    </byte_run>
+    <byte_run file_offset='20480' len='4096'>   
+      <hashdigest type='MD5'>dd343e5bfcc006b300701ef081d481cf</hashdigest>
+    </byte_run>
+    <byte_run file_offset='24576' len='4096'>   
+      <hashdigest type='MD5'>ea0cf0e718809558acac7d7d8399f66e</hashdigest>
+    </byte_run>
+    <byte_run file_offset='28672' len='4096'>   
+      <hashdigest type='MD5'>ca1c72ef609512e3c5f0e7e68608b704</hashdigest>
+    </byte_run>
+    <byte_run file_offset='32768' len='4096'>   
+      <hashdigest type='MD5'>ee769fe63d25bfe367085a8ff84722a2</hashdigest>
+    </byte_run>
+    <byte_run file_offset='36864' len='4096'>   
+      <hashdigest type='MD5'>382b284421b41afd1f82ce133c8c3318</hashdigest>
+    </byte_run>
+    <byte_run file_offset='40960' len='4096'>   
+      <hashdigest type='MD5'>f9fda996742ea0e6e1a0975a1876d9e0</hashdigest>
+    </byte_run>
+    <byte_run file_offset='45056' len='4096'>   
+      <hashdigest type='MD5'>88d399e3040d4405e64a4bb3db8f59a9</hashdigest>
+    </byte_run>
+    <byte_run file_offset='49152' len='4096'>   
+      <hashdigest type='MD5'>c74239160a8d97c2ef5bc7e62328c159</hashdigest>
+    </byte_run>
+    <byte_run file_offset='53248' len='4096'>   
+      <hashdigest type='MD5'>fd041d120ebab137481665f326b0d101</hashdigest>
+    </byte_run>
+    <byte_run file_offset='57344' len='4096'>   
+      <hashdigest type='MD5'>458d45446d40617956769a5262e5b4a2</hashdigest>
+    </byte_run>
+    <byte_run file_offset='61440' len='4096'>   
+      <hashdigest type='MD5'>40ba46b883b93597c91609c2712242aa</hashdigest>
+    </byte_run>
+    <byte_run file_offset='65536' len='4096'>   
+      <hashdigest type='MD5'>05c74cb8f06f8ee6629d6fbbff6e3318</hashdigest>
+    </byte_run>
+    <byte_run file_offset='69632' len='4096'>   
+      <hashdigest type='MD5'>903be613055c80083d355d75ec15b2bc</hashdigest>
+    </byte_run>
+    <byte_run file_offset='73728' len='4096'>   
+      <hashdigest type='MD5'>4ebec5818958cac2d7baf946df9840b9</hashdigest>
+    </byte_run>
+    <byte_run file_offset='77824' len='4096'>   
+      <hashdigest type='MD5'>9187d1875c188097d476f2ba3dcb184a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='81920' len='4096'>   
+      <hashdigest type='MD5'>221f9354df51affd16bbc6f06057046b</hashdigest>
+    </byte_run>
+    <byte_run file_offset='86016' len='4096'>   
+      <hashdigest type='MD5'>7940f17b2e47c468621c0d6b88398b98</hashdigest>
+    </byte_run>
+    <byte_run file_offset='90112' len='4096'>   
+      <hashdigest type='MD5'>e86a58c9a463f3ca3b558aa7688993c1</hashdigest>
+    </byte_run>
+    <byte_run file_offset='94208' len='4096'>   
+      <hashdigest type='MD5'>0a01fa6b7a3c4ba8ec3c52a1d91490b0</hashdigest>
+    </byte_run>
+    <byte_run file_offset='98304' len='4096'>   
+      <hashdigest type='MD5'>74fef9e5461f412e1df8ca5d9805319d</hashdigest>
+    </byte_run>
+    <byte_run file_offset='102400' len='4096'>   
+      <hashdigest type='MD5'>a2929e2d838b88973b4c4f3d7a96c6d9</hashdigest>
+    </byte_run>
+    <byte_run file_offset='106496' len='4096'>   
+      <hashdigest type='MD5'>5b9d3b025c7b824c620dc20bca29cb6f</hashdigest>
+    </byte_run>
+    <byte_run file_offset='110592' len='4096'>   
+      <hashdigest type='MD5'>4da6254d8259cdf49631f86d12552dff</hashdigest>
+    </byte_run>
+    <byte_run file_offset='114688' len='4096'>   
+      <hashdigest type='MD5'>47b61ab970174b7a601c81310c58ec63</hashdigest>
+    </byte_run>
+    <byte_run file_offset='118784' len='4096'>   
+      <hashdigest type='MD5'>37b21cf1e98a2fb1247144572d9aef6c</hashdigest>
+    </byte_run>
+    <byte_run file_offset='122880' len='4096'>   
+      <hashdigest type='MD5'>076440fbcefc5b10acd1647c5376cf7c</hashdigest>
+    </byte_run>
+    <byte_run file_offset='126976' len='4096'>   
+      <hashdigest type='MD5'>ca880683fee96782821abea81c1432d6</hashdigest>
+    </byte_run>
+    <byte_run file_offset='131072' len='4096'>   
+      <hashdigest type='MD5'>e3fa9793882de58e56c632e7ce532fe0</hashdigest>
+    </byte_run>
+    <byte_run file_offset='135168' len='4096'>   
+      <hashdigest type='MD5'>9a8a225ad894b5d30e85992351a85db3</hashdigest>
+    </byte_run>
+    <byte_run file_offset='139264' len='4096'>   
+      <hashdigest type='MD5'>2dd8644083ccf07ee0c9a57e02932bf4</hashdigest>
+    </byte_run>
+    <byte_run file_offset='143360' len='4096'>   
+      <hashdigest type='MD5'>acdc0c9e28b1705a11761b2516bda407</hashdigest>
+    </byte_run>
+    <byte_run file_offset='147456' len='4096'>   
+      <hashdigest type='MD5'>c30f4ac2b212e25680f486a11c628d5d</hashdigest>
+    </byte_run>
+    <byte_run file_offset='151552' len='4096'>   
+      <hashdigest type='MD5'>2764d2187f5359d6e4afe8c667dcdcad</hashdigest>
+    </byte_run>
+    <byte_run file_offset='155648' len='4096'>   
+      <hashdigest type='MD5'>a6bfcfe0449375ebfec6dc10df43f156</hashdigest>
+    </byte_run>
+    <byte_run file_offset='159744' len='4096'>   
+      <hashdigest type='MD5'>62f122b12972d7188c7c1574fdca707f</hashdigest>
+    </byte_run>
+    <byte_run file_offset='163840' len='4096'>   
+      <hashdigest type='MD5'>d9be3f9d01e2aebd61ea08d78afbb3cd</hashdigest>
+    </byte_run>
+    <byte_run file_offset='167936' len='4096'>   
+      <hashdigest type='MD5'>3aa7632f1ee299b2898925a3503f8006</hashdigest>
+    </byte_run>
+    <byte_run file_offset='172032' len='4096'>   
+      <hashdigest type='MD5'>1b23e40c8996fc9d5a5257ee5f160cc4</hashdigest>
+    </byte_run>
+    <byte_run file_offset='176128' len='4096'>   
+      <hashdigest type='MD5'>e39a81b99e8754e76981a4d8e164ce9f</hashdigest>
+    </byte_run>
+    <byte_run file_offset='180224' len='4096'>   
+      <hashdigest type='MD5'>ebd304755bd3f3eb6f2ff5ec1909f43b</hashdigest>
+    </byte_run>
+    <byte_run file_offset='184320' len='4096'>   
+      <hashdigest type='MD5'>4daca75308ec69faeee760b120ee5484</hashdigest>
+    </byte_run>
+    <byte_run file_offset='188416' len='4096'>   
+      <hashdigest type='MD5'>afd783a7761bdc4320ab51ddc33a65eb</hashdigest>
+    </byte_run>
+    <byte_run file_offset='192512' len='4096'>   
+      <hashdigest type='MD5'>98350faf19c4d760515338cd007979c8</hashdigest>
+    </byte_run>
+    <byte_run file_offset='196608' len='4096'>   
+      <hashdigest type='MD5'>7d924919317b36f9be8a85431c55b17b</hashdigest>
+    </byte_run>
+    <byte_run file_offset='200704' len='4096'>   
+      <hashdigest type='MD5'>224d1b9a10d0fbb4a50db4e0a8cdda61</hashdigest>
+    </byte_run>
+    <byte_run file_offset='204800' len='4096'>   
+      <hashdigest type='MD5'>d73a4a215b321e9f9af40b49cc3c62c0</hashdigest>
+    </byte_run>
+    <byte_run file_offset='208896' len='4096'>   
+      <hashdigest type='MD5'>1e74e9e05008efce076dc6ff5f29713a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='212992' len='4096'>   
+      <hashdigest type='MD5'>b7162dd11629a8d65f3af241a4bb543c</hashdigest>
+    </byte_run>
+    <byte_run file_offset='217088' len='4096'>   
+      <hashdigest type='MD5'>659cd7de6b5547b7fb5f06da103b2b3f</hashdigest>
+    </byte_run>
+    <byte_run file_offset='221184' len='4096'>   
+      <hashdigest type='MD5'>68a3e3643c7e3fdc7fff02997b80dd2c</hashdigest>
+    </byte_run>
+    <byte_run file_offset='225280' len='4096'>   
+      <hashdigest type='MD5'>26823afe3ba0e3a3fe46bec97d6564a2</hashdigest>
+    </byte_run>
+    <byte_run file_offset='229376' len='4096'>   
+      <hashdigest type='MD5'>32ba5c75d8e579a8c6f64af2ecf75188</hashdigest>
+    </byte_run>
+    <byte_run file_offset='233472' len='4096'>   
+      <hashdigest type='MD5'>921951600f21eac3dc88a38a4fec6ca5</hashdigest>
+    </byte_run>
+    <byte_run file_offset='237568' len='4096'>   
+      <hashdigest type='MD5'>fa7ee2903b4d87f22370c6d3ca07d4e8</hashdigest>
+    </byte_run>
+    <byte_run file_offset='241664' len='4096'>   
+      <hashdigest type='MD5'>9ac650f2ef13890793a8596fbc590c73</hashdigest>
+    </byte_run>
+    <byte_run file_offset='245760' len='4096'>   
+      <hashdigest type='MD5'>eeb322ddd82eeb9d699783d383783f23</hashdigest>
+    </byte_run>
+    <byte_run file_offset='249856' len='4096'>   
+      <hashdigest type='MD5'>26a8860e9c4f0dda1e08ca4a84548683</hashdigest>
+    </byte_run>
+    <byte_run file_offset='253952' len='4096'>   
+      <hashdigest type='MD5'>7283d85b5671735f5184e47a86c97a34</hashdigest>
+    </byte_run>
+    <byte_run file_offset='258048' len='4096'>   
+      <hashdigest type='MD5'>963b5bea95bbcfb3c7d1b880f50053d4</hashdigest>
+    </byte_run>
+    <byte_run file_offset='262144' len='4096'>   
+      <hashdigest type='MD5'>af049b30eed8b8d309a6759e75edf390</hashdigest>
+    </byte_run>
+    <byte_run file_offset='266240' len='4096'>   
+      <hashdigest type='MD5'>4d78257dc8e77fb753f281c41fcd0634</hashdigest>
+    </byte_run>
+    <byte_run file_offset='270336' len='4096'>   
+      <hashdigest type='MD5'>57cf9ef8e6aaf8ab9203bf96e51162cf</hashdigest>
+    </byte_run>
+    <byte_run file_offset='274432' len='4096'>   
+      <hashdigest type='MD5'>e1d002d33c15bceec91c85408ffb0b75</hashdigest>
+    </byte_run>
+    <byte_run file_offset='278528' len='4096'>   
+      <hashdigest type='MD5'>add3925071e75a29eb4728a8a3f89937</hashdigest>
+    </byte_run>
+    <byte_run file_offset='282624' len='4096'>   
+      <hashdigest type='MD5'>51caaaa192b9da57139163121e1c65f6</hashdigest>
+    </byte_run>
+    <byte_run file_offset='286720' len='4096'>   
+      <hashdigest type='MD5'>776c49d89c393a6f0b46a5c0d725e430</hashdigest>
+    </byte_run>
+    <byte_run file_offset='290816' len='4096'>   
+      <hashdigest type='MD5'>77bf861da52dbb4294435bbf1141b75e</hashdigest>
+    </byte_run>
+    <byte_run file_offset='294912' len='4096'>   
+      <hashdigest type='MD5'>9669ed2a96bc8d93ce15815cc01c34ab</hashdigest>
+    </byte_run>
+    <byte_run file_offset='299008' len='4096'>   
+      <hashdigest type='MD5'>b681623f4bb0cae15f87310c3b3c3d7c</hashdigest>
+    </byte_run>
+    <byte_run file_offset='303104' len='1826'>   
+      <hashdigest type='MD5'>035d762f2b28b20c0edbd1470d8e70cd</hashdigest>
+    </byte_run>
+    <hashdigest type='MD5'>732a289b7dd8c7dd28d4d73ed2480bcf</hashdigest>
+  </fileobject>
+  <rusage>
+    <utime>0.002000</utime>
+    <stime>0.004000</stime>
+    <maxrss>2468</maxrss>
+    <minflt>548</minflt>
+    <majflt>0</majflt>
+    <nswap>0</nswap>
+    <inblock>0</inblock>
+    <oublock>24</oublock>
+    <clocktime>0.004068</clocktime>
+  </rusage>
+</dfxml>
