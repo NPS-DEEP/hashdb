@@ -32,6 +32,7 @@
 #include "to_key_helper.hpp"
 #include "hashdb_element.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
+#include "dfxml_hashdigest_writer.hpp"
 
 /*
 static const char temp_dir[] = "temp_dir";
@@ -43,11 +44,17 @@ void run_tests() {
 
   dfxml_hashdigest_reader_manager_t manager("sample_dfxml", "my repository");
 
-  std::vector<hashdb_element_t>::const_iterator it = manager.begin();
+  dfxml_hashdigest_reader_manager_t::const_iterator it = manager.begin();
+
+//  std::vector<hashdb_element_t>::const_iterator it = manager.begin();
 
   size_t count = 0;
+
+  dfxml_hashdigest_writer_t writer("temp_dir/temp_dfxml_output");
+
   while (it != manager.end()) {
-std::cout << "value: " << it->hashdigest << "\n";
+    writer.add_hashdb_element(*it);
+//std::cout << "value: " << it->hashdigest << "\n";
     ++count;
     ++it;
   }

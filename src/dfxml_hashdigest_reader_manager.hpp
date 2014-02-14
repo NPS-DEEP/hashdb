@@ -64,6 +64,8 @@ class dfxml_hashdigest_reader_manager_t {
 
 
   public:
+  typedef std::vector<hashdb_element_t>::const_iterator const_iterator;
+
   // read dfxml into vector of elements
   dfxml_hashdigest_reader_manager_t(std::string p_dfxml_filename,
                                     std::string p_default_repository_name) :
