@@ -125,6 +125,8 @@ void require_no_repository_name() {
 void require_parameter_count(size_t count) {
   if (count != parameter_count) {
     std::cerr << "Incorrect number of parameters provided in this command.\n";
+    std::cerr << "Expected " << count
+              << ", but received " << parameter_count << ".\n";
     exit(1);
   }
 }
@@ -371,6 +373,7 @@ int main(int argc,char **argv) {
   argv++;
 
   // get any arguments
+  parameter_count = argc;
   const std::string arg1((argc>=1) ? argv[0] : "");
   const std::string arg2((argc>=2) ? argv[1] : "");
   const std::string arg3((argc>=3) ? argv[2] : "");

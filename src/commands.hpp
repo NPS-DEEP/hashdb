@@ -31,7 +31,8 @@
 #include "history_manager.hpp"
 #include "hashdb_manager.hpp"
 #include "logger.hpp"
-//#include "hashdb_db_manager.hpp"
+#include "dfxml_hashdigest_reader_manager.hpp"
+#include "dfxml_hashdigest_writer.hpp"
 
 /*
 #include "dfxml_hashdigest_reader.hpp"
@@ -66,9 +67,12 @@ class commands_t {
   static void create(const hashdb_settings_t& settings,
                      const std::string& hashdb_dir) {
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+
+    // get hashdb files to exist because other file modes require them
     hashdb_manager_t hashdb_manager(hashdb_dir, RW_NEW);
 
     logger_t logger(hashdb_dir, "create");
+    logger.add("hashdb_dir", hashdb_dir);
     logger.add_hashdb_settings(settings);
   }
 
@@ -77,14 +81,48 @@ class commands_t {
                      const std::string& dfxml_file,
                      const std::string& hashdb_dir) {
 
+    logger_t logger(hashdb_dir, "import");
+    logger.add("dfxml_file", dfxml_file);
+    logger.add("hashdb_dir", hashdb_dir);
+    logger.add("repository_name", repository_name);
+std::cout << "commands.import.aa\n";
     hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+std::cout << "commands.import.b\n";
+    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
 
+std::cout << "commands.import.c\n";
+    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
 
+std::cout << "commands.import.d\n";
+    hashdb_changes_t changes;
+std::cout << "commands.import.e\n";
+
+    logger.add_timestamp("begin import");
+std::cout << "commands.import.f\n";
+
+    while (it != reader_manager.end()) {
+std::cout << "commands.import.g\n";
+      hashdb_manager.insert(*it, changes);
+std::cout << "commands.import.h\n";
+    }
+std::cout << "commands.import.i\n";
+    logger.add_timestamp("end import");
+std::cout << "commands.import.j\n";
+    logger.add_hashdb_changes(changes);
+std::cout << "commands.import.k\n";
+
+    std::cout << changes << "\n";
   }
 
   // export
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    dfxml_hashdigest_writer_t writer(dfxml_file);
+    hashdb_iterator_t it = hashdb_manager.begin();
+    while (it != hashdb_manager.end()) {
+      writer.add_hashdb_element(*it);
+    }
   }
 
   // copy

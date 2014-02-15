@@ -137,5 +137,11 @@ class hashdb_changes_t {
   }
 };
 
+inline std::ostream& operator<<(std::ostream& os,
+                         const class hashdb_changes_t& changes) {
+  changes.report_changes(os);
+  return os;
+}
+
 #endif
 

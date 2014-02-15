@@ -79,11 +79,14 @@ class bi_store_t {
     } else if (file_mode == RW_MODIFY) {
 
       // RW_MODIFY
+std::cout << "bi_store.rw.a\n";
       index_by_key   = new index_by_key_t(idx1_filename, dat_filename,
                                           boost::btree::flags::read_write);
+std::cout << "bi_store.rw.b\n";
       index_by_value = new index_by_value_t(idx2_filename, index_by_key->file(),
                                           boost::btree::flags::read_write,
                                           -1, typename BI_T::value_ordering());
+std::cout << "bi_store.rw.c\n";
     }
   }
 

@@ -31,21 +31,27 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 AM_LDFLAGS = -static $(XML_LIBS)
 
 HASHDB_INCS = \
+	bi_64_pair_data.hpp \
+	bi_64_sv_data.hpp \
 	bi_data_types.hpp \
 	bi_store.hpp \
+	bloom_filter_calculator.hpp \
 	bloom_filter.hpp \
+	bloom_filter_manager.hpp \
 	commands.hpp \
-	command_line.cpp \
-	command_line.hpp \
 	dfxml_hashdigest_reader.hpp \
-	hashdb.cpp \
-	hashdb.hpp \
+	dfxml_hashdigest_reader_manager.hpp \
+	dfxml_hashdigest_writer.hpp \
+	file_modes.h \
+	hash_algorithm_types.h \
 	hashdb_change_logger.hpp \
+	hashdb_changes.hpp \
+	hashdb.cpp \
 	hashdb_db_info_provider.hpp \
-	hashdb_db_manager.hpp \
-	hashdb_exporter.hpp \
-	hashdb_filenames.cpp \
-	hashdb_filenames.hpp \
+	hashdb_element.hpp \
+	hashdb_element_lookup.hpp \
+	hashdb_element_lookup.hpp \
+	\
 	hashdb_manager.cpp \
 	hashdb_types.h \
 	hash_duplicates_store.hpp \
@@ -65,18 +71,6 @@ HASHDB_INCS = \
 	hashdb_settings_writer.hpp \
 	source_lookup_manager.hpp \
 	source_lookup_encoding.hpp
-
-DFXML_INCS = \
-	dfxml/src/hash_t.h \
-	dfxml/src/dfxml_writer.cpp \
-	dfxml/src/dfxml_writer.h \
-	dfxml/src/cppmutex.h
-
-MISC_INCS = \
-	misc/bloom.c \
-	misc/bloom.h \
-	misc/file_mapper.cpp \
-	misc/file_mapper.hpp
 
 # note: btree/tools/*.cpp files exist but are expected to be unused
 BTREE_INCS = \
@@ -112,6 +106,22 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
 
+COMMAND_LINE_INCS = \
+	command_line.cpp \
+	command_line.hpp
+
+BLOOM_INCS = \
+	misc/bloom.c \
+	misc/bloom.h \
+	misc/file_mapper.cpp \
+	misc/file_mapper.hpp
+
+DFXML_INCS = \
+	dfxml/src/hash_t.h \
+	dfxml/src/dfxml_writer.cpp \
+	dfxml/src/dfxml_writer.h \
+	dfxml/src/cppmutex.h
+
 #hashdb_manager_SOURCES = \
 #	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
 #	$(BTREE_INCS) $(ENDIAN_INCS)
@@ -119,5 +129,7 @@ ENDIAN_INCS = \
 hashdb_SOURCES = \
 	main.cpp \
 	usage.hpp \
-	command_line.cpp \
-	command_line.hpp
+	$(COMMAND_LINE_INCS) \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	$(BLOOM_INCS) $(DFXML_INCS)
+

@@ -39,7 +39,7 @@
 #include <libxml/parser.h>
 //#include "hashdb_types.h"
 #include "hashdb_settings.hpp"
-#include "hashdb_filenames.hpp"
+//#include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <sstream>

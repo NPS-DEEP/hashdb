@@ -59,10 +59,12 @@ class hashdb_manager_t {
                 md5_manager(0),
                 sha1_manager(0),
                 sha256_manager(0) {
+std::cout << "hashdb_manager.a\n";
 
     // initialize the map_multimap_manager appropriate for the settings
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
+std::cout << "hashdb_manager.b\n";
         md5_manager = new map_multimap_manager_t<md5_t>(hashdb_dir, file_mode);
         return;
       case HASHDIGEST_SHA1:
@@ -73,6 +75,7 @@ class hashdb_manager_t {
         return;
       default: assert(0);
     }
+std::cout << "hashdb_manager.c\n";
   }
 
   ~hashdb_manager_t() {
