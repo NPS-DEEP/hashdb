@@ -87,6 +87,10 @@ class logger_t {
     x.add_rusage();
     x.pop(); // command
     x.pop(); // log
+
+    // mark this logger as closed
+    x.flush();
+    closed = true;
   }
 
   /**

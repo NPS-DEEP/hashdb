@@ -46,6 +46,10 @@ class dfxml_hashdigest_reader_manager_t {
   const std::string default_repository_name;
   std::vector<hashdb_element_t>* elements;
 
+  // do not allow copy or assignment
+  dfxml_hashdigest_reader_manager_t(const dfxml_hashdigest_reader_manager_t&);
+  dfxml_hashdigest_reader_manager_t& operator=(const dfxml_hashdigest_reader_manager_t&);
+
   // internal consumer for vector
   // during initialization, this reader uses this consumer with
   // dfxml_hashdigest_reader's static do_read() function.

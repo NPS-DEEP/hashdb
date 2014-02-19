@@ -19,11 +19,13 @@
 
 /**
  * \file
- * Provides factory helper.
+ * Provides factory helper for obtaining a hashdb element from a
+ * hashdigest, source_lookup_encoding pair.
+ * Contains reference to source_lookup_index_manager to perform the lookup.
  */
 
-#ifndef HASHDB_ELEMENT_HELPER_HPP
-#define HASHDB_ELEMENT_HELPER_HPP
+#ifndef HASHDB_ELEMENT_LOOKUP_HPP
+#define HASHDB_ELEMENT_LOOKUP_HPP
 
 #include <cstring>
 #include <stdint.h>
@@ -47,34 +49,12 @@ class hashdb_element_lookup_t {
                    settings(p_settings) {
   }
 
-/*
-  hashdb_element_lookup_t() :
-                   source_lookup_index_manager(0),
-                   settings(0) {
-  }
-*/
-
-/*
-  // Beware that I am not properly managing pointers here.
-  hashdb_element_lookup_t(const hashdb_element_lookup_t& other) :
-               source_lookup_index_manager(other.source_lookup_index_manager),
-               settings(other.settings) {
-  }
-
-  // Beware that I am not properly managing pointers here.
-  hashdb_element_lookup_t& operator=(const hashdb_element_lookup_t& other) {
-    this->source_lookup_index_manager = other.source_lookup_index_manager;
-    this->settings = other.settings;
-    return *this;
-  }
-*/
-
   bool operator==(const hashdb_element_lookup_t& other) const {
     // equal if same object
     return (source_lookup_index_manager == other.source_lookup_index_manager);
   }
 
-/* non-fancy
+/* non-fancy approach
   // lookup
   hashdb_element_t do_lookup(
              const std::pair<hashdigest_t, uint64_t>& hashdb_pair) const {

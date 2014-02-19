@@ -133,7 +133,6 @@ class map_multimap_manager_t {
                                settings.bloom2_is_used,
                                settings.bloom2_M_hash_size,
                                settings.bloom2_k_hash_functions) {
-std::cout << "map_multimap_manager.a\n";
   }
 
   void emplace(const T& key, uint64_t source_lookup_encoding,

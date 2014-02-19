@@ -104,36 +104,57 @@ class hashdb_changes_t {
   }
 
   void report_changes(std::ostream& os) const {
+    bool has_insert_action = (hashes_inserted ||
+                              hashes_not_inserted_wrong_hash_block_size ||
+                              hashes_not_inserted_file_offset_not_aligned ||
+                              hashes_not_inserted_wrong_hashdigest_type ||
+                              hashes_not_inserted_exceeds_max_duplicates ||
+                              hashes_not_inserted_duplicate_element);
 
-    // log any insert changes to stdout
-    std::cout << "hashdb changes:\n";
-    if (hashes_inserted)
-     std::cout << "    hashes inserted=" << hashes_inserted << "\n";
-    if (hashes_not_inserted_wrong_hash_block_size)
-     std::cout << "    hashes not inserted, wrong hash block size=" << hashes_not_inserted_wrong_hash_block_size << "\n";
-    if (hashes_not_inserted_file_offset_not_aligned)
-     std::cout << "    hashes not inserted, file offset not aligned=" << hashes_not_inserted_file_offset_not_aligned << "\n";
-    if (hashes_not_inserted_wrong_hashdigest_type)
-     std::cout << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n";
-    if (hashes_not_inserted_exceeds_max_duplicates)
-     std::cout << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n";
-    if (hashes_not_inserted_duplicate_element)
-     std::cout << "    hashes not inserted, duplicate element=" << hashes_not_inserted_duplicate_element << "\n";
+    bool has_remove_action = (hashes_removed ||
+                              hashes_not_removed_wrong_hash_block_size ||
+                              hashes_not_removed_file_offset_not_aligned ||
+                              hashes_not_removed_wrong_hashdigest_type ||
+                              hashes_not_removed_no_hash ||
+                              hashes_not_removed_no_element); 
 
-    // log any remove changes to stdout
-      std::cout << "hashdb changes:\n";
-    if (hashes_removed)
-      std::cout << "    hashes removed=" << hashes_removed << "\n";
-    if (hashes_not_removed_wrong_hash_block_size)
-      std::cout << "    hashes not removed, wrong hash block size=" << hashes_not_removed_wrong_hash_block_size << "\n";
-    if (hashes_not_removed_file_offset_not_aligned)
-      std::cout << "    hashes not removed, file offset not aligned=" << hashes_not_removed_file_offset_not_aligned << "\n";
-    if (hashes_not_removed_wrong_hashdigest_type)
-      std::cout << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n";
-    if (hashes_not_removed_no_hash)
-      std::cout << "    hashes not removed, no hash=" << hashes_not_removed_no_hash << "\n";
-    if (hashes_not_removed_no_element)
-      std::cout << "    hashes not removed, no element=" << hashes_not_removed_no_element << "\n";
+    if (!has_insert_action && !has_remove_action) {
+      std::cout << "No hashdb changes.\n";
+    }
+
+    if (has_insert_action) {
+      // log any insert changes to stdout
+      std::cout << "hashdb changes (insert):\n";
+      if (hashes_inserted)
+       std::cout << "    hashes inserted=" << hashes_inserted << "\n";
+      if (hashes_not_inserted_wrong_hash_block_size)
+       std::cout << "    hashes not inserted, wrong hash block size=" << hashes_not_inserted_wrong_hash_block_size << "\n";
+      if (hashes_not_inserted_file_offset_not_aligned)
+       std::cout << "    hashes not inserted, file offset not aligned=" << hashes_not_inserted_file_offset_not_aligned << "\n";
+      if (hashes_not_inserted_wrong_hashdigest_type)
+       std::cout << "    hashes not inserted, wrong hashdigest type=" << hashes_not_inserted_wrong_hashdigest_type << "\n";
+      if (hashes_not_inserted_exceeds_max_duplicates)
+       std::cout << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n";
+      if (hashes_not_inserted_duplicate_element)
+       std::cout << "    hashes not inserted, duplicate element=" << hashes_not_inserted_duplicate_element << "\n";
+    }
+
+    if (has_remove_action) {
+      // log any remove changes to stdout
+        std::cout << "hashdb changes (remove):\n";
+      if (hashes_removed)
+        std::cout << "    hashes removed=" << hashes_removed << "\n";
+      if (hashes_not_removed_wrong_hash_block_size)
+        std::cout << "    hashes not removed, wrong hash block size=" << hashes_not_removed_wrong_hash_block_size << "\n";
+      if (hashes_not_removed_file_offset_not_aligned)
+        std::cout << "    hashes not removed, file offset not aligned=" << hashes_not_removed_file_offset_not_aligned << "\n";
+      if (hashes_not_removed_wrong_hashdigest_type)
+        std::cout << "    hashes not removed, wrong hashdigest type=" << hashes_not_removed_wrong_hashdigest_type << "\n";
+      if (hashes_not_removed_no_hash)
+        std::cout << "    hashes not removed, no hash=" << hashes_not_removed_no_hash << "\n";
+      if (hashes_not_removed_no_element)
+        std::cout << "    hashes not removed, no element=" << hashes_not_removed_no_element << "\n";
+    }
   }
 };
 

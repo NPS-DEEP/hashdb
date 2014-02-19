@@ -74,6 +74,10 @@ class commands_t {
     logger_t logger(hashdb_dir, "create");
     logger.add("hashdb_dir", hashdb_dir);
     logger.add_hashdb_settings(settings);
+
+    // create new history trail
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
   }
 
   // import
@@ -85,32 +89,23 @@ class commands_t {
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-std::cout << "commands.import.aa\n";
     hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
-std::cout << "commands.import.b\n";
     dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
 
-std::cout << "commands.import.c\n";
     dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
 
-std::cout << "commands.import.d\n";
     hashdb_changes_t changes;
-std::cout << "commands.import.e\n";
 
     logger.add_timestamp("begin import");
-std::cout << "commands.import.f\n";
 
     while (it != reader_manager.end()) {
-std::cout << "commands.import.g\n";
       hashdb_manager.insert(*it, changes);
-std::cout << "commands.import.h\n";
+      ++it;
     }
-std::cout << "commands.import.i\n";
     logger.add_timestamp("end import");
-std::cout << "commands.import.j\n";
     logger.add_hashdb_changes(changes);
-std::cout << "commands.import.k\n";
 
+    // also write changes to cout
     std::cout << changes << "\n";
   }
 
@@ -122,34 +117,186 @@ std::cout << "commands.import.k\n";
     hashdb_iterator_t it = hashdb_manager.begin();
     while (it != hashdb_manager.end()) {
       writer.add_hashdb_element(*it);
+      ++it;
     }
   }
 
   // copy
   static void copy(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
+
+    logger_t logger(hashdb_dir2, "copy");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin copy");
+    while (it1 != hashdb_manager1.end()) {
+      hashdb_manager2.insert(*it1, changes);
+      ++it1;
+    }
+    logger.add_timestamp("end copy");
+
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // merge
   static void merge(const std::string& hashdb_dir1,
                     const std::string& hashdb_dir2,
                     const std::string& hashdb_dir3) {
+
+    logger_t logger(hashdb_dir3, "merge");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add("hashdb_dir3", hashdb_dir3);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_iterator_t it2 = hashdb_manager2.begin();
+    hashdb_iterator_t it1_end = hashdb_manager1.end();
+    hashdb_iterator_t it2_end = hashdb_manager2.end();
+
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin merge");
+
+    // while elements are in both, insert ordered by key, prefering it1 first
+    while ((it1 != it1_end) && (it2 != it2_end)) {
+      if (it1->hashdigest <= it2->hashdigest) {
+        hashdb_manager3.insert(*it1, changes);
+        ++it1;
+      } else {
+        hashdb_manager3.insert(*it2, changes);
+        ++it2;
+      }
+    }
+
+    // hashdb1 or hashdb2 has become depleted so insert remaining elements
+    while (it1 != it1_end) {
+      hashdb_manager3.insert(*it1, changes);
+      ++it1;
+    }
+    while (it2 != it2_end) {
+      hashdb_manager3.insert(*it2, changes);
+      ++it2;
+    }
+
+
+    logger.add_timestamp("end merge");
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // remove
   static void remove(const std::string& hashdb_dir1,
                      const std::string& hashdb_dir2) {
+
+    logger_t logger(hashdb_dir2, "remove");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin remove");
+    while (it1 != hashdb_manager1.end()) {
+      hashdb_manager2.remove(*it1, changes);
+      ++it1;
+    }
+    logger.add_timestamp("end remove");
+
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // remove all
   static void remove_all(const std::string& hashdb_dir1,
                          const std::string& hashdb_dir2) {
+    // note: this could be optimised by using map_iterator on hashdb_dir1
+    // instead of using hashdb_iterator on hashdb_dir1.
+
+    logger_t logger(hashdb_dir2, "remove all");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin remove all");
+    while (it1 != hashdb_manager1.end()) {
+      hashdigest_t hashdigest(it1->hashdigest, it1->hashdigest_type);
+      hashdb_manager2.remove_key(hashdigest, changes);
+      ++it1;
+    }
+    logger.add_timestamp("end remove all");
+
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // remove dfxml
   static void remove_dfxml(const std::string& repository_name,
                            const std::string& dfxml_file,
                            const std::string& hashdb_dir) {
+
+    logger_t logger(hashdb_dir, "remove dfxml");
+    logger.add("dfxml_file", dfxml_file);
+    logger.add("hashdb_dir", hashdb_dir);
+    logger.add("repository_name", repository_name);
+    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+
+    hashdb_changes_t changes;
+
+    logger.add_timestamp("begin remove dfxml");
+
+    while (it != reader_manager.end()) {
+      hashdb_manager.remove(*it, changes);
+      ++it;
+    }
+    logger.add_timestamp("end remove dfxml");
+    logger.add_hashdb_changes(changes);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // remove all dfxml

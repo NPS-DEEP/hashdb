@@ -48,6 +48,10 @@ class hashdb_manager_t {
   map_multimap_manager_t<sha1_t>* sha1_manager;
   map_multimap_manager_t<sha256_t>* sha256_manager;
 
+  // do not allow copy or assignment
+  hashdb_manager_t(const hashdb_manager_t&);
+  hashdb_manager_t& operator=(const hashdb_manager_t&);
+
   public:
   hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_type_t p_file_mode) :
                 hashdb_dir(p_hashdb_dir),
@@ -59,12 +63,10 @@ class hashdb_manager_t {
                 md5_manager(0),
                 sha1_manager(0),
                 sha256_manager(0) {
-std::cout << "hashdb_manager.a\n";
 
     // initialize the map_multimap_manager appropriate for the settings
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-std::cout << "hashdb_manager.b\n";
         md5_manager = new map_multimap_manager_t<md5_t>(hashdb_dir, file_mode);
         return;
       case HASHDIGEST_SHA1:
@@ -75,7 +77,6 @@ std::cout << "hashdb_manager.b\n";
         return;
       default: assert(0);
     }
-std::cout << "hashdb_manager.c\n";
   }
 
   ~hashdb_manager_t() {

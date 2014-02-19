@@ -88,7 +88,7 @@ void usage() {
   << "\n"
   << "    Parameters:\n"
   << "    <source hashdb>       the hash database to copy hashes from\n"
-  << "    <destination hashdb>  the hash database to copy hashes to\n"
+  << "    <destination hashdb>  the hash database to copy hashes into\n"
   << "\n"
   << "merge <source hashdb 1> <source hashdb 2> <destination hashdb>\n"
   << "    Copies hashes from <source hashdb 1> and <source hashdb 2> into\n"

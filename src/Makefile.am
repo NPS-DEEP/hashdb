@@ -44,7 +44,6 @@ HASHDB_INCS = \
 	dfxml_hashdigest_writer.hpp \
 	file_modes.h \
 	hash_algorithm_types.h \
-	hashdb_change_logger.hpp \
 	hashdb_changes.hpp \
 	hashdb.cpp \
 	hashdb_db_info_provider.hpp \
