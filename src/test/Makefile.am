@@ -297,6 +297,9 @@ hashdb_map_only_manager_test_SOURCES = \
 	../hashdb_map_only_manager.hpp \
 	../hashdb_map_only_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(DFXML_INCS) \
 	hashdb_map_only_manager_test.cpp
 
 .PHONY: run_tests

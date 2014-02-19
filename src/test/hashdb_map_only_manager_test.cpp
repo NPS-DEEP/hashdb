@@ -37,18 +37,17 @@
 #include "hashdb_map_only_manager.hpp"
 #include "hashdb_map_only_iterator.hpp"
 #include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_map[] = "temp_dir/hash_store";
+static const char temp_settings[] = "temp_dir/settings.xml";
 
 template<typename T>
 void run_tests() {
 
   T key;
   std::pair<map_iterator_t<T>, bool> map_action_pair;
-
-  // clean up from any previous run
-  remove(temp_map);
 
   // perform setup inside control block so map_manager resources get released
   {
@@ -66,8 +65,6 @@ void run_tests() {
   hashdb_map_only_iterator_t end_it = manager.end();
 
   // see that count is correct
-//  uint32_t temp = it->second;
-//  BOOST_TEST_EQ(temp, 1);
   BOOST_TEST_EQ(it->second, 1);
 
   // verify end function
@@ -77,8 +74,18 @@ void run_tests() {
 
 int cpp_main(int argc, char* argv[]) {
 
+  hashdb_settings_t settings;
+  settings.hashdigest_type = HASHDIGEST_MD5;
+  remove(temp_settings);
+  hashdb_settings_manager_t::write_settings(std::string(temp_dir), settings);
   run_tests<md5_t>();
+  settings.hashdigest_type = HASHDIGEST_SHA1;
+  remove(temp_settings);
+  hashdb_settings_manager_t::write_settings(std::string(temp_dir), settings);
   run_tests<sha1_t>();
+  settings.hashdigest_type = HASHDIGEST_SHA256;
+  remove(temp_settings);
+  hashdb_settings_manager_t::write_settings(std::string(temp_dir), settings);
   run_tests<sha256_t>();
 
   // done
