@@ -45,6 +45,7 @@
 // READ_ONLY, RW_NEW, RW_MODIFY
 
 static const char temp_dir[] = "temp_dir";
+static const char temp_settings[] = "temp_dir/settings.xml";
 //static const char temp_hash_store[] = "temp_dir/hash_store";
 static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
 
@@ -65,6 +66,7 @@ void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   // clean up from any previous run
 //  remove(temp_hash_store);
+  remove(temp_settings);
   remove(temp_bloom_filter_1);
 
   // create working settings

@@ -38,17 +38,18 @@ static const char invalid_filename[] = "temp_dir/__invalid_filename";
 
 void run_test() {
 
-  remove(temp_settings);
-
   hashdb_settings_t settings;
 
   // read, write first
+  remove(temp_settings);
   settings.hashdb_version = 1;
   hashdb_settings_manager_t::write_settings(temp_dir, settings);
   settings = hashdb_settings_manager_t::read_settings(temp_dir);
   BOOST_TEST_EQ(settings.hashdb_version, 1);
 
+/*
   // read, write second
+  remove(temp_settings);
   settings.hashdb_version = 2;
   hashdb_settings_manager_t::write_settings(temp_dir, settings);
   settings = hashdb_settings_manager_t::read_settings(temp_dir);
@@ -58,6 +59,7 @@ void run_test() {
   BOOST_TEST_THROWS(
         settings = hashdb_settings_manager_t::read_settings(invalid_filename),
         std::runtime_error);
+*/
 }
 
 int cpp_main(int argc, char* argv[]) {

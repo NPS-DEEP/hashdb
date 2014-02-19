@@ -137,7 +137,7 @@ void run_map_rw_tests() {
 
 template<typename T, typename K>
 void run_map_ro_tests() {
-std::cout << "run_map_ro_tests\n";
+//std::cout << "run_map_ro_tests\n";
 
   typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
@@ -167,7 +167,7 @@ std::cout << "run_map_ro_tests\n";
 
 template<typename T, typename K>
 void run_multimap_rw_tests() {
-std::cout << "run_multimap_rw_tests\n";
+//std::cout << "run_multimap_rw_tests\n";
   typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
 
   // clean up from any previous run
@@ -294,7 +294,7 @@ std::cout << "run_multimap_rw_tests\n";
 
 template<typename T, typename K>
 void run_multimap_ro_tests() {
-std::cout << "run_multimap_ro_tests\n";
+//std::cout << "run_multimap_ro_tests\n";
   typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests

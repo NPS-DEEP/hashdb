@@ -48,9 +48,9 @@ inline std::string map_type_to_string(map_type_t type) {
 
 inline bool string_to_map_type(const std::string& name, map_type_t& type) {
   if (name == "btree")               { type = MAP_BTREE; return true; }
-  if (name == "flat_sorted-vector")  { type = MAP_FLAT_SORTED_VECTOR; return true; }
+  if (name == "flat-sorted-vector")  { type = MAP_FLAT_SORTED_VECTOR; return true; }
   if (name == "red-black-tree")      { type = MAP_RED_BLACK_TREE; return true; }
-  if (name == "unordered_hash")      { type = MAP_UNORDERED_HASH; return true; }
+  if (name == "unordered-hash")      { type = MAP_UNORDERED_HASH; return true; }
   type = MAP_BTREE;
   return false;
 }

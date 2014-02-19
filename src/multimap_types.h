@@ -48,9 +48,9 @@ inline std::string multimap_type_to_string(multimap_type_t type) {
 
 inline bool string_to_multimap_type(const std::string& name, multimap_type_t& type) {
   if (name == "btree")               { type = MULTIMAP_BTREE; return true; }
-  if (name == "flat_sorted-vector")  { type = MULTIMAP_FLAT_SORTED_VECTOR; return true; }
+  if (name == "flat-sorted-vector")  { type = MULTIMAP_FLAT_SORTED_VECTOR; return true; }
   if (name == "red-black-tree")      { type = MULTIMAP_RED_BLACK_TREE; return true; }
-  if (name == "unordered_hash")      { type = MULTIMAP_UNORDERED_HASH; return true; }
+  if (name == "unordered-hash")      { type = MULTIMAP_UNORDERED_HASH; return true; }
   type = MULTIMAP_BTREE;
   return false;
 }

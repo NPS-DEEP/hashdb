@@ -302,10 +302,64 @@ class commands_t {
   // remove all dfxml
   static void remove_all_dfxml(const std::string& dfxml_file,
                                const std::string& hashdb_dir) {
+
+    logger_t logger(hashdb_dir, "remove all dfxml");
+    logger.add("dfxml_file", dfxml_file);
+    logger.add("hashdb_dir", hashdb_dir);
+    std::string repository_name = "not used by remove_all_dfxml";
+    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+
+    hashdb_changes_t changes;
+
+    logger.add_timestamp("begin remove dfxml");
+
+    while (it != reader_manager.end()) {
+      hashdigest_t hashdigest(it1->hashdigest, it1->hashdigest_type);
+      hashdb_manager2.remove_key(hashdigest, changes);
+      ++it;
+    }
+    logger.add_timestamp("end remove dfxml");
+    logger.add_hashdb_changes(changes);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 
   // deduplicate
-  static void deduplicate(const std::string& hashdb_dir) {
+  static void deduplicate(const std::string& hashdb_dir1,
+                          const std::string& hashdb_dir2) {
+
+    // note: this could be optimised by using map_iterator on hashdb_dir1
+    // instead of using hashdb_iterator on hashdb_dir1.
+
+    logger_t logger(hashdb_dir2, "deduplicate");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin copy");
+    while (it1 != hashdb_manager1.end()) {
+      hashdb_manager2.insert(*it1, changes);
+      ++it1;
+    }
+    logger.add_timestamp("end copy");
+
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
+
   }
 
   // rebuild bloom

@@ -32,8 +32,10 @@
 #include "map_iterator.hpp"
 #include "multimap_manager.hpp"
 #include "multimap_iterator.hpp"
+#include "map_singles_iterator.hpp"
 #include "map_multimap_iterator.hpp"
 #include "bloom_filter_manager.hpp"
+#include "hashdb_settings_manager.hpp"
 #include "source_lookup_encoding.hpp"
 #include "file_modes.h"
 #include <vector>
@@ -295,12 +297,32 @@ class map_multimap_manager_t {
     return map_manager.has(key);
   }
 
+  /**
+   * Iterate over all elements.
+   */
   map_multimap_iterator_t<T> begin() {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
   }
 
+  /**
+   * Iterate over all elements.
+   */
   map_multimap_iterator_t<T> end() {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+  }
+
+  /**
+   * Iterate over all elements that have count=1.
+   */
+  map_singles_iterator_t<T> begin_singles() {
+    return map_singles_iterator_t<T>(&map_manager, false);
+  }
+
+  /**
+   * Iterate over all elements that have count=1.
+   */
+  map_singles_iterator_t<T> end_singles() {
+    return map_singles_iterator_t<T>(&map_manager, true);
   }
 
   size_t map_size() const {

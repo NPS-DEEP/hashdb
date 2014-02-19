@@ -90,8 +90,9 @@ Remove hashes in database 1 from database 2
 using a \mmi over database 1.
 \item \texttt{remove\_dfxml <DFXML file> <hashdb>} \\
 Remove hashes in the DFXML file from the database.
-\item \texttt{deduplicate <hashdb>} \\
-Removes all duplicates.
+\item \texttt{deduplicate <hashdb1> <hashdb2>} \\
+Copy hashes in hashdb1 to hashdb2,
+except for hashes that appear more than once.
 \item \texttt{rebuild\_bloom <bloom filter settings> <hashdb>} \\
 Rebuild the Bloom filters with new settings
 using a \mi over the given database.

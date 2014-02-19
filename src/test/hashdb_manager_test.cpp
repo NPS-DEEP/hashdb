@@ -38,6 +38,7 @@
 #include "file_modes.h"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
+#include "hashdb_singles_iterator.hpp"
 #include "hashdb_element.hpp"
 #include "dfxml/src/hash_t.h"
 
@@ -48,14 +49,58 @@
 
 static const char temp_dir[] = "temp_dir";
 //static const char temp_hash_store[] = "temp_dir/hash_store";
+static const char temp_settings[] = "temp_dir/settings.xml";
 static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
+static const char temp_hash_store[] = "temp_dir/hash_store";
+static const char temp_hash_duplicates_store[] = "temp_dir/hash_duplicates_store";
+/*
+static const char temp_source_lookup_store_dat[] = "temp_dir/source_lookup_store.dat";
+static const char temp_source_lookup_store_idx1[] = "temp_dir/source_lookup_store.idx1";
+static const char temp_source_lookup_store_idx2[] = "temp_dir/source_lookup_store.idx2";
+static const char temp_source_repository_name_store_dat[] = "temp_dir/source_repository_name_store.dat";
+static const char temp_source_repository_name_store_idx1[] = "temp_dir/source_repository_name_store.idx1";
+static const char temp_source_repository_name_store_idx2[] = "temp_dir/source_repository_name_store.idx2";
+static const char temp_source_filename_store_dat[] = "temp_dir/source_filename_store.dat";
+static const char temp_source_filename_store_idx1[] = "temp_dir/source_filename_store.idx1";
+static const char temp_source_filename_store_idx2[] = "temp_dir/source_filename_store.idx2";
+*/
 
+void write_settings(hashdigest_type_t hashdigest_type,
+                    map_type_t map_type,
+                    multimap_type_t multimap_type) {
+  // clean up from any previous run
+  remove(temp_settings);
+  remove(temp_bloom_filter_1);
+  remove(temp_hash_store);
+  remove(temp_hash_duplicates_store);
+/*
+  remove(temp_source_lookup_store_dat);
+  remove(temp_source_lookup_store_idx1);
+  remove(temp_source_lookup_store_idx2);
+  remove(temp_source_repository_name_store_dat);
+  remove(temp_source_repository_name_store_idx1);
+  remove(temp_source_repository_name_store_idx2);
+  remove(temp_source_filename_store_dat);
+  remove(temp_source_filename_store_idx1);
+  remove(temp_source_filename_store_idx2);
+*/
+
+  // create working settings
+  hashdb_settings_t settings;
+  settings.hashdigest_type = hashdigest_type;
+  settings.map_type = map_type;
+  settings.multimap_type = multimap_type;
+  settings.maximum_hash_duplicates = 2;
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+}
+
+template<typename T>
 void do_test(map_type_t map_type, multimap_type_t multimap_type) {
 
-  // valid sha1 values
-  sha1_t k1;
-  sha1_t k2;
-  sha1_t k3;
+  // valid hashdigest values
+  T k1;
+  T k2;
+  T k3;
   to_key(1, k1);
   to_key(2, k2);
   to_key(3, k3);
@@ -66,24 +111,12 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   hashdigest_t d2(k2);
   hashdigest_t d3(k3);
 
-  // md5 will be invalid since hashdb expects sha1
+  // md5 will be invalid if hashdb expects sha1
   md5_t k1_md5;
   to_key(1, k1_md5);
   hashdigest_t d1_md5(k1_md5);
 
   hashdb_element_t element;
-
-  // clean up from any previous run
-//  remove(temp_hash_store);
-  remove(temp_bloom_filter_1);
-
-  // create working settings
-  hashdb_settings_t settings;
-  settings.hashdigest_type = HASHDIGEST_SHA1;
-  settings.map_type = MAP_BTREE;
-  settings.multimap_type = MULTIMAP_BTREE;
-  settings.maximum_hash_duplicates = 2;
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
 
   // create working changes object
   hashdb_changes_t changes;
@@ -227,6 +260,11 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   ++it;
   BOOST_TEST_EQ((it == manager.end()), true);
 
+  // this is a good spot to test the hashdb singles iterator
+  hashdb_singles_iterator_t singles_it = manager.begin_singles();
+  BOOST_TEST_EQ(singles_it->hashdigest_type, "SHA1");
+  ++singles_it;
+  BOOST_TEST_EQ((singles_it == manager.end_singles()), true);
 
   // setup with two elements under one key and one element under another key
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -251,11 +289,20 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
 int cpp_main(int argc, char* argv[]) {
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
-  do_test(MAP_BTREE, MULTIMAP_BTREE);
-  do_test(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  do_test(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  do_test(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  do_test(MAP_BTREE, MULTIMAP_BTREE);
+  write_settings(HASHDIGEST_SHA1, MAP_BTREE, MULTIMAP_BTREE);
+  do_test<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
+
+  write_settings(HASHDIGEST_SHA1, MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+  do_test<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+
+  write_settings(HASHDIGEST_SHA1, MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+  do_test<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+
+  write_settings(HASHDIGEST_SHA1, MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+  do_test<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+
+  write_settings(HASHDIGEST_SHA1, MAP_BTREE, MULTIMAP_BTREE);
+  do_test<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
 
   // done
   int status = boost::report_errors();
