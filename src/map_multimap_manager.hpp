@@ -27,6 +27,7 @@
 #define MAP_MULTIMAP_MANAGER_HPP
 
 #include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
 #include "hashdb_changes.hpp"
 #include "map_manager.hpp"
 #include "map_iterator.hpp"
@@ -35,7 +36,6 @@
 #include "map_singles_iterator.hpp"
 #include "map_multimap_iterator.hpp"
 #include "bloom_filter_manager.hpp"
-#include "hashdb_settings_manager.hpp"
 #include "source_lookup_encoding.hpp"
 #include "file_modes.h"
 #include <vector>

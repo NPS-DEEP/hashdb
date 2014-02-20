@@ -240,24 +240,26 @@ class commands_t {
   // remove all
   static void remove_all(const std::string& hashdb_dir1,
                          const std::string& hashdb_dir2) {
-    // note: this could be optimised by using map_iterator on hashdb_dir1
-    // instead of using hashdb_iterator on hashdb_dir1.
+    // Uses hashdigest manager rather than hashdb manager
+    // to just iterate over hashes without
+    // iterating through hashdb elements that may have hash duplicates.
 
-    logger_t logger(hashdb_dir2, "remove all");
+    logger_t logger(hashdb_dir2, "remove_all");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdigest_manager_t hashdigest_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
-    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdigest_iterator_t hashdigest_it1 = hashdigest_manager1.begin();
     hashdb_changes_t changes;
-    logger.add_timestamp("begin remove all");
-    while (it1 != hashdb_manager1.end()) {
-      hashdigest_t hashdigest(it1->hashdigest, it1->hashdigest_type);
+    logger.add_timestamp("begin remove_all");
+    while (hashdigest_it1 != hashdigest_manager1.end()) {
+      hashdigest_t hashdigest(hashdigest_it1->hashdigest,
+                              hashdigest_it1->hashdigest_type);
       hashdb_manager2.remove_key(hashdigest, changes);
-      ++it1;
+      ++hashdigest_it1;
     }
-    logger.add_timestamp("end remove all");
+    logger.add_timestamp("end remove_all");
 
     logger.add_hashdb_changes(changes);
 
@@ -303,7 +305,7 @@ class commands_t {
   static void remove_all_dfxml(const std::string& dfxml_file,
                                const std::string& hashdb_dir) {
 
-    logger_t logger(hashdb_dir, "remove all dfxml");
+    logger_t logger(hashdb_dir, "remove_all_dfxml");
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     std::string repository_name = "not used by remove_all_dfxml";
@@ -314,14 +316,14 @@ class commands_t {
 
     hashdb_changes_t changes;
 
-    logger.add_timestamp("begin remove dfxml");
+    logger.add_timestamp("begin remove_all_dfxml");
 
     while (it != reader_manager.end()) {
       hashdigest_t hashdigest(it1->hashdigest, it1->hashdigest_type);
       hashdb_manager2.remove_key(hashdigest, changes);
       ++it;
     }
-    logger.add_timestamp("end remove dfxml");
+    logger.add_timestamp("end remove_all_dfxml");
     logger.add_hashdb_changes(changes);
 
     // also write changes to cout
@@ -332,23 +334,30 @@ class commands_t {
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
-    // note: this could be optimised by using map_iterator on hashdb_dir1
-    // instead of using hashdb_iterator on hashdb_dir1.
+    // Uses hashdb_map_only_iterator to iterate over hashes 
+    // iterating through hashdb elements that may have hash duplicates.
 
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdigest_manager_t hashdigest_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
-    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdigest_iterator_t hashdigest_it1 = hashdigest_manager1.begin();
     hashdb_changes_t changes;
-    logger.add_timestamp("begin copy");
-    while (it1 != hashdb_manager1.end()) {
-      hashdb_manager2.insert(*it1, changes);
-      ++it1;
+    logger.add_timestamp("begin deduplicate");
+    while (hashdigest_it1 != hashdigest_manager1.end()) {
+
+      // for deduplicate, only keep hashes whose count=1
+      if (hashdigest_it1->second == 1) {
+        // good, keep it
+        hashdb_manager2.insert(*hashdigest_it1, changes);
+      }
+
+      ++hashdigest_it1;
     }
-    logger.add_timestamp("end copy");
+
+    logger.add_timestamp("end deduplicate");
 
     logger.add_hashdb_changes(changes);
 
@@ -365,6 +374,30 @@ class commands_t {
   // rebuild bloom
   static void rebuild_bloom(const hashdb_settings_t& settings,
                             const std::string& hashdb_dir) {
+/*
+    // must iterate over all elements just to get hashdigest keys
+    // may optimise later by providing another iterator just for keys
+    logger_t logger(hashdb_dir, "rebuild_bloom");
+    logger.add("hashdb_dir", hashdb_dir);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_changes_t changes;
+    logger.add_timestamp("begin copy");
+    while (it1 != hashdb_manager1.end()) {
+      hashdb_manager2.insert(*it1, changes);
+      ++it1;
+    }
+    logger.add_timestamp("end copy");
+
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+*/
+
   }
 
   // server

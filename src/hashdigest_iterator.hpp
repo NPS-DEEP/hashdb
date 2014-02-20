@@ -19,38 +19,32 @@
 
 /**
  * \file
- * Provides a hashdb singles iterator which wraps map_singles_iterator_t<T>.
- * Dereferences through pair<hexdigest_string, source_lookup_encoding>
- * into hashdb_element using help from hashdb_element_lookup_t.
+ * Provides a hashdigest iterator which wraps map_multimap_iterator_t<T>.
+ * Dereferences to pair<hashdigest_string, uint32_t count>.
  */
 
-#ifndef HASHDB_SINGLES_ITERATOR_HPP
-#define HASHDB_SINGLES_ITERATOR_HPP
-#include "map_singles_iterator.hpp"
-#include "hashdb_element.hpp"
-#include "hashdb_element_lookup.hpp"
-#include "dfxml/src/hash_t.h"
+#ifndef HASHDIGEST_ITERATOR_HPP
+#define HASHDIGEST_ITERATOR_HPP
+#include "map_manager.hpp"
+#include "map_iterator.hpp"
+//#include "dfxml/src/hash_t.h"
 #include "hashdigest.hpp" // for string style hashdigest and hashdigest type
 #include "hashdigest_types.h"
 
-class hashdb_singles_iterator_t {
+class hashdigest_iterator_t {
   private:
 
   // the hashdigest type that this iterator will be using
   hashdigest_type_t hashdigest_type;
 
-  // external resource required for creating a hashdb_element
-  const hashdb_element_lookup_t hashdb_element_lookup;
-
-  // the hashdigest-specific iterators, one of which will be used,
-  // based on how hashdb_singles_iterator_t is instantiated
-  map_singles_iterator_t<md5_t> md5_iterator;
-  map_singles_iterator_t<sha1_t> sha1_iterator;
-  map_singles_iterator_t<sha256_t> sha256_iterator;
+  // one of these iterators will be used
+  map_iterator_t<md5_t> md5_iterator;
+  map_iterator_t<sha1_t> sha1_iterator;
+  map_iterator_t<sha256_t> sha256_iterator;
 
   // the dereferenced value
   bool dereferenced_value_is_cached;
-  hashdb_element_t dereferenced_value;
+  std::pair<hashdigest_t, uint32_t> dereferenced_value;
 
   // elemental forward iterator accessors are increment, equal, and dereference
   // increment
@@ -65,11 +59,7 @@ class hashdb_singles_iterator_t {
   }
 
   // equal
-  bool equal(hashdb_singles_iterator_t const& other) const {
-    // it is a program error if external resources differ
-    if (!(this->hashdb_element_lookup == other.hashdb_element_lookup)) {
-      assert(0);
-    }
+  bool equal(hashdigest_iterator_t const& other) const {
 
     // it is a program error if hashdigest types differ
     if (this->hashdigest_type != other.hashdigest_type) {
@@ -89,82 +79,76 @@ class hashdb_singles_iterator_t {
 
   // dereference
   void dereference() {
-    std::pair<hashdigest_t, uint64_t> hashdb_pair;
     switch(hashdigest_type) {
       case HASHDIGEST_MD5:
-        hashdb_pair = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(md5_iterator->first), md5_iterator->second);
+        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
+               hashdigest_t(md5_iterator->first),
+               source_lookup_encoding::get_count(md5_iterator->second));
         break;
       case HASHDIGEST_SHA1:
-        hashdb_pair = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(sha1_iterator->first), sha1_iterator->second);
+        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
+               hashdigest_t(sha1_iterator->first),
+               source_lookup_encoding::get_count(sha1_iterator->second));
         break;
       case HASHDIGEST_SHA256:
-        hashdb_pair = std::pair<hashdigest_t, uint64_t>(
-               hashdigest_t(sha256_iterator->first), sha256_iterator->second);
+        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
+               hashdigest_t(sha256_iterator->first),
+               source_lookup_encoding::get_count(sha256_iterator->second));
         break;
       default: assert(0);
     }
-
-    dereferenced_value = hashdb_element_lookup(hashdb_pair);
     dereferenced_value_is_cached = true;
   }
 
   public:
-  // the constructors for each map type using native iterators
-  hashdb_singles_iterator_t(map_singles_iterator_t<md5_t> map_singles_iterator,
-           const hashdb_element_lookup_t& p_hashdb_element_lookup) :
+  // the constructors for each map type
+  hashdigest_iterator_t(map_iterator_t<md5_t> map_iterator) :
                    hashdigest_type(HASHDIGEST_MD5),
-                   hashdb_element_lookup(p_hashdb_element_lookup),
-                   md5_iterator(map_singles_iterator),
+                   md5_iterator(map_iterator),
                    sha1_iterator(),
                    sha256_iterator(),
                    dereferenced_value_is_cached(false),
                    dereferenced_value() {
   }
-  hashdb_singles_iterator_t(map_singles_iterator_t<sha1_t> map_singles_iterator,
-           const hashdb_element_lookup_t& p_hashdb_element_lookup) :
+  hashdigest_iterator_t(map_iterator_t<sha1_t> map_iterator) :
                    hashdigest_type(HASHDIGEST_SHA1),
-                   hashdb_element_lookup(p_hashdb_element_lookup),
                    md5_iterator(),
-                   sha1_iterator(map_singles_iterator),
+                   sha1_iterator(map_iterator),
                    sha256_iterator(),
                    dereferenced_value_is_cached(false),
                    dereferenced_value() {
   }
-  hashdb_singles_iterator_t(map_singles_iterator_t<sha256_t> map_singles_iterator,
-           const hashdb_element_lookup_t& p_hashdb_element_lookup) :
+  hashdigest_iterator_t(map_iterator_t<sha256_t> map_iterator) :
                    hashdigest_type(HASHDIGEST_SHA256),
-                   hashdb_element_lookup(p_hashdb_element_lookup),
                    md5_iterator(),
                    sha1_iterator(),
-                   sha256_iterator(map_singles_iterator),
+                   sha256_iterator(map_iterator),
                    dereferenced_value_is_cached(false),
                    dereferenced_value() {
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=
-  hashdb_singles_iterator_t& operator++() {
+  hashdigest_iterator_t& operator++() {
     increment();
     return *this;
   }
-  hashdb_singles_iterator_t operator++(int) {  // c++11 delete would be better.
-    hashdb_singles_iterator_t temp(*this);
+  hashdigest_iterator_t operator++(int) {  // c++11 delete would be better.
+    hashdigest_iterator_t temp(*this);
     increment();
     return temp;
   }
-  hashdb_element_t& operator*() {
+  std::pair<hashdigest_t, uint32_t>& operator*() {
     dereference();
     return dereferenced_value;
   }
-  hashdb_element_t* operator->() {
+  std::pair<hashdigest_t, uint32_t>* operator->() {
     dereference();
     return &dereferenced_value;
   }
-  bool operator==(const hashdb_singles_iterator_t& other) const {
+  bool operator==(const hashdigest_iterator_t& other) const {
     return equal(other);
   }
-  bool operator!=(const hashdb_singles_iterator_t& other) const {
+  bool operator!=(const hashdigest_iterator_t& other) const {
     return !equal(other);
   }
 };

@@ -38,7 +38,6 @@
 #include "file_modes.h"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
-#include "hashdb_singles_iterator.hpp"
 #include "hashdb_element.hpp"
 #include "dfxml/src/hash_t.h"
 
@@ -259,12 +258,6 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ((*it).file_offset, 0);
   ++it;
   BOOST_TEST_EQ((it == manager.end()), true);
-
-  // this is a good spot to test the hashdb singles iterator
-  hashdb_singles_iterator_t singles_it = manager.begin_singles();
-  BOOST_TEST_EQ(singles_it->hashdigest_type, "SHA1");
-  ++singles_it;
-  BOOST_TEST_EQ((singles_it == manager.end_singles()), true);
 
   // setup with two elements under one key and one element under another key
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,

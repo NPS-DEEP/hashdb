@@ -31,7 +31,6 @@
 #include "map_multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
 #include "hashdb_iterator.hpp"
-#include "hashdb_singles_iterator.hpp"
 #include "hashdigest.hpp" // for string style hashdigest and hashdigest type
 #include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
@@ -275,38 +274,6 @@ class hashdb_manager_t {
                                               hashdb_element_lookup);
       case HASHDIGEST_SHA256:
         return hashdb_iterator_t(sha256_manager->end(),
-                                              hashdb_element_lookup);
-      default: assert(0);
-    }
-  }
-
-  // begin_singles
-  hashdb_singles_iterator_t begin_singles() const {
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        return hashdb_singles_iterator_t(md5_manager->begin_singles(),
-                                              hashdb_element_lookup);
-      case HASHDIGEST_SHA1:
-        return hashdb_singles_iterator_t(sha1_manager->begin_singles(),
-                                              hashdb_element_lookup);
-      case HASHDIGEST_SHA256:
-        return hashdb_singles_iterator_t(sha256_manager->begin_singles(),
-                                              hashdb_element_lookup);
-      default: assert(0);
-    }
-  }
-
-  // end singles
-  hashdb_singles_iterator_t end_singles() const {
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        return hashdb_singles_iterator_t(md5_manager->end_singles(),
-                                              hashdb_element_lookup);
-      case HASHDIGEST_SHA1:
-        return hashdb_singles_iterator_t(sha1_manager->end_singles(),
-                                              hashdb_element_lookup);
-      case HASHDIGEST_SHA256:
-        return hashdb_singles_iterator_t(sha256_manager->end_singles(),
                                               hashdb_element_lookup);
       default: assert(0);
     }
