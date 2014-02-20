@@ -20,7 +20,7 @@
 /**
  * \file
  * Provides a hashdigest iterator which wraps map_multimap_iterator_t<T>.
- * Dereferences to pair<hashdigest_string, uint32_t count>.
+ * Dereferences to pair<hashdigest_string, uint64_t>.
  */
 
 #ifndef HASHDIGEST_ITERATOR_HPP
@@ -44,7 +44,7 @@ class hashdigest_iterator_t {
 
   // the dereferenced value
   bool dereferenced_value_is_cached;
-  std::pair<hashdigest_t, uint32_t> dereferenced_value;
+  std::pair<hashdigest_t, uint64_t> dereferenced_value;
 
   // elemental forward iterator accessors are increment, equal, and dereference
   // increment
@@ -81,19 +81,17 @@ class hashdigest_iterator_t {
   void dereference() {
     switch(hashdigest_type) {
       case HASHDIGEST_MD5:
-        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
-               hashdigest_t(md5_iterator->first),
-               source_lookup_encoding::get_count(md5_iterator->second));
+        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
+               hashdigest_t(md5_iterator->first), md5_iterator->second);
+//               source_lookup_encoding::get_count(md5_iterator->second)
         break;
       case HASHDIGEST_SHA1:
-        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
-               hashdigest_t(sha1_iterator->first),
-               source_lookup_encoding::get_count(sha1_iterator->second));
+        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
+               hashdigest_t(sha1_iterator->first), sha1_iterator->second);
         break;
       case HASHDIGEST_SHA256:
-        dereferenced_value = std::pair<hashdigest_t, uint32_t>(
-               hashdigest_t(sha256_iterator->first),
-               source_lookup_encoding::get_count(sha256_iterator->second));
+        dereferenced_value = std::pair<hashdigest_t, uint64_t>(
+               hashdigest_t(sha256_iterator->first), sha256_iterator->second);
         break;
       default: assert(0);
     }
@@ -137,11 +135,11 @@ class hashdigest_iterator_t {
     increment();
     return temp;
   }
-  std::pair<hashdigest_t, uint32_t>& operator*() {
+  std::pair<hashdigest_t, uint64_t>& operator*() {
     dereference();
     return dereferenced_value;
   }
-  std::pair<hashdigest_t, uint32_t>* operator->() {
+  std::pair<hashdigest_t, uint64_t>* operator->() {
     dereference();
     return &dereferenced_value;
   }

@@ -208,7 +208,6 @@ int cpp_main(int argc, char* argv[]) {
 
   // done
   int status = boost::report_errors();
-  std::cout << "map_manager_test done.\n";
   return status;
 }
 

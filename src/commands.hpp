@@ -30,6 +30,9 @@
 #include "hashdb_settings_manager.hpp"
 #include "history_manager.hpp"
 #include "hashdb_manager.hpp"
+#include "hashdb_iterator.hpp"
+#include "hashdigest_manager.hpp"
+#include "hashdigest_iterator.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
@@ -254,8 +257,8 @@ class commands_t {
     hashdb_changes_t changes;
     logger.add_timestamp("begin remove_all");
     while (hashdigest_it1 != hashdigest_manager1.end()) {
-      hashdigest_t hashdigest(hashdigest_it1->hashdigest,
-                              hashdigest_it1->hashdigest_type);
+      hashdigest_t hashdigest(hashdigest_it1->first.hashdigest,
+                              hashdigest_it1->first.hashdigest_type);
       hashdb_manager2.remove_key(hashdigest, changes);
       ++hashdigest_it1;
     }
@@ -319,8 +322,8 @@ class commands_t {
     logger.add_timestamp("begin remove_all_dfxml");
 
     while (it != reader_manager.end()) {
-      hashdigest_t hashdigest(it1->hashdigest, it1->hashdigest_type);
-      hashdb_manager2.remove_key(hashdigest, changes);
+      hashdigest_t hashdigest(it->hashdigest, it->hashdigest_type);
+      hashdb_manager.remove_key(hashdigest, changes);
       ++it;
     }
     logger.add_timestamp("end remove_all_dfxml");
@@ -334,8 +337,7 @@ class commands_t {
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
-    // Uses hashdb_map_only_iterator to iterate over hashes 
-    // iterating through hashdb elements that may have hash duplicates.
+    // Uses hashdigest_manager to iterate over hashes.
 
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -343,15 +345,21 @@ class commands_t {
     hashdigest_manager_t hashdigest_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
+    // get resources for hashdb_element lookup
+    source_lookup_index_manager_t source_lookup_index_manager(hashdb_dir1, READ_ONLY);
+    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir1);
+    hashdb_element_lookup_t hashdb_element_lookup(&source_lookup_index_manager,
+                                                  &settings);
+
     hashdigest_iterator_t hashdigest_it1 = hashdigest_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin deduplicate");
     while (hashdigest_it1 != hashdigest_manager1.end()) {
 
       // for deduplicate, only keep hashes whose count=1
-      if (hashdigest_it1->second == 1) {
-        // good, keep it
-        hashdb_manager2.insert(*hashdigest_it1, changes);
+      if (source_lookup_encoding::get_count(hashdigest_it1->second) == 1) {
+        // good, use it
+        hashdb_manager2.insert(hashdb_element_lookup(*hashdigest_it1), changes);
       }
 
       ++hashdigest_it1;

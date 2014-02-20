@@ -49,7 +49,7 @@ AM_LDFLAGS = -static $(XML_LIBS)
 
 run_tests:
 	for test in $(bin_PROGRAMS); do \
-	  echo $$test ... ; \
+	  echo Begin $$test ... ; \
 	  ./$$test; \
 	done
 

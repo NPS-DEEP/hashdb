@@ -474,8 +474,8 @@ int main(int argc,char **argv) {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
-    require_parameter_count(1);
-    commands_t::deduplicate(arg1);
+    require_parameter_count(2);
+    commands_t::deduplicate(arg1, arg2);
   } else if (command == "rebuild_bloom") {
     require_no_hashdb_settings();
     require_no_repository_name();

@@ -99,7 +99,7 @@ void do_test() {
   hashdigest_iterator_t it = manager.begin();
 
   // check iterator
-  BOOST_TEST_EQ(it->second, 1);
+  BOOST_TEST_EQ(source_lookup_encoding::get_count(it->second), 1);
   ++it;
   BOOST_TEST_EQ((it == manager.end()), true);
 }
