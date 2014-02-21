@@ -40,7 +40,8 @@ class hashdb_iterator_t {
   hashdigest_type_t hashdigest_type;
 
   // external resource required for creating a hashdb_element
-  const hashdb_element_lookup_t hashdb_element_lookup;
+//  const hashdb_element_lookup_t hashdb_element_lookup;
+  hashdb_element_lookup_t hashdb_element_lookup;
 
   // the hashdigest-specific iterators, one of which will be used,
   // based on how hashdb_iterator_t is instantiated
@@ -143,7 +144,6 @@ class hashdb_iterator_t {
                    dereferenced_value() {
   }
 
-/*
   // this useless default constructor is required by std::pair
   hashdb_iterator_t() :
                       hashdigest_type(HASHDIGEST_UNDEFINED),
@@ -154,7 +154,6 @@ class hashdb_iterator_t {
                       dereferenced_value_is_cached(false),
                       dereferenced_value() {
   }
-*/
 
 /*
   // Beware that I am not properly managing pointers here.

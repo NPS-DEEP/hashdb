@@ -78,9 +78,11 @@ void run_tests() {
 
   // create map_multimap iterator
   map_multimap_iterator_t<T> map_multimap_it =
-           map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
+           map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
+                                      map_manager.begin());
   map_multimap_iterator_t<T> map_multimap_end_it =
-           map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+           map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
+                                      map_manager.end());
 
   // create hashdb_iterator from map_multimap iterator
   hashdb_iterator_t hashdb_it(map_multimap_it, hashdb_element_lookup);

@@ -237,10 +237,10 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 3);
 
   // ************************************************************
-  // has_key, size, iterator
+  // find, find_count, size, iterator
   // ************************************************************
-  BOOST_TEST_EQ(manager.has_key(d1), false);
-  BOOST_TEST_EQ(manager.has_key(d1_md5), false);
+  BOOST_TEST_EQ(manager.find_count(d1), 0);
+  BOOST_TEST_EQ(manager.find_count(k1), 0);
 
   // setup with one element to make iterator simple
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -267,7 +267,7 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
 
-  BOOST_TEST_EQ(manager.has_key(d1), true);
+  BOOST_TEST_EQ(manager.find_count(d1), 2);
   BOOST_TEST_EQ(manager.map_size(), 2);
   BOOST_TEST_EQ(manager.multimap_size(), 2);
 
@@ -277,6 +277,17 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   ++it2;
 
   BOOST_TEST_EQ((it2 == manager.end()), true);
+
+  // check iterator pair from find
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair;
+  it_pair = manager.find(k1);
+  ++it_pair.first;
+  ++it_pair.first;
+  BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
+  it_pair = manager.find(d1);
+  ++it_pair.first;
+  ++it_pair.first;
+  BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
 }
 
 int cpp_main(int argc, char* argv[]) {

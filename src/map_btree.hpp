@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <cassert>
 #include "file_modes.h"
+#include "source_lookup_encoding.hpp"
 
 // Boost includes
 #include <boost/btree/btree_map.hpp>
@@ -144,10 +145,21 @@ class map_btree_t {
 
     // find
     typename map_t::const_iterator find(const KEY_T& key) const {
-        typename map_t::const_iterator itr = map->find(key);
-        return itr;
+      typename map_t::const_iterator itr = map->find(key);
+      return itr;
     }
 
+    // find_count
+    uint32_t find_count(const KEY_T& key) const {
+      typename map_t::const_iterator itr = map->find(key);
+      if (itr == map->end()) {
+        return 0;
+      } else {
+        return source_lookup_encoding::get_count(itr->second);
+      }
+    }
+
+/*
     // has
     bool has(const KEY_T& key) const {
       if (find(key) != map->end()) {
@@ -156,6 +168,7 @@ class map_btree_t {
         return false;
       }
     }
+*/
 
     // begin
     typename map_t::const_iterator begin() const {

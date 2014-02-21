@@ -130,9 +130,9 @@ void run_map_rw_tests() {
 
   // validate map integrity by looking for keys using has
   to_key(1000003, key);
-  BOOST_TEST_EQ(map.has(key), true);
+  BOOST_TEST_EQ(map.find_count(key), 1);
   to_key(2000003, key);
-  BOOST_TEST_EQ(map.has(key), false);
+  BOOST_TEST_EQ(map.find_count(key), 0);
 }
 
 template<typename T, typename K>
@@ -154,9 +154,9 @@ void run_map_ro_tests() {
 
   // validate map integrity by looking for keys
   to_key(1000003, key);
-  BOOST_TEST_EQ(map.has(key), true);
+  BOOST_TEST_EQ(map.find_count(key), 1);
   to_key(2000003, key);
-  BOOST_TEST_EQ(map.has(key), false);
+  BOOST_TEST_EQ(map.find_count(key), 0);
 
   // try to edit the RO map
   to_key(0, key);

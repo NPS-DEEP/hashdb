@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cassert>
 #include "file_modes.h"
+#include "source_lookup_encoding.hpp"
 
 // Boost includes
 #include <boost/interprocess/allocators/allocator.hpp>
@@ -239,6 +240,17 @@ class map_flat_sorted_vector_t {
         return itr;
     }
 
+    // find_count
+    uint32_t find_count(const KEY_T& key) const {
+      typename map_t::const_iterator itr = map->find(key);
+      if (itr == map->end()) {
+        return 0;
+      } else {
+        return source_lookup_encoding::get_count(itr->second);
+      }
+    }
+
+/*
     // has
     bool has(const KEY_T& key) const {
       if (find(key) != map->end()) {
@@ -247,6 +259,7 @@ class map_flat_sorted_vector_t {
         return false;
       }
     }
+*/
 
     // begin
     typename map_t::const_iterator begin() const {

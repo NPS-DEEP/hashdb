@@ -122,11 +122,11 @@ void run_map_manager_rw_tests(map_type_t map_type) {
   bool temp = (map_it == map_manager.end());
   BOOST_TEST_EQ(temp, true);
 
-  // validate map manager integrity by looking for keys using has
+  // validate map manager integrity by looking for keys using find_count
   to_key(103, key);
-  BOOST_TEST_EQ(map_manager.has(key), true);
+  BOOST_TEST_EQ(map_manager.find_count(key), 1);
   to_key(203, key);
-  BOOST_TEST_EQ(map_manager.has(key), false);
+  BOOST_TEST_EQ(map_manager.find_count(key), 0);
 
   // validate iterator
   map_it = map_manager.begin();
@@ -166,9 +166,9 @@ void run_map_manager_ro_tests(map_type_t map_type) {
 
   // validate map manager integrity by looking for keys
   to_key(103, key);
-  BOOST_TEST_EQ(map_manager.has(key), true);
+  BOOST_TEST_EQ(map_manager.find_count(key), 1);
   to_key(203, key);
-  BOOST_TEST_EQ(map_manager.has(key), false);
+  BOOST_TEST_EQ(map_manager.find_count(key), 0);
 
   // try to edit the RO map manager
   to_key(0, key);

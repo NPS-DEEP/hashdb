@@ -285,6 +285,40 @@ class map_multimap_manager_t {
     changes.hashes_removed += count;
   }
 
+  // find
+  std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
+          find(const T& key) {
+    map_iterator_t<T> map_it = map_manager.find(key);
+
+    if (map_it == map_manager.end()) {
+      // begin is at end
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it)));
+
+    } else {
+      // end is at the next entry in the map iterator
+      map_iterator_t<T> end_it(map_it);
+      ++end_it;
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, end_it)));
+    }
+  }
+
+  // find_count
+  uint32_t find_count(const T& key) {
+    // if key not in bloom filter then clearly count=0
+    if (!bloom_filter_manager.is_positive(key)) {
+      // key not present in bloom filter
+      return 0;
+    }
+
+    // check for presence in map
+    return map_manager.find_count(key);
+  }
+
+/*
   bool has_key(const T& key) {
     // if key not in bloom filter then check directly
     if (!bloom_filter_manager.is_positive(key)) {
@@ -295,13 +329,16 @@ class map_multimap_manager_t {
     // check for presence in map
     return map_manager.has(key);
   }
+*/
 
   map_multimap_iterator_t<T> begin() {
-    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
+    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
+                                      map_manager.begin());
   }
 
   map_multimap_iterator_t<T> end() {
-    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
+                                      map_manager.end());
   }
 
   size_t map_size() const {

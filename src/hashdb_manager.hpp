@@ -229,6 +229,7 @@ class hashdb_manager_t {
     }
   }
 
+/*
   // has key
   bool has_key(const hashdigest_t& hashdigest) {
     // validate the hashdigest type
@@ -245,6 +246,121 @@ class hashdb_manager_t {
         return sha256_manager->has_key(sha256_t::fromhex(hashdigest.hashdigest));
       default: assert(0);
     }
+  }
+*/
+
+  // find
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(
+                                            const hashdigest_t& hashdigest) {
+
+    if (hashdigest.hashdigest_type == "MD5") {
+      return find(md5_t::fromhex(hashdigest.hashdigest));
+    } else if (hashdigest.hashdigest_type == "SHA1") {
+      return find(sha1_t::fromhex(hashdigest.hashdigest));
+    } else if (hashdigest.hashdigest_type == "SHA256") {
+      return find(sha256_t::fromhex(hashdigest.hashdigest));
+    } else {
+      // invalid user input
+      std::cout << "hashdb_manager.find: invalid hashdigest type: "
+                << hashdigest.hashdigest_type << "\n";
+
+      // gracefully don't find key
+      return std::pair<hashdb_iterator_t, hashdb_iterator_t>(end(), end());
+    }
+  }
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const md5_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_MD5) {
+      // gracefully return hashdb end iterators
+      return std::pair<hashdb_iterator_t, hashdb_iterator_t>(end(), end());
+    }
+
+    // return the iterator pair for this key
+    std::pair<map_multimap_iterator_t<md5_t>,
+              map_multimap_iterator_t<md5_t> >
+                                           it_pair(md5_manager->find(key));
+    return std::pair<hashdb_iterator_t, hashdb_iterator_t>(
+               hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
+               hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
+  }
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha1_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_SHA1) {
+      // gracefully return hashdb end iterators
+      return std::pair<hashdb_iterator_t, hashdb_iterator_t>(end(), end());
+    }
+
+    // return the iterator pair for this key
+    std::pair<map_multimap_iterator_t<sha1_t>,
+              map_multimap_iterator_t<sha1_t> >
+                                           it_pair(sha1_manager->find(key));
+    return std::pair<hashdb_iterator_t, hashdb_iterator_t>(
+               hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
+               hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
+  }
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha256_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_SHA256) {
+      // gracefully return hashdb end iterators
+      return std::pair<hashdb_iterator_t, hashdb_iterator_t>(end(), end());
+    }
+
+    // return the iterator pair for this key
+    std::pair<map_multimap_iterator_t<sha256_t>,
+              map_multimap_iterator_t<sha256_t> >
+                                           it_pair(sha256_manager->find(key));
+    return std::pair<hashdb_iterator_t, hashdb_iterator_t>(
+               hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
+               hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
+  }
+
+  // find_count
+  uint32_t find_count(const hashdigest_t& hashdigest) {
+
+    if (hashdigest.hashdigest_type == "MD5") {
+      return find_count(md5_t::fromhex(hashdigest.hashdigest));
+    } else if (hashdigest.hashdigest_type == "SHA1") {
+      return find_count(sha1_t::fromhex(hashdigest.hashdigest));
+    } else if (hashdigest.hashdigest_type == "SHA256") {
+      return find_count(sha256_t::fromhex(hashdigest.hashdigest));
+    } else {
+      // invalid user input
+      std::cout << "hashdb_manager.find_count: invalid hashdigest type: "
+                << hashdigest.hashdigest_type << "\n";
+
+      // gracefully don't find key
+      return 0;
+    }
+  }
+  uint32_t find_count(const md5_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_MD5) {
+      // gracefully return 0
+      return 0;
+    }
+
+    // return the count for this key
+    return md5_manager->find_count(key);
+  }
+  uint32_t find_count(const sha1_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_SHA1) {
+      // gracefully return 0
+      return 0;
+    }
+
+    // return the count for this key
+    return sha1_manager->find_count(key);
+  }
+  uint32_t find_count(const sha256_t& key) {
+    // check that the hashdigest type is right for this hashdb
+    if (settings.hashdigest_type != HASHDIGEST_SHA256) {
+      // gracefully return 0
+      return 0;
+    }
+
+    // return the count for this key
+    return sha256_manager->find_count(key);
   }
 
   // begin

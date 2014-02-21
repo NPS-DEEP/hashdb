@@ -131,6 +131,7 @@ class map_multimap_iterator_t {
   }
 
   public:
+/*
   // the constructors for each map type using native map iterators
   map_multimap_iterator_t(map_manager_t<T>* p_map_manager,
                     multimap_manager_t<T>* p_multimap_manager,
@@ -149,6 +150,22 @@ class map_multimap_iterator_t {
       // set up with begin iterator
       map_iterator = map_manager->begin();
     }
+    // set state for the multimap iterator
+    set_multimap_iterator_state();
+  }
+*/
+
+  // the constructor takes the managers and the starting iterator
+  map_multimap_iterator_t(map_manager_t<T>* p_map_manager,
+                    multimap_manager_t<T>* p_multimap_manager,
+                    map_iterator_t<T> p_map_iterator) :
+                             map_manager(p_map_manager),
+                             multimap_manager(p_multimap_manager),
+                             map_iterator(p_map_iterator),
+                             multimap_iterator(),
+                             multimap_end_iterator(),
+                             in_multimap_iterator(false),
+                             dereferenced_value() {
     // set state for the multimap iterator
     set_multimap_iterator_state();
   }

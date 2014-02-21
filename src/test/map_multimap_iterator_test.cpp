@@ -71,8 +71,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ(map_action_pair.second, false);
 
   // walk map of 1 element
-  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
-  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_manager.begin());
+  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_manager.end());
   BOOST_TEST_EQ(it->second, 1);
   is_done = (it == it_end);
   BOOST_TEST_EQ(is_done, false);
@@ -88,8 +88,8 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   multimap_manager.emplace(key, 201);
 
   // walk multimap of 1 element
-  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, false);
-  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, true);
+  it = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_manager.begin());
+  it_end = map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_manager.end());
   
   BOOST_TEST_EQ(it->second, 201);
   is_done = (it == it_end);

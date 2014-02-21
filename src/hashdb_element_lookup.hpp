@@ -49,6 +49,12 @@ class hashdb_element_lookup_t {
                    settings(p_settings) {
   }
 
+  // useless constructor required by std::pair
+  hashdb_element_lookup_t() :
+    source_lookup_index_manager(0),
+    settings(0) {
+  }
+
   bool operator==(const hashdb_element_lookup_t& other) const {
     // equal if same object
     return (source_lookup_index_manager == other.source_lookup_index_manager);

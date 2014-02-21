@@ -207,6 +207,24 @@ class map_manager_t {
     }
   }
 
+  // find_count
+  uint32_t find_count(const T& key) const {
+    switch(map_type) {
+      case MAP_BTREE:
+        return map_btree->find_count(key);
+      case MAP_FLAT_SORTED_VECTOR:
+        return map_flat_sorted_vector->find_count(key);
+      case MAP_RED_BLACK_TREE:
+        return map_red_black_tree->find_count(key);
+      case MAP_UNORDERED_HASH:
+        return map_unordered_hash->find_count(key);
+
+      default:
+        assert(0);
+    }
+  }
+
+/*
   // has
   bool has(const T& key) const {
     switch(map_type) {
@@ -223,6 +241,7 @@ class map_manager_t {
         assert(0);
     }
   }
+*/
 
   // size
   size_t size() const {

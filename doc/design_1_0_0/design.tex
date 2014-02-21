@@ -334,7 +334,7 @@ bool erase(const T& key);
 pair<map_iterator_t<T>, bool> change(const T& key,
                                       uint64_t source_lookup_encoding);
 map_iterator_t<T> find(const T& key);
-bool has(const T& key);   // faster than find()
+uint32_t find_count(const T& key);   // convenience, specific use of find
 map_iterator_t<T> begin() const;
 map_iterator_t<T> end() const;
 size_t size();
@@ -512,6 +512,7 @@ more for completeness than for usefulness.
 Interfaces:
 
 \begin{small}
+%zzzz removed bool has_key(const T& key);
 \begin{verbatim}
 map_multimap_manager_t<T>(const std::string& hashdb_dir,
                           file_mode_t file_mode_type);
@@ -524,7 +525,10 @@ void remove(const T& key, uint64_t source_lookup_encoding,
 
 void remove_key(const T& key, hashdb_changes_t& hashdb_changes);
 
-bool has_key(const T& key);
+pair<map_multimap_iterator_t<T>>, map_multimap_iterator_t<T>>
+     find(const T& key);
+
+uint32_t find_range(const T& key);
 
 pair<T, uint64_t> begin() const;
 
@@ -576,7 +580,10 @@ void remove(const hashdb_element_t&, hashdb_changes_t&);
 
 void remove_key(const hashdigest_t&, hashdb_changes_t&);
 
-bool has_key(const hashdigest_t&);
+pair<hashdb_iterator_t, hashdb_iterator_t> find(hashdigest_t);
+pair<hashdb_iterator_t, hashdb_iterator_t> find(T key);
+uint32_t find_count(hashdigest_t);
+uint32_t find_count(T key);
 
 size_t map_size();
 
