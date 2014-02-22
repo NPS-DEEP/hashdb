@@ -46,7 +46,7 @@ class identified_sources_writer_t {
 
   public:
   identified_sources_writer_t(std::string p_filename) :
-                    outf(p_filename.c_str()),
+                    outf(p_filename.c_str(), std::ios_base::out),
                     out(&outf) {
 
     // make sure the output file was opened
