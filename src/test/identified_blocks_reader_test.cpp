@@ -42,7 +42,7 @@ void do_test() {
 
   identified_sources_writer_t writer("temp_dir/identified_sources.txt");
   for (int i=0; i<16; ++i) {
-    writer.write(it->first + ", " + it->second);
+    writer.write(it->first + ", " + it->second + "\n");
     ++it;
   }
   BOOST_TEST_EQ((it == reader.end()), true);

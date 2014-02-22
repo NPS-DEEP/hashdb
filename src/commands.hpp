@@ -26,6 +26,7 @@
 #define COMMANDS_HPP
 //#include "hashdb_types.h"
 #include "command_line.hpp"
+#include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "history_manager.hpp"
@@ -37,6 +38,8 @@
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
+#include "identified_blocks_reader.hpp"
+#include "identified_sources_writer.hpp"
 
 /*
 #include "dfxml_hashdigest_reader.hpp"
@@ -463,6 +466,43 @@ class commands_t {
   static void get_hash_source(const std::string& path_or_socket,
                               const std::string& identified_blocks_file,
                               const std::string& identified_sources_file) {
+
+    // for now, use path only, TBD
+    std::string hashdb_dir = path_or_socket;
+
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // get the reader and writer for the input and output files
+    identified_blocks_reader_t reader(identified_blocks_file);
+    identified_sources_writer_t writer(identified_sources_file);
+
+    // get settings to know what hashdigest_type to indicate zzzzzzz
+    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
+    std::string hashdigest_type_string = hashdigest_type_to_string(settings.hashdigest_type);
+
+    // read identified blocks from input and write out matches
+    identified_blocks_reader_iterator_t it = reader.begin();
+    while(it != reader.end()) {
+      hashdigest_t hashdigest(it->second, hashdigest_type_string);
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+             hashdb_manager.find(hashdigest);
+      while (it_pair.first != it_pair.second) {
+        // write match to output:
+        // offset tab hashdigest tab repository name, filename
+        writer.write(it->first);
+        writer.write("\t");
+        writer.write(it_pair.first->hashdigest);
+        writer.write("\t");
+        writer.write(it_pair.first->repository_name);
+        writer.write(",");
+        writer.write(it_pair.first->filename);
+        writer.write("\n");
+
+        ++it_pair.first;
+      }
+    }
+    ++it;
   }
 
   // get hashdb info

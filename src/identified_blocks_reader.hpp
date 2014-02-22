@@ -38,6 +38,7 @@
 #include "hashdb.hpp"
 #include "dfxml/src/hash_t.h"
 #include <errno.h>
+#include "identified_blocks_reader_iterator.hpp"
 
 class identified_blocks_reader_t {
 
