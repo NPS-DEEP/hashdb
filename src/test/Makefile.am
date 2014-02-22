@@ -35,7 +35,8 @@ bin_PROGRAMS = \
 	hashdb_iterator_test \
 	hashdb_manager_test \
 	dfxml_hashdigest_rw_test \
-	hashdigest_manager_test
+	hashdigest_manager_test \
+	identified_blocks_reader_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -305,6 +306,12 @@ hashdigest_manager_test_SOURCES = \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdigest_manager_test.cpp
+
+identified_blocks_reader_test_SOURCES = \
+	boost_fix.hpp \
+	identified_blocks_reader_iterator.hpp \
+	identified_blocks_reader.hpp \
+	identified_blocks_reader_test.cpp
 
 .PHONY: run_tests
 

@@ -461,8 +461,8 @@ class commands_t {
 
   // get hash source
   static void get_hash_source(const std::string& path_or_socket,
-                              const std::string& identified_blocks,
-                              const std::string& identified_sources) {
+                              const std::string& identified_blocks_file,
+                              const std::string& identified_sources_file) {
   }
 
   // get hashdb info

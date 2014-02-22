@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Reads from identified_blocks.txt into sources_request_md5_t structure.
+ * Provides array<pair<string offset, string hashdigest>>.
  */
 
 #ifndef IDENTIFIED_BLOCKS_READER_HPP
@@ -41,53 +41,36 @@
 
 class identified_blocks_reader_t {
 
-  public:
-  identified_blocks_reader_t(const std::string& filename,
-                             hashdb::sources_request_md5_t& request,
-                             std::map<uint32_t, std::string>& offset_map) {
-    uint32_t offset_index = 0;
-    request.clear();
-    offset_map.clear();
+  std::string filename;
+  std::fstream in;
 
+  public:
+  identified_blocks_reader_t(std::string p_filename) :
+                    filename(p_filename),
+                    in(filename.c_str()) {
+
+/*
+    // identified_blocks.txt must exist
     if(access(filename.c_str(),R_OK)){
-      std::cerr << "Error: identified_blocks.txt feature file " << filename << " is missing or unreadable.\n";
+      std::cerr << "Error: unable to read identified_blocks.txt feature file '" << filename << "'.\n";
       std::cerr << "Cannot continue.\n";
       exit(1);
     }
+*/
 
-    // get file stream
-    std::fstream in(filename.c_str());
+    // see that in initialized
     if (!in.is_open()) {
       std::cout << "Cannot open " << filename << ": " << strerror(errno) << "\n";
       exit(1);
     }
- 
-    // parse each line
-    std::string line;
-    bool error = false;
-    while(getline(in, line) && !error) {
+  }
 
-      // skip comment lines
-      if (line[0] == '#') {
-        continue;
-      }
+  identified_blocks_reader_iterator_t begin() {
+    return identified_blocks_reader_iterator_t(&in, false);
+  }
 
-      // find hash
-      size_t tab_index = line.find('\t');
-      if (tab_index == std::string::npos) {
-        continue;
-      }
-      md5_t md5 = md5_t(md5_t::fromhex(line.substr(tab_index+1, 32)));
-      uint8_t digest[16];
-      memcpy(digest, md5.digest, 16);
-      request.push_back(hashdb::source_request_md5_t(offset_index, digest, 0,0,0));
-      offset_map[offset_index] = line.substr(0, tab_index);
-
-      ++offset_index;
-    }
-
-    // close
-    in.close();
+  identified_blocks_reader_iterator_t end() {
+    return identified_blocks_reader_iterator_t(&in, true);
   }
 };
 
