@@ -76,7 +76,6 @@ class hashdb_settings_reader_t {
                     MAXIMUM_HASH_DUPLICATES,
                     SOURCE_LOOKUP_INDEX_BITS,
                     REGULAR_MAP_TYPE,
-                    MAP_SHARD_COUNT,
                     MULTIMAP_TYPE,
                     MULTIMAP_SHARD_COUNT,
                     BLOOM1_USED,
@@ -126,7 +125,6 @@ class hashdb_settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("source_lookup_index_bits"))) return SOURCE_LOOKUP_INDEX_BITS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_shard_count"))) return MAP_SHARD_COUNT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_type"))) return MULTIMAP_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_shard_count"))) return MULTIMAP_SHARD_COUNT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
@@ -240,8 +238,6 @@ class hashdb_settings_reader_t {
       if (!is_valid) {
         exit_invalid_text("invalid hash store map type", map_type_string);
       }
-    } else if (user_data.active_node == MAP_SHARD_COUNT) {
-      xmlChar_to_number(characters, len, user_data.settings->map_shard_count);
 
     } else if (user_data.active_node == MULTIMAP_TYPE) {
       // get multimap type
