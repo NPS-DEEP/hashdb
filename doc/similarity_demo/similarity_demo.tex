@@ -1,0 +1,261 @@
+
+%\documentclass[10pt,twoside,twocolumn]{article}
+\documentclass[12pt,twoside]{article}
+\usepackage[bf,small]{caption}
+\usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
+\usepackage{paralist} % comapctitem, compactdesc, compactenum
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{./graphics/}}
+\usepackage{xspace}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{float}
+\hyphenation{Sub-Bytes Shift-Rows Mix-Col-umns Add-Round-Key}
+
+\setlength{\parskip}{12pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+\newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hashid}{\emph{hashid}\xspace}
+\newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
+
+\begin{document}
+
+\begin{center}
+\Large Demo: Finding Similarities between Media Images \\
+\large Using \bulk and \hdb
+\end{center}
+
+Find similarities between media images by finding common block hashes:
+\begin{compactenum}
+\item Generate sector hashes for media image 1.
+\item Generate sector hashes for media image 2.
+\item Obtain common hash blocks by taking the intersection of these hashes.
+\end{compactenum}
+Here is the workflow:
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.6]{drawings/import_hashes}
+  \caption*{Import media images into hash databases.}
+\end{figure}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.6]{drawings/intersect_hashes}
+  \caption*{Run the \hdb \texttt{intersect} command to generate the intersection database.}
+\end{figure}
+
+But Media Images contain lots of noise in terms of null blocks,
+operating system files, etc, that are false-positive similarities.
+To remove this noise, we use a whitelist hashdb and subtract its hash blocks
+from our media image hashdb:
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.6]{drawings/subtract_whitelist}
+  \caption*{Run the \hdb \texttt{subtract} command to create a database without whitelist hashes.}
+\end{figure}
+
+Now view the list of forensic paths common to both media images:
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.6]{drawings/print_sources}
+  \caption*{Run the \hdb \texttt{print\_sources} command to list where all the hashes were sourced from.}
+\end{figure}
+
+It may additionally be interesting to find blacklisted content common to both media images, and the actual files they were sourced from.
+To do this, generate an intersection database with the blacklist database,
+see \texttt{intersect}, above, and print the intersection sources,
+see \texttt{print\_sources}, above.
+
+%steps
+Here are the steps to perform this demo:
+\textbf{NOTE: These downloads and \hdb v1.0.0 are not available yet.}
+\begin{compactenum}
+\item Download and install \hdb from
+\url{www.digitalcorpora.org/downloads/hashdb/hashdb-1.0.0\_beta-windowsinstaller.exe}.
+\item Download and install \bulk compiled with \hdb from
+\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.4-windowsinstaller.exe}
+\item Download demo media image 1 and 2, the whitelist database,
+and the blacklist database:
+\begin{compactenum}
+\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/media\_image\_1}
+\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/media\_image\_2}
+\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/\_whitelist\_hashdb}
+\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/\_blacklist\_hashdb}
+\end{compactenum}
+
+\item Import media image 1:
+\begin{verbatim}
+$ bulk_extractor -o outdir1 -S import media_image_1
+\end{verbatim}
+
+\item Import media image 2:
+\begin{verbatim}
+$ bulk_extractor -o outdir2 -S import media_image_1
+\end{verbatim}
+
+\item Merge the intersection of media image 1 and 2:
+\begin{verbatim}
+$ hashdb create merged_hashdb
+$ hashdb intersect media_image1/hashdb media_image2/hashdb \
+         merged_hashdb
+\end{verbatim}
+
+\item Subtract the noise:
+\begin{verbatim}
+$ hashdb create quiet_hashdb
+$ hashdb subtract merged_hashdb whitelist_hashdb filtered_hashdb
+\end{verbatim}
+
+\item Generate the list of common hashes
+\begin{verbatim}
+$ hashdb print_sources filtered_hashdb > demo_output
+\end{verbatim}
+
+\item See what is common that is blacklisted
+\begin{verbatim}
+$ hashdb create filtered_blacklist_hashdb
+$ hashdb intersect filtered_hashdb blacklist_hashdb \
+         filtered_blacklist_hashdb
+$ hashdb print_sources filtered_hashdb > demo_blacklist_output
+\end{verbatim}
+\end{compactenum}
+
+\end{document}
+
+
+%Take the intersection
+%\begin{verbatim}
+%$ bulk_extractor -o outdir2 -S import media_image_2
+%\end{verbatim}
+%
+%
+%
+%
+%
+%
+%
+%\begin{compactenum}
+%\item Generate sector hashes for media image 1:
+%\begin{verbatim}
+%$ bulk_extractor -o outdir1 -S import media_image_1
+%\end{verbatim}
+%\item Generate sector hashes for media image 2:
+%\begin{verbatim}
+%$ bulk_extractor -o outdir2 -S import media_image_2
+%\end{verbatim}
+%
+%
+%Run \bulk to scan the media image for parts of a video file:
+%
+%\begin{figure}[H]
+%  \center
+%  \includegraphics[scale=0.6]{drawings/scan_hashid}
+%  \caption*{Scan the media image for parts of a video file.}
+%  \label{fig:scan_hashid}
+%\end{figure}
+%
+%Download the data files required for the demo into a working directory:
+%\begin{compactitem}
+%\item The database containing hash blocks of the demo video file:
+%\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_db\_win.zip}
+%\item Media containing a fragment of the demo video file,
+%specifically, a contiguous 64KiB section
+%near the end of about 10 MiB of video data:
+%\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_redacted\_image}
+%\end{compactitem}
+%Download \bulk v1.4.1 compiled with the the \hashid v0.9.1 scanner:
+%\begin{compactitem}
+%\item \bulk with the \hdb \hashid scanner:
+%\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}
+%\end{compactitem}
+%
+%Steps:
+%\begin{compactenum}
+%\item Install \bulk by running the
+%\texttt{bulk\_extractor-1.4.1-windowsinstaler.exe} Windows installer.
+%\item Extract the demo database
+%by unzipig the \texttt{demo\_video\_db\_win.zip} file
+%into your working directory.
+%Please check that it doesn't unzip into a nested subfolder.
+%\item Scan for matching hash values: Using a command window, go to your working directory and then run \bulk,
+%specifying the paths to the hash database and the media:
+%\begin{verbatim}
+%$ bulk_extractor -o outdir -S query_type=use_path \
+%  -S path=demo_video_db_win demo_video_redacted_image
+%\end{verbatim}
+%\item View the feature file using an editor or use the \bev tool.
+%For example to view with Notepad, type:
+%\begin{verbatim}
+%$ notepad outdir/identified_blocks.txt
+%\end{verbatim}
+%An example hash block match looks like this:
+%\begin{verbatim}
+%12452352    3b6b477d391f73f67c1c01e2141dbb17    1
+%\end{verbatim}
+%\end{compactenum}
+%
+%Seeing hash \texttt{3b6b477...} at Forensic path \texttt{12452352}
+%shows that a hash block match was found, but what file does it match?
+%We find the file that contains the hash by using a \hdb source lookup:
+%\begin{figure}[H]
+%  \center
+%  \includegraphics[scale=0.6]{drawings/source_lookup}
+%  \caption*{Look up the file that has the hash.}
+%  \label{fig:source_lookup}
+%\end{figure}
+%
+%Download the \hdb v0.9.1 tool to perform the post-processing:
+%\begin{compactitem}
+%\item The \hdb tool used for post-processing:
+%\url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1-windowsinstaller.exe}
+%\end{compactitem}
+%
+%Steps:
+%\begin{compactenum}
+%\item Install the \hdb tool by running the
+%\texttt{hashdb-0.9.1-windowsinstaler.exe} Windows installer.
+%\item Find where the identified hashes were sourced from:
+%Using a command window, go to your working directory and then run
+%the \hdb tool:
+%\begin{verbatim}
+%$ hashdb_checker --query_source -p demo_video_db_win \
+%  outdir/identified_blocks.txt > outdir/identified_sources.txt
+%\end{verbatim}
+%
+%\item Now view file \texttt{outdir/identified\_sources.txt} to see
+%features containing source information.
+%This example line:
+%\begin{verbatim}
+%12452352    3b6b477d391f73f67c1c01e2141dbb17 \
+%repository_name=repository_demo_video_dfxml, \
+%filename=/home/bdallen/demo/demo_video.mp4, \
+%file_offset=10485760
+%\end{verbatim}
+%
+%states that the block at Forensic path \texttt{12452352}
+%matches the block \texttt{10485760} bytes into the
+%\texttt{demo\_video.mp4} video file
+%in the hash database,
+%indicating a positive match.
+%\end{compactenum}
+%
+%This demo describes steps for a Windows system.
+%For Linux or Mac, please download and build
+%\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1.tar.gz}
+%and
+%\url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1.tar.gz}
+%as described at
+%\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
+%
+%\end{document}
+%
