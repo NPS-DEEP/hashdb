@@ -66,10 +66,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="361.04121"
+     inkscape:cx="363.04121"
      inkscape:cy="597.9309"
      inkscape:document-units="px"
-     inkscape:current-layer="g3356"
+     inkscape:current-layer="layer1"
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -77,8 +77,8 @@
      guidetolerance="10000"
      inkscape:window-width="1157"
      inkscape:window-height="926"
-     inkscape:window-x="37"
-     inkscape:window-y="101"
+     inkscape:window-x="761"
+     inkscape:window-y="128"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -202,15 +202,15 @@
            y="336.86218"
            x="112"
            sodipodi:role="line"
-           id="tspan3070">of</tspan><tspan
+           id="tspan3102">of hashes</tspan><tspan
            y="364.36218"
            x="112"
            sodipodi:role="line"
-           id="tspan3074">media image</tspan><tspan
+           id="tspan3039">common to</tspan><tspan
            y="391.86218"
            x="112"
            sodipodi:role="line"
-           id="tspan3102">with noise</tspan></text>
+           id="tspan3041">#1 and #2</tspan></text>
       <g
          transform="matrix(1.0728477,0,0,1,-0.1490066,157)"
          id="g3284-7">
@@ -316,15 +316,15 @@
            y="336.86218"
            x="112"
            sodipodi:role="line"
-           id="tspan3152">of</tspan><tspan
+           id="tspan3102-9">of filtered</tspan><tspan
            y="364.36218"
            x="112"
            sodipodi:role="line"
-           id="tspan3074-9">media image</tspan><tspan
+           id="tspan3048">common</tspan><tspan
            y="391.86218"
            x="112"
            sodipodi:role="line"
-           id="tspan3102-9">without noise</tspan></text>
+           id="tspan3050">hashes</tspan></text>
       <g
          transform="matrix(1.0728477,0,0,1,-0.1490066,157)"
          id="g3284-7-7">

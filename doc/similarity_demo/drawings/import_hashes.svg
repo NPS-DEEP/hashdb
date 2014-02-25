@@ -94,7 +94,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="359.04121"
+     inkscape:cx="361.04121"
      inkscape:cy="597.9309"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -105,8 +105,8 @@
      guidetolerance="10000"
      inkscape:window-width="1157"
      inkscape:window-height="926"
-     inkscape:window-x="37"
-     inkscape:window-y="101"
+     inkscape:window-x="749"
+     inkscape:window-y="128"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -255,18 +255,18 @@
            x="610"
            y="232.36217"
            id="tspan3163">bulk_extractor output</tspan><tspan
-           id="tspan3045"
-           sodipodi:role="line"
-           x="610"
-           y="259.86218">including feature files</tspan><tspan
-           id="tspan3049"
-           sodipodi:role="line"
-           x="610"
-           y="287.36218">and hashdb database</tspan><tspan
            id="tspan3051"
            sodipodi:role="line"
            x="610"
-           y="314.86218">for Media Image #1</tspan></text>
+           y="259.86218">including the</tspan><tspan
+           sodipodi:role="line"
+           x="610"
+           y="287.36218"
+           id="tspan3052">Media Image #1</tspan><tspan
+           sodipodi:role="line"
+           x="610"
+           y="314.86218"
+           id="tspan3058">hash database</tspan></text>
       <rect
          style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
          id="rect3367"
@@ -392,18 +392,18 @@
            x="610"
            y="232.36217"
            id="tspan3163-2">bulk_extractor output</tspan><tspan
-           id="tspan3045-9"
-           sodipodi:role="line"
-           x="610"
-           y="259.86218">including feature files</tspan><tspan
-           id="tspan3049-8"
-           sodipodi:role="line"
-           x="610"
-           y="287.36218">and hashdb database</tspan><tspan
            id="tspan3051-7"
            sodipodi:role="line"
            x="610"
-           y="314.86218">for Media Image #2</tspan></text>
+           y="259.86218">including the</tspan><tspan
+           sodipodi:role="line"
+           x="610"
+           y="287.36218"
+           id="tspan3065">Media Image #2</tspan><tspan
+           sodipodi:role="line"
+           x="610"
+           y="314.86218"
+           id="tspan3067">hash database</tspan></text>
       <rect
          style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
          id="rect3367-6"

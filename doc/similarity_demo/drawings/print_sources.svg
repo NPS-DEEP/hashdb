@@ -94,10 +94,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="365.04121"
+     inkscape:cx="373.04121"
      inkscape:cy="597.9309"
      inkscape:document-units="px"
-     inkscape:current-layer="g3356"
+     inkscape:current-layer="g3061"
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -169,15 +169,15 @@
              sodipodi:role="line"
              x="112"
              y="340.86218"
-             id="tspan3024">of common</tspan><tspan
+             id="tspan3028">of filtered</tspan><tspan
              sodipodi:role="line"
              x="112"
              y="368.36218"
-             id="tspan3026">hashes</tspan><tspan
+             id="tspan3030">common</tspan><tspan
              sodipodi:role="line"
              x="112"
              y="395.86218"
-             id="tspan3028">without noise</tspan></text>
+             id="tspan3032">hashes</tspan></text>
         <g
            id="g3284-7"
            transform="matrix(1.0728477,0,0,1,-0.1490066,157)">
@@ -262,15 +262,19 @@
            id="tspan3051"
            sodipodi:role="line"
            x="610"
-           y="232.36217">List of where all</tspan><tspan
+           y="232.36217">List of filtered hashes</tspan><tspan
            sodipodi:role="line"
            x="610"
            y="259.86218"
-           id="tspan3039">common hashes</tspan><tspan
+           id="tspan3039">common to #1 and #2</tspan><tspan
            sodipodi:role="line"
            x="610"
            y="287.36218"
-           id="tspan3041">came from</tspan></text>
+           id="tspan3041">with their</tspan><tspan
+           sodipodi:role="line"
+           x="610"
+           y="314.86218"
+           id="tspan3023">forensic paths</tspan></text>
       <rect
          style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
          id="rect3367"
