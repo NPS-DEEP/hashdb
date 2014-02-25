@@ -76,6 +76,6 @@ doc/design_1_0_0/design.pdf
 doc/hashdb_user_guide/hashdb_user_guide.aux
 doc/hashdb_user_guide/hashdb_user_guide.out
 doc/hashdb_user_guide/hashdb_user_guide.pdf
-doc/scanner_demo/scanner_demo.aux
-doc/scanner_demo/scanner_demo.out
-doc/scanner_demo/scanner_demo.pdf
+doc/*/*_demo.aux
+doc/*/*_demo.out
+doc/*/*_demo.pdf
