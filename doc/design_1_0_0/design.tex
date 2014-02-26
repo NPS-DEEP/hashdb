@@ -103,12 +103,14 @@ Start the \hdb tool as a server lookup service using the database
 at the specified socket.
 \item \texttt{scan <hashdb> <DFXML file>} \\
 Print out hashes in the \hdb that match hashes in the DFXML file.
-\item \texttt{print\_sources <hashdb> <identified\_blocks.txt> <identified\_sources.txt>} \\
-Create output file from input, showing full source intormation.
-\item \texttt{get\_hashdb\_sources <hashdb>} \\
-Print out all repository name, filename sources defined in the database.
-\item \texttt{get\_hashdb\_info <hashdb>} \\
-Print out information about the given database.
+\item \texttt{expand\_identified\_blocks <hashdb> <identified\_blocks.txt>} \\
+Print out identified blocks with full source lookup information,
+specifically, the source repository name, filename, and file offset
+of every instance where the hash value was sourced.
+\item \texttt{print\_source\_info <hashdb>} \\
+Print out all repository name and filename sources defined in the database.
+\item \texttt{print\_stats <hashdb>} \\
+Print out statistics about the given database.
 \end{compactitem}
 
 \subsection{\hdb Library Interfaces}

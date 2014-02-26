@@ -19,9 +19,7 @@
 
 /**
  * \file
- * Provides services for accessing hashdb as a whole.
- * Hides map_multimap_manager and bloom filter.
- * Notes hashdb changes in provided hashdb_changes.
+ * Provides iterator accessors for iterating over just the map manager.
  */
 
 #ifndef HASHDIGEST_MANAGER_HPP
@@ -112,6 +110,19 @@ class hashdigest_manager_t {
         return hashdigest_iterator_t(sha1_manager->end());
       case HASHDIGEST_SHA256:
         return hashdigest_iterator_t(sha256_manager->end());
+      default: assert(0);
+    }
+  }
+
+  // quick easy statistic
+  size_t map_size() const {
+    switch(settings.hashdigest_type) {
+      case HASHDIGEST_MD5:
+        return md5_manager->map_size();
+      case HASHDIGEST_SHA1:
+        return sha1_manager->map_size();
+      case HASHDIGEST_SHA256:
+        return sha256_manager->map_size();
       default: assert(0);
     }
   }

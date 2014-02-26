@@ -68,6 +68,48 @@
 // READ_ONLY, RW_NEW, RW_MODIFY
 
 class commands_t {
+  private:
+  // perform intersection, optimised for speed
+  intersect_optimised(const hashdb_manager_t& hashdb_smaller,
+                      const hashdb_manager_t& hashdb_larger,
+                      hashdb_manager_t& hashdb_dir3,
+                      hashdb_changes_t& changes) {
+
+    // get iterator for smaller db
+    hashdb_iterator_t smaller_it = hashdb_smaller.begin();
+
+    // iterate over smaller db
+    while (smaller_it != hashdb_smaller.end()) {
+
+      // generate a hashdigest for this element
+      hashdigest_t hashdigest(smaller_it->hashdigest,
+                              smaller_it->hashdigest_type);
+
+      // see if hashdigest is in larger db
+      uint32_t count_larger = hashdb_larger.find_count(hashdigest);
+
+      if (count_larger > 0) {
+        // there is a match
+        uint32_t count_smaller = hashdb_smaller.find_count(hashdigest);
+
+        // add hashes from smaller
+        for (uint32_t i = 0; i<count_smaller; ++i) {
+          hashdb_element_t hashdb_element = *hashdb_it;
+          hashdb_3.insert(hashdb_element, changes);
+        }
+
+        // add hashes from larger
+        std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+                                      hashdb_manager.find(hashdigest);
+        while (it_pair.first != it_pair.second) {
+          hashdb_manager2.insert(*it_pair.first, changes);
+          ++it_pair.first;
+        }
+      }
+      ++smaller_it;
+    }
+  }
+
   public:
 
   // create
@@ -158,12 +200,12 @@ class commands_t {
     std::cout << changes << "\n";
   }
 
-  // merge
-  static void merge(const std::string& hashdb_dir1,
-                    const std::string& hashdb_dir2,
-                    const std::string& hashdb_dir3) {
+  // add
+  static void add(const std::string& hashdb_dir1,
+                  const std::string& hashdb_dir2,
+                  const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir3, "merge");
+    logger_t logger(hashdb_dir3, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
@@ -177,7 +219,7 @@ class commands_t {
     hashdb_iterator_t it2_end = hashdb_manager2.end();
 
     hashdb_changes_t changes;
-    logger.add_timestamp("begin merge");
+    logger.add_timestamp("begin add");
 
     // while elements are in both, insert ordered by key, prefering it1 first
     while ((it1 != it1_end) && (it2 != it2_end)) {
@@ -200,8 +242,7 @@ class commands_t {
       ++it2;
     }
 
-
-    logger.add_timestamp("end merge");
+    logger.add_timestamp("end add");
     logger.add_hashdb_changes(changes);
 
     // provide summary
@@ -214,24 +255,76 @@ class commands_t {
     std::cout << changes << "\n";
   }
 
-  // remove
-  static void remove(const std::string& hashdb_dir1,
-                     const std::string& hashdb_dir2) {
+  // intersect
+  static void intersect(const std::string& hashdb_dir1,
+                        const std::string& hashdb_dir2,
+                        const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir2, "remove");
+    logger_t logger(hashdb_dir3, "intersect");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add("hashdb_dir3", hashdb_dir3);
+
+    // resources
+    hashdigest_manager_t manager1(hashdb_dir1, READ_ONLY);
+    hashdigest_manager_t manager2(hashdb_dir2, READ_ONLY);
+    hashdigest_manager_t manager3(hashdb_dir2, RW_MODIFY);
+    hashdb_changes_t changes;
+
+    logger.add_timestamp("begin intersect");
+
+    // optimise processing based on smaller db
+    if (temp1.map_size() <= temp2.map_size()) {
+      intersect_optimised(manager1, manager2, manager3, changes);
+    } else {
+      intersect_optimised(manager2, manager1, manager3, changes);
+    }
+
+    logger.add_timestamp("end intersect");
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
+  }
+
+  // subtract: hashdb1 - hashdb 2 -> hashdb3
+  static void subtract(const std::string& hashdb_dir1,
+                       const std::string& hashdb_dir2,
+                       const std::string& hashdb_dir3) {
+
+    logger_t logger(hashdb_dir2, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    hashdb_changes_t changes;
 
     hashdb_iterator_t it1 = hashdb_manager1.begin();
-    hashdb_changes_t changes;
-    logger.add_timestamp("begin remove");
+
+    logger.add_timestamp("begin subtract");
+
     while (it1 != hashdb_manager1.end()) {
-      hashdb_manager2.remove(*it1, changes);
+      
+      // generate a hashdigest for this element
+      hashdigest_t hashdigest(it1->hashdigest,
+                              it1->hashdigest_type);
+
+      if (hashdb_manager2.find_count(hashdigest) > 0) {
+        // hashdb2 has the hash so drop the hash
+      } else {
+        // hashdb2 does not have the hash so copy it to hashdb3
+        hashdb_manager3.insert(*it1, changes);
+      }
       ++it1;
     }
-    logger.add_timestamp("end remove");
+    logger.add_timestamp("end subtract");
 
     logger.add_hashdb_changes(changes);
 
