@@ -315,7 +315,7 @@ class hashdb_manager_t {
   }
 
   // find_count
-  uint32_t find_count(const hashdigest_t& hashdigest) {
+  uint32_t find_count(const hashdigest_t& hashdigest) const {
 
     if (hashdigest.hashdigest_type == "MD5") {
       return find_count(md5_t::fromhex(hashdigest.hashdigest));
@@ -332,7 +332,7 @@ class hashdb_manager_t {
       return 0;
     }
   }
-  uint32_t find_count(const md5_t& key) {
+  uint32_t find_count(const md5_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_MD5) {
       // gracefully return 0
@@ -342,7 +342,7 @@ class hashdb_manager_t {
     // return the count for this key
     return md5_manager->find_count(key);
   }
-  uint32_t find_count(const sha1_t& key) {
+  uint32_t find_count(const sha1_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_SHA1) {
       // gracefully return 0
@@ -352,7 +352,7 @@ class hashdb_manager_t {
     // return the count for this key
     return sha1_manager->find_count(key);
   }
-  uint32_t find_count(const sha256_t& key) {
+  uint32_t find_count(const sha256_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_SHA256) {
       // gracefully return 0

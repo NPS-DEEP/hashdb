@@ -104,12 +104,13 @@ at the specified socket.
 \item \texttt{scan <hashdb> <DFXML file>} \\
 Print out hashes in the \hdb that match hashes in the DFXML file.
 \item \texttt{expand\_identified\_blocks <hashdb> <identified\_blocks.txt>} \\
-Print out identified blocks with full source lookup information,
+For each hash in \texttt{identified\_blocks.txt},
+print out the hash with full source lookup information,
 specifically, the source repository name, filename, and file offset
 of every instance where the hash value was sourced.
-\item \texttt{print\_source\_info <hashdb>} \\
-Print out all repository name and filename sources defined in the database.
-\item \texttt{print\_stats <hashdb>} \\
+\item \texttt{get\_sources <hashdb>} \\
+Print out all repository name and filename sources in the specified database.
+\item \texttt{get\_statistics <hashdb>} \\
 Print out statistics about the given database.
 \end{compactitem}
 

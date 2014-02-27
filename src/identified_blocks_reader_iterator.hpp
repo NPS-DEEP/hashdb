@@ -151,7 +151,7 @@ class identified_blocks_reader_iterator_t {
     increment();
     return *this;
   }
-  identified_blocks_reader_iterator_t operator++(int) {  // c++11 delete would be better.
+  identified_blocks_reader_iterator_t operator++(int) {
     identified_blocks_reader_iterator_t temp(*this);
     increment();
     return temp;

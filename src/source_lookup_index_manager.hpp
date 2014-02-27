@@ -33,6 +33,7 @@
 #include <boost/btree/support/string_view.hpp>
 #include "bi_store.hpp"
 #include <string>
+#include "source_lookup_index_iterator.hpp"
 //#include <cassert>
 
 /**
@@ -206,6 +207,24 @@ class source_lookup_index_manager_t {
     std::pair<std::string, std::string> string_pair(to_string(repository_name_sv),
                                                to_string(filename_sv));
     return string_pair;
+  }
+
+  // begin
+  source_lookup_index_iterator_t begin() {
+    return source_lookup_index_iterator_t(
+                                &source_lookup_store,
+                                &repository_name_lookup_store,
+                                &filename_lookup_store,
+                                source_lookup_store.index_by_key_begin());
+  }
+
+  // end
+  source_lookup_index_iterator_t end() {
+    return source_lookup_index_iterator_t(
+                                &source_lookup_store,
+                                &repository_name_lookup_store,
+                                &filename_lookup_store,
+                                source_lookup_store.index_by_key_end());
   }
 
   /**

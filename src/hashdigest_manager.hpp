@@ -118,11 +118,11 @@ class hashdigest_manager_t {
   size_t map_size() const {
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
-        return md5_manager->map_size();
+        return md5_manager->size();
       case HASHDIGEST_SHA1:
-        return sha1_manager->map_size();
+        return sha1_manager->size();
       case HASHDIGEST_SHA256:
-        return sha256_manager->map_size();
+        return sha256_manager->size();
       default: assert(0);
     }
   }

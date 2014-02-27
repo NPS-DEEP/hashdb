@@ -70,10 +70,10 @@
 class commands_t {
   private:
   // perform intersection, optimised for speed
-  intersect_optimised(const hashdb_manager_t& hashdb_smaller,
-                      const hashdb_manager_t& hashdb_larger,
-                      hashdb_manager_t& hashdb_dir3,
-                      hashdb_changes_t& changes) {
+  void intersect_optimised(const hashdb_manager_t& hashdb_smaller,
+                           const hashdb_manager_t& hashdb_larger,
+                           hashdb_manager_t& hashdb_dir3,
+                           hashdb_changes_t& changes) {
 
     // get iterator for smaller db
     hashdb_iterator_t smaller_it = hashdb_smaller.begin();
@@ -316,6 +316,7 @@ class commands_t {
       hashdigest_t hashdigest(it1->hashdigest,
                               it1->hashdigest_type);
 
+      // subtract or copy the hash
       if (hashdb_manager2.find_count(hashdigest) > 0) {
         // hashdb2 has the hash so drop the hash
       } else {
@@ -324,107 +325,16 @@ class commands_t {
       }
       ++it1;
     }
+
     logger.add_timestamp("end subtract");
 
     logger.add_hashdb_changes(changes);
 
     // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
-    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
-
-    // also write changes to cout
-    std::cout << changes << "\n";
-  }
-
-  // remove all
-  static void remove_all(const std::string& hashdb_dir1,
-                         const std::string& hashdb_dir2) {
-    // Use hashdigest manager rather than hashdb manager
-    // to iterate over hashes, without iterating through hashdb elements
-    // that may have hash duplicates.
-
-    logger_t logger(hashdb_dir2, "remove_all");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
-    hashdigest_manager_t hashdigest_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
-
-    hashdigest_iterator_t hashdigest_it1 = hashdigest_manager1.begin();
-    hashdb_changes_t changes;
-    logger.add_timestamp("begin remove_all");
-    while (hashdigest_it1 != hashdigest_manager1.end()) {
-      hashdigest_t hashdigest(hashdigest_it1->first.hashdigest,
-                              hashdigest_it1->first.hashdigest_type);
-      hashdb_manager2.remove_key(hashdigest, changes);
-      ++hashdigest_it1;
-    }
-    logger.add_timestamp("end remove_all");
-
-    logger.add_hashdb_changes(changes);
-
-    // provide summary
-    logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
-    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
-
-    // also write changes to cout
-    std::cout << changes << "\n";
-  }
-
-  // remove dfxml
-  static void remove_dfxml(const std::string& repository_name,
-                           const std::string& dfxml_file,
-                           const std::string& hashdb_dir) {
-
-    logger_t logger(hashdb_dir, "remove dfxml");
-    logger.add("dfxml_file", dfxml_file);
-    logger.add("hashdb_dir", hashdb_dir);
-    logger.add("repository_name", repository_name);
-    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
-
-    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
-
-    hashdb_changes_t changes;
-
-    logger.add_timestamp("begin remove dfxml");
-
-    while (it != reader_manager.end()) {
-      hashdb_manager.remove(*it, changes);
-      ++it;
-    }
-    logger.add_timestamp("end remove dfxml");
-    logger.add_hashdb_changes(changes);
-
-    // also write changes to cout
-    std::cout << changes << "\n";
-  }
-
-  // remove all dfxml
-  static void remove_all_dfxml(const std::string& dfxml_file,
-                               const std::string& hashdb_dir) {
-
-    logger_t logger(hashdb_dir, "remove_all_dfxml");
-    logger.add("dfxml_file", dfxml_file);
-    logger.add("hashdb_dir", hashdb_dir);
-    std::string repository_name = "not used by remove_all_dfxml";
-    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
-
-    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
-
-    hashdb_changes_t changes;
-
-    logger.add_timestamp("begin remove_all_dfxml");
-
-    while (it != reader_manager.end()) {
-      hashdigest_t hashdigest(it->hashdigest, it->hashdigest_type);
-      hashdb_manager.remove_key(hashdigest, changes);
-      ++it;
-    }
-    logger.add_timestamp("end remove_all_dfxml");
-    logger.add_hashdb_changes(changes);
+    history_manager_t::append_log_to_history(hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
     // also write changes to cout
     std::cout << changes << "\n";
@@ -514,11 +424,11 @@ class commands_t {
     std::cout << "server service TBD, command not performed.\n";
   }
 
-  // query hash
-  static void query_hash(const std::string& path_or_socket,
-                         const std::string& dfxml_file) {
+  // scan
+  static void scan(const std::string& path_or_socket,
+                   const std::string& dfxml_file) {
 
-    // for now, use path only, TBD
+    // for now, use hashdb_dir path only, no socket, TBD
     std::string hashdb_dir = path_or_socket;
 
     // open hashdb
@@ -555,20 +465,16 @@ class commands_t {
     }
   }
 
-  // get hash source
-  static void get_hash_source(const std::string& path_or_socket,
-                              const std::string& identified_blocks_file,
-                              const std::string& identified_sources_file) {
-
-    // for now, use path only, TBD
-    std::string hashdb_dir = path_or_socket;
+  // expand identified_blocks.txt
+  static void expand_identified_blocks(const std::string& hashdb_dir,
+                            const std::string& identified_blocks_file) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the reader and writer for the input and output files
     identified_blocks_reader_t reader(identified_blocks_file);
-    identified_sources_writer_t writer(identified_sources_file);
+    identified_sources_writer_t writer(std::cout);
 
     // get settings to know what hashdigest_type to indicate zzzzzzz
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
@@ -590,6 +496,8 @@ class commands_t {
         writer.write(it_pair.first->repository_name);
         writer.write(",");
         writer.write(it_pair.first->filename);
+        writer.write(",");
+        writer.write(it_pair.first->file_offset);
         writer.write("\n");
 
         ++it_pair.first;
@@ -598,8 +506,22 @@ class commands_t {
     ++it;
   }
 
+  // print sources referenced in this database
+  static void get_sources(const std::string& hashdb_dir) {
+
+    // open the source lookup index manager for hashdb_dir
+    source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
+    source_lookup_index_iterator_t it = manager.begin();
+    while (it != manager.end()) {
+      std::cout << "repository name='" << e.repository_name
+                << "', filename='" << e.filename << "\n";
+      ++it;
+    }
+  }
+
   // get hashdb info
-  static void get_hashdb_info(const std::string& path_or_socket) {
+  static void get_statistics(const std::string& hashdb_dir) {
+    std::cout << "Statistics are not available yet.\n";
   }
 
 };

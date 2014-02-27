@@ -90,6 +90,11 @@ class hashdb_iterator_t {
 
   // dereference
   void dereference() {
+    if (dereferenced_value_is_cached) {
+      // already valid
+      return;
+    }
+
     std::pair<hashdigest_t, uint64_t> hashdb_pair;
     switch(hashdigest_type) {
       case HASHDIGEST_MD5:

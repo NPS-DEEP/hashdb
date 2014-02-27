@@ -79,6 +79,11 @@ class hashdigest_iterator_t {
 
   // dereference
   void dereference() {
+    if (dereferenced_value_is_cached) {
+      // already valid
+      return;
+    }
+
     switch(hashdigest_type) {
       case HASHDIGEST_MD5:
         dereferenced_value = std::pair<hashdigest_t, uint64_t>(
@@ -130,7 +135,7 @@ class hashdigest_iterator_t {
     increment();
     return *this;
   }
-  hashdigest_iterator_t operator++(int) {  // c++11 delete would be better.
+  hashdigest_iterator_t operator++(int) {
     hashdigest_iterator_t temp(*this);
     increment();
     return temp;

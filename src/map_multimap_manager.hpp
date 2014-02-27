@@ -307,7 +307,7 @@ class map_multimap_manager_t {
   }
 
   // find_count
-  uint32_t find_count(const T& key) {
+  uint32_t find_count(const T& key) const {
     // if key not in bloom filter then clearly count=0
     if (!bloom_filter_manager.is_positive(key)) {
       // key not present in bloom filter

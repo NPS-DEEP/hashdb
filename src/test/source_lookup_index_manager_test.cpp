@@ -30,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "source_lookup_index_manager.hpp"
+#include "source_lookup_index_iterator.hpp"
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir";
@@ -59,6 +60,9 @@ void run_test() {
   source_lookup_index_manager_t manager(temp_dir, RW_NEW);
   std::pair<bool, uint64_t> pair_bool_64;
   std::pair<std::string, std::string> pair_string;
+
+  // check that the empty iterator is functional
+  BOOST_TEST_EQ(manager.begin() == manager.end(), true);
 
   // add first source
   pair_bool_64 = manager.insert("rep_a", "file_a");
@@ -119,6 +123,12 @@ void run_test() {
   pair_string = manager.find(3);
   BOOST_TEST_EQ(pair_string.first, "rep_b");
   BOOST_TEST_EQ(pair_string.second, "file_a");
+
+  // check the iterator with values available
+  source_lookup_index_iterator_t it = manager.begin();
+  BOOST_TEST_EQ(it->first, "rep_a");
+  BOOST_TEST_EQ(it->second, "file_a");
+  ++it; ++it; ++it; ++it;
 }
 
 int cpp_main(int argc, char* argv[]) {

@@ -37,8 +37,8 @@
 #include "hashdigest_types.h"
 #include "file_modes.h"
 #include "hashdb_manager.hpp"
-#include "hashdigest_manager.hpp"
 #include "hashdigest_iterator.hpp"
+#include "hashdigest_manager.hpp"
 #include "dfxml/src/hash_t.h"
 
 // map types:

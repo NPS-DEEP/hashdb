@@ -164,6 +164,16 @@ class bi_store_t {
 
     return key;
   }
+
+  // begin iterator by key
+  typename index_by_key_t::iterator index_by_key_begin() const {
+    return index_by_key->begin();
+  }
+
+  // end iterator by key
+  typename index_by_key_t::iterator index_by_key_end() const {
+    return index_by_key->end();
+  }
 };
 
 #endif

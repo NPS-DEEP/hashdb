@@ -33,31 +33,29 @@
 \large Using \mdd and \hdb
 \end{center}
 
-We build large block hash databases to help us find specific data.
+We build large databases of block hashes
+to help us find matching blocks of data.
+Here are some ways \hdb databases are used:
 \begin{compactitem}
-\item We search a database of blacklist hashes to find blocks
-that are from blacklisted data.
-\item We subtract hashes that match whitelist data
-to remove obvious false positives.
+\item We scan data looking for blocks that match blocks in the blacklist databae.
+\item We subtract whitelist blocks to remove distracting false positives.
 \end{compactitem}
 The Scanner demo at
-\url{www.digitalcorpora.org/downloads/hashdb/scanner\_demo.pdf}.
-references a database of blacklisted hash values
-to find that a media image contains part of a blacklisted video file.
+\url{www.digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}.
+checks against a database of blacklisted hash values
+to find part of a blacklisted video file in a media image.
 
 The Similarity demo at
-\url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo.pdf}.
+\url{www.digitalcorpora.org/downloads/hashdb/demo/similarity\_demo.pdf}.
 subtracts whitelist hash values
-to reveal user files that are common in two media images.
+to reveal blocks of user data that are common in two media images.
 
 The workflow for managing blacklist databases and whitelist databases
 is the same:
 \begin{compactenum}
-\item Generate block hash values in DFXML format
-from blacklist or whitelist sources.
-\item Import these block hash values into a \hdb hash database.
-%\item Tailor the contents of a database by adding or removing
-%specific hash values.
+\item Generate DFXML file(s) of block hashes
+from blacklist or whitelist file sources.
+\item Import these DFXML file(s) into a block hash database.
 \end{compactenum}
 
 %Here is the workflow:
@@ -78,12 +76,6 @@ Import block hashes into the hash database:
   \caption*{Run the \hdb \texttt{import} command
             to import block hashes into the hash database.}
 \end{figure}
-
-%Use \hdb tool commands to tailor your database as needed.
-%For example:
-%\begin{compactenum}
-%\item If a hash 
-%\end{compactenum}
 
 %steps
 Here are the steps to perform this demo:
