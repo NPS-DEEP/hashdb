@@ -22,6 +22,7 @@
  * holds the command line the program was started with.
  */
 
+#include <config.h>
 #include "command_line.hpp"
 #include <string>
 
