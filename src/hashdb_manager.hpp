@@ -251,7 +251,7 @@ class hashdb_manager_t {
 
   // find
   std::pair<hashdb_iterator_t, hashdb_iterator_t> find(
-                                            const hashdigest_t& hashdigest) {
+                                       const hashdigest_t& hashdigest) const {
 
     if (hashdigest.hashdigest_type == "MD5") {
       return find(md5_t::fromhex(hashdigest.hashdigest));
@@ -268,7 +268,7 @@ class hashdb_manager_t {
       return std::pair<hashdb_iterator_t, hashdb_iterator_t>(end(), end());
     }
   }
-  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const md5_t& key) {
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const md5_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_MD5) {
       // gracefully return hashdb end iterators
@@ -283,7 +283,7 @@ class hashdb_manager_t {
                hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
                hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
   }
-  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha1_t& key) {
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha1_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_SHA1) {
       // gracefully return hashdb end iterators
@@ -298,7 +298,7 @@ class hashdb_manager_t {
                hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
                hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
   }
-  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha256_t& key) {
+  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const sha256_t& key) const {
     // check that the hashdigest type is right for this hashdb
     if (settings.hashdigest_type != HASHDIGEST_SHA256) {
       // gracefully return hashdb end iterators

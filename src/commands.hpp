@@ -39,7 +39,6 @@
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
-#include "identified_sources_writer.hpp"
 
 /*
 #include "dfxml_hashdigest_reader.hpp"
@@ -69,40 +68,41 @@
 
 class commands_t {
   private:
-  // perform intersection, optimised for speed
-  void intersect_optimised(const hashdb_manager_t& hashdb_smaller,
-                           const hashdb_manager_t& hashdb_larger,
-                           hashdb_manager_t& hashdb_dir3,
-                           hashdb_changes_t& changes) {
+  // perform intersection, optimized for speed
+  static void intersect_optimized(const hashdb_manager_t& smaller_hashdb,
+                                  const hashdb_manager_t& larger_hashdb,
+                                  hashdb_manager_t& hashdb3,
+                                  hashdb_changes_t& changes) {
 
     // get iterator for smaller db
-    hashdb_iterator_t smaller_it = hashdb_smaller.begin();
+    hashdb_iterator_t smaller_it = smaller_hashdb.begin();
 
     // iterate over smaller db
-    while (smaller_it != hashdb_smaller.end()) {
+    while (smaller_it != smaller_hashdb.end()) {
 
       // generate a hashdigest for this element
       hashdigest_t hashdigest(smaller_it->hashdigest,
                               smaller_it->hashdigest_type);
 
       // see if hashdigest is in larger db
-      uint32_t count_larger = hashdb_larger.find_count(hashdigest);
+      uint32_t larger_count = larger_hashdb.find_count(hashdigest);
 
-      if (count_larger > 0) {
+      if (larger_count > 0) {
         // there is a match
-        uint32_t count_smaller = hashdb_smaller.find_count(hashdigest);
+        uint32_t smaller_count = smaller_hashdb.find_count(hashdigest);
 
         // add hashes from smaller
-        for (uint32_t i = 0; i<count_smaller; ++i) {
-          hashdb_element_t hashdb_element = *hashdb_it;
-          hashdb_3.insert(hashdb_element, changes);
+        for (uint32_t i = 0; i<smaller_count; ++i) {
+          hashdb_element_t hashdb_element = *smaller_it;
+          hashdb3.insert(hashdb_element, changes);
+          ++smaller_it;
         }
 
         // add hashes from larger
         std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-                                      hashdb_manager.find(hashdigest);
+                                      larger_hashdb.find(hashdigest);
         while (it_pair.first != it_pair.second) {
-          hashdb_manager2.insert(*it_pair.first, changes);
+          hashdb3.insert(*it_pair.first, changes);
           ++it_pair.first;
         }
       }
@@ -266,18 +266,18 @@ class commands_t {
     logger.add("hashdb_dir3", hashdb_dir3);
 
     // resources
-    hashdigest_manager_t manager1(hashdb_dir1, READ_ONLY);
-    hashdigest_manager_t manager2(hashdb_dir2, READ_ONLY);
-    hashdigest_manager_t manager3(hashdb_dir2, RW_MODIFY);
+    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t manager3(hashdb_dir2, RW_MODIFY);
     hashdb_changes_t changes;
 
     logger.add_timestamp("begin intersect");
 
     // optimise processing based on smaller db
-    if (temp1.map_size() <= temp2.map_size()) {
-      intersect_optimised(manager1, manager2, manager3, changes);
+    if (manager1.map_size() <= manager2.map_size()) {
+      intersect_optimized(manager1, manager2, manager3, changes);
     } else {
-      intersect_optimised(manager2, manager1, manager3, changes);
+      intersect_optimized(manager2, manager1, manager3, changes);
     }
 
     logger.add_timestamp("end intersect");
@@ -472,11 +472,10 @@ class commands_t {
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // get the reader and writer for the input and output files
+    // get the identified_blocks.txt file reader
     identified_blocks_reader_t reader(identified_blocks_file);
-    identified_sources_writer_t writer(std::cout);
 
-    // get settings to know what hashdigest_type to indicate zzzzzzz
+    // look up the hashdigest type from settings
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     std::string hashdigest_type_string = hashdigest_type_to_string(settings.hashdigest_type);
 
@@ -489,16 +488,12 @@ class commands_t {
       while (it_pair.first != it_pair.second) {
         // write match to output:
         // offset tab hashdigest tab repository name, filename
-        writer.write(it->first);
-        writer.write("\t");
-        writer.write(it_pair.first->hashdigest);
-        writer.write("\t");
-        writer.write(it_pair.first->repository_name);
-        writer.write(",");
-        writer.write(it_pair.first->filename);
-        writer.write(",");
-        writer.write(it_pair.first->file_offset);
-        writer.write("\n");
+        std::cout << it->first << "\t"
+                  << it_pair.first->hashdigest << "\t"
+                  << "repository name=" << it_pair.first->repository_name
+                  << ",filename=" << it_pair.first->filename
+                  << ",file offset=" << it_pair.first->file_offset
+                  << "\n";
 
         ++it_pair.first;
       }
@@ -513,8 +508,8 @@ class commands_t {
     source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
     source_lookup_index_iterator_t it = manager.begin();
     while (it != manager.end()) {
-      std::cout << "repository name='" << e.repository_name
-                << "', filename='" << e.filename << "\n";
+      std::cout << "repository name='" << it->first
+                << "', filename='" << it->second << "\n";
       ++it;
     }
   }

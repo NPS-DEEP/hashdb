@@ -31,7 +31,6 @@
 #include "boost_fix.hpp"
 #include "identified_blocks_reader_iterator.hpp"
 #include "identified_blocks_reader.hpp"
-#include "identified_sources_writer.hpp"
 
 
 void do_test() {
@@ -40,9 +39,9 @@ void do_test() {
   BOOST_TEST_EQ(it->first, "10485760");
   BOOST_TEST_EQ(it->second, "3b6b477d391f73f67c1c01e2141dbb17");
 
-  identified_sources_writer_t writer("temp_dir/identified_sources.txt");
   for (int i=0; i<16; ++i) {
-    writer.write(it->first + ", " + it->second + "\n");
+    // the first of 16 is validated above, but all may be inspected
+    // std::cout << it->first + ", " + it->second + "\n";
     ++it;
   }
   BOOST_TEST_EQ((it == reader.end()), true);

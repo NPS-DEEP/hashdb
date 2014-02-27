@@ -287,7 +287,7 @@ class map_multimap_manager_t {
 
   // find
   std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
-          find(const T& key) {
+          find(const T& key) const {
     map_iterator_t<T> map_it = map_manager.find(key);
 
     if (map_it == map_manager.end()) {
