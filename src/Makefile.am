@@ -20,6 +20,9 @@
 # This file assists in building the hashdb_manager tool.
 
 bin_PROGRAMS = hashdb
+#lib_LTLIBRARIES = libhashdb.la
+
+#libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -131,4 +134,15 @@ hashdb_SOURCES = \
 	$(COMMAND_LINE_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS)
+
+# use separate makefile because autotools can't create these
+# with and without libtool
+#libhashdb_la_SOURCES = \
+#	$(COMMAND_LINE_INCS) \
+#	$(BTREE_INCS) $(ENDIAN_INCS) \
+#	$(BLOOM_INCS) $(DFXML_INCS) \
+#	hashdb.cpp \
+#	hashdb.hpp
+#
+#include_HEADERS = hashdb.hpp
 

@@ -28,6 +28,8 @@
   // including windows.h first, resulting in a warning.
   #include <winsock2.h>
 #endif
+#include "hashdb.hpp"
+#include "hashdb_manager.hpp"
 #include <dfxml/src/hash_t.h>
 #include <string>
 #include <vector>
@@ -48,30 +50,15 @@ const char* hashdb_version() {
   return PACKAGE_VERSION;
 }
 
-  // private helper method
-  template<class T>
-  do_import(T hash,
-            const std::string& repository_name,
-            const std::string& filename,
-            uint64_t file_offset) {
-    if (mode != HASHDB_IMPORT) {
-      return 0;
-    }
-
-    hashdigest_t hashdigest(hash);
-    hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                    hashdigest.hashdigest_type,
-
-
   // constructor for importing
   hashdb_t::hashdb_t(const std::string& hashdb_dir,
            const std::string& hashdigest_type,
            uint32_t p_block_size,
            uint32_t p_max_duplicates) :
+                       mode(HASHDB_IMPORT),
                        hashdb_manager(0),
                        hashdb_changes(0),
-                       mode(HASHDB_IMPORT),
-                       hash__size(p_hash__size),
+                       block_size(p_block_size),
                        max_duplicates(p_max_duplicates) {
 
     // create and write settings to hashdb_dir
@@ -79,8 +66,7 @@ const char* hashdb_version() {
     bool success = string_to_hashdigest_type(hashdigest_type,
                                              settings.hashdigest_type);
     if (success == false) {
-//      mode = HASHDB_NONE;
-//      return;
+      // setup must be successful
       std::cerr << "Error: Invalid hash algorithm name: '" << hashdigest_type
                 << "'\nCannot continue.\n";
       exit(1);
@@ -94,15 +80,16 @@ const char* hashdb_version() {
     hashdb_changes = new hashdb_changes_t;
   }
 
-  // Import
-  int hashdb_t::import(T hash,
+  // these theree imports are nearly identical; they should use template.
+  // Import md5
+  int hashdb_t::import(md5_t hash,
              std::string repository_name,
              std::string filename,
              uint64_t file_offset) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
-      return 0;
+      return -1;
     }
 
     // create hashdb element to insert
@@ -114,211 +101,197 @@ const char* hashdb_version() {
                                     filename,
                                     file_offset);
 
-    hashdb_manager->insert(hashdb_element, *changes);
+    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+    // good, done
+    return 0;
+  }
+  // Import sha1
+  int hashdb_t::import(sha1_t hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset) {
+
+    // check mode
+    if (mode != HASHDB_IMPORT) {
+      return -1;
+    }
+
+    // create hashdb element to insert
+    hashdigest_t hashdigest(hash);
+    hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                    hashdigest.hashdigest_type,
+                                    block_size,
+                                    repository_name,
+                                    filename,
+                                    file_offset);
+
+    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+    // good, done
+    return 0;
+  }
+  // Import sha256
+  int hashdb_t::import(sha256_t hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset) {
+
+    // check mode
+    if (mode != HASHDB_IMPORT) {
+      return -1;
+    }
+
+    // create hashdb element to insert
+    hashdigest_t hashdigest(hash);
+    hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                    hashdigest.hashdigest_type,
+                                    block_size,
+                                    repository_name,
+                                    filename,
+                                    file_offset);
+
+    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+    // good, done
+    return 0;
   }
 
   // constructor for scanning
-  hashdb_t(const std::string& path_or_socket) :
+  hashdb_t::hashdb_t(const std::string& path_or_socket) :
+                       mode(HASHDB_SCAN),
                        hashdb_manager(0),
                        hashdb_changes(0),
-                       mode(HASHDB_SCAN),
-                       hash__size(0),
+                       block_size(0),
                        max_duplicates(0) {
 
-    // no socket yet, so go directly to hashdb_dir
+    // no socket implemented yet, so go directly to hashdb_dir
     std::string hashdb_dir = path_or_socket;
 
     // open hashdb_manager for scanning
-    hashdb_manager = new hashdb_manager(hashdb_dir, READ_ONLY);
-
-    hashd
-
-  // Scan
-  std::vector<std::pair<uint64_t, uint32_t>>
-               hashdb_t::scan(std::vector<std::pair<uint64_t, md5_t>>);
-  std::vector<std::pair<uint64_t, uint32_t count>>
-               hashdb_t::scan(std::vector<std::pair<uint64_t, sha1_t>>);
-  std::vector<std::pair<uint64_t, uint32_t count>>
-               hashdb_t::scan(std::vector<std::pair<uint64_t, sha256_t>>);
-
-
-
-
-// Standard includes
-#include <cstdlib>
-#include <cstdio>
-#include <string>
-#include <string.h>
-#include <sstream>
-#include <iostream>
-#include <algorithm>
-#include <map>
-
-// ************************************************************ 
-// the query type for performing the query
-// ************************************************************ 
-std::string hashdb::query_type_to_string(query_type_t type) {
-  switch(type) {
-    case QUERY_USE_PATH: return "use_path";
-    case QUERY_USE_SOCKET: return "use_socket";
-    default: return "not_selected";
+    hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
   }
-}
 
-bool hashdb::string_to_query_type(
-                            const std::string& name, query_type_t& type) {
-  if (name == "use_path")       { type = QUERY_USE_PATH;        return true; }
-  if (name == "use_socket")     { type = QUERY_USE_SOCKET;      return true; }
-  if (name == "not_selected")   { type = QUERY_NOT_SELECTED;    return true; }
-  type = QUERY_NOT_SELECTED;
-  return false;
-}
+  // these theree scans are nearly identical; they should use template.
+  // Scan md5
+  int hashdb_t::scan(const std::vector<std::pair<uint64_t, md5_t> >& input,
+                     scan_output_t& output) {
 
-// ************************************************************ 
-// data structures required by the query interfaces
-// ************************************************************ 
-// hash request
-hashdb::hash_request_md5_t::hash_request_md5_t() : id(0), digest() {
-}
-hashdb::hash_request_md5_t::hash_request_md5_t(uint32_t p_id, const uint8_t* p_digest) :
-         id(p_id), digest() {
-  memcpy(this->digest,p_digest,16);
-}
+    // check mode
+    if (mode != HASHDB_SCAN) {
+      return -1;
+    }
 
-// hash response, also same as source request
-hashdb::hash_response_md5_t::hash_response_md5_t() :
-             id(0), digest(), duplicates_count(0),
-             source_query_index(0), hash_block_offset_value(0) {
-}
-hashdb::hash_response_md5_t::hash_response_md5_t(
-                    uint32_t p_id,
-                    const uint8_t* p_digest,
-                    uint32_t p_duplicates_count,
-                    uint64_t p_source_query_index,
-                    uint64_t p_hash_block_offset_value) :
-             id(p_id),
-             duplicates_count(p_duplicates_count),
-             source_query_index(p_source_query_index),
-             hash_block_offset_value(p_hash_block_offset_value) {
-  memcpy(this->digest,p_digest,16);
-}
+    // clear any old output
+    output.clear();
+           
+    // no socket implemented yet, so directly use hashdb
 
-// one source reference
-hashdb::source_reference_t::source_reference_t() :
-             repository_name(""),
-             filename(""),
-             file_offset(0) {
-}
-hashdb::source_reference_t::source_reference_t(
-                    std::string p_repository_name,
-                    std::string p_filename,
-                    uint64_t p_file_offset) :
-             repository_name(p_repository_name),
-             filename(p_filename),
-             file_offset(p_file_offset) {
-}
+    // scan each input in turn
+    std::vector<std::pair<uint64_t, md5_t> >::const_iterator it = input.begin();
+    while (it != input.end()) {
+      uint32_t count = hashdb_manager->find_count(it->second);
+      if (count > 0) {
+        std::pair<uint64_t, uint32_t> return_item(it->first, count);
+        output.push_back(return_item);
+//        output.push_back(typename std::vector<std::pair<uint64_t, uint32_t> >(
+//                                                          it->first, count));
+      }
+      ++it;
+    }
 
-// source response for one hash
-hashdb::source_response_md5_t::source_response_md5_t() :
-             id(0),
-             source_references() {
-}
-hashdb::source_response_md5_t::source_response_md5_t(
-                    uint32_t p_id,
-                    const uint8_t* p_digest) :
-             id(p_id),
-             source_references() {
-  memcpy(this->digest,p_digest,16);
-}
-
-// ************************************************************ 
-// the query interfaces
-// ************************************************************ 
-
-hashdb::query_t::query_t(hashdb::query_type_t p_query_type,
-                         const std::string& p_query_source_string) :
-             query_type(p_query_type),
-             query_by_path(0),
-             query_by_socket(0) {
-
-    switch(query_type) {
-      case QUERY_USE_PATH:
-        query_by_path = new query_by_path_t(p_query_source_string);
-        break;
-      case QUERY_USE_SOCKET:
-        query_by_socket = new query_by_socket_t(p_query_source_string);
-        break;
-      default:
-        // non-valid source type was provided
-        std::cerr << "Error on init: A valid query service type is required.\n";
+    // good, done
+    return 0;
   }
-}
 
-hashdb::query_t::~query_t() {
-  switch(query_type) {
-    case QUERY_USE_PATH:
-      delete query_by_path;
-      break;
-    case QUERY_USE_SOCKET:
-      delete query_by_socket;
-      break;
-    default:
-      // non-valid source type was provided
-      std::cerr << "Error on delete: A valid query service type is required.\n";
+  // Scan sha1
+  int hashdb_t::scan(const std::vector<std::pair<uint64_t, sha1_t> >& input,
+                     scan_output_t& output) {
+
+    // check mode
+    if (mode != HASHDB_SCAN) {
+      return -1;
+    }
+
+    // clear any old output
+    output.clear();
+           
+    // no socket implemented yet, so directly use hashdb
+
+    // scan each input in turn
+    std::vector<std::pair<uint64_t, sha1_t> >::const_iterator it = input.begin();
+    while (it != input.end()) {
+      uint32_t count = hashdb_manager->find_count(it->second);
+      if (count > 0) {
+        std::pair<uint64_t, uint32_t> return_item(it->first, count);
+        output.push_back(return_item);
+//        output.push_back(std::vector<std::pair<uint64_t, uint32_t> >(
+//                                                          it->first, count));
+      }
+      ++it;
+    }
+
+    // good, done
+    return 0;
   }
-}
 
-int hashdb::query_t::query_status() const {
-    switch(query_type) {
-      case QUERY_USE_PATH:
-        return query_by_path->query_status();
-      case QUERY_USE_SOCKET:
-        return query_by_socket->query_status();
-      default:
-        return -1;
-    }
-}
+  // Scan sha256
+  int hashdb_t::scan(const std::vector<std::pair<uint64_t, sha256_t> >& input,
+                     scan_output_t& output) {
 
-int hashdb::query_t::query_hashes_md5(
-                const hashdb::hashes_request_md5_t& request,
-                hashdb::hashes_response_md5_t& response) {
-    switch(query_type) {
-      case QUERY_USE_PATH:
-        return query_by_path->query_hashes_md5(request, response);
-      case QUERY_USE_SOCKET:
-        return query_by_socket->query_hashes_md5(request, response);
-      default:
-        // non-valid source type was provided
-        std::cerr << "Error on query hashes md5: A valid query service type is required.\n";
-        return -1;
+    // check mode
+    if (mode != HASHDB_SCAN) {
+      return -1;
     }
-}
- 
-int hashdb::query_t::query_sources_md5(
-                const hashdb::sources_request_md5_t& request,
-                hashdb::sources_response_md5_t& response) {
-    switch(query_type) {
-      case QUERY_USE_PATH:
-        return query_by_path->query_sources_md5(request, response);
-      case QUERY_USE_SOCKET:
-        return query_by_socket->query_sources_md5(request, response);
-      default:
-        // non-valid source type was provided
-        std::cerr << "Error on query sources md5: A valid query service type is required.\n";
-        return -1;
+
+    // clear any old output
+    output.clear();
+           
+    // no socket implemented yet, so directly use hashdb
+
+    // scan each input in turn
+    std::vector<std::pair<uint64_t, sha256_t> >::const_iterator it = input.begin();
+    while (it != input.end()) {
+      uint32_t count = hashdb_manager->find_count(it->second);
+      if (count > 0) {
+        std::pair<uint64_t, uint32_t> return_item(it->first, count);
+        output.push_back(return_item);
+//        output.push_back(std::vector<std::pair<uint64_t, uint32_t> >(
+//                                                          it->first, count));
+      }
+      ++it;
     }
-}
- 
-int hashdb::query_t::query_hashdb_info(std::string& hashdb_info_response) {
-    switch(query_type) {
-      case QUERY_USE_PATH:
-        return query_by_path->query_hashdb_info(hashdb_info_response);
-      case QUERY_USE_SOCKET:
-        return query_by_socket->query_hashdb_info(hashdb_info_response);
-      default:
-        // non-valid source type was provided
-        std::cerr << "Error on query hashdb info: A valid query service type is required.\n";
-        return -1;
+
+    // good, done
+    return 0;
+  }
+
+  // destructor
+  hashdb_t::~hashdb_t() {
+    switch(mode) {
+      case HASHDB_NONE:
+        return;
+      case HASHDB_IMPORT:
+        delete hashdb_manager;
+        delete hashdb_changes;
+        return;
+      case HASHDB_SCAN:
+        delete hashdb_manager;
+        return;
     }
-}
- 
+  }
+
+  hashdb_t::hashdb_t(const hashdb_t& other) :
+                 mode(HASHDB_NONE),
+                 hashdb_manager(0),
+                 hashdb_changes(0),
+                 block_size(0),
+                 max_duplicates(0) {
+    // fix zzzzzz
+    assert(0);
+  }
+  hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
+    // fix zzzzzz
+    assert(0);
+  }
+

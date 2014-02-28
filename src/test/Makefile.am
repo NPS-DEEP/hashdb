@@ -36,7 +36,8 @@ bin_PROGRAMS = \
 	hashdb_manager_test \
 	dfxml_hashdigest_rw_test \
 	hashdigest_manager_test \
-	identified_blocks_reader_test
+	identified_blocks_reader_test \
+	libhashdb_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -45,6 +46,8 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/endian/include \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
+
+libhashdb_test_LDADD = ../libhashdb/libhashdb.la
 
 AM_LDFLAGS = -static $(XML_LIBS)
 
@@ -313,5 +316,10 @@ identified_blocks_reader_test_SOURCES = \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_test.cpp
 
+libhashdb_test_SOURCES = \
+	boost_fix.hpp \
+	../dfxml/src/hash_t.h \
+	libhashdb_test.cpp
+	
 .PHONY: run_tests
 

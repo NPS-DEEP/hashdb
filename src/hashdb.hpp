@@ -31,46 +31,96 @@
 #include <stdint.h>
 
 /**
- * Version of the hashdb client library.
+ * Version of the hashdb library.
  */
 extern "C"
 const char* hashdb_version();
 
-template <typename T>
+// required inside hashdb_t
+class hashdb_manager_t;
+class hashdb_changes_t;
+
+/**
+ * The hashdb library.
+ */
 class hashdb_t {
   private:
-  class hashdb_manager_t;
-  class hashdb_changes_t;
-  hashdb_manager_t *hashdb_manager;
-  hashdb_changes_t *hashdb_changes;
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
                        HASHDB_SCAN};
   hashdb_modes_t mode;
+  hashdb_manager_t *hashdb_manager;
+  hashdb_changes_t *hashdb_changes;
   const uint32_t block_size;
   const uint32_t max_duplicates;
 
   public:
-  typedef std::vector<std:pair<uint64_t, T> > scan_input_t;
-  typedef std::vector<std:pair<uint64_t, uint32_t> > scan_output_t;
+  typedef std::vector<std::pair<uint64_t, md5_t> >    scan_input_md5_t;
+  typedef std::vector<std::pair<uint64_t, sha1_t> >   scan_input_sha1_t;
+  typedef std::vector<std::pair<uint64_t, sha256_t> > scan_input_sha256_t;
+  typedef std::vector<std::pair<uint64_t, uint32_t> > scan_output_t;
 
-  // constructor for importing
+  /**
+   * Constructor for importing.
+   */
   hashdb_t(const std::string& hashdb_dir,
            const std::string& hashdigest_type,
            uint32_t p_block_size,
            uint32_t p_max_duplicates);
 
-  // Import
-  int import(T hash,
+  /**
+   * Import MD5 hash.
+   */
+  int import(md5_t hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset);
+  /**
+   * Import SHA1 hash.
+   */
+  int import(sha1_t hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset);
+  /**
+   * Import SHA256 hash.
+   */
+  int import(sha256_t hash,
              std::string repository_name,
              std::string filename,
              uint64_t file_offset);
 
-  // constructor for scanning
+  /**
+   * Constructor for scanning.
+   */
   hashdb_t(const std::string& path_or_socket);
 
-  // Scan
-  scan_output_t& scan(scan_input_t* scan_input);
+  /**
+   * Scan for MD5 hashes.
+   */
+  int scan(const scan_input_md5_t& scan_input,
+           scan_output_t& scan_output);
+  /**
+   * Scan for SHA1 hashes.
+   */
+  int scan(const scan_input_sha1_t& scan_input,
+           scan_output_t& scan_output);
+  /**
+   * Scan for SHA256 hashes.
+   */
+  int scan(const scan_input_sha256_t& scan_input,
+           scan_output_t& scan_output);
+
+  /**
+   * don't use this.
+   */
+  hashdb_t(const hashdb_t& other);
+  /**
+   * don't use this.
+   */
+  hashdb_t& operator=(const hashdb_t& other);
+
+  ~hashdb_t();
 };
 
 #endif

@@ -35,45 +35,6 @@ AM_LDFLAGS = -static $(XML_LIBS)
 # ############################################################
 # for libhashdb sources
 # ############################################################
-HASHDB_INCS = \
-	../bi_data_types.hpp \
-	../bi_store.hpp \
-	../bloom_filter.hpp \
-	../command_line.cpp \
-	../command_line.hpp \
-	../hashdb.cpp \
-	../hashdb.hpp \
-	../hashdb_change_logger.hpp \
-	../hashdb_filenames.cpp \
-	../hashdb_filenames.hpp \
-	../hashdb_types.h \
-	../hashdb_db_manager.hpp \
-	../hashdb_settings.hpp \
-	../hashdb_settings_reader.hpp \
-	../hash_duplicates_store.cpp \
-	../hash_duplicates_store.hpp \
-	../hash_store.cpp \
-	../hash_store.hpp \
-	../manager_modified.h \
-	../manager_modified_includes.h \
-	../manager_modified_multimap.h \
-	../query_by_path.hpp \
-	../query_by_socket.hpp \
-	../source_lookup_manager.hpp \
-	../source_lookup_encoding.hpp
-
-DFXML_INCS = \
-	../dfxml/src/hash_t.h \
-	../dfxml/src/dfxml_writer.cpp \
-	../dfxml/src/dfxml_writer.h \
-	../dfxml/src/cppmutex.h
-
-MISC_INCS = \
-	../misc/bloom.c \
-	../misc/bloom.h \
-	../misc/file_mapper.cpp \
-	../misc/file_mapper.hpp
-
 BTREE_INCS = \
 	../btree/include/boost/btree/index_helpers.hpp \
 	../btree/include/boost/btree/support/string_view.hpp \
@@ -83,7 +44,7 @@ BTREE_INCS = \
 	../btree/include/boost/btree/btree_index_set.hpp \
 	../btree/include/boost/btree/mmff.hpp \
 	../btree/include/boost/btree/btree_set.hpp \
-	../btree/include/boost/btree/btree_index_set.hpp \
+	../btree/include/boost/btree/btree_index_map.hpp \
 	../btree/include/boost/btree/helpers.hpp \
 	../btree/include/boost/btree/detail/binary_file.hpp \
 	../btree/include/boost/btree/detail/test_traits.hpp \
@@ -107,9 +68,53 @@ ENDIAN_INCS = \
 	../endian/include/boost/endian/detail/intrinsic.hpp \
 	../endian/include/boost/endian/conversion.hpp
 
+COMMAND_LINE_INCS = \
+	../command_line.cpp \
+	../command_line.hpp
+
+BLOOM_INCS = \
+	../misc/bloom.c \
+	../misc/bloom.h \
+	../misc/file_mapper.cpp \
+	../misc/file_mapper.hpp
+
+DFXML_INCS = \
+	../dfxml/src/hash_t.h \
+	../dfxml/src/dfxml_writer.cpp \
+	../dfxml/src/dfxml_writer.h \
+	../dfxml/src/cppmutex.h
+
+#HASHDB_INCS = \
+#	../bi_data_types.hpp \
+#	../bi_store.hpp \
+#	../bloom_filter.hpp \
+#	../hashdb.cpp \
+#	../hashdb.hpp \
+#	../hashdb_change_logger.hpp \
+#	../hashdb_filenames.cpp \
+#	../hashdb_filenames.hpp \
+#	../hashdb_types.h \
+#	../hashdb_db_manager.hpp \
+#	../hashdb_settings.hpp \
+#	../hashdb_settings_reader.hpp \
+#	../hash_duplicates_store.cpp \
+#	../hash_duplicates_store.hpp \
+#	../hash_store.cpp \
+#	../hash_store.hpp \
+#	../manager_modified.h \
+#	../manager_modified_includes.h \
+#	../manager_modified_multimap.h \
+#	../query_by_path.hpp \
+#	../query_by_socket.hpp \
+#	../source_lookup_manager.hpp \
+#	../source_lookup_encoding.hpp
+
 libhashdb_la_SOURCES = \
-	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
-	$(BTREE_INCS) $(ENDIAN_INCS)
+	../hashdb.cpp \
+	../hashdb.hpp \
+	$(COMMAND_LINE_INCS) \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	$(BLOOM_INCS) $(DFXML_INCS)
 
 include_HEADERS = ../hashdb.hpp
 

@@ -148,12 +148,11 @@ Interfaces follow:
 %int open_hashdb_scanner(const std::string& path_or_socket);
 \begin{small}
 \begin{verbatim}
-// generic template
-template <typename T> class hashdb_t;
-
 // convenience typedefs
-typedef std::vector<std:pair<uint64_t, T> > scan_input_t;
-typedef std::vector<std:pair<uint64_t, uint32_t> > scan_output_t;
+typedef std::vector<std::pair<uint64_t, md5_t>>     scan_input_md5_t;
+typedef std::vector<std::pair<uint64_t, sha1_t>>    scan_input_sha1_t;
+typedef std::vector<std::pair<uint64_t, sha256_t>>  scan_input_md5_t;
+typedef std::vector<std::pair<uint64_t, uint32_t>>  scan_output_t;
 
 // constructor for importing
 hashdb_t(const std::string& hashdb_dir,
@@ -162,7 +161,15 @@ hashdb_t(const std::string& hashdb_dir,
          uint32_t max_duplicates);
 
 // Import
-int import(T hash,
+int import(md5_t hash,
+           std::string repository_name,
+           std::string filename,
+           uint64_t file_offset);
+int import(sha1_t hash,
+           std::string repository_name,
+           std::string filename,
+           uint64_t file_offset);
+int import(sha256_t hash,
            std::string repository_name,
            std::string filename,
            uint64_t file_offset);
@@ -171,13 +178,20 @@ int import(T hash,
 hashdb_t(const std::string& path_or_socket);
 
 // Scan
-scan_output_t& scan(scan_input_t& scan_input);
+int scan(const scan_input_md5_t& scan_input_md5,
+         scan_output_t& scan_output);
+int scan(const scan_input_sha1_t& scan_input_sha1,
+         scan_output_t& scan_output);
+int scan(const scan_input_sha256_t& scan_input_sha256,
+         scan_output_t& scan_output);
 \end{verbatim}
 \end{small}
 
 For importing, if the \texttt{path\_or\_socket} string
 contains adjacent // markers, a socket is opened for scanning,
 otherwise a database at the given path is opened for scanning.
+
+All functions return 0 unless there was an error.
 
 
 %\subsection{\hdb Server}
