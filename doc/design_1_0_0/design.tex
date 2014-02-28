@@ -20,6 +20,7 @@
 
 \newcommand{\hdb}{\emph{hashdb}\xspace}
 \newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hid}{\emph{hashid}\xspace}
 \newcommand{\mdd}{\emph{md5deep}\xspace}
 \newcommand{\mi}{\textbf{map iterator}\xspace}
 \newcommand{\mmi}{\textbf{multimap iterator}\xspace}
@@ -128,56 +129,107 @@ Instead, the library provides interfaces to create a new \hdb
 or to search an existing \hdb locally or remotely,
 and relies on the portability of \hdb databases
 so that users move databases onto one system
-where the \hdb Tool is then used
+where the \hdb tool is then used
 to perform all desired operational functions.
+
+These interfaces are provided as files:
+\begin{compactitem}
+\item \texttt{hashdb.hpp}
+\item \texttt{libhashdb.o}
+\end{compactitem}
 
 Interfaces follow:
 
+%// open for importing
+%int create_hashdb(const std::string& hashdigest_type,
+%                  uint32_t block_size,
+%                  uint32_t max_duplicates)
+%// open for scanning
+%int open_hashdb_scanner(const std::string& path_or_socket);
 \begin{small}
 \begin{verbatim}
-// Scan
-int open_hashdb_scanner(const std::string& path_or_socket);
-std::vector<std::pair<std::pair<uint64_t id, md5_t key>, uint32_t count>
-        scan(std::vector<std::pair<uint64_t& id, md5_t key);
-std::vector<std::pair<std::pair<uint64_t id, sha1_t key>, uint32_t count>
-        scan(std::vector<std::pair<uint64_t& id, sha1_t key);
-std::vector<std::pair<std::pair<uint64_t id, sha256_t key>, uint32_t count>
-        scan(std::vector<std::pair<uint64_t& id, sha256_t key);
+// generic template
+template <typename T> class hashdb_t;
+
+// convenience typedefs
+typedef std::vector<std:pair<uint64_t, T> > scan_input_t;
+typedef std::vector<std:pair<uint64_t, uint32_t> > scan_output_t;
+
+// constructor for importing
+hashdb_t(const std::string& hashdb_dir,
+         const std::string& hashdigest_type,
+         uint32_t block_size,
+         uint32_t max_duplicates);
 
 // Import
-int create_hashdb(const std::string& hashdigest_type,
-                  uint32_t hash_block_size,
-                  uint32_t maximum_hash_duplicates)
-int import(const hashdb_element_t element);
+int import(T hash,
+           std::string repository_name,
+           std::string filename,
+           uint64_t file_offset);
 
-// hashdb element
-hashdb_element_t(const std::string hashdigest,
-                 const std::string hashdigest_type,
-                 uint32_t block_size,
-                 const std::string repository_name,  // forensic path prefix
-                 const std::string filename,         // forensic path suffix
-                 uint64_t file_offset);              // forensic path offset
+// constructor for scanning
+hashdb_t(const std::string& path_or_socket);
+
+// Scan
+scan_output_t& scan(scan_input_t& scan_input);
 \end{verbatim}
 \end{small}
 
-For \texttt{create\_hashdb},
-if the string contains adjacent // markers, a socket is indicated,
-otherwise a file path is indicated.
-Here is the constructor:
+For importing, if the \texttt{path\_or\_socket} string
+contains adjacent // markers, a socket is opened for scanning,
+otherwise a database at the given path is opened for scanning.
 
 
-\subsection{\hdb Server}
-The \hdb server service performs lookup queries on the \hdb library.
-The \hdb server workflow is simple:
+%\subsection{\hdb Server}
+%The \hdb server service performs lookup queries on the \hdb library.
+%The \hdb server workflow is simple:
+%
+%\begin{algorithmic}
+%\STATE Instantiate a \hdb element manager
+%\WHILE{true}
+%  \STATE wait for vector of hashes with their ID
+%  \STATE scan the \hdb for matching hases
+%  \STATE for matches, return matching hashes, their ID, and the match count
+%\ENDWHILE
+%\end{algorithmic}
 
-\begin{algorithmic}
-\STATE Instantiate a \hdb element manager
-\WHILE{true}
-  \STATE wait for vector of hashes with their ID
-  \STATE scan the \hdb for matching hases
-  \STATE for matches, return matching hashes, their ID, and the match count
-\ENDWHILE
-\end{algorithmic}
+\subsection{\bulk \hid Scanner}
+The \bulk \hid scanner supports \texttt{import} and \texttt{scan} modes:
+\begin{compactitem}
+\item \texttt{scan} mode scans against a \hdb database
+and places hash features that match into feature file \texttt{identified\_blocks.txt}.
+\item \texttt{import} mode creates a \hdb database
+in the \bulk output directory under database directory \texttt{hashdb}.
+\end{compactitem}
+
+\hid scanner options are entered using \bulk \texttt{-S} parameter options:
+\begin{compactitem}
+\item \texttt{hashdb\_mode=[none|import|scan]}
+selects the \hid scanner mode of operation.
+Default is \texttt{none}, in which case the \hid scanner does nothing.
+\item \texttt{hashdb\_hashdigest\_type=[MD5|SHA1|SHA256]}
+For \texttt{import}, selects the hashdigest type to use for the hash database.
+For \texttt{scan}, selects the hashdigest type to use
+when generating hash blocks to be scanned.
+Default is \texttt{MD5}.
+\item \texttt{hashdb\_block\_size=<block size>}
+selects the block size to use for generating hashes.
+Default is 4096.
+\item \texttt{hashdb\_max\_duplicates=<max duplicates>}
+selects the maximum number of duplicates to import for a given hash value.
+Default is 20.
+Valid only for \texttt{import} mode.
+\item \texttt{hashdb\_path\_or\_socket=<path or socket>}
+selects the file path to a hash database
+or, if the text contains adjacent // markers,
+selects the socket to a \hdb server.
+Valid only for \texttt{scan} mode.
+\item \texttt{hashdb\_sector\_size=<sector size>}
+selects the sector size.
+When scanning, generate hash values to search for along sector boundaries.
+Default is 512.
+Valid only for \texttt{scan} mode.
+\end{compactitem}
 
 \section{File Modules - Mid-Level Database File Drivers}
 File modules manage access to database files.

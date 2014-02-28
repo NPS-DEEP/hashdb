@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Class file for the hashdb query interface.
+ * Class file for the hashdb library.
  */
 
 #include <config.h>
@@ -28,11 +28,121 @@
   // including windows.h first, resulting in a warning.
   #include <winsock2.h>
 #endif
-#include "hashdb.hpp"
-#include "hashdigest_types.h"                  // for hashdigest_type_t
+#include <dfxml/src/hash_t.h>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include "file_modes.h"
-//#include "query_by_path.hpp"
-//#include "query_by_socket.hpp"
+#include "hashdigest_types.h"
+#include "hashdb_settings.hpp"
+#include "hashdb_settings_manager.hpp"
+#include "hashdb_manager.hpp"
+#include "hashdb_element.hpp"
+#include "hashdb_changes.hpp"
+
+/**
+ * version of the hashdb query library
+ */
+extern "C"
+const char* hashdb_version() {
+  return PACKAGE_VERSION;
+}
+
+  // private helper method
+  template<class T>
+  do_import(T hash,
+            const std::string& repository_name,
+            const std::string& filename,
+            uint64_t file_offset) {
+    if (mode != HASHDB_IMPORT) {
+      return 0;
+    }
+
+    hashdigest_t hashdigest(hash);
+    hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                    hashdigest.hashdigest_type,
+
+
+  // constructor for importing
+  hashdb_t::hashdb_t(const std::string& hashdb_dir,
+           const std::string& hashdigest_type,
+           uint32_t p_block_size,
+           uint32_t p_max_duplicates) :
+                       hashdb_manager(0),
+                       hashdb_changes(0),
+                       mode(HASHDB_IMPORT),
+                       hash__size(p_hash__size),
+                       max_duplicates(p_max_duplicates) {
+
+    // create and write settings to hashdb_dir
+    hashdb_settings_t settings;
+    bool success = string_to_hashdigest_type(hashdigest_type,
+                                             settings.hashdigest_type);
+    if (success == false) {
+//      mode = HASHDB_NONE;
+//      return;
+      std::cerr << "Error: Invalid hash algorithm name: '" << hashdigest_type
+                << "'\nCannot continue.\n";
+      exit(1);
+    }
+    settings.hash_block_size = block_size;
+    settings.maximum_hash_duplicates = max_duplicates;
+    hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+
+    // create hashdb_manager for importing
+    hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
+    hashdb_changes = new hashdb_changes_t;
+  }
+
+  // Import
+  int hashdb_t::import(T hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset) {
+
+    // check mode
+    if (mode != HASHDB_IMPORT) {
+      return 0;
+    }
+
+    // create hashdb element to insert
+    hashdigest_t hashdigest(hash);
+    hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                    hashdigest.hashdigest_type,
+                                    block_size,
+                                    repository_name,
+                                    filename,
+                                    file_offset);
+
+    hashdb_manager->insert(hashdb_element, *changes);
+  }
+
+  // constructor for scanning
+  hashdb_t(const std::string& path_or_socket) :
+                       hashdb_manager(0),
+                       hashdb_changes(0),
+                       mode(HASHDB_SCAN),
+                       hash__size(0),
+                       max_duplicates(0) {
+
+    // no socket yet, so go directly to hashdb_dir
+    std::string hashdb_dir = path_or_socket;
+
+    // open hashdb_manager for scanning
+    hashdb_manager = new hashdb_manager(hashdb_dir, READ_ONLY);
+
+    hashd
+
+  // Scan
+  std::vector<std::pair<uint64_t, uint32_t>>
+               hashdb_t::scan(std::vector<std::pair<uint64_t, md5_t>>);
+  std::vector<std::pair<uint64_t, uint32_t count>>
+               hashdb_t::scan(std::vector<std::pair<uint64_t, sha1_t>>);
+  std::vector<std::pair<uint64_t, uint32_t count>>
+               hashdb_t::scan(std::vector<std::pair<uint64_t, sha256_t>>);
+
+
+
 
 // Standard includes
 #include <cstdlib>
@@ -43,14 +153,6 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
-
-// ************************************************************ 
-// version of the hashdb query library
-// ************************************************************ 
-extern "C"
-const char* hashdb_version() {
-  return PACKAGE_VERSION;
-}
 
 // ************************************************************ 
 // the query type for performing the query

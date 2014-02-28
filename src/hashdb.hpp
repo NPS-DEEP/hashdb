@@ -19,18 +19,16 @@
 
 /**
  * \file
- * Header file for the hashdb query interface.
+ * Header file for the hashdb library.
  */
 
 #ifndef HASHDB_HPP
 #define HASHDB_HPP
 
 #include <string>
+#include <dfxml/src/hash_t.h>
 #include <vector>
 #include <stdint.h>
-
-class query_by_path_t;
-class query_by_socket_t;
 
 /**
  * Version of the hashdb client library.
@@ -38,130 +36,42 @@ class query_by_socket_t;
 extern "C"
 const char* hashdb_version();
 
-namespace hashdb {
+template <typename T>
+class hashdb_t {
+  private:
+  class hashdb_manager_t;
+  class hashdb_changes_t;
+  hashdb_manager_t *hashdb_manager;
+  hashdb_changes_t *hashdb_changes;
+  enum hashdb_modes_t {HASHDB_NONE,
+                       HASHDB_IMPORT,
+                       HASHDB_SCAN};
+  hashdb_modes_t mode;
+  const uint32_t block_size;
+  const uint32_t max_duplicates;
 
-/**
- * Lookup types that are available.
- */
-enum query_type_t {QUERY_NOT_SELECTED,
-                   QUERY_USE_PATH,
-                   QUERY_USE_SOCKET};
+  public:
+  typedef std::vector<std:pair<uint64_t, T> > scan_input_t;
+  typedef std::vector<std:pair<uint64_t, uint32_t> > scan_output_t;
 
-std::string query_type_to_string(query_type_t type);
-bool string_to_query_type(const std::string& name, query_type_t& type);
+  // constructor for importing
+  hashdb_t(const std::string& hashdb_dir,
+           const std::string& hashdigest_type,
+           uint32_t p_block_size,
+           uint32_t p_max_duplicates);
 
-// ************************************************************ 
-// data structures supporting query_hashes_md5
-// ************************************************************ 
-/**
- * data associated with one hash in a request
- */
-struct hash_request_md5_t {
-    uint32_t id;
-    uint8_t digest[16];
+  // Import
+  int import(T hash,
+             std::string repository_name,
+             std::string filename,
+             uint64_t file_offset);
 
-    hash_request_md5_t();
-    hash_request_md5_t(uint32_t id, const uint8_t* p_digest);
+  // constructor for scanning
+  hashdb_t(const std::string& path_or_socket);
+
+  // Scan
+  scan_output_t& scan(scan_input_t* scan_input);
 };
-
-/**
- * Hash query request sent to the query engine
- */
-typedef std::vector<hash_request_md5_t> hashes_request_md5_t;
-
-/**
- * data associated with one hash in a response
- */
-struct hash_response_md5_t {
-    uint32_t id;
-    uint8_t digest[16];
-    uint32_t duplicates_count;
-    uint64_t source_query_index;
-    uint64_t hash_block_offset_value;
-
-    hash_response_md5_t();
-    hash_response_md5_t(uint32_t p_id,
-                        const uint8_t* p_digest,
-                        uint32_t p_duplicates_count,
-                        uint64_t p_source_query_index,
-                        uint64_t p_hash_block_offset_value);
-};
-
-/**
- * Hash query response returned from the query engine
- * and source query request sent to the query engine
- */
-typedef std::vector<hash_response_md5_t> hashes_response_md5_t;
-
-/**
- * Source query request sent to the qery engine
- * identical to hash query response
- */
-typedef hash_response_md5_t source_request_md5_t;
-typedef hashes_response_md5_t sources_request_md5_t;
-
-/**
- * data associated with one source reference
- */
-struct source_reference_t {
-    std::string repository_name;
-    std::string filename;
-    uint64_t file_offset;
-
-    source_reference_t();
-    source_reference_t(std::string p_repository_name,
-                       std::string p_filename,
-                       uint64_t p_file_offset);
-};
-
-/**
- * source references
- */
-typedef std::vector<source_reference_t> source_references_t;
-
-/**
- * source response data associated with one hash response
- */
-struct source_response_md5_t {
-    uint32_t id;
-    uint8_t digest[16];
-    source_references_t source_references;
-
-    source_response_md5_t();
-    source_response_md5_t(uint32_t p_id, const uint8_t* p_digest);
-};
-
-/**
- * source responses
- */
-typedef std::vector<source_response_md5_t> sources_response_md5_t;
-
-class query_t {
-    public:
-    query_t(query_type_t p_query_type, const std::string& p_query_source);
-    ~query_t();
-
-    int query_status() const;
-
-    int query_hashes_md5(const hashes_request_md5_t& hashes_request,
-                         hashes_response_md5_t& hashes_response);
-
-    int query_sources_md5(const sources_request_md5_t& sources_request,
-                          sources_response_md5_t& sources_response);
-
-    int query_hashdb_info(std::string& hashdb_info_response);
-
-    private:
-    query_type_t query_type;
-    query_by_path_t* query_by_path;
-    query_by_socket_t* query_by_socket;
-
-    // do not allow these
-    query_t(const query_t&);
-    query_t& operator=(const query_t&);
-};
-
-} // namespace
 
 #endif
 
