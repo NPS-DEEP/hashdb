@@ -82,76 +82,88 @@ const char* hashdb_version() {
 
   // these theree imports are nearly identical; they should use template.
   // Import md5
-  int hashdb_t::import(md5_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset) {
+  int hashdb_t::import(import_input_md5_t input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
       return -1;
     }
 
-    // create hashdb element to insert
-    hashdigest_t hashdigest(hash);
-    hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                    hashdigest.hashdigest_type,
-                                    block_size,
-                                    repository_name,
-                                    filename,
-                                    file_offset);
+    // import each input in turn
+    import_input_md5_t::const_iterator it = input.begin();
+    while (it != input.end()) {
+      // convert input to hashdb_element_t
+      hashdigest_t hashdigest(it->hash);
+      hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                      hashdigest.hashdigest_type,
+                                      block_size,
+                                      it->repository_name,
+                                      it->filename,
+                                      it->file_offset);
 
-    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+      // add hashdb_element_t to hashdb_manager
+      hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+      ++it;
+    }
 
     // good, done
     return 0;
   }
   // Import sha1
-  int hashdb_t::import(sha1_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset) {
+  int hashdb_t::import(import_input_sha1_t input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
       return -1;
     }
 
-    // create hashdb element to insert
-    hashdigest_t hashdigest(hash);
-    hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                    hashdigest.hashdigest_type,
-                                    block_size,
-                                    repository_name,
-                                    filename,
-                                    file_offset);
+    // import each input in turn
+    import_input_sha1_t::const_iterator it = input.begin();
+    while (it != input.end()) {
+      // convert input to hashdb_element_t
+      hashdigest_t hashdigest(it->hash);
+      hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                      hashdigest.hashdigest_type,
+                                      block_size,
+                                      it->repository_name,
+                                      it->filename,
+                                      it->file_offset);
 
-    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+      // add hashdb_element_t to hashdb_manager
+      hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+      ++it;
+    }
 
     // good, done
     return 0;
   }
   // Import sha256
-  int hashdb_t::import(sha256_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset) {
+  int hashdb_t::import(import_input_sha256_t input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
       return -1;
     }
 
-    // create hashdb element to insert
-    hashdigest_t hashdigest(hash);
-    hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                    hashdigest.hashdigest_type,
-                                    block_size,
-                                    repository_name,
-                                    filename,
-                                    file_offset);
+    // import each input in turn
+    import_input_sha256_t::const_iterator it = input.begin();
+    while (it != input.end()) {
+      // convert input to hashdb_element_t
+      hashdigest_t hashdigest(it->hash);
+      hashdb_element_t hashdb_element(hashdigest.hashdigest,
+                                      hashdigest.hashdigest_type,
+                                      block_size,
+                                      it->repository_name,
+                                      it->filename,
+                                      it->file_offset);
 
-    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+      // add hashdb_element_t to hashdb_manager
+      hashdb_manager->insert(hashdb_element, *hashdb_changes);
+
+      ++it;
+    }
 
     // good, done
     return 0;

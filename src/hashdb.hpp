@@ -55,6 +55,28 @@ class hashdb_t {
   const uint32_t max_duplicates;
 
   public:
+  // data structures for import
+  template<typename T>
+  struct import_element_t {
+    T hash;
+    std::string repository_name;
+    std::string filename;
+    uint64_t file_offset;
+    import_element_t(T p_hash,
+                   std::string p_repository_name,
+                   std::string p_filename,
+                   uint64_t p_file_offset) :
+                          hash(p_hash),
+                          repository_name(p_repository_name),
+                          filename(p_filename),
+                          file_offset(p_file_offset) {
+    }
+  };
+  typedef std::vector<import_element_t<md5_t> > import_input_md5_t;
+  typedef std::vector<import_element_t<sha1_t> > import_input_sha1_t;
+  typedef std::vector<import_element_t<sha256_t> > import_input_sha256_t;
+
+  // data structures for scan
   typedef std::vector<std::pair<uint64_t, md5_t> >    scan_input_md5_t;
   typedef std::vector<std::pair<uint64_t, sha1_t> >   scan_input_sha1_t;
   typedef std::vector<std::pair<uint64_t, sha256_t> > scan_input_sha256_t;
@@ -71,24 +93,15 @@ class hashdb_t {
   /**
    * Import MD5 hash.
    */
-  int import(md5_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset);
+  int import(import_input_md5_t import_input_md5);
   /**
    * Import SHA1 hash.
    */
-  int import(sha1_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset);
+  int import(import_input_sha1_t import_input_sha1);
   /**
    * Import SHA256 hash.
    */
-  int import(sha256_t hash,
-             std::string repository_name,
-             std::string filename,
-             uint64_t file_offset);
+  int import(import_input_sha256_t import_input_sha256);
 
   /**
    * Constructor for scanning.
@@ -98,17 +111,17 @@ class hashdb_t {
   /**
    * Scan for MD5 hashes.
    */
-  int scan(const scan_input_md5_t& scan_input,
+  int scan(const scan_input_md5_t& scan_input_md5,
            scan_output_t& scan_output);
   /**
    * Scan for SHA1 hashes.
    */
-  int scan(const scan_input_sha1_t& scan_input,
+  int scan(const scan_input_sha1_t& scan_input_sha1,
            scan_output_t& scan_output);
   /**
    * Scan for SHA256 hashes.
    */
-  int scan(const scan_input_sha256_t& scan_input,
+  int scan(const scan_input_sha256_t& scan_input_sha256,
            scan_output_t& scan_output);
 
   /**

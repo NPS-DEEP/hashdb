@@ -74,22 +74,23 @@ void do_import(std::string hashdigest_type) {
 //  to_key(2, k2);
 //  to_key(3, k3);
 
+  // input for import
+  std::vector<hashdb_t::import_element_t<T> > import_input;
+  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 0));
+  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 4096));
+  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 4097)); // invalid
+
   // create new database
   hashdb_t hashdb(temp_dir, hashdigest_type, 4096, 20);
 
   // import some elements
   int status;
-  status = hashdb.import(k1, "rep1", "file1", 0);
-  BOOST_TEST_EQ(status, 0);
-  status = hashdb.import(k1, "rep1", "file1", 4096);
-  BOOST_TEST_EQ(status, 0);
-  status = hashdb.import(k1, "rep1", "file1", 4097); // invalid block size
-  BOOST_TEST_EQ(status, 0);
+  status = hashdb.import(import_input);
 
   // invalid mode
-  std::vector<std::pair<uint64_t, T> > input;
-  std::vector<std::pair<uint64_t, uint32_t> > output;
-  status = hashdb.scan(input, output);
+  std::vector<std::pair<uint64_t, T> > scan_input;
+  std::vector<std::pair<uint64_t, uint32_t> > scan_output;
+  status = hashdb.scan(scan_input, scan_output);
   BOOST_TEST_NE(status, 0);
 }
 
