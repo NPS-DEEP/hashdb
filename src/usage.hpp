@@ -163,7 +163,7 @@ void usage() {
   << "    <hashdb>       the hash database to use as the lookup source\n"
   << "    <DFXML file>   the DFXML file containing hashes to scan for\n"
   << "\n"
-  << "expand_identified_blocks <identified_blocks.txt> <identified_sources.txt>\n"
+  << "expand_identified_blocks <hashdb_dir> <identified_blocks.txt>\n"
   << "    Prints out source information for each hash in <identified_blocks.txt>\n"
   << "    Source information includes repository name, filename, and file offset\n"
   << "\n"

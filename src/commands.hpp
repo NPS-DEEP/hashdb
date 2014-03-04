@@ -497,8 +497,8 @@ class commands_t {
 
         ++it_pair.first;
       }
+      ++it;
     }
-    ++it;
   }
 
   // print sources referenced in this database
