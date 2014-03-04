@@ -182,18 +182,9 @@ hashdb_t(const std::string& hashdb_dir,
          uint32_t max_duplicates);
 
 // Import
-int import(md5_t hash,
-           std::string repository_name,
-           std::string filename,
-           uint64_t file_offset);
-int import(sha1_t hash,
-           std::string repository_name,
-           std::string filename,
-           uint64_t file_offset);
-int import(sha256_t hash,
-           std::string repository_name,
-           std::string filename,
-           uint64_t file_offset);
+int import(const import_input_md5_t& import_input_md5);
+int import(const import_input_sha1_t& import_input_sha1);
+int import(const import_input_sha256_t& import_input_sha256);
 
 // constructor for scanning
 hashdb_t(const std::string& path_or_socket);

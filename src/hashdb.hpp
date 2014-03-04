@@ -55,7 +55,7 @@ class hashdb_t {
   const uint32_t max_duplicates;
 
   public:
-  // data structures for import
+  // data structure for one import element
   template<typename T>
   struct import_element_t {
     T hash;
@@ -72,14 +72,29 @@ class hashdb_t {
                           file_offset(p_file_offset) {
     }
   };
+
+  /**
+   * The import input is an array of import_element_t objects
+   * to be imported into the hash database.
+   */
   typedef std::vector<import_element_t<md5_t> > import_input_md5_t;
   typedef std::vector<import_element_t<sha1_t> > import_input_sha1_t;
   typedef std::vector<import_element_t<sha256_t> > import_input_sha256_t;
 
-  // data structures for scan
-  typedef std::vector<std::pair<uint64_t, md5_t> >    scan_input_md5_t;
-  typedef std::vector<std::pair<uint64_t, sha1_t> >   scan_input_sha1_t;
+  /**
+   * The scan input is an array of pairs of uint64_t index values
+   * and hash values to be scanned for.
+   */
+  typedef std::vector<std::pair<uint64_t, md5_t> > scan_input_md5_t;
+  typedef std::vector<std::pair<uint64_t, sha1_t> > scan_input_sha1_t;
   typedef std::vector<std::pair<uint64_t, sha256_t> > scan_input_sha256_t;
+
+  /**
+   * The scan output is an array of pairs of uint64_t index values
+   * and uint32_t count values, where count indicates the number of
+   * source entries that contain this value.  The scan output does not
+   * contain scan responses for hashes that are not found (count=0).
+   */
   typedef std::vector<std::pair<uint64_t, uint32_t> > scan_output_t;
 
   /**
@@ -93,15 +108,15 @@ class hashdb_t {
   /**
    * Import MD5 hash.
    */
-  int import(import_input_md5_t import_input_md5);
+  int import(const import_input_md5_t& import_input_md5);
   /**
    * Import SHA1 hash.
    */
-  int import(import_input_sha1_t import_input_sha1);
+  int import(const import_input_sha1_t& import_input_sha1);
   /**
    * Import SHA256 hash.
    */
-  int import(import_input_sha256_t import_input_sha256);
+  int import(const import_input_sha256_t& import_input_sha256);
 
   /**
    * Constructor for scanning.
@@ -109,17 +124,19 @@ class hashdb_t {
   hashdb_t(const std::string& path_or_socket);
 
   /**
-   * Scan for MD5 hashes.
+   * Scan for MD5 hashes
    */
   int scan(const scan_input_md5_t& scan_input_md5,
            scan_output_t& scan_output);
+
   /**
-   * Scan for SHA1 hashes.
+   * Scan for SHA1 hashes
    */
   int scan(const scan_input_sha1_t& scan_input_sha1,
            scan_output_t& scan_output);
+
   /**
-   * Scan for SHA256 hashes.
+   * Scan for SHA256 hashes
    */
   int scan(const scan_input_sha256_t& scan_input_sha256,
            scan_output_t& scan_output);

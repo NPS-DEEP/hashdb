@@ -82,7 +82,7 @@ const char* hashdb_version() {
 
   // these theree imports are nearly identical; they should use template.
   // Import md5
-  int hashdb_t::import(import_input_md5_t input) {
+  int hashdb_t::import(const import_input_md5_t& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -111,7 +111,7 @@ const char* hashdb_version() {
     return 0;
   }
   // Import sha1
-  int hashdb_t::import(import_input_sha1_t input) {
+  int hashdb_t::import(const import_input_sha1_t& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -140,7 +140,7 @@ const char* hashdb_version() {
     return 0;
   }
   // Import sha256
-  int hashdb_t::import(import_input_sha256_t input) {
+  int hashdb_t::import(const import_input_sha256_t& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -186,7 +186,7 @@ const char* hashdb_version() {
 
   // these theree scans are nearly identical; they should use template.
   // Scan md5
-  int hashdb_t::scan(const std::vector<std::pair<uint64_t, md5_t> >& input,
+  int hashdb_t::scan(const scan_input_md5_t& input,
                      scan_output_t& output) {
 
     // check mode
@@ -200,7 +200,7 @@ const char* hashdb_version() {
     // no socket implemented yet, so directly use hashdb
 
     // scan each input in turn
-    std::vector<std::pair<uint64_t, md5_t> >::const_iterator it = input.begin();
+    scan_input_md5_t::const_iterator it = input.begin();
     while (it != input.end()) {
       uint32_t count = hashdb_manager->find_count(it->second);
       if (count > 0) {
@@ -217,7 +217,7 @@ const char* hashdb_version() {
   }
 
   // Scan sha1
-  int hashdb_t::scan(const std::vector<std::pair<uint64_t, sha1_t> >& input,
+  int hashdb_t::scan(const scan_input_sha1_t& input,
                      scan_output_t& output) {
 
     // check mode
@@ -231,7 +231,7 @@ const char* hashdb_version() {
     // no socket implemented yet, so directly use hashdb
 
     // scan each input in turn
-    std::vector<std::pair<uint64_t, sha1_t> >::const_iterator it = input.begin();
+    scan_input_sha1_t::const_iterator it = input.begin();
     while (it != input.end()) {
       uint32_t count = hashdb_manager->find_count(it->second);
       if (count > 0) {
@@ -248,7 +248,7 @@ const char* hashdb_version() {
   }
 
   // Scan sha256
-  int hashdb_t::scan(const std::vector<std::pair<uint64_t, sha256_t> >& input,
+  int hashdb_t::scan(const scan_input_sha256_t& input,
                      scan_output_t& output) {
 
     // check mode
@@ -262,7 +262,7 @@ const char* hashdb_version() {
     // no socket implemented yet, so directly use hashdb
 
     // scan each input in turn
-    std::vector<std::pair<uint64_t, sha256_t> >::const_iterator it = input.begin();
+    scan_input_sha256_t::const_iterator it = input.begin();
     while (it != input.end()) {
       uint32_t count = hashdb_manager->find_count(it->second);
       if (count > 0) {
@@ -299,11 +299,11 @@ const char* hashdb_version() {
                  hashdb_changes(0),
                  block_size(0),
                  max_duplicates(0) {
-    // fix zzzzzz
+    // fix so this is not at the interface zzzzzz
     assert(0);
   }
   hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
-    // fix zzzzzz
+    // fix so this is not at the interface zzzzzz
     assert(0);
   }
 
