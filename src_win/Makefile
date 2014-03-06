@@ -34,8 +34,7 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 	fi
 	echo '**** running make in win32/ to create win32 .exe files ****'; \
 	(cd ../win32;$(MAKE))
-	cp ../win32/src/hashdb_manager.exe hashdb_manager32.exe
-	cp ../win32/src/hashdb_checker/hashdb_checker.exe hashdb_checker32.exe
+	cp ../win32/src/hashdb.exe hashdb32.exe
 	@echo 
 	@echo
 	if [ ! -r ../win64/Makefile ]; then \
@@ -45,8 +44,7 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 	fi
 	echo '**** running make in win64/ to create win64 .exe files ****'; \
 	(cd ../win64;$(MAKE))
-	cp ../win64/src/hashdb_manager.exe hashdb_manager64.exe
-	cp ../win64/src/hashdb_checker/hashdb_checker.exe hashdb_checker64.exe
+	cp ../win64/src/hashdb.exe hashdb64.exe
 	@echo
 	@echo
 	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi

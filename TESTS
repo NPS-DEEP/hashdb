@@ -1,5 +1,9 @@
 Testing hashdb:
 
+NOTE ************************************************************
+NOTE: this file is out of date and needs rewritten for new interfaces.
+NOTE ************************************************************
+
 For basic interface testing, run the examples shown in detailed help,
 type "hashdb -H".
 

@@ -9,8 +9,8 @@ hash databases, merging hash databases, and performing hash lookups.
 Multiple map types are supported, allowing for specific optimizations.
 Hash databases may be imported and exported in DFXML format.
 
-The hashdb toolset includes the hashdb_manager and hashdb_checker tools
-and hashdb library file libhashdb.a and header file hashdb.hpp.
+The hashdb toolset includes the hashdb tool, hashdb library file
+libhashdb.a, and header file hashdb.hpp.
 
 
 Downloads and Websites
@@ -65,13 +65,11 @@ under $HOME/local as follows:
    $ install
 
 The following files are installed:
-   bin/hashdb_manager
-   bin/hashdb_checker
+   bin/hashdb
    include/hashdb.hpp
    lib/libhashdb.la
    lib/libhashdb.a
-   share/man/man1/hashdb_manager.1
-   share/man/man1/hashdb_checker.1
+   share/man/man1/hashdb.1
 
 
 Linking hashdb into another application such as bulk_extractor

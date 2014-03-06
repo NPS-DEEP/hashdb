@@ -1,0 +1,144 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH HASHDB_MANAGER 1 "MAR 2014" "User Manuals"
+.SH NAME
+hashdb_manager \- Create and manage block hash databases.
+.SH SYNOPSIS
+.B hashdb_manager <command>
+.SH DESCRIPTION
+.B hashdb_manager
+provides commands for creating and managing hash databases.
+.SH COMMANDS
+These are the
+.B hashdb
+commands:
+
+.IP "create [<hashdb settings>]+ [<bloom filter settings>]+ <hashdb>"
+Create a new hash database.
+
+.IP "import [-r <repository name>] <DFXML file> <hashdb>"
+Import hashes from file <DFXML file> into hash database <hashdb>.
+
+.IP "export <hashdb> <DFXML file>"
+Export hashes from the <hashdb> to a <DFXML file>.
+
+.IP "copy <source hashdb> <destination hashdb>"
+Copies hashes from the <source hashdb> to the <destination hashdb>.
+
+.IP "add <source hashdb 1> <source hashdb 2> <destination hashdb>"
+Perform a union of <source hashdb 1> and <source hashdb 2> into
+the <destination hashdb>.
+
+.IP "intersect <source hashdb 1> <source hashdb 2> <destination hashdb>"
+Copies hashes that are common to both <source hashdb 1> and
+<source hashdb 2> into <destination hashdb>.
+Hashes match when hash values match, even if their associated
+source repository name and filename do not match.
+
+.IP "subtract <source hashdb 1> <source hashdb 2> <destination hashdb>"
+Copy hashes in <souce hashdb 1> and not in <source hashdb 2> into
+<destination hashdb>.
+Hashes match when hash values match, even if their associated
+source repository name and filename do not match.
+
+.IP "deduplicate <source hashdb> <destination hashdb>"
+Copy hall hashes in <source hashdb> to <destination hashdb> except
+for hashes with duplicates.
+
+.IP "rebuild_bloom [<bloom filter settings>]+ <hashdb>"
+Rebuilds the bloom filters in the <hashdb> hash database based on the
+<bloom filter settings> provided.
+
+.IP "server <hashdb> <socket>"
+Starts a query server service for <hashdb> at <socket> for
+servicing hashdb queries.
+
+.IP "scan <hashdb> <DFXML file>"
+Scans the <hashdb> for hashes that match hashes in the <DFXML file>
+and prints out matches.
+
+.IP "expand_identified_blocks <hashdb_dir> <identified_blocks.txt>"
+Prints out source information for each hash in <identified_blocks.txt>
+Source information includes repository name, filename, and file offset
+
+.IP "get_sources <hashdb>"
+Prints out the repository name and filename of where each hash in the
+<hashdb> came from.
+
+.IP "get_statistics <hashdb>"
+Print out statistics about the given <hashdb> database.
+
+.SH HASHDB SETTINGS
+.B <hashdb settings>
+establish the settings of a new hash database:
+
+.IP "-p, --hash_block_size=<hash block size>"
+<hash block size>, in bytes, used to generate hashes (default 4096)
+
+.IP "-m, --max_duplicates=<maximum>"
+<maximum> number of hash duplicates allowed, or 0 for no limit
+(default 0)
+
+.IP "-t, --storage_type=<storage type>"
+<storage type> to use in the hash database, where <storage type>
+is one of: btree | hash | red-black-tree | sorted-vector
+(default btree)
+
+.IP "-a, --algorithm=<hash algorithm>"
+<hash algorithm> in use for the hash database, where <hash algorithm>
+is one of: md5 | sha1 | sha256
+(default md5)
+
+.IP "-b, --bits=<number>"
+<number> of source lookup index bits to use for the source lookup
+index, between 32 and 40 (default 32)
+The number of bits used for the hash block offset value is
+(64 - <number>).
+
+.SH BLOOM FILTER SETTINGS
+.B <bloom filter settings>
+tune performance during hash queries:
+
+.IP "--bloom1 <state>"
+sets bloom filter 1 <state> to enabled | disabled (default enabled)
+.IP "--bloom1_n <n>"
+expected total number <n> of unique hashes (default 1)
+.IP "--bloom1_kM <k:M>"
+number of hash functions <k> and bits per hash <M> (default <k>=28
+and <M>=3 or <M>=value calculated from value in --b1n)
+.IP "--bloom2 <state>"
+sets bloom filter 1 <state> to enabled | disabled (default disabled)
+.IP "--bloom2_n <total>"
+expected total number <n> of unique hashes (default 1)
+.IP "--bloom2_kM <k:M>"
+number of hash functions <k> and bits per hash <M> (default <k>=28
+and <M>=3 or <M>=value calculated from value in --bloom2_n)
+
+.IP "--server <hashdb>"
+
+.SH HISTORY
+.BR "hashdb_manager" 
+was released into the public domain by Bruce Allen in 2013.
+.SH AUTHOR
+Bruce Allen <bdallen@nps.edu>
+.SH REPORTING BUGS
+Report bugs to bdallen@nps.edu
+.SH COPYRIGHT
+.BR "hashdb_manager" 
+code is provided with the following notice:
+The software provided here is released by the Naval Postgraduate School,
+an agency of the U.S. Department of Navy. The software bears no warranty,
+either expressed or implied. NPS does not assume legal liability nor
+responsibility for a User's use of the software or the results of such use.
+
+Please note that within the United States, copyright protection,
+under Section 105 of the United States Code, Title 17, is not available
+for any work of the United States Government and/or for any works
+created by United States Government employees. 
+
+.SH SEE ALSO
+.BR "hashdb" 
+wiki at https://github.com/simsong/hashdb/wiki.
+Also, please see The User Guide for the hashdb Tools.
+
