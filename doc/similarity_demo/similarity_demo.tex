@@ -33,7 +33,9 @@
 \large Using \bulk and \hdb
 \end{center}
 
-Find similarities between media images by finding common block hashes:
+In this demo, we find similarities between media images
+by finding block hashes that are common between them.
+Here are the steps:
 \begin{compactenum}
 \item Generate a hash database of block hashes from media image 1.
 \item Generate a hash database of block hashes from media image 2.
@@ -71,7 +73,7 @@ Now view the list of forensic paths common to both media images:
 \begin{figure}[H]
   \center
   \includegraphics[scale=0.6]{drawings/print_sources}
-  \caption*{Run the \hdb \texttt{print\_sources} command \\
+  \caption*{Run the \hdb \texttt{get\_sources} command \\
             to list common hashes and where they were sourced from.}
 \end{figure}
 
@@ -81,64 +83,82 @@ Now view the list of forensic paths common to both media images:
 %To do this, generate an intersection database with the blacklist database
 %using the \texttt{intersect} command,
 %and then print the intersection sources
-%using the \texttt{print\_sources} command.
+%using the \texttt{get\_sources} command.
 %For a demo on generating hash databases of whitelist and blacklist
 %block hashes, please see
-%\url{www.digitalcorpora.org/downloads/hashdb/blacklist\_demo.pdf}.
+%\url{http://digitalcorpora.org/downloads/hashdb/blacklist\_demo.pdf}.
 
 %steps
 Here are the steps to perform this demo:
-\textbf{NOTE: These downloads and \hdb v1.0.0 are not available yet.}
 \begin{compactenum}
-\item Download and install \hdb from
-\url{www.digitalcorpora.org/downloads/hashdb/hashdb-1.0.0\_beta-windowsinstaller.exe}.
-\item Download and install \bulk compiled with \hdb from
-\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.4-windowsinstaller.exe}
-\item Download demo media image 1 and 2, the whitelist database,
-and the blacklist database:
-\begin{compactenum}
-\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/media\_image\_1}
-\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/media\_image\_2}
-\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/\_whitelist\_hashdb}
-\item \url{www.digitalcorpora.org/downloads/hashdb/similarity\_demo/\_blacklist\_hashdb}
-\end{compactenum}
+\item Download and install \hdb  and \bulk compiled with the \hashid scanner
+from
+\url{http://digitalcorpora.org/downloads/hashdb}
+as described in the Scanner demo
+for finding part of a video file in a media image,
+\url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}
+\item Identify two media images to compare.
+I'll call them \texttt{media\_image\_1} and \texttt{media\_image\_2}.
+Note that images are available at
+\url{http://digitalcorpora.org/corpora/disk-images}.
+For example
+\url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01}
+and
+\url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/jo-work-usb-2009-12-11.E01}.
 
 \item Import media image 1:
 \begin{verbatim}
-$ bulk_extractor -o outdir1 -S import media_image_1
+$ bulk_extractor -o outdir1 -S hashdb_mode=import media_image_1
 \end{verbatim}
 
 \item Import media image 2:
 \begin{verbatim}
-$ bulk_extractor -o outdir2 -S import media_image_1
+$ bulk_extractor -o outdir2 -S hashdb_mode=import media_image_2
 \end{verbatim}
 
-\item Merge the intersection of media image 1 and 2:
+\item Create the intersection of media image 1 and 2
+to obtain a database of hashes that are common between them:
 \begin{verbatim}
-$ hashdb create merged_hashdb
+$ hashdb create intersection_hashdb
 $ hashdb intersect media_image1/hashdb media_image2/hashdb \
-         merged_hashdb
+         intersection_hashdb
 \end{verbatim}
+\end{compactenum}
 
-\item Subtract the noise:
+Now database \texttt{intersection\_hashdb} contains common hashes,
+but we want to know what is in it.
+Here are some approaches for further analysis:
+\begin{compactitem}
+\item There are ``false positives'' from system files.
+Which hashes are actually interesting user data?
+
+Subtract whitelist noise (false positives)
+so that the remaining hashes are pertinent data common between the
+media images:
 \begin{verbatim}
 $ hashdb create quiet_hashdb
-$ hashdb subtract merged_hashdb whitelist_hashdb filtered_hashdb
+$ hashdb subtract intersection_hashdb whitelist_hashdb filtered_hashdb
 \end{verbatim}
 
-\item Generate the list of common hashes
-\begin{verbatim}
-$ hashdb print_sources filtered_hashdb > demo_output
-\end{verbatim}
+\item What hashes match my blacklist dataset?
 
-\item See what is common that is blacklisted
+Intersect the media image intersection database with the blacklist database,
+and print out the list of files from which the blacklist hashes were sourced:
 \begin{verbatim}
 $ hashdb create filtered_blacklist_hashdb
 $ hashdb intersect filtered_hashdb blacklist_hashdb \
          filtered_blacklist_hashdb
-$ hashdb print_sources filtered_hashdb > demo_blacklist_output
+$ hashdb get_sources filtered_hashdb > demo_blacklist_output
 \end{verbatim}
-\end{compactenum}
+\end{compactitem}
+
+Note that these approaches for further analysis require whitelist and blacklist
+block hash databases.
+For a demo on preparing a block hash database, please see
+\url{http://digitalcorpora.org/downloads/hashdb/demo/blacklist\_demo.pdf}.
+For a whitelist database, import hashes from some media images
+or from the NSRL.
+For a blacklist block hash database, import block hashes from blacklist files.
 
 \end{document}
 

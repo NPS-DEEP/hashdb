@@ -31,9 +31,72 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/endian/include \
 	$(XML_CFLAGS)
 
-AM_LDFLAGS = -static $(XML_LIBS)
+#zzzzzzzzzAM_LDFLAGS = -static $(XML_LIBS)
+AM_LDFLAGS = -static
 
-HASHDB_INCS = \
+HAHSDB_INCS = \
+	map_multimap_iterator.hpp \
+	commands.hpp \
+	usage.hpp \
+	hashdb.hpp \
+	map_multimap_manager.hpp \
+	hashdb_manager.hpp \
+	source_lookup_index_manager.hpp \
+	hashdigest_manager.hpp \
+	hashdigest_iterator.hpp \
+	source_lookup_index_iterator.hpp \
+	bi_store.hpp \
+	identified_blocks_reader_iterator.hpp \
+	hashdb_iterator.hpp \
+	hashdb_settings_reader.hpp \
+	hashdb_settings.hpp \
+	identified_blocks_reader.hpp \
+	bloom_rebuild_manager.hpp \
+	hashdb_element_lookup.hpp \
+	map_manager.hpp \
+	map_unordered_hash.hpp \
+	map_flat_sorted_vector.hpp \
+	map_btree.hpp \
+	map_red_black_tree.hpp \
+	hashdb_changes.hpp \
+	logger.hpp \
+	dfxml_hashdigest_reader_manager.hpp \
+	bloom_filter_manager.hpp \
+	hashdb_settings_manager.hpp \
+	dfxml_hashdigest_writer.hpp \
+	dfxml_hashdigest_reader.hpp \
+	history_manager.hpp \
+	bloom_filter_calculator.hpp \
+	bloom_filter.hpp \
+	hashdb_element.hpp \
+	multimap_manager.hpp \
+	hashdigest.hpp \
+	multimap_flat_sorted_vector.hpp \
+	multimap_red_black_tree.hpp \
+	multimap_unordered_hash.hpp \
+	multimap_btree.hpp \
+	query_by_socket.hpp \
+	query_by_socket_server.hpp \
+	query_by_path.hpp \
+	hashdb_settings_writer.hpp \
+	hashdb_db_info_provider.hpp \
+	hash_values.hpp \
+	multimap_iterator.hpp \
+	map_iterator.hpp \
+	source_lookup_encoding.hpp \
+	command_line.hpp \
+	bi_data_types.hpp \
+	bi_64_pair_data.hpp \
+	bi_64_sv_data.hpp \
+	hashdb_filenames.cpp \
+	hashdb_filenames.hpp \
+	file_modes.h \
+	hash_algorithm_types.h \
+	hashdigest_types.h \
+	map_types.h \
+	multimap_types.h
+
+OLD_HASHDB_INCS = \
 	bi_64_pair_data.hpp \
 	bi_64_sv_data.hpp \
 	bi_data_types.hpp \
@@ -133,7 +196,8 @@ hashdb_SOURCES = \
 	usage.hpp \
 	$(COMMAND_LINE_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	$(BLOOM_INCS) $(DFXML_INCS)
+	$(BLOOM_INCS) $(DFXML_INCS) \
+	$(HAHSDB_INCS)
 
 # use separate makefile because autotools can't create these
 # with and without libtool

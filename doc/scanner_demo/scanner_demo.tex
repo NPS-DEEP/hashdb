@@ -33,7 +33,18 @@
 \large Using \bulk and \hdb
 \end{center}
 
-Run \bulk to scan the media image for parts of a video file:
+In this demo, we find that a media image contains part of a
+``blacklisted'' video file.
+This demo uses the following resources:
+\begin{compactitem}
+\item The media image containing a fragment of a video file.
+\item A \hdb block hash database containing block hashes
+from the blacklist video file.
+\item \hdb.
+\item \bulk compiled with the \hdb \hashid scanner.
+\end{compactitem}
+
+Here is the workflow:
 
 \begin{figure}[H]
   \center
@@ -42,37 +53,53 @@ Run \bulk to scan the media image for parts of a video file:
   \label{fig:scan_hashid}
 \end{figure}
 
-Download the data files required for the demo into a working directory:
-\begin{compactitem}
-\item The database containing hash blocks of the demo video file:
-\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_db\_win.zip}
-\item Media containing a fragment of the demo video file,
-specifically, a contiguous 64KiB section
-near the end of about 10 MiB of video data:
-\url{www.digitalcorpora.org/downloads/hashdb/demo/demo\_video\_redacted\_image}
-\end{compactitem}
-Download \bulk v1.4.1 compiled with the the \hashid v0.9.1 scanner:
-\begin{compactitem}
-\item \bulk with the \hdb \hashid scanner:
-\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}
-\end{compactitem}
-
 Steps:
 \begin{compactenum}
-\item Install \bulk by running the
-\texttt{bulk\_extractor-1.4.1-windowsinstaler.exe} Windows installer.
+\item Download and install \hdb from
+\url{http://digitalcorpora.org/downloads/hashdb}
+as described at
+\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
+  \begin{compactitem}
+  \item Windows: Download and install the latest hashdb windowsinstaller.exe file:
+  \url{http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta-1-windowsinstaller.exe}
+  \item Linux, Mac: Download and build the latest hashdb distribution:
+  \url{http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta-1.tar.gz}.
+  \end{compactitem}
+\item Download and install \bulk compiled with \hdb:
+  \begin{compactitem}
+  \item Windows: Download and install the latest
+  bulk\_extractor windowsinstaller.exe file
+  compiled with the \hdb \hashid scanner:
+  \url{http://digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.5devel-windowsinstaller.exe}
+  \textbf{NOTE: \bulk is currently not available for Windows systems.
+                This demo currently cannot be completed on Windows systems.}
+  \item Linux, Mac: Download and build the latest \bulk:
+  \url{http://digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.5devel.tar.gz}.
+  \end{compactitem}
+
+\item Download the data files required for the demo into a working directory:
+  \begin{compactitem}
+  \item The database containing hash blocks of the demo video file:
+  \url{http://digitalcorpora.org/downloads/hashdb/demo/demo\_video\_db.zip}
+  \item Media containing a fragment of the demo video file,
+  specifically, a contiguous 64KiB section
+  near the end of about 10 MiB of video data:
+  \url{http://digitalcorpora.org/downloads/hashdb/demo/demo\_video\_redacted\_image}
+  \end{compactitem}
+
 \item Extract the demo database
-by unzipig the \texttt{demo\_video\_db\_win.zip} file
+by unzipig the \texttt{demo\_video\_db.zip} file
 into your working directory.
 Please check that it doesn't unzip into a nested subfolder.
 \item Scan for matching hash values: Using a command window, go to your working directory and then run \bulk,
 specifying the paths to the hash database and the media:
 \begin{verbatim}
-$ bulk_extractor -o outdir -S query_type=use_path \
-  -S path=demo_video_db_win demo_video_redacted_image
+$ bulk_extractor -o outdir -S hashdb_mode=scan \
+  -S hashdb_path_or_socket=demo_video_db \
+  demo_video_redacted_image
 \end{verbatim}
 \item View the feature file using an editor or use the \bev tool.
-For example to view with Notepad, type:
+For example to view with Windows Notepad, type:
 \begin{verbatim}
 $ notepad outdir/identified_blocks.txt
 \end{verbatim}
@@ -92,21 +119,12 @@ We find the file that contains the hash by using a \hdb source lookup:
   \label{fig:source_lookup}
 \end{figure}
 
-Download the \hdb v0.9.1 tool to perform the post-processing:
-\begin{compactitem}
-\item The \hdb tool used for post-processing:
-\url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1-windowsinstaller.exe}
-\end{compactitem}
-
-Steps:
+Steps to look up source information about the identified blocks:
 \begin{compactenum}
-\item Install the \hdb tool by running the
-\texttt{hashdb-0.9.1-windowsinstaler.exe} Windows installer.
-\item Find where the identified hashes were sourced from:
-Using a command window, go to your working directory and then run
+\item Using a command window, go to your working directory and then run
 the \hdb tool:
 \begin{verbatim}
-$ hashdb_checker --query_source -p demo_video_db_win \
+$ hashdb expand_identified_blocks demo_video_db \
   outdir/identified_blocks.txt > outdir/identified_sources.txt
 \end{verbatim}
 
@@ -127,13 +145,7 @@ in the hash database,
 indicating a positive match.
 \end{compactenum}
 
-This demo describes steps for a Windows system.
-For Linux or Mac, please download and build
-\url{www.digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1.tar.gz}
-and
-\url{www.digitalcorpora.org/downloads/hashdb/hashdb-0.9.1.tar.gz}
-as described at
-\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
+This completes the demo.
 
 \end{document}
 

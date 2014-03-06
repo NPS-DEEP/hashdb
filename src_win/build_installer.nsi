@@ -108,8 +108,7 @@ Section "32-bit configuration"
 
 	# install hashdb files into the 32-bit configuration
 	setOutPath "$INSTDIR\32-bit"
-	file "/oname=hashdb_manager.exe" "hashdb_manager32.exe"
-	file "/oname=hashdb_checker.exe" "hashdb_checker32.exe"
+	file "/oname=hashdb.exe" "hashdb32.exe"
 sectionEnd
 
 Section "64-bit configuration"
@@ -119,8 +118,7 @@ Section "64-bit configuration"
 
 	# install hashdb files into the 64-bit configuration
 	setOutPath "$INSTDIR\64-bit"
-	file "/oname=hashdb_manager.exe" "hashdb_manager64.exe"
-	file "/oname=hashdb_checker.exe" "hashdb_checker64.exe"
+	file "/oname=hashdb.exe" "hashdb64.exe"
 sectionEnd
 
 Section "Add to path"
@@ -165,13 +163,9 @@ FunctionEnd
 
 section "uninstall"
 	# manage uninstalling these because they may be open
-	StrCpy $0 "$INSTDIR\32-bit\hashdb_manager.exe"
+	StrCpy $0 "$INSTDIR\32-bit\hashdb.exe"
 	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\32-bit\hashdb_checker.exe"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\64-bit\hashdb_manager.exe"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\64-bit\hashdb_checker.exe"
+	StrCpy $0 "$INSTDIR\64-bit\hashdb.exe"
 	Call un.FailableDelete
 	StrCpy $0 "$INSTDIR\pdf\hashdb_user_guide.pdf"
 	Call un.FailableDelete

@@ -315,6 +315,7 @@ fi
 ################################################################
 ## support required by libxml2
 
+# zzzzzzzzzzzzz
 # note: a recommended approach is to use PKG_CHECK_MODULES:
 #          PKG_CHECK_MODULES(XML, libxml-2.0)
 # but this requires compiling with per-target flags,
@@ -326,13 +327,21 @@ fi
 # So instead, check for headers and libraries in the hardcoded path
 # expected for a standard Fedora installation
 # or hardwaire LDFLAGS for your path:
+# zzzzzzzzzzzzz
 
 # the win32 configuration of libxml2 requires zlib and iconv libraries
 if test  x"$mingw" = x"yes";  then
   AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
   AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
 fi
+
+# find the libxml/parser.h header
 PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4, [], [AC_MSG_ERROR([libxml2 failed])])
+
+# find the xml2 library
+AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
+    [AC_MSG_ERROR([Could not find libxml2 library required to build the hashid scanner])])
+
 
 ################################################################
 ## support required by zmq

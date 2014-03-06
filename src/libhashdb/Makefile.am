@@ -30,7 +30,8 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
-AM_LDFLAGS = -static $(XML_LIBS)
+#zzzzzzzzzzzzzzAM_LDFLAGS = -static $(XML_LIBS)
+AM_LDFLAGS = -static
 
 # ############################################################
 # for libhashdb sources

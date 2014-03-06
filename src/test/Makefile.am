@@ -49,7 +49,8 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 
 libhashdb_test_LDADD = ../libhashdb/libhashdb.la
 
-AM_LDFLAGS = -static $(XML_LIBS)
+# zzzzzzzzAM_LDFLAGS = -static $(XML_LIBS)
+AM_LDFLAGS = -static
 
 run_tests:
 	for test in $(bin_PROGRAMS); do \
@@ -72,7 +73,7 @@ HASHDB_INCS = \
 	../hashdb_filenames.hpp \
 	../hashdb_types.h \
 	../hashdb_db_manager.hpp \
-	../settings.hpp \
+	../hashdb_settings.hpp \
 	../hashdb_settings_reader.hpp \
 	../hash_duplicates_store.cpp \
 	../hash_duplicates_store.hpp \
@@ -142,7 +143,7 @@ source_lookup_encoding_test_SOURCES = \
 map_and_multimap_test_SOURCES = \
 	boost_fix.hpp \
 	to_key_helper.hpp \
-        ../map_stats.hpp \
+        ../map_types.h \
         ../file_modes.h \
 	../dfxml/src/dfxml_writer.h \
 	../map_red_black_tree.hpp \
@@ -207,8 +208,8 @@ bloom_filter_manager_test_SOURCES = \
 
 settings_manager_test_SOURCES = \
 	boost_fix.hpp \
-	../settings.hpp \
-	../settings_manager.hpp \
+	../hashdb_settings.hpp \
+	../hashdb_settings_manager.hpp \
 	../command_line.cpp \
 	../command_line.hpp \
 	$(DFXML_INCS) \
@@ -218,7 +219,7 @@ logger_test_SOURCES = \
 	boost_fix.hpp \
 	../logger.hpp \
 	../hashdb_changes.hpp \
-	../settings.hpp \
+	../hashdb_settings.hpp \
 	../command_line.cpp \
 	../command_line.hpp \
 	$(DFXML_INCS) \
@@ -312,8 +313,8 @@ hashdigest_manager_test_SOURCES = \
 
 identified_blocks_reader_test_SOURCES = \
 	boost_fix.hpp \
-	identified_blocks_reader_iterator.hpp \
-	identified_blocks_reader.hpp \
+	../identified_blocks_reader_iterator.hpp \
+	../identified_blocks_reader.hpp \
 	identified_blocks_reader_test.cpp
 
 libhashdb_test_SOURCES = \

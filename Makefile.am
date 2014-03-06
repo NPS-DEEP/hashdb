@@ -39,12 +39,12 @@ execlean:
 	/bin/rm -f */*exe
 
 .PHONY: win32
-win32: win32/bulk_extractor32.exe
+win32: win32/hashdb32.exe
 
 .PHONY: win64
-win64: win64/bulk_extractor64.exe
+win64: win64/hashdb64.exe
 
-win32/bulk_extractor32.exe:
+win32/hashdb32.exe:
 	@echo '****************************************************'
 	@echo '*** making win32 with mingw32-configure and make ***'
 	@echo '****************************************************'
@@ -52,10 +52,10 @@ win32/bulk_extractor32.exe:
 	if [ ! -d win32  ]; then mkdir win32 ; fi
 	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure) ; fi
 	(cd win32;$(MAKE))
-	(cp win32/src/hashdb_manager.exe win32/hashdb_manager32.exe)
+	(cp win32/src/hashdb.exe win32/hashdb32.exe)
 	ls -l win32/*.exe
 
-win64/bulk_extractor64.exe:
+win64/hashdb64.exe:
 	@echo '****************************************************'
 	@echo '*** making win64 with mingw32-configure and make ***'
 	@echo '****************************************************'
@@ -63,7 +63,7 @@ win64/bulk_extractor64.exe:
 	if [ ! -d win64  ]; then mkdir win64 ; fi
 	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure) ; fi
 	(cd win64;$(MAKE))
-	(cp win64/src/hashdb_manager.exe win64/hashdb_manager64.exe)
+	(cp win64/src/hashdb.exe win64/hashdb64.exe)
 	ls -l win64/*.exe
 
 # windist makes win32 and win64 .exe files and puts them in a zip file
@@ -73,8 +73,8 @@ windist: win32 win64
 	rm -rf $(distdir).zip
 	mkdir $(distdir)
 	@echo
-	cp win32/hashdb_manager32.exe $(distdir)
-	cp win64/hashdb_manager64.exe $(distdir)
+	cp win32/hashdb32.exe $(distdir)
+	cp win64/hashdb64.exe $(distdir)
 	@echo ====================================
 	@echo 
 	@echo Creating ZIP archive
