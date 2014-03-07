@@ -268,7 +268,7 @@ class commands_t {
     // resources
     const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
     const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t manager3(hashdb_dir2, RW_MODIFY);
+    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
     hashdb_changes_t changes;
 
     logger.add_timestamp("begin intersect");
