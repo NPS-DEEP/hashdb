@@ -30,6 +30,8 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "commands.hpp"
+#include "map_types.h"        // for settings
+#include "multimap_types.h"   // for settings
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -63,7 +65,8 @@ void rm_hashdb_dir(std::string hashdb_dir) {
   }
 }
 
-void do_test() {
+void do_test(map_type_t map_type, multimap_type_t multimap_type) {
+  std::cout << "commands_test: " << map_type_to_string(map_type) << "\n";
   
   // clean up from any previous run
   rm_hashdb_dir("temp_dir1");
@@ -122,7 +125,10 @@ void do_test() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-  do_test();
+  do_test(MAP_BTREE, MULTIMAP_BTREE);
+  do_test(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
+  do_test(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
+  do_test(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
   return 0;
 }
 

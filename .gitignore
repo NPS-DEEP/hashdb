@@ -62,6 +62,7 @@ src/hashdb_checker/hashdb_checker.exe
 src/test/source_lookup_encoding_test
 src/test/*_test
 src/test/temp_*
+src_win/win_tests*
 hashdb*.tar.gz
 space
 doc/design/design.aux

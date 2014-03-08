@@ -76,7 +76,9 @@ void run_map_rw_tests() {
 
   // add duplicate
   to_key(1000005, key);
+std::cout << "map_and_multimap_test.run_map_rw_tests.a\n";
   map_pair = map.emplace(key, 0);
+std::cout << "map_and_multimap_test.run_map_rw_tests.b\n";
   BOOST_TEST_EQ(map_pair.second, false);
 
   // add new

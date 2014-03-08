@@ -450,6 +450,7 @@ class commands_t {
       // disregard misses
       uint32_t count = hashdb_manager.find_count(hashdigest);
       if (count == 0) {
+        ++it;
         continue;
       }
 
@@ -464,7 +465,9 @@ class commands_t {
         std::cout << e.hashdigest << "\t"
                   << "repository name='" << e.repository_name
                   << "', filename='" << e.filename << "\n";
+        ++range_it_pair.first;
       }
+      ++it;
     }
   }
 

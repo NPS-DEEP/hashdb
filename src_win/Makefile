@@ -52,6 +52,16 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 	ls -lt *exe
 
+win_tests:
+	rm -rf win_tests
+	mkdir win_tests
+	mkdir win_tests/win32
+	mkdir win_tests/win64
+	cp ../win32/src/test/*.exe win_tests/win32
+	cp ../win64/src/test/*.exe win_tests/win64
+	cp run_tests win_tests
+	zip -r9 win_tests-$(HASHDBVERSION).zip win_tests
+
 $(SRC_WIN)clean:
 	/bin/rm -rf ../win32 ../win64 *.exe
 	/bin/rm -rf $(PDFDOCS)
@@ -76,5 +86,5 @@ DOWNLOAD = http://digitalcorpora.org/downloads/hashdb
 hashdb_user_guide.pdf:
 	wget $(DOWNLOAD)/hashdb_user_guide.pdf
 
-.PHONY: clean distclean install uninstall
+.PHONY: clean distclean install uninstall win_tests
 
