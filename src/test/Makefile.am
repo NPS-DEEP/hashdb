@@ -37,7 +37,8 @@ bin_PROGRAMS = \
 	dfxml_hashdigest_rw_test \
 	hashdigest_manager_test \
 	identified_blocks_reader_test \
-	libhashdb_test
+	libhashdb_test \
+	commands_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -322,5 +323,15 @@ libhashdb_test_SOURCES = \
 	../dfxml/src/hash_t.h \
 	libhashdb_test.cpp
 	
+commands_test_SOURCES = \
+	boost_fix.hpp \
+        ../commands.hpp \
+	$(BTREE_INCS) $(ENDIAN_INCS) \
+	../command_line.cpp \
+	../command_line.hpp \
+	$(BLOOM_INCS) \
+	$(DFXML_INCS) \
+	commands_test.cpp
+
 .PHONY: run_tests
 

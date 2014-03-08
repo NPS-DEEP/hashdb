@@ -141,14 +141,11 @@ class hashdb_t {
   int scan(const scan_input_sha256_t& scan_input_sha256,
            scan_output_t& scan_output);
 
-  /**
-   * don't use this.
-   */
-  hashdb_t(const hashdb_t& other);
-  /**
-   * don't use this.
-   */
-  hashdb_t& operator=(const hashdb_t& other);
+  // don't use this.
+  hashdb_t(const hashdb_t& other) = delete;
+
+  // don't use this.
+  hashdb_t& operator=(const hashdb_t& other) = delete;
 
   ~hashdb_t();
 };

@@ -1,13 +1,13 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH HASHDB_MANAGER 1 "MAR 2014" "User Manuals"
+.TH HASHDB 1 "MAR 2014" "User Manuals"
 .SH NAME
-hashdb_manager \- Create and manage block hash databases.
+hashdb \- Create and manage block hash databases.
 .SH SYNOPSIS
-.B hashdb_manager <command>
+.B hashdb <command>
 .SH DESCRIPTION
-.B hashdb_manager
+.B hashdb
 provides commands for creating and managing hash databases.
 .SH COMMANDS
 These are the
@@ -23,10 +23,10 @@ Import hashes from file <DFXML file> into hash database <hashdb>.
 .IP "export <hashdb> <DFXML file>"
 Export hashes from the <hashdb> to a <DFXML file>.
 
-.IP "copy <source hashdb> <destination hashdb>"
+.IP "add <source hashdb> <destination hashdb>"
 Copies hashes from the <source hashdb> to the <destination hashdb>.
 
-.IP "add <source hashdb 1> <source hashdb 2> <destination hashdb>"
+.IP "add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>"
 Perform a union of <source hashdb 1> and <source hashdb 2> into
 the <destination hashdb>.
 
@@ -115,17 +115,15 @@ expected total number <n> of unique hashes (default 1)
 number of hash functions <k> and bits per hash <M> (default <k>=28
 and <M>=3 or <M>=value calculated from value in --bloom2_n)
 
-.IP "--server <hashdb>"
-
 .SH HISTORY
-.BR "hashdb_manager" 
+.BR "hashdb" 
 was released into the public domain by Bruce Allen in 2013.
 .SH AUTHOR
 Bruce Allen <bdallen@nps.edu>
 .SH REPORTING BUGS
 Report bugs to bdallen@nps.edu
 .SH COPYRIGHT
-.BR "hashdb_manager" 
+.BR "hashdb" 
 code is provided with the following notice:
 The software provided here is released by the Naval Postgraduate School,
 an agency of the U.S. Department of Navy. The software bears no warranty,
@@ -140,5 +138,4 @@ created by United States Government employees.
 .SH SEE ALSO
 .BR "hashdb" 
 wiki at https://github.com/simsong/hashdb/wiki.
-Also, please see The User Guide for the hashdb Tools.
 

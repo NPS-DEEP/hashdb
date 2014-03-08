@@ -64,7 +64,7 @@ class bloom_rebuild_manager_t {
     settings.bloom2_k_hash_functions = new_bloom_settings.bloom2_k_hash_functions;
 
     // write back new changed settings
-    hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+    hashdb_settings_manager_t::replace_settings(hashdb_dir, settings);
 
     // remove existing bloom files
     std::string filename1 = hashdb_dir + "/bloom_filter_1";

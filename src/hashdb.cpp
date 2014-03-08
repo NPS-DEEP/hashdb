@@ -293,7 +293,9 @@ const char* hashdb_version() {
     }
   }
 
-  hashdb_t::hashdb_t(const hashdb_t& other) :
+/*
+  // Now I use =delete in C++11
+  __attribute__((noreturn)) hashdb_t::hashdb_t(const hashdb_t& other) :
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
                  hashdb_changes(0),
@@ -302,8 +304,10 @@ const char* hashdb_version() {
     // fix so this is not at the interface zzzzzz
     assert(0);
   }
-  hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
+  // Now I use =delete in C++11
+  __attribute__((noreturn)) hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
     // fix so this is not at the interface zzzzzz
     assert(0);
   }
+*/
 

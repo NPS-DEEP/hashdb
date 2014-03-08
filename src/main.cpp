@@ -51,22 +51,6 @@
 
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
-/*
-static const std::string COMMAND_CREATE = "create";
-static const std::string COMMAND_IMPORT = "import";
-static const std::string COMMAND_EXPORT = "export";
-static const std::string COMMAND_COPY = "copy";
-static const std::string COMMAND_MERGE = "merge";
-static const std::string COMMAND_REMOVE = "remove";
-static const std::string COMMAND_REMOVE_DFXML = "remove_dfxml";
-static const std::string COMMAND_DEDUPLICATE = "deduplicate";
-static const std::string COMMAND_REBUILD_BLOOM = "rebuild_bloom";
-static const std::string COMMAND_QUERY_HASH = "query_hash";
-static const std::string COMMAND_GET_HASH_SOURCE = "get_hash_source";
-static const std::string COMMAND_GET_HASHDB_INFO = "get_hashdb_info";
-static const std::string COMMAND_SERVER = "server";
-*/
-
 // settings
 static hashdb_settings_t hashdb_settings;
 
@@ -435,18 +419,18 @@ int main(int argc,char **argv) {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::do_export(arg1, arg2);
-  } else if (command == "copy") {
-    require_no_hashdb_settings();
-    require_no_bloom_filter_settings();
-    require_no_repository_name();
-    require_parameter_count(2);
-    commands_t::copy(arg1, arg2);
   } else if (command == "add") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::add(arg1, arg2);
+  } else if (command == "add_multiple") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
     require_parameter_count(3);
-    commands_t::add(arg1, arg2, arg3);
+    commands_t::add_multiple(arg1, arg2, arg3);
   } else if (command == "intersect") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();

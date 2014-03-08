@@ -1,0 +1,24 @@
+Tasks:
+* The ability to query using sockets is not in place.
+* The hashdb API is not threadsafe yet.
+* Include lists in Makefiles need to be updated.
+* The Windows configuration has not been tested.
+* bulk_extractor for Windows is not available.  The amount of work to
+prepare this is not determined.
+* I need to coordinate about performing some level of hashdb code review. 
+* I need to examin a file hang issue that manifests
+underneath btree code when I compile with clang.  I am avoiding the
+issue right now by compiling with gcc.  The issue is readily reproducible.
+* I need to implement some amount of database statistical reporting. 
+Actual statistics to report have not been defined, but I'll find some
+things to report as I test the examples.
+
+----------------------------
+
+Testing
+
+Platforms: FC19, FC20, Win32, Win64, Mac, and FC19 or FC20 compiled by clang.
+
+Tests:
+Tests would be 1) that the automated test suite completes and 2) that a
+generated database is compatible across FC, Win32, Win64, and Mac.

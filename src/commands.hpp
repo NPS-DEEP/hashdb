@@ -105,8 +105,11 @@ class commands_t {
           hashdb3.insert(*it_pair.first, changes);
           ++it_pair.first;
         }
+
+      } else {
+        // no match, so just move on
+        ++smaller_it;
       }
-      ++smaller_it;
     }
   }
 
@@ -170,11 +173,11 @@ class commands_t {
     }
   }
 
-  // copy
-  static void copy(const std::string& hashdb_dir1,
+  // add A to B
+  static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
 
-    logger_t logger(hashdb_dir2, "copy");
+    logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
@@ -182,12 +185,12 @@ class commands_t {
 
     hashdb_iterator_t it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
-    logger.add_timestamp("begin copy");
+    logger.add_timestamp("begin add");
     while (it1 != hashdb_manager1.end()) {
       hashdb_manager2.insert(*it1, changes);
       ++it1;
     }
-    logger.add_timestamp("end copy");
+    logger.add_timestamp("end add");
 
     logger.add_hashdb_changes(changes);
 
@@ -200,12 +203,12 @@ class commands_t {
     std::cout << changes << "\n";
   }
 
-  // add
-  static void add(const std::string& hashdb_dir1,
-                  const std::string& hashdb_dir2,
-                  const std::string& hashdb_dir3) {
+  // add_multiple A and B to C
+  static void add_multiple(const std::string& hashdb_dir1,
+                           const std::string& hashdb_dir2,
+                           const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir3, "add");
+    logger_t logger(hashdb_dir3, "add_multiple");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
@@ -219,7 +222,7 @@ class commands_t {
     hashdb_iterator_t it2_end = hashdb_manager2.end();
 
     hashdb_changes_t changes;
-    logger.add_timestamp("begin add");
+    logger.add_timestamp("begin add_multiple");
 
     // while elements are in both, insert ordered by key, prefering it1 first
     while ((it1 != it1_end) && (it2 != it2_end)) {
@@ -242,7 +245,7 @@ class commands_t {
       ++it2;
     }
 
-    logger.add_timestamp("end add");
+    logger.add_timestamp("end add_multiple");
     logger.add_hashdb_changes(changes);
 
     // provide summary
@@ -514,7 +517,7 @@ class commands_t {
     }
   }
 
-  // get hashdb info
+  // get hashdb statistics
   static void get_statistics(const std::string& hashdb_dir) {
     std::cout << "Statistics are not available yet.\n";
   }
