@@ -19,6 +19,10 @@
 
 # This file assists in building test programs.
 
+EXTRA_DIST = \
+	identified_blocks.txt \
+	sample_dfxml
+
 bin_PROGRAMS = \
 	source_lookup_encoding_test \
 	map_and_multimap_test \

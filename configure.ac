@@ -1,4 +1,4 @@
-                                               -*- Autoconf -*-
+#                                  -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Order is largely irrevellant, although it must start with AC_INIT and end with AC_OUTPUT
 # See http://autotoolset.sourceforge.net/tutorial.html
@@ -9,8 +9,14 @@ AC_PREREQ(2.57)
 AC_INIT(hashdb, 1.0.0-beta-1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
-# NOTE - src_win/Makefile is not automatically generated. This is necessary
-# so that it can be run even after a 'make distclean' is done
+# NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
+#          but it is not listed as a SUBDIR for Makefile.am so that it is
+#          not automatically built.  Compile manually there for testing.
+#
+# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
+#          so that it can be run even after a 'make distclean' is done
+#
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/libhashdb/Makefile
@@ -24,7 +30,7 @@ AC_CONFIG_FILES([Makefile
 
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
-AC_PREFIX_PROGRAM
+AC_PREFIX_PROGRAM(hashdb)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -36,24 +42,34 @@ AC_LANG_PUSH(C++)
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
 AC_LANG_POP()
 
-m4_include([src/dfxml/src/dfxml_configure.m4])
-
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
 ##
-## optional NSIS Windows Installer
+## NSIS Windows Installer
 AC_CHECK_PROG(has_nsis, makensis, true, false)
 if test x"$has_nsis" == "xfalse" ; then
   AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
 fi
 
-##
-## Standard macros
-##
-AC_TYPE_INT64_T
-AC_SYS_LARGEFILE
-AC_SYS_POSIX_TERMIOS
+# Get the GIT commit into the HASHDB_GIT_COMMIT variable
+AC_CHECK_PROG([git],[git],[yes],[no])
+AM_CONDITIONAL([FOUND_GIT],[test "x$git" = xyes])
+AM_COND_IF([FOUND_GIT],
+        [HASHDB_GIT_COMMIT=`git describe --dirty --always`
+         AC_MSG_NOTICE([git commit $HASHDB_GIT_COMMIT])],
+        [AC_MSG_WARN([git not found])]
+        [HASHDB_GIT_COMMIT="not versioned"]
+        )
+
+################################################################
+## only build tests if requested
+AC_ARG_ENABLE(tests,
+    [AS_HELP_STRING([--enable-tests],
+                    [enable building the tests in the src/test directory])],
+      use_tests=yes,
+      use_tests=no)
+AM_CONDITIONAL([WANT_TESTS], test x$use_tests == xtrue])
 
 ################################################################
 ## See if we are running on mingw
@@ -75,8 +91,9 @@ case $host in
      AC_DEFINE([__LINUX__],1,[Linux operating system functions])
      ;;
 
-  *mingw32*)   
-     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32 -lstdc++"  
+  *mingw*)   
+#     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32 -lstdc++"  
+     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
      CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
      CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
@@ -123,12 +140,14 @@ fi
 # causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
+# Don't use: -Wno-unknown-warning-option
 
-# Check GCC
+# Check GCC and clang
 WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time "
+    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
+    -Qunused-arguments "
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we do not want to do on mingw
@@ -154,6 +173,10 @@ do
   fi
 done
 unset option
+
+################################################################
+## Includes
+m4_include([src/dfxml/src/dfxml_configure.m4])
 
 ################################################################
 ## mcheck support
@@ -186,24 +209,36 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 # -Wundef  --- causes problems with zlib
 # -Wcast-qual 
 # -Wmissing-format-attribute  --- Just too annoying
+# don't use: -Wno-unknown-warning-option
 AC_LANG_PUSH(C++)
-WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
+AC_CHECK_HEADERS([string])
+
+CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time"
+    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
 
-if test x$CXX != "xclang++" ; then
+clang=no
+if (g++ --version 2>&1 | grep clang > /dev/null) ; 
+then 
+   clang=yes
+fi
+if test x$CXX == "xclang++" ; then
+  clang=yes
+fi
+
+if test $clang == "no" ; then
   # -Wstrict-null-sentinel is not supported under clang
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wstrict-null-sentinel"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
 fi
 
 if test x"${mingw}" == "xno" ; then
   # add the warnings we don't want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST  -Weffc++"
+  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
 fi
 
-for option in $WARNINGS_TO_TEST
+for option in $CXX_WARNINGS_TO_TEST
 do
   SAVE_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $option"
@@ -218,44 +253,18 @@ done
 unset option
 AC_LANG_POP()    
 
-# Determine UTC date offset
-CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
-
-#################################################################
-## PTHREAD support required by bloom.h
-## With special nods to compiling under mingw
-#
-#if test  x"$mingw" = x"yes";  then
-#  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
-#  CFLAGS="$CFLAGS -mthreads "
-#  CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-#  CXXFLAGS="$CXXFLAGS -mthreads "
-#  AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
-#else
-#  m4_include([m4/ax_pthread.m4])
-#  AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
-#  AX_PTHREAD([
-#              echo Using settings from AX_PTHREAD
-#              LIBS="$LIBS $PTHREAD_LIBS"
-#              CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
-#              CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
-#              CC="$PTHREAD_CC"],
-#            [AC_MSG_ERROR(hashdb requires pthreads)])
-#fi
-#
-#AC_CHECK_HEADERS([pthread.h])
-#AC_CHECK_LIB([pthreadGC2],[pthread_create])
+## Determine UTC date offset
+#CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
 
 ################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
+#  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
   CFLAGS="$CFLAGS -mthreads "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads "
-
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
@@ -297,26 +306,32 @@ AC_LINK_IFELSE(
 # end PTHREAD SUPPORT
 ################################################################
 
-################################################################
-############## drop optimization flags and add -g if requested ################
-if test x"${AFF_NOOPT}" != "x" ; then
-   with_noopt="yes";
-fi
+# Specific functions, may not be required
+AC_TYPE_INT64_T
+AC_SYS_LARGEFILE
+AC_SYS_POSIX_TERMIOS
 
-if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
-  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
-else
-  # If we are not stripping the optimizer, add fortify source
-  CFLAGS="  $CFLAGS   -D_FORTIFY_SOURCE=2 "
-  CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 "
 
-  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
-  if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
-      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
-  fi
-fi
+#################################################################
+############### drop optimization flags and add -g if requested ################
+#if test x"${AFF_NOOPT}" != "x" ; then
+#   with_noopt="yes";
+#fi
+#
+#if test "${with_opt}" = "no" ; then
+#  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+#  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
+#else
+#  # If we are not stripping the optimizer, add fortify source
+#  CFLAGS="  $CFLAGS   -D_FORTIFY_SOURCE=2 "
+#  CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 "
+#
+#  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
+#  if test "${with_o3}" != "no" ; then
+#      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+#      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
+#  fi
+#fi
 
 ################################################################
 ## support required by libxml2
@@ -405,7 +420,7 @@ AC_CHECK_LIB([sicuuc],[main])
 #AC_CHECK_LIB([lightgrep], [lg_create_pattern])
 AC_CHECK_HEADERS([regex.h tre/tre.h])
 AC_CHECK_LIB([regex],[regcomp])
-AC_CHECK_LIB([tre.a],[tre_regcomp])
+AC_CHECK_LIB([tre],[tre_regcomp])
 AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 ################################################################
@@ -437,9 +452,9 @@ AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Weffcpp"],[int a=3;],
 AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"],[int a=3;],
   [AC_DEFINE(HAVE_DIAGNOSTIC_SUGGEST_ATTRIBUTE,1,[define 1 if GCC supports -Wsuggest-attribute=noreturn])]
 )
-AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wredundant-decls"],[int a=3;],
-  [AC_DEFINE(HAVE_DIAGNOSTIC_REDUNDANT_DECLS,1,[define 1 if GCC supports -Wredundant-decls])]
-)
+#AC_TRY_COMPILE([#pragma GCC diagnostic ignored "-Wredundant-decls"],[int a=3;],
+#  [AC_DEFINE(HAVE_DIAGNOSTIC_REDUNDANT_DECLS,1,[define 1 if GCC supports -Wredundant-decls])]
+#)
 
 ################################################################
 # do we have a broken strchr?
@@ -456,16 +471,17 @@ else
   AC_MSG_NOTICE([strchr is not conforming])
 fi
 AC_LANG_POP()
-################################################################
-#
-# Do we have the CPUID instruction?
-AC_TRY_COMPILE([#define cpuid(id) __asm__( "cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(id), "b"(0), "c"(0), "d"(0))],
-			[unsigned long eax, ebx, ecx, edx;cpuid(0);],
-			have_cpuid=yes,
-			have_cpuid=no)
-if test "$have_cpuid" = yes; then
- AC_DEFINE(HAVE_ASM_CPUID, 1, [define to 1 if __asm__ CPUID is available])
-fi
+
+#################################################################
+##
+## Do we have the CPUID instruction?
+#AC_TRY_COMPILE([#define cpuid(id) __asm__( "cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(id), "b"(0), "c"(0), "d"(0))],
+#			[unsigned long eax, ebx, ecx, edx;cpuid(0);],
+#			have_cpuid=yes,
+#			have_cpuid=no)
+#if test "$have_cpuid" = yes; then
+# AC_DEFINE(HAVE_ASM_CPUID, 1, [define to 1 if __asm__ CPUID is available])
+#fi
 
 ################################################################
 ############## drop optimization flags and add -g if requested ################
@@ -508,4 +524,14 @@ echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
 echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
+
+## for hashdb
+if test x"$HASHDB_GIT_COMMIT" != "x" ; then
+  echo "#define HADHDB_GIT_COMMIT  \"$HADHDB_GIT_COMMIT\""  >> config.h
+fi
+
+## for dfxml
+if test x"$GIT_COMMIT" != "x" ; then
+  echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
+fi
 

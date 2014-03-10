@@ -45,7 +45,10 @@ namespace hashdb_settings_writer {
 
     dfxml_writer x(filename, false);
     x.push("settings");
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
+
+    std::string hashdb_version = "commit=" + HASHDB_GIT_COMMIT; // from config.h
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION,
+                        hashdb_version, command_line_t::command_line_string);
     settings.report_settings(x);
     x.pop();
   }
