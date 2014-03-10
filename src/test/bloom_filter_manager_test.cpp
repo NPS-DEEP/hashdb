@@ -53,6 +53,15 @@ void run_rw_tests(std::string& hashdb_dir,
   remove(temp_bloom1);
   remove(temp_bloom2);
 
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
   bloom_filter_manager_t<T> bloom(hashdb_dir, file_mode,
                   bloom1_is_used, bloom1_M_hash_size, bloom1_k_hash_functions,
                   bloom2_is_used, bloom2_M_hash_size, bloom2_k_hash_functions);

@@ -57,6 +57,15 @@ void run_tests() {
   remove(temp_map);
   remove(temp_multimap);
 
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
   // create map manager
   map_manager_t<T> map_manager(temp_dir, RW_NEW, MAP_BTREE);
 

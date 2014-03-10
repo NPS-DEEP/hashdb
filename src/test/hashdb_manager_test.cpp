@@ -291,6 +291,16 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
 }
 
 int cpp_main(int argc, char* argv[]) {
+
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
   write_settings(HASHDIGEST_SHA1, MAP_BTREE, MULTIMAP_BTREE);

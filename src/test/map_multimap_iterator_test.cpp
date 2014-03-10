@@ -106,6 +106,15 @@ void run_ro_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
 int cpp_main(int argc, char* argv[]) {
 
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
   run_rw_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
   run_ro_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
   run_rw_tests<md5_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);

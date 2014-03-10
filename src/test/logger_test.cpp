@@ -38,6 +38,15 @@ static const char temp_log[] = "temp_dir/log.xml";
 
 void run_test() {
 
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
   remove(temp_log);
 
   hashdb_settings_t settings;

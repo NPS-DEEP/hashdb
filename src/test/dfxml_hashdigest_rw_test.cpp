@@ -34,13 +34,22 @@
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 
-/*
 static const char temp_dir[] = "temp_dir";
+/*
 static const char temp_map[] = "temp_dir/hash_store";
 static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
 */
 
 void run_tests() {
+
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
 
   dfxml_hashdigest_reader_manager_t manager("sample_dfxml", "my repository");
 

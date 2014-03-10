@@ -180,6 +180,14 @@ void run_map_manager_ro_tests(map_type_t map_type) {
 
 int cpp_main(int argc, char* argv[]) {
 
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
   // map tests
   run_map_manager_rw_tests<md5_t>(MAP_BTREE);
   run_map_manager_ro_tests<md5_t>(MAP_BTREE);

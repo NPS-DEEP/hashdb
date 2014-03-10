@@ -32,6 +32,7 @@
 #include "source_lookup_index_manager.hpp"
 #include "source_lookup_index_iterator.hpp"
 #include "file_modes.h"
+#include <sys/stat.h> // makedir
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_f1[] = "temp_dir/source_lookup_store.dat";
@@ -132,6 +133,16 @@ void run_test() {
 }
 
 int cpp_main(int argc, char* argv[]) {
+
+  // if temp_dir does not exist, create it
+  if (access(temp_dir, F_OK) != 0) {
+#ifdef WIN32
+    mkdir(temp_dir);
+#else
+    mkdir(temp_dir,0777);
+#endif
+  }
+
   run_test();
 
   // done
