@@ -66,7 +66,7 @@ AM_COND_IF([FOUND_GIT],
 ## only build tests if requested
 AC_ARG_ENABLE(tests,
     [AS_HELP_STRING([--enable-tests],
-                    [enable building the tests in the src/test directory])],
+                    [enable building tests in the src/test directory])],
       use_tests=yes,
       use_tests=no)
 AM_CONDITIONAL([WANT_TESTS], test x$use_tests == xtrue])
