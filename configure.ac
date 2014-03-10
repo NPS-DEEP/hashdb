@@ -364,11 +364,11 @@ AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_ERROR([Could not find libxml2 library required to build the hashid scanner])])
 
 
-################################################################
-## support required by zmq
-AC_CHECK_HEADERS([zmq.h],,[AC_MSG_ERROR([Could not find zmq.h, zeromq v3 is required])])
-AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],[AC_MSG_ERROR([Could not find zeromq, zeromq v3 is required])])
-AC_CHECK_FUNCS([zmq_version],,[AC_MSG_ERROR([test fails])])
+#################################################################
+### support required by zmq
+#AC_CHECK_HEADERS([zmq.h],,[AC_MSG_ERROR([Could not find zmq.h, zeromq v3 is required])])
+#AC_CHECK_LIB([zmq],[zmq_ctx_new],[LIBS="-lzmq $LIBS"],[AC_MSG_ERROR([Could not find zeromq, zeromq v3 is required])])
+#AC_CHECK_FUNCS([zmq_version],,[AC_MSG_ERROR([test fails])])
 
 ################################################################
 ## support required by boost

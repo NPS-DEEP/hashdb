@@ -14,6 +14,7 @@ SRC_WIN_DIST = \
 	src_win/build_installer.nsi \
 	src_win/CONFIGURE_F18.bash \
 	src_win/EnvVarUpdate.nsi \
+	src_win/run_tests.bat \
 	src_win/icu-mingw32-libprefix.patch \
 	src_win/icu-mingw64-libprefix.patch \
 	src_win/Makefile \

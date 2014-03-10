@@ -59,10 +59,9 @@ win_tests:
 	mkdir win_tests/win64
 	cp ../win32/src/test/*.exe win_tests/win32
 	cp ../win64/src/test/*.exe win_tests/win64
-	cp run_tests win_tests
+	cp run_tests.bat win_tests
 	cp ../src/test/identified_blocks.txt win_tests
 	cp ../src/test/sample_dfxml win_tests
-	mkdir win_tests/temp_dir
 	zip -r9 win_tests-$(HASHDBVERSION).zip win_tests
 
 $(SRC_WIN)clean:
