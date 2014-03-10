@@ -95,13 +95,13 @@ void require_no_hashdb_settings() {
   }
 }
 void require_no_bloom_filter_settings() {
-  if (has_hashdb_settings) {
+  if (has_bloom_filter_settings) {
     std::cerr << "bloom filter settings are not allowed in this command.\n";
     exit(1);
   }
 }
 void require_no_repository_name() {
-  if (has_hashdb_settings) {
+  if (has_repository_name) {
     std::cerr << "Repository name not allowed in this command.\n";
     exit(1);
   }

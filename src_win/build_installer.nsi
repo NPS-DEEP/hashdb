@@ -88,10 +88,10 @@ function InstallOnce
 
         # install PDF docs
         setOutPath "$INSTDIR\pdf"
-        file "hashdb_user_guide.pdf"
+        file "scanner_demo.pdf"
 
         # 
-	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb User Guide.lnk" "$INSTDIR\pdf\hashdb_user_guide.pdf"
+	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Scanner Demo.lnk" "$INSTDIR\pdf\scanner_demo.pdf"
 
 	AlreadyThere:
 functionEnd
@@ -167,7 +167,7 @@ section "uninstall"
 	Call un.FailableDelete
 	StrCpy $0 "$INSTDIR\64-bit\hashdb.exe"
 	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\pdf\hashdb_user_guide.pdf"
+	StrCpy $0 "$INSTDIR\pdf\scanner_demo.pdf"
 	Call un.FailableDelete
 
 	# uninstall files and links
@@ -181,7 +181,7 @@ section "uninstall"
 	rmdir "$INSTDIR\pdf"
 
 	# uninstall Start Menu launcher shortcuts
-	delete "$SMPROGRAMS\${APPNAME}\hashdb User Guide.lnk"
+	delete "$SMPROGRAMS\${APPNAME}\hashdb Scanner Demo.lnk"
 	delete "$SMPROGRAMS\${APPNAME}\uninstall ${APPNAME}.lnk"
 	rmDir "$SMPROGRAMS\${APPNAME}"
 
