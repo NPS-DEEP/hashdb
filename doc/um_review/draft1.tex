@@ -1,0 +1,445 @@
+% To build, please type: pdflatex draft1.tex
+
+\documentclass[12pt,twoside]{article}
+\usepackage[bf,small]{caption}
+\usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
+\usepackage{paralist} % comapctitem, compactdesc, compactenum
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{./graphics/}}
+\usepackage{xspace}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{float}
+\hyphenation{Sub-Bytes Shift-Rows Mix-Col-umns Add-Round-Key}
+
+\setlength{\parskip}{12pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+\newcommand{\libhdb}{\emph{libhashdb}\xspace}
+\newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hashid}{\emph{hashid}\xspace}
+\newcommand{\hid}{\emph{hashid}\xspace}
+\newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
+
+\begin{document}
+
+Thanks for the draft, it provides a great basis for showing what I need to
+explain.
+
+\subsubsection*{One-page quickstart}
+
+If nothing is imported, hashdb will indicate that nothing was imported.
+I would prefer to have users feel they do not need to go down
+into the \hdb directory to look for a 0-length file.
+Import and delete actions provide specific statistics as to what happened
+during an import request.
+They should consult this.
+It is printed when the command completes
+and is logged in the \texttt{log.xml} file.
+
+Here are the change statistics tracked.
+Their value is the number of times the event happened during the command.
+
+\begin{verbatim}
+  uint32_t hashes_inserted;
+  uint32_t hashes_not_inserted_wrong_hash_block_size;
+  uint32_t hashes_not_inserted_file_offset_not_aligned;
+  uint32_t hashes_not_inserted_wrong_hashdigest_type;
+  uint32_t hashes_not_inserted_exceeds_max_duplicates;
+  uint32_t hashes_not_inserted_duplicate_element;
+
+  uint32_t hashes_removed;
+  uint32_t hashes_not_removed_wrong_hash_block_size;
+  uint32_t hashes_not_removed_file_offset_not_aligned;
+  uint32_t hashes_not_removed_wrong_hashdigest_type;
+  uint32_t hashes_not_removed_no_hash;
+  uint32_t hashes_not_removed_no_element;
+\end{verbatim}
+
+Meaning:
+\begin{compactitem}
+\item Number of hashes that were inserted.
+\item Number of hashes that were not inserted
+becasue the hash block size of the block requested for insert was
+incorrect.
+For example if \hdb was set to require a hash block size of 4096,
+and the file size is 5096 bytes,
+the last block hash size will be 100 bytes, which is not valid,
+so it will not be inserted.
+\item Number of hashes not inserted because the file offset was not aligned.
+If the database expects block size of 4096 and the \hdb or \libhdb user
+tries to add a hash at block 512, \hdb will detect that 512 does not fall on
+a 4096 byte boundary $(512 \% 4096 \ne 0)$.
+This happens if the user mistakenly provides unworkable parameters.
+\item number of hashes with the wrong hashdigest type:
+The \hdb is configured to accept MD5
+but the user attempts to import 500 SHA1 hashes.
+\item exceeds max duplicates: The user sets max duplicates with \texttt{-m 20}
+and the run attempts to import 30 hashdigests calculated from 30 NULL blocks
+of input, so we see 20 max duplicates.
+\item duplicate element: The user attemts to import a hash
+where the hash value, repository name, filename, and its file offset
+are all the same.
+\item hashes not removed, no hash: The user attempts to remove 20
+hashes but these 20 hash values are not in the database.
+\item hashes not removed, no element: the user attempts to remove 20 hashes
+specifically identified by 
+hash value, repository name, filename, and its file offset.
+It is likely that the user already deleted these or never added them
+in the first place, indicating a possible mistake in database management.
+\end{compactitem}
+
+After each command to change a database, values $> 0$ are written
+in the \texttt{log.xml} file and to \texttt{stdout}.
+
+\subsubsection*{Contents of the \hdb Database (not documented yet)}
+The \hdb database contains these files:
+
+\begin{verbatim}
+bloom_filter_1
+bloom_filter_2
+hash_duplicates_store
+hash_store
+history.xml
+log.xml
+settings.xml
+source_filename_store.dat
+source_filename_store.idx1
+source_filename_store.idx2
+source_lookup_store.dat
+source_lookup_store.idx1
+source_lookup_store.idx2
+source_repository_name_store.dat
+source_repository_name_store.idx1
+source_repository_name_store.idx2
+\end{verbatim}
+
+These files are:
+\begin{compactitem}
+\item \texttt{.xml} files containing configuration settings and logs.
+\item up to 2 bloom filter files used for improving the speed of hash lookups.
+\item binary files containing stored hashes and hash duplicates
+from multiple sources.
+\item binary files that allow lookup of hash source names.
+\end{compactitem}
+Of these, the following may be interesting to the user:
+\begin{compactitem}
+\item \texttt{log.xml} \\
+Every time a command is run that changes the content of the database,
+this file is replaced with a log of the run.
+The log includes
+the command name, information about \hdb including the command typed
+and how \hdb was compiled,
+information about the operating system \hdb was just run on,
+a copy of the \hdb settings,
+timestamps indicating how much time the command took,
+and the specific \hdb changes applied, described above.
+\item \texttt{settings.xml} \\
+Includes the build environment and execution environment,
+described above,
+and the settings the user requested when the \hdb was created,
+see \hdb settings and bloom filter settings options.
+\item \texttt{history.xml} \\
+The purpose of this file is to retain full attribution for a database.
+On every change, \texttt{log.xml} is appended.
+On every change applied from another database
+(or from two databases, as is the case with the \texttt{add\_multiple} command),
+the history of that database or databases is appended also.
+It's messy and hard to follow, but it does provide full attribution.
+\end{compactitem}
+
+\subsubsection*{Introduction, Overview of \hdb}
+Please replace ``pornography'' with ``child exploitation''
+to map more accurately to perceived actionable concerns.
+
+Create hash databases of SHA256 cryptographic \textbf{block} hashes,
+as opposed to file hashes.
+
+The \texttt{md5deep}, \texttt{sha1deep} etc.\ toolset
+and the \hdb \texttt{export} command
+are the only tools that generate DFXML output containing block hashes.
+
+\texttt{tcpflow} does not, but \texttt{tcpflow} does provide
+great usage describable elsewhere: it converts Ethernet traffic
+into files so that their block hashes may be calculated
+and stored in the block hash database.
+Then someone can use the \hdb libray API and scan Ethernet traffic
+against hashes in the database populated by hashes
+from blacklist traffic values.
+
+Provide source information for hash values.
+Typically, hash values are sourced from files or directories of files
+using \texttt{md5deep} with the recursive directory \texttt{-r} option.
+If hash values are sourced from raw media using the \bulk \hid scanner
+in \texttt{import} mode, then the Forensic Path is used
+as the source information.
+
+Regarding paper "Distinct Sector Hashes for Target File Identification":
+
+Adding one byte to the beginning of a file stored on disk will
+totally change block hash values as well,
+so this argument is wrong.
+
+The hashcode for a file is the same no matter what the system is on,
+so that assertion is wrong.
+
+The point is that the thinking and the capability set
+when managing data on the block level instead of the file level is different.
+
+File hashes: the file must be complete to generate a file hash.
+A file carver can pull together a file and generate a valid file hash.
+We think in terms of artifacts being files.
+We like the media being examined to be a filesystem
+so we can navigate through directories of files.
+
+Block hashes:
+We manage blocks of data.
+We don't carve data into files.
+We don't need a filesystem or files.
+Artifacts are at the block scale (usually 4096 bytes), not at the file scale.
+Artifacts must be sector-aligned for \hdb to find hashes.
+\hdb works well with hard disks and operating systems that fragment
+data into discontiguous blocks yet still sector-align media
+because scans are performed along sector boundaries.
+
+By working at the block resolution, we can find part of a file when
+the rest of the file is missing, such as with a giant video file
+where only part of the video is on disk.
+We can analyze network traffic.
+We can find artifacts that are sub-file, for example embedded content
+in a \texttt{.pdf} document.
+
+Please use ``block hashing'', not ``sector hashing''.
+A disk drive may have 512-byte sectors,
+but we may want to hash along 4096-byte blocks.
+
+When importing block hashes, they are block aligned.
+When scanning for block hashes,
+we calculate block hashes along every sector boundary.
+
+Block hashing does not provide any special encryption capability, as indicated.
+\hdb does not decrypt.
+Encrypted blocks may be hashed
+and this block hash value may be stored in the database
+so that when searching, we may find a block hash that matches.
+
+Cryptographic hashes are calculated from hash blocks
+\textbf{and are stored} along with source information...
+
+\subsubsection*{How \hdb Works}
+Again: DFXML containing block hashes currently is only available
+from the \texttt{md5deep} toolset or \hdb \texttt{export}.
+
+A \hdb block hash database may be populated these ways:
+\begin{compactitem}
+\item Importing from DFXML.
+\item Copying from another \hdb database.
+\item Importing from \bulk \hid scanner in \texttt{import} mode.
+\end{compactitem}
+
+Please change to: hash databases can be exported,
+\textbf{added to and subtracted from}, and shared.
+Merge is one set operator among add, subtract, and intersect.
+
+Also, somewhere, please indicate that hashes in databases can be treated
+as sets, as supported by the add, subtract, and intersect commands.
+
+Somewhere, please indicate that the source of a block hash has three parts:
+\begin{compactitem}
+\item Repository Name:  When the user imports from a DFXML file
+generated by \texttt{md5deep},
+there is no repository name attributed to the import effort.
+This is where the user uses the \texttt{import -r <repository name>} option.
+We intend the repository name to indicate something about the dataset,
+such as ``Company X's intellectual property files''.
+
+If a repository name is not provided, the DFXML filename itself is used.
+
+When \hdb exports databases, for each block hash,
+the associated repository name as well as the associated filename and offset
+are exported in the DFXML content.
+
+\item Filename: The file from which the block hash was sourced.
+\item File Offset: the offset, in bytes into the file,
+where the block hash was calculated.
+\end{compactitem}
+
+
+
+\subsubsection*{2.2 DFXML}
+Listing 1 illustrates nothing because it has no block hash values.
+In fact, \texttt{tcpflow} cannot be used here
+because it can't generate block hashes; it is only able to 
+generate MD5 hashes of complete packets.
+
+The only workflow that could use \texttt{tcpflow}
+would be to use \texttt{tcpflow} to save captured traffic
+to files and then to use \texttt{md5deep}
+to generate block hashes from files.
+
+Here is an excerpt of a usable DFXML file generated by \texttt{md5deep}
+from the demo file at
+\url{http://digitalcorpora.org/downloads/hashdb/demo/demo\_video\_dfxml}:
+
+\begin{verbatim}
+  <fileobject>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <filesize>10630146</filesize>
+    <ctime>2014-01-30T20:20:39Z</ctime>
+    <mtime>2014-01-30T19:04:59Z</mtime>
+    <atime>2014-01-30T20:04:52Z</atime>
+    <byte_run file_offset='0' len='4096'>   
+      <hashdigest type='MD5'>63641a3c008a3d26a192c778dd088868</hashdigest>
+    </byte_run>
+    <byte_run file_offset='4096' len='4096'>   
+      <hashdigest type='MD5'>c7dd2354e223c10856469e27686b8c6b</hashdigest>
+    </byte_run>
+    <byte_run file_offset='8192' len='4096'>   
+      <hashdigest type='MD5'>ff540fda05d008ccebf2cca2ec71571d</hashdigest>
+    </byte_run>
+    <byte_run file_offset='12288' len='4096'>   
+      <hashdigest type='MD5'>d3de47d704e85e0f61a91876236593d3</hashdigest>
+
+...
+
+    <byte_run file_offset='10625024' len='4096'>   
+      <hashdigest type='MD5'>d2d958b44c481cc41b0121b3b4afae85</hashdigest>
+    </byte_run>
+    <byte_run file_offset='10629120' len='1026'>   
+      <hashdigest type='MD5'>4640564a8655d3b201a85b4a76411b00</hashdigest>
+    </byte_run>
+    <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
+  </fileobject>
+\end{verbatim}
+
+The interesting stuff is in the \texttt{byte\_run} tag.
+The \texttt{file\_offset} attribute is the number of bytes into the file
+where the cryptographic block hash was calculated.
+
+The \texttt{len} attribute indicates the size of the block.
+Notice the last length hashed, 1026.
+When importing hashes from 4KiB blocks, this last entry will be rejected
+because $1026 \ne 4096$.
+The \texttt{hashes\_not\_inserted\_wrong\_hash\_block\_size} change variable 
+will be 1 because of this entry.
+
+The \texttt{hashdigest} tag identifies that hash algorithm (MD5)
+and the long hexadecimal hash value.
+Note that the length, in characters for the hexadecimal value
+for MD5, SHA1, and SHA256 is 16, 20, and 32, respectively.
+
+The filename to attribute these hashes to is specified in the \texttt{filename}
+tag.
+
+Note that the DFXML that \hdb exports is compatible
+but different from \texttt{md5deep}.
+Here is an example excerpt, available at
+\url{http://digitalcorpora.org/downloads/hashdb/demo/demo\_video\_exported\_dfxml}:
+
+\begin{verbatim}
+  <fileobject>
+    <repository_name>repository_demo_video_dfxml</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <byte_run file_offset='6938624' len='4096'>
+      <hashdigest type='MD5'>0016aa775765eb7929ec06dea25b6f0e</hashdigest>
+    </byte_run>
+  </fileobject>
+  <fileobject>
+    <repository_name>repository_demo_video_dfxml</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <byte_run file_offset='3837952' len='4096'>
+      <hashdigest type='MD5'>00183a37c80b3ee02cb4bdd3e7d7e9d2</hashdigest>
+    </byte_run>
+  </fileobject>
+  <fileobject>
+    <repository_name>repository_demo_video_dfxml</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <byte_run file_offset='5652480' len='4096'>
+      <hashdigest type='MD5'>00513c9484ebc957eb928adf30504bc9</hashdigest>
+    </byte_run>
+  </fileobject>
+\end{verbatim}
+Differences:
+\begin{compactenum}
+\item The first offset is 6938624, not 0,
+because the output is sorted by hash value. 
+\item There is a \texttt{fileobject} tag wrapping every individual hash.
+\item Every entry includes a \texttt{repository\_name} tag.
+\end{compactenum}
+
+\subsubsection*{2.3 Using the Hash Databases}
+No, the \hdb library API now only provides import and scan capabilities
+as seen and used by the \hdb \hid scanner.
+For import:
+\begin{compactitem}
+\item Upon instantiation, a new database is created at the specified directory.
+\item Arrays of Hashes are imported, along with their source information.
+\item Upon destruction, the new database is closed, and the changes
+are written in the new \texttt{log.xml} file.
+\end{compactitem}
+
+For scanning:
+\begin{compactitem}
+\item Upon instantiation, an existing database is opened for reading
+at the specified path or socket.
+\item Scans may be performed.
+\item Upon destruction, resources are closed.
+Since we are scanning, there are no changes to log.
+\end{compactitem}
+
+Please include the listing of the \texttt{hashdb.hpp} header file
+as an appendix.
+A copy of this file is available at
+\url{http://digitalcorpora.org/downloads/hashdb/hashdb.hpp}.
+
+Please also include a copy of the \hdb \hid scanner options in the appendix.
+This is simply an excerpt from \hdb usage,
+"Using the bulk\_extractor hashid scanner".
+This makes three appendix listings: \hdb help, the \hdb library API file,
+and the \hdb scanner options.
+
+\subsubsection*{3.1.1 Installing on Linux or Mac}
+Please spell out un-tar: Right-click "Extract To..." on the file
+or type \texttt{tar -xvf hashdb-<x.y.z>.tar.gz}.
+
+Also, please indicate that sudo is not required, as described under
+'If you do not wish to use sudo' at
+\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
+
+Please also add this fact:
+When building \bulk, the \hid scanner will naturally be built
+but only if the \hdb library has been installed.
+Otherwise, \bulk will build without the \hid scanner.
+To check that the \hid scanner is enabled,
+observe that it is enabled in the output of running \texttt{./configure}
+or type \texttt{bulk\_extractor -h} and look for \hid setting options.
+
+For the next available version of \bulk,
+please use v1.4.5, not v1.4.1.
+The v1.4.1 that I put online at
+\url{http://digitalcorpora.org/downloads/hashdb/}
+was hacked together for demo purposes,
+and is not formally available yet.
+
+\subsubsection*{Installing on Windows}
+Please describe the warning as a Windows safeguard,
+not as an antivirus measure.
+The installer should never be flagged as a virus.
+
+Please have the user select only one configuration,
+the 64-bit configuration, unless it is incompatible with their old 32-bit
+Windows system.
+This goes for the \bulk Windows installation, too.
+
+\subsubsection*{3.2 Run \hdb tools}
+TBD.
+
+\end{document}
+
