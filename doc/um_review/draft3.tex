@@ -1,0 +1,106 @@
+% To build, please type: pdflatex draft1.tex
+
+\documentclass[12pt,twoside]{article}
+\usepackage[bf,small]{caption}
+\usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
+\usepackage{paralist} % comapctitem, compactdesc, compactenum
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{./graphics/}}
+\usepackage{xspace}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{float}
+\hyphenation{Sub-Bytes Shift-Rows Mix-Col-umns Add-Round-Key}
+
+\setlength{\parskip}{12pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+\newcommand{\libhdb}{\emph{libhashdb}\xspace}
+\newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hashid}{\emph{hashid}\xspace}
+\newcommand{\hid}{\emph{hashid}\xspace}
+\newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
+\newcommand{\fiwalk}{\emph{fiwalk}\xspace}
+
+\begin{document}
+Draft review 3.
+
+I like the use of filename extensions.
+
+\texttt{mock\_video\_db.hdb} has redundancy.  Plese use
+\texttt{mock\_video.hdb}.
+Lets use the \texttt{.xml} filename extension for all our DFXML files.
+Instead of \texttt{mock\_video\_dfxml}, please use \\
+\texttt{mock\_video\_hashes.xml}.
+\texttt{intersection.hdb} instead of \texttt{intersection\_hashdb.hdb}.
+
+Lets add \texttt{.hdb} to the \hdb database name that \bulk creates
+when it is in \texttt{import} mode.
+If \texttt{hashdb.hdb} seems okay, lets use that.
+I'll change the \bulk \hid scanner to comply.
+
+I redid the demos at
+\url{https://github.com/simsong/hashdb/wiki}.
+They should now reflect this naming convention.
+
+From my discussion with Michael, who met with our sponsor:
+\begin{compactitem}
+\item They couldn't get the tools to work
+because they had an old Command window open.
+Please add: If you had a Command window open,
+please close and reopen it so that Windows can find the \hdb tool.
+\item They thought \texttt{hashes\_not\_inserted\_wrong\_hash\_block\_size}
+indicated an error, but it is expected
+since the remaining bytes of every file is likely to not be the exact
+hash block size.
+For now, please add this fact so they understand these variables better.
+I don't know if I'll be able to fix this because it would lose information.
+\end{compactitem}
+
+It seems figures and listings tend to appear before they are referenced.
+If you can, please format them to appear soon after.  Thanks.
+
+Section 2.2: They don't need to know the exact length.
+Please drop sentence "Note that the length... and 32, respectively".
+
+Section 2.3: settings.xml: "settings the user requested
+when the 'block hash database' was created", not when the \hdb was created.
+
+Section 3.2.3: "In this case, each hash values shown...".
+I don't get it.
+Duplicate hash values get stored when the hash value is the same
+and any of the source information is different.
+A hash value does not have a duplicate if there is only one set of source
+information citing that hash value.
+
+Section 3.2.3: "benign" seems confusing.
+How about "such as 'brand new' operating system images".
+
+Table 4: \texttt{expand\_identified\_blocks}:
+Usage and description are confusing.
+Lets use usage:
+\begin{verbatim}
+expand_identified_blocks <hashdb> <identified_blocks.txt>
+\end{verbatim}
+
+For description please append text:
+"for each hash feature in the \texttt{identified\_blocks.txt} input file."
+to indicate that source information is printed for hashes in
+\texttt{identified\_blocks.txt}, and not for each hash in the \hdb.
+
+Section 4.4: You still say "Bloom filters can be used to quickly indicate
+whether or not a hash value is found in the database".
+This implies Bloom filters quickly indicate when a hash is in the database.
+This is not true.  Please fix it.
+
+Section 6: Please use the \texttt{bulk\_extractor-users} Google group instead.
+
+\end{document}
+

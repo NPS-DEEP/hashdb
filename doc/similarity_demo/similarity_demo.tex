@@ -65,7 +65,7 @@ we subtract out hashes if they are are already known:
 \begin{figure}[H]
   \center
   \includegraphics[scale=0.6]{drawings/subtract_whitelist}
-  \caption*{Run the \hdb \texttt{subtract} command to create a database without whitelist hashes.}
+  \caption*{Run the \hdb \texttt{subtract} command to create a database without specified hashes.}
 \end{figure}
 
 Now view the list of forensic paths common to both media images:
@@ -76,17 +76,6 @@ Now view the list of forensic paths common to both media images:
   \caption*{Run the \hdb \texttt{get\_sources} command \\
             to list common hashes and where they were sourced from.}
 \end{figure}
-
-%It may additionally be interesting to find blacklisted content
-%common to both media images and to find the actual files
-%they were sourced from.
-%To do this, generate an intersection database with the blacklist database
-%using the \texttt{intersect} command,
-%and then print the intersection sources
-%using the \texttt{get\_sources} command.
-%For a demo on generating hash databases of whitelist and blacklist
-%block hashes, please see
-%\url{http://digitalcorpora.org/downloads/hashdb/blacklist\_demo.pdf}.
 
 %steps
 Here are the steps to perform this demo:
@@ -119,46 +108,66 @@ $ bulk_extractor -o outdir2 -S hashdb_mode=import media_image_2
 \item Create the intersection of media image 1 and 2
 to obtain a database of hashes that are common between them:
 \begin{verbatim}
-$ hashdb create intersection_hashdb
-$ hashdb intersect media_image1/hashdb media_image2/hashdb \
-         intersection_hashdb
+$ hashdb create intersection.hdb
+$ hashdb intersect media_image1/hashdb.hdb media_image2/hashdb.hdb \
+         intersection.hdb
 \end{verbatim}
 \end{compactenum}
 
-Now database \texttt{intersection\_hashdb} contains common hashes,
+Now database \texttt{intersection.hdb} contains common hashes,
 but we want to know what is in it.
 Here are some approaches for further analysis:
 \begin{compactitem}
 \item There are ``false positives'' from system files.
 Which hashes are actually interesting user data?
-
-Subtract whitelist noise (false positives)
+Subtract false positives from a database of files known to be not interesting,
+such as system files,
 so that the remaining hashes are pertinent data common between the
 media images:
 \begin{verbatim}
-$ hashdb create quiet_hashdb
-$ hashdb subtract intersection_hashdb whitelist_hashdb filtered_hashdb
+$ hashdb create intersection2.hdb
+$ hashdb subtract intersection.hdb false_positives.hdb \\
+         intersection2.hdb
 \end{verbatim}
 
-\item What hashes match my blacklist dataset?
-
-Intersect the media image intersection database with the blacklist database,
-and print out the list of files from which the blacklist hashes were sourced:
+\item What hashes match previously encountered data?
+Intersect the media image intersection database
+with a database of known interesting data,
+and print out the list of files from which the known hashes were sourced:
 \begin{verbatim}
-$ hashdb create filtered_blacklist_hashdb
-$ hashdb intersect filtered_hashdb blacklist_hashdb \
-         filtered_blacklist_hashdb
-$ hashdb get_sources filtered_hashdb > demo_blacklist_output
+$ hashdb create recognized_hashes.hdb
+$ hashdb intersect intersection.hdb known_hashes.hdb \
+         recognized_hashes.hdb
+$ hashdb get_sources recognized_hashes.hdb > output.txt
 \end{verbatim}
 \end{compactitem}
 
-Note that these approaches for further analysis require whitelist and blacklist
-block hash databases.
+Note that these approaches for further analysis require
+databaes of previously encountered files.
 For a demo on preparing a block hash database, please see
-\url{http://digitalcorpora.org/downloads/hashdb/demo/blacklist\_demo.pdf}.
-For a whitelist database, import hashes from some media images
-or from the NSRL.
-For a blacklist block hash database, import block hashes from blacklist files.
+\url{http://digitalcorpora.org/downloads/hashdb/demo/create\_hdb\_demo.pdf}.
+To create a database of ``false positives'',
+import hashes from some media images or from the NSRL.
+
+Note that this demo uses the default hash block size of 4096 bytes
+and the default sector size of 512 bytes.
+This is not required.
+For example to perform a similarity analysis
+with a block fragment resolution of 64 bytes along every byte boundary,
+use a block size of 64 bytes and a sector size of 1 byte.
+The syntax for importing media images 1 and 2 would be:
+\begin{verbatim}
+$ bulk_extractor -o outdir1 \
+                 -S hashdb_mode=import \
+                 -S hashdb_block_size=64 \
+                 -S hashdb_sector_size=1 \
+                 media_image_1
+$ bulk_extractor -o outdir2 \
+                 -S hashdb_mode=import \
+                 -S hashdb_block_size=64 \
+                 -S hashdb_sector_size=1 \
+                 media_image_2
+\end{verbatim}
 
 \end{document}
 

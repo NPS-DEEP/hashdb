@@ -29,48 +29,49 @@
 \begin{document}
 
 \begin{center}
-\Large Demo: Preparing a Block Hash Database \\
-\large Using \mdd and \hdb
+\Large Demo: Creating a Block Hash Database \\
+\large Using \hdb and \mdd
 \end{center}
 
 We build large databases of block hashes
-to help us find matching blocks of data.
+to help us find fragments of previously encountered data.
 Here are some ways \hdb databases are used:
 \begin{compactitem}
-\item We scan data looking for blocks that match blocks in the blacklist databae.
-\item We subtract whitelist blocks to remove distracting false positives.
+\item We scan data looking for block hashes that match
+block hashes in previously encountered data.
+\item We subtract data known to be not interesting, such as system files,
+to remove distracting false positives.
 \end{compactitem}
 The Scanner demo at
-\url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}.
-checks against a database of blacklisted hash values
-to find part of a blacklisted video file in a media image.
+\url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}
+uses a block hash database to find previously encountered data
+in a media image.
 
 The Similarity demo at
-\url{http://digitalcorpora.org/downloads/hashdb/demo/similarity\_demo.pdf}.
-subtracts whitelist hash values
-to reveal blocks of user data that are common in two media images.
+\url{http://digitalcorpora.org/downloads/hashdb/demo/similarity\_demo.pdf}
+compares two block hash databases created from two media images to find 
+fragments of user data that are common between them.
 
-In this demo, we create a block hash database
-for use as a blacklist or whitelist reference.
-The workflow for managing blacklist databases and whitelist databases
-is the same:
+In this demo, we create block hash database \texttt{mock\_video.hdb}
+of mock video file \texttt{mock\_video.mp4}
+to use as a reference for finding previously encountered data.
+The database we create is the very database we use in the
+introductory demo for finding fragments of previously encontered data at
+\url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}.
+
+Workflow:
 \begin{compactenum}
-\item Generate DFXML file(s) of block hashes
-from blacklist or whitelist file sources.
-\item Import these DFXML file(s) into a block hash database.
-\end{compactenum}
-
-%Here is the workflow:
-Generate block hashes in DFXML format:
+\item Generate a DFXML file containing block hashes
+from sources of ``previously encountered'' data.
 
 \begin{figure}[H]
   \center
   \includegraphics[scale=0.6]{drawings/md5deep}
-  \caption*{Run \mdd to create a DFXML file of block hashes \\
-            from your library of blacklist or whitelist files.}
+  \caption*{Run \mdd to create a DFXML file of block hashes from your \\
+            library of prevously encountered files.}
 \end{figure}
 
-Import block hashes into the hash database:
+\item Import the DFXML file of block hashes into a block hash database.
 
 \begin{figure}[H]
   \center
@@ -79,12 +80,9 @@ Import block hashes into the hash database:
             to import block hashes into the hash database.}
 \end{figure}
 
-%steps
-In this demo, we create a mock ``blacklist'' hash database.
-We use the \texttt{demo\_video.mp4} file referenced in the scanner demo,
-so the resultant \texttt{demo\_video\_db} hash database in this demo
-is the same as the database used in that demo.
-Here are the steps to perform this demo:
+\end{compactenum}
+
+Steps:
 \begin{compactenum}
 \item Download and install \hdb  and \bulk compiled with the \hashid scanner
 from
@@ -92,37 +90,35 @@ from
 as described in the Scanner demo
 for finding part of a video file in a media image,
 \url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}
-\item Pick an file or directory to use
-as your source of whitelist or blacklist files.
-For this demo, please download file
-\url{http://digitalcorpora.org/downloads/hashdb/demo/demo\_video.mp4}.
+\item Pick a directory or file to use
+as your source of files.
+For this demo, please download and use the mock video file at
+\url{http://digitalcorpora.org/downloads/hashdb/demo/mock\_video.mp4}.
 
 \item Use the \mdd tool to generate the DFXML file of block hashes
 of your files and directories:
 \begin{compactitem}
 \item Use \texttt{-p 4096} to specify a block (partition) size of 4096.
 \item Use \texttt{-d} to generate output in DFXML format.
-\item If you are generating block hashes recursively in subdirectories,
-rather than from a file, use the \texttt{-r} option.
-In this demo, we generate block hashes from a file,
-so we do not use this option.
-\item Use \texttt{> demo\_video\_dfxml} to direct the DFXML output
-to go to file \texttt{demo\_video\_dfxml}.
+%\item Use \texttt{-r} to generate block hashes recursively in subdirectories.
+\item Use \texttt{> mock\_video\_hashes.xml} to direct the DFXML output
+to go to file \\
+\texttt{mock\_video\_hashes.xml}.
 \end{compactitem}
 \begin{verbatim}
-$ md5deep -p 4096 -d demo_video.mp4 > demo_video_dfxml
+$ md5deep -p 4096 -d mock_video.mp4 > mock_video_hashes.xml
 \end{verbatim}
 
 \item Use the \hdb tool to \texttt{create} a new hash database
-called \texttt{demo\_video\_db}:
+called \texttt{mock\_video.hdb}:
 \begin{verbatim}
-$ hashdb create demo_video_db
+$ hashdb create mock_video.hdb
 \end{verbatim}
 
 \item Use the \hdb tool to \texttt{import} the block hashes
 from the DFXML file into the new hash database:
 \begin{verbatim}
-$ hashdb import demo_video_dfxml demo_video_db
+$ hashdb import mock_video_hashes.xml mock_video.hdb
 \end{verbatim}
 \end{compactenum}
 

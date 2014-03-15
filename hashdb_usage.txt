@@ -1,0 +1,175 @@
+hashdb Version 1.0.0-beta-1
+Usage: hashdb -h | -H | -V | <command>
+    -h, --help    print this message
+    -H            print detailed help including usage notes and examples
+    --Version     print version number
+
+The hashdb tool supports the following <command> options:
+
+create [<hashdb settings>]+ [<bloom filter settings>]+ <hashdb>
+    Create a new hash database.
+
+    Options:
+    Please see <hashdb settings> and <bloom filter settings> for settings
+    and default values.
+
+    Parameters:
+    <hashdb>   the file path to the new hash database to create
+
+import [-r <repository name>] <DFXML file> <hashdb>
+    Import hashes from file <DFXML file> into hash database <hashdb>.
+
+    Options:
+    -r, --repository=<repository name>
+        The repository name to use for the set of hashes being imported.
+        (default is "repository_" followed by the <DFXML file> path).
+
+    Parameters:
+    <DFXML file>   the hash database to import hashes from
+    <hashdb>       the hash database to insert the imported hashes into
+
+export <hashdb> <DFXML file>
+    Export hashes from the <hashdb> to a <DFXML file>.
+
+    Parameters:
+    <hashdb>       the hash database whose hash values are to be exported
+    <DFXML file>   the DFXML file of exported hash values
+
+add <source hashdb> <destination hashdb>
+    Copies hashes from the <source hashdb> to the <destination hashdb>.
+
+    Parameters:
+    <source hashdb>       the hash database to copy hashes from
+    <destination hashdb>  the hash database to copy hashes into
+
+add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Perform a union add of <source hashdb 1> and <source hashdb 2>
+    into the <destination hashdb>.
+
+    Parameters:
+    <source hashdb 1>     a hash database to copy hashes from
+    <source hashdb 2>     a hash database to copy hashes from
+    <destination hashdb>  the hash database to copy hashes into
+
+intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copies hashes that are common to both <source hashdb 1> and
+    <source hashdb 2> into <destination hashdb>.
+    Hashes match when hash values match, even if their associated
+    source repository name and filename do not match.
+
+    Parameters:
+    <source hashdb 1>     the first of two hash databases to copy the
+                          intersection of
+    <source hashdb 2>     the second of two hash databases to copy the
+                          intersection of
+    <destination hashdb>  the hash database to copy the intersection of
+                          hashes into
+
+subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes in <souce hashdb 1> and not in <source hashdb 2> into
+    <destination hashdb>.
+    Hashes match when hash values match, even if their associated
+    source repository name and filename do not match.
+
+    Parameters:
+    <source hashdb 1>     the hash database containing hash values that
+                          may be added
+    <source hashdb 2>     the hash database indicating hash values that
+                          are not to be added
+    <destination hashdb>  the hash database to copy the difference of
+                          hashes into
+
+deduplicate <source hashdb> <destination hashdb>
+    Copy hall hashes in <source hashdb> to <destination hashdb> except
+    for hashes with duplicates.
+
+    Parameters:
+    <source hashdb>       the hash database to entirely remove duplicated
+                          hashes from
+
+rebuild_bloom [<bloom filter settings>]+ <hashdb>
+    Rebuilds the bloom filters in the <hashdb> hash database based on the
+    <bloom filter settings> provided.
+
+    Options:
+    <bloom filter settings>
+        Please see <bloom filter settings> for settings and default values.
+
+    Parameters:
+    <hashdb>       a hash database for which the bloom filters will be rebuilt
+
+server <hashdb> <socket>
+    Starts a query server service for <hashdb> at <socket> for
+    servicing hashdb queries.
+
+    Parameters:
+    <hashdb>       the hash database that the server service will use
+    <socket>       the TCP socket to make available for clients,
+                   for example 'tcp://localhost:14500'.
+
+scan <hashdb> <DFXML file>
+    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
+    and prints out matches.
+
+    Parameters:
+    <hashdb>       the hash database to use as the lookup source
+    <DFXML file>   the DFXML file containing hashes to scan for
+
+expand_identified_blocks <hashdb_dir> <identified_blocks.txt>
+    Prints out source information for each hash in <identified_blocks.txt>
+    Source information includes repository name, filename, and file offset
+
+get_sources <hashdb>
+    Prints out the repository name and filename of where each hash in the
+    <hashdb> came from.
+
+    Parameters:
+    <hashdb>       the hash database to print all the repository name,
+                   filename source information for
+
+get_statistics <hashdb>
+    Print out statistics about the given <hashdb> database.
+
+    Parameters:
+    <hashdb>       the hash database to print statistics about
+
+<hashdb settings> establish the settings of a new hash database:
+    -p, --hash_block_size=<hash block size>
+        <hash block size>, in bytes, used to generate hashes (default 4096)
+
+    -m, --max_duplicates=<maximum>
+        <maximum> number of hash duplicates allowed, or 0 for no limit
+        (default 0)
+
+    -t, --storage_type=<storage type>
+        <storage type> to use in the hash database, where <storage type> is
+        one of: btree | unordered-hash | red-black-tree | flat-sorted-vector
+        (default btree)
+
+    -a, --algorithm=<hash algorithm>
+        <hash algorithm> in use for the hash database, where <hash algorithm>
+        is one of: MD5 | SHA1 | SHA256
+        (default MD5)
+
+    -b, --bits=<number>
+        <number> of source lookup index bits to use for the source lookup
+        index, between 32 and 40 (default 32)
+        The number of bits used for the hash block offset value is
+        (64 - <number>).
+
+<bloom filter settings> tune performance during hash queries:
+    --bloom1 <state>
+        sets bloom filter 1 <state> to enabled | disabled (default enabled)
+    --bloom1_n <n>
+        expected total number <n> of unique hashes (default 45634027)
+    --bloom1_kM <k:M>
+        number of hash functions <k> and bits per hash <M> (default <k>=3
+        and <M>=28 or <M>=value calculated from value in --bloom1_n)
+    --bloom2 <state>
+        sets bloom filter 1 <state> to enabled | disabled (default disabled)
+    --bloom2_n <total>
+        expected total number <n> of unique hashes (default 45634027)
+    --bloom2_kM <k:M>
+        number of hash functions <k> and bits per hash <M> (default <k>=3
+        and <M>=28 or <M>=value calculated from value in --bloom2_n)
+

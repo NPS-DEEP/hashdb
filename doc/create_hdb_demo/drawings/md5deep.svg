@@ -14,7 +14,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.4 r9939"
-   sodipodi:docname="import.svg">
+   sodipodi:docname="md5deep.svg">
   <defs
      id="defs4">
     <marker
@@ -94,10 +94,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="375.04121"
+     inkscape:cx="365.04121"
      inkscape:cy="597.9309"
      inkscape:document-units="px"
-     inkscape:current-layer="g3061"
+     inkscape:current-layer="g3075"
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -105,8 +105,8 @@
      guidetolerance="10000"
      inkscape:window-width="1157"
      inkscape:window-height="926"
-     inkscape:window-x="761"
-     inkscape:window-y="70"
+     inkscape:window-x="749"
+     inkscape:window-y="128"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -153,69 +153,7 @@
     <g
        id="g3061">
       <g
-         id="g3290-5"
-         transform="translate(540,98.99998)">
-        <text
-           xml:space="preserve"
-           style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:NanumGothic;-inkscape-font-specification:Sans"
-           x="112"
-           y="323.36218"
-           id="text2987-7-1"
-           sodipodi:linespacing="125%"><tspan
-             sodipodi:role="line"
-             x="112"
-             y="323.36218"
-             id="tspan3060-1">Hash Database</tspan><tspan
-             sodipodi:role="line"
-             x="112"
-             y="350.86218"
-             id="tspan3032">of blacklist</tspan><tspan
-             sodipodi:role="line"
-             x="112"
-             y="378.36218"
-             id="tspan3055">hash blocks</tspan></text>
-        <g
-           id="g3284-7"
-           transform="matrix(1.0728477,0,0,1,-0.1490066,157)">
-          <path
-             d="m 190,210 c 0,5.52285 -33.57864,10 -75,10 -41.421356,0 -75,-4.47715 -75,-10 0,-5.52285 33.578644,-10 75,-10 41.42136,0 75,4.47715 75,10 z"
-             sodipodi:ry="10"
-             sodipodi:rx="75"
-             sodipodi:cy="210"
-             sodipodi:cx="115"
-             id="path3245-8-3"
-             style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-             sodipodi:type="arc"
-             transform="translate(-10,-86.63784)" />
-          <path
-             sodipodi:open="true"
-             sodipodi:end="3.1415927"
-             sodipodi:start="0"
-             d="m 190,210 c 0,5.52285 -33.57864,10 -75,10 -41.421356,0 -75,-4.47715 -75,-10 0,0 0,0 0,0"
-             sodipodi:ry="10"
-             sodipodi:rx="75"
-             sodipodi:cy="210"
-             sodipodi:cx="115"
-             id="path3245-84"
-             style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-             sodipodi:type="arc"
-             transform="translate(-10,31.36216)" />
-          <path
-             transform="translate(0,62.362161)"
-             inkscape:connector-curvature="0"
-             id="path3274-1"
-             d="m 30,60 c 0,120 0,120 0,120"
-             style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-          <path
-             transform="translate(0,62.362161)"
-             inkscape:connector-curvature="0"
-             id="path3276-9"
-             d="m 180,60 0,120"
-             style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-        </g>
-      </g>
-      <g
-         transform="translate(55.190033,98.499978)"
+         transform="translate(-16.809967,98.499978)"
          id="g3356">
         <text
            xml:space="preserve"
@@ -227,15 +165,15 @@
              sodipodi:role="line"
              x="362.80997"
              y="320.86218"
-             id="tspan3122">hashdb</tspan><tspan
+             id="tspan3352">md5deep</tspan><tspan
              sodipodi:role="line"
              x="362.80997"
              y="348.36218"
-             id="tspan3048">import</tspan><tspan
+             id="tspan3053">block hash</tspan><tspan
              sodipodi:role="line"
              x="362.80997"
              y="375.86218"
-             id="tspan3352">tool</tspan></text>
+             id="tspan3055">generation tool</tspan></text>
         <rect
            ry="10"
            rx="10"
@@ -248,8 +186,7 @@
            transform="translate(0,62.362161)" />
       </g>
       <g
-         id="g3024"
-         transform="translate(-482,2.9999936)">
+         id="g3075">
         <text
            sodipodi:linespacing="125%"
            id="text2987-4-2"
@@ -257,18 +194,18 @@
            x="624"
            style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:NanumGothic;-inkscape-font-specification:Sans"
            xml:space="preserve"><tspan
-             id="tspan3023"
+             id="tspan3058"
              y="415.36218"
              x="624"
              sodipodi:role="line">DFXML file</tspan><tspan
              y="442.86218"
-             x="624"
+             x="627.07227"
              sodipodi:role="line"
-             id="tspan3042">containing blacklist</tspan><tspan
+             id="tspan3137">containing </tspan><tspan
              y="470.36218"
              x="624"
              sodipodi:role="line"
-             id="tspan3044">hash blocks</tspan></text>
+             id="tspan3023">block hashes</tspan></text>
         <rect
            transform="translate(14,231.36216)"
            y="140"
@@ -281,13 +218,44 @@
       <path
          inkscape:connector-curvature="0"
          id="path4963"
-         d="m 514,439.36216 50,0"
+         d="m 442,439.36216 50,0"
          style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
       <path
          inkscape:connector-curvature="0"
          id="path4963-1"
-         d="m 275,439.36216 50,0"
+         d="m 203,439.36216 50,0"
          style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
+      <g
+         transform="translate(-554,0.99999364)"
+         id="g3075-3">
+        <text
+           sodipodi:linespacing="125%"
+           id="text2987-4-2-6"
+           y="417.36218"
+           x="624"
+           style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:NanumGothic;-inkscape-font-specification:Sans"
+           xml:space="preserve"><tspan
+             id="tspan3058-4"
+             y="417.36218"
+             x="624"
+             sodipodi:role="line">Library of</tspan><tspan
+             y="444.86218"
+             x="624"
+             sodipodi:role="line"
+             id="tspan3017">previously encountered</tspan><tspan
+             y="472.36218"
+             x="624"
+             sodipodi:role="line"
+             id="tspan3019">files</tspan></text>
+        <rect
+           transform="translate(14,231.36216)"
+           y="140"
+           x="490"
+           height="130"
+           width="240"
+           id="rect3367-4"
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+      </g>
     </g>
   </g>
 </svg>
