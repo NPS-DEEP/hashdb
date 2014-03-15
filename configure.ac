@@ -69,7 +69,7 @@ AC_ARG_ENABLE(tests,
                     [enable building tests in the src/test directory])],
       use_tests=yes,
       use_tests=no)
-AM_CONDITIONAL([WANT_TESTS], test x$use_tests == xtrue])
+AM_CONDITIONAL([WANT_TESTS], test x$use_tests == xyes])
 
 ################################################################
 ## See if we are running on mingw

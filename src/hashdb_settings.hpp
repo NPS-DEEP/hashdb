@@ -77,11 +77,11 @@ struct hashdb_settings_t {
         multimap_type(MULTIMAP_BTREE),
         multimap_shard_count(1),
         bloom1_is_used(true),
-        bloom1_M_hash_size(3),
-        bloom1_k_hash_functions(28),
+        bloom1_M_hash_size(28),
+        bloom1_k_hash_functions(3),
         bloom2_is_used(false),
-        bloom2_M_hash_size(3),
-        bloom2_k_hash_functions(28) {
+        bloom2_M_hash_size(28),
+        bloom2_k_hash_functions(3) {
   }
 
   void report_settings(std::ostream& os) const {
