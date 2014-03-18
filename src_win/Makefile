@@ -17,7 +17,8 @@ HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ 
 UNVERSIONED_INSTALLER = temp-hashdb-windowsinstaller.exe
 INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
-PDFDOCS = scanner_demo.pdf
+PDFDOCS = hashdbUsersManual.pdf \
+          scanner_demo.pdf create_hdb_demo.pdf similarity_demo.pdf
 
 # The prerequisites for the installer can't be listed after the colon 
 # becuase then the system will try to generate them simultaneously,
@@ -84,9 +85,18 @@ $(SRC_WIN)uninstall:
 ##
 ## Get the PDF documentation from the download site
 ##
-DOWNLOAD = http://digitalcorpora.org/downloads/hashdb/demo
+DOWNLOAD = http://digitalcorpora.org/downloads/hashdb
+hashdbUsersManual.pdf:
+	wget $(DOWNLOAD)/hashdbUsersManual.pdf
+
 scanner_demo.pdf:
-	wget $(DOWNLOAD)/scanner_demo.pdf
+	wget $(DOWNLOAD)/demo/scanner_demo.pdf
+
+create_hashdb_demo.pdf:
+	wget $(DOWNLOAD)/demo/create_hashdb_demo.pdf
+
+similarity_demo.pdf:
+	wget $(DOWNLOAD)/demo/similarity_demo.pdf
 
 .PHONY: clean distclean install uninstall win_tests
 
