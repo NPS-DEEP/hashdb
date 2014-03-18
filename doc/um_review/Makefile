@@ -1,4 +1,4 @@
-drafts = draft1.pdf draft1b.pdf draft2.pdf draft3.pdf
+drafts = draft1.pdf draft1b.pdf draft2.pdf draft3.pdf draft3b.pdf
 
 .SUFFIXES: .tex .pdf
 
