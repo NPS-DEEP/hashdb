@@ -170,11 +170,19 @@ class hashdb_t {
   int scan(const std::vector<std::pair<uint64_t, T> >& scan_input,
            scan_output_t& scan_output);
 
-  // don't use this.
+#ifdef HAVE_CXX11
   hashdb_t(const hashdb_t& other) = delete;
-
+#else
   // don't use this.
+  hashdb_t(const hashdb_t& other);
+#endif
+
+#ifdef HAVE_CXX11
   hashdb_t& operator=(const hashdb_t& other) = delete;
+#else
+  // don't use this.
+  hashdb_t& operator=(const hashdb_t& other);
+#endif
 
   ~hashdb_t();
 };

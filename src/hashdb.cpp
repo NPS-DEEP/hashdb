@@ -198,21 +198,20 @@ const char* hashdb_version() {
     }
   }
 
-/*
-  // Now I use =delete in C++11
+// mac doesn't seem to be up to c++11 yet
+#ifndef HAVE_CXX11
+  // if c++11 fail at compile time else fail at runtime upon invocation
   __attribute__((noreturn)) hashdb_t::hashdb_t(const hashdb_t& other) :
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
                  hashdb_changes(0),
                  block_size(0),
                  max_duplicates(0) {
-    // fix so this is not at the interface zzzzzz
     assert(0);
   }
-  // Now I use =delete in C++11
+  // if c++11 fail at compile time else fail at runtime upon invocation
   __attribute__((noreturn)) hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
-    // fix so this is not at the interface zzzzzz
     assert(0);
   }
-*/
+#endif
 
