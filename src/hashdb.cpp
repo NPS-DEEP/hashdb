@@ -59,7 +59,12 @@ const char* hashdb_version() {
                        hashdb_manager(0),
                        hashdb_changes(0),
                        block_size(p_block_size),
-                       max_duplicates(p_max_duplicates) {
+                       max_duplicates(p_max_duplicates),
+                       M() {
+
+#ifdef HAVE_PTHREAD
+    pthread_mutex_init(&M,NULL);
+#endif
 
     // create and write settings to hashdb_dir
     hashdb_settings_t settings;
@@ -80,9 +85,9 @@ const char* hashdb_version() {
     hashdb_changes = new hashdb_changes_t;
   }
 
-  // these theree imports are nearly identical; they should use template.
-  // Import md5
-  int hashdb_t::import(const import_input_md5_t& input) {
+  // import
+  template<typename T>
+  int hashdb_t::import(const std::vector<import_element_t<T> >& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -90,7 +95,13 @@ const char* hashdb_version() {
     }
 
     // import each input in turn
-    import_input_md5_t::const_iterator it = input.begin();
+    typename std::vector<import_element_t<T> >::const_iterator it = input.begin();
+
+    // perform all scans in one locked operation.
+    // There is basically no cost for grouping since this iterates db access.
+    // There is gain if this is a large sorted request.
+    MUTEX_LOCK(&M);
+
     while (it != input.end()) {
       // convert input to hashdb_element_t
       hashdigest_t hashdigest(it->hash);
@@ -107,63 +118,7 @@ const char* hashdb_version() {
       ++it;
     }
 
-    // good, done
-    return 0;
-  }
-  // Import sha1
-  int hashdb_t::import(const import_input_sha1_t& input) {
-
-    // check mode
-    if (mode != HASHDB_IMPORT) {
-      return -1;
-    }
-
-    // import each input in turn
-    import_input_sha1_t::const_iterator it = input.begin();
-    while (it != input.end()) {
-      // convert input to hashdb_element_t
-      hashdigest_t hashdigest(it->hash);
-      hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                      hashdigest.hashdigest_type,
-                                      block_size,
-                                      it->repository_name,
-                                      it->filename,
-                                      it->file_offset);
-
-      // add hashdb_element_t to hashdb_manager
-      hashdb_manager->insert(hashdb_element, *hashdb_changes);
-
-      ++it;
-    }
-
-    // good, done
-    return 0;
-  }
-  // Import sha256
-  int hashdb_t::import(const import_input_sha256_t& input) {
-
-    // check mode
-    if (mode != HASHDB_IMPORT) {
-      return -1;
-    }
-
-    // import each input in turn
-    import_input_sha256_t::const_iterator it = input.begin();
-    while (it != input.end()) {
-      // convert input to hashdb_element_t
-      hashdigest_t hashdigest(it->hash);
-      hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                      hashdigest.hashdigest_type,
-                                      block_size,
-                                      it->repository_name,
-                                      it->filename,
-                                      it->file_offset);
-
-      // add hashdb_element_t to hashdb_manager
-      hashdb_manager->insert(hashdb_element, *hashdb_changes);
-
-      ++it;
-    }
+    MUTEX_UNLOCK(&M);
 
     // good, done
     return 0;
@@ -175,7 +130,12 @@ const char* hashdb_version() {
                        hashdb_manager(0),
                        hashdb_changes(0),
                        block_size(0),
-                       max_duplicates(0) {
+                       max_duplicates(0),
+                       M() {
+
+#ifdef HAVE_PTHREAD
+    pthread_mutex_init(&M,NULL);
+#endif
 
     // no socket implemented yet, so go directly to hashdb_dir
     std::string hashdb_dir = path_or_socket;
@@ -184,9 +144,9 @@ const char* hashdb_version() {
     hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
   }
 
-  // these theree scans are nearly identical; they should use template.
-  // Scan md5
-  int hashdb_t::scan(const scan_input_md5_t& input,
+  // scan
+  template<typename T>
+  int hashdb_t::scan(const std::vector<std::pair<uint64_t, T> >& input,
                      scan_output_t& output) {
 
     // check mode
@@ -199,8 +159,13 @@ const char* hashdb_version() {
            
     // no socket implemented yet, so directly use hashdb
 
+    // perform all scans in one locked operation.
+    // There is basically no cost for grouping since this iterates db access.
+    // There is gain if this is a large sorted request.
+    MUTEX_LOCK(&M);
+
     // scan each input in turn
-    scan_input_md5_t::const_iterator it = input.begin();
+    typename std::vector<std::pair<uint64_t, T> >::const_iterator it = input.begin();
     while (it != input.end()) {
       uint32_t count = hashdb_manager->find_count(it->second);
       if (count > 0) {
@@ -212,67 +177,7 @@ const char* hashdb_version() {
       ++it;
     }
 
-    // good, done
-    return 0;
-  }
-
-  // Scan sha1
-  int hashdb_t::scan(const scan_input_sha1_t& input,
-                     scan_output_t& output) {
-
-    // check mode
-    if (mode != HASHDB_SCAN) {
-      return -1;
-    }
-
-    // clear any old output
-    output.clear();
-           
-    // no socket implemented yet, so directly use hashdb
-
-    // scan each input in turn
-    scan_input_sha1_t::const_iterator it = input.begin();
-    while (it != input.end()) {
-      uint32_t count = hashdb_manager->find_count(it->second);
-      if (count > 0) {
-        std::pair<uint64_t, uint32_t> return_item(it->first, count);
-        output.push_back(return_item);
-//        output.push_back(std::vector<std::pair<uint64_t, uint32_t> >(
-//                                                          it->first, count));
-      }
-      ++it;
-    }
-
-    // good, done
-    return 0;
-  }
-
-  // Scan sha256
-  int hashdb_t::scan(const scan_input_sha256_t& input,
-                     scan_output_t& output) {
-
-    // check mode
-    if (mode != HASHDB_SCAN) {
-      return -1;
-    }
-
-    // clear any old output
-    output.clear();
-           
-    // no socket implemented yet, so directly use hashdb
-
-    // scan each input in turn
-    scan_input_sha256_t::const_iterator it = input.begin();
-    while (it != input.end()) {
-      uint32_t count = hashdb_manager->find_count(it->second);
-      if (count > 0) {
-        std::pair<uint64_t, uint32_t> return_item(it->first, count);
-        output.push_back(return_item);
-//        output.push_back(std::vector<std::pair<uint64_t, uint32_t> >(
-//                                                          it->first, count));
-      }
-      ++it;
-    }
+    MUTEX_UNLOCK(&M);
 
     // good, done
     return 0;

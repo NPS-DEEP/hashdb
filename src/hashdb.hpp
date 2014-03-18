@@ -30,6 +30,16 @@
 #include <vector>
 #include <stdint.h>
 
+// the implementation uses pthread lock to protect the hash database
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#define MUTEX_LOCK(M)   pthread_mutex_lock(M)
+#define MUTEX_UNLOCK(M) pthread_mutex_unlock(M)
+#else
+#define MUTEX_LOCK(M)   {}
+#define MUTEX_UNLOCK(M) {}
+#endif
+
 /**
  * Version of the hashdb library.
  */
@@ -53,6 +63,12 @@ class hashdb_t {
   hashdb_changes_t *hashdb_changes;
   const uint32_t block_size;
   const uint32_t max_duplicates;
+
+#ifdef HAVE_PTHREAD
+  pthread_mutex_t M;  // mutext protecting database access
+#else
+  int M;              // placeholder
+#endif
 
   public:
   // data structure for one import element
@@ -119,26 +135,39 @@ class hashdb_t {
   int import(const import_input_sha256_t& import_input_sha256);
 
   /**
+   * Import hash.
+   */
+  template<typename T>
+  int import(const std::vector<import_element_t<T> >& import_input);
+
+  /**
    * Constructor for scanning.
    */
   hashdb_t(const std::string& path_or_socket);
 
   /**
-   * Scan for MD5 hashes
+   * Scan for MD5 hashes.
    */
   int scan(const scan_input_md5_t& scan_input_md5,
            scan_output_t& scan_output);
 
   /**
-   * Scan for SHA1 hashes
+   * Scan for SHA1 hashes.
    */
   int scan(const scan_input_sha1_t& scan_input_sha1,
            scan_output_t& scan_output);
 
   /**
-   * Scan for SHA256 hashes
+   * Scan for SHA256 hashes.
    */
   int scan(const scan_input_sha256_t& scan_input_sha256,
+           scan_output_t& scan_output);
+
+  /**
+   * Scan for hashes.
+   */
+  template<typename T>
+  int scan(const std::vector<std::pair<uint64_t, T> >& scan_input,
            scan_output_t& scan_output);
 
   // don't use this.
