@@ -62,6 +62,13 @@ class bi_store_t {
     // instantiate the lookup store based on file mode
     if (file_mode == READ_ONLY) {
 
+      // files should exist but just check .dat
+      if (access(dat_filename.c_str(), F_OK) != 0) {
+        std::cerr << "Error: Could not find hashdb file '" << dat_filename
+                  << "'\nCannot continue.\n";
+        exit(1);
+      }
+
       // READ_ONLY
       index_by_key   = new index_by_key_t(idx1_filename, dat_filename,
                                           boost::btree::flags::read_only);

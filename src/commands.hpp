@@ -522,7 +522,13 @@ class commands_t {
 
   // get hashdb statistics
   static void get_statistics(const std::string& hashdb_dir) {
-    std::cout << "Statistics are not available yet.\n";
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // print obvious statistics
+    std::cout << "Hash store size: " << hashdb_manager.map_size()
+      << "\nHash duplicates store size: " << hashdb_manager.multimap_size()
+      << "\n";
   }
 
 };
