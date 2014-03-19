@@ -229,7 +229,7 @@ void nsrl_bloom_fprint_info(const nsrl_bloom *b,FILE *out)
     fprintf(out,"hash_bytes: %"PRIu32"\n",b->hash_bytes);
     fprintf(out,"M: %"PRIu32"\n",b->M);
     fprintf(out,"k: %"PRIu32"\n",b->k);
-    fprintf(out,"vector_bytes: %"PRIu64"\n", b->vector_bytes);
+    fprintf(out,"vector_bytes: %"PRIu64"\n", (uint64_t)b->vector_bytes);
     fprintf(out,"vector_offset: %"PRIu32"\n",b->vector_offset);
     fprintf(out,"vector: %p\n",b->vector);
     fprintf(out,"# comment: %s\n",b->comment ? b->comment : "");
