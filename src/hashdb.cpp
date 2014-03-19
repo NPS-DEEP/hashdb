@@ -224,7 +224,8 @@ const char* hashdb_version() {
                  hashdb_manager(0),
                  hashdb_changes(0),
                  block_size(0),
-                 max_duplicates(0) {
+                 max_duplicates(0),
+                 M() {
     assert(0);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
