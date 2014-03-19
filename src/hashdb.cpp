@@ -86,8 +86,17 @@ const char* hashdb_version() {
   }
 
   // import
+  int hashdb_t::import(const import_input_md5_t& input) {
+    return import_private(input);
+  }
+  int hashdb_t::import(const import_input_sha1_t& input) {
+    return import_private(input);
+  }
+  int hashdb_t::import(const import_input_sha256_t& input) {
+    return import_private(input);
+  }
   template<typename T>
-  int hashdb_t::import(const std::vector<import_element_t<T> >& input) {
+  int hashdb_t::import_private(const std::vector<import_element_t<T> >& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -145,9 +154,18 @@ const char* hashdb_version() {
   }
 
   // scan
+  int hashdb_t::scan(const scan_input_md5_t& input, scan_output_t& output) {
+    return scan_private(input, output);
+  }
+  int hashdb_t::scan(const scan_input_sha1_t& input, scan_output_t& output) {
+    return scan_private(input, output);
+  }
+  int hashdb_t::scan(const scan_input_sha256_t& input, scan_output_t& output) {
+    return scan_private(input, output);
+  }
   template<typename T>
-  int hashdb_t::scan(const std::vector<std::pair<uint64_t, T> >& input,
-                     scan_output_t& output) {
+  int hashdb_t::scan_private(const std::vector<std::pair<uint64_t, T> >& input,
+                             scan_output_t& output) {
 
     // check mode
     if (mode != HASHDB_SCAN) {

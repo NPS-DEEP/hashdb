@@ -113,6 +113,17 @@ class hashdb_t {
    */
   typedef std::vector<std::pair<uint64_t, uint32_t> > scan_output_t;
 
+  private:
+  // the interface is specific but the implementation is generic
+  template<typename T>
+  int import_private(const std::vector<import_element_t<T> >& import_input);
+
+  // the interface is specific but the implementation is generic
+  template<typename T>
+  int scan_private(const std::vector<std::pair<uint64_t, T> >& scan_input,
+           scan_output_t& scan_output);
+
+  public:
   /**
    * Constructor for importing.
    */
@@ -135,12 +146,6 @@ class hashdb_t {
   int import(const import_input_sha256_t& import_input_sha256);
 
   /**
-   * Import hash.
-   */
-  template<typename T>
-  int import(const std::vector<import_element_t<T> >& import_input);
-
-  /**
    * Constructor for scanning.
    */
   hashdb_t(const std::string& path_or_socket);
@@ -161,13 +166,6 @@ class hashdb_t {
    * Scan for SHA256 hashes.
    */
   int scan(const scan_input_sha256_t& scan_input_sha256,
-           scan_output_t& scan_output);
-
-  /**
-   * Scan for hashes.
-   */
-  template<typename T>
-  int scan(const std::vector<std::pair<uint64_t, T> >& scan_input,
            scan_output_t& scan_output);
 
 #ifdef HAVE_CXX11
