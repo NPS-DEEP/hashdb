@@ -28,6 +28,7 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 static std::string XML_HEADER = "<?xml version='1.0' encoding='UTF-8'?>";
 
