@@ -41,6 +41,7 @@
 #include "hashdb_manager.hpp"
 #include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
+#include "logger.hpp"
 
 /**
  * version of the hashdb query library
@@ -51,13 +52,15 @@ const char* hashdb_version() {
 }
 
   // constructor for importing
-  hashdb_t::hashdb_t(const std::string& hashdb_dir,
+  hashdb_t::hashdb_t(const std::string& p_hashdb_dir,
            const std::string& hashdigest_type,
            uint32_t p_block_size,
            uint32_t p_max_duplicates) :
+                       hashdb_dir(p_hashdb_dir), // socket not implemented yet
                        mode(HASHDB_IMPORT),
                        hashdb_manager(0),
                        hashdb_changes(0),
+                       logger(0),
                        block_size(p_block_size),
                        max_duplicates(p_max_duplicates),
                        M() {
@@ -80,9 +83,13 @@ const char* hashdb_version() {
     settings.maximum_hash_duplicates = max_duplicates;
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
 
-    // create hashdb_manager for importing
+    // create hashdb_manager
     hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
     hashdb_changes = new hashdb_changes_t;
+
+    // open logger
+    logger = new logger_t(hashdb_dir, "hashdb library import");
+    logger->add_timestamp("begin import");
   }
 
   // import
@@ -135,19 +142,18 @@ const char* hashdb_version() {
 
   // constructor for scanning
   hashdb_t::hashdb_t(const std::string& path_or_socket) :
-                       mode(HASHDB_SCAN),
-                       hashdb_manager(0),
-                       hashdb_changes(0),
-                       block_size(0),
-                       max_duplicates(0),
-                       M() {
+                     hashdb_dir(path_or_socket), // socket not implemented yet
+                     mode(HASHDB_SCAN),
+                     hashdb_manager(0),
+                     hashdb_changes(0),
+                     logger(0),
+                     block_size(0),
+                     max_duplicates(0),
+                     M() {
 
 #ifdef HAVE_PTHREAD
     pthread_mutex_init(&M,NULL);
 #endif
-
-    // no socket implemented yet, so go directly to hashdb_dir
-    std::string hashdb_dir = path_or_socket;
 
     // open hashdb_manager for scanning
     hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
@@ -207,8 +213,11 @@ const char* hashdb_version() {
       case HASHDB_NONE:
         return;
       case HASHDB_IMPORT:
+        logger->add_timestamp("end import");
+        logger->add_hashdb_changes(*hashdb_changes);
         delete hashdb_manager;
         delete hashdb_changes;
+        delete logger;
         return;
       case HASHDB_SCAN:
         delete hashdb_manager;
@@ -220,9 +229,11 @@ const char* hashdb_version() {
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
   __attribute__((noreturn)) hashdb_t::hashdb_t(const hashdb_t& other) :
+                 hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
                  hashdb_changes(0),
+                 logger(0),
                  block_size(0),
                  max_duplicates(0),
                  M() {

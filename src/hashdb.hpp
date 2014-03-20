@@ -49,6 +49,7 @@ const char* hashdb_version();
 // required inside hashdb_t
 class hashdb_manager_t;
 class hashdb_changes_t;
+class logger_t;
 
 /**
  * The hashdb library.
@@ -58,9 +59,11 @@ class hashdb_t {
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
                        HASHDB_SCAN};
-  hashdb_modes_t mode;
+  const std::string hashdb_dir;
+  const hashdb_modes_t mode;
   hashdb_manager_t *hashdb_manager;
   hashdb_changes_t *hashdb_changes;
+  logger_t *logger;
   const uint32_t block_size;
   const uint32_t max_duplicates;
 
