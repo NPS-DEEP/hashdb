@@ -53,7 +53,9 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 	ls -lt *exe
 
-win_tests:
+win_tests: $(UNVERSIONED_INSTALLER)
+	(cd ../win32/src/test;$(MAKE))
+	(cd ../win64/src/test;$(MAKE))
 	rm -rf win_tests
 	mkdir win_tests
 	mkdir win_tests/win32
@@ -92,8 +94,8 @@ hashdbUsersManual.pdf:
 scanner_demo.pdf:
 	wget $(DOWNLOAD)/demo/scanner_demo.pdf
 
-create_hashdb_demo.pdf:
-	wget $(DOWNLOAD)/demo/create_hashdb_demo.pdf
+create_hdb_demo.pdf:
+	wget $(DOWNLOAD)/demo/create_hdb_demo.pdf
 
 similarity_demo.pdf:
 	wget $(DOWNLOAD)/demo/similarity_demo.pdf
