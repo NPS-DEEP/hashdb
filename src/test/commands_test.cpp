@@ -29,6 +29,7 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "directory_helper.hpp"
 #include "commands.hpp"
 #include "map_types.h"        // for settings
 #include "multimap_types.h"   // for settings
@@ -37,33 +38,6 @@
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
-
-void rm_hashdb_dir(std::string hashdb_dir) {
-  remove((hashdb_dir + "/bloom_filter_1").c_str());
-  remove((hashdb_dir + "/bloom_filter_2").c_str());
-  remove((hashdb_dir + "/hash_duplicates_store").c_str());
-  remove((hashdb_dir + "/hash_store").c_str());
-  remove((hashdb_dir + "/history.xml").c_str());
-  remove((hashdb_dir + "/log.xml").c_str());
-  remove((hashdb_dir + "/settings.xml").c_str());
-  remove((hashdb_dir + "/source_filename_store.dat").c_str());
-  remove((hashdb_dir + "/source_filename_store.idx1").c_str());
-  remove((hashdb_dir + "/source_filename_store.idx2").c_str());
-  remove((hashdb_dir + "/source_lookup_store.dat").c_str());
-  remove((hashdb_dir + "/source_lookup_store.idx1").c_str());
-  remove((hashdb_dir + "/source_lookup_store.idx2").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.dat").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.idx1").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.idx2").c_str());
-
-  if (access(hashdb_dir.c_str(), F_OK) == 0) {
-    // dir exists so remove it
-    int status = rmdir(hashdb_dir.c_str());
-    if (status != 0) {
-      std::cout << "failed to remove hashdb_dir " << hashdb_dir << "\n";
-    }
-  }
-}
 
 void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   std::cout << "commands_test: " << map_type_to_string(map_type) << "\n";

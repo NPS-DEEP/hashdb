@@ -23,6 +23,14 @@
  */
 
 #include <config.h>
+// this process of getting WIN32 defined was inspired
+// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
+// All this to include winsock2.h before windows.h to avoid a warning.
+#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+#endif
 #ifdef WIN32
   // including winsock2.h now keeps an included header somewhere from
   // including windows.h first, resulting in a warning.
@@ -238,10 +246,12 @@ const char* hashdb_version() {
                  max_duplicates(0),
                  M() {
     assert(0);
+    exit(1);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
   __attribute__((noreturn)) hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
     assert(0);
+    exit(1);
   }
 #endif
 

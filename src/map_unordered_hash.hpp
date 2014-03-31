@@ -197,6 +197,7 @@ class map_unordered_hash_t {
       } while (not done);
       // the compiler doesn't know we can't get here, so appease it
       assert(0);
+      std::exit(1);
     }
 
     // erase
@@ -231,6 +232,7 @@ class map_unordered_hash_t {
       size_t num_erased = erase(key);
       if (num_erased != 1) {
         assert(0);
+        std::exit(1);
 //        // erase failed
 //        return std::pair<typename map_t::const_iterator, bool>(map->end(), false);
       } else {

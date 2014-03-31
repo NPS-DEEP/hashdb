@@ -24,6 +24,23 @@
 
 #ifndef BI_STORE_HPP
 #define BI_STORE_HPP
+
+// this process of getting WIN32 defined was inspired
+// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
+// All this to include winsock2.h before windows.h to avoid a warning.
+#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+#endif
+#ifdef WIN32
+  // including winsock2.h now keeps an included header somewhere from
+  // including windows.h first, resulting in a warning.
+  #include <winsock2.h>
+  #include <io.h>
+#endif
+
+
 #include <string>
 //#include "indexed_string_t.hpp"
 #include "file_modes.h"

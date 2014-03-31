@@ -133,7 +133,7 @@ class bloom_filter_t {
       } else {
         // program error
         assert(0);
-        return false;
+        std::exit(1);
       }
     }
 

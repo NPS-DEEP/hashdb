@@ -23,51 +23,23 @@
  */
 
 #include <config.h>
-// this process of getting WIN32 defined was inspired
-// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
-// All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#endif
-#ifdef WIN32
-#include <io.h>
-#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "directory_helper.hpp"
 #include "source_lookup_index_manager.hpp"
 #include "source_lookup_index_iterator.hpp"
 #include "file_modes.h"
 #include <sys/stat.h> // makedir
 
 static const char temp_dir[] = "temp_dir";
-static const char temp_f1[] = "temp_dir/source_lookup_store.dat";
-static const char temp_f2[] = "temp_dir/source_lookup_store.idx1";
-static const char temp_f3[] = "temp_dir/source_lookup_store.idx2";
-static const char temp_f4[] = "temp_dir/source_repository_name_store.dat";
-static const char temp_f5[] = "temp_dir/source_repository_name_store.idx1";
-static const char temp_f6[] = "temp_dir/source_repository_name_store.idx2";
-static const char temp_f7[] = "temp_dir/source_filename_store.dat";
-static const char temp_f8[] = "temp_dir/source_filename_store.idx1";
-static const char temp_f9[] = "temp_dir/source_filename_store.idx2";
-
 
 void run_test() {
 
-  remove(temp_f1);
-  remove(temp_f2);
-  remove(temp_f3);
-  remove(temp_f4);
-  remove(temp_f5);
-  remove(temp_f6);
-  remove(temp_f7);
-  remove(temp_f8);
-  remove(temp_f9);
+  rm_hashdb_dir(temp_dir);
 
   source_lookup_index_manager_t manager(temp_dir, RW_NEW);
   std::pair<bool, uint64_t> pair_bool_64;
@@ -145,14 +117,7 @@ void run_test() {
 
 int cpp_main(int argc, char* argv[]) {
 
-  // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
+  make_dir_if_not_there(temp_dir);
 
   run_test();
 

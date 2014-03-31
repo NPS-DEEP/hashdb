@@ -23,14 +23,6 @@
  */
 
 #include <config.h>
-// this process of getting WIN32 defined was inspired
-// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
-// All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -38,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "bloom_filter_manager.hpp"
 #include "dfxml/src/hash_t.h"
 #include "file_modes.h"
@@ -61,15 +54,6 @@ void run_rw_tests(std::string& hashdb_dir,
   remove(temp_bloom1);
   remove(temp_bloom2);
 
-  // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
-
   bloom_filter_manager_t<T> bloom(hashdb_dir, file_mode,
                   bloom1_is_used, bloom1_M_hash_size, bloom1_k_hash_functions,
                   bloom2_is_used, bloom2_M_hash_size, bloom2_k_hash_functions);
@@ -86,6 +70,8 @@ void run_rw_tests(std::string& hashdb_dir,
 
 int cpp_main(int argc, char* argv[]) {
   static std::string temp_dir_string("temp_dir");
+  make_dir_if_not_there(temp_dir);
+
 //std::cout << "bfmt.a\n";
   run_rw_tests<md5_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
 //std::cout << "bfmt.b\n";

@@ -22,6 +22,7 @@
  * Test the map_multimap_manager.
  */
 
+#include "directory_helper.hpp"
 #include <config.h>
 #include <iostream>
 #include <iomanip>
@@ -31,6 +32,7 @@
 #include "boost_fix.hpp"
 #include "hashdb.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "dfxml/src/hash_t.h"
@@ -41,30 +43,11 @@
 // READ_ONLY, RW_NEW, RW_MODIFY
 
 static const char temp_dir[] = "temp_dir";
-//static const char temp_hash_store[] = "temp_dir/hash_store";
-static const char temp_settings[] = "temp_dir/settings.xml";
-static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
-static const char temp_hash_store[] = "temp_dir/hash_store";
-static const char temp_hash_duplicates_store[] = "temp_dir/hash_duplicates_store";
-/*
-static const char temp_source_lookup_store_dat[] = "temp_dir/source_lookup_store.dat";
-static const char temp_source_lookup_store_idx1[] = "temp_dir/source_lookup_store.idx1";
-static const char temp_source_lookup_store_idx2[] = "temp_dir/source_lookup_store.idx2";
-static const char temp_source_repository_name_store_dat[] = "temp_dir/source_repository_name_store.dat";
-static const char temp_source_repository_name_store_idx1[] = "temp_dir/source_repository_name_store.idx1";
-static const char temp_source_repository_name_store_idx2[] = "temp_dir/source_repository_name_store.idx2";
-static const char temp_source_filename_store_dat[] = "temp_dir/source_filename_store.dat";
-static const char temp_source_filename_store_idx1[] = "temp_dir/source_filename_store.idx1";
-static const char temp_source_filename_store_idx2[] = "temp_dir/source_filename_store.idx2";
-*/
 
 template<typename T>
 void do_import(std::string hashdigest_type) {
   // clean up from any previous run
-  remove(temp_settings);
-  remove(temp_bloom_filter_1);
-  remove(temp_hash_store);
-  remove(temp_hash_duplicates_store);
+  rm_hashdb_dir(temp_dir);
 
   // valid hashdigest values
   T k1;

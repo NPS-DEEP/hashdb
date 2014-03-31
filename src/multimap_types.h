@@ -42,7 +42,7 @@ inline std::string multimap_type_to_string(multimap_type_t type) {
     case MULTIMAP_FLAT_SORTED_VECTOR: return "flat-sorted-vector";
     case MULTIMAP_RED_BLACK_TREE:     return "red-black-tree";
     case MULTIMAP_UNORDERED_HASH:     return "unordered-hash";
-    default: assert(0); return "";
+    default: assert(0); std::exit(1);
   }
 }
 

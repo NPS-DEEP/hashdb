@@ -128,7 +128,7 @@ class multimap_iterator_t {
         return this->red_black_tree_it == other.red_black_tree_it;
       case MULTIMAP_UNORDERED_HASH:
         return this->unordered_hash_it == other.unordered_hash_it;
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 

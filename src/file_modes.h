@@ -40,7 +40,7 @@ inline std::string file_mode_type_to_string(file_mode_type_t type) {
     case READ_ONLY: return "read_only";
     case RW_NEW: return "rw_new";
     case RW_MODIFY: return "rw_modify";
-    default: assert(0); return "";
+    default: assert(0); std::exit(1);
   }
 }
 

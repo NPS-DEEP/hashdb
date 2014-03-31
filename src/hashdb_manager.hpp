@@ -244,7 +244,7 @@ class hashdb_manager_t {
         return sha1_manager->has_key(sha1_t::fromhex(hashdigest.hashdigest));
       case HASHDIGEST_SHA256:
         return sha256_manager->has_key(sha256_t::fromhex(hashdigest.hashdigest));
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 */
@@ -375,7 +375,7 @@ class hashdb_manager_t {
       case HASHDIGEST_SHA256:
         return hashdb_iterator_t(sha256_manager->begin(),
                                               hashdb_element_lookup);
-      default: assert(0);
+      default: assert(0); exit(1);
     }
   }
 
@@ -391,7 +391,7 @@ class hashdb_manager_t {
       case HASHDIGEST_SHA256:
         return hashdb_iterator_t(sha256_manager->end(),
                                               hashdb_element_lookup);
-      default: assert(0);
+      default: assert(0); exit(1);
     }
   }
 
@@ -404,7 +404,7 @@ class hashdb_manager_t {
         return sha1_manager->map_size();
       case HASHDIGEST_SHA256:
         return sha256_manager->map_size();
-      default: assert(0);
+      default: assert(0); exit(1);
     }
   }
 
@@ -417,7 +417,7 @@ class hashdb_manager_t {
         return sha1_manager->multimap_size();
       case HASHDIGEST_SHA256:
         return sha256_manager->multimap_size();
-      default: assert(0);
+      default: assert(0); exit(1);
     }
   }
 

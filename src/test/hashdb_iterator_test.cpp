@@ -23,14 +23,6 @@
  */
 
 #include <config.h>
-// this process of getting WIN32 defined was inspired
-// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
-// All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -38,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "dfxml/src/hash_t.h"
 #include "file_modes.h"
 #include "map_types.h"
@@ -66,13 +59,7 @@ void run_tests() {
   remove(temp_multimap);
 
   // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
+  make_dir_if_not_there(temp_dir);
 
   // create map manager
   map_manager_t<T> map_manager(temp_dir, RW_NEW, MAP_BTREE);

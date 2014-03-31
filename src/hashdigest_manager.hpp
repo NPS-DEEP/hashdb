@@ -97,7 +97,7 @@ class hashdigest_manager_t {
         return hashdigest_iterator_t(sha1_manager->begin());
       case HASHDIGEST_SHA256:
         return hashdigest_iterator_t(sha256_manager->begin());
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 
@@ -110,7 +110,7 @@ class hashdigest_manager_t {
         return hashdigest_iterator_t(sha1_manager->end());
       case HASHDIGEST_SHA256:
         return hashdigest_iterator_t(sha256_manager->end());
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 
@@ -123,7 +123,7 @@ class hashdigest_manager_t {
         return sha1_manager->size();
       case HASHDIGEST_SHA256:
         return sha256_manager->size();
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 };

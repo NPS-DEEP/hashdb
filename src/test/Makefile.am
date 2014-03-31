@@ -171,6 +171,7 @@ btree_bug_test_SOURCES = \
 
 map_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
 	../map_red_black_tree.hpp \
@@ -183,6 +184,7 @@ map_manager_test_SOURCES = \
 
 multimap_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../file_modes.h \
 	../multimap_types.h \
 	../multimap_red_black_tree.hpp \
@@ -195,6 +197,7 @@ multimap_manager_test_SOURCES = \
 
 map_multimap_iterator_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
 	../map_manager.hpp \
@@ -206,6 +209,7 @@ map_multimap_iterator_test_SOURCES = \
 
 bloom_filter_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../file_modes.h \
 	../bloom_filter_manager.hpp \
 	$(BLOOM_INCS) \
@@ -213,6 +217,7 @@ bloom_filter_manager_test_SOURCES = \
 
 settings_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../hashdb_settings.hpp \
 	../hashdb_settings_manager.hpp \
 	../command_line.cpp \
@@ -222,6 +227,7 @@ settings_manager_test_SOURCES = \
 
 logger_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../logger.hpp \
 	../hashdb_changes.hpp \
 	../hashdb_settings.hpp \
@@ -238,6 +244,7 @@ hashdb_element_test_SOURCES = \
 
 map_multimap_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
         ../multimap_types.h \
@@ -252,6 +259,7 @@ map_multimap_manager_test_SOURCES = \
 
 source_lookup_index_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../source_lookup_index_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
@@ -259,6 +267,7 @@ source_lookup_index_manager_test_SOURCES = \
 
 hashdb_iterator_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
         ../multimap_types.h \
@@ -274,6 +283,7 @@ hashdb_iterator_test_SOURCES = \
 
 hashdb_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
         ../multimap_types.h \
@@ -290,6 +300,7 @@ hashdb_manager_test_SOURCES = \
 
 dfxml_hashdigest_rw_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../dfxml_hashdigest_reader.hpp \
 	../dfxml_hashdigest_reader_manager.hpp \
 	../dfxml_hashdigest_writer.hpp \
@@ -300,6 +311,7 @@ dfxml_hashdigest_rw_test_SOURCES = \
 
 hashdigest_manager_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../file_modes.h \
         ../map_types.h \
         ../multimap_types.h \
@@ -324,11 +336,13 @@ identified_blocks_reader_test_SOURCES = \
 
 libhashdb_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
 	../dfxml/src/hash_t.h \
 	libhashdb_test.cpp
 	
 commands_test_SOURCES = \
 	boost_fix.hpp \
+	directory_helper.hpp \
         ../commands.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	../command_line.cpp \

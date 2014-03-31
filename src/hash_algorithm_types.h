@@ -41,7 +41,7 @@ inline std::string hash_algorithm_type_to_string(hash_algorithm_type_t type) {
     case HASH_ALGORITHM_MD5:    return "md5";
     case HASH_ALGORITHM_SHA1:   return "sha1";
     case HASH_ALGORITHM_SHA256: return "sha256";
-    default: assert(0); return "";
+    default: assert(0); std::exit(1);
   }
 }
 

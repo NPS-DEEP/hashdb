@@ -29,6 +29,7 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 
@@ -63,6 +64,7 @@ void run_test() {
 }
 
 int cpp_main(int argc, char* argv[]) {
+  make_dir_if_not_there(temp_dir);
   run_test();
 
   // done

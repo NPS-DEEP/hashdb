@@ -38,6 +38,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_element.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
@@ -50,14 +51,7 @@ static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
 
 void run_tests() {
 
-  // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
+  make_dir_if_not_there(temp_dir);
 
   dfxml_hashdigest_reader_manager_t manager("sample_dfxml", "my repository");
 

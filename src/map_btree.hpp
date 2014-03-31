@@ -135,6 +135,7 @@ class map_btree_t {
       size_t num_erased = erase(key);
       if (num_erased != 1) {
         assert(0);
+        std::exit(1);
 //        // erase failed
 //        return std::pair<typename map_t::const_iterator, bool>(map->end(), false);
       } else {

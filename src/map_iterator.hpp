@@ -82,7 +82,7 @@ class map_iterator_t {
                              other.red_black_tree_const_iterator;
       case MAP_UNORDERED_HASH: return this-> unordered_hash_const_iterator ==
                              other.unordered_hash_const_iterator;
-      default: assert(0);
+      default: assert(0); std::exit(1);
     }
   }
 

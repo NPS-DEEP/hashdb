@@ -85,6 +85,8 @@ class multimap_manager_t {
       case MULTIMAP_UNORDERED_HASH:
         multimap_unordered_hash = new multimap_unordered_hash_t<T, uint64_t>(filename, file_mode);
         return;
+      default:
+        assert(0);
     }
   }
 
@@ -113,7 +115,7 @@ class multimap_manager_t {
         return multimap_unordered_hash->emplace(key, source_lookup_encoding);
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -126,7 +128,7 @@ class multimap_manager_t {
       case MULTIMAP_UNORDERED_HASH: return multimap_unordered_hash->erase(key, source_lookup_encoding);
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -139,7 +141,7 @@ class multimap_manager_t {
       case MULTIMAP_UNORDERED_HASH: return multimap_unordered_hash->erase_range(key);
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -176,7 +178,7 @@ class multimap_manager_t {
       }
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -193,7 +195,7 @@ class multimap_manager_t {
         return multimap_unordered_hash->has(key, source_lookup_encoding);
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -210,7 +212,7 @@ class multimap_manager_t {
         return multimap_unordered_hash->has_range(key);
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 
@@ -227,7 +229,7 @@ class multimap_manager_t {
         return multimap_unordered_hash->size();
 
       default:
-        assert(0);
+        assert(0); std::exit(1);
     }
   }
 };

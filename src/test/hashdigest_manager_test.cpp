@@ -30,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "map_types.h"
@@ -105,6 +106,9 @@ void do_test() {
 }
 
 int cpp_main(int argc, char* argv[]) {
+
+  make_dir_if_not_there(temp_dir);
+
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
   write_settings(HASHDIGEST_MD5, MAP_BTREE, MULTIMAP_BTREE);

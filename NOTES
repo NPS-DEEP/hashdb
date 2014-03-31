@@ -364,6 +364,10 @@ Compiler warnings
 
 At some point, these warnings should be examined.
 
+The mingw compiler does not see "assert(0)" as terminal, so for functions
+with non-void return parameters, I then immediately call "exit(1)"
+to quiet the compiler warning.
+
 ------------------------------------------------------------
 Tagging a version and Uploading to digitalcorpora
  * $ git tag -a v0.9.1 -m "v0.9.1

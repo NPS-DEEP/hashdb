@@ -23,14 +23,6 @@
  */
 
 #include <config.h>
-// this process of getting WIN32 defined was inspired
-// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
-// All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -38,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "map_types.h"
@@ -54,7 +47,6 @@
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_settings[] = "temp_dir/settings.xml";
-//static const char temp_hash_store[] = "temp_dir/hash_store";
 static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
 
 template<typename T>
@@ -73,7 +65,6 @@ void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
   map_multimap_iterator_t<T> map_multimap_it;
 
   // clean up from any previous run
-//  remove(temp_hash_store);
   remove(temp_settings);
   remove(temp_bloom_filter_1);
 
@@ -156,14 +147,7 @@ void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
 int cpp_main(int argc, char* argv[]) {
 
-  // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
+  make_dir_if_not_there(temp_dir);
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH

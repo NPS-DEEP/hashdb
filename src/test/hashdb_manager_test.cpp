@@ -23,14 +23,6 @@
  */
 
 #include <config.h>
-// this process of getting WIN32 defined was inspired
-// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
-// All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#endif
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -38,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "map_types.h"
@@ -55,42 +48,12 @@
 // READ_ONLY, RW_NEW, RW_MODIFY
 
 static const char temp_dir[] = "temp_dir";
-//static const char temp_hash_store[] = "temp_dir/hash_store";
-static const char temp_settings[] = "temp_dir/settings.xml";
-static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
-static const char temp_hash_store[] = "temp_dir/hash_store";
-static const char temp_hash_duplicates_store[] = "temp_dir/hash_duplicates_store";
-/*
-static const char temp_source_lookup_store_dat[] = "temp_dir/source_lookup_store.dat";
-static const char temp_source_lookup_store_idx1[] = "temp_dir/source_lookup_store.idx1";
-static const char temp_source_lookup_store_idx2[] = "temp_dir/source_lookup_store.idx2";
-static const char temp_source_repository_name_store_dat[] = "temp_dir/source_repository_name_store.dat";
-static const char temp_source_repository_name_store_idx1[] = "temp_dir/source_repository_name_store.idx1";
-static const char temp_source_repository_name_store_idx2[] = "temp_dir/source_repository_name_store.idx2";
-static const char temp_source_filename_store_dat[] = "temp_dir/source_filename_store.dat";
-static const char temp_source_filename_store_idx1[] = "temp_dir/source_filename_store.idx1";
-static const char temp_source_filename_store_idx2[] = "temp_dir/source_filename_store.idx2";
-*/
 
 void write_settings(hashdigest_type_t hashdigest_type,
                     map_type_t map_type,
                     multimap_type_t multimap_type) {
   // clean up from any previous run
-  remove(temp_settings);
-  remove(temp_bloom_filter_1);
-  remove(temp_hash_store);
-  remove(temp_hash_duplicates_store);
-/*
-  remove(temp_source_lookup_store_dat);
-  remove(temp_source_lookup_store_idx1);
-  remove(temp_source_lookup_store_idx2);
-  remove(temp_source_repository_name_store_dat);
-  remove(temp_source_repository_name_store_idx1);
-  remove(temp_source_repository_name_store_idx2);
-  remove(temp_source_filename_store_dat);
-  remove(temp_source_filename_store_idx1);
-  remove(temp_source_filename_store_idx2);
-*/
+  rm_hashdb_dir(temp_dir);
 
   // create working settings
   hashdb_settings_t settings;
@@ -300,14 +263,7 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
 
 int cpp_main(int argc, char* argv[]) {
 
-  // if temp_dir does not exist, create it
-  if (access(temp_dir, F_OK) != 0) {
-#ifdef WIN32
-    mkdir(temp_dir);
-#else
-    mkdir(temp_dir,0777);
-#endif
-  }
+  make_dir_if_not_there(temp_dir);
 
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 

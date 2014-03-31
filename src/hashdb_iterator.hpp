@@ -84,7 +84,7 @@ class hashdb_iterator_t {
         return this->sha1_iterator == other.sha1_iterator;
       case HASHDIGEST_SHA256:
         return this->sha256_iterator == other.sha256_iterator;
-      default: assert(0);
+      default: assert(0); exit(1);
     }
   }
 

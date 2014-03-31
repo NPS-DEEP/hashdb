@@ -69,7 +69,7 @@ AC_ARG_ENABLE(tests,
                     [enable building tests in the src/test directory])],
       use_tests=yes,
       use_tests=no)
-AM_CONDITIONAL([WANT_TESTS], test x$use_tests == xyes])
+AM_CONDITIONAL([WANT_TESTS], [test x$use_tests == xyes])
 
 ################################################################
 ## See if we are running on mingw
@@ -390,8 +390,8 @@ AC_CHECK_FUNCS([EVP_get_digestbyname],,
 
 ################################################################
 ## support required by bloom.h
-AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])
-AC_CHECK_HEADERS([err.h sys/mman.h sys/resource.h unistd.h],,[AC_MSG_WARN([Not all requested headers are available: err.h, sys/mman.h, ...])])
+#AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])
+#AC_CHECK_HEADERS([err.h sys/mman.h sys/resource.h unistd.h],,[AC_MSG_WARN([Not all requested headers are available: err.h, sys/mman.h, ...])])
 #PTHREAD: AC_CHECK_HEADERS([pthread.h],,[AC_MSG_ERROR([pthread headers are required])])
 # note that crypto requires zlib
 AC_CHECK_LIB([crypto],[EVP_Digest],[],[AC_MSG_ERROR([Could not find crypto library])])

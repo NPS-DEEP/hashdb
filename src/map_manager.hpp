@@ -151,6 +151,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -168,6 +169,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -186,6 +188,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -204,6 +207,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -221,6 +225,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -239,6 +244,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 */
@@ -257,6 +263,7 @@ class map_manager_t {
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -298,6 +305,7 @@ inline std::ostream& operator<<(std::ostream& os,
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 
@@ -315,6 +323,7 @@ inline std::ostream& operator<<(std::ostream& os,
 
       default:
         assert(0);
+        std::exit(1);
     }
   }
 };

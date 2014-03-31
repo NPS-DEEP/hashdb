@@ -210,6 +210,7 @@ class multimap_flat_sorted_vector_t {
       } while (not done);
       // the compiler doesn't know we can't get here, so appease it
       assert(0);
+      std::exit(1);
     }
 
     // erase
