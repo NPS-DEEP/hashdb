@@ -535,3 +535,5 @@ if test x"$GIT_COMMIT" != "x" ; then
   echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
 fi
 
+cp confdefs.h temp_backed_up_confdefs.h
+
