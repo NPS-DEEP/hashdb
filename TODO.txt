@@ -23,3 +23,34 @@ and FC19 or FC20 compiled by clang.
 Tests:
 Tests would be 1) that the automated test suite completes and 2) that a
 generated database is compatible across FC, Win32, Win64, and Mac.
+
+
+----------------------------
+Note: zmq client hangs in ZMQ code when server not present.
+Workaround: CTRL-C after zmq timeout message is reported.
+Future workaround: may replace ZMQ with boost:asio.
+Error:
+#0  0x0000003b304eb7fd in poll () at ../sysdeps/unix/syscall-template.S:81
+#1  0x0000003a12a26d55 in poll (__timeout=<optimized out>, __nfds=1, 
+    __fds=0x7fffffffd730) at /usr/include/bits/poll2.h:46
+#2  zmq::signaler_t::wait (this=this@entry=0x749cb8, timeout_=<optimized out>)
+    at signaler.cpp:149
+#3  0x0000003a12a18646 in zmq::mailbox_t::recv (this=this@entry=0x749c58, 
+    cmd_=cmd_@entry=0x7fffffffd790, timeout_=timeout_@entry=-1)
+    at mailbox.cpp:74
+#4  0x0000003a12a112bc in zmq::ctx_t::terminate (this=this@entry=0x749bc0)
+    at ctx.cpp:112
+#5  0x0000003a12a36fa8 in zmq_ctx_destroy (ctx_=0x749bc0) at zmq.cpp:173
+#6  0x00000000004a35da in ~query_by_socket_t (this=0x754bb0, 
+    __in_chrg=<optimized out>) at query_by_socket.hpp:291
+#7  hashdb_t::~hashdb_t (this=0x7fffffffd8c0, __in_chrg=<optimized out>)
+    at hashdb.cpp:270
+#8  0x000000000041f277 in commands_t::scan_private<hash__<&EVP_md5, 16ul> > (
+    path_or_socket="tcp://localhost:14500", reader_manager=...)
+    at commands.hpp:500
+#9  0x000000000041ff09 in commands_t::scan (
+    path_or_socket="tcp://localhost:14500", dfxml_file="demo_video_dfxml")
+    at commands.hpp:453
+#10 0x0000000000409210 in main (argc=2, argv=<optimized out>) at main.cpp:476
+
+

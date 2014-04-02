@@ -92,13 +92,13 @@ class hashdb_manager_t {
   void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
     // validate the hashdigest type
     if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
-      ++changes.hashes_not_inserted_wrong_hashdigest_type;
+      ++changes.hashes_not_inserted_mismatched_hashdigest_type;
       return;
     }
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
-      ++changes.hashes_not_inserted_wrong_hash_block_size;
+      ++changes.hashes_not_inserted_mismatched_hash_block_size;
       return;
     }
 
@@ -150,13 +150,13 @@ class hashdb_manager_t {
   void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
     // validate the hashdigest type
     if (hashdb_element.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
-      ++changes.hashes_not_removed_wrong_hashdigest_type;
+      ++changes.hashes_not_removed_mismatched_hashdigest_type;
       return;
     }
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
-      ++changes.hashes_not_removed_wrong_hash_block_size;
+      ++changes.hashes_not_removed_mismatched_hash_block_size;
       return;
     }
 
@@ -208,7 +208,7 @@ class hashdb_manager_t {
   void remove_key(const hashdigest_t& hashdigest, hashdb_changes_t& changes) {
     // validate the hashdigest type
     if (hashdigest.hashdigest_type != hashdigest_type_to_string(settings.hashdigest_type)) {
-      ++changes.hashes_not_removed_wrong_hashdigest_type;
+      ++changes.hashes_not_removed_mismatched_hashdigest_type;
       return;
     }
 

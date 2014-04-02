@@ -20,7 +20,7 @@
 /**
  * \file
  * Unfortunately, the existing hashdigest reader output is hard to consume.
- * To get by, this manager reads all entries into a vector
+ * To get by, this manager reads all entries into a vector of hashdb_element_t
  * and allows the consumer to use an iterator on the vector.
  * Not efficient, but the interface presented is clean.
  */

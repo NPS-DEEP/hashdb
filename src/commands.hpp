@@ -40,6 +40,9 @@
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 #include "query_by_socket_server.hpp"
+#include "hashdigest_types.h"
+#include "dfxml/src/hash_t.h"
+#include "hashdb.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -434,8 +437,72 @@ class commands_t {
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
 
-    // for now, use hashdb_dir path only, no socket, TBD
-    std::string hashdb_dir = path_or_socket;
+    // get dfxml reader
+    std::string repository_name = "not used";
+    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+
+    // done if no entries
+    if (reader_manager.begin() == reader_manager.end()) {
+      std::cout << "No entries in DFXML file\n";
+      return;
+    }
+
+    // perform scan based on the first hashdigest type from the dfxml reader
+    hashdb_element_t element = *reader_manager.begin();
+    if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_MD5)) {
+      scan_private<md5_t>(path_or_socket, reader_manager);
+    } else if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_SHA1)) {
+      scan_private<sha1_t>(path_or_socket, reader_manager);
+    } else if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_SHA256)) {
+      scan_private<sha256_t>(path_or_socket, reader_manager);
+    } else {
+      // program error
+      assert(0);
+      exit(1);
+    }
+  }
+
+  // private scan helper
+  template<typename T>
+  static void scan_private(const std::string& path_or_socket,
+                  const dfxml_hashdigest_reader_manager_t& reader_manager) {
+
+    // create space on the heap for the scan input and output vectors
+    std::vector<std::pair<uint64_t, T> >* scan_input = new
+                                       std::vector<std::pair<uint64_t, T> >;
+    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t();
+
+    // create the hashdb scan service
+    hashdb_t hashdb(path_or_socket);
+
+    // get dfxml block hash entries into the scan_input request vector
+    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+    uint64_t i=0;
+    while (it != reader_manager.end()) {
+      scan_input->push_back(std::pair<uint64_t, T>(
+                                i++, T::fromhex(it->hashdigest)));
+      ++it;
+    }
+
+    // perform the scan
+    hashdb.scan(*scan_input, *scan_output);
+
+    // show hash values that match
+    hashdb_t::scan_output_t::const_iterator it2(scan_output->begin());
+    while (it2 != scan_output->end()) {
+      // print: '<index> \t <hexdigest> \t <count> \n' where count>0
+      if (it2->second > 0) {
+        std::cout << it2->first << "\t"
+                  << (*scan_input)[it2->first].second << "\t" // hexdigest
+                  << it2->second << "\n";
+      }
+      ++it2;
+    }
+  }
+
+  // scan expanded, does not use socket
+  static void scan_expanded(const std::string& hashdb_dir,
+                            const std::string& dfxml_file) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);

@@ -114,11 +114,11 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 1);
 
-  // insert, wrong hash block size
+  // insert, mismatched hash block size
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
                              5, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_wrong_hash_block_size, 1);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_mismatched_hash_block_size, 1);
 
   // insert, file offset not aligned
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -126,11 +126,11 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_file_offset_not_aligned, 1);
 
-  // insert, wrong hashdigest type
+  // insert, mismatched hashdigest type
   element = hashdb_element_t(d1_md5.hashdigest, d1_md5.hashdigest_type,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_wrong_hashdigest_type, 1);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_mismatched_hashdigest_type, 1);
 
   // insert, add second valid
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -183,11 +183,11 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   manager.remove_key(d1, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_hash, 1);
 
-  // remove, wrong hash block size
+  // remove, mismatched hash block size
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
                              5, "rep1", "file1", 0);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_wrong_hash_block_size, 1);
+  BOOST_TEST_EQ(changes.hashes_not_removed_mismatched_hash_block_size, 1);
 
   // remove, file offset not aligned
   element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
@@ -195,11 +195,11 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_file_offset_not_aligned, 1);
 
-  // remove, wrong hashdigest type
+  // remove, mismatched hashdigest type
   element = hashdb_element_t(d1_md5.hashdigest, d1_md5.hashdigest_type,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_wrong_hashdigest_type, 1);
+  BOOST_TEST_EQ(changes.hashes_not_removed_mismatched_hashdigest_type, 1);
 
   // remove, no element
   element = hashdb_element_t(d2.hashdigest, d2.hashdigest_type,

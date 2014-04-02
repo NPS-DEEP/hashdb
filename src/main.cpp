@@ -474,6 +474,12 @@ int main(int argc,char **argv) {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::scan(arg1, arg2);
+  } else if (command == "scan_expanded") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::scan_expanded(arg1, arg2);
   } else if (command == "expand_identified_blocks") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
