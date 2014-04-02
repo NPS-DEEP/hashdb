@@ -298,7 +298,7 @@ class query_by_socket_t {
    * Look up hashes.
    */
   template<typename T>
-  int scan(uint32_t* scan_type, const std::vector<T>& request,
+  int scan(const uint32_t* scan_type, const std::vector<T>& request,
            hashdb_t::scan_output_t& response) {
 
     // the query service must be working

@@ -30,16 +30,6 @@
 #include <vector>
 #include <stdint.h>
 
-// the implementation uses pthread lock to protect the hash database
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#define MUTEX_LOCK(M)   pthread_mutex_lock(M)
-#define MUTEX_UNLOCK(M) pthread_mutex_unlock(M)
-#else
-#define MUTEX_LOCK(M)   {}
-#define MUTEX_UNLOCK(M) {}
-#endif
-
 /**
  * Version of the hashdb library.
  */
@@ -71,9 +61,9 @@ class hashdb_t {
   const uint32_t max_duplicates;
 
 #ifdef HAVE_PTHREAD
-  pthread_mutex_t M;  // mutext protecting database access
+  mutable pthread_mutex_t M;  // mutext protecting database access
 #else
-  int M;              // placeholder
+  mutable int M;              // placeholder
 #endif
 
   public:

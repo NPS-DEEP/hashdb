@@ -52,6 +52,16 @@
 #include "logger.hpp"
 #include "query_by_socket.hpp"
 
+// this implementation uses pthread lock to protect the hash database
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#define MUTEX_LOCK(M)   pthread_mutex_lock(M)
+#define MUTEX_UNLOCK(M) pthread_mutex_unlock(M)
+#else
+#define MUTEX_LOCK(M)   {}
+#define MUTEX_UNLOCK(M) {}
+#endif
+
 /**
  * version of the hashdb query library
  */
@@ -184,21 +194,21 @@ const char* hashdb_version() {
   // scan
   int hashdb_t::scan(const scan_input_md5_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, md5_t>(&QUERY_MD5, input, output);
+      return query_by_socket->scan<std::pair<uint64_t, md5_t> >(&QUERY_MD5, input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha1_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, sha1_t>(&QUERY_SHA1, input, output);
+      return query_by_socket->scan<std::pair<uint64_t, sha1_t> >(&QUERY_SHA1, input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha256_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, sha256_t>(&QUERY_SHA256, input, output);
+      return query_by_socket->scan<std::pair<uint64_t, sha256_t> >(&QUERY_SHA256, input, output);
     } else {
       return scan_private(input, output);
     }
@@ -257,7 +267,7 @@ const char* hashdb_version() {
         delete hashdb_manager;
         return;
       case HASHDB_SCAN_SOCKET:
-        delete query_by_path;
+        delete query_by_socket;
         return;
     }
   }
