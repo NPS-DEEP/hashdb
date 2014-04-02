@@ -17,7 +17,8 @@ things to report as I test the examples.
 
 Testing
 
-Platforms: FC19, FC20, Win32, Win64, Mac, and FC19 or FC20 compiled by clang.
+Platforms: FC19, FC20, Centos, Win32, Win64, Mac,
+and FC19 or FC20 compiled by clang.
 
 Tests:
 Tests would be 1) that the automated test suite completes and 2) that a

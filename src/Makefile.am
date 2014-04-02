@@ -38,6 +38,7 @@ HAHSDB_INCS = \
 	map_multimap_iterator.hpp \
 	commands.hpp \
 	usage.hpp \
+	hashdb.cpp \
 	hashdb.hpp \
 	map_multimap_manager.hpp \
 	hashdb_manager.hpp \
@@ -77,7 +78,6 @@ HAHSDB_INCS = \
 	multimap_btree.hpp \
 	query_by_socket.hpp \
 	query_by_socket_server.hpp \
-	query_by_path.hpp \
 	hashdb_settings_writer.hpp \
 	hashdb_db_info_provider.hpp \
 	hash_values.hpp \

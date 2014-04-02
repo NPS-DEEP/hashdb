@@ -50,6 +50,7 @@ const char* hashdb_version();
 class hashdb_manager_t;
 class hashdb_changes_t;
 class logger_t;
+class query_by_socket_t;
 
 /**
  * The hashdb library.
@@ -58,12 +59,14 @@ class hashdb_t {
   private:
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
-                       HASHDB_SCAN};
+                       HASHDB_SCAN,
+                       HASHDB_SCAN_SOCKET};
   const std::string hashdb_dir;
   const hashdb_modes_t mode;
   hashdb_manager_t *hashdb_manager;
   hashdb_changes_t *hashdb_changes;
   logger_t *logger;
+  query_by_socket_t *query_by_socket;
   const uint32_t block_size;
   const uint32_t max_duplicates;
 
@@ -124,7 +127,7 @@ class hashdb_t {
   // the interface is specific but the implementation is generic
   template<typename T>
   int scan_private(const std::vector<std::pair<uint64_t, T> >& scan_input,
-           scan_output_t& scan_output);
+           scan_output_t& scan_output) const;
 
   public:
   /**
@@ -157,19 +160,19 @@ class hashdb_t {
    * Scan for MD5 hashes.
    */
   int scan(const scan_input_md5_t& scan_input_md5,
-           scan_output_t& scan_output);
+           scan_output_t& scan_output) const;
 
   /**
    * Scan for SHA1 hashes.
    */
   int scan(const scan_input_sha1_t& scan_input_sha1,
-           scan_output_t& scan_output);
+           scan_output_t& scan_output) const;
 
   /**
    * Scan for SHA256 hashes.
    */
   int scan(const scan_input_sha256_t& scan_input_sha256,
-           scan_output_t& scan_output);
+           scan_output_t& scan_output) const;
 
 #ifdef HAVE_CXX11
   hashdb_t(const hashdb_t& other) = delete;

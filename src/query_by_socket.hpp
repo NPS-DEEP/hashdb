@@ -33,11 +33,7 @@
 #define QUERY_BY_SOCKET_HPP
 
 #include <config.h>
-#include "hashdigest_types.h"
-#include "settings.hpp"
-#include "hashdb_db_manager.hpp"
 #include "hashdb.hpp"
-#include "hashdb_db_info_provider.hpp"
 #include <map>
 #include <zmq.h>
 
@@ -66,34 +62,13 @@
 #endif
 
 // types of queries that are available
-const uint32_t QUERY_HASHDB_INFO = 1;
-const uint32_t QUERY_HASHES_MD5 = 2;
-const uint32_t QUERY_SOURCES_MD5 = 3;
+const uint32_t QUERY_MD5 = 1;
+const uint32_t QUERY_SHA1 = 2;
+const uint32_t QUERY_SHA256 = 3;
 
 // ************************************************************
 // types used for zmq transit
 // ************************************************************
-typedef hashdb::hash_request_md5_t zmq_source_response_header_md5_t;
-
-struct zmq_source_reference_t {
-  char repository_name_bytes[200];
-  char filename_bytes[200];
-  uint64_t file_offset;
-
-  zmq_source_reference_t(std::string p_repository_name,
-                         std::string p_filename,
-                         uint64_t p_file_offset) :
-          repository_name_bytes(), filename_bytes(),
-          file_offset(p_file_offset) {
-    strncpy(repository_name_bytes, p_repository_name.c_str(), 200);
-    repository_name_bytes[200-1] = '\0';
-    strncpy(filename_bytes, p_filename.c_str(), 200);
-    filename_bytes[200-1] = '\0';
-  }
-};
-
-typedef std::vector<zmq_source_reference_t> zmq_source_references_t;
-  
 
 class zmq_helper_t {
   public:
@@ -322,6 +297,86 @@ class query_by_socket_t {
   /**
    * Look up hashes.
    */
+  template<typename T>
+  int scan(uint32_t* scan_type, const std::vector<T>& request,
+           hashdb_t::scan_output_t& response) {
+
+    // the query service must be working
+    if (!is_valid) {
+      return -1;
+    }
+
+    // clear any exsting response
+    response.clear();
+
+    // already done if there are no request items
+    if (request.size() == 0) {
+      return 0;
+    }
+
+    // get the socket
+    void* socket = get_socket();
+    if (socket == 0) {
+      std::cerr << "query_by_socket_t failed to procure a socket\n";
+      return -1;
+    }
+
+    int status;
+
+    // send the hash query request type
+    status = zmq_helper_t::send_part(
+                       scan_type, sizeof(uint32_t), socket, true);
+    if (status != 0) {
+      return status;
+    }
+
+    // send the hash query request
+    status = zmq_helper_t::send_part(
+                       &request[0],
+                       sizeof(T) * request.size(),
+                       socket,
+                       false);
+    if (status != 0) {
+      return status;
+    }
+
+    // get the hash query response
+    zmq_msg_t zmq_response;
+
+    size_t hash_response_count;
+    bool is_more;
+    status = zmq_helper_t::open_and_receive_part(zmq_response,
+                                   socket,
+                                   sizeof(hashdb_t::scan_output_t),
+                                   true,
+                                   hash_response_count,
+                                   is_more);
+    if (status != 0) {
+      return status;
+    }
+    if (is_more) {
+      std::cerr << "query_hashes_md5 unexpected more data\n";
+      bool status2 __attribute__((unused)) = zmq_helper_t::close_part(zmq_response);
+      return -1;
+    }
+
+    std::pair<uint64_t, uint32_t>* response_array = reinterpret_cast<std::pair<uint64_t, uint32_t>*>(zmq_msg_data(&zmq_response));
+
+    // copy response array to response vector
+    for (size_t i = 0; i<hash_response_count; i++) {
+      response.push_back(response_array[i]);
+    }
+
+    // close hash query response
+    status = zmq_helper_t::close_part(zmq_response);
+    if (status != 0) {
+      return status;
+    }
+
+    return 0;
+  }
+
+/*
   int query_hashes_md5(const hashdb::hashes_request_md5_t& request,
                        hashdb::hashes_response_md5_t& response) {
 
@@ -399,186 +454,7 @@ class query_by_socket_t {
 
     return 0;
   }
-
-  /**
-   * Look up sources.
-   */
-  int query_sources_md5(const hashdb::sources_request_md5_t& request,
-                        hashdb::sources_response_md5_t& response) {
-
-    // the query service must be working
-    if (!is_valid) {
-      return -1;
-    }
-
-    // clear any exsting response
-    response.clear();
-
-    // get the socket
-    void* socket = get_socket();
-    if (socket == 0) {
-      std::cerr << "query_sources_md5 failed to procure a socket\n";
-      return -1;
-    }
-
-    int status;
-
-    // send the source query request type
-    status = zmq_helper_t::send_part(&QUERY_SOURCES_MD5, sizeof(uint32_t), socket, true);
-    if (status != 0) {
-      return status;
-    }
-
-    // send the hash query request
-    status = zmq_helper_t::send_part(&request[0],
-                       sizeof(hashdb::source_request_md5_t) * request.size(),
-                       socket,
-                       false);
-    if (status != 0) {
-      return status;
-    }
-
-    // receive pairs of source_request and source_references
-    while (true) {
-      // get the source_request response
-      zmq_msg_t zmq_source_request;
-      size_t count;
-      bool is_more;
-      status = zmq_helper_t::open_and_receive_part(zmq_source_request,
-                                     socket,
-                                     sizeof(hashdb::source_request_md5_t),
-                                     true,
-                                     count,
-                                     is_more);
-      if (status != 0) {
-        return status;
-      }
-
-      // done when count is 0 and no more parts
-      if (count == 0 && !is_more) {
-        status = zmq_helper_t::close_part(zmq_source_request);
-        if (status != 0) {
-          return status;
-        }
-        break;
-      }
-
-      if ((count != 1) || (!is_more)) {
-        std::cerr << "query_sources_md5 receive hash request requires more data, count " << count << ", is_more " << is_more << "\n";
-        bool status2 __attribute__((unused)) = zmq_helper_t::close_part(zmq_source_request);
-        return -1;
-      }
-
-      // get address of source request
-      hashdb::source_request_md5_t* source_request_md5 = reinterpret_cast<hashdb::source_request_md5_t*>(zmq_msg_data(&zmq_source_request));
-
-      // push a source response record onto the respnse vector
-      response.push_back(hashdb::source_response_md5_t(source_request_md5->id,
-                                               source_request_md5->digest));
-
-      // get the source response in order to add source references to it
-      hashdb::source_response_md5_t* source_response = &response.back();
-
-      // close zmq_source_request
-      status = zmq_helper_t::close_part(zmq_source_request);
-      if (status != 0) {
-        return status;
-      }
-
-      // get the zmq source_references
-      zmq_msg_t zmq_source_references_request;
-      size_t zmq_source_references_count;
-      status = zmq_helper_t::open_and_receive_part(
-                                     zmq_source_references_request,
-                                     socket,
-                                     sizeof(zmq_source_reference_t),
-                                     true,
-                                     zmq_source_references_count,
-                                     is_more);
-      if (status != 0) {
-        return status;
-      }
-      if (!is_more) {
-        std::cerr << "query_sources_md5 receive hash request expects more data.\n";
-        return -1;
-      }
-
-      // get address of source references request
-      zmq_source_reference_t* zmq_source_reference_array = reinterpret_cast<zmq_source_reference_t*>(zmq_msg_data(&zmq_source_references_request));
-
-      // copy each source reference into source response
-      for (size_t i=0; i<zmq_source_references_count; i++) {
-        source_response->source_references.push_back(hashdb::source_reference_t(
-                std::string(zmq_source_reference_array[i].repository_name_bytes),
-                std::string(zmq_source_reference_array[i].filename_bytes),
-                zmq_source_reference_array[i].file_offset));
-      }
-
-      // close zmq_source_references_request
-      status = zmq_helper_t::close_part(zmq_source_references_request);
-
-      if (status != 0) {
-        return status;
-      }
-    }
-
-    return 0;
-  }
-
-  /**
-   * Request information about the hashdb.
-   */
-  int query_hashdb_info(std::string& info) {
-    // the query service must be working
-    if (!is_valid) {
-      return -1;
-    }
-
-    // get the socket
-    void* socket = get_socket();
-    if (socket == 0) {
-      std::cerr << "query_by_socket_t failed to procure a socket\n";
-      return -1;
-    }
-
-    int status;
-
-    // send the hash query request type
-    status = zmq_helper_t::send_part(
-                       &QUERY_HASHDB_INFO, sizeof(uint32_t), socket, false);
-    if (status != 0) {
-      return status;
-    }
-
-    // get the hashdb info response
-    zmq_msg_t zmq_response;
-    size_t char_count;
-    bool is_more;
-    status = zmq_helper_t::open_and_receive_part(
-                        zmq_response,
-                        socket,
-                        sizeof(char),
-                        true,
-                        char_count,
-                        is_more);
-    if (status != 0) {
-      return status;
-    }
-    if (is_more) {
-      std::cerr << "query_hashdb_info unexpected more data\n";
-      bool status2 __attribute__((unused)) = zmq_helper_t::close_part(zmq_response);
-      return -1;
-    }
-    char* c = reinterpret_cast<char*>(zmq_msg_data(&zmq_response));
-
-    // set info from response
-    info = std::string(c);
-
-    // close hashdb info response
-    status = zmq_helper_t::close_part(zmq_response);
-
-    return status;
-  }
+*/
 
   private:
   // ************************************************************

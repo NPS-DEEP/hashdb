@@ -39,14 +39,7 @@
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
-
-/*
-#include "dfxml_hashdigest_reader.hpp"
-#include "hashdb_exporter.hpp"
 #include "query_by_socket_server.hpp"
-#include "dfxml/src/dfxml_writer.h"
-#include "source_lookup_encoding.hpp"
-*/
 
 // Standard includes
 #include <cstdlib>
@@ -423,8 +416,18 @@ class commands_t {
 
   // server
   static void server(const std::string& hashdb_dir,
-                     const std::string& path_or_socket) {
-    std::cout << "server service TBD, command not performed.\n";
+                     const std::string& socket_string) {
+
+    // create the server
+    query_by_socket_server_t server(hashdb_dir, socket_string);
+
+    while (std::cin) {
+      // process hash sets indefinitely
+      int status = server.process_request();
+      if (status != 0) {
+        std::cerr << "Error in server service while processing request.  Request lost.\n";
+      }
+    }
   }
 
   // scan
