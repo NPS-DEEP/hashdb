@@ -275,12 +275,13 @@ const char* hashdb_version() {
 // mac doesn't seem to be up to c++11 yet
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
-  __attribute__((noreturn)) hashdb_t::hashdb_t(const hashdb_t& other) :
+  hashdb_t::hashdb_t(const hashdb_t& other) :
                  hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
                  hashdb_changes(0),
                  logger(0),
+                 query_by_socket(0),
                  block_size(0),
                  max_duplicates(0),
                  M() {
@@ -288,7 +289,7 @@ const char* hashdb_version() {
     exit(1);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
-  __attribute__((noreturn)) hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
+  hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
     assert(0);
     exit(1);
   }

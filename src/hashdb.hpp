@@ -168,14 +168,14 @@ class hashdb_t {
   hashdb_t(const hashdb_t& other) = delete;
 #else
   // don't use this.
-  hashdb_t(const hashdb_t& other);
+  hashdb_t(const hashdb_t& other) __attribute__ ((noreturn));
 #endif
 
 #ifdef HAVE_CXX11
   hashdb_t& operator=(const hashdb_t& other) = delete;
 #else
   // don't use this.
-  hashdb_t& operator=(const hashdb_t& other);
+  hashdb_t& operator=(const hashdb_t& other) __attribute__ ((noreturn));
 #endif
 
   ~hashdb_t();

@@ -96,47 +96,6 @@ HAHSDB_INCS = \
 	map_types.h \
 	multimap_types.h
 
-OLD_HASHDB_INCS = \
-	bi_64_pair_data.hpp \
-	bi_64_sv_data.hpp \
-	bi_data_types.hpp \
-	bi_store.hpp \
-	bloom_filter_calculator.hpp \
-	bloom_filter.hpp \
-	bloom_filter_manager.hpp \
-	commands.hpp \
-	dfxml_hashdigest_reader.hpp \
-	dfxml_hashdigest_reader_manager.hpp \
-	dfxml_hashdigest_writer.hpp \
-	file_modes.h \
-	hash_algorithm_types.h \
-	hashdb_changes.hpp \
-	hashdb.cpp \
-	hashdb_db_info_provider.hpp \
-	hashdb_element.hpp \
-	hashdb_element_lookup.hpp \
-	hashdb_element_lookup.hpp \
-	\
-	hashdb_manager.cpp \
-	hashdb_types.h \
-	hash_duplicates_store.hpp \
-	hash_duplicates_store.cpp \
-	hash_store.hpp \
-	hash_store.cpp \
-	hash_values.hpp \
-	history_manager.hpp \
-	manager_modified.h \
-	manager_modified_includes.h \
-	manager_modified_multimap.h \
-	query_by_path.hpp \
-	query_by_socket.hpp \
-	query_by_socket_server.hpp \
-	settings.hpp \
-	hashdb_settings_reader.hpp \
-	hashdb_settings_writer.hpp \
-	source_lookup_manager.hpp \
-	source_lookup_encoding.hpp
-
 # note: btree/tools/*.cpp files exist but are expected to be unused
 BTREE_INCS = \
 	btree/include/boost/btree/index_helpers.hpp \
@@ -187,10 +146,6 @@ DFXML_INCS = \
 	dfxml/src/dfxml_writer.h \
 	dfxml/src/cppmutex.h
 
-#hashdb_manager_SOURCES = \
-#	$(HASHDB_INCS) $(DFXML_INCS) $(MISC_INCS) \
-#	$(BTREE_INCS) $(ENDIAN_INCS)
-
 hashdb_SOURCES = \
 	main.cpp \
 	usage.hpp \
@@ -198,15 +153,4 @@ hashdb_SOURCES = \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS) \
 	$(HAHSDB_INCS)
-
-# use separate makefile because autotools can't create these
-# with and without libtool
-#libhashdb_la_SOURCES = \
-#	$(COMMAND_LINE_INCS) \
-#	$(BTREE_INCS) $(ENDIAN_INCS) \
-#	$(BLOOM_INCS) $(DFXML_INCS) \
-#	hashdb.cpp \
-#	hashdb.hpp
-#
-#include_HEADERS = hashdb.hpp
 

@@ -85,31 +85,6 @@ DFXML_INCS = \
 	../dfxml/src/dfxml_writer.h \
 	../dfxml/src/cppmutex.h
 
-#HASHDB_INCS = \
-#	../bi_data_types.hpp \
-#	../bi_store.hpp \
-#	../bloom_filter.hpp \
-#	../hashdb.cpp \
-#	../hashdb.hpp \
-#	../hashdb_change_logger.hpp \
-#	../hashdb_filenames.cpp \
-#	../hashdb_filenames.hpp \
-#	../hashdb_types.h \
-#	../hashdb_db_manager.hpp \
-#	../hashdb_settings.hpp \
-#	../hashdb_settings_reader.hpp \
-#	../hash_duplicates_store.cpp \
-#	../hash_duplicates_store.hpp \
-#	../hash_store.cpp \
-#	../hash_store.hpp \
-#	../manager_modified.h \
-#	../manager_modified_includes.h \
-#	../manager_modified_multimap.h \
-#	../query_by_path.hpp \
-#	../query_by_socket.hpp \
-#	../source_lookup_manager.hpp \
-#	../source_lookup_encoding.hpp
-
 libhashdb_la_SOURCES = \
 	../hashdb.cpp \
 	../hashdb.hpp \

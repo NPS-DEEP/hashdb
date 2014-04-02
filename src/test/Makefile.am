@@ -54,7 +54,6 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 
 libhashdb_test_LDADD = ../libhashdb/libhashdb.la
 
-# zzzzzzzzAM_LDFLAGS = -static $(XML_LIBS)
 AM_LDFLAGS = -static
 
 run_tests:
@@ -66,32 +65,6 @@ run_tests:
 # ############################################################
 # potentially useful include files
 # ############################################################
-HASHDB_INCS = \
-	../bi_data_types.hpp \
-	../bi_store.hpp \
-	../bloom_filter.hpp \
-	../command_line.cpp \
-	../command_line.hpp \
-	../hashdb.cpp \
-	../hashdb.hpp \
-	../hashdb_filenames.cpp \
-	../hashdb_filenames.hpp \
-	../hashdb_types.h \
-	../hashdb_db_manager.hpp \
-	../hashdb_settings.hpp \
-	../hashdb_settings_reader.hpp \
-	../hash_duplicates_store.cpp \
-	../hash_duplicates_store.hpp \
-	../hash_store.cpp \
-	../hash_store.hpp \
-	../manager_modified.h \
-	../manager_modified_includes.h \
-	../manager_modified_multimap.h \
-	../query_by_path.hpp \
-	../query_by_socket.hpp \
-	../source_lookup_manager.hpp \
-	../source_lookup_encoding.hpp
-
 DFXML_INCS = \
 	../dfxml/src/hash_t.h \
 	../dfxml/src/dfxml_writer.cpp \
@@ -344,6 +317,8 @@ commands_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
         ../commands.hpp \
+	../hashdb.cpp \
+	../hashdb.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	../command_line.cpp \
 	../command_line.hpp \
