@@ -376,3 +376,12 @@ Tagging a version and Uploading to digitalcorpora
  * Upload to digitalcorpora.org/downloads/hashdb
    at ncr:/var/www/digitalcorpora/downloads/hashdb
 
+------------------------------------------------------------
+ZMQ vs Boost.Asio:
+ZMQ: The reply sent is routed to the client that issued the request.
+     One socket is used.
+Boost: Create a new socket, then
+       use tcp::acceptor::accept to accept a new connection from a peer
+       into the given socket.
+       Then use that socket for your transaction.
+
