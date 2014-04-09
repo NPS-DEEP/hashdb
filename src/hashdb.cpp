@@ -50,17 +50,11 @@
 #include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
 #include "logger.hpp"
-#include "query_by_socket.hpp"
+//#include "query_by_socket.hpp"
+#include "tcp_client_manager.hpp"
 
 // this implementation uses pthread lock to protect the hash database
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#define MUTEX_LOCK(M)   pthread_mutex_lock(M)
-#define MUTEX_UNLOCK(M) pthread_mutex_unlock(M)
-#else
-#define MUTEX_LOCK(M)   {}
-#define MUTEX_UNLOCK(M) {}
-#endif
+#include "mutex_lock.hpp"
 
 /**
  * version of the hashdb query library
@@ -80,7 +74,7 @@ const char* hashdb_version() {
                        hashdb_manager(0),
                        hashdb_changes(0),
                        logger(0),
-                       query_by_socket(0),
+                       tcp_client_manager(0),
                        block_size(p_block_size),
                        max_duplicates(p_max_duplicates),
                        M() {
@@ -162,14 +156,13 @@ const char* hashdb_version() {
 
   // constructor for scanning
   hashdb_t::hashdb_t(const std::string& path_or_socket) :
-                     hashdb_dir(path_or_socket), // socket not implemented yet
-                     mode(path_or_socket.find("//") ==
-                         std::string::npos ? HASHDB_SCAN : HASHDB_SCAN_SOCKET),
-//                     mode(HASHDB_SCAN),
+                     hashdb_dir(path_or_socket),
+                     mode(path_or_socket.find("tcp://") != 0
+                         ? HASHDB_SCAN : HASHDB_SCAN_SOCKET),
                      hashdb_manager(0),
                      hashdb_changes(0),
                      logger(0),
-                     query_by_socket(0),
+                     tcp_client_manager(0),
                      block_size(0),
                      max_duplicates(0),
                      M() {
@@ -184,7 +177,7 @@ const char* hashdb_version() {
       hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
     } else if (mode == HASHDB_SCAN_SOCKET) {
       // open query by socket service for scanning
-      query_by_socket = new query_by_socket_t(hashdb_dir);
+      tcp_client_manager = new tcp_client_manager_t(path_or_socket);
     } else {
       assert(0);
       exit(1);
@@ -194,21 +187,21 @@ const char* hashdb_version() {
   // scan
   int hashdb_t::scan(const scan_input_md5_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, md5_t> >(&QUERY_MD5, input, output);
+      return tcp_client_manager->scan<scan_input_md5_t, 1>(input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha1_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, sha1_t> >(&QUERY_SHA1, input, output);
+      return tcp_client_manager->scan<scan_input_sha1_t, 2>(input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha256_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return query_by_socket->scan<std::pair<uint64_t, sha256_t> >(&QUERY_SHA256, input, output);
+      return tcp_client_manager->scan<scan_input_sha256_t, 3>(input, output);
     } else {
       return scan_private(input, output);
     }
@@ -267,7 +260,7 @@ const char* hashdb_version() {
         delete hashdb_manager;
         return;
       case HASHDB_SCAN_SOCKET:
-        delete query_by_socket;
+        delete tcp_client_manager;
         return;
     }
   }
@@ -281,7 +274,7 @@ const char* hashdb_version() {
                  hashdb_manager(0),
                  hashdb_changes(0),
                  logger(0),
-                 query_by_socket(0),
+                 tcp_client_manager(0),
                  block_size(0),
                  max_duplicates(0),
                  M() {

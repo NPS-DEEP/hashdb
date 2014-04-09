@@ -76,8 +76,8 @@ HAHSDB_INCS = \
 	multimap_red_black_tree.hpp \
 	multimap_unordered_hash.hpp \
 	multimap_btree.hpp \
-	query_by_socket.hpp \
-	query_by_socket_server.hpp \
+	tcp_client_manager.hpp \
+	tcp_server_manager.hpp \
 	hashdb_settings_writer.hpp \
 	hashdb_db_info_provider.hpp \
 	hash_values.hpp \
@@ -94,7 +94,8 @@ HAHSDB_INCS = \
 	hash_algorithm_types.h \
 	hashdigest_types.h \
 	map_types.h \
-	multimap_types.h
+	multimap_types.h \
+	mutex_lock.hpp
 
 # note: btree/tools/*.cpp files exist but are expected to be unused
 BTREE_INCS = \

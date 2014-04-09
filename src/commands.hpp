@@ -40,7 +40,7 @@
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 //#include "query_by_socket_server.hpp"
-#include "server_manager.hpp"
+#include "tcp_server_manager.hpp"
 #include "hashdigest_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
@@ -420,15 +420,27 @@ class commands_t {
 
   // server
   static void server(const std::string& hashdb_dir,
-                     const std::string& socket_string) {
+                     const std::string& port_number_string) {
+
+    uint16_t port_number;
+    try {
+      port_number = boost::lexical_cast<uint16_t>(port_number_string);
+    } catch(...) {
+      std::cerr << "Invalid port: '" << port_number_string << "'\n";
+      exit(1);
+    }
 
     // start the server
-    server_manager_t server_manager(hashdb_dir, 14500);
-
+std::cout << "commands.server.a\n";
+    tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
+    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
+/*
+    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
     std::cout << "The hashdb service server is running.  Press Return to quit.\n";
     std::string buffer;
     getline(std::cin, buffer);
     std::cout << "Done.\n";
+*/
   }
 
   // scan
