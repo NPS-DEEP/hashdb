@@ -19,399 +19,156 @@
 
 /**
  * \file
- * Provides the client hashdb query service using Boost.Asio.
+ * Provides the server hashdb scan service using Boost.Asio.
+ * Modeled after the Boost blocking_tcp_echo_server.cpp example.
  */
 
 #ifndef TCP_SERVER_MANAGER_HPP
 #define TCP_SERVER_MANAGER_HPP
 
 #include <config.h>
-#include "hashdb.hpp"
+#include "hashdb_manager.hpp"
+#include "file_modes.h"
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include <boost/asio.hpp>
+#include <dfxml/src/hash_t.h>
 
 // types of queries that are available
 const uint32_t QUERY_MD5 = 1;
 const uint32_t QUERY_SHA1 = 2;
 const uint32_t QUERY_SHA256 = 3;
 
-// ************************************************************
-// session_t
-// Session sequence:
-//       start reads request_type
-//       read_request_count
-//       read_md5, read_sha1, or read_sha256
-//       write_response
-// ************************************************************
-class session_t {
-  private:
-  hashdb_t& hashdb;
-  boost::asio::ip::tcp::socket session_socket;
-  uint32_t request_type;
-  uint32_t request_count;
-  uint32_t response_count;
-  hashdb_t::scan_input_md5_t* scan_input_md5;
-  hashdb_t::scan_input_sha1_t* scan_input_sha1;
-  hashdb_t::scan_input_sha256_t* scan_input_sha256;
-  hashdb_t::scan_output_t* scan_output;
-
-  // do not allow copy or assignment
-  session_t(const session_t&);
-  session_t& operator=(const session_t&);
-
-  public:
-  session_t(hashdb_t& p_hashdb, boost::asio::io_service& io_service) :
-                    hashdb(p_hashdb),
-                    session_socket(io_service),
-                    request_type(0),
-                    request_count(0),
-                    response_count(0),
-                    scan_input_md5(0),
-                    scan_input_sha1(0),
-                    scan_input_sha256(0),
-                    scan_output(new hashdb_t::scan_output_t) {
-  }
-
-  // get this session's socket
-  boost::asio::ip::tcp::socket& socket() {
-    return session_socket;
-  }
-
-  // read the request type, one of MD5, SHA1, or SHA256
-  void start() {
-    boost::asio::async_read(
-               session_socket,
-
-               // get request_type
-               boost::asio::buffer(&request_type, sizeof(request_type)),
-
-               // next step will be to call read_request_count
-               boost::bind(&session_t::read_request_count,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-  }
-
-  // read the request count
-  void read_request_count(const boost::system::error_code& error,
-                          size_t bytes_transferred) {
-    if (!error) {
-      boost::asio::async_read(
-               session_socket,
-
-               // get request_count
-               boost::asio::buffer(&request_count, sizeof(request_count)),
-
-               // next step will be to call read_vector
-               boost::bind(&session_t::read_vector,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      // failure in read
-      delete this;
-    }
-  }
-
-  // read the vector of input data
-  void read_vector(const boost::system::error_code& error,
-                   size_t bytes_transferred) {
-    if (!error) {
-      // the read operation depends on the request type
-      if (request_type == QUERY_MD5) {
-        scan_input_md5 = new hashdb_t::scan_input_md5_t(request_count);
-        boost::asio::async_read(
-               session_socket,
-
-               // get request_count
-               boost::asio::buffer(*scan_input_md5),
-
-               // next step will be to call write_vector count
-               boost::bind(&session_t::write_vector_md5_count,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-      } else if (request_type == QUERY_SHA1) {
-        scan_input_sha1 = new hashdb_t::scan_input_sha1_t(request_count);
-        boost::asio::async_read(
-               session_socket,
-
-               // get request_count
-               boost::asio::buffer(*scan_input_sha1),
-
-               // next step will be to call write_vector count
-               boost::bind(&session_t::write_vector_sha1_count,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-      } else if (request_type == QUERY_SHA256) {
-        scan_input_sha256 = new hashdb_t::scan_input_sha256_t(request_count);
-        boost::asio::async_read(
-               session_socket,
-
-               // get request_count
-               boost::asio::buffer(*scan_input_sha256),
-
-               // next step will be to call write_vector count
-               boost::bind(&session_t::write_vector_sha256_count,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-      } else {
-        // failure in request type read
-        delete this;
-      }
-    } else {
-      // failure in read
-      delete this;
-    }
-  }
-
-  // ************************************************************
-  // look up data, write response_count
-  // ************************************************************
-
-  void write_vector_md5_count(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error && request_count * sizeof(hashdb_t::import_element_t<md5_t>) ==
-                  bytes_transferred) {
-
-      // perform the scan
-      hashdb.scan(*scan_input_md5, *scan_output);
-      response_count = scan_output->size();
-      delete scan_input_md5;
-
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(&response_count, sizeof(response_count)),
-               boost::bind(&session_t::write_vector_md5,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_md5;
-      delete this;
-    }
-  }
-
-  void write_vector_sha1_count(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error && request_count * sizeof(hashdb_t::import_element_t<sha1_t>) ==
-                  bytes_transferred) {
-
-      // perform the scan
-      hashdb.scan(*scan_input_sha1, *scan_output);
-      response_count = scan_output->size();
-      delete scan_input_sha1;
-
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(&response_count, sizeof(response_count)),
-               boost::bind(&session_t::write_vector_sha1,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_sha1;
-      delete this;
-    }
-  }
-
-  void write_vector_sha256_count(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error && request_count * sizeof(hashdb_t::import_element_t<sha256_t>)
-                 == bytes_transferred) {
-
-      // perform the scan
-      hashdb.scan(*scan_input_sha256, *scan_output);
-      response_count = scan_output->size();
-      delete scan_input_sha256;
-
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(&response_count, sizeof(response_count)),
-               boost::bind(&session_t::write_vector_sha256,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_sha256;
-      delete this;
-    }
-  }
-
-  // ************************************************************
-  // write data response vector
-  // ************************************************************
-
-  void write_vector_md5(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error) {
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(*scan_output),
-               boost::bind(&session_t::completion_handler_md5,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_md5;
-      delete this;
-    }
-  }
-
-  void write_vector_sha1(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error) {
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(*scan_output),
-               boost::bind(&session_t::completion_handler_sha1,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_sha1;
-      delete this;
-    }
-  }
-
-  void write_vector_sha256(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-
-    if (!error) {
-      // send the output
-      boost::asio::async_write(
-               session_socket,
-               boost::asio::buffer(*scan_output),
-               boost::bind(&session_t::completion_handler_sha256,
-                           this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
-    } else {
-      delete scan_input_sha256;
-      delete this;
-    }
-  }
-
-  void completion_handler_md5(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-    delete scan_output;
-    delete this;
-  }
-
-  void completion_handler_sha1(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-    delete scan_output;
-    delete this;
-  }
-
-  void completion_handler_sha256(const boost::system::error_code& error,
-                        size_t bytes_transferred) {
-    delete scan_output;
-    delete this;
-  }
-};
-
-// ************************************************************
-// server_t
-// ************************************************************
-class server_t {
-  private:
-  hashdb_t& hashdb;
-  boost::asio::io_service& io_service;
-  boost::asio::ip::tcp::acceptor acceptor;
-
-  // do not allow copy or assignment
-  server_t(const server_t&);
-  server_t& operator=(const server_t&);
-
-  // async wait for a session, run handle_accept when available
-  void start_accept() {
-std::cout << "tcp_server_manager.start_accept.a\n";
-    session_t* session = new session_t(hashdb, io_service);
-    acceptor.async_accept(
-          session->socket(),
-          boost::bind(&server_t::handle_accept, this, session,
-                      boost::asio::placeholders::error));
-std::cout << "tcp_server_manager.start_accept.b\n";
-  }
-
-  // arrive here when tcp::acceptor accepts a new session
-  void handle_accept(session_t* session,
-                     const boost::system::error_code& error) {
-std::cout << "tcp_server_manager.handle_accept.a\n";
-    if (!error) {
-      // start timeout timer for killing stale session
-      //TBD
-
-std::cout << "tcp_server_manager.handle_accept.b\n";
-      // begin reading session data
-      session->start();
-std::cout << "tcp_server_manager.handle_accept.c\n";
-    } else {
-std::cout << "tcp_server_manager.handle_accept.d\n";
-      // give up this session that just started because it had an error
-      delete session;
-    }
-
-    // session is done, accept a new session
-    start_accept();
-  }
-
-  public:
-  server_t(hashdb_t& p_hashdb,
-           uint16_t port_number,
-           boost::asio::io_service& io_service_p) :
-             hashdb(p_hashdb),
-             io_service(io_service_p),
-             acceptor(io_service, boost::asio::ip::tcp::endpoint(
-                                boost::asio::ip::tcp::v4(), port_number)) {
-std::cout << "server_t.a\n";
-    start_accept();
-std::cout << "server_t.b\n";
-  }
-};
-
-// ************************************************************
-// tcp_server_manager_t
-// ************************************************************
 class tcp_server_manager_t {
-  // note: basic action:
-  //   connect
-  //   read from connection
-  //   query hashdb
-  //   write connection
-  // so to optimize, start several server handlers to help with TCP I/O.
-  // Don't start too many, the bottleneck is in lookup.
-  //
-  // note: smart pointers for input and output buffers would be much cleaner.
 
   private:
-  hashdb_t hashdb;
+  hashdb_manager_t hashdb_manager;
   boost::asio::io_service io_service;
-  server_t server1;
-  server_t server2;
+  boost::mutex scan_mutex;
+
+  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
+
+  // run a complete connection session.
+  // The session is run on a thread by a server dispatcher.
+  void run_session(socket_ptr_t socket_ptr) {
+std::cout << "tsm run_session.a\n";
+
+    // get the hashdigest type that the database is using
+    uint32_t hashdigest_type;
+    if (hashdb_manager.hashdigest_type_string() == "MD5") {
+      hashdigest_type = QUERY_MD5;
+    } else if (hashdb_manager.hashdigest_type_string() == "SHA1") {
+      hashdigest_type = QUERY_SHA1;
+    } else if (hashdb_manager.hashdigest_type_string() == "SHA256") {
+      hashdigest_type = QUERY_SHA256;
+    } else {
+      assert(0); exit(1); // program error
+    }
+
+    try {
+      // transmit the required hashdigest type to the client
+      boost::asio::write(*socket_ptr, boost::asio::buffer(
+                                    &hashdigest_type, sizeof(hashdigest_type)));
+
+      // now loop servicing request/response cycles
+      while(true) {
+        // perform scan iteration based on request type
+        if (hashdigest_type == QUERY_MD5) {
+          do_scan<md5_t>(socket_ptr);
+        } else if (hashdigest_type == QUERY_SHA1) {
+          do_scan<sha1_t>(socket_ptr);
+        } else if (hashdigest_type == QUERY_SHA256) {
+          do_scan<sha256_t>(socket_ptr);
+        } else {
+          assert(0); exit(1); // program error
+        }
+      }
+    } catch (std::exception& e) {
+      std::cerr << "Exception in request, request dropped: " << e.what() << "\n";
+    }
+  }
+
+  // perform one request/response scan iteration
+  template<typename T>
+  void do_scan(socket_ptr_t socket_ptr) {
+    typedef std::vector<std::pair<uint64_t, T> > request_t;
+    
+    // read the request size
+    uint32_t request_size;
+    boost::asio::read(*socket_ptr, boost::asio::buffer(
+                                    &request_size, sizeof(request_size)));
+
+    // allocate request and response vectors on heap
+    boost::shared_ptr<request_t> request_ptr(new request_t(request_size));
+    boost::shared_ptr<hashdb_t::scan_output_t>
+                         response_ptr(new hashdb_t::scan_output_t);
+
+    // read the request
+    boost::asio::read(*socket_ptr, boost::asio::buffer(*request_ptr));
+
+    // lock this until we are confident that reading is threadsafe
+    // use boost mutex since this will be running on a boost-launched thread
+    scan_mutex.lock();
+
+    // scan each input in turn
+    typename request_t::const_iterator it = request_ptr->begin();
+    while (it != request_ptr->end()) {
+      uint32_t count = hashdb_manager.find_count(it->second);
+      if (count > 0) {
+        std::pair<uint64_t, uint32_t> return_item(it->first, count);
+        response_ptr->push_back(return_item);
+      }
+      ++it;
+    }
+
+    // unlock
+    scan_mutex.unlock();
+
+    // send the response count
+    uint32_t response_size = response_ptr->size();
+    boost::asio::write(*socket_ptr, boost::asio::buffer(
+                                    &response_size, sizeof(response_size)));
+
+    // send the response vector
+    boost::asio::write(*socket_ptr, boost::asio::buffer(*response_ptr));
+  }
 
   public:
+  /**
+   * This works as follows:
+   *   initialize state,
+   *   while true:
+   *     wait to accept a socket connection,
+   *     dispatch the connection to service request, scan, response queries.
+   *
+   * Note that the service thread intentionally runs on the
+   * tcp_server_manager_t singleton in order to have visibility to
+   * its resources, and that the singleton must access threadsafe members.
+   */
   tcp_server_manager_t(const std::string& hashdb_dir, uint16_t port_number) :
-                       hashdb(hashdb_dir),
+                       hashdb_manager(hashdb_dir, READ_ONLY),
                        io_service(),
-                       server1(hashdb, port_number, io_service),
-                       server2(hashdb, port_number, io_service) {
-std::cout << "tcp_server_manager_t.a\n";
-    io_service.run();
-std::cout << "tcp_server_manager_t.b\n";
+                       scan_mutex() {
+
+    try {
+      boost::asio::ip::tcp::acceptor acceptor(io_service,
+                  boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(),
+                                                 port_number));
+      while (true) {
+        socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
+std::cout << "tsm waiting to accept.\n";
+        acceptor.accept(*socket_ptr);
+
+std::cout << "tsm socket accepted.\n";
+        // now run this.run_session on a thread.
+        // this should be safe since the resources it accesses are threadsafe.
+        boost::thread t(boost::bind(&tcp_server_manager_t::run_session,
+                                    this,
+                                    socket_ptr));
+      }
+    } catch (std::exception& e) {
+      std::cerr << "Exception: unable to connect to socket.  Aborting.  " << e.what() << "\n";
+    }
   }
 };
 

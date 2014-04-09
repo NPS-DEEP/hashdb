@@ -432,8 +432,9 @@ class commands_t {
 
     // start the server
 std::cout << "commands.server.a\n";
+    std::cout << "Running the hashdb server scan service.  Press Ctrl-C to quit.\n";
     tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
-    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
+//    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
 /*
     std::cout << "The hashdb service server is running.  Press Return to quit.\n";
     std::cout << "The hashdb service server is running.  Press Return to quit.\n";

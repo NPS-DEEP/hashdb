@@ -363,6 +363,11 @@ class hashdb_manager_t {
     return sha256_manager->find_count(key);
   }
 
+  // hashdigest_type string
+  std::string hashdigest_type_string() const {
+    return hashdigest_type_to_string(settings.hashdigest_type);
+  }
+
   // begin
   hashdb_iterator_t begin() const {
     switch(settings.hashdigest_type) {

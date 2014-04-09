@@ -69,7 +69,7 @@ const char* hashdb_version() {
            const std::string& hashdigest_type,
            uint32_t p_block_size,
            uint32_t p_max_duplicates) :
-                       hashdb_dir(p_hashdb_dir), // socket not implemented yet
+                       hashdb_dir(p_hashdb_dir),
                        mode(HASHDB_IMPORT),
                        hashdb_manager(0),
                        hashdb_changes(0),

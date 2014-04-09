@@ -20,6 +20,7 @@
 /**
  * \file
  * Provides the client hashdb query service using Boost.Asio.
+ * Modeled after the Boost blocking_tcp_echo_client.cpp example.
  */
 
 #ifndef TCP_CLIENT_MANAGER_HPP
@@ -29,6 +30,11 @@
 #include "hashdb.hpp"
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include "mutex_lock.hpp" // define MUTEX_LOCK
+
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
 
 // types of queries that are available
 const uint32_t QUERY_MD5 = 1;
@@ -37,24 +43,69 @@ const uint32_t QUERY_SHA256 = 3;
 
 class tcp_client_manager_t {
   private:
+  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
+
   boost::asio::io_service io_service;
   boost::asio::ip::tcp::resolver::iterator resolver_iterator;
+  std::map<pthread_t, socket_ptr_t> sockets;
+  uint32_t hashdigest_type;
+#ifdef HAVE_PTHREAD
+  pthread_mutex_t M;                  // mutext
+#else
+  int M;                              // placeholder
+#endif
 
-  // take socket_string in form "tcp://<host>:<port>"
+  // ************************************************************
+  // thread-safe socket acquisition
+  // ************************************************************
+  socket_ptr_t get_socket() {
+    pthread_t this_pthread = pthread_self();
+
+    MUTEX_LOCK(&M);
+
+    // find and return the socket assocated with this pthread
+    if (sockets.find(this_pthread) != sockets.end()) {
+      MUTEX_UNLOCK(&M);
+      return sockets[this_pthread];
+    }
+
+    // create the socket for this pthread
+    socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
+
+    // connect this socket
+    boost::asio::connect(*socket_ptr, resolver_iterator);
+
+    // read the hashdigest type from the socket
+    boost::asio::read(*socket_ptr, boost::asio::buffer(
+                              &hashdigest_type, sizeof(hashdigest_type)));
+
+    // add the prepared socket
+    sockets[this_pthread] = socket_ptr;
+
+    // return the freshly created socket
+    MUTEX_UNLOCK(&M);
+    return socket_ptr;
+  }
+
+
+  // helper: get the resolver iterator
   static boost::asio::ip::tcp::resolver::iterator get_resolver_iterator(
                                 boost::asio::io_service* io_service,
                                 const std::string& socket_string) {
 std::cout << "tcp_client_manager.a\n";
     // validate input
+    // take socket_string in form "tcp://<host>:<port>"
     if (socket_string.find("tcp://") != 0) {
-      return useless_resolver_iterator(io_service, socket_string);
+      // unusable socket_string syntax
+      throw std::runtime_error("Error: invalid socket syntax, 'tcp://' expected");
     }
 
     // parse host and port
     std::string host_port_string = socket_string.substr(6, std::string::npos-1);
     size_t colon_position = host_port_string.find(':');
     if (colon_position == std::string::npos) {
-      return useless_resolver_iterator(io_service, socket_string);
+      // unusable socket_string syntax
+      throw std::runtime_error("Error: invalid socket syntax, ':' expected");
     }
     std::string host_string = host_port_string.substr(0, colon_position);
     std::string port_string = host_port_string.substr(colon_position+1);
@@ -70,17 +121,16 @@ std::cout << "tcp_client_manager.k\n";
     return iterator;
   }
 
-  static boost::asio::ip::tcp::resolver::iterator useless_resolver_iterator(boost::asio::io_service* p_io_service, const std::string& socket_string) {
-    std::cerr << "invalid socket address: '" << socket_string << "'\n";
-    boost::asio::ip::tcp::resolver useless_resolver(*p_io_service);
-    boost::asio::ip::tcp::resolver::query useless_query(boost::asio::ip::tcp::v4(), "", "");
-      return useless_resolver.resolve(useless_query);
-  }
-
   public:
   tcp_client_manager_t(const std::string& socket_string) :
         io_service(),
-        resolver_iterator(get_resolver_iterator(&io_service, socket_string)) {
+        resolver_iterator(get_resolver_iterator(&io_service, socket_string)),
+        sockets(),
+        hashdigest_type(0),
+        M() {
+#ifdef HAVE_PTHREAD
+    pthread_mutex_init(&M,NULL);
+#endif
   }
 
   // scan
@@ -95,49 +145,42 @@ std::cout << "tcp_client_manager.k\n";
       return 0;
     }
 
-    // establish a socket connection
+    try {
 
-    // get the socket
-    boost::asio::ip::tcp::socket socket(io_service);
-    boost::asio::connect(socket, resolver_iterator);
+      // get, possibly establishing, the connnected socket for this thread
+      socket_ptr_t socket = get_socket();
 
-    // write the request_type
-    uint32_t request_type = RT;
-    boost::system::error_code ec;
-    boost::asio::write(
-         socket,
-         boost::asio::buffer(&request_type, sizeof(request_type)),
-         ec);
-    if (ec != 0) {
+      // write the request_count
+      uint32_t request_count = request.size();
+      boost::asio::write(
+           *socket,
+           boost::asio::buffer(&request_count, sizeof(request_count)));
+
+      // write the request vector
+      boost::asio::write(
+           *socket, boost::asio::buffer(request));
+
+      // read the response_count
+      uint32_t response_count = response.size();
+      boost::asio::write(
+           *socket,
+           boost::asio::buffer(&response_count, sizeof(request_count)));
+
+      // prepare the response vector with the expected size
+      response = hashdb_t::scan_output_t(response_count);
+
+      // read the response vector
+      boost::asio::read(*socket, boost::asio::buffer(response));
+
+      // good, return 0
+      return 0;
+
+    } catch (std::exception& e) {
+      // bad, return -1
+      std::cerr << "Exception in socket scan request, request dropped: "
+                << e.what() << "\n";
       return -1;
     }
-
-    // write the request_count
-    uint32_t request_count = request.size();
-    boost::asio::write(
-         socket,
-         boost::asio::buffer(&request_type, sizeof(request_count)),
-         ec);
-    if (ec != 0) {
-      return -1;
-    }
-
-    // write the request array
-    boost::asio::write(
-         socket, boost::asio::buffer(request), ec);
-    if (ec != 0) {
-      return -1;
-    }
-
-    // read the response
-    boost::asio::read(
-         socket, boost::asio::buffer(response), ec);
-    if (ec != 0) {
-      return -1;
-    }
-
-    // good, return 0
-    return 0;
   }
 };
 
