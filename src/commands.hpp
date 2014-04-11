@@ -39,7 +39,6 @@
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
-//#include "query_by_socket_server.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdigest_types.h"
 #include "dfxml/src/hash_t.h"
@@ -431,8 +430,7 @@ class commands_t {
     }
 
     // start the server
-std::cout << "commands.server.a\n";
-    std::cout << "Running the hashdb server scan service.  Press Ctrl-C to quit.\n";
+    std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
     tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
 //    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
 /*

@@ -43,42 +43,40 @@ class tcp_server_manager_t {
 
   private:
   hashdb_manager_t hashdb_manager;
+  uint32_t hashdb_hashdigest_type;
   boost::asio::io_service io_service;
   boost::mutex scan_mutex;
 
   typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
 
-  // run a complete connection session.
-  // The session is run on a thread by a server dispatcher.
-  void run_session(socket_ptr_t socket_ptr) {
-std::cout << "tsm run_session.a\n";
-
-    // get the hashdigest type that the database is using
-    uint32_t hashdigest_type;
+  // get the hashdigest type used by hashdb_manager
+  uint32_t get_hashdb_hashdigest_type() {
     if (hashdb_manager.hashdigest_type_string() == "MD5") {
-      hashdigest_type = QUERY_MD5;
+      return QUERY_MD5;
     } else if (hashdb_manager.hashdigest_type_string() == "SHA1") {
-      hashdigest_type = QUERY_SHA1;
+      return QUERY_SHA1;
     } else if (hashdb_manager.hashdigest_type_string() == "SHA256") {
-      hashdigest_type = QUERY_SHA256;
+      return QUERY_SHA256;
     } else {
       assert(0); exit(1); // program error
     }
+  }
 
+  // run a complete connection session.
+  // The session is run on a thread by a server dispatcher.
+  void run_session(socket_ptr_t socket_ptr) {
     try {
-      // transmit the required hashdigest type to the client
-      boost::asio::write(*socket_ptr, boost::asio::buffer(
-                                    &hashdigest_type, sizeof(hashdigest_type)));
-
-      // now loop servicing request/response cycles
-      while(true) {
+      // loop servicing request/response cycles based on the hashdigest type
+      // the hashdb_manager supports
+      bool valid_session = true;
+      while(valid_session) {
         // perform scan iteration based on request type
-        if (hashdigest_type == QUERY_MD5) {
-          do_scan<md5_t>(socket_ptr);
-        } else if (hashdigest_type == QUERY_SHA1) {
-          do_scan<sha1_t>(socket_ptr);
-        } else if (hashdigest_type == QUERY_SHA256) {
-          do_scan<sha256_t>(socket_ptr);
+        if (hashdb_hashdigest_type == QUERY_MD5) {
+          valid_session = do_scan<md5_t>(socket_ptr);
+        } else if (hashdb_hashdigest_type == QUERY_SHA1) {
+          valid_session = do_scan<sha1_t>(socket_ptr);
+        } else if (hashdb_hashdigest_type == QUERY_SHA256) {
+          valid_session = do_scan<sha256_t>(socket_ptr);
         } else {
           assert(0); exit(1); // program error
         }
@@ -89,10 +87,33 @@ std::cout << "tsm run_session.a\n";
   }
 
   // perform one request/response scan iteration
+  // true = more, false=EOF
   template<typename T>
-  void do_scan(socket_ptr_t socket_ptr) {
+  bool do_scan(socket_ptr_t socket_ptr) {
     typedef std::vector<std::pair<uint64_t, T> > request_t;
     
+    // read the client's hashdigest type, acknowledging EOF
+    uint32_t client_hashdigest_type;
+    boost::system::error_code error;
+    boost::asio::read(*socket_ptr, boost::asio::buffer(
+                    &client_hashdigest_type, sizeof(client_hashdigest_type)),
+                    error);
+
+    // the protocol may leave the scan loop here
+    if (error == boost::asio::error::eof) {
+      // done
+      return false;
+    } else if (error) {
+      throw boost::system::system_error(error); // Some other error.
+    }
+
+
+    // check for hashdigest compatibility else drop this connection.
+    if (client_hashdigest_type != hashdb_hashdigest_type) {
+      std::cout << "tcp_server_manager: client and server hashdigest types do not match.  Request dropped.\n";
+      return false;
+    }
+
     // read the request size
     uint32_t request_size;
     boost::asio::read(*socket_ptr, boost::asio::buffer(
@@ -131,6 +152,8 @@ std::cout << "tsm run_session.a\n";
 
     // send the response vector
     boost::asio::write(*socket_ptr, boost::asio::buffer(*response_ptr));
+
+    return true;
   }
 
   public:
@@ -147,6 +170,7 @@ std::cout << "tsm run_session.a\n";
    */
   tcp_server_manager_t(const std::string& hashdb_dir, uint16_t port_number) :
                        hashdb_manager(hashdb_dir, READ_ONLY),
+                       hashdb_hashdigest_type(get_hashdb_hashdigest_type()),
                        io_service(),
                        scan_mutex() {
 
@@ -156,10 +180,8 @@ std::cout << "tsm run_session.a\n";
                                                  port_number));
       while (true) {
         socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
-std::cout << "tsm waiting to accept.\n";
         acceptor.accept(*socket_ptr);
 
-std::cout << "tsm socket accepted.\n";
         // now run this.run_session on a thread.
         // this should be safe since the resources it accesses are threadsafe.
         boost::thread t(boost::bind(&tcp_server_manager_t::run_session,

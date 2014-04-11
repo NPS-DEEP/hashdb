@@ -40,7 +40,6 @@ const char* hashdb_version();
 class hashdb_manager_t;
 class hashdb_changes_t;
 class logger_t;
-//class query_by_socket_t;
 class tcp_client_manager_t;
 
 /**
@@ -57,7 +56,6 @@ class hashdb_t {
   hashdb_manager_t *hashdb_manager;
   hashdb_changes_t *hashdb_changes;
   logger_t *logger;
-//  query_by_socket_t *query_by_socket;
   tcp_client_manager_t *tcp_client_manager;
   const uint32_t block_size;
   const uint32_t max_duplicates;

@@ -50,14 +50,13 @@
 #include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
 #include "logger.hpp"
-//#include "query_by_socket.hpp"
 #include "tcp_client_manager.hpp"
 
 // this implementation uses pthread lock to protect the hash database
 #include "mutex_lock.hpp"
 
 /**
- * version of the hashdb query library
+ * version of the hashdb library
  */
 extern "C"
 const char* hashdb_version() {
@@ -176,7 +175,7 @@ const char* hashdb_version() {
       // open hashdb_manager for scanning
       hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
     } else if (mode == HASHDB_SCAN_SOCKET) {
-      // open query by socket service for scanning
+      // open TCP socket service for scanning
       tcp_client_manager = new tcp_client_manager_t(path_or_socket);
     } else {
       assert(0);

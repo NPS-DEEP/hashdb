@@ -19,14 +19,7 @@
 
 /**
  * \file
- * Provides client hashdb query service interfaces for using a socket ZMQ
- * server service.
- *
- * This interface is threadsafe because it manages zmq in a threadsafe way.
- *
- * The query request consists of two parts: the query type and then,
- * unless not needed, the query request.
- * The response consists of parts for building a response array, as needed.
+ * Provides mutex macros for pthreads.
  */
 
 #ifndef MUTEX_LOCK_HPP

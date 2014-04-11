@@ -18,11 +18,7 @@ SRC_WIN_DIST = \
 	src_win/icu-mingw32-libprefix.patch \
 	src_win/icu-mingw64-libprefix.patch \
 	src_win/Makefile \
-	src_win/README \
-	src_win/zmq-configure.in.patch \
-	src_win/zmq-configure.patch \
-	src_win/zmq-zmq.h.patch \
-	src_win/zmq-zmq_utils.h.patch
+	src_win/README
 
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
