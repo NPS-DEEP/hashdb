@@ -76,6 +76,9 @@ class tcp_client_manager_t {
     // connect this socket
     boost::asio::connect(*socket_ptr, resolver_iterator);
 
+    // improve speed by disabling nagle's algorithm
+    socket_ptr->set_option(boost::asio::ip::tcp::no_delay(true));
+
     // add the socket prepared for this thread to the sockets map
     sockets[this_pthread] = socket_ptr;
 
@@ -139,7 +142,7 @@ class tcp_client_manager_t {
 
   // scan
   template<typename T, int RT>
-  int scan(const T& request, hashdb_t::scan_output_t& response) {
+  int scan(const std::vector<T>& request, hashdb_t::scan_output_t& response) {
 
     // clear any exsting response
     response.clear();
@@ -175,7 +178,7 @@ class tcp_client_manager_t {
       uint32_t response_count;
       boost::asio::read(
            *socket,
-           boost::asio::buffer(&response_count, sizeof(request_count)));
+           boost::asio::buffer(&response_count, sizeof(response_count)));
 
       // allocate the response vector with the expected size
       response = hashdb_t::scan_output_t(response_count);

@@ -47,7 +47,8 @@ class tcp_server_manager_t {
   boost::asio::io_service io_service;
   boost::mutex scan_mutex;
 
-  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
+//  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
+  typedef boost::asio::ip::tcp::socket* socket_ptr_t;
 
   // get the hashdigest type used by hashdb_manager
   uint32_t get_hashdb_hashdigest_type() {
@@ -66,6 +67,9 @@ class tcp_server_manager_t {
   // The session is run on a thread by a server dispatcher.
   void run_session(socket_ptr_t socket_ptr) {
     try {
+      // improve speed by disabling nagle's algorithm
+      socket_ptr->set_option(boost::asio::ip::tcp::no_delay(true));
+
       // loop servicing request/response cycles based on the hashdigest type
       // the hashdb_manager supports
       bool valid_session = true;
@@ -84,13 +88,13 @@ class tcp_server_manager_t {
     } catch (std::exception& e) {
       std::cerr << "Exception in request, request dropped: " << e.what() << "\n";
     }
+    delete socket_ptr;
   }
 
   // perform one request/response scan iteration
   // true = more, false=EOF
   template<typename T>
   bool do_scan(socket_ptr_t socket_ptr) {
-    typedef std::vector<std::pair<uint64_t, T> > request_t;
     
     // read the client's hashdigest type, acknowledging EOF
     uint32_t client_hashdigest_type;
@@ -99,7 +103,7 @@ class tcp_server_manager_t {
                     &client_hashdigest_type, sizeof(client_hashdigest_type)),
                     error);
 
-    // the protocol may leave the scan loop here
+    // the protocol allows us to leave the scan loop here
     if (error == boost::asio::error::eof) {
       // done
       return false;
@@ -120,9 +124,8 @@ class tcp_server_manager_t {
                                     &request_size, sizeof(request_size)));
 
     // allocate request and response vectors on heap
-    boost::shared_ptr<request_t> request_ptr(new request_t(request_size));
-    boost::shared_ptr<hashdb_t::scan_output_t>
-                         response_ptr(new hashdb_t::scan_output_t);
+    std::vector<T>* request_ptr = new std::vector<T>(request_size);
+    hashdb_t::scan_output_t* response_ptr = new hashdb_t::scan_output_t;
 
     // read the request
     boost::asio::read(*socket_ptr, boost::asio::buffer(*request_ptr));
@@ -132,14 +135,11 @@ class tcp_server_manager_t {
     scan_mutex.lock();
 
     // scan each input in turn
-    typename request_t::const_iterator it = request_ptr->begin();
-    while (it != request_ptr->end()) {
-      uint32_t count = hashdb_manager.find_count(it->second);
+    for (uint32_t i=0; i<request_size; ++i) {
+      uint32_t count = hashdb_manager.find_count((*request_ptr)[i]);
       if (count > 0) {
-        std::pair<uint64_t, uint32_t> return_item(it->first, count);
-        response_ptr->push_back(return_item);
+        response_ptr->push_back(std::pair<uint32_t, uint32_t>(i, count));
       }
-      ++it;
     }
 
     // unlock
@@ -152,6 +152,9 @@ class tcp_server_manager_t {
 
     // send the response vector
     boost::asio::write(*socket_ptr, boost::asio::buffer(*response_ptr));
+
+    delete request_ptr;
+    delete response_ptr;
 
     return true;
   }

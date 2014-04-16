@@ -42,6 +42,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include <climits>
 #include "file_modes.h"
 #include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
@@ -186,27 +187,27 @@ const char* hashdb_version() {
   // scan
   int hashdb_t::scan(const scan_input_md5_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<scan_input_md5_t, 1>(input, output);
+      return tcp_client_manager->scan<md5_t, 1>(input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha1_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<scan_input_sha1_t, 2>(input, output);
+      return tcp_client_manager->scan<sha1_t, 2>(input, output);
     } else {
       return scan_private(input, output);
     }
   }
   int hashdb_t::scan(const scan_input_sha256_t& input, scan_output_t& output) const {
     if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<scan_input_sha256_t, 3>(input, output);
+      return tcp_client_manager->scan<sha256_t, 3>(input, output);
     } else {
       return scan_private(input, output);
     }
   }
   template<typename T>
-  int hashdb_t::scan_private(const std::vector<std::pair<uint64_t, T> >& input,
+  int hashdb_t::scan_private(const std::vector<T>& input,
                              scan_output_t& output) const {
 
     // check mode
@@ -217,7 +218,12 @@ const char* hashdb_version() {
     // clear any old output
     output.clear();
            
-    // no socket implemented yet, so directly use hashdb
+    // since we optimize by limiting the return index size to uint32_t,
+    // we must reject vector size > uint32_t
+    if (input.size() > ULONG_MAX) {
+      std::cerr << "Error: array too large.  discarding.\n";
+      return -1;
+    }
 
     // perform all scans in one locked operation.
     // There is basically no cost for grouping since this iterates db access.
@@ -225,16 +231,12 @@ const char* hashdb_version() {
     MUTEX_LOCK(&M);
 
     // scan each input in turn
-    typename std::vector<std::pair<uint64_t, T> >::const_iterator it = input.begin();
-    while (it != input.end()) {
-      uint32_t count = hashdb_manager->find_count(it->second);
+    uint32_t input_size = (uint32_t)input.size();
+    for (uint32_t i=0; i<input_size; i++) {
+      uint32_t count = hashdb_manager->find_count(input[i]);
       if (count > 0) {
-        std::pair<uint64_t, uint32_t> return_item(it->first, count);
-        output.push_back(return_item);
-//        output.push_back(typename std::vector<std::pair<uint64_t, uint32_t> >(
-//                                                          it->first, count));
+        output.push_back(std::pair<uint32_t, uint32_t>(i, count));
       }
-      ++it;
     }
 
     MUTEX_UNLOCK(&M);

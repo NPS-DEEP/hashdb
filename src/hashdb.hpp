@@ -97,17 +97,17 @@ class hashdb_t {
    * The scan input is an array of pairs of uint64_t index values
    * and hash values to be scanned for.
    */
-  typedef std::vector<std::pair<uint64_t, md5_t> > scan_input_md5_t;
-  typedef std::vector<std::pair<uint64_t, sha1_t> > scan_input_sha1_t;
-  typedef std::vector<std::pair<uint64_t, sha256_t> > scan_input_sha256_t;
+  typedef std::vector<md5_t> scan_input_md5_t;
+  typedef std::vector<sha1_t> scan_input_sha1_t;
+  typedef std::vector<sha256_t> scan_input_sha256_t;
 
   /**
-   * The scan output is an array of pairs of uint64_t index values
+   * The scan output is an array of pairs of uint32_t index values
    * and uint32_t count values, where count indicates the number of
    * source entries that contain this value.  The scan output does not
    * contain scan responses for hashes that are not found (count=0).
    */
-  typedef std::vector<std::pair<uint64_t, uint32_t> > scan_output_t;
+  typedef std::vector<std::pair<uint32_t, uint32_t> > scan_output_t;
 
   private:
   // the interface is specific but the implementation is generic
@@ -116,7 +116,7 @@ class hashdb_t {
 
   // the interface is specific but the implementation is generic
   template<typename T>
-  int scan_private(const std::vector<std::pair<uint64_t, T> >& scan_input,
+  int scan_private(const std::vector<T>& scan_input,
            scan_output_t& scan_output) const;
 
   public:

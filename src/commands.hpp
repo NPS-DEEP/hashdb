@@ -477,8 +477,7 @@ class commands_t {
                   const dfxml_hashdigest_reader_manager_t& reader_manager) {
 
     // create space on the heap for the scan input and output vectors
-    std::vector<std::pair<uint64_t, T> >* scan_input = new
-                                       std::vector<std::pair<uint64_t, T> >;
+    std::vector<T>* scan_input = new std::vector<T>;
     hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t();
 
     // create the hashdb scan service
@@ -486,10 +485,8 @@ class commands_t {
 
     // get dfxml block hash entries into the scan_input request vector
     dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
-    uint64_t i=0;
     while (it != reader_manager.end()) {
-      scan_input->push_back(std::pair<uint64_t, T>(
-                                i++, T::fromhex(it->hashdigest)));
+      scan_input->push_back(T::fromhex(it->hashdigest));
       ++it;
     }
 
@@ -502,7 +499,7 @@ class commands_t {
       // print: '<index> \t <hexdigest> \t <count> \n' where count>0
       if (it2->second > 0) {
         std::cout << it2->first << "\t"
-                  << (*scan_input)[it2->first].second << "\t" // hexdigest
+                  << (*scan_input)[it2->first] << "\t" // hexdigest
                   << it2->second << "\n";
       }
       ++it2;
