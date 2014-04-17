@@ -43,7 +43,6 @@ const uint32_t QUERY_SHA256 = 3;
 
 class tcp_client_manager_t {
   private:
-//  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
   typedef boost::asio::ip::tcp::socket* socket_ptr_t;
 
   boost::asio::io_service io_service;
@@ -70,7 +69,6 @@ class tcp_client_manager_t {
     }
 
     // create the socket for this pthread
-//    socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
     socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
 
     // connect this socket
@@ -108,8 +106,6 @@ class tcp_client_manager_t {
     std::string host_string = host_port_string.substr(0, colon_position);
     std::string port_string = host_port_string.substr(colon_position+1);
 
-//std::cout << "tcp_client_manager.i host_string '" << host_string << "', port_string '" << port_string << "'\n";
-
     // return valid resolver iterator
     boost::asio::ip::tcp::resolver resolver(*io_service);
     boost::asio::ip::tcp::resolver::query query(boost::asio::ip::tcp::v4(), host_string, port_string);
@@ -136,7 +132,6 @@ class tcp_client_manager_t {
 
       socket_ptr->close();
       delete socket_ptr;
-//      delete *it;
     }
   }
 

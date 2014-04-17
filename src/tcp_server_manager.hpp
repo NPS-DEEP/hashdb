@@ -47,7 +47,6 @@ class tcp_server_manager_t {
   boost::asio::io_service io_service;
   boost::mutex scan_mutex;
 
-//  typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr_t;
   typedef boost::asio::ip::tcp::socket* socket_ptr_t;
 
   // get the hashdigest type used by hashdb_manager
