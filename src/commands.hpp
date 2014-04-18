@@ -596,6 +596,25 @@ class commands_t {
     }
   }
 
+  // get hashdb size values
+  static void get_size(const std::string& hashdb_dir) {
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // print size values
+    std::cout << "Hashdb size\n"
+              << "    hash store: "
+              << hashdb_manager.map_size() << "\n"
+              << "    hash duplicates store: "
+              << hashdb_manager.multimap_size() << "\n"
+              << "    source lookup store: "
+              << hashdb_manager.source_lookup_store_size() << "\n"
+              << "    source repository name store: "
+              << hashdb_manager.repository_name_lookup_store_size() << "\n"
+              << "    source filename store: "
+              << hashdb_manager.filename_lookup_store_size() << "\n";
+  }
+
   // get hashdb statistics
   static void get_statistics(const std::string& hashdb_dir) {
     // open hashdb

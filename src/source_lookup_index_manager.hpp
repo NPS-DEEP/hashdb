@@ -227,6 +227,17 @@ class source_lookup_index_manager_t {
                                 source_lookup_store.index_by_key_end());
   }
 
+  // sizes
+  size_t source_lookup_store_size() const {
+    return source_lookup_store.size();
+  }
+  size_t repository_name_lookup_store_size() const {
+    return repository_name_lookup_store.size();
+  }
+  size_t filename_lookup_store_size() const {
+    return filename_lookup_store.size();
+  }
+
   /**
    * Report status to consumer.
    */

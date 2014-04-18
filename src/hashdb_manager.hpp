@@ -400,7 +400,7 @@ class hashdb_manager_t {
     }
   }
 
-  // quick easy statistic
+  // map size
   size_t map_size() const {
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
@@ -413,7 +413,7 @@ class hashdb_manager_t {
     }
   }
 
-  // quick easy statistic
+  // multimap size
   size_t multimap_size() const {
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
@@ -424,6 +424,21 @@ class hashdb_manager_t {
         return sha256_manager->multimap_size();
       default: assert(0); exit(1);
     }
+  }
+
+  // source lookup store size
+  size_t source_lookup_store_size() const {
+    return source_lookup_index_manager.source_lookup_store_size();
+  }
+
+  // repository name lookup store size
+  size_t repository_name_lookup_store_size() const {
+    return source_lookup_index_manager.repository_name_lookup_store_size();
+  }
+
+  // filename lookup store size
+  size_t filename_lookup_store_size() const {
+    return source_lookup_index_manager.filename_lookup_store_size();
   }
 
 };

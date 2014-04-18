@@ -492,6 +492,12 @@ int main(int argc,char **argv) {
     require_no_repository_name();
     require_parameter_count(1);
     commands_t::get_sources(arg1);
+  } else if (command == "get_size") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::get_size(arg1);
   } else if (command == "get_statistics") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();

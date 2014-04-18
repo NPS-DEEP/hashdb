@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides map iterator.
+ * Provides map iterator which dereferences to std::pair<T, uint64_t>.
  */
 
 #ifndef MAP_ITERATOR_HPP
