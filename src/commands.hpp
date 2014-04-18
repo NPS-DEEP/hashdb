@@ -43,6 +43,7 @@
 #include "hashdigest_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
+#include "statistics_manager.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -589,11 +590,13 @@ class commands_t {
     // open the source lookup index manager for hashdb_dir
     source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
     source_lookup_index_iterator_t it = manager.begin();
+    std::cout << "Hashdb sources:\n";
     while (it != manager.end()) {
       std::cout << "repository name='" << it->first
                 << "', filename='" << it->second << "\n";
       ++it;
     }
+    std::cout << "\n";
   }
 
   // get hashdb size values
@@ -602,30 +605,24 @@ class commands_t {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // print size values
-    std::cout << "Hashdb size\n"
-              << "    hash store: "
+    std::cout << "Hashdb size:\n"
+              << "  hash store: "
               << hashdb_manager.map_size() << "\n"
-              << "    hash duplicates store: "
+              << "  hash duplicates store: "
               << hashdb_manager.multimap_size() << "\n"
-              << "    source lookup store: "
+              << "  source lookup store: "
               << hashdb_manager.source_lookup_store_size() << "\n"
-              << "    source repository name store: "
+              << "  source repository name store: "
               << hashdb_manager.repository_name_lookup_store_size() << "\n"
-              << "    source filename store: "
-              << hashdb_manager.filename_lookup_store_size() << "\n";
+              << "  source filename store: "
+              << hashdb_manager.filename_lookup_store_size() << "\n"
+              << "\n";
   }
 
   // get hashdb statistics
   static void get_statistics(const std::string& hashdb_dir) {
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // print obvious statistics
-    std::cout << "Hash store size: " << hashdb_manager.map_size()
-      << "\nHash duplicates store size: " << hashdb_manager.multimap_size()
-      << "\n";
+    statistics_manager_t::show_statistics(hashdb_dir);
   }
-
 };
 
 #endif

@@ -25,7 +25,10 @@
 #ifndef STATISTICS_MANAGER_HPP
 #define STATISTICS_MANAGER_HPP
 
-#include "hashdb_manager.hpp"
+#include "hashdb_settings.hpp"
+#include "map_types.h"
+#include "file_modes.h"
+#include "map_manager.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -44,18 +47,18 @@ class statistics_manager_t {
   private:
   static void show_histogram(const std::string& hashdb_dir) {
 
-    // get hashdb settings
-    settings_t settings;
-    hashdb_settings_reader_t::read_settings(hashdb_dir+"settings.xml", settings);
+    // get hashdb settings in order to use map_manager
+    hashdb_settings_t settings;
+    hashdb_settings_reader_t::read_settings(hashdb_dir+"/settings.xml", settings);
 
     // open map_manager
     switch(settings.hashdigest_type) {
       case HASHDIGEST_MD5:
         show_histogram<md5_t>(hashdb_dir, settings.map_type); return;
       case HASHDIGEST_SHA1:
-        show_histogram<sha1_t(hashdb_dir, settings.map_type); return;
+        show_histogram<sha1_t>(hashdb_dir, settings.map_type); return;
       case HASHDIGEST_SHA256:
-        show_histogram<sha256_t(hashdb_dir, settings.map_type); return;
+        show_histogram<sha256_t>(hashdb_dir, settings.map_type); return;
       default: assert(0); exit(1);
     }
   }
@@ -97,14 +100,14 @@ class statistics_manager_t {
       if (hash_histogram_it == hash_histogram->end()) {
 
         // this is the first hash found with this count value
-        hash_histogram->insert(std::pair<uint32_t, size_t>(count, 1);
+        hash_histogram->insert(std::pair<uint32_t, size_t>(count, 1));
 
       } else {
 
         // increment #hashes with this count
-        size_t old_number = hash_repeats_it->second;
-        hash_repeats->erase(count);
-        hash_repeats->insert(std::pair<uint32_t, size_t>(
+        size_t old_number = hash_histogram_it->second;
+        hash_histogram->erase(count);
+        hash_histogram->insert(std::pair<uint32_t, size_t>(
                                            count, old_number + 1));
       }
     }
@@ -112,15 +115,19 @@ class statistics_manager_t {
     // now show the statistics
 
     // totals
-    std::cout << "total hashes: " << total_hashes << "\n";
-              << "unique hashes: " << unique_hashes << "\n";
+    std::cout << "total hashes: " << total_hashes << "\n"
+              << "unique hashes: " << total_unique_hashes << "\n";
 
     // histogram
-    std::map<uint32_t, uint64_t>::iterator hash_repeats_it2;
-    for (hash_repeats_it2 = hash_repeats->begin(); hash_repeats_it2 != hash_repeats->end(); ++hash_repeats_it2) {
-      std::cout << "  " << hash_repeats_it2->first;
-                << "  " << hash_repeats_it2->second << "\n";
+    std::cout << "Histogram of count, #hashes with count:\n";
+    // hash histogram as <count, number of hashes with count>
+    std::map<uint32_t, uint64_t>::iterator hash_histogram_it2;
+    for (hash_histogram_it2 = hash_histogram->begin();
+         hash_histogram_it2 != hash_histogram->end(); ++hash_histogram_it2) {
+      std::cout << ", " << hash_histogram_it2->first << "\n"
+                << ", " << hash_histogram_it2->second << "\n";
     }
+    std::cout << "\n";
   }
 };
 
