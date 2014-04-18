@@ -486,24 +486,30 @@ int main(int argc,char **argv) {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::expand_identified_blocks(arg1, arg2);
-  } else if (command == "get_sources") {
+  } else if (command == "sources") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::get_sources(arg1);
-  } else if (command == "get_size") {
+    commands_t::sources(arg1);
+  } else if (command == "size") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::get_size(arg1);
-  } else if (command == "get_statistics") {
+    commands_t::size(arg1);
+  } else if (command == "statistics") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::get_statistics(arg1);
+    commands_t::statistics(arg1);
+  } else if (command == "duplicates") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::duplicates(arg1, arg2);
   } else {
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }

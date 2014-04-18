@@ -79,11 +79,12 @@ HAHSDB_INCS = \
 	tcp_client_manager.hpp \
 	tcp_server_manager.hpp \
 	hashdb_settings_writer.hpp \
-	hashdb_db_info_provider.hpp \
 	hash_values.hpp \
 	multimap_iterator.hpp \
 	map_iterator.hpp \
 	source_lookup_encoding.hpp \
+	statistics_command.hpp \
+	duplicates_command.hpp \
 	command_line.hpp \
 	bi_data_types.hpp \
 	bi_64_pair_data.hpp \

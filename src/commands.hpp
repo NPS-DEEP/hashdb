@@ -43,7 +43,8 @@
 #include "hashdigest_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
-#include "statistics_manager.hpp"
+#include "statistics_command.hpp"
+#include "duplicates_command.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -585,28 +586,43 @@ class commands_t {
   }
 
   // print sources referenced in this database
-  static void get_sources(const std::string& hashdb_dir) {
+  static void sources(const std::string& hashdb_dir) {
 
     // open the source lookup index manager for hashdb_dir
     source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
     source_lookup_index_iterator_t it = manager.begin();
-    std::cout << "Hashdb sources:\n";
+
+    // there is nothing to report if the source lookup index map is empty
+    if (it == manager.end()) {
+      std::cout << "The source lookup index map is empty.\n";
+      return;
+    }
+
+    // report each entry
     while (it != manager.end()) {
       std::cout << "repository name='" << it->first
-                << "', filename='" << it->second << "\n";
+                << "', filename='" << it->second << "'\n";
       ++it;
     }
-    std::cout << "\n";
   }
 
-  // get hashdb size values
-  static void get_size(const std::string& hashdb_dir) {
+  // show hashdb size values
+  static void size(const std::string& hashdb_dir) {
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
+    // there is nothing to report if the database is empty
+    if (hashdb_manager.map_size() == 0
+     && hashdb_manager.multimap_size() == 0
+     && hashdb_manager.source_lookup_store_size() == 0
+     && hashdb_manager.repository_name_lookup_store_size() == 0
+     && hashdb_manager.filename_lookup_store_size() == 0) {
+      std::cout << "The hash database is empty.\n";
+      return;
+    }
+
     // print size values
-    std::cout << "Hashdb size:\n"
-              << "  hash store: "
+    std::cout << "  hash store: "
               << hashdb_manager.map_size() << "\n"
               << "  hash duplicates store: "
               << hashdb_manager.multimap_size() << "\n"
@@ -615,13 +631,27 @@ class commands_t {
               << "  source repository name store: "
               << hashdb_manager.repository_name_lookup_store_size() << "\n"
               << "  source filename store: "
-              << hashdb_manager.filename_lookup_store_size() << "\n"
-              << "\n";
+              << hashdb_manager.filename_lookup_store_size() << "\n";
   }
 
-  // get hashdb statistics
-  static void get_statistics(const std::string& hashdb_dir) {
-    statistics_manager_t::show_statistics(hashdb_dir);
+  // show hashdb statistics
+  static void statistics(const std::string& hashdb_dir) {
+    statistics_command_t::show_statistics(hashdb_dir);
+  }
+
+  // show hashdb duplicates for a given duplicates count
+  static void duplicates(const std::string& hashdb_dir,
+                         const std::string& duplicates_string) {
+
+    // convert duplicates string to number
+    uint32_t duplicates_number;
+    try {
+      duplicates_number = boost::lexical_cast<uint32_t>(duplicates_string);
+    } catch(...) {
+      std::cerr << "Invalid number of duplicates: '" << duplicates_string << "'\n";
+      exit(1);
+    }
+    duplicates_command_t::show_duplicates(hashdb_dir, duplicates_number);
   }
 };
 

@@ -385,3 +385,46 @@ Boost: Create a new socket, then
        into the given socket.
        Then use that socket for your transaction.
 
+ZMQ sockets work more at the port level, with paired transmit and receive
+sequences, while Boost.Asio sockets are bound to specific connections.
+Each connection is managed in a Thread, improving performance.
+Boost.Asio is easier to use at the data protocol level because user data
+is wrapped into a boost buffer for transmittal.
+The buffer supports scatter/gather processing, avoiding unnecessary copies.
+I use it to wrap my std::vector lookup and response data, and it works nicely.
+
+To improve performance during transmit, I disable Nagle's algorithm
+via "my_socket.set_option(tcp::no_delay(true))".
+
+The hashdb client makes
+one transaction per call to scan_hashid().  I send a count of hashes and
+then a vector of hashes.  For MD5, this is uint32_t and then
+std::vector<md5_t>.  The number of hashes sent depends on the block
+size, the sector size, and sbuf.pagesize.  For example with a block size
+of 4096, a sector size of 512, and a pagesize of 4096+512, I send a
+count of two and then a vector of two hashes to scan.  For a pagesize of
+16,773,632, I send a count and hashes for 16,773,632/512 = 32,761
+hashes.  Since MD5 hashes are 16 bytes in size, the two examples are a
+payload of 4 and a payload of 2*8=32, and a payload of 4 and a payload
+of 32,761*16=524,176 bytes, respectively.
+
+The response consists of a count of
+matches and then a std::vector<std::pair<uint32_t, uint32_t>> of
+matches, where each std::pair<uint32_t, uint32_t> represents the index
+of a hash and the number of times the hash was sourced in the database. 
+Nothing is returned for hashes that were not matched, so the returned
+response vector will usually be empty.  Both the request and response
+vectors are managed on the heap.
+
+In the future, I may improve scanner performance more by having the scanner
+thread hand off hashdb scan requests to a separate lookup queue,
+allowing the scanner to begin processing the next sbuf
+rather than waiting for the Server's response before moving on.
+
+I should also double up write requests so that count and data are sent at once,
+thereby preventing a separate packet from going over the wire.
+
+------------------------------------------------------------
+gnu screen
+Start screen by "ssh -t user@path screen -d -r"
+
