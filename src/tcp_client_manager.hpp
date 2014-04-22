@@ -34,6 +34,13 @@
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
+  #ifdef WIN32
+    // help ptw32_handle_t because in the WIN32 configuration std::map
+    // needs operator<
+    inline bool operator< (const ptw32_handle_t& lh, const ptw32_handle_t& rh) {
+      return lh.p < rh.p;
+    }
+  #endif
 #endif
 
 // types of queries that are available

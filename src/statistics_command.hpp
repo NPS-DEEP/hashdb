@@ -78,14 +78,14 @@ class statistics_command_t {
     }
 
     // total number of hashes in the database
-    size_t total_hashes = 0;
+    uint64_t total_hashes = 0;
 
     // total number of unique hashes
-    size_t total_unique_hashes = 0;
+    uint64_t total_unique_hashes = 0;
 
     // hash histogram as <count, number of hashes with count>
-    std::map<uint32_t, size_t>* hash_histogram =
-                new std::map<uint32_t, size_t>();
+    std::map<uint32_t, uint64_t>* hash_histogram =
+                new std::map<uint32_t, uint64_t>();
     
     // iterate over all hashes in map and set statistics variables
     // note that *it is std::pair<T, uint64_t>
@@ -102,19 +102,19 @@ class statistics_command_t {
 
       // update hash_histogram information
       // look for existing entry
-      std::map<uint32_t, size_t>::iterator hash_histogram_it = hash_histogram->find(count);
+      std::map<uint32_t, uint64_t>::iterator hash_histogram_it = hash_histogram->find(count);
       if (hash_histogram_it == hash_histogram->end()) {
 
         // this is the first hash found with this count value
         // so start a new element for it
-        hash_histogram->insert(std::pair<uint32_t, size_t>(count, 1));
+        hash_histogram->insert(std::pair<uint32_t, uint64_t>(count, 1));
 
       } else {
 
         // increment existing value for number of hashes with this count
-        size_t old_number = hash_histogram_it->second;
+        uint64_t old_number = hash_histogram_it->second;
         hash_histogram->erase(count);
-        hash_histogram->insert(std::pair<uint32_t, size_t>(
+        hash_histogram->insert(std::pair<uint32_t, uint64_t>(
                                            count, old_number + 1));
       }
 

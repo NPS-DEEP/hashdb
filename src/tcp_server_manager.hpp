@@ -30,6 +30,8 @@
 #include "hashdb_manager.hpp"
 #include "file_modes.h"
 #include <boost/bind.hpp>
+//zz required because of compiler rules for Windows
+#define BOOST_THREAD_USE_LIB
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
 #include <dfxml/src/hash_t.h>

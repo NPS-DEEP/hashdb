@@ -30,6 +30,10 @@
 #include <vector>
 #include <stdint.h>
 
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+
 /**
  * Version of the hashdb library.
  */
