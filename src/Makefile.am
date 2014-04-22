@@ -89,8 +89,6 @@ HAHSDB_INCS = \
 	bi_data_types.hpp \
 	bi_64_pair_data.hpp \
 	bi_64_sv_data.hpp \
-	hashdb_filenames.cpp \
-	hashdb_filenames.hpp \
 	file_modes.h \
 	hash_algorithm_types.h \
 	hashdigest_types.h \

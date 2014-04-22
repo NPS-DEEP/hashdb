@@ -41,9 +41,9 @@ namespace hashdb_settings_writer {
   void write_settings(const std::string& hashdb_dir,
                       const settings_t& settings) {
 
-    std::string filename = hashdb_filenames_t::settings_filename(hashdb_dir);
+    std::string settings_filename = shdb_dir + "/settings.xml";
 
-    dfxml_writer x(filename, false);
+    dfxml_writer x(settings_filename, false);
     x.push("settings");
 
     std::string hashdb_version = "commit=" + HASHDB_GIT_COMMIT; // from config.h
