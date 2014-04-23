@@ -55,10 +55,6 @@ HAHSDB_INCS = \
 	bloom_rebuild_manager.hpp \
 	hashdb_element_lookup.hpp \
 	map_manager.hpp \
-	map_unordered_hash.hpp \
-	map_flat_sorted_vector.hpp \
-	map_btree.hpp \
-	map_red_black_tree.hpp \
 	hashdb_changes.hpp \
 	logger.hpp \
 	dfxml_hashdigest_reader_manager.hpp \
@@ -72,16 +68,10 @@ HAHSDB_INCS = \
 	hashdb_element.hpp \
 	multimap_manager.hpp \
 	hashdigest.hpp \
-	multimap_flat_sorted_vector.hpp \
-	multimap_red_black_tree.hpp \
-	multimap_unordered_hash.hpp \
-	multimap_btree.hpp \
 	tcp_client_manager.hpp \
 	tcp_server_manager.hpp \
 	hashdb_settings_writer.hpp \
 	hash_values.hpp \
-	multimap_iterator.hpp \
-	map_iterator.hpp \
 	source_lookup_encoding.hpp \
 	statistics_command.hpp \
 	duplicates_command.hpp \
@@ -92,8 +82,6 @@ HAHSDB_INCS = \
 	file_modes.h \
 	hash_algorithm_types.h \
 	hashdigest_types.h \
-	map_types.h \
-	multimap_types.h \
 	mutex_lock.hpp
 
 # note: btree/tools/*.cpp files exist but are expected to be unused

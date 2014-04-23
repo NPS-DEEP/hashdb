@@ -445,6 +445,7 @@ class commands_t {
   }
 
   // scan
+  template<typename T>
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
 
@@ -457,26 +458,6 @@ class commands_t {
       std::cout << "No entries in DFXML file\n";
       return;
     }
-
-    // perform scan based on the first hashdigest type from the dfxml reader
-    hashdb_element_t element = *reader_manager.begin();
-    if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_MD5)) {
-      scan_private<md5_t>(path_or_socket, reader_manager);
-    } else if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_SHA1)) {
-      scan_private<sha1_t>(path_or_socket, reader_manager);
-    } else if (element.hashdigest_type == hashdigest_type_to_string(HASHDIGEST_SHA256)) {
-      scan_private<sha256_t>(path_or_socket, reader_manager);
-    } else {
-      // program error
-      assert(0);
-      exit(1);
-    }
-  }
-
-  // private scan helper
-  template<typename T>
-  static void scan_private(const std::string& path_or_socket,
-                  const dfxml_hashdigest_reader_manager_t& reader_manager) {
 
     // create space on the heap for the scan input and output vectors
     std::vector<T>* scan_input = new std::vector<T>;

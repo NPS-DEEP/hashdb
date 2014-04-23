@@ -38,6 +38,7 @@
  */
 class duplicates_command_t {
   public:
+  template<typename T>
   static void show_duplicates(const std::string& hashdb_dir,
                               uint32_t duplicates) {
 
@@ -45,24 +46,8 @@ class duplicates_command_t {
     hashdb_settings_t settings;
     hashdb_settings_reader_t::read_settings(hashdb_dir+"/settings.xml", settings);
 
+
     // open map_manager
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        show_duplicates<md5_t>(hashdb_dir, settings.map_type, duplicates); return;
-      case HASHDIGEST_SHA1:
-        show_duplicates<sha1_t>(hashdb_dir, settings.map_type, duplicates); return;
-      case HASHDIGEST_SHA256:
-        show_duplicates<sha256_t>(hashdb_dir, settings.map_type, duplicates); return;
-      default: assert(0); exit(1);
-    }
-  }
-
-  template<typename T>
-  static void show_duplicates(const std::string& hashdb_dir,
-                              map_type_t map_type,
-                              uint32_t duplicates) {
-
-    // use map_manager
     map_manager_t<T> map_manager(hashdb_dir, READ_ONLY, map_type);
     map_iterator_t<T> it = map_manager.begin();
 

@@ -26,10 +26,9 @@
 #define    hashdb_settings_hpp
 
 //#include "hashdb_types.h"
-#include "map_types.h"
-#include "multimap_types.h"
 #include "hashdigest_types.h"
 #include "dfxml/src/dfxml_writer.h"
+#include "dfxml/src/hash_t.h"
 #include <string>
 #include <sstream>
 #include <stdint.h>
@@ -50,13 +49,9 @@ inline std::string bloom_state_to_string(bool state) {
 struct hashdb_settings_t {
 
   uint32_t hashdb_version;
-  hashdigest_type_t hashdigest_type;
+  uint32_t hashdigest_size;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
-  uint8_t source_lookup_index_bits;
-  map_type_t map_type;
-  multimap_type_t multimap_type;
-  uint32_t multimap_shard_count;
   // bloom 1 and 2
   bool     bloom1_is_used;
   uint32_t bloom1_M_hash_size;      // size of the bloom filter hash, in bits
@@ -69,13 +64,9 @@ struct hashdb_settings_t {
 
   hashdb_settings_t() :
         hashdb_version(2),
-        hashdigest_type(HASHDIGEST_MD5),
+        hashdigest_size(md5_t::size()),
         hash_block_size(4096),
         maximum_hash_duplicates(0),
-        source_lookup_index_bits(32),
-        map_type(MAP_BTREE),
-        multimap_type(MULTIMAP_BTREE),
-        multimap_shard_count(1),
         bloom1_is_used(true),
         bloom1_M_hash_size(28),
         bloom1_k_hash_functions(3),
@@ -91,11 +82,6 @@ struct hashdb_settings_t {
     os << "hash block size=" << hash_block_size << ", ";
     os << "maximum hash duplicates=" << maximum_hash_duplicates << ", ";
 
-    os << "number of index bits type=" << (uint32_t)source_lookup_index_bits << "\n";
-    os << "map type=" << map_type_to_string(map_type) << ", ";
-    os << "multimap type=" << multimap_type_to_string(multimap_type) << ", ";
-    os << "multimap_shard count=" << multimap_shard_count << "\n";
-
     os << "bloom 1 used=" << bloom_state_to_string(bloom1_is_used);
     os << ", bloom 1 k hash functions=" << bloom1_k_hash_functions;
     os << ", bloom 1 M hash size=" << bloom1_M_hash_size << "\n";
@@ -110,10 +96,6 @@ struct hashdb_settings_t {
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("hashdigest_type", hashdigest_type_to_string(hashdigest_type));
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
-    x.xmlout("source_lookup_index_bits", (uint32_t)source_lookup_index_bits);
-    x.xmlout("map_type", map_type_to_string(map_type));
-    x.xmlout("multimap_type", multimap_type_to_string(multimap_type));
-    x.xmlout("multimap_shard_count", multimap_shard_count);
 
     x.xmlout("bloom1_used", bloom_state_to_string(bloom1_is_used));
     x.xmlout("bloom1_k_hash_functions", (uint64_t)bloom1_k_hash_functions);

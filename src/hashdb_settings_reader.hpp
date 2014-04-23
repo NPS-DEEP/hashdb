@@ -37,9 +37,7 @@
   #include "io.h"
 #endif
 #include <libxml/parser.h>
-//#include "hashdb_types.h"
 #include "hashdb_settings.hpp"
-//#include "hashdb_filenames.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
@@ -65,19 +63,13 @@ class hashdb_settings_reader_t {
   // ************************************************************
 
   // nodes
-  // NOTE: use REGULAR_MAP_TYPE instead of MAP_TYPE because of a typedef
-  // conflict, likely in usr/include/asm-generic/mman-common.h
-  // or usr/include/bits/mman.h
   enum node_type_t {NO_NODE,
                     // hashdb
                     HASHDB_VERSION,
-                    HASH_BLOCK_SIZE,
                     HASHDIGEST_TYPE,
+                    HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
                     SOURCE_LOOKUP_INDEX_BITS,
-                    REGULAR_MAP_TYPE,
-                    MULTIMAP_TYPE,
-                    MULTIMAP_SHARD_COUNT,
                     BLOOM1_USED,
                     BLOOM1_K_HASH_FUNCTIONS,
                     BLOOM1_M_HASH_SIZE,
@@ -120,13 +112,10 @@ class hashdb_settings_reader_t {
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdb_version"))) return HASHDB_VERSION;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("source_lookup_index_bits"))) return SOURCE_LOOKUP_INDEX_BITS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("map_type"))) return REGULAR_MAP_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_type"))) return MULTIMAP_TYPE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("multimap_shard_count"))) return MULTIMAP_SHARD_COUNT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_k_hash_functions"))) return BLOOM1_K_HASH_FUNCTIONS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_M_hash_size"))) return BLOOM1_M_HASH_SIZE;
@@ -208,8 +197,6 @@ class hashdb_settings_reader_t {
 
     if (user_data.active_node == HASHDB_VERSION) {
       xmlChar_to_number(characters, len, user_data.settings->hashdb_version);
-    } else if (user_data.active_node == HASH_BLOCK_SIZE) {
-      xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
     } else if (user_data.active_node == HASHDIGEST_TYPE) {
       // get hashdigest type
       std::string hashdigest_type_string;
@@ -218,6 +205,8 @@ class hashdb_settings_reader_t {
       if (!is_valid) {
         exit_invalid_text("invalid hashdigest type", hashdigest_type_string);
       }
+    } else if (user_data.active_node == HASH_BLOCK_SIZE) {
+      xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
       xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
 
@@ -229,26 +218,6 @@ class hashdb_settings_reader_t {
         assert(0);
       }
       user_data.settings->source_lookup_index_bits = (uint8_t)temp;
-
-    } else if (user_data.active_node == REGULAR_MAP_TYPE) {
-      // get map type
-      std::string map_type_string;
-      xmlChar_to_string(characters, len, map_type_string);
-      is_valid = string_to_map_type(map_type_string, user_data.settings->map_type);
-      if (!is_valid) {
-        exit_invalid_text("invalid hash store map type", map_type_string);
-      }
-
-    } else if (user_data.active_node == MULTIMAP_TYPE) {
-      // get multimap type
-      std::string multimap_type_string;
-      xmlChar_to_string(characters, len, multimap_type_string);
-      is_valid = string_to_multimap_type(multimap_type_string, user_data.settings->multimap_type);
-      if (!is_valid) {
-        exit_invalid_text("invalid hash duplicates store", multimap_type_string);
-      }
-    } else if (user_data.active_node == MULTIMAP_SHARD_COUNT) {
-      xmlChar_to_number(characters, len, user_data.settings->multimap_shard_count);
 
     } else if (user_data.active_node == BLOOM1_USED) {
       std::string bloom1_state_string;

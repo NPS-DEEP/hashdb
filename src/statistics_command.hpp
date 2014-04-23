@@ -38,37 +38,19 @@
  */
 class statistics_command_t {
   public:
+  template<typename T>
   static void show_statistics(const std::string& hashdb_dir) {
 
     // show histogram statistic
-    show_histogram(hashdb_dir);
+    show_histogram<T>(hashdb_dir);
   }
 
   private:
+  template<typename T>
   static void show_histogram(const std::string& hashdb_dir) {
 
-    // get hashdb settings in order to use map_manager
-    hashdb_settings_t settings;
-    hashdb_settings_reader_t::read_settings(hashdb_dir+"/settings.xml", settings);
-
-    // open map_manager
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        show_histogram<md5_t>(hashdb_dir, settings.map_type); return;
-      case HASHDIGEST_SHA1:
-        show_histogram<sha1_t>(hashdb_dir, settings.map_type); return;
-      case HASHDIGEST_SHA256:
-        show_histogram<sha256_t>(hashdb_dir, settings.map_type); return;
-      default: assert(0); exit(1);
-    }
-  }
-
-  template<typename T>
-  static void show_histogram(const std::string& hashdb_dir,
-                             map_type_t map_type) {
-
     // use map_manager
-    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY, map_type);
+    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
     map_iterator_t<T> it = map_manager.begin();
 
     // there is nothing to report if the map is empty

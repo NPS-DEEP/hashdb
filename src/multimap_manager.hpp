@@ -19,37 +19,35 @@
 
 /**
  * \file
- * Provides interfaces to the hash map store using glue to the actual
- * storage maps used.
+ * Provides interfaces to the btree multimap.
  */
 
 #ifndef MULTIMAP_MANAGER_HPP
 #define MULTIMAP_MANAGER_HPP
-#include "multimap_btree.hpp"
-#include "multimap_flat_sorted_vector.hpp"
-#include "multimap_red_black_tree.hpp"
-#include "multimap_unordered_hash.hpp"
+#include <string>
+#include <cstdio>
+#include <cassert>
 #include "file_modes.h"
-#include "multimap_types.h"
-#include "multimap_iterator.hpp"
 
 /**
- * Provides interfaces to the hash map store that use glue to the actual
- * storage maps used.
+ * Provides interfaces to the btree multimap.
  */
-template<class T>  // hash type used as key in multimaps
+template<typename T>  // hash type used as key in multimaps
 class multimap_manager_t {
+
+  public:
+  typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
+  typedef multimap_t::const_iterator multimap_iterator_t;
+  typedef std::pair<multimap_iterator_t, multimap_iterator_t> multimap_iterator_range_t;
+
+  private:
 
   // multimap_manager properties
   const std::string filename;
   const file_mode_type_t file_mode;
-  const multimap_type_t multimap_type;
 
-  // map models
-  multimap_btree_t<T, uint64_t>*                 multimap_btree;
-  multimap_flat_sorted_vector_t<T, uint64_t>*    multimap_flat_sorted_vector;
-  multimap_red_black_tree_t<T, uint64_t>*        multimap_red_black_tree;
-  multimap_unordered_hash_t<T, uint64_t>*        multimap_unordered_hash;
+  // multimap
+  multimap_t multimap;
 
   // disallow copy and assignment
   multimap_manager_t(const multimap_manager_t&);
@@ -61,176 +59,136 @@ class multimap_manager_t {
    * Create a hash store of the given map type and file mode type.
    */
   multimap_manager_t (const std::string& p_hashdb_dir,
-                 file_mode_type_t p_file_mode,
-                 multimap_type_t p_map_type) :
+                 file_mode_type_t p_file_mode) :
        filename(p_hashdb_dir + "/hash_duplicates_store"),
        file_mode(p_file_mode),
-       multimap_type(p_map_type),
-
-       multimap_btree(0),
-       multimap_flat_sorted_vector(0),
-       multimap_red_black_tree(0),
-       multimap_unordered_hash(0) {
-
-    switch(multimap_type) {
-      case MULTIMAP_BTREE:
-        multimap_btree = new multimap_btree_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MULTIMAP_FLAT_SORTED_VECTOR:
-        multimap_flat_sorted_vector = new multimap_flat_sorted_vector_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MULTIMAP_RED_BLACK_TREE:
-        multimap_red_black_tree = new multimap_red_black_tree_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MULTIMAP_UNORDERED_HASH:
-        multimap_unordered_hash = new multimap_unordered_hash_t<T, uint64_t>(filename, file_mode);
-        return;
-      default:
-        assert(0);
-    }
-  }
-
-  ~multimap_manager_t() {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE: delete multimap_btree; return;
-      case MULTIMAP_FLAT_SORTED_VECTOR: delete multimap_flat_sorted_vector; return;
-      case MULTIMAP_RED_BLACK_TREE: delete multimap_red_black_tree; return;
-      case MULTIMAP_UNORDERED_HASH: delete multimap_unordered_hash; return;
-
-      default:
-        assert(0);
-    }
+       multimap(filename, file_mode_type_to_btree_flags_bitmask(file_mode){
   }
 
   // emplace
-  bool emplace(const T& key, uint64_t source_lookup_encoding) {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE:
-        return multimap_btree->emplace(key, source_lookup_encoding);
-      case MULTIMAP_FLAT_SORTED_VECTOR:
-        return multimap_flat_sorted_vector->emplace(key, source_lookup_encoding);
-      case MULTIMAP_RED_BLACK_TREE:
-        return multimap_red_black_tree->emplace(key, source_lookup_encoding);
-      case MULTIMAP_UNORDERED_HASH:
-        return multimap_unordered_hash->emplace(key, source_lookup_encoding);
-
-      default:
-        assert(0); std::exit(1);
+  bool emplace(const KEY_T& key, const uint64_t& pay) {
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: emplace called in RO mode");
     }
+
+    // see if element already exists
+    typename multimap_iterator_t it = find(key, pay);
+    if (it != multimap.end()) {
+      return false;
+    }
+
+    // insert the element
+    multimap.emplace(key, pay);
+    return true;
   }
 
   // erase
-  bool erase(const T& key, uint64_t source_lookup_encoding) {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE: return multimap_btree->erase(key, source_lookup_encoding);
-      case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase(key, source_lookup_encoding);
-      case MULTIMAP_RED_BLACK_TREE: return multimap_red_black_tree->erase(key, source_lookup_encoding);
-      case MULTIMAP_UNORDERED_HASH: return multimap_unordered_hash->erase(key, source_lookup_encoding);
-
-      default:
-        assert(0); std::exit(1);
+  bool erase(const KEY_T& key, const uint64_t& pay) {
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: erase called in RO mode");
     }
+
+    // find the uniquely identified element
+    multimap_iterator_range_t it = map.equal_range(key);
+    typename multimap_iterator_t lower = it.first;
+    if (lower == map->end()) {
+      return false;
+    }
+    const typename multimap_iterator_t upper = it.second;
+    for (; lower != upper; ++lower) {
+      if (lower->second == pay) {
+        // found it so erase it
+        map.erase(lower);
+        return true;
+      }
+    }
+    // pay is not a member in range of key
+    return false;
   }
 
-  // erase_range
-  size_t erase_range(const T& key) const {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE: return multimap_btree->erase_range(key);
-      case MULTIMAP_FLAT_SORTED_VECTOR: return multimap_flat_sorted_vector->erase_range(key);
-      case MULTIMAP_RED_BLACK_TREE: return multimap_red_black_tree->erase_range(key);
-      case MULTIMAP_UNORDERED_HASH: return multimap_unordered_hash->erase_range(key);
-
-      default:
-        assert(0); std::exit(1);
+  // erase range
+  size_t erase_range(const KEY_T& key) {
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: erase_range called in RO mode");
     }
+
+    return map.erase(key);
   }
 
-  // equal_range
-  std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> > equal_range(const T& key) const {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE: {
-        typename multimap_btree_t<T, uint64_t>::map_const_iterator_range_t it1 =
-                  multimap_btree->equal_range(key);
-        return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it1, false),
-                  multimap_iterator_t<T>(it1, true));
-      }
-      case MULTIMAP_FLAT_SORTED_VECTOR: {
-        typename multimap_flat_sorted_vector_t<T, uint64_t>::map_const_iterator_range_t it2 =
-                  multimap_flat_sorted_vector->equal_range(key);
-        return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it2, false),
-                  multimap_iterator_t<T>(it2, true));
-      }
-      case MULTIMAP_RED_BLACK_TREE: {
-        typename multimap_red_black_tree_t<T, uint64_t>::map_const_iterator_range_t it3 =
-                  multimap_red_black_tree->equal_range(key);
-        return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it3, false),
-                  multimap_iterator_t<T>(it3, true));
-      }
-      case MULTIMAP_UNORDERED_HASH: {
-        typename multimap_unordered_hash_t<T, uint64_t>::map_const_iterator_range_t it4 =
-                  multimap_unordered_hash->equal_range(key);
-        return std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >(
-                  multimap_iterator_t<T>(it4, false),
-                  multimap_iterator_t<T>(it4, true));
-      }
-
-      default:
-        assert(0); std::exit(1);
+  // find
+  typename multimap_iterator_t find(const KEY_T& key, const uint64_t& pay) const {
+    // find the uniquely identified element
+    multimap_iterator_range_t it = multimap.equal_range(key);
+    typename multimap_iterator_t lower = it.first;
+    if (lower == multimap.end()) {
+      return map.end();
     }
+    const typename multimap_iterator_t upper = it.second;
+    for (; lower != upper; ++lower) {
+      if (lower->second == pay) {
+        // found it
+        return lower;
+      }
+    }
+    // if here, pay was not found
+    return map.end();
+  }
+
+  // equal_range for key
+  multimap_iterator_range_t equal_range(const KEY_T& key) const {
+    multimap_iterator_range_t it = multimap.equal_range(key);
+    return it;
   }
 
   // has
-  bool has(const T& key, uint64_t source_lookup_encoding) const {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE:
-        return multimap_btree->has(key, source_lookup_encoding);
-      case MULTIMAP_FLAT_SORTED_VECTOR:
-        return multimap_flat_sorted_vector->has(key, source_lookup_encoding);
-      case MULTIMAP_RED_BLACK_TREE:
-        return multimap_red_black_tree->has(key, source_lookup_encoding);
-      case MULTIMAP_UNORDERED_HASH:
-        return multimap_unordered_hash->has(key, source_lookup_encoding);
+  bool has(const KEY_T& key, const uint64_t& pay) const {
+    // find the uniquely identified element
+    multimap_iterator_range_t it = multimap.equal_range(key);
+    typename multimap_iterator_t lower = it.first;
+    if (lower == map.end()) {
+      return false;
+    }
+    const typename multimap_iterator_t upper = it.second;
+    for (; lower != upper; ++lower) {
+      if (lower->second == pay) {
+        // found it
+        return true;
+      }
+    }
+    // if here, pay was not found
+    return false;
+  }
 
-      default:
-        assert(0); std::exit(1);
+  // has range
+  bool has_range(const KEY_T& key) const {
+    // find the key
+    multimap_iterator_t it = multimap.find(key);
+    if (it == map.end()) {
+      return false;
+    } else {
+      // found at least one
+      return true;
     }
   }
 
-  // has_range
-  bool has_range(const T& key) const {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE:
-        return multimap_btree->has_range(key);
-      case MULTIMAP_FLAT_SORTED_VECTOR:
-        return multimap_flat_sorted_vector->has_range(key);
-      case MULTIMAP_RED_BLACK_TREE:
-        return multimap_red_black_tree->has_range(key);
-      case MULTIMAP_UNORDERED_HASH:
-        return multimap_unordered_hash->has_range(key);
-
-      default:
-        assert(0); std::exit(1);
-    }
+  // begin
+  typename multimap_iterator_t begin() const {
+    return multimap.begin();
   }
 
-  // size
-  size_t size() const {
-    switch(multimap_type) {
-      case MULTIMAP_BTREE:
-        return multimap_btree->size();
-      case MULTIMAP_FLAT_SORTED_VECTOR:
-        return multimap_flat_sorted_vector->size();
-      case MULTIMAP_RED_BLACK_TREE:
-        return multimap_red_black_tree->size();
-      case MULTIMAP_UNORDERED_HASH:
-        return multimap_unordered_hash->size();
+  // end
+  typename multimap_iterator_t end() const {
+    return multimap.end();
+  }
 
-      default:
-        assert(0); std::exit(1);
-    }
+  // number of elements
+  size_t size() {
+    return multimap.size();
+  }
+
+  // count for key
+  size_t count(const KEY_T& key) const {
+    return multimap.count(key);
   }
 };
 #endif

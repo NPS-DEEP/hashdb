@@ -37,8 +37,6 @@
   #include <winsock2.h>
 #endif
 #include "file_modes.h"
-// zz not yet #include "map_types.h"
-// zz not yet #include "multimap_types.h"
 #include "hashdb_settings.hpp"
 #include "usage.hpp"
 #include "bloom_filter_calculator.hpp"

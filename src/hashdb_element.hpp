@@ -34,26 +34,24 @@
 /**
  * A hashdb element fully describes a hash source.
  */
+template<typename T>
 class hashdb_element_t {
 
   public:
 
-  std::string hashdigest;
-  std::string hashdigest_type; // "MD5", etc.
+  T key;
   uint32_t hash_block_size;         // typically 4096
   std::string repository_name;
   std::string filename;
   uint64_t file_offset;        // should be a multiple of hash_block_size
   
   // fully specified
-  hashdb_element_t(const std::string p_hashdigest,
-                   const std::string p_hashdigest_type,
+  hashdb_element_t(const T& p_key,
                    uint32_t p_block_size,
                    const std::string p_repository_name,
                    const std::string p_filename,
                    uint64_t p_file_offset) :
-          hashdigest(p_hashdigest),
-          hashdigest_type(p_hashdigest_type),
+          key(p_key),
           hash_block_size(p_block_size),
           repository_name(p_repository_name),
           filename(p_filename),
@@ -61,25 +59,8 @@ class hashdb_element_t {
   }
 
   // key-based with no source information
-  hashdb_element_t(const md5_t& key) :
-          hashdigest(key.hexdigest()),
-          hashdigest_type("MD5"),
-          hash_block_size(0),
-          repository_name(""),
-          filename(""),
-          file_offset(0) {
-  }
-  hashdb_element_t(const sha1_t& key) :
-          hashdigest(key.hexdigest()),
-          hashdigest_type("SHA1"),
-          hash_block_size(0),
-          repository_name(""),
-          filename(""),
-          file_offset(0) {
-  }
-  hashdb_element_t(const sha256_t& key) :
-          hashdigest(key.hexdigest()),
-          hashdigest_type("SHA256"),
+  hashdb_element_t(const T& p_key) :
+          key(p_key),
           hash_block_size(0),
           repository_name(""),
           filename(""),
@@ -88,15 +69,12 @@ class hashdb_element_t {
 
   // empty
   hashdb_element_t() :
-          hashdigest(""),
-          hashdigest_type(""),
+          key(),
           hash_block_size(0),
           repository_name(""),
           filename(""),
           file_offset(0) {
   }
-
-  // note: POD so permit default copy and assignment
 };
 
 #endif

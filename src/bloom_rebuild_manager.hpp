@@ -26,21 +26,18 @@
 #ifndef BLOOM_REBUILD_MANAGER_HPP
 #define BLOOM_REBUILD_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdigest_types.h"
 #include "bloom_filter_manager.hpp"
 #include "hashdigest.hpp" // for string style hashdigest and hashdigest type
-#include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 
+template<typename T>
 class bloom_rebuild_manager_t {
+
   private:
   const std::string hashdb_dir;
   hashdb_settings_t settings;
-
-  bloom_filter_manager_t<md5_t>* md5_manager;
-  bloom_filter_manager_t<sha1_t>* sha1_manager;
-  bloom_filter_manager_t<sha256_t>* sha256_manager;
+  bloom_filter_manager_t<T> *manager;
 
   // do not allow copy or assignment
   bloom_rebuild_manager_t(const bloom_rebuild_manager_t&);
@@ -51,9 +48,7 @@ class bloom_rebuild_manager_t {
                           hashdb_settings_t new_bloom_settings) :
                 hashdb_dir(p_hashdb_dir),
                 settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
-                md5_manager(0),
-                sha1_manager(0),
-                sha256_manager(0) {
+                manager(0) {
 
     // replace bloom settings with new changed settings
     settings.bloom1_is_used = new_bloom_settings.bloom1_is_used;
@@ -73,65 +68,22 @@ class bloom_rebuild_manager_t {
     remove(filename2.c_str());
 
     // initialize the bloom_filter_manager appropriate for the settings
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        md5_manager = new bloom_filter_manager_t<md5_t>(hashdb_dir, RW_NEW,
+    manager = new bloom_filter_manager_t<T>(hashdb_dir, RW_NEW,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions,
                                settings.bloom2_is_used,
                                settings.bloom2_M_hash_size,
                                settings.bloom2_k_hash_functions);
- 
-        return;
-      case HASHDIGEST_SHA1:
-        sha1_manager = new bloom_filter_manager_t<sha1_t>(hashdb_dir, RW_NEW,
-                               settings.bloom1_is_used,
-                               settings.bloom1_M_hash_size,
-                               settings.bloom1_k_hash_functions,
-                               settings.bloom2_is_used,
-                               settings.bloom2_M_hash_size,
-                               settings.bloom2_k_hash_functions);
-
-        return;
-      case HASHDIGEST_SHA256:
-        sha256_manager = new bloom_filter_manager_t<sha256_t>(hashdb_dir, RW_NEW,
-                               settings.bloom1_is_used,
-                               settings.bloom1_M_hash_size,
-                               settings.bloom1_k_hash_functions,
-                               settings.bloom2_is_used,
-                               settings.bloom2_M_hash_size,
-                               settings.bloom2_k_hash_functions);
-
-        return;
-      default: assert(0);
-    }
   }
 
   ~bloom_rebuild_manager_t() {
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5: delete md5_manager; return;
-      case HASHDIGEST_SHA1: delete sha1_manager; return;
-      case HASHDIGEST_SHA256: delete sha256_manager; return;
-      default: assert(0);
-    }
+    delete manager;
   }
 
   // add hash value
-  void add_hash_value(const hashdigest_t& hashdigest) {
-
-    switch(settings.hashdigest_type) {
-      case HASHDIGEST_MD5:
-        md5_manager->add_hash_value(md5_t::fromhex(hashdigest.hashdigest));
-        return;
-      case HASHDIGEST_SHA1:
-        sha1_manager->add_hash_value(sha1_t::fromhex(hashdigest.hashdigest));
-        return;
-      case HASHDIGEST_SHA256:
-        sha256_manager->add_hash_value(sha256_t::fromhex(hashdigest.hashdigest));
-        return;
-      default: assert(0);
-    }
+  void add_hash_value(const T& key) {
+    manager->add_hash_value(key);
   }
 };
 

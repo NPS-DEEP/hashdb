@@ -25,13 +25,12 @@
 
 #ifndef MAP_MANAGER_HPP
 #define MAP_MANAGER_HPP
-#include "map_btree.hpp"
-#include "map_flat_sorted_vector.hpp"
-#include "map_red_black_tree.hpp"
-#include "map_unordered_hash.hpp"
+
+#include <string>
+#include <cstdio>
+#include <cassert>
 #include "file_modes.h"
-#include "map_types.h"
-#include "map_iterator.hpp"
+#include <boost/btree/btree_map.hpp>
 
 /**
  * Provides interfaces to the hash map store that use glue to the actual
@@ -40,56 +39,21 @@
 template<class T>  // hash type used as key in maps
 class map_manager_t {
 
+  public:
+  typedef boost::btree::btree_map<T, uint64_t> map_t;
+  typedef map_t::const_iterator map_iterator_t;
+
+  private:
   // map_manager properties
   const std::string filename;
   const file_mode_type_t file_mode;
-  const map_type_t map_type;
 
-  // map models
-  map_btree_t<T, uint64_t>*                 map_btree;
-  map_flat_sorted_vector_t<T, uint64_t>*    map_flat_sorted_vector;
-  map_red_black_tree_t<T, uint64_t>*        map_red_black_tree;
-  map_unordered_hash_t<T, uint64_t>*        map_unordered_hash;
+  // btree map
+  map_t<T, uint64_t> map;
 
   // disallow copy and assignment
   map_manager_t(const map_manager_t&);
   map_manager_t& operator=(const map_manager_t&);
-
-  // helper to translate a specific iterator, bool pair to a generic pair
-  std::pair<map_iterator_t<T>, bool> map_pair(
-          typename map_btree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
-//typename map_btree_t<T, uint64_t>::map_pair_it_bool_t temp_pair = pair_it_bool;
-
-    // make generic iterator from specific iterator
-    map_iterator_t<T> map_it(pair_it_bool.first);
-    // make generic pair from generic iterator and specific bool
-    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
-    return generic_pair;
-  }
-  std::pair<map_iterator_t<T>, bool> map_pair(
-          typename map_flat_sorted_vector_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
-    // make generic iterator from specific iterator
-    map_iterator_t<T> map_it(pair_it_bool.first);
-    // make generic pair from generic iterator and specific bool
-    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
-    return generic_pair;
-  }
-  std::pair<map_iterator_t<T>, bool> map_pair(
-          typename map_red_black_tree_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
-    // make generic iterator from specific iterator
-    map_iterator_t<T> map_it(pair_it_bool.first);
-    // make generic pair from generic iterator and specific bool
-    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
-    return generic_pair;
-  }
-  std::pair<map_iterator_t<T>, bool> map_pair(
-          typename map_unordered_hash_t<T, uint64_t>::map_pair_it_bool_t pair_it_bool) {
-    // make generic iterator from specific iterator
-    map_iterator_t<T> map_it(pair_it_bool.first);
-    // make generic pair from generic iterator and specific bool
-    std::pair<map_iterator_t<T>, bool> generic_pair(map_it, pair_it_bool.second);
-    return generic_pair;
-  }
 
   public:
 
@@ -101,230 +65,90 @@ class map_manager_t {
                  map_type_t p_map_type) :
        filename(p_hashdb_dir + "/hash_store"),
        file_mode(p_file_mode),
-       map_type(p_map_type),
-
-       map_btree(0),
-       map_flat_sorted_vector(0),
-       map_red_black_tree(0),
-       map_unordered_hash(0) {
-
-    switch(map_type) {
-      case MAP_BTREE:
-        map_btree = new map_btree_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MAP_FLAT_SORTED_VECTOR:
-        map_flat_sorted_vector = new map_flat_sorted_vector_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MAP_RED_BLACK_TREE:
-        map_red_black_tree = new map_red_black_tree_t<T, uint64_t>(filename, file_mode);
-        return;
-      case MAP_UNORDERED_HASH:
-        map_unordered_hash = new map_unordered_hash_t<T, uint64_t>(filename, file_mode);
-        return;
-    }
-  }
-
-  ~map_manager_t() {
-    switch(map_type) {
-      case MAP_BTREE: delete map_btree; return;
-      case MAP_FLAT_SORTED_VECTOR: delete map_flat_sorted_vector; return;
-      case MAP_RED_BLACK_TREE: delete map_red_black_tree; return;
-      case MAP_UNORDERED_HASH: delete map_unordered_hash; return;
-
-      default:
-        assert(0);
-    }
+       map(filename, file_mode_type_to_btree_flags_bitmask(file_mode)) {
   }
 
   // emplace
   // return pair from composed map iterator and actual map's bool
-  std::pair<map_iterator_t<T>, bool> emplace(const T& key, uint64_t source_lookup_encoding) {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_pair(map_btree->emplace(key, source_lookup_encoding));
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_pair(map_flat_sorted_vector->emplace(key, source_lookup_encoding));
-      case MAP_RED_BLACK_TREE:
-        return map_pair(map_red_black_tree->emplace(key, source_lookup_encoding));
-      case MAP_UNORDERED_HASH:
-        return map_pair(map_unordered_hash->emplace(key, source_lookup_encoding));
+  std::pair<typename map_t::const_iterator, bool>
+  emplace(const T& key, const uint64_t& pay) {
 
-      default:
-        assert(0);
-        std::exit(1);
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: emplace called in RO mode");
     }
+
+    return map.emplace(key, pay);
   }
 
   // erase
-  bool erase(const T& key) {
-    switch(map_type) {
-      case MAP_BTREE:
-        return (map_btree->erase(key) == 1) ? true : false;
-      case MAP_FLAT_SORTED_VECTOR:
-        return (map_flat_sorted_vector->erase(key) == 1) ? true : false;
-      case MAP_RED_BLACK_TREE:
-        return (map_red_black_tree->erase(key) == 1) ? true : false;
-      case MAP_UNORDERED_HASH:
-        return (map_unordered_hash->erase(key) == 1) ? true : false;
-
-      default:
-        assert(0);
-        std::exit(1);
+  size_t erase(const KEY_T& key) {
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: erase called in RO mode");
     }
+
+    size_t num_erased = map.erase(key);
+    return num_erased;
   }
 
   // change
-  // return pair from composed map iterator and actual map's bool
-  std::pair<map_iterator_t<T>, bool> change(const T& key, uint64_t source_lookup_encoding) {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_pair(map_btree->change(key, source_lookup_encoding));
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_pair(map_flat_sorted_vector->change(key, source_lookup_encoding));
-      case MAP_RED_BLACK_TREE:
-        return map_pair(map_red_black_tree->change(key, source_lookup_encoding));
-      case MAP_UNORDERED_HASH:
-        return map_pair(map_unordered_hash->change(key, source_lookup_encoding));
+  std::pair<typename map_t::const_iterator, bool>
+  change(const KEY_T& key, const uint64_t& pay) {
+    if (file_mode == READ_ONLY) {
+      throw std::runtime_error("Error: change called in RO mode");
+    }
 
-      default:
-        assert(0);
-        std::exit(1);
+    // get original key
+    typename map_t::const_iterator itr = map.find(key);
+    if (itr == map.end()) {
+      // the old element did not exist
+      return std::pair<typename map_t::const_iterator, bool>(map.end(), false);
+    }
+    if (itr->second == pay) {
+      // the payload value is the same
+      return std::pair<typename map_t::const_iterator, bool>(itr, false);
+    }
+
+    // erase the old element
+    size_t num_erased = erase(key);
+    if (num_erased != 1) {
+      assert(0);
+      std::exit(1);
+//      // erase failed
+    } else {
+      // put in new
+      return map.emplace(key, pay);
     }
   }
 
-
   // find
-  map_iterator_t<T> find(const T& key) const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_iterator_t<T>(map_btree->find(key));
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_iterator_t<T>(map_flat_sorted_vector->find(key));
-      case MAP_RED_BLACK_TREE:
-        return map_iterator_t<T>(map_red_black_tree->find(key));
-      case MAP_UNORDERED_HASH:
-        return map_iterator_t<T>(map_unordered_hash->find(key));
-
-      default:
-        assert(0);
-        std::exit(1);
-    }
+  typename map_t::const_iterator find(const KEY_T& key) const {
+    typename map_t::const_iterator itr = map.find(key);
+    return itr;
   }
 
   // find_count
-  uint32_t find_count(const T& key) const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_btree->find_count(key);
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_flat_sorted_vector->find_count(key);
-      case MAP_RED_BLACK_TREE:
-        return map_red_black_tree->find_count(key);
-      case MAP_UNORDERED_HASH:
-        return map_unordered_hash->find_count(key);
-
-      default:
-        assert(0);
-        std::exit(1);
+  uint32_t find_count(const KEY_T& key) const {
+    typename map_t::const_iterator itr = map.find(key);
+    if (itr == map.end()) {
+      return 0;
+    } else {
+      return source_lookup_encoding::get_count(itr->second);
     }
   }
 
-/*
-  // has
-  bool has(const T& key) const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_btree->has(key);
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_flat_sorted_vector->has(key);
-      case MAP_RED_BLACK_TREE:
-        return map_red_black_tree->has(key);
-      case MAP_UNORDERED_HASH:
-        return map_unordered_hash->has(key);
-
-      default:
-        assert(0);
-        std::exit(1);
-    }
+  // number of elements
+  size_t size() {
+    return map.size();
   }
-*/
-
-  // size
-  size_t size() const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_btree->size();
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_flat_sorted_vector->size();
-      case MAP_RED_BLACK_TREE:
-        return map_red_black_tree->size();
-      case MAP_UNORDERED_HASH:
-        return map_unordered_hash->size();
-
-      default:
-        assert(0);
-        std::exit(1);
-    }
-  }
-
-/*
-  // map stats
-inline std::ostream& operator<<(std::ostream& os,
-        const class map_stats_t& s) {
-  os << "(filename=" << s.filename
-     << ", file_mode=" << file_mode_type_to_string(s.file_mode)
-     << ", data type name=" << s.data_type_name
-     << ", segment size=" << s.segment_size
-     << ", count size=" << s.count_size
-     << ")";
-  return os;
-}
-
-  void report_stats(dfxml_writer& x) const {
-    x.push("map_stats");
-    x.xmlout("filename", filename);
-    x.xmlout("file_mode", file_mode_type_to_string(file_mode));
-    x.xmlout("data_type_name", data_type_name);
-    x.xmlout("segment_size",segment_size);
-    x.xmlout("count_size",count_size);
-    x.pop();
-  }
-*/
 
   // begin
-  map_iterator_t<T> const begin() const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_iterator_t<T>(map_btree->begin());
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_iterator_t<T>(map_flat_sorted_vector->begin());
-      case MAP_RED_BLACK_TREE:
-        return map_iterator_t<T>(map_red_black_tree->begin());
-      case MAP_UNORDERED_HASH:
-        return map_iterator_t<T>(map_unordered_hash->begin());
-
-      default:
-        assert(0);
-        std::exit(1);
-    }
+  typename map_t::const_iterator begin() const {
+    return map.begin();
   }
 
   // end
-  map_iterator_t<T> const end() const {
-    switch(map_type) {
-      case MAP_BTREE:
-        return map_iterator_t<T>(map_btree->end());
-      case MAP_FLAT_SORTED_VECTOR:
-        return map_iterator_t<T>(map_flat_sorted_vector->end());
-      case MAP_RED_BLACK_TREE:
-        return map_iterator_t<T>(map_red_black_tree->end());
-      case MAP_UNORDERED_HASH:
-        return map_iterator_t<T>(map_unordered_hash->end());
-
-      default:
-        assert(0);
-        std::exit(1);
-    }
+  typename map_t::const_iterator end() const {
+    return map.end();
   }
 };
 #endif
