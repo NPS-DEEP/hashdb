@@ -144,7 +144,7 @@ class tcp_client_manager_t {
 
   // scan
   template<typename T, int RT>
-  int scan(const std::vector<T>& request, hashdb_t::scan_output_t& response) {
+  int scan(const std::vector<T>& request, hashdb_t__<T>::scan_output_t& response) {
 
     // clear any exsting response
     response.clear();
@@ -183,7 +183,7 @@ class tcp_client_manager_t {
            boost::asio::buffer(&response_count, sizeof(response_count)));
 
       // allocate the response vector with the expected size
-      response = hashdb_t::scan_output_t(response_count);
+      response = hashdb_t__<T>::scan_output_t(response_count);
 
       // read the response vector
       boost::asio::read(*socket, boost::asio::buffer(response));

@@ -51,7 +51,7 @@ class statistics_command_t {
 
     // use map_manager
     map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
-    map_iterator_t<T> it = map_manager.begin();
+    map_manager_t<T>::map_iterator_t it = map_manager.begin();
 
     // there is nothing to report if the map is empty
     if (it == map_manager.end()) {

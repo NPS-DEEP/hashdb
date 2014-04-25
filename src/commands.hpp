@@ -24,9 +24,7 @@
 
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-//#include "hashdb_types.h"
 #include "command_line.hpp"
-#include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "history_manager.hpp"
@@ -40,7 +38,6 @@
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 #include "tcp_server_manager.hpp"
-#include "hashdigest_types.h"
 #include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
 #include "statistics_command.hpp"

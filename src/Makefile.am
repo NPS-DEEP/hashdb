@@ -35,54 +35,50 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 AM_LDFLAGS = -static
 
 HAHSDB_INCS = \
-	map_multimap_iterator.hpp \
-	commands.hpp \
-	usage.hpp \
-	hashdb.cpp \
-	hashdb.hpp \
-	map_multimap_manager.hpp \
-	hashdb_manager.hpp \
-	source_lookup_index_manager.hpp \
-	hashdigest_manager.hpp \
-	hashdigest_iterator.hpp \
-	source_lookup_index_iterator.hpp \
-	bi_store.hpp \
-	identified_blocks_reader_iterator.hpp \
-	hashdb_iterator.hpp \
-	hashdb_settings_reader.hpp \
-	hashdb_settings.hpp \
-	identified_blocks_reader.hpp \
-	bloom_rebuild_manager.hpp \
-	hashdb_element_lookup.hpp \
-	map_manager.hpp \
-	hashdb_changes.hpp \
-	logger.hpp \
-	dfxml_hashdigest_reader_manager.hpp \
-	bloom_filter_manager.hpp \
-	hashdb_settings_manager.hpp \
-	dfxml_hashdigest_writer.hpp \
-	dfxml_hashdigest_reader.hpp \
-	history_manager.hpp \
-	bloom_filter_calculator.hpp \
-	bloom_filter.hpp \
-	hashdb_element.hpp \
-	multimap_manager.hpp \
-	hashdigest.hpp \
-	tcp_client_manager.hpp \
-	tcp_server_manager.hpp \
-	hashdb_settings_writer.hpp \
-	hash_values.hpp \
-	source_lookup_encoding.hpp \
-	statistics_command.hpp \
-	duplicates_command.hpp \
-	command_line.hpp \
-	bi_data_types.hpp \
 	bi_64_pair_data.hpp \
 	bi_64_sv_data.hpp \
+	bi_data_types.hpp \
+	bi_store.hpp \
+	bloom_filter_calculator.hpp \
+	bloom_filter.hpp \
+	bloom_filter_manager.hpp \
+	bloom_rebuild_manager.hpp \
+	command_line.cpp \
+	command_line.hpp \
+	commands.hpp \
+	dfxml_hashdigest_reader.hpp \
+	dfxml_hashdigest_reader_manager.hpp \
+	dfxml_hashdigest_writer.hpp \
+	duplicates_command.hpp \
 	file_modes.h \
-	hash_algorithm_types.h \
-	hashdigest_types.h \
-	mutex_lock.hpp
+	hashdb_changes.hpp \
+	hashdb.cpp \
+	hashdb_element.hpp \
+	hashdb_element_lookup.hpp \
+	hashdb.hpp \
+	hashdb_iterator.hpp \
+	hashdb_manager.hpp \
+	hashdb_settings.hpp \
+	hashdb_settings_manager.hpp \
+	hashdb_settings_reader.hpp \
+	hashdb_settings_writer.hpp \
+	history_manager.hpp \
+	identified_blocks_reader.hpp \
+	identified_blocks_reader_iterator.hpp \
+	logger.hpp \
+	main.cpp \
+	map_manager.hpp \
+	map_multimap_iterator.hpp \
+	map_multimap_manager.hpp \
+	multimap_manager.hpp \
+	mutex_lock.hpp \
+	source_lookup_encoding.hpp \
+	source_lookup_index_iterator.hpp \
+	source_lookup_index_manager.hpp \
+	statistics_command.hpp \
+	tcp_client_manager.hpp \
+	tcp_server_manager.hpp \
+	usage.hpp
 
 # note: btree/tools/*.cpp files exist but are expected to be unused
 BTREE_INCS = \
@@ -118,10 +114,6 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
 
-COMMAND_LINE_INCS = \
-	command_line.cpp \
-	command_line.hpp
-
 BLOOM_INCS = \
 	misc/bloom.c \
 	misc/bloom.h \
@@ -135,9 +127,6 @@ DFXML_INCS = \
 	dfxml/src/cppmutex.h
 
 hashdb_SOURCES = \
-	main.cpp \
-	usage.hpp \
-	$(COMMAND_LINE_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS) \
 	$(HAHSDB_INCS)

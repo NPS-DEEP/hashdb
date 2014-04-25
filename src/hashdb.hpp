@@ -40,7 +40,7 @@
 extern "C"
 const char* hashdb_version();
 
-// required inside hashdb_t
+// required inside hashdb_t__
 class hashdb_manager_t;
 class hashdb_changes_t;
 class logger_t;
@@ -49,7 +49,8 @@ class tcp_client_manager_t;
 /**
  * The hashdb library.
  */
-class hashdb_t {
+template<typename T>
+class hashdb_t__ {
   private:
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
@@ -72,7 +73,7 @@ class hashdb_t {
 
   public:
   // data structure for one import element
-  template<typename T>
+//  template<typename T>
   struct import_element_t {
     T hash;
     std::string repository_name;
@@ -93,17 +94,13 @@ class hashdb_t {
    * The import input is an array of import_element_t objects
    * to be imported into the hash database.
    */
-  typedef std::vector<import_element_t<md5_t> > import_input_md5_t;
-  typedef std::vector<import_element_t<sha1_t> > import_input_sha1_t;
-  typedef std::vector<import_element_t<sha256_t> > import_input_sha256_t;
+  typedef std::vector<import_element_t> import_input_t;
 
   /**
    * The scan input is an array of pairs of uint64_t index values
    * and hash values to be scanned for.
    */
-  typedef std::vector<md5_t> scan_input_md5_t;
-  typedef std::vector<sha1_t> scan_input_sha1_t;
-  typedef std::vector<sha256_t> scan_input_sha256_t;
+  typedef std::vector<T> scan_input_t;
 
   /**
    * The scan output is an array of pairs of uint32_t index values
@@ -113,77 +110,51 @@ class hashdb_t {
    */
   typedef std::vector<std::pair<uint32_t, uint32_t> > scan_output_t;
 
-  private:
-  // the interface is specific but the implementation is generic
-  template<typename T>
-  int import_private(const std::vector<import_element_t<T> >& import_input);
-
-  // the interface is specific but the implementation is generic
-  template<typename T>
-  int scan_private(const std::vector<T>& scan_input,
-           scan_output_t& scan_output) const;
-
-  public:
   /**
    * Constructor for importing.
    */
-  hashdb_t(const std::string& hashdb_dir,
-           const std::string& hashdigest_type,
-           uint32_t p_block_size,
-           uint32_t p_max_duplicates);
+  hashdb_t__(const std::string& hashdb_dir,
+             uint32_t p_block_size,
+             uint32_t p_max_duplicates);
 
   /**
-   * Import MD5 hash.
+   * Import.
    */
-  int import(const import_input_md5_t& import_input_md5);
-  /**
-   * Import SHA1 hash.
-   */
-  int import(const import_input_sha1_t& import_input_sha1);
-  /**
-   * Import SHA256 hash.
-   */
-  int import(const import_input_sha256_t& import_input_sha256);
+  int import(const import_input_t& import_input);
 
   /**
    * Constructor for scanning.
    */
-  hashdb_t(const std::string& path_or_socket);
+  hashdb_t__(const std::string& path_or_socket);
 
   /**
-   * Scan for MD5 hashes.
+   * Scan.
    */
-  int scan(const scan_input_md5_t& scan_input_md5,
+  int scan(const scan_input_t& scan_input,
            scan_output_t& scan_output) const;
 
-  /**
-   * Scan for SHA1 hashes.
-   */
-  int scan(const scan_input_sha1_t& scan_input_sha1,
-           scan_output_t& scan_output) const;
-
-  /**
-   * Scan for SHA256 hashes.
-   */
-  int scan(const scan_input_sha256_t& scan_input_sha256,
-           scan_output_t& scan_output) const;
 
 #ifdef HAVE_CXX11
-  hashdb_t(const hashdb_t& other) = delete;
+  hashdb_t__(const hashdb_t__& other) = delete;
 #else
   // don't use this.
-  hashdb_t(const hashdb_t& other) __attribute__ ((noreturn));
+  hashdb_t__(const hashdb_t__& other) __attribute__ ((noreturn));
 #endif
 
 #ifdef HAVE_CXX11
-  hashdb_t& operator=(const hashdb_t& other) = delete;
+  hashdb_t__& operator=(const hashdb_t__& other) = delete;
 #else
   // don't use this.
-  hashdb_t& operator=(const hashdb_t& other) __attribute__ ((noreturn));
+  hashdb_t__& operator=(const hashdb_t__& other) __attribute__ ((noreturn));
 #endif
 
-  ~hashdb_t();
+  ~hashdb_t__();
 };
+
+/**
+ * This hashdb is built to use MD5.
+ */
+typedef hashdb_t__<md5_t> hashdb_md5_t;
 
 #endif
 

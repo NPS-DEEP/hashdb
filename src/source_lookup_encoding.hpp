@@ -42,45 +42,32 @@
 class source_lookup_encoding {
 
   private:
-  // program error if source lookup index bits are out of range
-  static inline void check_source_lookup_index_bits(uint8_t i) {
-    if (i < 32 || i > 40) {
-      std::ostringstream ss;
-      ss << "Error: The source lookup index provided, " << (uint32_t)i
-         << ", is not within the valid range\nof 32 to 40.\n";
-      ss << "Cannot continue.\n";
-      throw std::runtime_error(ss.str());
-    }
-  }
+
+  // the hardcoded bit distribution
+  static uint8_t source_lookup_index_bits = 32;
 
   // runtime error if source lookup index is too large
-  static inline void check_source_lookup_index(uint8_t i, uint64_t index) {
-    check_source_lookup_index_bits(i);
-    uint64_t max = ((uint64_t)1<<i) - 2;
+  static inline void check_source_lookup_index(uint64_t index) {
+    uint64_t max = ((uint64_t)1<<source_lookup_index_bits) - 2;
     if (index > max) {
       std::ostringstream ss;
       ss << "Error: The source lookup index is too large for the "
-         << (uint32_t)i << " index bits\ncurrently specified.\n";
+         << (uint32_t)source_lookup_index_bits
+         << " index bits\ncurrently specified.\n";
       ss << "Specifically, requested index " << index << " > max " << max << ".\n";
-      ss << "No more source lookup records can be allocated at this setting.\n";
-      ss << "Please rebuild the dataset using a larger number of index bits.\n";
-      ss << "Cannot continue.\n";
       throw std::runtime_error(ss.str());
     }
   }
 
   // runtime error if hash block offset is too large
-  static inline void check_hash_block_offset(uint8_t i, uint64_t offset) {
-    check_source_lookup_index_bits(i);
-    uint64_t max = ((uint64_t)1<<(64 - i)) - 2;
+  static inline void check_hash_block_offset(uint64_t offset) {
+    uint64_t max = ((uint64_t)1<<(64 - source_lookup_index_bits)) - 2;
     if (offset > max) {
       std::ostringstream ss;
       ss << "Error: The hash block offset value is too large for the "
-         << (uint32_t)i << " index bits\ncurrently specified.\n";
+         << (uint32_t)source_lookup_index_bits
+         << " index bits\ncurrently specified.\n";
       ss << "Specifically, requested offset " << offset << " > max " << max << ".\n";
-      ss << "No more source lookup records can be allocated at this setting.\n";
-      ss << "Please rebuild dataset using a smaller number of index bits.\n";
-      ss << "Cannot continue.\n";
       throw std::runtime_error(ss.str());
     }
   }
@@ -94,14 +81,12 @@ class source_lookup_encoding {
    * and hash block offset value given a bit size specification.
    */
   static uint64_t get_source_lookup_encoding(
-                   uint8_t source_lookup_index_bits,
                    uint64_t source_lookup_index,
                    uint64_t hash_block_offset) {
 
     // validate request
-    check_source_lookup_index_bits(source_lookup_index_bits);
-    check_source_lookup_index(source_lookup_index_bits, source_lookup_index);
-    check_hash_block_offset(source_lookup_index_bits, hash_block_offset);
+    check_source_lookup_index(source_lookup_index);
+    check_hash_block_offset(hash_block_offset);
 
     return ((source_lookup_index << (64 - source_lookup_index_bits)) | hash_block_offset);
   }
@@ -131,11 +116,7 @@ class source_lookup_encoding {
    * Get the source lookup index value given a bit size specification.
    */
   static uint64_t get_source_lookup_index(
-                   uint8_t source_lookup_index_bits,
                    uint64_t source_lookup_encoding) {
-
-    // validate request
-    check_source_lookup_index_bits(source_lookup_index_bits);
 
     return source_lookup_encoding >> (64 - source_lookup_index_bits);
   }
@@ -144,11 +125,7 @@ class source_lookup_encoding {
    * Get the hash block offset value given a bit size specification.
    */
   static uint64_t get_hash_block_offset(
-                   uint8_t source_lookup_index_bits,
                    uint64_t source_lookup_encoding) {
-
-    // validate request
-    check_source_lookup_index_bits(source_lookup_index_bits);
 
     // calculate bit mask for the hash block offset bit fields
     uint64_t bit_mask = ((uint64_t)1<<(64 - source_lookup_index_bits)) - 1;

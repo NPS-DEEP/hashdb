@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <climits>
 #include "file_modes.h"
-#include "hashdigest_types.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "hashdb_manager.hpp"
@@ -65,10 +64,9 @@ const char* hashdb_version() {
 }
 
   // constructor for importing
-  hashdb_t::hashdb_t(const std::string& p_hashdb_dir,
-           const std::string& hashdigest_type,
-           uint32_t p_block_size,
-           uint32_t p_max_duplicates) :
+  hashdb_t__<typename T>::hashdb_t(const std::string& p_hashdb_dir,
+                                   uint32_t p_block_size,
+                                   uint32_t p_max_duplicates) :
                        hashdb_dir(p_hashdb_dir),
                        mode(HASHDB_IMPORT),
                        hashdb_manager(0),
@@ -85,14 +83,6 @@ const char* hashdb_version() {
 
     // create and write settings to hashdb_dir
     hashdb_settings_t settings;
-    bool success = string_to_hashdigest_type(hashdigest_type,
-                                             settings.hashdigest_type);
-    if (success == false) {
-      // setup must be successful
-      std::cerr << "Error: Invalid hash algorithm name: '" << hashdigest_type
-                << "'\nCannot continue.\n";
-      exit(1);
-    }
     settings.hash_block_size = block_size;
     settings.maximum_hash_duplicates = max_duplicates;
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
@@ -107,17 +97,8 @@ const char* hashdb_version() {
   }
 
   // import
-  int hashdb_t::import(const import_input_md5_t& input) {
+  int hashdb_t__<typename T>::import(const import_input_t& input) {
     return import_private(input);
-  }
-  int hashdb_t::import(const import_input_sha1_t& input) {
-    return import_private(input);
-  }
-  int hashdb_t::import(const import_input_sha256_t& input) {
-    return import_private(input);
-  }
-  template<typename T>
-  int hashdb_t::import_private(const std::vector<import_element_t<T> >& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -136,7 +117,6 @@ const char* hashdb_version() {
       // convert input to hashdb_element_t
       hashdigest_t hashdigest(it->hash);
       hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                      hashdigest.hashdigest_type,
                                       block_size,
                                       it->repository_name,
                                       it->filename,
@@ -155,7 +135,7 @@ const char* hashdb_version() {
   }
 
   // constructor for scanning
-  hashdb_t::hashdb_t(const std::string& path_or_socket) :
+  hashdb_t__<typename T>::hashdb_t(const std::string& path_or_socket) :
                      hashdb_dir(path_or_socket),
                      mode(path_or_socket.find("tcp://") != 0
                          ? HASHDB_SCAN : HASHDB_SCAN_SOCKET),
@@ -185,30 +165,7 @@ const char* hashdb_version() {
   }
 
   // scan
-  int hashdb_t::scan(const scan_input_md5_t& input, scan_output_t& output) const {
-    if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<md5_t, 1>(input, output);
-    } else {
-      return scan_private(input, output);
-    }
-  }
-  int hashdb_t::scan(const scan_input_sha1_t& input, scan_output_t& output) const {
-    if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<sha1_t, 2>(input, output);
-    } else {
-      return scan_private(input, output);
-    }
-  }
-  int hashdb_t::scan(const scan_input_sha256_t& input, scan_output_t& output) const {
-    if (mode == HASHDB_SCAN_SOCKET) {
-      return tcp_client_manager->scan<sha256_t, 3>(input, output);
-    } else {
-      return scan_private(input, output);
-    }
-  }
-  template<typename T>
-  int hashdb_t::scan_private(const std::vector<T>& input,
-                             scan_output_t& output) const {
+  int hashdb_t__<typename T>::scan(const scan_input_t& input, scan_output_t& output) const {
 
     // check mode
     if (mode != HASHDB_SCAN) {
@@ -246,7 +203,7 @@ const char* hashdb_version() {
   }
 
   // destructor
-  hashdb_t::~hashdb_t() {
+  hashdb_t__<typename T>::~hashdb_t() {
     switch(mode) {
       case HASHDB_NONE:
         return;
@@ -269,7 +226,7 @@ const char* hashdb_version() {
 // mac doesn't seem to be up to c++11 yet
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
-  hashdb_t::hashdb_t(const hashdb_t& other) :
+  hashdb_t__<typename T>::hashdb_t(const hashdb_t__<typename T>hashdb_t& other) :
                  hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
@@ -283,7 +240,7 @@ const char* hashdb_version() {
     exit(1);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
-  hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
+  hashdb_t__<typename T>& hashdb_t__<typename T>::operator=(const hashdb_t__<typename T>& other) {
     assert(0);
     exit(1);
   }

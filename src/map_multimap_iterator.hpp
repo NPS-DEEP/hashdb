@@ -25,9 +25,7 @@
 #ifndef MAP_MULTIMAP_ITERATOR_HPP
 #define MAP_MULTIMAP_ITERATOR_HPP
 #include "map_manager.hpp"
-#include "map_iterator.hpp"
 #include "multimap_manager.hpp"
-#include "multimap_iterator.hpp"
 #include "source_lookup_encoding.hpp" // to obtain count from payload
 
 template<class T>
@@ -39,9 +37,8 @@ class map_multimap_iterator_t {
   const multimap_manager_t<T>* multimap_manager;
 
   // internal state
-  map_iterator_t<T> map_iterator;
-  multimap_iterator_t<T> multimap_iterator;
-  multimap_iterator_t<T> multimap_end_iterator;
+  map_manager_t<T>::map_iterator_t map_iterator;
+  multimap_manager_t<T>::multimap_iterator_t multimap_iterator;
   bool in_multimap_iterator;
 
   // the dereferenced value, specifically, std::pair<T, uint64_t>

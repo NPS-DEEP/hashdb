@@ -69,7 +69,6 @@ class hashdb_settings_reader_t {
                     HASHDIGEST_TYPE,
                     HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
-                    SOURCE_LOOKUP_INDEX_BITS,
                     BLOOM1_USED,
                     BLOOM1_K_HASH_FUNCTIONS,
                     BLOOM1_M_HASH_SIZE,
@@ -115,7 +114,6 @@ class hashdb_settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("source_lookup_index_bits"))) return SOURCE_LOOKUP_INDEX_BITS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_k_hash_functions"))) return BLOOM1_K_HASH_FUNCTIONS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_M_hash_size"))) return BLOOM1_M_HASH_SIZE;
@@ -200,24 +198,11 @@ class hashdb_settings_reader_t {
     } else if (user_data.active_node == HASHDIGEST_TYPE) {
       // get hashdigest type
       std::string hashdigest_type_string;
-      xmlChar_to_string(characters, len, hashdigest_type_string);
-      is_valid = string_to_hashdigest_type(hashdigest_type_string, user_data.settings->hashdigest_type);
-      if (!is_valid) {
-        exit_invalid_text("invalid hashdigest type", hashdigest_type_string);
-      }
+      user_data.settings->hashdigest_type = hashdigest_type_string;
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {
       xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
       xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
-
-    } else if (user_data.active_node == SOURCE_LOOKUP_INDEX_BITS) {
-      // get number of index bits
-      uint32_t temp;
-      xmlChar_to_number(characters, len, temp);
-      if (temp > 64) {
-        assert(0);
-      }
-      user_data.settings->source_lookup_index_bits = (uint8_t)temp;
 
     } else if (user_data.active_node == BLOOM1_USED) {
       std::string bloom1_state_string;

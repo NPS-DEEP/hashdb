@@ -66,7 +66,7 @@ class multimap_manager_t {
   }
 
   // emplace
-  bool emplace(const KEY_T& key, const uint64_t& pay) {
+  bool emplace(const T& key, const uint64_t& pay) {
     if (file_mode == READ_ONLY) {
       throw std::runtime_error("Error: emplace called in RO mode");
     }
@@ -83,7 +83,7 @@ class multimap_manager_t {
   }
 
   // erase
-  bool erase(const KEY_T& key, const uint64_t& pay) {
+  bool erase(const T& key, const uint64_t& pay) {
     if (file_mode == READ_ONLY) {
       throw std::runtime_error("Error: erase called in RO mode");
     }
@@ -107,7 +107,7 @@ class multimap_manager_t {
   }
 
   // erase range
-  size_t erase_range(const KEY_T& key) {
+  size_t erase_range(const T& key) {
     if (file_mode == READ_ONLY) {
       throw std::runtime_error("Error: erase_range called in RO mode");
     }
@@ -116,7 +116,7 @@ class multimap_manager_t {
   }
 
   // find
-  typename multimap_iterator_t find(const KEY_T& key, const uint64_t& pay) const {
+  typename multimap_iterator_t find(const T& key, const uint64_t& pay) const {
     // find the uniquely identified element
     multimap_iterator_range_t it = multimap.equal_range(key);
     typename multimap_iterator_t lower = it.first;
@@ -135,13 +135,13 @@ class multimap_manager_t {
   }
 
   // equal_range for key
-  multimap_iterator_range_t equal_range(const KEY_T& key) const {
+  multimap_iterator_range_t equal_range(const T& key) const {
     multimap_iterator_range_t it = multimap.equal_range(key);
     return it;
   }
 
   // has
-  bool has(const KEY_T& key, const uint64_t& pay) const {
+  bool has(const T& key, const uint64_t& pay) const {
     // find the uniquely identified element
     multimap_iterator_range_t it = multimap.equal_range(key);
     typename multimap_iterator_t lower = it.first;
@@ -160,7 +160,7 @@ class multimap_manager_t {
   }
 
   // has range
-  bool has_range(const KEY_T& key) const {
+  bool has_range(const T& key) const {
     // find the key
     multimap_iterator_t it = multimap.find(key);
     if (it == map.end()) {
@@ -187,7 +187,7 @@ class multimap_manager_t {
   }
 
   // count for key
-  size_t count(const KEY_T& key) const {
+  size_t count(const T& key) const {
     return multimap.count(key);
   }
 };

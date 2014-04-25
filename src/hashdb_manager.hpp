@@ -27,7 +27,6 @@
 #ifndef HASHDB_MANAGER_HPP
 #define HASHDB_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdigest_types.h"
 #include "map_multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
 #include "hashdb_settings.hpp"

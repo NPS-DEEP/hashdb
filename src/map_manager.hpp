@@ -41,7 +41,7 @@ class map_manager_t {
 
   public:
   typedef boost::btree::btree_map<T, uint64_t> map_t;
-  typedef map_t::const_iterator map_iterator_t;
+  typedef typename map_t::const_iterator map_iterator_t;
 
   private:
   // map_manager properties
@@ -49,7 +49,7 @@ class map_manager_t {
   const file_mode_type_t file_mode;
 
   // btree map
-  map_t<T, uint64_t> map;
+  map_t map;
 
   // disallow copy and assignment
   map_manager_t(const map_manager_t&);
@@ -61,8 +61,7 @@ class map_manager_t {
    * Create a hash store of the given map type and file mode type.
    */
   map_manager_t (const std::string& p_hashdb_dir,
-                 file_mode_type_t p_file_mode,
-                 map_type_t p_map_type) :
+                 file_mode_type_t p_file_mode) :
        filename(p_hashdb_dir + "/hash_store"),
        file_mode(p_file_mode),
        map(filename, file_mode_type_to_btree_flags_bitmask(file_mode)) {
@@ -81,7 +80,7 @@ class map_manager_t {
   }
 
   // erase
-  size_t erase(const KEY_T& key) {
+  size_t erase(const T& key) {
     if (file_mode == READ_ONLY) {
       throw std::runtime_error("Error: erase called in RO mode");
     }
@@ -92,7 +91,7 @@ class map_manager_t {
 
   // change
   std::pair<typename map_t::const_iterator, bool>
-  change(const KEY_T& key, const uint64_t& pay) {
+  change(const T& key, const uint64_t& pay) {
     if (file_mode == READ_ONLY) {
       throw std::runtime_error("Error: change called in RO mode");
     }
@@ -121,13 +120,13 @@ class map_manager_t {
   }
 
   // find
-  typename map_t::const_iterator find(const KEY_T& key) const {
+  typename map_t::const_iterator find(const T& key) const {
     typename map_t::const_iterator itr = map.find(key);
     return itr;
   }
 
   // find_count
-  uint32_t find_count(const KEY_T& key) const {
+  uint32_t find_count(const T& key) const {
     typename map_t::const_iterator itr = map.find(key);
     if (itr == map.end()) {
       return 0;

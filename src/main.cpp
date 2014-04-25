@@ -145,9 +145,6 @@ int main(int argc,char **argv) {
       // hashdb settings
       {"hash_block_size", required_argument, 0, 'p'},
       {"max_duplicates", required_argument, 0, 'm'},
-      {"storage_type", required_argument, 0, 't'},
-      {"algorithm", required_argument, 0, 'a'},
-      {"bits", required_argument, 0, 'b'},
 
       // bloom filter settings
       {"bloom1", required_argument, 0, 'A'},
@@ -164,7 +161,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHVp:m:t:a:b:A:B:C:D:E:F:r", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHV p:m:t:a:b:A:B:C:D:E:F:r", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -210,36 +207,6 @@ int main(int argc,char **argv) {
           std::cerr << "Invalid value for maximum hash duplicates: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
-        break;
-      }
-      case 't': {	// storage type
-        has_hashdb_settings = true;
-        bool is_ok_map = string_to_map_type(optarg, hashdb_settings.map_type);
-        bool is_ok_multimap = string_to_multimap_type(optarg, hashdb_settings.multimap_type);
-        if (!is_ok_map || !is_ok_multimap) {
-          std::cerr << "Invalid value for storage type: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        break;
-      }
-      case 'a': {	// hash algorithm
-        has_hashdb_settings = true;
-        bool is_ok_hashdigest_type = string_to_hashdigest_type(optarg, hashdb_settings.hashdigest_type);
-        if (!is_ok_hashdigest_type) {
-          std::cerr << "Invalid value for hashdigest type: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        break;
-      }
-      case 'b': {	// number of index bits
-        has_hashdb_settings = true;
-        // boost can't cast to uint8_t
-        uint32_t temp = boost::lexical_cast<uint32_t>(optarg);
-        if (temp < 32 || temp > 40) {
-          std::cerr << "Invalid value for number of index bits: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        hashdb_settings.source_lookup_index_bits = (uint8_t)temp;
         break;
       }
 
@@ -332,13 +299,7 @@ int main(int argc,char **argv) {
         repository_name = optarg;
         break;
       }
-/*
-      case 's': {	// server socket endpoint
-        has_server_path_or_socket = true;
-        zz server_path_or_socket = optarg;
-        break;
-      }
-*/
+
       default:
 //        std::cerr << "unexpected command character " << ch << "\n";
         exit(1);

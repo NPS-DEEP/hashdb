@@ -110,6 +110,10 @@ ENDIAN_INCS = \
 	../endian/include/boost/endian/detail/intrinsic.hpp \
 	../endian/include/boost/endian/conversion.hpp
 
+COMMAND_LINE_INCS = \
+	../command_line.cpp \
+	../command_line.hpp
+
 # ############################################################
 # tests
 # ############################################################
@@ -121,111 +125,62 @@ source_lookup_encoding_test_SOURCES = \
 map_and_multimap_test_SOURCES = \
 	boost_fix.hpp \
 	to_key_helper.hpp \
-        ../map_types.h \
-        ../file_modes.h \
-	../dfxml/src/dfxml_writer.h \
-	../map_red_black_tree.hpp \
-	../map_unordered_hash.hpp \
-	../map_flat_sorted_vector.hpp \
-	../map_btree.hpp \
-	../multimap_red_black_tree.hpp \
-	../multimap_unordered_hash.hpp \
-	../multimap_flat_sorted_vector.hpp \
-	../multimap_btree.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	map_and_multimap_test.cpp
 
 btree_bug_test_SOURCES = \
 	boost_fix.hpp \
-	../map_btree.hpp \
-	../multimap_btree.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	btree_bug_test.cpp
 
 map_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-	../map_red_black_tree.hpp \
-	../map_unordered_hash.hpp \
-	../map_flat_sorted_vector.hpp \
-	../map_btree.hpp \
-	../map_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	map_manager_test.cpp
 
 multimap_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../file_modes.h \
-	../multimap_types.h \
-	../multimap_red_black_tree.hpp \
-	../multimap_unordered_hash.hpp \
-	../multimap_flat_sorted_vector.hpp \
-	../multimap_btree.hpp \
-	../multimap_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	multimap_manager_test.cpp
 
 map_multimap_iterator_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-	../map_manager.hpp \
-        ../multimap_types.h \
-	../multimap_manager.hpp \
-	../hashdb_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	map_multimap_iterator_test.cpp
 
 bloom_filter_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../file_modes.h \
-	../bloom_filter_manager.hpp \
 	$(BLOOM_INCS) \
 	bloom_filter_manager_test.cpp
 
 settings_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../hashdb_settings.hpp \
-	../hashdb_settings_manager.hpp \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(DFXML_INCS) \
 	settings_manager_test.cpp
 
 logger_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../logger.hpp \
-	../hashdb_changes.hpp \
-	../hashdb_settings.hpp \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(DFXML_INCS) \
 	logger_test.cpp
 
 hashdb_element_test_SOURCES = \
 	boost_fix.hpp \
-	../hashdb_element.hpp \
 	$(DFXML_INCS) \
 	hashdb_element_test.cpp
 
 map_multimap_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-        ../multimap_types.h \
-	../map_multimap_manager.hpp \
-	../map_multimap_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	map_multimap_manager_test.cpp
@@ -233,23 +188,14 @@ map_multimap_manager_test_SOURCES = \
 source_lookup_index_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../source_lookup_index_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
 	source_lookup_index_manager_test.cpp
 
 hashdb_iterator_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-        ../multimap_types.h \
-	../map_multimap_manager.hpp \
-	../map_multimap_iterator.hpp \
-	../hashdb_iterator.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdb_iterator_test.cpp
@@ -257,16 +203,8 @@ hashdb_iterator_test_SOURCES = \
 hashdb_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-        ../multimap_types.h \
-	../map_multimap_manager.hpp \
-	../map_multimap_iterator.hpp \
-	../hashdb_iterator.hpp \
-	../hashdb_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdb_manager_test.cpp
@@ -274,54 +212,34 @@ hashdb_manager_test_SOURCES = \
 dfxml_hashdigest_rw_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../dfxml_hashdigest_reader.hpp \
-	../dfxml_hashdigest_reader_manager.hpp \
-	../dfxml_hashdigest_writer.hpp \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(DFXML_INCS) \
 	dfxml_hashdigest_rw_test.cpp
 
 hashdigest_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../file_modes.h \
-        ../map_types.h \
-        ../multimap_types.h \
-	../map_multimap_manager.hpp \
-	../map_multimap_iterator.hpp \
-	../hashdb_iterator.hpp \
-	../hashdb_manager.hpp \
-	../hashdigest_iterator.hpp \
-	../hashdigest_manager.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	hashdigest_manager_test.cpp
 
 identified_blocks_reader_test_SOURCES = \
 	boost_fix.hpp \
-	../identified_blocks_reader_iterator.hpp \
-	../identified_blocks_reader.hpp \
 	identified_blocks_reader_test.cpp
 
 libhashdb_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	../dfxml/src/hash_t.h \
+	$(DFXML_INCS) \
 	libhashdb_test.cpp
 	
 commands_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-        ../commands.hpp \
-	../hashdb.cpp \
-	../hashdb.hpp \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	../command_line.cpp \
-	../command_line.hpp \
+	$(COMMAND_LINE_INCS) \
 	$(BLOOM_INCS) \
 	$(DFXML_INCS) \
 	commands_test.cpp

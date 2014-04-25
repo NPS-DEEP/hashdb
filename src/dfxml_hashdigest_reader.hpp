@@ -37,6 +37,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
+#include <dfxml/src/hash_t.h>
 
 // a class is used just to keep members private
 template <class T>
@@ -118,10 +119,13 @@ class dfxml_hashdigest_reader_t {
     std::string filename = user_data.filename;
     uint64_t file_offset = user_data.byte_run_file_offset_attribute;
 
-    // create the hashdb element
-    hashdb_element_t hashdb_element(
-               hashdigest,
-               hashdigest_type,
+    // create the MD5 hashdb element
+    if (hashdigest_type != "MD5") {
+      std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
+                << hashdigest_type << "\n";
+    }
+    hashdb_element_t<md5_t> hashdb_element(
+               md5_t(hashdigest),
                hash_block_size,
                selected_repository_name,
                filename,

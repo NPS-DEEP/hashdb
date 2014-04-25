@@ -126,7 +126,7 @@ class tcp_server_manager_t {
 
     // allocate request and response vectors on heap
     std::vector<T>* request_ptr = new std::vector<T>(request_size);
-    hashdb_t::scan_output_t* response_ptr = new hashdb_t::scan_output_t;
+    hashdb_t__<T>::scan_output_t* response_ptr = new hashdb_t__<T>::scan_output_t;
 
     // read the request
     boost::asio::read(*socket_ptr, boost::asio::buffer(*request_ptr));

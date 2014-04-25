@@ -30,9 +30,7 @@
 #include "hashdb_settings_manager.hpp"
 #include "hashdb_changes.hpp"
 #include "map_manager.hpp"
-#include "map_iterator.hpp"
 #include "multimap_manager.hpp"
-#include "multimap_iterator.hpp"
 #include "map_multimap_iterator.hpp"
 #include "bloom_filter_manager.hpp"
 #include "source_lookup_encoding.hpp"
@@ -50,6 +48,8 @@
 template<class T>
 class map_multimap_manager_t {
   private:
+  typedef map_manager<T>::map_iterator_t map_iterator_t;
+
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
 
@@ -64,7 +64,7 @@ class map_multimap_manager_t {
 
   // helper
   void map_emplace(const T& key, uint64_t source_lookup_encoding) {
-    std::pair<map_iterator_t<T>, bool> emplace_pair =
+    std::pair<map_iterator_t, bool> emplace_pair =
                              map_manager.emplace(key, source_lookup_encoding);
     if (emplace_pair.second != true) {
       // really bad if emplace fails
@@ -83,7 +83,7 @@ class map_multimap_manager_t {
 
   // helper
   void map_change(const T& key, uint64_t source_lookup_encoding) {
-    std::pair<map_iterator_t<T>, bool> change_pair =
+    std::pair<map_iterator_t, bool> change_pair =
                              map_manager.change(key, source_lookup_encoding);
     if (change_pair.second != true) {
       // really bad if change fails
@@ -150,7 +150,7 @@ class map_multimap_manager_t {
     }
 
     // bloom filter gave positive, so see if this key is in map
-    map_iterator_t<T> map_iterator = map_manager.find(key);
+    map_iterator_t map_iterator = map_manager.find(key);
     if (map_iterator == map_manager.end()) {
       // key not in map so add element to map
       map_emplace(key, source_lookup_encoding);
@@ -206,7 +206,7 @@ class map_multimap_manager_t {
               hashdb_changes_t& changes) {
 
     // approach depends on count
-    map_iterator_t<T> map_iterator = map_manager.find(key);
+    map_iterator_t map_iterator = map_manager.find(key);
     if (map_iterator == map_manager.end()) {
       // no key
       ++changes.hashes_not_removed_no_element;
@@ -232,7 +232,7 @@ class map_multimap_manager_t {
         ++changes.hashes_removed;
 
         // also move last remaining element in multimap to map
-        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >
+        std::pair<multimap_iterator_t, multimap_iterator_t>
                               equal_range(multimap_manager.equal_range(key));
         map_change(equal_range.first->first, equal_range.first->second);
         multimap_erase(equal_range.first->first, equal_range.first->second);
@@ -259,7 +259,7 @@ class map_multimap_manager_t {
 
   void remove_key(const T& key, hashdb_changes_t& changes) {
     // approach depends on count
-    map_iterator_t<T> map_iterator = map_manager.find(key);
+    map_iterator_t map_iterator = map_manager.find(key);
     if (map_iterator == map_manager.end()) {
       // no key
       ++changes.hashes_not_removed_no_hash;
@@ -286,23 +286,23 @@ class map_multimap_manager_t {
   }
 
   // find
-  std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
+  std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
           find(const T& key) const {
-    map_iterator_t<T> map_it = map_manager.find(key);
+    map_iterator_t map_it = map_manager.find(key);
 
     if (map_it == map_manager.end()) {
       // begin is at end
-      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
-       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
-       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it)));
+      return std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
+       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it)));
 
     } else {
       // end is at the next entry in the map iterator
-      map_iterator_t<T> end_it(map_it);
+      map_iterator_t end_it(map_it);
       ++end_it;
-      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
-       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
-       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, end_it)));
+      return std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
+       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t(&map_manager, &multimap_manager, end_it)));
     }
   }
 
@@ -331,14 +331,14 @@ class map_multimap_manager_t {
   }
 */
 
-  map_multimap_iterator_t<T> begin() {
-    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
-                                      map_manager.begin());
+  map_multimap_iterator_t begin() {
+    return map_multimap_iterator_t(&map_manager, &multimap_manager,
+                                   map_manager.begin());
   }
 
-  map_multimap_iterator_t<T> end() {
-    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
-                                      map_manager.end());
+  map_multimap_iterator_t end() {
+    return map_multimap_iterator_t(&map_manager, &multimap_manager,
+                                   map_manager.end());
   }
 
   size_t map_size() const {

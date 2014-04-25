@@ -55,11 +55,11 @@ inline bool string_to_file_mode_type(const std::string& name, file_mode_type_t& 
 
 inline boost::btree::flags::bitmask file_mode_type_to_btree_flags_bitmask(
                        file_mode_type_t& type) {
-  if (file_mode == READ_ONLY) {
+  if (type == READ_ONLY) {
     return boost::btree::flags::read_only;
-  } else if (file_mode == RW_NEW) {
+  } else if (type == RW_NEW) {
     return boost::btree::flags::truncate;
-  } else if (file_mode == RW_MODIFY) {
+  } else if (type == RW_MODIFY) {
     return boost::btree::flags::read_write;
   } else {
     assert(0);
