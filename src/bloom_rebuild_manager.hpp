@@ -27,7 +27,6 @@
 #define BLOOM_REBUILD_MANAGER_HPP
 #include "file_modes.h"
 #include "bloom_filter_manager.hpp"
-#include "hashdigest.hpp" // for string style hashdigest and hashdigest type
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 

@@ -37,8 +37,8 @@ class multimap_manager_t {
 
   public:
   typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
-  typedef multimap_t::const_iterator multimap_iterator_t;
-  typedef std::pair<multimap_iterator_t, multimap_iterator_t> multimap_iterator_range_t;
+  typedef typename multimap_t::const_iterator multimap_iterator_t;
+  typedef typename std::pair<multimap_iterator_t, multimap_iterator_t> multimap_iterator_range_t;
 
   private:
 
@@ -62,7 +62,7 @@ class multimap_manager_t {
                  file_mode_type_t p_file_mode) :
        filename(p_hashdb_dir + "/hash_duplicates_store"),
        file_mode(p_file_mode),
-       multimap(filename, file_mode_type_to_btree_flags_bitmask(file_mode){
+       multimap(filename, file_mode_type_to_btree_flags_bitmask(file_mode)){
   }
 
   // emplace
@@ -72,7 +72,7 @@ class multimap_manager_t {
     }
 
     // see if element already exists
-    typename multimap_iterator_t it = find(key, pay);
+    multimap_iterator_t it = find(key, pay);
     if (it != multimap.end()) {
       return false;
     }
@@ -89,16 +89,16 @@ class multimap_manager_t {
     }
 
     // find the uniquely identified element
-    multimap_iterator_range_t it = map.equal_range(key);
-    typename multimap_iterator_t lower = it.first;
-    if (lower == map->end()) {
+    multimap_iterator_range_t it = multimap.equal_range(key);
+    multimap_iterator_t lower = it.first;
+    if (lower == multimap.end()) {
       return false;
     }
-    const typename multimap_iterator_t upper = it.second;
+    const multimap_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
       if (lower->second == pay) {
         // found it so erase it
-        map.erase(lower);
+        multimap.erase(lower);
         return true;
       }
     }
@@ -112,18 +112,18 @@ class multimap_manager_t {
       throw std::runtime_error("Error: erase_range called in RO mode");
     }
 
-    return map.erase(key);
+    return multimap.erase(key);
   }
 
   // find
-  typename multimap_iterator_t find(const T& key, const uint64_t& pay) const {
+  multimap_iterator_t find(const T& key, const uint64_t& pay) const {
     // find the uniquely identified element
     multimap_iterator_range_t it = multimap.equal_range(key);
-    typename multimap_iterator_t lower = it.first;
+    multimap_iterator_t lower = it.first;
     if (lower == multimap.end()) {
-      return map.end();
+      return multimap.end();
     }
-    const typename multimap_iterator_t upper = it.second;
+    const multimap_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
       if (lower->second == pay) {
         // found it
@@ -131,7 +131,7 @@ class multimap_manager_t {
       }
     }
     // if here, pay was not found
-    return map.end();
+    return multimap.end();
   }
 
   // equal_range for key
@@ -144,11 +144,11 @@ class multimap_manager_t {
   bool has(const T& key, const uint64_t& pay) const {
     // find the uniquely identified element
     multimap_iterator_range_t it = multimap.equal_range(key);
-    typename multimap_iterator_t lower = it.first;
-    if (lower == map.end()) {
+    multimap_iterator_t lower = it.first;
+    if (lower == multimap.end()) {
       return false;
     }
-    const typename multimap_iterator_t upper = it.second;
+    const multimap_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
       if (lower->second == pay) {
         // found it
@@ -163,7 +163,7 @@ class multimap_manager_t {
   bool has_range(const T& key) const {
     // find the key
     multimap_iterator_t it = multimap.find(key);
-    if (it == map.end()) {
+    if (it == multimap.end()) {
       return false;
     } else {
       // found at least one
@@ -172,12 +172,12 @@ class multimap_manager_t {
   }
 
   // begin
-  typename multimap_iterator_t begin() const {
+  multimap_iterator_t begin() const {
     return multimap.begin();
   }
 
   // end
-  typename multimap_iterator_t end() const {
+  multimap_iterator_t end() const {
     return multimap.end();
   }
 

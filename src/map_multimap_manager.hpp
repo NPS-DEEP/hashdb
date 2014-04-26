@@ -45,10 +45,12 @@
  * The map_multimap_manager<T> treats map_manager<T> and multimap_manager<T>
  * as a single managed database.
  */
-template<class T>
+template<typename T>
 class map_multimap_manager_t {
   private:
-  typedef map_manager<T>::map_iterator_t map_iterator_t;
+  typedef typename map_manager_t<T>::map_iterator_t map_iterator_t;
+  typedef typename multimap_manager_t<T>::multimap_iterator_t multimap_iterator_t;
+//  typedef map_multimap_iterator_t<T> map_multimap_iterator_t;
 
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
@@ -125,8 +127,8 @@ class map_multimap_manager_t {
           hashdb_dir(p_hashdb_dir),
           file_mode(p_file_mode),
           settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
-          map_manager(hashdb_dir, file_mode, settings.map_type),
-          multimap_manager(hashdb_dir, file_mode, settings.multimap_type),
+          map_manager(hashdb_dir, file_mode),
+          multimap_manager(hashdb_dir, file_mode),
           bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
@@ -286,23 +288,23 @@ class map_multimap_manager_t {
   }
 
   // find
-  std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
+  std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
           find(const T& key) const {
     map_iterator_t map_it = map_manager.find(key);
 
     if (map_it == map_manager.end()) {
       // begin is at end
-      return std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
-       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it),
-       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it)));
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it)));
 
     } else {
       // end is at the next entry in the map iterator
       map_iterator_t end_it(map_it);
       ++end_it;
-      return std::pair<map_multimap_iterator_t, map_multimap_iterator_t>
-       (map_multimap_iterator_t(&map_manager, &multimap_manager, map_it),
-       (map_multimap_iterator_t(&map_manager, &multimap_manager, end_it)));
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
+       (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, end_it)));
     }
   }
 
@@ -331,13 +333,13 @@ class map_multimap_manager_t {
   }
 */
 
-  map_multimap_iterator_t begin() {
-    return map_multimap_iterator_t(&map_manager, &multimap_manager,
+  map_multimap_iterator_t<T> begin() {
+    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
                                    map_manager.begin());
   }
 
-  map_multimap_iterator_t end() {
-    return map_multimap_iterator_t(&map_manager, &multimap_manager,
+  map_multimap_iterator_t<T> end() {
+    return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
                                    map_manager.end());
   }
 

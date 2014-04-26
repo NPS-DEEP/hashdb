@@ -30,8 +30,6 @@
 #include "history_manager.hpp"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
-#include "hashdigest_manager.hpp"
-#include "hashdigest_iterator.hpp"
 #include "bloom_rebuild_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
@@ -61,41 +59,39 @@
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
+template<typename T>
 class commands_t {
   private:
   // perform intersection, optimized for speed
-  static void intersect_optimized(const hashdb_manager_t& smaller_hashdb,
-                                  const hashdb_manager_t& larger_hashdb,
-                                  hashdb_manager_t& hashdb3,
+  static void intersect_optimized(const hashdb_manager_t<T>& smaller_hashdb,
+                                  const hashdb_manager_t<T>& larger_hashdb,
+                                  hashdb_manager_t<T>& hashdb3,
                                   hashdb_changes_t& changes) {
 
     // get iterator for smaller db
-    hashdb_iterator_t smaller_it = smaller_hashdb.begin();
+    hashdb_iterator_t<T> smaller_it = smaller_hashdb.begin();
 
     // iterate over smaller db
     while (smaller_it != smaller_hashdb.end()) {
 
-      // generate a hashdigest for this element
-      hashdigest_t hashdigest(smaller_it->hashdigest,
-                              smaller_it->hashdigest_type);
-
       // see if hashdigest is in larger db
-      uint32_t larger_count = larger_hashdb.find_count(hashdigest);
+      uint32_t larger_count = larger_hashdb.find_count(smaller_it->key);
 
       if (larger_count > 0) {
-        // there is a match
-        uint32_t smaller_count = smaller_hashdb.find_count(hashdigest);
+        // there is a match in larger db
+        T matching_key = smaller_it->key;
 
         // add hashes from smaller
+        uint32_t smaller_count = smaller_hashdb.find_count(matching_key);
         for (uint32_t i = 0; i<smaller_count; ++i) {
-          hashdb_element_t hashdb_element = *smaller_it;
+          hashdb_element_t<T> hashdb_element = *smaller_it;
           hashdb3.insert(hashdb_element, changes);
           ++smaller_it;
         }
 
         // add hashes from larger
-        std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-                                      larger_hashdb.find(hashdigest);
+        std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
+                                      larger_hashdb.find(matching_key);
         while (it_pair.first != it_pair.second) {
           hashdb3.insert(*it_pair.first, changes);
           ++it_pair.first;
@@ -116,7 +112,7 @@ class commands_t {
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
 
     // get hashdb files to exist because other file modes require them
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_NEW);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
 
     logger_t logger(hashdb_dir, "create");
     logger.add("hashdb_dir", hashdb_dir);
@@ -136,10 +132,10 @@ class commands_t {
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
-    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
 
-    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
 
     hashdb_changes_t changes;
 
@@ -159,9 +155,9 @@ class commands_t {
   // export
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    dfxml_hashdigest_writer_t writer(dfxml_file);
-    hashdb_iterator_t it = hashdb_manager.begin();
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    dfxml_hashdigest_writer_t<T> writer(dfxml_file);
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
     while (it != hashdb_manager.end()) {
       writer.add_hashdb_element(*it);
       ++it;
@@ -175,10 +171,10 @@ class commands_t {
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
-    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin add");
     while (it1 != hashdb_manager1.end()) {
@@ -207,21 +203,21 @@ class commands_t {
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
 
-    hashdb_iterator_t it1 = hashdb_manager1.begin();
-    hashdb_iterator_t it2 = hashdb_manager2.begin();
-    hashdb_iterator_t it1_end = hashdb_manager1.end();
-    hashdb_iterator_t it2_end = hashdb_manager2.end();
+    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
+    hashdb_iterator_t<T> it2 = hashdb_manager2.begin();
+    hashdb_iterator_t<T> it1_end = hashdb_manager1.end();
+    hashdb_iterator_t<T> it2_end = hashdb_manager2.end();
 
     hashdb_changes_t changes;
     logger.add_timestamp("begin add_multiple");
 
     // while elements are in both, insert ordered by key, prefering it1 first
     while ((it1 != it1_end) && (it2 != it2_end)) {
-      if (it1->hashdigest <= it2->hashdigest) {
+      if (it1->key.hexdigest() <= it2->key.hexdigest()) {
         hashdb_manager3.insert(*it1, changes);
         ++it1;
       } else {
@@ -264,9 +260,9 @@ class commands_t {
     logger.add("hashdb_dir3", hashdb_dir3);
 
     // resources
-    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
-    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
+    const hashdb_manager_t<T> manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t<T> manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t<T> manager3(hashdb_dir3, RW_MODIFY);
     hashdb_changes_t changes;
 
     logger.add_timestamp("begin intersect");
@@ -299,23 +295,19 @@ class commands_t {
     logger_t logger(hashdb_dir2, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
     hashdb_changes_t changes;
 
-    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
 
     logger.add_timestamp("begin subtract");
 
     while (it1 != hashdb_manager1.end()) {
       
-      // generate a hashdigest for this element
-      hashdigest_t hashdigest(it1->hashdigest,
-                              it1->hashdigest_type);
-
       // subtract or copy the hash
-      if (hashdb_manager2.find_count(hashdigest) > 0) {
+      if (hashdb_manager2.find_count(it1->key) > 0) {
         // hashdb2 has the hash so drop the hash
       } else {
         // hashdb2 does not have the hash so copy it to hashdb3
@@ -342,32 +334,32 @@ class commands_t {
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
-    // Use hashdigest_manager to iterate over hashes.
+    // Use map_manager to iterate over hashes.
 
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    hashdigest_manager_t hashdigest_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    map_manager_t<T> map_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
     // get resources for hashdb_element lookup
     source_lookup_index_manager_t source_lookup_index_manager(hashdb_dir1, READ_ONLY);
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir1);
-    hashdb_element_lookup_t hashdb_element_lookup(&source_lookup_index_manager,
-                                                  &settings);
+    hashdb_element_lookup_t<T> hashdb_element_lookup(
+                          &source_lookup_index_manager, &settings);
 
-    hashdigest_iterator_t hashdigest_it1 = hashdigest_manager1.begin();
+    typename map_manager_t<T>::map_iterator_t map_it1 = map_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin deduplicate");
-    while (hashdigest_it1 != hashdigest_manager1.end()) {
+    while (map_it1 != map_manager1.end()) {
 
       // for deduplicate, only keep hashes whose count=1
-      if (source_lookup_encoding::get_count(hashdigest_it1->second) == 1) {
+      if (source_lookup_encoding::get_count(map_it1->second) == 1) {
         // good, use it
-        hashdb_manager2.insert(hashdb_element_lookup(*hashdigest_it1), changes);
+        hashdb_manager2.insert(hashdb_element_lookup(*map_it1), changes);
       }
 
-      ++hashdigest_it1;
+      ++map_it1;
     }
 
     logger.add_timestamp("end deduplicate");
@@ -392,21 +384,20 @@ class commands_t {
     logger.add("hashdb_dir", hashdb_dir);
 
     // start the bloom rebuild manager
-    bloom_rebuild_manager_t bloom_rebuild_manager(hashdb_dir, settings);
+    bloom_rebuild_manager_t<T> bloom_rebuild_manager(hashdb_dir, settings);
 
     // log the revised settings
     hashdb_settings_t revised_settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     logger.add_hashdb_settings(revised_settings);
 
-    // get the hashdigest iterator
-    hashdigest_manager_t hashdigest_manager(hashdb_dir, READ_ONLY);
-    hashdigest_iterator_t it = hashdigest_manager.begin();
+    // get the map manager and its iterator
+    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
+    typename map_manager_t<T>::map_iterator_t it = map_manager.begin();
 
     logger.add_timestamp("begin rebuild_bloom");
-    while (it != hashdigest_manager.end()) {
-      // add the hashdigest to the bloom filter
-      hashdigest_t hashdigest(it->first.hashdigest, it->first.hashdigest_type);
-      bloom_rebuild_manager.add_hash_value(hashdigest);
+    while (it != map_manager.end()) {
+      // add the hash to the bloom filter
+      bloom_rebuild_manager.add_hash_value(it->first);
       ++it;
     }
     logger.add_timestamp("end rebuild_bloom");
@@ -430,7 +421,7 @@ class commands_t {
 
     // start the server
     std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
-    tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
+    tcp_server_manager_t<T> tcp_server_manager(hashdb_dir, port_number);
 //    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
 /*
     std::cout << "The hashdb service server is running.  Press Return to quit.\n";
@@ -442,13 +433,12 @@ class commands_t {
   }
 
   // scan
-  template<typename T>
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
 
     // get dfxml reader
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
 
     // done if no entries
     if (reader_manager.begin() == reader_manager.end()) {
@@ -458,15 +448,15 @@ class commands_t {
 
     // create space on the heap for the scan input and output vectors
     std::vector<T>* scan_input = new std::vector<T>;
-    hashdb_t::scan_output_t* scan_output = new hashdb_t::scan_output_t();
+    typename hashdb_t__<T>::scan_output_t* scan_output = new typename hashdb_t__<T>::scan_output_t();
 
     // create the hashdb scan service
-    hashdb_t hashdb(path_or_socket);
+    hashdb_t__<T> hashdb(path_or_socket);
 
     // get dfxml block hash entries into the scan_input request vector
-    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
     while (it != reader_manager.end()) {
-      scan_input->push_back(T::fromhex(it->hashdigest));
+      scan_input->push_back(it->key);
       ++it;
     }
 
@@ -474,7 +464,7 @@ class commands_t {
     hashdb.scan(*scan_input, *scan_output);
 
     // show hash values that match
-    hashdb_t::scan_output_t::const_iterator it2(scan_output->begin());
+    typename hashdb_t__<T>::scan_output_t::const_iterator it2(scan_output->begin());
     while (it2 != scan_output->end()) {
       // print: '<index> \t <hexdigest> \t <count> \n' where count>0
       if (it2->second > 0) {
@@ -491,34 +481,32 @@ class commands_t {
                             const std::string& dfxml_file) {
 
     // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get dfxml reader
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_manager_t reader_manager(dfxml_file, repository_name);
+    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
 
-    dfxml_hashdigest_reader_manager_t::const_iterator it = reader_manager.begin();
+    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
 
-    // search hashdb for hashdigest values in dfxml
+    // search hashdb for hash values in dfxml
     while (it != reader_manager.end()) {
-      hashdigest_t hashdigest(it->hashdigest, it->hashdigest_type);
 
-      // disregard misses
-      uint32_t count = hashdb_manager.find_count(hashdigest);
+      uint32_t count = hashdb_manager.find_count(it->key);
       if (count == 0) {
         ++it;
         continue;
       }
 
       // get range of hash match
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> range_it_pair(
-                                             hashdb_manager.find(hashdigest));
-//      hashdb_iterator_t hashdb_it = range_it_pair.first;
-//      hashdb_iterator_t hashdb_it_end = range_it_pair.second;
+      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > range_it_pair(
+                                             hashdb_manager.find(it->key));
+//      hashdb_iterator_t<T> hashdb_it = range_it_pair.first;
+//      hashdb_iterator_t<T> hashdb_it_end = range_it_pair.second;
 
       while (range_it_pair.first != range_it_pair.second) {
-        hashdb_element_t e = *(range_it_pair.first);
-        std::cout << e.hashdigest << "\t"
+        hashdb_element_t<T> e = *(range_it_pair.first);
+        std::cout << e.key.hexdigest() << "\t"
                   << "repository name='" << e.repository_name
                   << "', filename='" << e.filename << "\n";
         ++range_it_pair.first;
@@ -532,26 +520,21 @@ class commands_t {
                             const std::string& identified_blocks_file) {
 
     // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the identified_blocks.txt file reader
     identified_blocks_reader_t reader(identified_blocks_file);
 
-    // look up the hashdigest type from settings
-    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
-    std::string hashdigest_type_string = hashdigest_type_to_string(settings.hashdigest_type);
-
     // read identified blocks from input and write out matches
     identified_blocks_reader_iterator_t it = reader.begin();
     while(it != reader.end()) {
-      hashdigest_t hashdigest(it->second, hashdigest_type_string);
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-             hashdb_manager.find(hashdigest);
+      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T>> it_pair =
+             hashdb_manager.find(T::fromhex(it->second));
       while (it_pair.first != it_pair.second) {
         // write match to output:
         // offset tab hashdigest tab repository name, filename
         std::cout << it->first << "\t"
-                  << it_pair.first->hashdigest << "\t"
+                  << hexdigest(it_pair.first->key) << "\t"
                   << "repository name=" << it_pair.first->repository_name
                   << ",filename=" << it_pair.first->filename
                   << ",file offset=" << it_pair.first->file_offset
@@ -587,7 +570,7 @@ class commands_t {
   // show hashdb size values
   static void size(const std::string& hashdb_dir) {
     // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
 
     // there is nothing to report if the database is empty
     if (hashdb_manager.map_size() == 0
@@ -614,7 +597,7 @@ class commands_t {
 
   // show hashdb statistics
   static void statistics(const std::string& hashdb_dir) {
-    statistics_command_t::show_statistics(hashdb_dir);
+    statistics_command_t::show_statistics<T>(hashdb_dir);
   }
 
   // show hashdb duplicates for a given duplicates count
@@ -629,7 +612,7 @@ class commands_t {
       std::cerr << "Invalid number of duplicates: '" << duplicates_string << "'\n";
       exit(1);
     }
-    duplicates_command_t::show_duplicates(hashdb_dir, duplicates_number);
+    duplicates_command_t<T>::show_duplicates(hashdb_dir, duplicates_number);
   }
 };
 

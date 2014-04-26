@@ -28,17 +28,20 @@
 #include "multimap_manager.hpp"
 #include "source_lookup_encoding.hpp" // to obtain count from payload
 
-template<class T>
+template<typename T>
 class map_multimap_iterator_t {
   private:
+  typedef typename map_manager_t<T>::map_iterator_t map_iterator_t;
+  typedef typename multimap_manager_t<T>::multimap_iterator_t multimap_iterator_t;
 
   // multimap manager
-  const map_manager_t<T>* map_manager;
-  const multimap_manager_t<T>* multimap_manager;
+  const map_manager_t<T> map_manager;
+  const multimap_manager_t<T> multimap_manager;
 
   // internal state
-  map_manager_t<T>::map_iterator_t map_iterator;
-  multimap_manager_t<T>::multimap_iterator_t multimap_iterator;
+  map_iterator_t map_iterator;
+  multimap_iterator_t multimap_iterator;
+  multimap_iterator_t multimap_end_iterator;
   bool in_multimap_iterator;
 
   // the dereferenced value, specifically, std::pair<T, uint64_t>
@@ -98,7 +101,7 @@ class map_multimap_iterator_t {
 
   // call this after changing the map iterator
   void set_multimap_iterator_state() {
-    if (map_iterator == map_manager->end()) {
+    if (map_iterator == map_manager.end()) {
       // done
       in_multimap_iterator = false;
 
@@ -111,9 +114,8 @@ class map_multimap_iterator_t {
       } else {
         // use multimap
         in_multimap_iterator = true;
-        std::pair<multimap_iterator_t<T>, multimap_iterator_t<T> >
-                      multimap_range =
-                      multimap_manager->equal_range(map_iterator->first);
+        std::pair<multimap_iterator_t, multimap_iterator_t> multimap_range =
+                           multimap_manager.equal_range(map_iterator->first);
         multimap_iterator = multimap_range.first;
         multimap_end_iterator = multimap_range.second;
 
@@ -122,7 +124,6 @@ class map_multimap_iterator_t {
         if (multimap_iterator == multimap_end_iterator) {
           assert(0);
         }
-
       }
     }
   }
@@ -142,10 +143,10 @@ class map_multimap_iterator_t {
                              dereferenced_value() {
     if (p_is_end) {
       // set up with end iterator
-      map_iterator = map_manager->end();
+      map_iterator = map_manager.end();
     } else {
       // set up with begin iterator
-      map_iterator = map_manager->begin();
+      map_iterator = map_manager.begin();
     }
     // set state for the multimap iterator
     set_multimap_iterator_state();
@@ -155,7 +156,7 @@ class map_multimap_iterator_t {
   // the constructor takes the managers and the starting iterator
   map_multimap_iterator_t(const map_manager_t<T>* p_map_manager,
                           const multimap_manager_t<T>* p_multimap_manager,
-                          map_iterator_t<T> p_map_iterator) :
+                          map_iterator_t p_map_iterator) :
                                         map_manager(p_map_manager),
                                         multimap_manager(p_multimap_manager),
                                         map_iterator(p_map_iterator),

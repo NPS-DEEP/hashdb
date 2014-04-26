@@ -31,6 +31,9 @@
 #include "map_multimap_iterator.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
+#include "source_lookup_index_manager.hpp"
+#include "hashdb_element_lookup.hpp"
+#include "hashdb_iterator.hpp"
 
 template<typename T>  // hash type
 class hashdb_manager_t {
@@ -40,7 +43,7 @@ class hashdb_manager_t {
   const hashdb_settings_t settings;
 
   source_lookup_index_manager_t source_lookup_index_manager;
-  const hashdb_element_lookup_t hashdb_element_lookup;
+  const hashdb_element_lookup_t<T> hashdb_element_lookup;
   map_multimap_manager_t<T> map_multimap_manager;
 
   // do not allow copy or assignment
@@ -53,13 +56,12 @@ class hashdb_manager_t {
                 file_mode(p_file_mode),
                 settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
                 source_lookup_index_manager(hashdb_dir, file_mode),
-//                hashdb_element_lookup(&source_lookup_index_manager,
-//                                      &settings),
-                manager(hashdb_dir, file_mode) {
+                hashdb_element_lookup(&source_lookup_index_manager,
+                                      &settings) {
   }
 
   // insert
-  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
+  void insert(const hashdb_element_t<T>& hashdb_element, hashdb_changes_t& changes) {
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
@@ -88,13 +90,13 @@ class hashdb_manager_t {
 
     // insert or note reason not to insert
     map_multimap_manager.emplace(hashdb_element.key,
+                                 encoding,
                                  settings.maximum_hash_duplicates,
                                  changes);
-    }
   }
 
   // remove
-  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
+  void remove(const hashdb_element_t<T>& hashdb_element, hashdb_changes_t& changes) {
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
@@ -121,12 +123,11 @@ class hashdb_manager_t {
 
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
-                       settings.source_lookup_index_bits,
                        source_lookup_index,
                        hashdb_element.file_offset / settings.hash_block_size);
 
     // checks passed, remove or show reason not to remove
-    map_multimap_manager.remove(hashdb_element.key, changes);
+    map_multimap_manager.remove(hashdb_element.key, encoding, changes);
   }
 
   // remove key
@@ -135,7 +136,7 @@ class hashdb_manager_t {
   }
 
   // find
-  std::pair<hashdb_iterator_t, hashdb_iterator_t> find(const T& key) const {
+  std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T>> find(const T& key) const {
 
     // get the map_multimap iterator pair
     std::pair<map_multimap_iterator_t<T>,
@@ -143,9 +144,9 @@ class hashdb_manager_t {
                                 it_pair(map_multimap_manager->find(key));
 
     // return the hashdb_iterator pair for this key
-    return std::pair<hashdb_iterator_t, hashdb_iterator_t>(
-               hashdb_iterator_t(it_pair.first, hashdb_element_lookup),
-               hashdb_iterator_t(it_pair.second, hashdb_element_lookup));
+    return std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> >(
+               hashdb_iterator_t<T>(it_pair.first, hashdb_element_lookup),
+               hashdb_iterator_t<T>(it_pair.second, hashdb_element_lookup));
   }
 
   // find_count
@@ -154,14 +155,14 @@ class hashdb_manager_t {
   }
 
   // begin
-  hashdb_iterator_t begin() const {
-    return hashdb_iterator_t(map_multimap_manager->begin(),
+  hashdb_iterator_t<T> begin() const {
+    return hashdb_iterator_t<T>(map_multimap_manager->begin(),
                                               hashdb_element_lookup);
   }
 
   // end
-  hashdb_iterator_t end() const {
-    return hashdb_iterator_t(map_multimap_manager->end(),
+  hashdb_iterator_t<T> end() const {
+    return hashdb_iterator_t<T>(map_multimap_manager->end(),
                                               hashdb_element_lookup);
   }
 
@@ -189,7 +190,6 @@ class hashdb_manager_t {
   size_t filename_lookup_store_size() const {
     return source_lookup_index_manager.filename_lookup_store_size();
   }
-
 };
 
 #endif

@@ -26,7 +26,6 @@
 #define STATISTICS_COMMAND_HPP
 
 #include "hashdb_settings.hpp"
-#include "map_types.h"
 #include "file_modes.h"
 #include "map_manager.hpp"
 #include <sstream>
@@ -51,7 +50,8 @@ class statistics_command_t {
 
     // use map_manager
     map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
-    map_manager_t<T>::map_iterator_t it = map_manager.begin();
+//    typename map_manager_t<T>::const_iterator it = map_manager.begin();
+    typename map_manager_t<T>::map_iterator_t it = map_manager.begin();
 
     // there is nothing to report if the map is empty
     if (it == map_manager.end()) {

@@ -40,6 +40,7 @@
 #include <dfxml/src/hash_t.h>
 
 // a class is used just to keep members private
+// Note that T is the consumer and hash algorithm md5 is hardcoded.
 template <class T>
 class dfxml_hashdigest_reader_t {
   private:
@@ -124,8 +125,8 @@ class dfxml_hashdigest_reader_t {
       std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
                 << hashdigest_type << "\n";
     }
-    hashdb_element_t<md5_t> hashdb_element(
-               md5_t(hashdigest),
+    hashdb_element_t<T> hashdb_element(
+               T::fromhex(hashdigest),
                hash_block_size,
                selected_repository_name,
                filename,

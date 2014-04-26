@@ -43,11 +43,7 @@
   #endif
 #endif
 
-// types of queries that are available
-const uint32_t QUERY_MD5 = 1;
-const uint32_t QUERY_SHA1 = 2;
-const uint32_t QUERY_SHA256 = 3;
-
+template<typename T>
 class tcp_client_manager_t {
   private:
   typedef boost::asio::ip::tcp::socket* socket_ptr_t;
@@ -143,8 +139,7 @@ class tcp_client_manager_t {
   }
 
   // scan
-  template<typename T, int RT>
-  int scan(const std::vector<T>& request, hashdb_t__<T>::scan_output_t& response) {
+  int scan(const std::vector<T>& request, typename hashdb_t__<T>::scan_output_t& response) {
 
     // clear any exsting response
     response.clear();
@@ -158,13 +153,6 @@ class tcp_client_manager_t {
 
       // get, possibly establishing, the connnected socket for this thread
       socket_ptr_t socket = get_socket();
-
-      // write the hashdigest type to use
-      uint32_t hashdigest_type = RT;
-      boost::asio::write(
-           *socket, boost::asio::buffer(&hashdigest_type,
-                                        sizeof(hashdigest_type)));
-
 
       // write the request_count
       uint32_t request_count = request.size();

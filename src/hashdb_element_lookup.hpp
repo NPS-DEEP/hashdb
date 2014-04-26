@@ -20,7 +20,7 @@
 /**
  * \file
  * Provides factory helper for obtaining a hashdb element from a
- * hashdigest, source_lookup_encoding pair.
+ * hash value.
  * Contains reference to source_lookup_index_manager to perform the lookup.
  */
 
@@ -30,12 +30,12 @@
 #include <cstring>
 #include <stdint.h>
 #include "source_lookup_index_manager.hpp"
-#include "hashdigest.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "hashdb_element.hpp"
 #include <iostream>
 
+template<typename T>
 class hashdb_element_lookup_t {
   private:
   const source_lookup_index_manager_t* source_lookup_index_manager;
@@ -62,27 +62,26 @@ class hashdb_element_lookup_t {
 
 /* non-fancy approach
   // lookup
-  hashdb_element_t do_lookup(
-             const std::pair<hashdigest_t, uint64_t>& hashdb_pair) const {
+  hashdb_element_t<T> do_lookup(
+             const std::pair<T, uint64_t>& hashdb_pair) const {
 
     // get source strings from source_lookup_encoding
     uint64_t source_lookup_encoding = hashdb_pair.second;
     uint64_t source_lookup_index =
           source_lookup_encoding::get_source_lookup_index(
-                  settings->source_lookup_index_bits, source_lookup_encoding);
+                  source_lookup_encoding);
     std::pair<std::string, std::string> source(
                      source_lookup_index_manager->find(source_lookup_index));
 
     // calculate file offset
     uint64_t hash_block_offset =
           source_lookup_encoding::get_hash_block_offset(
-                  settings->source_lookup_index_bits, source_lookup_encoding);
+                  source_lookup_encoding);
     uint64_t file_offset = hash_block_offset * settings->hash_block_size;
 
     // put hashdb element together
-    hashdb_element_t hashdb_element(
-                         hashdb_pair.first.hashdigest,
-                         hashdb_pair.first.hashdigest_type,
+    hashdb_element_t<T> hashdb_element(
+                         hashdb_pair.first,
                          settings->hash_block_size,
                          source.first,
                          source.second,
@@ -93,27 +92,24 @@ class hashdb_element_lookup_t {
 */
 
   // lookup
-  hashdb_element_t operator()(
-                 const std::pair<hashdigest_t, uint64_t>& hashdb_pair) const {
+  hashdb_element_t<T> operator()(
+                 const std::pair<T, uint64_t>& hashdb_pair) const {
 
     // get source strings from source_lookup_encoding
     uint64_t source_lookup_encoding = hashdb_pair.second;
     uint64_t source_lookup_index =
-          source_lookup_encoding::get_source_lookup_index(
-                  settings->source_lookup_index_bits, source_lookup_encoding);
+        source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
     std::pair<std::string, std::string> source(
                      source_lookup_index_manager->find(source_lookup_index));
 
     // calculate file offset
     uint64_t hash_block_offset =
-          source_lookup_encoding::get_hash_block_offset(
-                  settings->source_lookup_index_bits, source_lookup_encoding);
+        source_lookup_encoding::get_hash_block_offset( source_lookup_encoding);
     uint64_t file_offset = hash_block_offset * settings->hash_block_size;
 
     // put hashdb element together
-    hashdb_element_t hashdb_element(
-                         hashdb_pair.first.hashdigest,
-                         hashdb_pair.first.hashdigest_type,
+    hashdb_element_t<T> hashdb_element(
+                         hashdb_pair.first,
                          settings->hash_block_size,
                          source.first,
                          source.second,

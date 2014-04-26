@@ -37,7 +37,6 @@
   #include <winsock2.h>
 #endif
 #include "hashdb.hpp"
-#include "hashdb_manager.hpp"
 #include <dfxml/src/hash_t.h>
 #include <string>
 #include <vector>
@@ -64,18 +63,19 @@ const char* hashdb_version() {
 }
 
   // constructor for importing
-  hashdb_t__<typename T>::hashdb_t(const std::string& p_hashdb_dir,
-                                   uint32_t p_block_size,
-                                   uint32_t p_max_duplicates) :
-                       hashdb_dir(p_hashdb_dir),
-                       mode(HASHDB_IMPORT),
-                       hashdb_manager(0),
-                       hashdb_changes(0),
-                       logger(0),
-                       tcp_client_manager(0),
-                       block_size(p_block_size),
-                       max_duplicates(p_max_duplicates),
-                       M() {
+  template<typename T>
+  hashdb_t__<T>::hashdb_t__(const std::string& p_hashdb_dir,
+                          uint32_t p_block_size,
+                          uint32_t p_max_duplicates) :
+                   hashdb_dir(p_hashdb_dir),
+                   mode(HASHDB_IMPORT),
+                   hashdb_manager(0),
+                   hashdb_changes(0),
+                   logger(0),
+                   tcp_client_manager(0),
+                   block_size(p_block_size),
+                   max_duplicates(p_max_duplicates),
+                   M() {
 
 #ifdef HAVE_PTHREAD
     pthread_mutex_init(&M,NULL);
@@ -88,7 +88,7 @@ const char* hashdb_version() {
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
 
     // create hashdb_manager
-    hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
+    hashdb_manager = new hashdb_manager_t<T>(hashdb_dir, RW_NEW);
     hashdb_changes = new hashdb_changes_t;
 
     // open logger
@@ -97,7 +97,8 @@ const char* hashdb_version() {
   }
 
   // import
-  int hashdb_t__<typename T>::import(const import_input_t& input) {
+  template<typename T>
+  int hashdb_t__<T>::import(const import_input_t& input) {
     return import_private(input);
 
     // check mode
@@ -106,7 +107,7 @@ const char* hashdb_version() {
     }
 
     // import each input in turn
-    typename std::vector<import_element_t<T> >::const_iterator it = input.begin();
+    typename std::vector<import_element_t>::const_iterator it = input.begin();
 
     // perform all scans in one locked operation.
     // There is basically no cost for grouping since this iterates db access.
@@ -115,12 +116,11 @@ const char* hashdb_version() {
 
     while (it != input.end()) {
       // convert input to hashdb_element_t
-      hashdigest_t hashdigest(it->hash);
-      hashdb_element_t hashdb_element(hashdigest.hashdigest,
-                                      block_size,
-                                      it->repository_name,
-                                      it->filename,
-                                      it->file_offset);
+      hashdb_element_t<T> hashdb_element(it->hash,
+                                         block_size,
+                                         it->repository_name,
+                                         it->filename,
+                                         it->file_offset);
 
       // add hashdb_element_t to hashdb_manager
       hashdb_manager->insert(hashdb_element, *hashdb_changes);
@@ -135,7 +135,8 @@ const char* hashdb_version() {
   }
 
   // constructor for scanning
-  hashdb_t__<typename T>::hashdb_t(const std::string& path_or_socket) :
+  template<typename T>
+  hashdb_t__<T>::hashdb_t__(const std::string& path_or_socket) :
                      hashdb_dir(path_or_socket),
                      mode(path_or_socket.find("tcp://") != 0
                          ? HASHDB_SCAN : HASHDB_SCAN_SOCKET),
@@ -154,10 +155,10 @@ const char* hashdb_version() {
     // open the correct scan resource
     if (mode == HASHDB_SCAN) {
       // open hashdb_manager for scanning
-      hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
+      hashdb_manager = new hashdb_manager_t<T>(hashdb_dir, READ_ONLY);
     } else if (mode == HASHDB_SCAN_SOCKET) {
       // open TCP socket service for scanning
-      tcp_client_manager = new tcp_client_manager_t(path_or_socket);
+      tcp_client_manager = new tcp_client_manager_t<T>(path_or_socket);
     } else {
       assert(0);
       exit(1);
@@ -165,7 +166,8 @@ const char* hashdb_version() {
   }
 
   // scan
-  int hashdb_t__<typename T>::scan(const scan_input_t& input, scan_output_t& output) const {
+  template<typename T>
+  int hashdb_t__<T>::scan(const scan_input_t& input, scan_output_t& output) const {
 
     // check mode
     if (mode != HASHDB_SCAN) {
@@ -203,7 +205,8 @@ const char* hashdb_version() {
   }
 
   // destructor
-  hashdb_t__<typename T>::~hashdb_t() {
+  template<typename T>
+  hashdb_t__<T>::~hashdb_t__() {
     switch(mode) {
       case HASHDB_NONE:
         return;
@@ -226,7 +229,8 @@ const char* hashdb_version() {
 // mac doesn't seem to be up to c++11 yet
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
-  hashdb_t__<typename T>::hashdb_t(const hashdb_t__<typename T>hashdb_t& other) :
+  template<typename T>
+  hashdb_t__<T>::hashdb_t__(const hashdb_t__<typename T>hashdb_t& other) :
                  hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
@@ -240,7 +244,8 @@ const char* hashdb_version() {
     exit(1);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
-  hashdb_t__<typename T>& hashdb_t__<typename T>::operator=(const hashdb_t__<typename T>& other) {
+  template<typename T>
+  hashdb_t__<T>& hashdb_t__::operator=(const hashdb_t__<typename T>& other) {
     assert(0);
     exit(1);
   }

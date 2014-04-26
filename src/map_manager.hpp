@@ -30,13 +30,14 @@
 #include <cstdio>
 #include <cassert>
 #include "file_modes.h"
+#include "source_lookup_encoding.hpp"
 #include <boost/btree/btree_map.hpp>
 
 /**
  * Provides interfaces to the hash map store that use glue to the actual
  * storage maps used.
  */
-template<class T>  // hash type used as key in maps
+template<typename T>  // hash type used as key in maps
 class map_manager_t {
 
   public:

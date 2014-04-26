@@ -20,7 +20,7 @@
 /**
  * \file
  * Provides a hashdb iterator which wraps map_multimap_iterator_t<T>.
- * Dereferences through pair<hexdigest_string, source_lookup_encoding>
+ * Dereferences through pair<key, source_lookup_encoding>
  * into hashdb_element using help from hashdb_element_lookup_t.
  */
 
@@ -35,19 +35,16 @@ template<typename T>
 class hashdb_iterator_t {
   private:
 
-  // the hashdigest type that this iterator dereferences to
-  hashdigest_type_t hashdigest_type;
+  // the underlying map_multimap_iterator
+  map_multimap_iterator_t<T> map_multimap_iterator;
 
   // external resource required for creating a hashdb_element
-//  const hashdb_element_lookup_t hashdb_element_lookup;
-  hashdb_element_lookup_t hashdb_element_lookup;
-
-  // underlying the map_multimap_iterator
-  map_multimap_iterator_t<T> map_multimap_iterator;
+//  const hashdb_element_lookup_t<T> hashdb_element_lookup;
+  hashdb_element_lookup_t<T> hashdb_element_lookup;
 
   // the dereferenced value
   bool dereferenced_value_is_cached;
-  hashdb_element_t dereferenced_value;
+  hashdb_element_t<T> dereferenced_value;
 
   // elemental forward iterator accessors are increment, equal, and dereference
   // increment
@@ -82,8 +79,8 @@ class hashdb_iterator_t {
   public:
   // the constructor for the map_multimap type using the map_multimap iterators
   hashdb_iterator_t(map_multimap_iterator_t<T> p_map_multimap_iterator,
-                    const T& p_key) :
-               key(p_key),
+                    const hashdb_element_lookup_t<T> p_hashdb_element_lookup) :
+               hashdb_element_lookup(p_hashdb_element_lookup),
                map_multimap_iterator(p_map_multimap_iterator),
                dereferenced_value_is_cached(false),
                dereferenced_value() {
@@ -91,7 +88,7 @@ class hashdb_iterator_t {
 
   // this useless default constructor is required by std::pair
   hashdb_iterator_t() :
-                      key(),
+                      hashdb_element_lookup(),
                       map_multimap_iterator(),
                       dereferenced_value_is_cached(false),
                       dereferenced_value() {
@@ -107,11 +104,11 @@ class hashdb_iterator_t {
     increment();
     return temp;
   }
-  hashdb_element_t& operator*() {
+  hashdb_element_t<T>& operator*() {
     dereference();
     return dereferenced_value;
   }
-  hashdb_element_t* operator->() {
+  hashdb_element_t<T>* operator->() {
     dereference();
     return &dereferenced_value;
   }

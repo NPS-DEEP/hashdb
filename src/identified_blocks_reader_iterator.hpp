@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides iterator to array<pair<string offset, string hashdigest>>
+ * Provides iterator to array<pair<string forensic_path, string hexdigest>>
  * for an identified blocks reader.
  */
 

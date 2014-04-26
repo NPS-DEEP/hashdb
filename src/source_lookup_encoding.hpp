@@ -44,7 +44,7 @@ class source_lookup_encoding {
   private:
 
   // the hardcoded bit distribution
-  static uint8_t source_lookup_index_bits = 32;
+  static const uint8_t source_lookup_index_bits = 32;
 
   // runtime error if source lookup index is too large
   static inline void check_source_lookup_index(uint64_t index) {

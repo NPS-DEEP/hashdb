@@ -39,12 +39,14 @@
 //#include <algorithm>
 #include <vector>
 
+template<typename T>
 class dfxml_hashdigest_reader_manager_t {
 
   private:
+  typedef std::vector<hashdb_element_t<T> > hashdb_elements_t;
   const std::string dfxml_filename;
   const std::string default_repository_name;
-  std::vector<hashdb_element_t>* elements;
+  hashdb_elements_t* elements;
 
   // do not allow copy or assignment
   dfxml_hashdigest_reader_manager_t(const dfxml_hashdigest_reader_manager_t&);
@@ -54,21 +56,21 @@ class dfxml_hashdigest_reader_manager_t {
   // during initialization, this reader uses this consumer with
   // dfxml_hashdigest_reader's static do_read() function.
   class reader_consumer_t {
-    std::vector<hashdb_element_t>* elements;
+    hashdb_elements_t* elements;
 
     public:
-    reader_consumer_t(std::vector<hashdb_element_t>* p_elements) :
+    reader_consumer_t(hashdb_elements_t* p_elements) :
       elements(p_elements) {
     }
 
-    void consume(const hashdb_element_t& hashdb_element) {
+    void consume(const hashdb_element_t<T>& hashdb_element) {
       elements->push_back(hashdb_element);
     }
   };
 
 
   public:
-  typedef std::vector<hashdb_element_t>::const_iterator const_iterator;
+  typedef typename hashdb_elements_t::const_iterator const_iterator;
 
   // read dfxml into vector of elements
   dfxml_hashdigest_reader_manager_t(std::string p_dfxml_filename,
@@ -77,7 +79,7 @@ class dfxml_hashdigest_reader_manager_t {
            default_repository_name(p_default_repository_name),
            elements(0) {
 
-    elements = new std::vector<hashdb_element_t>();
+    elements = new hashdb_elements_t();
     reader_consumer_t consumer(elements);
 
     dfxml_hashdigest_reader_t<reader_consumer_t>::do_read(
@@ -91,10 +93,10 @@ class dfxml_hashdigest_reader_manager_t {
   }
 
   // element iterator access
-  std::vector<hashdb_element_t>::const_iterator begin() const {
+  typename hashdb_elements_t::const_iterator begin() const {
     return elements->begin();
   }
-  std::vector<hashdb_element_t>::const_iterator end() const {
+  typename hashdb_elements_t::const_iterator end() const {
     return elements->end();
   }
 };

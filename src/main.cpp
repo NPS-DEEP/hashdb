@@ -76,7 +76,13 @@ bool has_bloom2_n = false;
 bool has_bloom2_kM = false;
 
 // repository name
-static std::string repository_name = "";
+static std::string repository_name_string = "";
+
+// arguments
+static std::string command;
+static std::string arg1;
+static std::string arg2;
+static std::string arg3;
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
 // copied from bulk_extractor file support.cpp
@@ -120,6 +126,9 @@ void require_parameter_count(size_t count) {
     exit(1);
   }
 }
+
+template<typename T> void run_command();
+//template void <typename T>run_command() {
 
 // ************************************************************
 // main
@@ -296,7 +305,7 @@ int main(int argc,char **argv) {
       // repository name option
       case 'r': {	// repository name
         has_repository_name = true;
-        repository_name = optarg;
+        repository_name_string = optarg;
         break;
       }
 
@@ -319,15 +328,15 @@ int main(int argc,char **argv) {
     std::cerr << "Error: a command must be provided.\n";
     exit(1);
   }
-  const std::string command(argv[0]);
+  command = argv[0];
   argc--;
   argv++;
 
   // get any arguments
   parameter_count = argc;
-  const std::string arg1((argc>=1) ? argv[0] : "");
-  const std::string arg2((argc>=2) ? argv[1] : "");
-  const std::string arg3((argc>=3) ? argv[2] : "");
+  arg1 = (argc>=1) ? argv[0] : "";
+  arg2 = (argc>=2) ? argv[1] : "";
+  arg3 = (argc>=3) ? argv[2] : "";
 
   // ************************************************************
   // post-process the options
@@ -359,9 +368,20 @@ int main(int argc,char **argv) {
   // generate usable repository name if one is not provided
   // this works globally because all commands that use repository_name
   // uniformly require arg1
-  if (repository_name == "") {
-    repository_name = "repository_" + arg1;
+  if (repository_name_string == "") {
+    repository_name_string = "repository_" + arg1;
   }
+
+  // run the command as a md5hashdb command
+  run_command<md5_t>();
+
+  // done
+  return 0;
+}
+
+//template void <typename T>run_command() 
+template <typename T>
+void run_command() {
 
   // ************************************************************
   // run the command
@@ -374,106 +394,103 @@ int main(int argc,char **argv) {
   if (command == "create") {
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::create(hashdb_settings, arg1);
+    commands_t<T>::create(hashdb_settings, arg1);
   } else if (command == "import") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_parameter_count(2);
-    commands_t::import(repository_name, arg1, arg2);
+    commands_t<T>::import(repository_name_string, arg1, arg2);
   } else if (command == "export") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::do_export(arg1, arg2);
+    commands_t<T>::do_export(arg1, arg2);
   } else if (command == "add") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::add(arg1, arg2);
+    commands_t<T>::add(arg1, arg2);
   } else if (command == "add_multiple") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(3);
-    commands_t::add_multiple(arg1, arg2, arg3);
+    commands_t<T>::add_multiple(arg1, arg2, arg3);
   } else if (command == "intersect") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(3);
-    commands_t::intersect(arg1, arg2, arg3);
+    commands_t<T>::intersect(arg1, arg2, arg3);
   } else if (command == "subtract") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(3);
-    commands_t::subtract(arg1, arg2, arg3);
+    commands_t<T>::subtract(arg1, arg2, arg3);
   } else if (command == "deduplicate") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::deduplicate(arg1, arg2);
+    commands_t<T>::deduplicate(arg1, arg2);
   } else if (command == "rebuild_bloom") {
     require_no_hashdb_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::rebuild_bloom(hashdb_settings, arg1);
+    commands_t<T>::rebuild_bloom(hashdb_settings, arg1);
   } else if (command == "server") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::server(arg1, arg2);
+    commands_t<T>::server(arg1, arg2);
   } else if (command == "scan") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::scan(arg1, arg2);
+    commands_t<T>::scan(arg1, arg2);
   } else if (command == "scan_expanded") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::scan_expanded(arg1, arg2);
+    commands_t<T>::scan_expanded(arg1, arg2);
   } else if (command == "expand_identified_blocks") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::expand_identified_blocks(arg1, arg2);
+    commands_t<T>::expand_identified_blocks(arg1, arg2);
   } else if (command == "sources") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::sources(arg1);
+    commands_t<T>::sources(arg1);
   } else if (command == "size") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::size(arg1);
+    commands_t<T>::size(arg1);
   } else if (command == "statistics") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t::statistics(arg1);
+    commands_t<T>::statistics(arg1);
   } else if (command == "duplicates") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
-    commands_t::duplicates(arg1, arg2);
+    commands_t<T>::duplicates(arg1, arg2);
   } else {
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }
-
-  // done
-  return 0;
 }
 

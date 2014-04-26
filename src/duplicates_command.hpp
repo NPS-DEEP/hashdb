@@ -26,7 +26,6 @@
 #define DUPLICATES_COMMAND_HPP
 
 #include "hashdb_settings.hpp"
-#include "map_types.h"
 #include "file_modes.h"
 #include "map_manager.hpp"
 #include <sstream>
@@ -36,9 +35,9 @@
 /**
  * Support duplicates command.
  */
+template<typename T>
 class duplicates_command_t {
   public:
-  template<typename T>
   static void show_duplicates(const std::string& hashdb_dir,
                               uint32_t duplicates) {
 
@@ -48,8 +47,8 @@ class duplicates_command_t {
 
 
     // open map_manager
-    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY, map_type);
-    map_manager_t<T>::map_iterator_t it = map_manager.begin();
+    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
+    typename map_manager_t<T>::map_iterator_t it = map_manager.begin();
 
     // there is nothing to report if the map is empty
     if (it == map_manager.end()) {

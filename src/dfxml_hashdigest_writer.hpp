@@ -26,6 +26,7 @@
 #define DFXML_HASHDIGEST_WRITER_HPP
 //#include "hashdb_types.h"
 #include "dfxml/src/dfxml_writer.h"
+#include "dfxml/src/hash_t.h"
 #include "command_line.hpp"
 
 #include <iostream>
@@ -37,6 +38,9 @@
 /**
  * Provides the service of exporting the hashdb in DFXML format.
  */
+// note that hash type MD5 is hardcoded.
+// Change this if using T other than md5_t
+template<typename T>
 class dfxml_hashdigest_writer_t {
 
   private:
@@ -64,7 +68,8 @@ class dfxml_hashdigest_writer_t {
     x.close();
   }
 
-  void add_hashdb_element(const hashdb_element_t& element) {
+  // note that the MD5 hash algorithm name is hardcoded
+  void add_hashdb_element(const hashdb_element_t<T>& element) {
 
     // start the fileobject tag
     x.push("fileobject");
@@ -83,8 +88,8 @@ class dfxml_hashdigest_writer_t {
 
     // write the hashdigest
     std::stringstream ss2;
-    ss2 << "type='" << element.hashdigest_type << "'";
-    x.xmlout("hashdigest", element.hashdigest, ss2.str(), false);
+    ss2 << "type='MD5'";
+    x.xmlout("hashdigest", element.key.hexdigest(), ss2.str(), false);
 
     // close the byte_run tag
     x.pop();
