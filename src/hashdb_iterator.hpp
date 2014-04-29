@@ -35,12 +35,12 @@ template<typename T>
 class hashdb_iterator_t {
   private:
 
-  // the underlying map_multimap_iterator
-  map_multimap_iterator_t<T> map_multimap_iterator;
-
   // external resource required for creating a hashdb_element
 //  const hashdb_element_lookup_t<T> hashdb_element_lookup;
   hashdb_element_lookup_t<T> hashdb_element_lookup;
+
+  // the underlying map_multimap_iterator
+  map_multimap_iterator_t<T> map_multimap_iterator;
 
   // the dereferenced value
   bool dereferenced_value_is_cached;

@@ -40,8 +40,8 @@
 #include <dfxml/src/hash_t.h>
 
 // a class is used just to keep members private
-// Note that T is the consumer and hash algorithm md5 is hardcoded.
-template <class T>
+// Note that TC is the consumer and T is the hash algorithm.
+template <class TC, class T>
 class dfxml_hashdigest_reader_t {
   private:
 
@@ -50,6 +50,12 @@ class dfxml_hashdigest_reader_t {
   dfxml_hashdigest_reader_t(const dfxml_hashdigest_reader_t&);
   dfxml_hashdigest_reader_t& operator=(const dfxml_hashdigest_reader_t&);
 
+  // provide this
+//zz  std::string reader_hashdigest_type<md5_t>() const 
+  static std::string reader_hashdigest_type() {
+    return "MD5";
+  }
+
   // ************************************************************
   // user data type for sax
   // ************************************************************
@@ -57,7 +63,7 @@ class dfxml_hashdigest_reader_t {
 
     // input values provided by do_read()
     std::string default_repository_name;
-    T* consumer;
+    TC* consumer;
 
     // state variables
     bool is_at_repository_name;
@@ -77,7 +83,7 @@ class dfxml_hashdigest_reader_t {
     std::string hashdigest_type_attribute;
     std::string hashdigest;
 
-    user_data_t(const std::string& p_default_repository_name, T* p_consumer) :
+    user_data_t(const std::string& p_default_repository_name, TC* p_consumer) :
                          default_repository_name(p_default_repository_name),
                          consumer(p_consumer),
                          is_at_repository_name(false),
@@ -121,7 +127,7 @@ class dfxml_hashdigest_reader_t {
     uint64_t file_offset = user_data.byte_run_file_offset_attribute;
 
     // create the MD5 hashdb element
-    if (hashdigest_type != "MD5") {
+    if (hashdigest_type != reader_hashdigest_type()) {
       std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
                 << hashdigest_type << "\n";
     }
@@ -349,7 +355,7 @@ class dfxml_hashdigest_reader_t {
   static bool do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
-                T* consumer) {
+                TC* consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
     xmlSAXHandler sax_handlers = {

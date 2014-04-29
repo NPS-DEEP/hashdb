@@ -35,8 +35,8 @@ class map_multimap_iterator_t {
   typedef typename multimap_manager_t<T>::multimap_iterator_t multimap_iterator_t;
 
   // multimap manager
-  const map_manager_t<T> map_manager;
-  const multimap_manager_t<T> multimap_manager;
+  const map_manager_t<T> *map_manager;
+  const multimap_manager_t<T> *multimap_manager;
 
   // internal state
   map_iterator_t map_iterator;
@@ -101,7 +101,7 @@ class map_multimap_iterator_t {
 
   // call this after changing the map iterator
   void set_multimap_iterator_state() {
-    if (map_iterator == map_manager.end()) {
+    if (map_iterator == map_manager->end()) {
       // done
       in_multimap_iterator = false;
 
@@ -115,7 +115,7 @@ class map_multimap_iterator_t {
         // use multimap
         in_multimap_iterator = true;
         std::pair<multimap_iterator_t, multimap_iterator_t> multimap_range =
-                           multimap_manager.equal_range(map_iterator->first);
+                           multimap_manager->equal_range(map_iterator->first);
         multimap_iterator = multimap_range.first;
         multimap_end_iterator = multimap_range.second;
 
@@ -143,10 +143,10 @@ class map_multimap_iterator_t {
                              dereferenced_value() {
     if (p_is_end) {
       // set up with end iterator
-      map_iterator = map_manager.end();
+      map_iterator = map_manager->end();
     } else {
       // set up with begin iterator
-      map_iterator = map_manager.begin();
+      map_iterator = map_manager->begin();
     }
     // set state for the multimap iterator
     set_multimap_iterator_state();

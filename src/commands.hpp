@@ -534,7 +534,7 @@ class commands_t {
         // write match to output:
         // offset tab hashdigest tab repository name, filename
         std::cout << it->first << "\t"
-                  << hexdigest(it_pair.first->key) << "\t"
+                  << it_pair.first->key.hexdigest() << "\t"
                   << "repository name=" << it_pair.first->repository_name
                   << ",filename=" << it_pair.first->filename
                   << ",file offset=" << it_pair.first->file_offset

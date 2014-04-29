@@ -75,7 +75,6 @@ class hashdb_t__ {
 
   public:
   // data structure for one import element
-//  template<typename T>
   struct import_element_t {
     T hash;
     std::string repository_name;

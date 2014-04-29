@@ -57,7 +57,8 @@ class hashdb_manager_t {
                 settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
                 source_lookup_index_manager(hashdb_dir, file_mode),
                 hashdb_element_lookup(&source_lookup_index_manager,
-                                      &settings) {
+                                      &settings),
+                map_multimap_manager(hashdb_dir, file_mode) {
   }
 
   // insert
@@ -141,7 +142,7 @@ class hashdb_manager_t {
     // get the map_multimap iterator pair
     std::pair<map_multimap_iterator_t<T>,
               map_multimap_iterator_t<T> >
-                                it_pair(map_multimap_manager->find(key));
+                                it_pair(map_multimap_manager.find(key));
 
     // return the hashdb_iterator pair for this key
     return std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> >(
@@ -156,24 +157,24 @@ class hashdb_manager_t {
 
   // begin
   hashdb_iterator_t<T> begin() const {
-    return hashdb_iterator_t<T>(map_multimap_manager->begin(),
+    return hashdb_iterator_t<T>(map_multimap_manager.begin(),
                                               hashdb_element_lookup);
   }
 
   // end
   hashdb_iterator_t<T> end() const {
-    return hashdb_iterator_t<T>(map_multimap_manager->end(),
+    return hashdb_iterator_t<T>(map_multimap_manager.end(),
                                               hashdb_element_lookup);
   }
 
   // map size
   size_t map_size() const {
-    return map_multimap_manager->map_size();
+    return map_multimap_manager.map_size();
   }
 
   // multimap size
   size_t multimap_size() const {
-    return map_multimap_manager->map_size();
+    return map_multimap_manager.map_size();
   }
 
   // source lookup store size

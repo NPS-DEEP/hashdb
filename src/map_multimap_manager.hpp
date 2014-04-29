@@ -333,12 +333,12 @@ class map_multimap_manager_t {
   }
 */
 
-  map_multimap_iterator_t<T> begin() {
+  map_multimap_iterator_t<T> begin() const {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
                                    map_manager.begin());
   }
 
-  map_multimap_iterator_t<T> end() {
+  map_multimap_iterator_t<T> end() const {
     return map_multimap_iterator_t<T>(&map_manager, &multimap_manager,
                                    map_manager.end());
   }

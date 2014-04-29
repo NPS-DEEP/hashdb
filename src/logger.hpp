@@ -28,7 +28,6 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include "bloom_filter.hpp"
 #include "command_line.hpp"
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"

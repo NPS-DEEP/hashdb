@@ -40,7 +40,6 @@ HAHSDB_INCS = \
 	bi_data_types.hpp \
 	bi_store.hpp \
 	bloom_filter_calculator.hpp \
-	bloom_filter.hpp \
 	bloom_filter_manager.hpp \
 	bloom_rebuild_manager.hpp \
 	command_line.cpp \

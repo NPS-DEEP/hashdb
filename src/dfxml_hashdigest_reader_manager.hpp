@@ -82,7 +82,7 @@ class dfxml_hashdigest_reader_manager_t {
     elements = new hashdb_elements_t();
     reader_consumer_t consumer(elements);
 
-    dfxml_hashdigest_reader_t<reader_consumer_t>::do_read(
+    dfxml_hashdigest_reader_t<reader_consumer_t, T>::do_read(
                                    dfxml_filename,
                                    default_repository_name,
                                    &consumer);
