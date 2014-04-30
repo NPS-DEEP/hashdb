@@ -40,6 +40,7 @@ static const char temp_dir[] = "temp_dir";
 void run_test() {
 
   rm_hashdb_dir(temp_dir);
+  make_dir_if_not_there(temp_dir);
 
   source_lookup_index_manager_t manager(temp_dir, RW_NEW);
   std::pair<bool, uint64_t> pair_bool_64;
@@ -117,6 +118,7 @@ void run_test() {
 
 int cpp_main(int argc, char* argv[]) {
 
+  rm_hashdb_dir(temp_dir);
   make_dir_if_not_there(temp_dir);
 
   run_test();

@@ -193,9 +193,9 @@ void do_test() {
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(manager.map_size(), 1);
-  BOOST_TEST_EQ(manager.multimap_size(), 0);
+  BOOST_TEST_EQ(manager.multimap_size(), 1);
   hashdb_iterator_t<T> it(manager.begin());
-  BOOST_TEST_EQ(it->key, T::fromhex("0000000000000000000000000000000000000001"));
+  BOOST_TEST_EQ(it->key, T::fromhex("00000000000000000000000000000001"));
   BOOST_TEST_EQ(it->hash_block_size, 4096);
   BOOST_TEST_EQ(it->repository_name, "rep1");
   BOOST_TEST_EQ(it->filename, "file1");

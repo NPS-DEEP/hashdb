@@ -34,10 +34,11 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
+#include "directory_helper.hpp"
 #include "file_modes.h"
 #include "dfxml/src/hash_t.h"
 
-static const char temp_file[] = "temp_file";
+static const char temp_dir[] = "temp_dir";
 
 template<typename T>
 void run_map_rw_tests() {
@@ -45,9 +46,10 @@ void run_map_rw_tests() {
   T key;
 
   // clean up from any previous run
-  remove(temp_file);
+  rm_hashdb_dir(temp_dir);
+  make_dir_if_not_there(temp_dir);
 
-  map_manager_t<T> map(temp_file, RW_NEW);
+  map_manager_t<T> map(temp_dir, RW_NEW);
 
   map_pair_t map_pair; 
   size_t num_erased;
@@ -70,9 +72,7 @@ void run_map_rw_tests() {
 
   // add duplicate
   to_key(1000005, key);
-std::cout << "map_and_multimap_test.run_map_rw_tests.a\n";
   map_pair = map.emplace(key, 0);
-std::cout << "map_and_multimap_test.run_map_rw_tests.b\n";
   BOOST_TEST_EQ(map_pair.second, false);
 
   // add new
@@ -143,7 +143,7 @@ void run_map_ro_tests() {
   typename map_manager_t<T>::map_iterator_t map_it;
   T key;
 
-  map_manager_t<T> map(temp_file, READ_ONLY);
+  map_manager_t<T> map(temp_dir, READ_ONLY);
 
   // check count
   BOOST_TEST_EQ(map.size(), 1000000);
@@ -167,9 +167,10 @@ void run_multimap_rw_tests() {
   typedef std::pair<typename multimap_manager_t<T>::multimap_iterator_t, bool> map_pair_t;
 
   // clean up from any previous run
-  remove(temp_file);
+  rm_hashdb_dir(temp_dir);
+  make_dir_if_not_there(temp_dir);
 
-  multimap_manager_t<T> map(temp_file, RW_NEW);
+  multimap_manager_t<T> map(temp_dir, RW_NEW);
   T key;
   map_pair_t map_pair; 
   bool did_erase;
@@ -295,7 +296,7 @@ void run_multimap_ro_tests() {
   // ************************************************************
   // RO tests
   // ************************************************************
-  multimap_manager_t<T> map(temp_file, READ_ONLY);
+  multimap_manager_t<T> map(temp_dir, READ_ONLY);
   T key;
 
   map_pair_t map_pair; 
@@ -325,6 +326,7 @@ void run_multimap_ro_tests() {
   typedef uint64_t val_t;
 
 int cpp_main(int argc, char* argv[]) {
+
   // btree map
   run_map_rw_tests<md5_t>();
   run_map_ro_tests<md5_t>();

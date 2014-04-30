@@ -44,15 +44,19 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 
 void make_dir_if_not_there(const std::string& temp_dir) {
   // if temp_dir does not exist, create it
   if (access(temp_dir.c_str(), F_OK) != 0) {
 #ifdef WIN32
-    mkdir(temp_dir.c_str());
+    int status = mkdir(temp_dir.c_str());
 #else
-    mkdir(temp_dir.c_str(),0777);
+    int status = mkdir(temp_dir.c_str(),0777);
 #endif
+    if (status != 0) {
+      std::cout << "unable to create dir " << temp_dir << ": "<< strerror(status) << "\n";
+    }
   }
 }
 
@@ -64,6 +68,7 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/history.xml").c_str());
   remove((hashdb_dir + "/log.xml").c_str());
   remove((hashdb_dir + "/settings.xml").c_str());
+  remove((hashdb_dir + "/settings.xml.backup").c_str());
   remove((hashdb_dir + "/source_filename_store.dat").c_str());
   remove((hashdb_dir + "/source_filename_store.idx1").c_str());
   remove((hashdb_dir + "/source_filename_store.idx2").c_str());
@@ -73,12 +78,13 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/source_repository_name_store.dat").c_str());
   remove((hashdb_dir + "/source_repository_name_store.idx1").c_str());
   remove((hashdb_dir + "/source_repository_name_store.idx2").c_str());
+  remove((hashdb_dir + "/temp_dfxml_output").c_str());
 
   if (access(hashdb_dir.c_str(), F_OK) == 0) {
     // dir exists so remove it
     int status = rmdir(hashdb_dir.c_str());
     if (status != 0) {
-      std::cout << "unable to remove hashdb_dir " << hashdb_dir << "\n";
+      std::cout << "unable to remove hashdb_dir " << hashdb_dir << ": "<< strerror(status) << "\n";
     }
   }
 }
