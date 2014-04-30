@@ -77,6 +77,7 @@ int cpp_main(int argc, char* argv[]) {
 //std::cout << "bfmt.b\n";
   run_rw_tests<md5_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
 //std::cout << "bfmt.c\n";
+/*
   run_rw_tests<sha1_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
 //std::cout << "bfmt.d\n";
   run_rw_tests<sha1_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
@@ -85,6 +86,7 @@ int cpp_main(int argc, char* argv[]) {
 //std::cout << "bfmt.f\n";
   run_rw_tests<sha256_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
 //std::cout << "bfmt.g\n";
+*/
 
   // done
   int status = boost::report_errors();

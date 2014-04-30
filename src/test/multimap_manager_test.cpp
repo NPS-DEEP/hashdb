@@ -33,24 +33,23 @@
 #include "directory_helper.hpp"
 #include "dfxml/src/hash_t.h"
 #include "file_modes.h"
-#include "multimap_iterator.hpp"
 #include "multimap_manager.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_file[] = "temp_dir/hash_duplicates_store";
 
 template<typename T>
-void run_multimap_manager_rw_tests(multimap_type_t multimap_type) {
+void run_multimap_manager_rw_tests() {
 
   // clean up from any previous run
   remove(temp_file);
 
   T key;
-  multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW, multimap_type);
+  multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW);
   bool did_emplace;
   bool are_equal;
-  class multimap_iterator_t<T> multimap_it;
-  typedef std::pair<class multimap_iterator_t<T>, class multimap_iterator_t<T> > range_pair_t;
+  class multimap_manager_t<T>::multimap_iterator_t multimap_it;
+  typedef typename multimap_manager_t<T>::multimap_iterator_range_t range_pair_t;
   range_pair_t range_pair;
 
   // populate with 100 entries
@@ -151,12 +150,12 @@ void run_multimap_manager_rw_tests(multimap_type_t multimap_type) {
 }
 
 template<typename T>
-void run_multimap_manager_ro_tests(multimap_type_t multimap_type) {
+void run_multimap_manager_ro_tests() {
 
   T key;
-  multimap_manager_t<T> multimap_manager(temp_dir, READ_ONLY, multimap_type);
-  class multimap_iterator_t<T> multimap_it;
-  typedef std::pair<class multimap_iterator_t<T>, class multimap_iterator_t<T> > range_pair_t;
+  multimap_manager_t<T> multimap_manager(temp_dir, READ_ONLY);
+  class multimap_manager_t<T>::multimap_iterator_t multimap_it;
+  typedef typename multimap_manager_t<T>::multimap_iterator_range_t range_pair_t;
   range_pair_t range_pair;
 
   // ************************************************************
@@ -185,30 +184,8 @@ int cpp_main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
 
   // multimap tests
-  run_multimap_manager_rw_tests<md5_t>(MULTIMAP_BTREE);
-  run_multimap_manager_ro_tests<md5_t>(MULTIMAP_BTREE);
-  run_multimap_manager_rw_tests<sha1_t>(MULTIMAP_BTREE);
-  run_multimap_manager_ro_tests<sha1_t>(MULTIMAP_BTREE);
-  run_multimap_manager_rw_tests<sha256_t>(MULTIMAP_BTREE);
-  run_multimap_manager_ro_tests<sha256_t>(MULTIMAP_BTREE);
-  run_multimap_manager_rw_tests<md5_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_ro_tests<md5_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_rw_tests<sha1_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_ro_tests<sha1_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_rw_tests<sha256_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_ro_tests<sha256_t>(MULTIMAP_FLAT_SORTED_VECTOR);
-  run_multimap_manager_rw_tests<md5_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_ro_tests<md5_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_rw_tests<sha1_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_ro_tests<sha1_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_rw_tests<sha256_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_ro_tests<sha256_t>(MULTIMAP_RED_BLACK_TREE);
-  run_multimap_manager_rw_tests<md5_t>(MULTIMAP_UNORDERED_HASH);
-  run_multimap_manager_ro_tests<md5_t>(MULTIMAP_UNORDERED_HASH);
-  run_multimap_manager_rw_tests<sha1_t>(MULTIMAP_UNORDERED_HASH);
-  run_multimap_manager_ro_tests<sha1_t>(MULTIMAP_UNORDERED_HASH);
-  run_multimap_manager_rw_tests<sha256_t>(MULTIMAP_UNORDERED_HASH);
-  run_multimap_manager_ro_tests<sha256_t>(MULTIMAP_UNORDERED_HASH);
+  run_multimap_manager_rw_tests<md5_t>();
+  run_multimap_manager_ro_tests<md5_t>();
 
   // done
   int status = boost::report_errors();

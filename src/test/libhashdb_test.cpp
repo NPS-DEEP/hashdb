@@ -44,59 +44,48 @@
 
 static const char temp_dir[] = "temp_dir";
 
-template<typename T>
-void do_import(std::string hashdigest_type) {
+void do_import() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
 
   // valid hashdigest values
-  T k1;
-//  T k2;
-//  T k3;
-  to_key(1, k1);
-//  to_key(2, k2);
-//  to_key(3, k3);
+  md5_t k1;
 
   // input for import
-  std::vector<hashdb_t::import_element_t<T> > import_input;
-  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 0));
-  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 4096));
-  import_input.push_back(hashdb_t::import_element_t<T>(k1, "rep1", "file1", 4097)); // invalid
+  hashdb_md5_t::import_input_t import_input;
+  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 0));
+  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 4096));
+  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 4097)); // invalid
 
   // create new database
-  hashdb_t hashdb(temp_dir, hashdigest_type, 4096, 20);
+  hashdb_md5_t hashdb(temp_dir, 4096, 20);
 
   // import some elements
   int status;
   status = hashdb.import(import_input);
 
   // invalid mode
-  std::vector<std::pair<uint64_t, T> > scan_input;
-  std::vector<std::pair<uint64_t, uint32_t> > scan_output;
+  hashdb_md5_t::scan_input_t scan_input;
+  hashdb_md5_t::scan_output_t scan_output;
   status = hashdb.scan(scan_input, scan_output);
   BOOST_TEST_NE(status, 0);
 }
 
-template<typename T>
 void do_scan() {
 
   // valid hashdigest values
-  T k1;
-  T k2;
- // T k3;
-  to_key(1, k1);
-  to_key(2, k2);
- // to_key(3, k3);
+  md5_t k1;
+  md5_t k2;
 
   // open to scan
-  hashdb_t hashdb(temp_dir);
+  hashdb_md5_t hashdb(temp_dir);
 
-  std::vector<std::pair<uint64_t, T> > input;
-  std::vector<std::pair<uint64_t, uint32_t> > output;
+  hashdb_md5_t::scan_input_t input;
+  hashdb_md5_t::scan_output_t output;
 
   // populate input
-  input.push_back(std::pair<uint64_t, T>(1, k1));
-  input.push_back(std::pair<uint64_t, T>(2, k2));
+  input.push_back(k1);
+  input.push_back(k2);
 
   // perform scan
   hashdb.scan(input, output);
@@ -106,12 +95,8 @@ void do_scan() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-  do_import<md5_t>("MD5");
-  do_scan<md5_t>();
-  do_import<sha1_t>("SHA1");
-  do_scan<sha1_t>();
-  do_import<sha256_t>("SHA256");
-  do_scan<sha256_t>();
+  do_import();
+  do_scan();
 
   // done
   int status = boost::report_errors();

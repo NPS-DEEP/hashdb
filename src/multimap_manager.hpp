@@ -182,7 +182,7 @@ class multimap_manager_t {
   }
 
   // number of elements
-  size_t size() {
+  size_t size() const {
     return multimap.size();
   }
 

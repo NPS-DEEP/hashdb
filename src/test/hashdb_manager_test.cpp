@@ -33,9 +33,6 @@
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
-#include "map_types.h"
-#include "multimap_types.h"
-#include "hashdigest_types.h"
 #include "file_modes.h"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
@@ -49,23 +46,18 @@
 
 static const char temp_dir[] = "temp_dir";
 
-void write_settings(hashdigest_type_t hashdigest_type,
-                    map_type_t map_type,
-                    multimap_type_t multimap_type) {
+void write_settings() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
 
   // create working settings
   hashdb_settings_t settings;
-  settings.hashdigest_type = hashdigest_type;
-  settings.map_type = map_type;
-  settings.multimap_type = multimap_type;
   settings.maximum_hash_duplicates = 2;
   hashdb_settings_manager_t::write_settings(temp_dir, settings);
 }
 
 template<typename T>
-void do_test(map_type_t map_type, multimap_type_t multimap_type) {
+void do_test() {
 
   // valid hashdigest values
   T k1;
@@ -77,22 +69,17 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
 //  const uint64_t v1 = 111;
 //  const uint64_t v2 = 222;
 //  const uint64_t v3 = 333;
-  hashdigest_t d1(k1);
-  hashdigest_t d2(k2);
-  hashdigest_t d3(k3);
+//  hashdigest_t d1(k1);
+//  hashdigest_t d2(k2);
+//  hashdigest_t d3(k3);
 
-  // md5 will be invalid if hashdb expects sha1
-  md5_t k1_md5;
-  to_key(1, k1_md5);
-  hashdigest_t d1_md5(k1_md5);
-
-  hashdb_element_t element;
+  hashdb_element_t<T> element;
 
   // create working changes object
   hashdb_changes_t changes;
 
   // open new hashdb manager
-  hashdb_manager_t manager(temp_dir, RW_NEW);
+  hashdb_manager_t<T> manager(temp_dir, RW_NEW);
 
   // ************************************************************
   // initial state
@@ -109,100 +96,88 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   // note: some of these tests additionally test failure ordering
   // ************************************************************
   // insert valid
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 1);
 
   // insert, mismatched hash block size
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              5, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_mismatched_hash_block_size, 1);
 
   // insert, file offset not aligned
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 5);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_file_offset_not_aligned, 1);
 
-  // insert, mismatched hashdigest type
-  element = hashdb_element_t(d1_md5.hashdigest, d1_md5.hashdigest_type,
-                             4096, "rep1", "file1", 0);
-  manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_mismatched_hashdigest_type, 1);
-
   // insert, add second valid
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 4096);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 2);
 
   // insert, exceeds max duplicates
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 4096 * 2);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 1);
 
   // insert, duplicate element
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1);
 
   // remove, no element
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "undefined_rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 1);
 
   // remove successfully
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_removed, 1);
 
   // remove, no element
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 2);
 
   // insert, valid
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 3);
 
   // remove_key successfully
   BOOST_TEST_EQ(changes.hashes_removed, 1);
-  manager.remove_key(d1, changes);
+  manager.remove_key(k1, changes);
   BOOST_TEST_EQ(changes.hashes_removed, 3);
 
   // remove_key no hash
-  manager.remove_key(d1, changes);
+  manager.remove_key(k1, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_hash, 1);
 
   // remove, mismatched hash block size
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              5, "rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_mismatched_hash_block_size, 1);
 
   // remove, file offset not aligned
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 5);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_file_offset_not_aligned, 1);
 
-  // remove, mismatched hashdigest type
-  element = hashdb_element_t(d1_md5.hashdigest, d1_md5.hashdigest_type,
-                             4096, "rep1", "file1", 0);
-  manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_mismatched_hashdigest_type, 1);
-
   // remove, no element
-  element = hashdb_element_t(d2.hashdigest, d2.hashdigest_type,
+  element = hashdb_element_t<T>(k2,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 3);
@@ -210,18 +185,17 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   // ************************************************************
   // find, find_count, size, iterator
   // ************************************************************
-  BOOST_TEST_EQ(manager.find_count(d1), 0);
+  BOOST_TEST_EQ(manager.find_count(k1), 0);
   BOOST_TEST_EQ(manager.find_count(k1), 0);
 
   // setup with one element to make iterator simple
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(manager.map_size(), 1);
   BOOST_TEST_EQ(manager.multimap_size(), 0);
-  hashdb_iterator_t it(manager.begin());
-  BOOST_TEST_EQ(it->hashdigest, "0000000000000000000000000000000000000001");
-  BOOST_TEST_EQ(it->hashdigest_type, "SHA1");
+  hashdb_iterator_t<T> it(manager.begin());
+  BOOST_TEST_EQ(it->key, T::fromhex("0000000000000000000000000000000000000001"));
   BOOST_TEST_EQ(it->hash_block_size, 4096);
   BOOST_TEST_EQ(it->repository_name, "rep1");
   BOOST_TEST_EQ(it->filename, "file1");
@@ -231,18 +205,18 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ((it == manager.end()), true);
 
   // setup with two elements under one key and one element under another key
-  element = hashdb_element_t(d1.hashdigest, d1.hashdigest_type,
+  element = hashdb_element_t<T>(k1,
                              4096, "second_rep1", "file1", 0);
   manager.insert(element, changes);
-  element = hashdb_element_t(d2.hashdigest, d2.hashdigest_type,
+  element = hashdb_element_t<T>(k2,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
 
-  BOOST_TEST_EQ(manager.find_count(d1), 2);
+  BOOST_TEST_EQ(manager.find_count(k1), 2);
   BOOST_TEST_EQ(manager.map_size(), 2);
   BOOST_TEST_EQ(manager.multimap_size(), 2);
 
-  hashdb_iterator_t it2(manager.begin());
+  hashdb_iterator_t<T> it2(manager.begin());
   ++it2;
   it2++;
   ++it2;
@@ -250,12 +224,12 @@ void do_test(map_type_t map_type, multimap_type_t multimap_type) {
   BOOST_TEST_EQ((it2 == manager.end()), true);
 
   // check iterator pair from find
-  std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair;
+  std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair;
   it_pair = manager.find(k1);
   ++it_pair.first;
   ++it_pair.first;
   BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
-  it_pair = manager.find(d1);
+  it_pair = manager.find(k1);
   ++it_pair.first;
   ++it_pair.first;
   BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
@@ -267,20 +241,8 @@ int cpp_main(int argc, char* argv[]) {
 
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
-  write_settings(HASHDIGEST_SHA1, MAP_BTREE, MULTIMAP_BTREE);
-  do_test<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
-
-  write_settings(HASHDIGEST_SHA1, MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  do_test<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-
-  write_settings(HASHDIGEST_SHA1, MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  do_test<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-
-  write_settings(HASHDIGEST_SHA1, MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  do_test<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-
-  write_settings(HASHDIGEST_SHA1, MAP_BTREE, MULTIMAP_BTREE);
-  do_test<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
+  write_settings();
+  do_test<md5_t>();
 
   // done
   int status = boost::report_errors();

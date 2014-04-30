@@ -33,8 +33,6 @@
 #include "directory_helper.hpp"
 #include "dfxml/src/hash_t.h"
 #include "file_modes.h"
-#include "map_types.h"
-#include "multimap_types.h"
 #include "map_manager.hpp"
 #include "multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
@@ -45,13 +43,13 @@ static const char temp_map[] = "temp_dir/hash_store";
 static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
 
 template<typename T>
-void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
+void run_rw_tests() {
 
   T key;
   uint64_t pay;
   map_multimap_iterator_t<T> it;
   map_multimap_iterator_t<T> it_end;
-  std::pair<map_iterator_t<T>, bool> map_action_pair;
+  std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_action_pair;
   bool is_done;
 
   // clean up from any previous run
@@ -59,10 +57,10 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
   remove(temp_multimap);
 
   // create map manager
-  map_manager_t<T> map_manager(temp_dir, RW_NEW, map_type);
+  map_manager_t<T> map_manager(temp_dir, RW_NEW);
 
   // create multimap manager
-  multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW, multimap_type);
+  multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW);
 
   // put 1 element into map
   to_key(101, key);
@@ -101,7 +99,7 @@ void run_rw_tests(map_type_t map_type, multimap_type_t multimap_type) {
 }
 
 template<typename T>
-void run_ro_tests(map_type_t map_type, multimap_type_t multimap_type) {
+void run_ro_tests() {
   // no action defined for RO tests
 }
 
@@ -109,30 +107,8 @@ int cpp_main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
 
-  run_rw_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_ro_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_rw_tests<md5_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_ro_tests<md5_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_rw_tests<md5_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_ro_tests<md5_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_rw_tests<md5_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  run_ro_tests<md5_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  run_rw_tests<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_ro_tests<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_rw_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_ro_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_rw_tests<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_ro_tests<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_rw_tests<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  run_ro_tests<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  run_rw_tests<sha256_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_ro_tests<sha256_t>(MAP_BTREE, MULTIMAP_BTREE);
-  run_rw_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_ro_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  run_rw_tests<sha256_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_ro_tests<sha256_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  run_rw_tests<sha256_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  run_ro_tests<sha256_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+  run_rw_tests<md5_t>();
+  run_ro_tests<md5_t>();
 
   // done
   int status = boost::report_errors();

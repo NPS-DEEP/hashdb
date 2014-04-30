@@ -25,14 +25,8 @@
  */
 
 #include <config.h>
-#include "map_red_black_tree.hpp"
-#include "map_unordered_hash.hpp"
-#include "map_flat_sorted_vector.hpp"
-#include "map_btree.hpp"
-#include "multimap_red_black_tree.hpp"
-#include "multimap_unordered_hash.hpp"
-#include "multimap_flat_sorted_vector.hpp"
-#include "multimap_btree.hpp"
+#include "map_manager.hpp"
+#include "multimap_manager.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -45,19 +39,19 @@
 
 static const char temp_file[] = "temp_file";
 
-template<typename T, typename K>
+template<typename T>
 void run_map_rw_tests() {
-  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
-  K key;
+  typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
+  T key;
 
   // clean up from any previous run
   remove(temp_file);
 
-  T map(temp_file, RW_NEW);
+  map_manager_t<T> map(temp_file, RW_NEW);
 
   map_pair_t map_pair; 
   size_t num_erased;
-  typename T::map_const_iterator_t map_it;
+  typename map_manager_t<T>::map_iterator_t map_it;
 
   // populate with 1,000,000 entries
   for (uint64_t n=0; n< 1000000; ++n) {
@@ -137,19 +131,19 @@ std::cout << "map_and_multimap_test.run_map_rw_tests.b\n";
   BOOST_TEST_EQ(map.find_count(key), 0);
 }
 
-template<typename T, typename K>
+template<typename T>
 void run_map_ro_tests() {
 //std::cout << "run_map_ro_tests\n";
 
-  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
   map_pair_t map_pair; 
-  typename T::map_const_iterator_t map_it;
-  K key;
+  typename map_manager_t<T>::map_iterator_t map_it;
+  T key;
 
-  T map(temp_file, READ_ONLY);
+  map_manager_t<T> map(temp_file, READ_ONLY);
 
   // check count
   BOOST_TEST_EQ(map.size(), 1000000);
@@ -167,21 +161,21 @@ void run_map_ro_tests() {
   BOOST_TEST_THROWS(map_pair = map.change(key, 0), std::runtime_error);
 }
 
-template<typename T, typename K>
+template<typename T>
 void run_multimap_rw_tests() {
 //std::cout << "run_multimap_rw_tests\n";
-  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename multimap_manager_t<T>::multimap_iterator_t, bool> map_pair_t;
 
   // clean up from any previous run
   remove(temp_file);
 
-  T map(temp_file, RW_NEW);
-  K key;
+  multimap_manager_t<T> map(temp_file, RW_NEW);
+  T key;
   map_pair_t map_pair; 
   bool did_erase;
-  typename T::map_const_iterator_t map_it;
-  typename T::map_const_iterator_t end_it;
-  typename T::map_const_iterator_range_t map_it_range;
+  typename multimap_manager_t<T>::multimap_iterator_t map_it;
+  typename multimap_manager_t<T>::multimap_iterator_t end_it;
+  typename multimap_manager_t<T>::multimap_iterator_range_t map_it_range;
   bool did_emplace;
 
   // populate with 1,000,000 entries
@@ -294,20 +288,20 @@ void run_multimap_rw_tests() {
   BOOST_TEST_EQ(did_emplace, true);
 }
 
-template<typename T, typename K>
+template<typename T>
 void run_multimap_ro_tests() {
 //std::cout << "run_multimap_ro_tests\n";
-  typedef std::pair<typename T::map_const_iterator_t, bool> map_pair_t;
+  typedef std::pair<typename multimap_manager_t<T>::multimap_iterator_t, bool> map_pair_t;
   // ************************************************************
   // RO tests
   // ************************************************************
-  T map(temp_file, READ_ONLY);
-  K key;
+  multimap_manager_t<T> map(temp_file, READ_ONLY);
+  T key;
 
   map_pair_t map_pair; 
-  typename T::map_const_iterator_t map_it;
-  typename T::map_const_iterator_t end_it;
-  typename T::map_const_iterator_range_t map_it_range;
+  typename multimap_manager_t<T>::multimap_iterator_t map_it;
+  typename multimap_manager_t<T>::multimap_iterator_t end_it;
+  typename multimap_manager_t<T>::multimap_iterator_range_t map_it_range;
 
   // check count
   BOOST_TEST_EQ(map.size(), 1000000);
@@ -331,47 +325,14 @@ void run_multimap_ro_tests() {
   typedef uint64_t val_t;
 
 int cpp_main(int argc, char* argv[]) {
-  // ************************************************************
-  // map
-  // ************************************************************
-  // red-black-tree map
-  run_map_rw_tests<class map_red_black_tree_t<my_key_t, val_t>, my_key_t >();
-  run_map_ro_tests<class map_red_black_tree_t<my_key_t, val_t>, my_key_t >();
-
-  // unordered hash map
-  run_map_rw_tests<class map_unordered_hash_t<my_key_t, val_t>, my_key_t >();
-  run_map_ro_tests<class map_unordered_hash_t<my_key_t, val_t>, my_key_t >();
-
-  // flat sorted vector map
-  run_map_rw_tests<class map_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
-  run_map_ro_tests<class map_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
-
   // btree map
-  run_map_rw_tests<class map_btree_t<my_key_t, val_t>, my_key_t >();
-  run_map_ro_tests<class map_btree_t<my_key_t, val_t>, my_key_t >();
-
-  // ************************************************************
-  // multimap
-  // ************************************************************
-  // red-black-tree multimap
-  run_multimap_rw_tests<class multimap_red_black_tree_t<my_key_t, val_t>, my_key_t >();
-  run_multimap_ro_tests<class multimap_red_black_tree_t<my_key_t, val_t>, my_key_t >();
-
-  // unordered hash multimap
-  run_multimap_rw_tests<class multimap_unordered_hash_t<my_key_t, val_t>, my_key_t >();
-  run_multimap_ro_tests<class multimap_unordered_hash_t<my_key_t, val_t>, my_key_t >();
-
-  // flat sorted vector multimap
-  run_multimap_rw_tests<class multimap_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
-  run_multimap_ro_tests<class multimap_flat_sorted_vector_t<my_key_t, val_t>, my_key_t >();
+  run_map_rw_tests<md5_t>();
+  run_map_ro_tests<md5_t>();
 
   // btree multimap
-  run_multimap_rw_tests<class multimap_btree_t<my_key_t, val_t>, my_key_t >();
-  run_multimap_ro_tests<class multimap_btree_t<my_key_t, val_t>, my_key_t >();
+  run_multimap_rw_tests<md5_t>();
+  run_multimap_ro_tests<md5_t>();
 
-  // ************************************************************
-  // done
-  // ************************************************************
   // done
   int status = boost::report_errors();
   return status;

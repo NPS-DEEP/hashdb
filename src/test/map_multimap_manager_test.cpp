@@ -33,8 +33,6 @@
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
-#include "map_types.h"
-#include "multimap_types.h"
 #include "file_modes.h"
 #include "map_multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
@@ -50,7 +48,7 @@ static const char temp_settings[] = "temp_dir/settings.xml";
 static const char temp_bloom_filter_1[] = "temp_dir/bloom_filter_1";
 
 template<typename T>
-void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
+void rw_new_tests() {
 
   T k1;
   T k2;
@@ -70,8 +68,6 @@ void rw_new_tests(map_type_t map_type, multimap_type_t multimap_type) {
 
   // create working settings
   hashdb_settings_t settings;
-  settings.map_type = MAP_BTREE;
-  settings.multimap_type = MULTIMAP_BTREE;
   hashdb_settings_manager_t::write_settings(temp_dir, settings);
 
   // changes_t
@@ -149,27 +145,11 @@ int cpp_main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
 
-// map types:
-// MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
   // map tests
-  rw_new_tests<md5_t>(MAP_BTREE, MULTIMAP_BTREE);
-  rw_new_tests<sha1_t>(MAP_BTREE, MULTIMAP_BTREE);
-  rw_new_tests<sha256_t>(MAP_BTREE, MULTIMAP_BTREE);
-
-  rw_new_tests<md5_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  rw_new_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-  rw_new_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR, MULTIMAP_FLAT_SORTED_VECTOR);
-
-  rw_new_tests<md5_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  rw_new_tests<sha1_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-  rw_new_tests<sha256_t>(MAP_RED_BLACK_TREE, MULTIMAP_RED_BLACK_TREE);
-
-  rw_new_tests<md5_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  rw_new_tests<sha1_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
-  rw_new_tests<sha256_t>(MAP_UNORDERED_HASH, MULTIMAP_UNORDERED_HASH);
+  rw_new_tests<md5_t>();
 
   // done
   int status = boost::report_errors();

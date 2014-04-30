@@ -39,7 +39,6 @@ bin_PROGRAMS = \
 	hashdb_iterator_test \
 	hashdb_manager_test \
 	dfxml_hashdigest_rw_test \
-	hashdigest_manager_test \
 	identified_blocks_reader_test \
 	libhashdb_test \
 	commands_test
@@ -53,6 +52,7 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	$(XML_CFLAGS)
 
 libhashdb_test_LDADD = ../libhashdb/libhashdb.la
+commands_test_LDADD = ../libhashdb/libhashdb.la
 
 AM_LDFLAGS = -static
 
@@ -215,15 +215,6 @@ dfxml_hashdigest_rw_test_SOURCES = \
 	$(COMMAND_LINE_INCS) \
 	$(DFXML_INCS) \
 	dfxml_hashdigest_rw_test.cpp
-
-hashdigest_manager_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	$(BTREE_INCS) $(ENDIAN_INCS) \
-	$(COMMAND_LINE_INCS) \
-	$(BLOOM_INCS) \
-	$(DFXML_INCS) \
-	hashdigest_manager_test.cpp
 
 identified_blocks_reader_test_SOURCES = \
 	boost_fix.hpp \

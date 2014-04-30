@@ -1,19 +1,19 @@
 // Test to manifest the use_count bug, 1/15/2014
 
 #include "file_modes.h"
-#include "map_btree.hpp"
+#include "map_manager.hpp"
 #include <iostream>
 #include <cstdio>
 #include <boost/detail/lightweight_main.hpp>
 
 static const char temp_file[] = "temp_file";
 
-typedef map_btree_t<uint64_t, uint64_t> map_t;
+typedef map_manager_t<uint64_t> map_t;
 
 void test_rw() {
 
   size_t size __attribute__((unused));
-  map_t::map_pair_it_bool_t pair_it_bool; 
+  std::pair<map_manager_t<uint64_t>::map_iterator_t, bool> pair_it_bool;
 
   // clean up from any previous run
   remove(temp_file);

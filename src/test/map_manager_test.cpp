@@ -34,25 +34,24 @@
 #include "map_manager.hpp"
 #include "file_modes.h"
 #include "dfxml/src/hash_t.h"
-#include "map_iterator.hpp"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_file[] = "temp_dir/hash_store";
 
 template<typename T>
-void run_map_manager_rw_tests(map_type_t map_type) {
+void run_map_manager_rw_tests() {
 
   T key;
-  typedef std::pair<map_iterator_t<T>, bool> map_pair_t;
+  typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
   map_pair_t map_pair;
   bool did_erase;
-  class map_iterator_t<T> map_it;
+  class map_manager_t<T>::map_iterator_t map_it;
 
   // clean up from any previous run
   remove(temp_file);
 
   // create new map manager
-  map_manager_t<T> map_manager(temp_dir, RW_NEW, map_type);
+  map_manager_t<T> map_manager(temp_dir, RW_NEW);
 
   // populate with 100 entries
   for (uint64_t n=0; n< 100; ++n) {
@@ -131,7 +130,7 @@ void run_map_manager_rw_tests(map_type_t map_type) {
 
   // validate iterator
   map_it = map_manager.begin();
-  class map_iterator_t<T> map_it2 = map_manager.end();
+  class map_manager_t<T>::map_iterator_t map_it2 = map_manager.end();
   bool temp_equals = (map_it == map_it2);
   BOOST_TEST_EQ(temp_equals, false);
   temp_equals = (map_it != map_it2);
@@ -149,18 +148,18 @@ void run_map_manager_rw_tests(map_type_t map_type) {
 }
 
 template<typename T>
-void run_map_manager_ro_tests(map_type_t map_type) {
+void run_map_manager_ro_tests() {
 
   T key;
-  typedef std::pair<map_iterator_t<T>, bool> map_pair_t;
+  typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
   map_pair_t map_pair;
-  class map_iterator_t<T> map_it;
+  class map_manager_t<T>::map_iterator_t map_it;
 
   // ************************************************************
   // RO tests
   // ************************************************************
   // create new map manager
-  map_manager_t<T> map_manager(temp_dir, READ_ONLY, map_type);
+  map_manager_t<T> map_manager(temp_dir, READ_ONLY);
 
   // check count
   BOOST_TEST_EQ(map_manager.size(), 100);
@@ -183,30 +182,8 @@ int cpp_main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
   // map tests
-  run_map_manager_rw_tests<md5_t>(MAP_BTREE);
-  run_map_manager_ro_tests<md5_t>(MAP_BTREE);
-  run_map_manager_rw_tests<sha1_t>(MAP_BTREE);
-  run_map_manager_ro_tests<sha1_t>(MAP_BTREE);
-  run_map_manager_rw_tests<sha256_t>(MAP_BTREE);
-  run_map_manager_ro_tests<sha256_t>(MAP_BTREE);
-  run_map_manager_rw_tests<md5_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_ro_tests<md5_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_rw_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_ro_tests<sha1_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_rw_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_ro_tests<sha256_t>(MAP_FLAT_SORTED_VECTOR);
-  run_map_manager_rw_tests<md5_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_ro_tests<md5_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_rw_tests<sha1_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_ro_tests<sha1_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_rw_tests<sha256_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_ro_tests<sha256_t>(MAP_RED_BLACK_TREE);
-  run_map_manager_rw_tests<md5_t>(MAP_UNORDERED_HASH);
-  run_map_manager_ro_tests<md5_t>(MAP_UNORDERED_HASH);
-  run_map_manager_rw_tests<sha1_t>(MAP_UNORDERED_HASH);
-  run_map_manager_ro_tests<sha1_t>(MAP_UNORDERED_HASH);
-  run_map_manager_rw_tests<sha256_t>(MAP_UNORDERED_HASH);
-  run_map_manager_ro_tests<sha256_t>(MAP_UNORDERED_HASH);
+  run_map_manager_rw_tests<md5_t>();
+  run_map_manager_ro_tests<md5_t>();
 
   // done
   int status = boost::report_errors();

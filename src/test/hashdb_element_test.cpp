@@ -32,19 +32,8 @@
 
 void run_test() {
 
-  hashdb_element_t element;
+  hashdb_element_t<md5_t> element;
   BOOST_TEST_EQ(element.hash_block_size, 0);
-//  element("7", "MD5_misspelled", 2, "rep", "file", 3);
-//  BOOST_TEST_EQ(element.block_size, 2);
-  md5_t temp;
-  element = hashdb_element_t(temp);
-  BOOST_TEST_EQ(element.hashdigest_type, "MD5");
-  sha1_t temp2;
-  element = hashdb_element_t(temp2);
-  BOOST_TEST_EQ(element.hashdigest_type, "SHA1");
-  sha256_t temp3;
-  element = hashdb_element_t(temp3);
-  BOOST_TEST_EQ(element.hashdigest_type, "SHA256");
 }
 
 int cpp_main(int argc, char* argv[]) {
