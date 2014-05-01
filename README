@@ -33,7 +33,8 @@ install requisite dependencies on Fedora 19.
 
    $ sudo yum update
    $ sudo yum groupinstall development-tools
-   $ sudo yum install zeromq3-devel libxml2-devel openssl-devel tre-devel
+   $ sudo yum install gcc-c++
+   $ sudo yum install libxml2-devel openssl-devel tre-devel
    $ sudo yum install boost-devel
 
 Not all development tools are required.  The following should be sufficient
@@ -101,7 +102,7 @@ INSTALLING DEPENDENCIES ON MAC:
 
 We recommend installing Mac dependencies using the MacPorts system. Once that is installed, try:
 
-  $ sudo port install autoconf automake libxml2-devel zeromq3
+  $ sudo port install autoconf automake libxml2-devel
 
 Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
 to include /opt/local/bin.
