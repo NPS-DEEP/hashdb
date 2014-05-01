@@ -62,7 +62,7 @@ inline boost::btree::flags::bitmask file_mode_type_to_btree_flags_bitmask(
   } else if (type == RW_MODIFY) {
     return boost::btree::flags::read_write;
   } else {
-    assert(0);
+    assert(0); std::exit(1);
   }
 }
 
