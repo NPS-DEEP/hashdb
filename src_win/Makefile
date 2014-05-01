@@ -26,7 +26,7 @@ PDFDOCS = hashdbUsersManual.pdf \
 # So this just manually checks to see if the prerequists are present and,
 # if not, it makes them.
 #
-$(UNVERSIONED_INSTALLER): build_installer.nsi $(PDFDOCS)
+$(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
 	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
 	if [ ! -r ../win32/Makefile ]; then \
 	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
