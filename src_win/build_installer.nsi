@@ -31,11 +31,9 @@
 
 SetCompressor lzma
  
-#RequestExecutionLevel admin
-RequestExecutionLevel user
+RequestExecutionLevel admin
  
-#InstallDir "$PROGRAMFILES\${APPNAME}"
-InstallDir "$LOCALAPPDATA\${APPNAME}"
+InstallDir "$PROGRAMFILES\${APPNAME}"
  
 Name "${APPNAME}"
 	outFile "hashdb-${VERSION}-windowsinstaller.exe"
@@ -65,18 +63,18 @@ function InstallOnce
         setOutPath "$INSTDIR"
 
 	# install Registry information
-	WriteRegStr HKCU "${REG_SUB_KEY}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
-	WriteRegStr HKCU "${REG_SUB_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKCU "${REG_SUB_KEY}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "Publisher" "$\"${COMPANYNAME}$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "HelpLink" "$\"${HELPURL}$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "URLUpdateInfo" "$\"${UPDATEURL}$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "URLInfoAbout" "$\"${ABOUTURL}$\""
-	WriteRegStr HKCU "${REG_SUB_KEY}" "DisplayVersion" "$\"${VERSION}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "InstallLocation" "$\"$INSTDIR$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "Publisher" "$\"${COMPANYNAME}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "HelpLink" "$\"${HELPURL}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLUpdateInfo" "$\"${UPDATEURL}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLInfoAbout" "$\"${ABOUTURL}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayVersion" "$\"${VERSION}$\""
 	# There is no option for modifying or repairing the install
-	WriteRegDWORD HKCU "${REG_SUB_KEY}" "NoModify" 1
-	WriteRegDWORD HKCU "${REG_SUB_KEY}" "NoRepair" 1
+	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoModify" 1
+	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoRepair" 1
 
 	# install the uninstaller
 	# create the uninstaller
@@ -105,9 +103,8 @@ function InstallOnce
 functionEnd
 
 function .onInit
-#	setShellVarContext all
-	setShellVarContext current
-#	!insertmacro VerifyUserIsAdmin
+	setShellVarContext all
+	!insertmacro VerifyUserIsAdmin
 functionEnd
 
 Section "32-bit configuration"
@@ -134,18 +131,18 @@ Section "Add to path"
 	setOutPath "$INSTDIR"
         # note that path includes 32-bit and 64-bit, whether or not they
         # were both installed
-        ${EnvVarUpdate} $0 "PATH" "A" "HKCU" "$INSTDIR\32-bit"
-        ${EnvVarUpdate} $0 "PATH" "A" "HKCU" "$INSTDIR\64-bit"
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\32-bit"
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\64-bit"
 sectionEnd
 
 function un.onInit
-	SetShellVarContext current
+	SetShellVarContext all
  
 	#Verify the uninstaller - last chance to back out
 	MessageBox MB_OKCANCEL "Permanantly remove ${APPNAME}?" IDOK next
 		Abort
 	next:
-#	!insertmacro VerifyUserIsAdmin
+	!insertmacro VerifyUserIsAdmin
 functionEnd
  
 Function un.FailableDelete
@@ -214,7 +211,7 @@ section "uninstall"
 
         # remove associated search paths from the PATH environment variable
         # were both installed
-        ${un.EnvVarUpdate} $0 "PATH" "R" "HKCU" "$INSTDIR\32-bit"
-        ${un.EnvVarUpdate} $0 "PATH" "R" "HKCU" "$INSTDIR\64-bit"
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\32-bit"
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\64-bit"
 sectionEnd
 
