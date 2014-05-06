@@ -107,7 +107,8 @@ function .onInit
 	!insertmacro VerifyUserIsAdmin
 functionEnd
 
-Section "32-bit configuration"
+# deselected by default
+Section /o "32-bit configuration"
 
 	# install content common to both
 	call InstallOnce
