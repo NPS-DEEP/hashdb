@@ -3,7 +3,7 @@
 	url = https://github.com/simsong/dfxml.git
 [submodule "src/btree"]
 	path = src/btree
-	url = https://github.com/Beman/btree
+	url = https://github.com/simsong/btree
 [submodule "src/endian"]
 	path = src/endian
 	url = https://github.com/Beman/endian
