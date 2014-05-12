@@ -90,15 +90,9 @@ function InstallOnce
         # install PDF docs
         setOutPath "$INSTDIR\pdf"
         file "hashdbUsersManual.pdf"
-        file "scanner_demo.pdf"
-        file "create_hdb_demo.pdf"
-        file "similarity_demo.pdf"
 
         # 
 	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk" "$INSTDIR\pdf\hashdbUsersManual.pdf"
-	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Scanner Demo.lnk" "$INSTDIR\pdf\scanner_demo.pdf"
-	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Create Database Demo.lnk" "$INSTDIR\pdf\create_hdb_demo.pdf"
-	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Similarity Demo.lnk" "$INSTDIR\pdf\similarity_demo.pdf"
 
 	AlreadyThere:
 functionEnd
@@ -186,12 +180,6 @@ section "uninstall"
 	StrCpy $0 "$INSTDIR\64-bit\hashdb.exe"
 	Call un.FailableDelete
 	StrCpy $0 "$INSTDIR\pdf\hashdbUsersManual.pdf"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\pdf\scanner_demo.pdf"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\pdf\create_hashdb_demo.pdf"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\pdf\similarity_demo.pdf"
 	Call un.FailableDelete
 
 	# uninstall files and links
