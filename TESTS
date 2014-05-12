@@ -131,5 +131,65 @@ Client should run to completion with 0 leaks.
 Server is currently not designed to abort (CNTL C) with good cleanup, so
 leaks are expected.  But varying the quantity of client queries should not
 change the number of leaks reported.
-------------------------------------------------------------
 
+------------------------------------------------------------
+Testing: Build on R4
+1) build local, so edit .bashrc to include "PATH=$HOME/local/bin:$PATH".
+2) Restart shell: ssh <place> or "ssh -t <place> screen".
+   On timeout: ssh -t <place> screen -d -r"
+2) copy bulk_extractor .tar.gz and hashdb .tar.gz to work area
+3) extract both: tar -xvf ~.tar.gz
+4) Build both locally with current src linker fix:
+./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS="-I$HOME/local/include/ -Isrc" LDFLAGS=-L$HOME/local/lib
+
+------------------------------------------------------------
+Testing: thebig_dfxml
+File at ncr.nps.edu $HOME
+From grep "len='4096'", file has 74,652,908 entries.
+
+1) pick working directory ~/test
+2) Build .hdb: hashdb crate big1.hdb
+3) import: hashdb import ../thebig_dfxml big1.hdb
+
+[bdallen@r4 test]$ hashdb import ../thebig_dfxml big1.hdb/
+dfxml_hashdigest_reader on_error(): Premature end of data in tag fileobject line 230242390
+dfxml_hashdigest_reader on_error(): Premature end of data in tag dfxml line 2
+hashdb changes (insert):
+    hashes inserted=74637601
+    hashes not inserted, mismatched hash block size=561921
+    hashes not inserted, duplicate element=15307
+
+note error line:  230242390
+note file size is 230242672 lines
+
+Problem: truncated thebig_dfxml file and with 15307 duplicates.
+
+Statistics:
+size <hashdb>; statistics <hashdb>; duplicates <hasdhb> <number>
+
+after second import with new repository name: 
+error: elements not added under new repository name.
+
+------------------------------------------------------------
+Testing: /corp/nps/drives/nps-2009-domexusers/nps-2009-domexusers.E01
+using bulk_extractor:
+
+bulk_extractor -e hashid -S hashdb_mode=import -o out1 my.E01
+
+Import generates 2,206,516 new feature lines in identified_blocks.
+
+log indicates 2,156,496 added
+and              50,020 duplicate elements
+totaling      2,206,516 new hashes.
+
+Second run:
+Import again generates 2,206,516 new feature lines in identified_blocks.
+
+log indicates 2,156,240 added
+and              50,276 duplicate elements
+totaling      2,206,516 new hashes.
+
+Problem: some varying amount of elements are deemed duplicate.
+Expect that the filename attributed to, although it exists, is wrong.
+
+Problem: the filename attributed to, although it exists, 

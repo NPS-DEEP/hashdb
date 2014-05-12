@@ -37,7 +37,7 @@
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
-void do_test() {
+void do_test1() {
   
   // clean up from any previous run
   rm_hashdb_dir("temp_dir1");
@@ -95,8 +95,40 @@ void do_test() {
   commands_t<md5_t>::statistics("temp_dir5");
 }
 
+void do_test2() {
+  
+  // clean up from any previous run
+  rm_hashdb_dir("temp_dir");
+
+  // create new hashdb
+  hashdb_settings_t settings;
+  commands_t<md5_t>::create(settings, "temp_dir");
+
+  // test ability to manage many repository names
+  for (int i=0; i<2500; i++) {
+    // generate unique repository name
+    std::ostringstream ss;
+    ss << "test_repository_name_" << i;
+
+    // import
+    commands_t<md5_t>::import(ss.str(), "sample_dfxml", "temp_dir");
+  }
+
+  // size
+  commands_t<md5_t>::size("temp_dir");
+
+  // sources
+  commands_t<md5_t>::sources("temp_dir");
+
+  // statistics
+  commands_t<md5_t>::statistics("temp_dir");
+}
+
 int cpp_main(int argc, char* argv[]) {
-  do_test();
+  std::cout << "test1\n";
+  do_test1();
+  std::cout << "test2\n";
+  do_test2();
   return 0;
 }
 

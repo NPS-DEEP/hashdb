@@ -169,6 +169,14 @@ class bi_store_t {
       assert(0);
     }
 
+    // get new key, which is size + 1
+    key = index_by_value->size() + 1;
+
+/*
+//zzzzzzzzz
+// NOTE: crbegin is broken.  Insetead, offer new key as size() + 1,
+//       which is fine.
+
     // get new key, which is last added key + 1
     if (index_by_value->empty()) {
       // no elements, use 1 as first element index
@@ -176,9 +184,14 @@ class bi_store_t {
     } else {
       // use 1 + last key
       typename index_by_value_t::const_reverse_iterator rit = index_by_value->crbegin();
+typename BI_T::key_type k((*rit).key);
+typename BI_T::value_type v((*rit).value);
+std::cout << "bi_store_t insert_value count : " << index_by_value->size() << ", key: " << k << ", value: " << v << "\n";
 //      key = rit->key + 1;
       key = (*rit).key + 1;
     }
+std::cout << "bi_store_t insert_value key: " << key << ", insert_value value: " << value << "\n";
+*/
 
     // add new element
     typename index_by_key_t::file_position pos;

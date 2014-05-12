@@ -36,4 +36,12 @@ Not completed: FC19 or FC20 compiled by clang.
 When compiled by clang, there is a file access hang underneath btree.
 This needs fixed.
 
+----------------------------
+Future:
+Add "top ten" to show hash values with highest repeat counts.
+
+Fix import so broken xml does not break log.xml and history.xml files.
+
+write validation command that verifies that the duplicates count
+in map match actual count in multimap.
 
