@@ -46,7 +46,7 @@ namespace hashdb_settings_writer {
     dfxml_writer x(settings_filename, false);
     x.push("settings");
 
-    std::string hashdb_version = "commit=" + HASHDB_GIT_COMMIT; // from config.h
+    std::string hashdb_version = "commit=" + GIT_COMMIT; // from config.h
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION,
                         hashdb_version, command_line_t::command_line_string);
     settings.report_settings(x);

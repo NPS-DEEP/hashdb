@@ -519,12 +519,7 @@ echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
 echo "#define LIBS     \"$LIBS\""     >> config.h
 echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
 
-## for hashdb
-if test x"$HASHDB_GIT_COMMIT" != "x" ; then
-  echo "#define HADHDB_GIT_COMMIT  \"$HADHDB_GIT_COMMIT\""  >> config.h
-fi
-
-## for dfxml
+## for hashdb git version, see dfxml_configure.m4
 if test x"$GIT_COMMIT" != "x" ; then
   echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
 fi
