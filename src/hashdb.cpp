@@ -137,8 +137,8 @@ const char* hashdb_version() {
   template<>
   hashdb_md5_t::hashdb_t__(const std::string& path_or_socket) :
                      hashdb_dir(path_or_socket),
-                     mode(path_or_socket.find("tcp://") != 0
-                         ? HASHDB_SCAN : HASHDB_SCAN_SOCKET),
+                     mode(path_or_socket.find("tcp://") == 0
+                         ? HASHDB_SCAN_SOCKET : HASHDB_SCAN),
                      hashdb_manager(0),
                      hashdb_changes(0),
                      logger(0),
@@ -168,10 +168,19 @@ const char* hashdb_version() {
   template<>
   int hashdb_md5_t::scan(const scan_input_t& input, scan_output_t& output) const {
 
+    if (mode == HASHDB_SCAN_SOCKET) {
+      // run scan using tcp_client_manager
+      tcp_client_manager->scan(input, output);
+      return 0;
+    }
+
     // check mode
     if (mode != HASHDB_SCAN) {
+      std::cerr << "Error: unable to scan, wrong scan mode.\n";
       return -1;
     }
+
+    // run scan using hashdb_manager
 
     // clear any old output
     output.clear();

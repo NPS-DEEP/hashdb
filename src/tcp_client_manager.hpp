@@ -171,7 +171,7 @@ class tcp_client_manager_t {
            boost::asio::buffer(&response_count, sizeof(response_count)));
 
       // allocate the response vector with the expected size
-      response = hashdb_t__<T>::scan_output_t(response_count);
+      response = typename hashdb_t__<T>::scan_output_t(response_count);
 
       // read the response vector
       boost::asio::read(*socket, boost::asio::buffer(response));
