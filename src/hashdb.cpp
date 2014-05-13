@@ -106,7 +106,7 @@ const char* hashdb_version() {
     }
 
     // import each input in turn
-    typename std::vector<import_element_t>::const_iterator it = input.begin();
+    std::vector<import_element_t>::const_iterator it = input.begin();
 
     // perform all scans in one locked operation.
     // There is basically no cost for grouping since this iterates db access.
@@ -244,7 +244,7 @@ const char* hashdb_version() {
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
   template<>
-  hashdb_md5_t& hashdb_t__::operator=(const hashdb_md5_t& other) {
+  hashdb_md5_t& hashdb_md5_t::operator=(const hashdb_md5_t& other) {
     assert(0);
     exit(1);
   }

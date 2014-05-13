@@ -137,7 +137,7 @@ class hashdb_manager_t {
   }
 
   // find
-  std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T>> find(const T& key) const {
+  std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > find(const T& key) const {
 
     // get the map_multimap iterator pair
     std::pair<map_multimap_iterator_t<T>,

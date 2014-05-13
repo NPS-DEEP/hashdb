@@ -288,13 +288,13 @@ class map_multimap_manager_t {
   }
 
   // find
-  std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
+  std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
           find(const T& key) const {
     map_iterator_t map_it = map_manager.find(key);
 
     if (map_it == map_manager.end()) {
       // begin is at end
-      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
        (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
        (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it)));
 
@@ -302,7 +302,7 @@ class map_multimap_manager_t {
       // end is at the next entry in the map iterator
       map_iterator_t end_it(map_it);
       ++end_it;
-      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T>>
+      return std::pair<map_multimap_iterator_t<T>, map_multimap_iterator_t<T> >
        (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, map_it),
        (map_multimap_iterator_t<T>(&map_manager, &multimap_manager, end_it)));
     }

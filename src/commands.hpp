@@ -528,7 +528,7 @@ class commands_t {
     // read identified blocks from input and write out matches
     identified_blocks_reader_iterator_t it = reader.begin();
     while(it != reader.end()) {
-      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T>> it_pair =
+      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
              hashdb_manager.find(T::fromhex(it->second));
       while (it_pair.first != it_pair.second) {
         // write match to output:
