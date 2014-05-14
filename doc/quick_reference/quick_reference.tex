@@ -1,0 +1,97 @@
+% pdflatex ch15.tex
+
+\documentclass[12pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{paralist} % for compactitem, compactdesc, compactenum
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{verbatim} % for commenting out section
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage{hyperref}
+\usepackage{url}
+
+%\date{}
+
+%\setlength{\parskip}{0pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+\newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
+\newcommand{\hashid}{\emph{hashid}\xspace}
+\newcommand{\mdd}{\emph{md5deep}\xspace}
+\newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
+
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+\textbf{\Large \hdb Quick Reference}
+\end{center}
+
+%\begin{table}[!ht]
+%\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
+%\end{tabular}
+%\end{table}
+
+\subsubsection*{New Hashdb}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{create [<settings>]+ <hashdb>} & Create a new hash database \\
+\end{tabular}
+
+\subsubsection*{Import/Export DFXML}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{import <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
+\texttt{export <hashdb.hdb> <dfxml.xml>} & Export hash database to DFXML file \\
+\end{tabular}
+
+\subsubsection*{\hdb Set Operations}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ \\
+\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ \\
+\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ \\
+\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ \\
+\end{tabular}
+
+\subsubsection*{Specialty Commands}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{deduplicate <A.hdb> <B.hdb>} & Copy A to B except for hashes with duplicates \\
+\texttt{rebuild\_bloom [<settings>]+} & Rebuild Bloom filter \\
+\texttt{server <hashdb.hdb> <port number>} & Start scan service at port, e.g. 14500 \\
+\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & Expands to include source information for each source \\
+\end{tabular}
+
+\subsubsection*{Scan Services}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{scan <path or socket> <DFXML file>} & Scans for matches, prints count\\
+\texttt{scan\_expanded <path or socket> <DFXML file>} & Scans for matches, prints source information for each source \\
+\end{tabular}
+
+\subsubsection*{\hdb Statistics}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{sources <hashdb.hdb>} & Prints all repository names and filenames \\
+\texttt{size <hashdb.hdb>} & Prints sizes of internal database tables \\
+\texttt{statistics <hashdb.hdb>} & Prints hash distribution \\
+\texttt{duplicates <hashdb.hdb> <number>} & Prints hashes sourced the given number of times \\
+\end{tabular}
+
+\subsubsection*{\hdb Settings}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{-p <hash block size>} & Block size, in bytes \\
+\texttt{-m <maximum>} & Maximum number of duplicates allowed, or 0 for unlimited\\
+\end{tabular}
+
+%\subsubsection*{Online Resources}
+\subsubsection*{Web Page}
+%\begin{tabular}{p{12 cm} p{4 cm} }
+\begin{tabular}{p{8 cm} p{9 cm} }
+\url{http://github.com/simsong/hashdb/wiki} & \hdb Wiki \\
+%\url{http://digitalcorpora.org/downloads/hashdb/hashdbUsersManual.pdf} & \hdb Users Manual \\
+%\url{http://groups.google.com/group/bulk_extractor-users} & \hdb Users Group \\
+\end{tabular}
+
+\end{document}
+
