@@ -48,7 +48,7 @@ void run_multimap_manager_rw_tests() {
   multimap_manager_t<T> multimap_manager(temp_dir, RW_NEW);
   bool did_emplace;
   bool are_equal;
-  class multimap_manager_t<T>::multimap_iterator_t multimap_it;
+  typename multimap_manager_t<T>::multimap_iterator_t multimap_it;
   typedef typename multimap_manager_t<T>::multimap_iterator_range_t range_pair_t;
   range_pair_t range_pair;
 
@@ -154,7 +154,7 @@ void run_multimap_manager_ro_tests() {
 
   T key;
   multimap_manager_t<T> multimap_manager(temp_dir, READ_ONLY);
-  class multimap_manager_t<T>::multimap_iterator_t multimap_it;
+  typename multimap_manager_t<T>::multimap_iterator_t multimap_it;
   typedef typename multimap_manager_t<T>::multimap_iterator_range_t range_pair_t;
   range_pair_t range_pair;
 

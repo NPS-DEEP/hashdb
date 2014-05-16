@@ -45,7 +45,7 @@ void run_map_manager_rw_tests() {
   typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
   map_pair_t map_pair;
   bool did_erase;
-  class map_manager_t<T>::map_iterator_t map_it;
+  typename map_manager_t<T>::map_iterator_t map_it;
 
   // clean up from any previous run
   remove(temp_file);
@@ -130,7 +130,7 @@ void run_map_manager_rw_tests() {
 
   // validate iterator
   map_it = map_manager.begin();
-  class map_manager_t<T>::map_iterator_t map_it2 = map_manager.end();
+  typename map_manager_t<T>::map_iterator_t map_it2 = map_manager.end();
   bool temp_equals = (map_it == map_it2);
   BOOST_TEST_EQ(temp_equals, false);
   temp_equals = (map_it != map_it2);
@@ -153,7 +153,7 @@ void run_map_manager_ro_tests() {
   T key;
   typedef std::pair<typename map_manager_t<T>::map_iterator_t, bool> map_pair_t;
   map_pair_t map_pair;
-  class map_manager_t<T>::map_iterator_t map_it;
+  typename map_manager_t<T>::map_iterator_t map_it;
 
   // ************************************************************
   // RO tests
