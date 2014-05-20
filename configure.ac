@@ -202,6 +202,19 @@ AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
 
 
 ################################################################
+## AddressSanitizer support
+AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], \
+              [enabled AddressSanitizer support for detecting a wide variety of \
+               memory allocation and deallocation errors]), \
+              [AC_DEFINE(HAVE_ADDRESS_SANITIZER, 1, [enable AddressSanitizer])
+              CFLAGS="$CFLAGS -fsanitize=address"
+              CXXFLAGS="$CXXFLAGS -fsanitize=address"
+              AC_TRY_COMPILE([],[const int i=0;],[AC_MSG_NOTICE([Address Sanitizer Enabled])],
+                                                 [AC_MSG_ERROR([Address Sanitizer not available])])
+              ])
+
+
+################################################################
 # Check G++
 # We don't use these warnings:
 # -Waggregate-return -- aggregate returns are GOOD; they simplify code design
@@ -372,6 +385,10 @@ AX_BOOST_BASE([1.53],
   AX_BOOST_THREAD
   LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $BOOST_THREAD_LIB $LIBS"],
   [AC_MSG_ERROR([Boost 1.53 or newer is required to build hashdb])])
+
+################################################################
+## libboost_thread needs clock_gettime from librt
+AC_CHECK_LIB([rt], [clock_gettime])
 
 ################################################################
 ## OpenSSL Support is required for hash_t and bloom
