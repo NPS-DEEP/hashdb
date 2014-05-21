@@ -105,7 +105,7 @@ void do_test2() {
   commands_t<md5_t>::create(settings, "temp_dir");
 
   // test ability to manage many repository names
-  for (int i=0; i<2500; i++) {
+  for (int i=0; i<250; i++) {
     // generate unique repository name
     std::ostringstream ss;
     ss << "test_repository_name_" << i;
