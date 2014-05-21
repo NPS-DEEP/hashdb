@@ -71,55 +71,6 @@ AC_ARG_ENABLE(tests,
       use_tests=no)
 AM_CONDITIONAL([WANT_TESTS], [test x$use_tests == xyes])
 
-################################################################
-## See if we are running on mingw
-# http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
-# Note: Windows 95 WINVER=0x400
-# Windows 98 WINVER=0x400  _WIN32_WINDOWS=0x0410
-# Windows Me WINVER=0x400  _WIN32_WINDOWS=0x0490
-# Windows NT 4.0 WINVER=0x0400  _WIN32_WINNT=0x0400
-# Windows NT 4.0 SP3 WINVER=0x0400 _WIN32_WINNT=0x0403
-# Windows 2000 WINVER=0x500 _WIN32_WINNT=0x0500
-# Windows XP WINVER=0x501 _WIN32_WINNT=0x0501
-# Windows Server 2003 WINVER=0x502 _WIN32_WINNT=0x0502
-#
-# mingw32 includes  i686-w64-mingw32 and  x86_64-w64-mingw32
-
-mingw="no"
-case $host in
-  *-*-*linux*-*) 
-     AC_DEFINE([__LINUX__],1,[Linux operating system functions])
-     ;;
-
-  *mingw*)   
-#     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32 -lstdc++"  
-     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
-     CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
-     CPPFLAGS="$CPPFLAGS --static "
-     CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
-     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
-     CXXFLAGS="$CXXFLAGS --static -static-libgcc -static-libstdc++"
-     LDFLAGS="$LDFLAGS --static"
-     mingw="yes"
-     ;;		 		     
-esac
-
-if test x"${mingw}" == "xno" ; then
-  # Bring additional directories where things might be found into our
-  # search path. I don't know why autoconf doesn't do this by default
-  for spfx in /usr/local /opt/local /sw /usr/local/ssl; do
-    AC_MSG_NOTICE([checking ${spfx}/include])
-    if test -d ${spfx}/include; then
-        CPPFLAGS="-isystem${spfx}/include $CPPFLAGS"
-        LDFLAGS="-L${spfx}/lib $LDFLAGS"
-        AC_MSG_NOTICE([ *** ADDING ${spfx}/include to CPPFLAGS *** ])
-        AC_MSG_NOTICE([ *** ADDING ${spfx}/lib to LDFLAGS *** ])
-    fi
-  done
-  AC_MSG_NOTICE([ CPPFLAGS = ${CPPFLAGS} ])        
-  AC_MSG_NOTICE([ LDFLAGS = ${LDFLAGS} ])        
-fi
-
 if test -r /bin/uname.exe ; then
   if test `uname -o` == "Msys" ; then
     AC_MSG_NOTICE([Compiling with Msys. Setting flags appropriately.])
@@ -127,55 +78,12 @@ if test -r /bin/uname.exe ; then
     LDFLAGS="$LDFLAGS -Wl,--enable-auto-import"
   fi
 fi
-################################################################
-#
-# Enable all the compiler debugging we can find
-#
-# This is originally from PhotoRec, but modified substantially by Simson
-# Figure out which flags we can use with the compiler. 
-#
-# These I don't like:
-# -Wdeclaration-after-statement -Wconversion
-# doesn't work: -Wunreachable-code 
-# causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
-# causes warnings with unistd.h:  -Wnested-externs 
-# Just causes too much annoyance: -Wmissing-format-attribute 
-# Don't use: -Wno-unknown-warning-option
-
-# Check GCC and clang
-WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
-    -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
-    -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn -funit-at-a-time \
-    -Qunused-arguments "
-
-if test x"${mingw}" == "xno" ; then
-  # add the warnings we do not want to do on mingw
-  WARNINGS_TO_TEST="$WARNINGS_TO_TEST -Wall -Wstrict-prototypes"
-fi
-
-echo "Warnings to test: $WARNINGS_TO_TEST"
-
-for option in $WARNINGS_TO_TEST
-do
-  SAVE_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $option"
-  AC_MSG_CHECKING([whether gcc understands $option])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
-  AC_MSG_RESULT($has_option)
-  unset has_option
-  unset SAVE_CFLAGS
-  if test $option = "-Wmissing-format-attribute" ; then
-    AC_DEFINE(HAVE_MISSING_FORMAT_ATTRIBUTE_WARNING,1,
-		[Indicates that we have the -Wmissing-format-attribute G++ warning])
-  fi
-done
-unset option
 
 ################################################################
 ## Includes
+m4_include([m4/slg_mingw_support.m4])
+m4_include([m4/slg_searchdirs.m4])
+m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/dfxml/src/dfxml_configure.m4])
 
 ################################################################
@@ -215,69 +123,14 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 
 
 ################################################################
-# Check G++
-# We don't use these warnings:
-# -Waggregate-return -- aggregate returns are GOOD; they simplify code design
-# We can use these warnings after ZLIB gets upgraded:
-# -Wundef  --- causes problems with zlib
-# -Wcast-qual 
-# -Wmissing-format-attribute  --- Just too annoying
-# don't use: -Wno-unknown-warning-option
-AC_LANG_PUSH(C++)
-AC_CHECK_HEADERS([string])
-
-CXX_WARNINGS_TO_TEST="-Wall -MD -Wpointer-arith \
-    -Wshadow -Wwrite-strings -Wcast-align  \
-    -Wredundant-decls -Wdisabled-optimization \
-    -Wfloat-equal -Wmultichar -Wmissing-noreturn \
-    -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Qunused-arguments"
-
-clang=no
-if (g++ --version 2>&1 | grep clang > /dev/null) ; 
-then 
-   clang=yes
-fi
-if test x$CXX == "xclang++" ; then
-  clang=yes
-fi
-
-if test $clang == "no" ; then
-  # -Wstrict-null-sentinel is not supported under clang
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
-fi
-
-if test x"${mingw}" == "xno" ; then
-  # add the warnings we don't want to do on mingw
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
-fi
-
-for option in $CXX_WARNINGS_TO_TEST
-do
-  SAVE_CXXFLAGS="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS $option"
-  AC_MSG_CHECKING([whether g++ understands $option])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CXXFLAGS="$SAVE_CXXFLAGS"])
-  AC_MSG_RESULT($has_option)
-  unset has_option
-  unset SAVE_CXXFLAGS
-done
-unset option
-AC_LANG_POP()    
-
-## Determine UTC date offset
-#CPPFLAGS="$CPPFLAGS -DUTC_OFFSET=`date +%z`"
-
-################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
 
 if test  x"$mingw" = x"yes";  then
-#  #AC_DEFINE([HAVE_STRUCT_TIMESPEC],1,[Required for mingw])
-  CFLAGS="$CFLAGS -mthreads "
+  CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
-  CXXFLAGS="$CXXFLAGS -mthreads "
+  CXXFLAGS="$CXXFLAGS -mthreads -pthread "
+  LDFLAGS="$LDFLAGS -mthreads -pthread "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
 else
   m4_include([m4/ax_pthread.m4])
@@ -291,6 +144,10 @@ else
             [AC_MSG_ERROR(bulk_extractor requires pthreads)])
 fi
 
+AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
+AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
+AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
+
 AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
@@ -302,19 +159,6 @@ AC_CHECK_LIB([pthreadGC2],[pthread_create])
 # (which should be a no-op on later version of G++ anyway)
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
-
-AC_MSG_CHECKING([for __sync_fetch_and_add])
-AC_LINK_IFELSE(
-   [AC_LANG_SOURCE([
-    int main(void) { int i; return __sync_fetch_and_add(&i, 0); }
-   ])],
-   [
-     AC_MSG_RESULT([yes])
-     AC_DEFINE(HAVE___SYNC_FETCH_AND_ADD,1,[Defined if __sync_fetch_and_add was detected])
-    ],
-   [AC_MSG_RESULT([no])]
-)
-
 
 # end PTHREAD SUPPORT
 ################################################################
