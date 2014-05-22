@@ -67,6 +67,7 @@ void do_import() {
   // invalid mode
   hashdb_md5_t::scan_input_t scan_input;
   hashdb_md5_t::scan_output_t scan_output;
+  std::cout << "may emit scan mode error here.\n";
   status = hashdb.scan(scan_input, scan_output);
   BOOST_TEST_NE(status, 0);
 }
@@ -76,6 +77,8 @@ void do_scan() {
   // valid hashdigest values
   md5_t k1;
   md5_t k2;
+  to_key(0, k1);
+  to_key(0, k2);
 
   // open to scan
   hashdb_md5_t hashdb(temp_dir);
@@ -89,9 +92,11 @@ void do_scan() {
 
   // perform scan
   hashdb.scan(input, output);
-  BOOST_TEST_EQ(output[0].first, 1);
+  BOOST_TEST_EQ(output.size(), 2);
+  BOOST_TEST_EQ(output[0].first, 0);
   BOOST_TEST_EQ(output[0].second, 2);
-  BOOST_TEST_EQ(output.size(), 1);
+  BOOST_TEST_EQ(output[1].first, 1);
+  BOOST_TEST_EQ(output[0].second, 2);
 }
 
 int cpp_main(int argc, char* argv[]) {
