@@ -242,5 +242,5 @@ commands_test_SOURCES = \
 	$(DFXML_INCS) \
 	commands_test.cpp
 
-.PHONY: run_tests
+.PHONY: run_tests run_tests_valgrind
 
