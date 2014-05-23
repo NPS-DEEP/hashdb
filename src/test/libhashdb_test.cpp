@@ -54,6 +54,7 @@ void do_import() {
 
   // valid hashdigest values
   md5_t k1;
+  to_key(0, k1);
 
   // input for import
   hashdb_md5_t::import_input_t import_input;

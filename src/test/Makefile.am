@@ -62,6 +62,13 @@ run_tests:
 	  ./$$test; \
 	done
 
+# test with valgrind memory analysis
+run_tests_valgrind:
+	for test in $(bin_PROGRAMS); do \
+	  echo Begin $$test ... ; \
+	  valgrind --tool=memcheck --leack-check=full --show-reachable=yes --suppressions=vg.supp ./$$test; \
+	done
+
 # ############################################################
 # potentially useful include files
 # ############################################################

@@ -120,6 +120,7 @@ class statistics_command_t {
                 << ", total=" << hash_histogram_it2->first *
                                  hash_histogram_it2->second << "\n";
     }
+    delete hash_histogram;
   }
 };
 

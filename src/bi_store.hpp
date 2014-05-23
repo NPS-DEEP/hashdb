@@ -169,10 +169,11 @@ class bi_store_t {
       assert(0);
     }
 
+/*
     // get new key, which is size + 1
     key = index_by_value->size() + 1;
+*/
 
-/*
 //zzzzzzzzz
 // NOTE: crbegin is broken.  Insetead, offer new key as size() + 1,
 //       which is fine.
@@ -191,7 +192,6 @@ std::cout << "bi_store_t insert_value count : " << index_by_value->size() << ", 
       key = (*rit).key + 1;
     }
 std::cout << "bi_store_t insert_value key: " << key << ", insert_value value: " << value << "\n";
-*/
 
     // add new element
     typename index_by_key_t::file_position pos;

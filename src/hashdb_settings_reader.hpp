@@ -339,7 +339,9 @@ class hashdb_settings_reader_t {
     int sax_parser_resource = xmlSAXUserParseFile(
                                &sax_handlers, &user_data, filename.c_str());
     if (sax_parser_resource == 0) {
-      // good, no failure
+      // good, no failure, settings is now read in
+      xmlCleanupParser(); // mostly for valgrind
+      
       return;
     } else {
       // something went wrong

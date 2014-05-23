@@ -37,7 +37,7 @@
  */
 
 #include "config.h"			/* required for OpenSSL defs */
-#include "bloom.hpp"
+#include "bloom.h"
 
 #ifdef WIN32
 #include <winsock.h>

@@ -859,6 +859,9 @@ void nsrl_bloom_clear(nsrl_bloom *b)
     }
 #endif
     memset(b,0,sizeof(nsrl_bloom));		/* clean object reuse */
+
+    // remove all ciphers and digests from the table
+    EVP_cleanup();
 }
 
 void nsrl_bloom_free(nsrl_bloom *b)

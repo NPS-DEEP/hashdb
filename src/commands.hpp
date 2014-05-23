@@ -474,6 +474,10 @@ class commands_t {
       }
       ++it2;
     }
+
+    // delete heap allocation
+    delete scan_input;
+    delete scan_output;
   }
 
   // scan expanded, does not use socket

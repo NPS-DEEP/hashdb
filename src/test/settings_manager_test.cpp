@@ -35,7 +35,7 @@
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_settings[] = "temp_dir/settings.xml";
-static const char invalid_filename[] = "temp_dir/__invalid_filename";
+//static const char invalid_filename[] = "temp_dir/__invalid_filename";
 
 void run_test() {
 
