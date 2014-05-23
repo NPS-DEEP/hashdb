@@ -66,7 +66,7 @@ run_tests:
 run_tests_valgrind:
 	for test in $(bin_PROGRAMS); do \
 	  echo Begin $$test ... ; \
-	  valgrind --tool=memcheck --leack-check=full --show-reachable=yes --suppressions=vg.supp ./$$test; \
+	  valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp ./$$test; \
 	done
 
 # ############################################################

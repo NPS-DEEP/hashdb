@@ -31,9 +31,6 @@
 #include "boost_fix.hpp"
 #include "directory_helper.hpp"
 #include "commands.hpp"
-#ifdef HAVE_MCHECK
-#include <mcheck.h>
-#endif
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -128,16 +125,10 @@ void do_test2() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-#ifdef HAVE_MCHECK
-  mtrace();
-#endif
   std::cout << "test1\n";
   do_test1();
   std::cout << "test2\n";
   do_test2();
-#ifdef HAVE_MCHECK
-  muntrace();
-#endif
   return 0;
 }
 

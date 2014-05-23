@@ -37,10 +37,6 @@
 #include "hashdb_settings_manager.hpp"
 #include "dfxml/src/hash_t.h"
 
-#ifdef HAVE_MCHECK
-#include <mcheck.h>
-#endif
-
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 // file modes:
@@ -105,17 +101,11 @@ void do_scan() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-#ifdef HAVE_MCHECK
-  mtrace();
-#endif
   do_import();
   do_scan();
 
   // done
   int status = boost::report_errors();
-#ifdef HAVE_MCHECK
-  muntrace();
-#endif
   return status;
 }
 
