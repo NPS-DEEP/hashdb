@@ -141,12 +141,17 @@ class commands_t {
 
     logger.add_timestamp("begin import");
 
+    // insert each entry from *it into the hashdb
     while (it != reader_manager.end()) {
       hashdb_manager.insert(*it, changes);
       ++it;
     }
     logger.add_timestamp("end import");
     logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << changes << "\n";
