@@ -55,6 +55,10 @@
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
 
+#ifdef HAVE_MCHECK
+#include <mcheck.h>
+#endif
+
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // settings
@@ -135,6 +139,10 @@ template<typename T> void run_command();
 // ************************************************************
 int main(int argc,char **argv) {
   command_line_t::command_line_string = dfxml_writer::make_command_line(argc, argv);
+
+#ifdef HAVE_MCHECK
+  mtrace();
+#endif
 
   // manage when there are no arguments
   if(argc==1) {
@@ -374,6 +382,10 @@ int main(int argc,char **argv) {
 
   // run the command as a md5hashdb command
   run_command<md5_t>();
+
+#ifdef HAVE_MCHECK
+  muntrace();
+#endif
 
   // done
   return 0;

@@ -87,6 +87,28 @@ m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/dfxml/src/dfxml_configure.m4])
 
 ################################################################
+## mcheck support
+## enable memory analysis support for detecting memory leaks
+## and detecting multiply deallocated memory resources
+## see http://en.wikipedia.org/wiki/Mtrace
+## here is the basic workflow:
+##   1. example usage and recompile: "./configure --enable-mcheck"
+##   2. export the environment variable for the output file,
+##        e.g. "export MALLOC_TRACE=~/malloc_outfile.txt"
+##   3. improve readability of malloc_outfile.txt using mtrace,
+##        e.g. "mtrace /usr/local/bin/bulk_extractor ~/malloc_outfile.txt
+AC_ARG_ENABLE([mcheck], AS_HELP_STRING([--enable-mcheck], \
+              [enable memory analysis support for detecting memory leaks \
+               and detecting multiply deallocated memory resources]), \
+              AC_DEFINE(HAVE_MCHECK, 1, \
+              [define the output file using global variable MALLOC_TRACE, \
+               for example "MALLOC_TRACE=./mcheck.out; export MALLOC_TRACE". \
+               Then post-process unreadable file mcheck.out using the mtrace command line tool, \
+               for example "mtrace /usr/local/bin/bulk_extractor mcheck.out".  \
+               Unfortunately, only addresses with written code are looked up, \
+               in otherwords, use of malloc is looked up, but use of new is not.]))
+
+################################################################
 ## AddressSanitizer support
 AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], \
               [enabled AddressSanitizer support for detecting a wide variety of \
