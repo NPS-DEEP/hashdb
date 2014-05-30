@@ -38,9 +38,9 @@ AC_PROG_LIBTOOL
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
-AC_LANG_PUSH(C++)
+# https://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
+m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 AX_CXX_COMPILE_STDCXX_11(noext, optional)
-AC_LANG_POP()
 
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
@@ -51,16 +51,6 @@ AC_CHECK_PROG(has_nsis, makensis, true, false)
 if test x"$has_nsis" == "xfalse" ; then
   AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
 fi
-
-# Get the GIT commit into the HASHDB_GIT_COMMIT variable
-AC_CHECK_PROG([git],[git],[yes],[no])
-AM_CONDITIONAL([FOUND_GIT],[test "x$git" = xyes])
-AM_COND_IF([FOUND_GIT],
-        [HASHDB_GIT_COMMIT=`git describe --dirty --always`
-         AC_MSG_NOTICE([git commit $HASHDB_GIT_COMMIT])],
-        [AC_MSG_WARN([git not found])]
-        [HASHDB_GIT_COMMIT="not versioned"]
-        )
 
 ################################################################
 ## only build tests if requested
