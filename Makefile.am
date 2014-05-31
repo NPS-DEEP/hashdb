@@ -8,7 +8,8 @@ if WANT_TESTS
 TEST_DIR = src/test
 endif
 
-SUBDIRS = src src/libhashdb man doc $(TEST_DIR)
+#SUBDIRS = src src/libhashdb man doc $(TEST_DIR)
+SUBDIRS = src man doc $(TEST_DIR)
 
 SRC_WIN_DIST = \
 	src_win/build_installer.nsi \

@@ -20,9 +20,9 @@
 # This file assists in building the hashdb_manager tool.
 
 bin_PROGRAMS = hashdb
-#lib_LTLIBRARIES = libhashdb.la
+lib_LTLIBRARIES = libhashdb.la
 
-#libhashdb_la_LDFLAGS = -static -avoid-version
+libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -31,10 +31,25 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/endian/include \
 	$(XML_CFLAGS)
 
-#zzzzzzzzzAM_LDFLAGS = -static $(XML_LIBS)
+hashdb_LDADD = libhashdb.la
+
 AM_LDFLAGS = -static
 
-HAHSDB_INCS = \
+HASHDB_INCS = \
+	commands.hpp \
+	dfxml_hashdigest_reader.hpp \
+	dfxml_hashdigest_reader_manager.hpp \
+	dfxml_hashdigest_writer.hpp \
+	duplicates_command.hpp \
+	main.cpp \
+	source_lookup_encoding.hpp \
+	source_lookup_index_iterator.hpp \
+	source_lookup_index_manager.hpp \
+	statistics_command.hpp \
+	tcp_server_manager.hpp \
+	usage.hpp
+
+LIBHASHDB_INCS = \
 	bi_64_pair_data.hpp \
 	bi_64_sv_data.hpp \
 	bi_data_types.hpp \
@@ -44,11 +59,6 @@ HAHSDB_INCS = \
 	bloom_rebuild_manager.hpp \
 	command_line.cpp \
 	command_line.hpp \
-	commands.hpp \
-	dfxml_hashdigest_reader.hpp \
-	dfxml_hashdigest_reader_manager.hpp \
-	dfxml_hashdigest_writer.hpp \
-	duplicates_command.hpp \
 	file_modes.h \
 	hashdb_changes.hpp \
 	hashdb.cpp \
@@ -65,19 +75,12 @@ HAHSDB_INCS = \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_iterator.hpp \
 	logger.hpp \
-	main.cpp \
 	map_manager.hpp \
 	map_multimap_iterator.hpp \
 	map_multimap_manager.hpp \
 	multimap_manager.hpp \
 	mutex_lock.hpp \
-	source_lookup_encoding.hpp \
-	source_lookup_index_iterator.hpp \
-	source_lookup_index_manager.hpp \
-	statistics_command.hpp \
-	tcp_client_manager.hpp \
-	tcp_server_manager.hpp \
-	usage.hpp
+	tcp_client_manager.hpp
 
 # note: btree/tools/*.cpp files exist but are expected to be unused
 BTREE_INCS = \
@@ -126,7 +129,12 @@ DFXML_INCS = \
 	dfxml/src/cppmutex.h
 
 hashdb_SOURCES = \
+	$(HASHDB_INCS)
+
+libhashdb_la_SOURCES = \
+	$(LIBHASHDB_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	$(BLOOM_INCS) $(DFXML_INCS) \
-	$(HAHSDB_INCS)
+	$(BLOOM_INCS) $(DFXML_INCS)
+
+include_HEADERS = hashdb.hpp
 

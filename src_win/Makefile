@@ -75,12 +75,12 @@ $(SRC_WIN)distclean:
 	$(MAKE) clean
 
 $(SRC_WIN)install:
-	(cd ../win32/src/libhashdb;$(MAKE) install)
-	(cd ../win64/src/libhashdb;$(MAKE) install)
+	(cd ../win32/src;$(MAKE) install)
+	(cd ../win64/src;$(MAKE) install)
 
 $(SRC_WIN)uninstall:
-	(cd ../win32/src/libhashdb;$(MAKE) uninstall)
-	(cd ../win64/src/libhashdb;$(MAKE) uninstall)
+	(cd ../win32/src;$(MAKE) uninstall)
+	(cd ../win64/src;$(MAKE) uninstall)
 
 ################################################################
 ##

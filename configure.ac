@@ -19,19 +19,21 @@ AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 src/libhashdb/Makefile
                  src/test/Makefile
                  man/Makefile
                  doc/Makefile])
+
+#zz                 src/libhashdb/Makefile
 
 # define CC and CXX as desired for alternate compilers
 #CC=clang
 #CXX=clang++
 
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 AC_PREFIX_PROGRAM(hashdb)
 AC_PROG_CC
+AM_PROG_CC_C_O                  dnl allow per-produce flags
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
