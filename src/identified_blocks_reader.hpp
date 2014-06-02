@@ -35,8 +35,6 @@
 #include <algorithm>
 //#include <vector>
 #include <map>
-//#include "hashdb.hpp"
-#include "dfxml/src/hash_t.h"
 #include <errno.h>
 #include "identified_blocks_reader_iterator.hpp"
 

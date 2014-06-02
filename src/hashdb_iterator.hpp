@@ -29,7 +29,6 @@
 #include "map_multimap_iterator.hpp"
 #include "hashdb_element.hpp"
 #include "hashdb_element_lookup.hpp"
-#include "dfxml/src/hash_t.h"
 
 template<typename T>
 class hashdb_iterator_t {

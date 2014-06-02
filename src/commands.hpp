@@ -36,7 +36,6 @@
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 #include "tcp_server_manager.hpp"
-#include "dfxml/src/hash_t.h"
 #include "hashdb.hpp"
 #include "statistics_command.hpp"
 #include "duplicates_command.hpp"

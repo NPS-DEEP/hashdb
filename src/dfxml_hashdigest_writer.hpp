@@ -26,7 +26,6 @@
 #define DFXML_HASHDIGEST_WRITER_HPP
 //#include "hashdb_types.h"
 #include "dfxml/src/dfxml_writer.h"
-#include "dfxml/src/hash_t.h"
 #include "command_line.hpp"
 
 #include <iostream>

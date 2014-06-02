@@ -35,7 +35,6 @@
 #define BOOST_THREAD_USE_LIB
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
-#include <dfxml/src/hash_t.h>
 
 template<typename T>
 class tcp_server_manager_t {

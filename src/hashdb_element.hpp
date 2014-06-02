@@ -28,7 +28,6 @@
 
 #include <cstring>
 #include <stdint.h>
-#include "dfxml/src/hash_t.h"
 #include <iostream>
 
 /**
