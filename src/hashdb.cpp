@@ -62,11 +62,14 @@ const char* hashdb_version() {
   return PACKAGE_VERSION;
 }
 
+// set hash_t to the desired hash type
+typedef md5_t hash_t;
+
   // constructor for importing
   template<>
-  hashdb_md5_t::hashdb_t__(const std::string& p_hashdb_dir,
-                          uint32_t p_block_size,
-                          uint32_t p_max_duplicates) :
+  hashdb_t__<hash_t>::hashdb_t__(const std::string& p_hashdb_dir,
+                                 uint32_t p_block_size,
+                                 uint32_t p_max_duplicates) :
                    hashdb_dir(p_hashdb_dir),
                    mode(HASHDB_IMPORT),
                    hashdb_manager(0),
@@ -88,7 +91,7 @@ const char* hashdb_version() {
     hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
 
     // create hashdb_manager
-    hashdb_manager = new hashdb_manager_t<md5_t>(hashdb_dir, RW_NEW);
+    hashdb_manager = new hashdb_manager_t<hash_t>(hashdb_dir, RW_NEW);
     hashdb_changes = new hashdb_changes_t;
 
     // open logger
@@ -98,7 +101,7 @@ const char* hashdb_version() {
 
   // import
   template<>
-  int hashdb_md5_t::import(const import_input_t& input) {
+  int hashdb_t__<hash_t>::import(const import_input_t& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -115,7 +118,7 @@ const char* hashdb_version() {
 
     while (it != input.end()) {
       // convert input to hashdb_element_t
-      hashdb_element_t<md5_t> hashdb_element(it->hash,
+      hashdb_element_t<hash_t> hashdb_element(it->hash,
                                          block_size,
                                          it->repository_name,
                                          it->filename,
@@ -135,7 +138,7 @@ const char* hashdb_version() {
 
   // constructor for scanning
   template<>
-  hashdb_md5_t::hashdb_t__(const std::string& path_or_socket) :
+  hashdb_t__<hash_t>::hashdb_t__(const std::string& path_or_socket) :
                      hashdb_dir(path_or_socket),
                      mode(path_or_socket.find("tcp://") == 0
                          ? HASHDB_SCAN_SOCKET : HASHDB_SCAN),
@@ -154,10 +157,10 @@ const char* hashdb_version() {
     // open the correct scan resource
     if (mode == HASHDB_SCAN) {
       // open hashdb_manager for scanning
-      hashdb_manager = new hashdb_manager_t<md5_t>(hashdb_dir, READ_ONLY);
+      hashdb_manager = new hashdb_manager_t<hash_t>(hashdb_dir, READ_ONLY);
     } else if (mode == HASHDB_SCAN_SOCKET) {
       // open TCP socket service for scanning
-      tcp_client_manager = new tcp_client_manager_t<md5_t>(path_or_socket);
+      tcp_client_manager = new tcp_client_manager_t<hash_t>(path_or_socket);
     } else {
       assert(0);
       exit(1);
@@ -166,7 +169,7 @@ const char* hashdb_version() {
 
   // scan
   template<>
-  int hashdb_md5_t::scan(const scan_input_t& input, scan_output_t& output) const {
+  int hashdb_t__<hash_t>::scan(const scan_input_t& input, scan_output_t& output) const {
 
     if (mode == HASHDB_SCAN_SOCKET) {
       // run scan using tcp_client_manager
@@ -214,7 +217,7 @@ const char* hashdb_version() {
 
   // destructor
   template<>
-  hashdb_md5_t::~hashdb_t__() {
+  hashdb_t__<hash_t>::~hashdb_t__() {
     switch(mode) {
       case HASHDB_NONE:
         return;
@@ -238,7 +241,7 @@ const char* hashdb_version() {
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
   template<>
-  hashdb_md5_t::hashdb_t__(const hashdb_md5_t& other) :
+  hashdb_t__<hash_t>::hashdb_t__(const hashdb_t__<hash_t>& other) :
                  hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
@@ -253,7 +256,7 @@ const char* hashdb_version() {
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
   template<>
-  hashdb_md5_t& hashdb_md5_t::operator=(const hashdb_md5_t& other) {
+  hashdb_t__<hash_t>& hashdb_t__<hash_t>::operator=(const hashdb_t__<hash_t>& other) {
     assert(0);
     exit(1);
   }

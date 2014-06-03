@@ -26,7 +26,7 @@
 #define HASHDB_HPP
 
 #include <string>
-#include <dfxml/src/hash_t.h>
+//zz #include "dfxml/src/hash_t.h"
 #include <vector>
 #include <stdint.h>
 
@@ -50,6 +50,9 @@ class tcp_client_manager_t;
 
 /**
  * The hashdb library.
+ *
+ * Note: libhashdb must be compiled to support the same hash type
+ * as the hash type provided in the template.
  */
 template<typename T>
 class hashdb_t__ {
@@ -151,11 +154,6 @@ class hashdb_t__ {
 
   ~hashdb_t__();
 };
-
-/**
- * This hashdb is built to use MD5.
- */
-typedef hashdb_t__<md5_t> hashdb_md5_t;
 
 #endif
 
