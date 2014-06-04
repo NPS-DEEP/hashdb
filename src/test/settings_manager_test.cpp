@@ -33,38 +33,31 @@
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 
-static const char temp_dir[] = "temp_dir";
-static const char temp_settings[] = "temp_dir/settings.xml";
-//static const char invalid_filename[] = "temp_dir/__invalid_filename";
-
+// Save with a changed value, then read, delete, write, and read,
+// then see if changed value is preserved.
 void run_test() {
 
+  // clean up from any previous run
+  rm_hashdb_dir("temp_dir");
+
+  // create and write settings
   hashdb_settings_t settings;
+  settings.hash_block_size = 512;
 
-  // read, write first
-  remove(temp_settings);
-  settings.hashdb_version = 1;
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
-  settings = hashdb_settings_manager_t::read_settings(temp_dir);
-  BOOST_TEST_EQ(settings.hashdb_version, 1);
+  // write settings
+  hashdb_settings_manager_t::write_settings("temp_dir", settings);
 
-/*
-  // read, write second
-  remove(temp_settings);
-  settings.hashdb_version = 2;
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
-  settings = hashdb_settings_manager_t::read_settings(temp_dir);
-  BOOST_TEST_EQ(settings.hashdb_version, 2);
+  // read, delete, write, read settings
+  settings = hashdb_settings_manager_t::read_settings("temp_dir");
+  rm_hashdb_dir("temp_dir");
+  hashdb_settings_manager_t::write_settings("temp_dir", settings);
+  settings = hashdb_settings_manager_t::read_settings("temp_dir");
 
   // attempt to read an invalid filename
-  BOOST_TEST_THROWS(
-        settings = hashdb_settings_manager_t::read_settings(invalid_filename),
-        std::runtime_error);
-*/
+  BOOST_TEST_EQ(settings.hash_block_size, 512);
 }
 
 int cpp_main(int argc, char* argv[]) {
-  make_dir_if_not_there(temp_dir);
   run_test();
 
   // done

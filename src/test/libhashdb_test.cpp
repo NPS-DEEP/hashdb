@@ -44,6 +44,8 @@
 
 static const char temp_dir[] = "temp_dir";
 
+typedef hashdb_t__<md5_t> hashdb_t;
+
 void do_import() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
@@ -53,21 +55,21 @@ void do_import() {
   to_key(0, k1);
 
   // input for import
-  hashdb_md5_t::import_input_t import_input;
-  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 0));
-  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 4096));
-  import_input.push_back(hashdb_md5_t::import_element_t(k1, "rep1", "file1", 4097)); // invalid
+  hashdb_t::import_input_t import_input;
+  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 0));
+  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 4096));
+  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 4097)); // invalid
 
   // create new database
-  hashdb_md5_t hashdb(temp_dir, 4096, 20);
+  hashdb_t hashdb(temp_dir, 4096, 20);
 
   // import some elements
   int status;
   status = hashdb.import(import_input);
 
   // invalid mode
-  hashdb_md5_t::scan_input_t scan_input;
-  hashdb_md5_t::scan_output_t scan_output;
+  hashdb_t::scan_input_t scan_input;
+  hashdb_t::scan_output_t scan_output;
   std::cout << "may emit scan mode error here.\n";
   status = hashdb.scan(scan_input, scan_output);
   BOOST_TEST_NE(status, 0);
@@ -82,10 +84,10 @@ void do_scan() {
   to_key(0, k2);
 
   // open to scan
-  hashdb_md5_t hashdb(temp_dir);
+  hashdb_t hashdb(temp_dir);
 
-  hashdb_md5_t::scan_input_t input;
-  hashdb_md5_t::scan_output_t output;
+  hashdb_t::scan_input_t input;
+  hashdb_t::scan_output_t output;
 
   // populate input
   input.push_back(k1);
