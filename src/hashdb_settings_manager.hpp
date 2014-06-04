@@ -91,9 +91,6 @@ class hashdb_settings_manager_t {
     // good, write settings to new settings file
     dfxml_writer x(filename, false);
     x.push("settings");
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION,
-                        "svn not tracked",
-                        command_line_t::command_line_string);
     settings.report_settings(x);
     x.pop();
   }

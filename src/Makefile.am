@@ -70,7 +70,6 @@ LIBHASHDB_INCS = \
 	hashdb_settings.hpp \
 	hashdb_settings_manager.hpp \
 	hashdb_settings_reader.hpp \
-	hashdb_settings_writer.hpp \
 	history_manager.hpp \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_iterator.hpp \

@@ -56,7 +56,7 @@ class dfxml_hashdigest_writer_t {
     x.push("dfxml");
 
     // add creator information
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "svn not tracked", command_line_t::command_line_string);
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_line_t::command_line_string);
   }
 
   ~dfxml_hashdigest_writer_t() {

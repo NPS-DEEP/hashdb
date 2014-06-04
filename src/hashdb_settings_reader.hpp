@@ -65,8 +65,6 @@ class hashdb_settings_reader_t {
   // nodes
   enum node_type_t {NO_NODE,
                     // hashdb
-                    HASHDB_VERSION,
-                    HASHDIGEST_TYPE,
                     HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
                     BLOOM1_USED,
@@ -110,8 +108,6 @@ class hashdb_settings_reader_t {
 
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdb_version"))) return HASHDB_VERSION;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest_type"))) return HASHDIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
@@ -193,13 +189,7 @@ class hashdb_settings_reader_t {
 
     bool is_valid;
 
-    if (user_data.active_node == HASHDB_VERSION) {
-      xmlChar_to_number(characters, len, user_data.settings->hashdb_version);
-    } else if (user_data.active_node == HASHDIGEST_TYPE) {
-      // get hashdigest type
-      std::string hashdigest_type_string;
-      user_data.settings->hashdigest_type = hashdigest_type_string;
-    } else if (user_data.active_node == HASH_BLOCK_SIZE) {
+    if (user_data.active_node == HASH_BLOCK_SIZE) {
       xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
       xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
