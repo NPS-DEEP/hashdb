@@ -50,8 +50,6 @@ HASHDB_INCS = \
 	usage.hpp
 
 LIBHASHDB_INCS = \
-	bi_64_pair_data.hpp \
-	bi_64_sv_data.hpp \
 	bi_data_types.hpp \
 	bi_store.hpp \
 	bloom_filter_calculator.hpp \
