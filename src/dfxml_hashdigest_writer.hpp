@@ -37,8 +37,6 @@
 /**
  * Provides the service of exporting the hashdb in DFXML format.
  */
-// note that hash type MD5 is hardcoded.
-// Change this if using T other than md5_t
 template<typename T>
 class dfxml_hashdigest_writer_t {
 
@@ -67,7 +65,6 @@ class dfxml_hashdigest_writer_t {
     x.close();
   }
 
-  // note that the MD5 hash algorithm name is hardcoded
   void add_hashdb_element(const hashdb_element_t<T>& element) {
 
     // start the fileobject tag
@@ -87,7 +84,7 @@ class dfxml_hashdigest_writer_t {
 
     // write the hashdigest
     std::stringstream ss2;
-    ss2 << "type='MD5'";
+    ss2 << "type='" << digest_name<T>() << "'";
     x.xmlout("hashdigest", element.key.hexdigest(), ss2.str(), false);
 
     // close the byte_run tag

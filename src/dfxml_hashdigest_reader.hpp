@@ -37,6 +37,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
+#include "digest_name.hpp"
 
 // a class is used just to keep members private
 // Note that TC is the consumer and T is the hash algorithm.
@@ -48,12 +49,6 @@ class dfxml_hashdigest_reader_t {
   dfxml_hashdigest_reader_t();
   dfxml_hashdigest_reader_t(const dfxml_hashdigest_reader_t&);
   dfxml_hashdigest_reader_t& operator=(const dfxml_hashdigest_reader_t&);
-
-  // provide this
-//zz  std::string reader_hashdigest_type<md5_t>() const 
-  static std::string reader_hashdigest_type() {
-    return "MD5";
-  }
 
   // ************************************************************
   // user data type for sax
@@ -125,8 +120,8 @@ class dfxml_hashdigest_reader_t {
     std::string filename = user_data.filename;
     uint64_t file_offset = user_data.byte_run_file_offset_attribute;
 
-    // create the MD5 hashdb element
-    if (hashdigest_type != reader_hashdigest_type()) {
+    // create the hashdb element
+    if (hashdigest_type != digest_name<T>()) {
       std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
                 << hashdigest_type << "\n";
     }
