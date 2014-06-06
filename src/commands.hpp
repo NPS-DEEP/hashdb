@@ -39,7 +39,6 @@
 #include "hashdb.hpp"
 #include "statistics_command.hpp"
 #include "duplicates_command.hpp"
-#include "digest_name.hpp"
 
 // Standard includes
 #include <cstdlib>

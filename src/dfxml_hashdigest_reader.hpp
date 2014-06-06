@@ -37,7 +37,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
-#include "digest_name.hpp"
 
 // a class is used just to keep members private
 // Note that TC is the consumer and T is the hash algorithm.
