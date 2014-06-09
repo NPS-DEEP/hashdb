@@ -26,7 +26,6 @@
 #define HASHDB_HPP
 
 #include <string>
-//zz #include "dfxml/src/hash_t.h"
 #include <vector>
 #include <stdint.h>
 

@@ -37,7 +37,7 @@
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
 #include "hashdb_element.hpp"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -62,16 +62,8 @@ void do_test() {
   // valid hashdigest values
   T k1;
   T k2;
-  T k3;
   to_key(1, k1);
   to_key(2, k2);
-  to_key(3, k3);
-//  const uint64_t v1 = 111;
-//  const uint64_t v2 = 222;
-//  const uint64_t v3 = 333;
-//  hashdigest_t d1(k1);
-//  hashdigest_t d2(k2);
-//  hashdigest_t d3(k3);
 
   hashdb_element_t<T> element;
 
@@ -195,7 +187,7 @@ void do_test() {
   BOOST_TEST_EQ(manager.map_size(), 1);
   BOOST_TEST_EQ(manager.multimap_size(), 1);
   hashdb_iterator_t<T> it(manager.begin());
-  BOOST_TEST_EQ(it->key, T::fromhex("00000000000000000000000000000001"));
+  BOOST_TEST_EQ(it->key, k1);
   BOOST_TEST_EQ(it->hash_block_size, 4096);
   BOOST_TEST_EQ(it->repository_name, "rep1");
   BOOST_TEST_EQ(it->filename, "file1");
@@ -242,7 +234,7 @@ int cpp_main(int argc, char* argv[]) {
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
   write_settings();
-  do_test<md5_t>();
+  do_test<hash_t>();
 
   // done
   int status = boost::report_errors();

@@ -36,7 +36,7 @@
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "file_modes.h"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 
 static const char temp_dir[] = "temp_dir";
 
@@ -321,19 +321,15 @@ void run_multimap_ro_tests() {
   BOOST_TEST_THROWS(map.erase(key, 0), std::runtime_error);
 }
 
-//  typedef uint64_t my_key_t;
-  typedef md5_t my_key_t;
-  typedef uint64_t val_t;
-
 int cpp_main(int argc, char* argv[]) {
 
   // btree map
-  run_map_rw_tests<md5_t>();
-  run_map_ro_tests<md5_t>();
+  run_map_rw_tests<hash_t>();
+  run_map_ro_tests<hash_t>();
 
   // btree multimap
-  run_multimap_rw_tests<md5_t>();
-  run_multimap_ro_tests<md5_t>();
+  run_multimap_rw_tests<hash_t>();
+  run_multimap_ro_tests<hash_t>();
 
   // done
   int status = boost::report_errors();

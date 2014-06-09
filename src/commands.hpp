@@ -535,8 +535,15 @@ class commands_t {
     identified_blocks_reader_t reader(identified_blocks_file);
 
     // read identified blocks from input and write out matches
-    identified_blocks_reader_iterator_t it = reader.begin();
-    while(it != reader.end()) {
+    identified_blocks_reader_iterator_t it;
+    for (it = reader.begin(); it != reader.end(); ++it) {
+      // check that the hashdigest length is correct
+      if (T::size()*2 != it->second.length()) {
+        std::cout << "Invalid hashdigest length, hashdigest ignored.\n";
+        continue;
+      }
+
+      // find matching range for this key
       std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
              hashdb_manager.find(T::fromhex(it->second));
       while (it_pair.first != it_pair.second) {
@@ -551,7 +558,6 @@ class commands_t {
 
         ++it_pair.first;
       }
-      ++it;
     }
   }
 

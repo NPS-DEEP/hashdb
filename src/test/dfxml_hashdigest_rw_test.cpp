@@ -39,6 +39,7 @@
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
+#include "../hash_t_selector.h"
 #include "hashdb_element.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
@@ -53,15 +54,15 @@ void run_tests() {
 
   make_dir_if_not_there(temp_dir);
 
-  dfxml_hashdigest_reader_manager_t<md5_t> manager("sample_dfxml", "my repository");
+  dfxml_hashdigest_reader_manager_t<hash_t> manager("sample_dfxml", "my repository");
 
-  dfxml_hashdigest_reader_manager_t<md5_t>::const_iterator it = manager.begin();
+  dfxml_hashdigest_reader_manager_t<hash_t>::const_iterator it = manager.begin();
 
 //  std::vector<hashdb_element_t>::const_iterator it = manager.begin();
 
   size_t count = 0;
 
-  dfxml_hashdigest_writer_t<md5_t> writer("temp_dir/temp_dfxml_output");
+  dfxml_hashdigest_writer_t<hash_t> writer("temp_dir/temp_dfxml_output");
 
   while (it != manager.end()) {
     writer.add_hashdb_element(*it);

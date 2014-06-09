@@ -37,7 +37,7 @@
   #include <winsock2.h>
 #endif
 #include "hashdb.hpp"
-#include <dfxml/src/hash_t.h>
+#include <hash_t_selector.h>
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -61,9 +61,6 @@ extern "C"
 const char* hashdb_version() {
   return PACKAGE_VERSION;
 }
-
-// set hash_t to the desired hash type
-typedef md5_t hash_t;
 
   // constructor for importing
   template<>

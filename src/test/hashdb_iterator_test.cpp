@@ -31,7 +31,7 @@
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 #include "file_modes.h"
 #include "map_manager.hpp"
 #include "multimap_manager.hpp"
@@ -98,7 +98,7 @@ void run_tests() {
 
 int cpp_main(int argc, char* argv[]) {
 
-  run_tests<md5_t>();
+  run_tests<hash_t>();
 //  run_tests<sha1_t>();
 //  run_tests<sha256_t>();
 

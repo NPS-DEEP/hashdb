@@ -36,7 +36,7 @@
 #include "file_modes.h"
 #include "map_multimap_manager.hpp"
 #include "map_multimap_iterator.hpp"
-#include "dfxml/src/hash_t.h"
+#include "hash_t_selector.h"
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -149,7 +149,7 @@ int cpp_main(int argc, char* argv[]) {
 // READ_ONLY, RW_NEW, RW_MODIFY
 
   // map tests
-  rw_new_tests<md5_t>();
+  rw_new_tests<hash_t>();
 
   // done
   int status = boost::report_errors();

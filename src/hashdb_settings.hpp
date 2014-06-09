@@ -27,7 +27,6 @@
 
 //#include "hashdb_types.h"
 #include "dfxml/src/dfxml_writer.h"
-#include "dfxml/src/hash_t.h"
 #include <string>
 #include <sstream>
 #include <stdint.h>

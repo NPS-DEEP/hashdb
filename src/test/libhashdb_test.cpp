@@ -35,7 +35,7 @@
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -44,14 +44,14 @@
 
 static const char temp_dir[] = "temp_dir";
 
-typedef hashdb_t__<md5_t> hashdb_t;
+typedef hashdb_t__<hash_t> hashdb_t;
 
 void do_import() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
 
   // valid hashdigest values
-  md5_t k1;
+  hash_t k1;
   to_key(0, k1);
 
   // input for import
@@ -78,8 +78,8 @@ void do_import() {
 void do_scan() {
 
   // valid hashdigest values
-  md5_t k1;
-  md5_t k2;
+  hash_t k1;
+  hash_t k2;
   to_key(0, k1);
   to_key(0, k2);
 

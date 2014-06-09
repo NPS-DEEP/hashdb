@@ -58,6 +58,7 @@ LIBHASHDB_INCS = \
 	command_line.cpp \
 	command_line.hpp \
 	file_modes.h \
+	hash_t_selector.h \
 	hashdb_changes.hpp \
 	hashdb.cpp \
 	hashdb_element.hpp \

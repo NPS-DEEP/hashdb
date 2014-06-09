@@ -31,7 +31,7 @@
 #include "boost_fix.hpp"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 #include "file_modes.h"
 #include "multimap_manager.hpp"
 
@@ -184,8 +184,8 @@ int cpp_main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
 
   // multimap tests
-  run_multimap_manager_rw_tests<md5_t>();
-  run_multimap_manager_ro_tests<md5_t>();
+  run_multimap_manager_rw_tests<hash_t>();
+  run_multimap_manager_ro_tests<hash_t>();
 
   // done
   int status = boost::report_errors();

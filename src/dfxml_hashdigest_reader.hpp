@@ -122,7 +122,8 @@ class dfxml_hashdigest_reader_t {
     // create the hashdb element
     if (hashdigest_type != digest_name<T>()) {
       std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
-                << hashdigest_type << "\n";
+                << hashdigest_type << ", hashdigest entry ignored.\n";
+      return;
     }
     hashdb_element_t<T> hashdb_element(
                T::fromhex(hashdigest),

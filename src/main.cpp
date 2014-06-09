@@ -36,6 +36,7 @@
   // including windows.h first, resulting in a warning.
   #include <winsock2.h>
 #endif
+#include "hash_t_selector.h"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "usage.hpp"
@@ -380,8 +381,8 @@ int main(int argc,char **argv) {
     repository_name_string = "repository_" + arg1;
   }
 
-  // run the command as a md5hashdb command
-  run_command<md5_t>();
+  // run the command
+  run_command<hash_t>();
 
 #ifdef HAVE_MCHECK
   muntrace();

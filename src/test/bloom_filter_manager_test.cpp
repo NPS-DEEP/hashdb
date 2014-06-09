@@ -32,7 +32,7 @@
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "bloom_filter_manager.hpp"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir";
@@ -73,20 +73,10 @@ int cpp_main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
 
 //std::cout << "bfmt.a\n";
-  run_rw_tests<md5_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
+  run_rw_tests<hash_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
 //std::cout << "bfmt.b\n";
-  run_rw_tests<md5_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
+  run_rw_tests<hash_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
 //std::cout << "bfmt.c\n";
-/*
-  run_rw_tests<sha1_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
-//std::cout << "bfmt.d\n";
-  run_rw_tests<sha1_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
-//std::cout << "bfmt.e\n";
-  run_rw_tests<sha256_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
-//std::cout << "bfmt.f\n";
-  run_rw_tests<sha256_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
-//std::cout << "bfmt.g\n";
-*/
 
   // done
   int status = boost::report_errors();

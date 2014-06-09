@@ -33,7 +33,7 @@
 #include "directory_helper.hpp"
 #include "map_manager.hpp"
 #include "file_modes.h"
-#include "dfxml/src/hash_t.h"
+#include "../hash_t_selector.h"
 
 static const char temp_dir[] = "temp_dir";
 static const char temp_file[] = "temp_dir/hash_store";
@@ -182,8 +182,8 @@ int cpp_main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
   // map tests
-  run_map_manager_rw_tests<md5_t>();
-  run_map_manager_ro_tests<md5_t>();
+  run_map_manager_rw_tests<hash_t>();
+  run_map_manager_ro_tests<hash_t>();
 
   // done
   int status = boost::report_errors();

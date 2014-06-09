@@ -27,23 +27,11 @@
 #include<sstream>
 #include "../dfxml/src/hash_t.h"
 
-// make one of these for each hash type to test
-void to_key(uint64_t i, md5_t& key) {
+template<typename T>
+void to_key(uint64_t i, T& key) {
   std::ostringstream ss;
-  ss << std::setw(16*2) << std::setfill('0') << std::hex << i;
-  key = md5_t::fromhex(ss.str());
-}
-
-void to_key(uint64_t i, sha1_t& key) {
-  std::ostringstream ss;
-  ss << std::setw(20*2) << std::setfill('0') << std::hex << i;
-  key = sha1_t::fromhex(ss.str());
-}
-
-void to_key(uint64_t i, sha256_t& key) {
-  std::ostringstream ss;
-  ss << std::setw(32*2) << std::setfill('0') << std::hex << i;
-  key = sha256_t::fromhex(ss.str());
+  ss << std::setw(T::size()*2) << std::setfill('0') << std::hex << i;
+  key = T::fromhex(ss.str());
 }
 
 #endif

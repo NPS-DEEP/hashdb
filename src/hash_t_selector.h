@@ -19,28 +19,34 @@
 
 /**
  * \file
- * Test hashdb_element_t constructors.
+ * Configures hash type hash_t based on the hash type macro.
  */
 
-#include <config.h>
-#include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
-#include "../hash_t_selector.h"
-#include "hashdb_element.hpp"
+#ifndef  HASH_T_SELECTOR_H
+#define  HASH_T_SELECTOR_H
 
-void run_test() {
+#include <dfxml/src/hash_t.h>
 
-  hashdb_element_t<hash_t> element;
-  BOOST_TEST_EQ(element.hash_block_size, 0);
+#ifdef USE_HASH_TYPE_MD5
+typedef md5_t hash_t;
+#elif USE_HASH_TYPE_SHA1
+typedef sha1_t hash_t;
+#elif USE_HASH_TYPE_SHA256
+typedef sha256_t hash_t;
+#elif USE_HASH_TYPE_SHA512
+typedef sha512_t hash_t;
+
+#elif USE_HASH_TYPE_STRAIGHT64
+typedef hash__<EVP_md_null,64> hash_t;
+template<typename T>
+inline std::string digest_name();
+template<>
+inline std::string digest_name<hash_t>() {
+    return "STRAIGHT64";
 }
 
-int cpp_main(int argc, char* argv[]) {
-  run_test();
+#else
+#error A valid hash type macro is required
+#endif
 
-  // done
-  int status = boost::report_errors();
-  return status;
-}
-
+#endif

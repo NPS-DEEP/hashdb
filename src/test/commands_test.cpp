@@ -30,6 +30,7 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 #include "directory_helper.hpp"
+#include "../hash_t_selector.h"
 #include "commands.hpp"
 
 // map types:
@@ -49,50 +50,50 @@ void do_test1() {
   // create new hashdbs
   hashdb_settings_t settings;
   settings.bloom1_is_used = false;
-  commands_t<md5_t>::create(settings, "temp_dir1");
-  commands_t<md5_t>::create(settings, "temp_dir2");
-  commands_t<md5_t>::create(settings, "temp_dir3");
-  commands_t<md5_t>::create(settings, "temp_dir4");
-  commands_t<md5_t>::create(settings, "temp_dir5");
+  commands_t<hash_t>::create(settings, "temp_dir1");
+  commands_t<hash_t>::create(settings, "temp_dir2");
+  commands_t<hash_t>::create(settings, "temp_dir3");
+  commands_t<hash_t>::create(settings, "temp_dir4");
+  commands_t<hash_t>::create(settings, "temp_dir5");
 
   // import
-  commands_t<md5_t>::import("test_repository_name", "sample_dfxml", "temp_dir1");
+  commands_t<hash_t>::import("test_repository_name", "sample_dfxml", "temp_dir1");
 
   // export
-  commands_t<md5_t>::do_export("temp_dir1", "temp_dfxml_out");
+  commands_t<hash_t>::do_export("temp_dir1", "temp_dfxml_out");
 
   // add
-  commands_t<md5_t>::add("temp_dir1", "temp_dir1");
+  commands_t<hash_t>::add("temp_dir1", "temp_dir1");
   
   // add_multiple
-  commands_t<md5_t>::add_multiple("temp_dir1", "temp_dir2", "temp_dir3");
+  commands_t<hash_t>::add_multiple("temp_dir1", "temp_dir2", "temp_dir3");
 
   // intersect
-  commands_t<md5_t>::intersect("temp_dir1", "temp_dir3", "temp_dir2");
+  commands_t<hash_t>::intersect("temp_dir1", "temp_dir3", "temp_dir2");
 
   // subtract
-  commands_t<md5_t>::subtract("temp_dir1", "temp_dir2", "temp_dir3");
+  commands_t<hash_t>::subtract("temp_dir1", "temp_dir2", "temp_dir3");
 
   // deduplicate
-  commands_t<md5_t>::deduplicate("temp_dir1", "temp_dir4");
+  commands_t<hash_t>::deduplicate("temp_dir1", "temp_dir4");
 
   // rebuild_bloom
-  commands_t<md5_t>::rebuild_bloom(settings, "temp_dir1");
+  commands_t<hash_t>::rebuild_bloom(settings, "temp_dir1");
 
   // server
   // not tested
 
   // scan
-  commands_t<md5_t>::scan("temp_dir5", "sample_dfxml");
+  commands_t<hash_t>::scan("temp_dir5", "sample_dfxml");
 
   // expand_identified_blocks
-  commands_t<md5_t>::expand_identified_blocks("temp_dir5", "identified_blocks.txt");
+  commands_t<hash_t>::expand_identified_blocks("temp_dir5", "identified_blocks.txt");
 
   // sources
-  commands_t<md5_t>::sources("temp_dir5");
+  commands_t<hash_t>::sources("temp_dir5");
 
   // statistics
-  commands_t<md5_t>::statistics("temp_dir5");
+  commands_t<hash_t>::statistics("temp_dir5");
 }
 
 void do_test2() {
@@ -102,7 +103,7 @@ void do_test2() {
 
   // create new hashdb
   hashdb_settings_t settings;
-  commands_t<md5_t>::create(settings, "temp_dir");
+  commands_t<hash_t>::create(settings, "temp_dir");
 
   // test ability to manage many repository names
   for (int i=0; i<250; i++) {
@@ -111,17 +112,17 @@ void do_test2() {
     ss << "test_repository_name_" << i;
 
     // import
-    commands_t<md5_t>::import(ss.str(), "sample_dfxml", "temp_dir");
+    commands_t<hash_t>::import(ss.str(), "sample_dfxml", "temp_dir");
   }
 
   // size
-  commands_t<md5_t>::size("temp_dir");
+  commands_t<hash_t>::size("temp_dir");
 
   // sources
-  commands_t<md5_t>::sources("temp_dir");
+  commands_t<hash_t>::sources("temp_dir");
 
   // statistics
-  commands_t<md5_t>::statistics("temp_dir");
+  commands_t<hash_t>::statistics("temp_dir");
 }
 
 int cpp_main(int argc, char* argv[]) {
