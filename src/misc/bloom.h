@@ -35,18 +35,14 @@
 #include <pthread.h>
 #endif
 
-#ifdef WIN32
-// note that winsock2.h is not needed by bloom.h, but if winsock2.h is needed
-// elsewhere, winsock2.h will complain if windows.h is already included.
-#include <winsock2.h> // not needed by bloom.h but needed by windows.h
-#include <windows.h>
-#include <windowsx.h>
-#include <wincrypt.h>
-#endif
-
-#ifdef HAVE_OPENSSL_HMAC_H
-#include <openssl/hmac.h>		// includes EVP
-#endif
+//#ifdef WIN32
+//// note that winsock2.h is not needed by bloom.h, but if winsock2.h is needed
+//// elsewhere, winsock2.h will complain if windows.h is already included.
+//#include <winsock2.h> // not needed by bloom.h but needed by windows.h
+//#include <windows.h>
+//#include <windowsx.h>
+//#include <wincrypt.h>
+//#endif
 
 #ifndef __BEGIN_DECLS
 #if defined(__cplusplus)
@@ -88,20 +84,9 @@ typedef struct  nsrl_bloom_ {
     uint32_t free_this:1;	// should we free this on clean?
     uint32_t fileio:1;		// force file i/o
     uint64_t hits;		// stats
-
-    /* Encryption Support; requires OpenSSL or WinCrypt */
-    uint8_t *key;			// hash of passphrase; 0 for no encryption
 #ifdef HAVE_PTHREAD
     uint32_t multithreaded:1;	// are we multithreaded?
     pthread_mutex_t mutex;
-#endif
-#ifdef HAVE_OPENSSL_HMAC_H
-    const EVP_MD *md;
-#endif
-#ifdef WIN32
-    DWORD digest_type;
-    HCRYPTPROV hProv;			/* handle to provider */
-    HCRYPTHASH hHash;			/* hash handle */
 #endif
 } nsrl_bloom;
 
@@ -151,16 +136,8 @@ void nsrl_bloom_print_info(const nsrl_bloom *b);
 void nsrl_bloom_fprint_usage(FILE *out);
 void nsrl_bloom_print_usage(void);
 void nsrl_bloom_add(nsrl_bloom *b,const uint8_t *hash); 
-#ifdef WIN32
-void Win32BloomHash(nsrl_bloom *b,const char *str,u_char *buf,DWORD *buflen);
-#endif
-int  nsrl_bloom_addString(nsrl_bloom *b,const char *str);  // add a string; return 0 if not presently present, 1 if already present.
 int  nsrl_bloom_query( nsrl_bloom *b,const uint8_t *hash); // 0 not present; 1 is present
-int  nsrl_bloom_queryString( nsrl_bloom *b,const char *str); // 0 not present; 1 is present
 double nsrl_bloom_utilization(const nsrl_bloom *b);			  // on scale 0..1
-
-/* Sets an encryption key */
-void nsrl_set_passphrase(nsrl_bloom *b,const char *passphrase);
 
 void  nsrl_bloom_clear(nsrl_bloom *b);	// Release resources and sanitize
 void  nsrl_bloom_free(nsrl_bloom *b);	// free *b
@@ -195,18 +172,9 @@ public:
 	this->memmapped=0;
 	this->free_this=0;
 	this->hits = 0;
-	this->key = 0;
 #ifdef HAVE_PTHREAD
 	this->multithreaded=0;
 #endif
-#ifdef HAVE_OPENSSL_HMAC_H
-	this->md  = 0;
-#endif
-#ifdef WIN32
-	digest_type = 0;
-	hProv = 0;
-	hHash = 0;
-#endif	
 	nsrl_bloom_clear(this);
     };
     /** Open the bloom filter; return 0 if sucessful. */
@@ -226,21 +194,9 @@ public:
     void fprint_info(FILE *out) const { 	nsrl_bloom_fprint_info(this,out);    }
 
     void add(const uint8_t *hash){	nsrl_bloom_add(this,hash);    }
-    int addString(const char *str){	return nsrl_bloom_addString(this,str);    }
-    void addString(const std::string &str){	nsrl_bloom_addString(this,str.c_str());    }
-    void addHex(const std::string &str){
-	uint8_t buf[256];		
-	nsrl_hex2bin(buf,sizeof(buf),str.c_str());
-	add(buf);
-    }
     bool query(const uint8_t *hash) const {	return nsrl_bloom_query(const_cast<NSRLBloom*>(this),hash);    }
-    bool queryString(const char *str)  { return nsrl_bloom_queryString(this,str);    }
-    bool queryString(const std::string &str)  {	return nsrl_bloom_queryString(this,str.c_str());    }
     double utilization() const{
 	return nsrl_bloom_utilization(this);
-    }
-    void set_passphrase(const char *passphrase){
-	nsrl_set_passphrase(this,passphrase);
     }
     uint64_t calchits(){
 	return this->hits;

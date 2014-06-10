@@ -352,23 +352,6 @@ static inline uint32_t get_bit(const unsigned char *buf,uint32_t bit)
     return (buf[bit/8] & (1<<bit%8)) ? 1 : 0;
 }
 
-
-/*
- * Encrypt with HMAC of hash; store the results in ebuf.
- */
-static inline const unsigned char *hash_encrypt(const nsrl_bloom *b,const unsigned char *hash,unsigned char *ebuf)
-{
-#ifdef HAVE_OPENSSL_HMAC_H
-    unsigned len = b->hash_bytes;	/* make openSSL happy */
-    HMAC(b->md,b->key,(int)b->hash_bytes,hash,b->hash_bytes,ebuf,&len);
-    return ebuf;
-#else
-    fprintf(stderr,"hash_encrypt requires OpenSSL HMAC at present.\n");
-    exit(-1);
-    return 0;
-#endif
-}
-
 /**
  * Add a hash into the bloom filter, updating the counters.
  * @param b The bloom filter.
@@ -388,10 +371,6 @@ void nsrl_bloom_add(nsrl_bloom *b,const unsigned char *hash)
 	pthread_mutex_lock(&b->mutex);
     }
 #endif
-    {
-	u_char ebuf[20];
-	if (b->key) hash = hash_encrypt(b,hash,ebuf);
-    }
     for(i=0;i<b->k;i++){		/* repeat for each hash function */
 	uint32_t offset = i * b->M;	/* compute offset into provided hash */
 	uint64_t v = 0;
@@ -418,62 +397,6 @@ void nsrl_bloom_add(nsrl_bloom *b,const unsigned char *hash)
 #endif
 }
 
-#ifdef WIN32
-/* This code can be called multithreaded since the hProv can be used to create multiple hashes.
- */
-void Win32BloomHash(nsrl_bloom *b,const char *str,u_char *buf,DWORD *buflen)
-{
-    if(b->hProv==0){
-	fprintf(stderr,"Win32BloomHash: b->hProv==0???\n");
-	nsrl_exit(1);
-    }
-    if (!CryptCreateHash(b->hProv, b->digest_type, 0, 0, &b->hHash)) {
-        DWORD dwStatus = GetLastError();
-        fprintf(stderr,"CryptCreateHash(bloom.c)(%d,%d) failed: %d\n",
-		(int)b->hProv,(int)b->digest_type,(int)dwStatus); 
-        CryptReleaseContext(b->hProv, 0);
-	nsrl_exit(1);
-    }
-    if(!CryptHashData(b->hHash,(const BYTE *)str,(DWORD)strlen(str),0)){
-	fprintf(stderr,"CryptHashData(bloom.c): Unable to update digest context hash");
-	nsrl_exit(1);
-    }
-    if( !CryptGetHashParam(b->hHash,HP_HASHVAL,(BYTE *)buf, buflen, 0 )) {
-	fprintf(stderr, "CryptGetHashParam(bloom.c): unable to finalize digest hash.\n");
-	nsrl_exit(1);
-    }
-    if( !CryptDestroyHash( b->hHash )){
-	fprintf(stderr," CryptDestroyHash(bloom.c): failed\n");
-	nsrl_exit(1);
-    }
-    if(b->hHash==0 || b->digest_type==0){
-	fprintf(stderr,"Things got broken\n");
-	nsrl_exit(1);
-    }
-}
-#endif
-
-int nsrl_bloom_addString(nsrl_bloom *b,const char *str)
-{
-    int previously_present = 0;
-    //char dst[64];
-#if defined(HAVE_OPENSSL_HMAC_H)
-    uint32_t buflen = EVP_MAX_MD_SIZE;
-    u_char buf[buflen];
-    EVP_Digest((const void *)str,strlen(str),buf,&buflen,b->md,0);
-#else
-#if defined(WIN32)
-    u_char buf[64];
-    DWORD buflen = sizeof(buf);
-    Win32BloomHash(b,str,buf,&buflen);
-#endif
-#endif
-    //printf("string='%s' hash=%s\n",str,nsrl_hexbuf(dst,sizeof(dst),buf,buflen,0));
-    previously_present = nsrl_bloom_query(b,buf);
-    if(!previously_present) nsrl_bloom_add(b,buf);
-    return previously_present;
-}
-
 /* nsrl_bloom_query:
  * Check each round of nist_function128 in the vector. If any are not set,
  * then the hash is not in the bloom filter.
@@ -495,10 +418,6 @@ int nsrl_bloom_query( nsrl_bloom *b,const unsigned char *hash)
 	printf("nsrl_bloom_query(%s) k:%d M:%d\n",
 	       nsrl_hexbuf(buf,sizeof(buf),hash,b->hash_bytes,0),b->k,b->M);
     }
-    {
-	u_char ebuf[20];
-	if (b->key) hash = hash_encrypt(b,hash,ebuf);
-    }
     for(i=0;i<b->k && found;i++){		/* i is which vector function to query */
 	uint32_t offset = i * b->M;
 	uint64_t v = 0;		/* v is the bit in the vector that is to be queried */
@@ -519,22 +438,6 @@ int nsrl_bloom_query( nsrl_bloom *b,const unsigned char *hash)
     }
 #endif
     return found;			
-}
-
-int nsrl_bloom_queryString(nsrl_bloom *b,const char *str)
-{
-#ifdef HAVE_OPENSSL_HMAC_H
-    u_char buf[EVP_MAX_MD_SIZE];
-    uint32_t buflen = EVP_MAX_MD_SIZE;
-    EVP_Digest((const void *)str,strlen(str),buf,&buflen,b->md,0);
-#else
-#ifdef WIN32
-    u_char buf[64];
-    DWORD buflen = sizeof(buf);
-    Win32BloomHash(b,str,buf,&buflen);
-#endif
-#endif
-    return nsrl_bloom_query(b,buf);
 }
 
 /*
@@ -577,49 +480,6 @@ nsrl_bloom *nsrl_bloom_alloc()
     b->free_this = 1;
     return b;
 }
-
-static void nsrl_bloom_set_params(nsrl_bloom *b)
-{
-#ifdef HAVE_OPENSSL_HMAC_H
-    OpenSSL_add_all_digests();
-    switch(b->hash_bytes){
-    case 16:	b->md = EVP_get_digestbyname("md5");	break;
-    case 20:	b->md = EVP_get_digestbyname("sha1");	break;
-    case 32:    b->md = EVP_get_digestbyname("sha256"); break;
-    default:
-	fprintf(stderr,"nsrl_bloom_set_params: hash_bytes=%d?\n",b->hash_bytes);
-	nsrl_exit(1);
-    }
-#else
-#ifdef WIN32
-    /* Request the AES crypt provider, fail back to the RSA crypt provider
-     */
-
-    b->hProv = 0;
-    b->hHash = 0;
-    if(CryptAcquireContext(&b->hProv,
-			   NULL,	/* pszContainer */
-			   NULL,	/* pszProvider */
-			   PROV_RSA_FULL, /* dwProvType */
-			   CRYPT_VERIFYCONTEXT)==0) /* dwFlags */ {
-	fprintf(stderr,"CryptAcquireContext(bloom.c): Cannot create RSA crypt provider");
-	nsrl_exit(1);
-    }
-    switch(b->hash_bytes){
-    case 16:	b->digest_type = CALG_MD5;break;
-    case 20:	b->digest_type = CALG_SHA1;break;
-    case 32:    fprintf(stderr,"bloom under windows can't handle 32-bits...\n");
-	nsrl_exit(1);
-    default:
-	fprintf(stderr,"nsrl_bloom_set_params: hash_bytes=%d?\n",b->hash_bytes);
-	nsrl_exit(1);
-    }
-#else
-#error Need OpenSSL or WIN32
-#endif
-#endif
-}
-
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -679,7 +539,6 @@ int nsrl_bloom_open(nsrl_bloom *b,const char *fname, map_permissions_t file_mode
 	    if(strcmp(line,str(comment))==0)            b->comment = strdup(after_colon);
 	}
     }
-    nsrl_bloom_set_params(b);
 
     if(version!=2){
 	fprintf(stderr,"bloom: require nsrl bf vesion 2; got version %d\n",version);
@@ -777,7 +636,6 @@ int nsrl_bloom_create(nsrl_bloom *b,
     b->M             =  bloom_bits;
     b->k             =  k;
     b->comment       =  strdup(comment);
-    nsrl_bloom_set_params(b);
 
     if(fname==0) return 0;		/* nameless bloom filter; we are done */
 
@@ -810,18 +668,6 @@ int nsrl_bloom_init_mutex(nsrl_bloom *b)
 #endif    
 
 
-
-/**
- * Establish a passphrase for the specified bloom filter.
- */
-
-void nsrl_set_passphrase(nsrl_bloom *b,const char *passphrase)
-{
-#ifdef HAVE_OPENSSL_HMAC_H
-    EVP_Digest((const void *)passphrase,strlen(passphrase),b->key,&b->hash_bytes,b->md,0);
-#endif
-}
-
 /**
  * Clear the allocated storage.
  */
@@ -842,16 +688,6 @@ void nsrl_bloom_clear(nsrl_bloom *b)
     
     if(b->fd)      close(b->fd);	/* close the file */
     if(b->comment) free(b->comment);
-#ifdef HAVE_OPENSSL_HMAC_H
-    if(b->key){
-	memset(b->key,0,b->hash_bytes);
-	free(b->key);
-    }
-#else
-    if(b->hProv){
-	CryptReleaseContext( b->hProv, 0 );
-    }
-#endif
 #ifdef HAVE_PTHREAD
     if(b->multithreaded){
 	pthread_mutex_destroy(&b->mutex);
