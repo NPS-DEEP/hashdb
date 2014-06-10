@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hopefully you checked out with git clone --recursive git@github.com:simsong/bulk_extractor.git
+# Hopefully you checked out with git clone --recursive git@github.com:simsong/hashdb.git
 
 for sub in dfxml btree endian
 do
