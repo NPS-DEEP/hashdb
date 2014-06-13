@@ -171,6 +171,12 @@ class map_multimap_manager_t {
         return;
       }
 
+      // don't add second if max duplicates is 1
+      if (maximum_hash_duplicates == 1) {
+        ++changes.hashes_not_inserted_exceeds_max_duplicates;
+        return;
+      }
+
       // move element in map to multimap
       multimap_emplace(key, map_iterator->second);
       map_change(key, source_lookup_encoding::get_source_lookup_encoding(2));
