@@ -82,14 +82,14 @@ class hashdb_t__ {
     std::string repository_name;
     std::string filename;
     uint64_t file_offset;
-    import_element_t(T p_hash,
-                   std::string p_repository_name,
-                   std::string p_filename,
-                   uint64_t p_file_offset) :
-                          hash(p_hash),
-                          repository_name(p_repository_name),
-                          filename(p_filename),
-                          file_offset(p_file_offset) {
+    import_element_t(const T p_hash,
+                     const std::string p_repository_name,
+                     const std::string p_filename,
+                     uint64_t p_file_offset) :
+                            hash(p_hash),
+                            repository_name(p_repository_name),
+                            filename(p_filename),
+                            file_offset(p_file_offset) {
     }
   };
 
