@@ -22,7 +22,7 @@
 bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 
-libhashdb_la_LDFLAGS = -static -avoid-version
+#libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -32,8 +32,9 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	$(XML_CFLAGS)
 
 hashdb_LDADD = libhashdb.la
+libhashdb_la_LIBADD = -ltre -lrt -lboost_system -lboost_filesystem -lboost_iostreams -lboost_thread -lxml2 -lssl -lcrypto
 
-AM_LDFLAGS = -static
+#AM_LDFLAGS = -static
 
 HASHDB_INCS = \
 	commands.hpp \
