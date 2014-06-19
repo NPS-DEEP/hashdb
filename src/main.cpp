@@ -502,6 +502,12 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t<T>::duplicates(arg1, arg2);
+  } else if (command == "hash_table") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t<T>::hash_table(arg1);
   } else {
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }

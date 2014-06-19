@@ -629,6 +629,26 @@ class commands_t {
     }
     duplicates_command_t<T>::show_duplicates(hashdb_dir, duplicates_number);
   }
+
+  // hash_table
+  static void hash_table(const std::string& hashdb_dir) {
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
+
+    // there is nothing to report if the hash database is empty
+    if (it == hashdb_manager.end()) {
+      std::cout << "The hash database is empty.\n";
+      return;
+    }
+
+    while (it != hashdb_manager.end()) {
+      std::cout << it->key.hexdigest() << "\t"
+                << it->repository_name << "\t"
+                << it->filename << "\t"
+                << it->file_offset << "\n";
+      ++it;
+    }
+  }
 };
 
 #endif
