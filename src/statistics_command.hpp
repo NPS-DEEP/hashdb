@@ -27,7 +27,7 @@
 
 #include "hashdb_settings.hpp"
 #include "file_modes.h"
-#include "map_manager.hpp"
+#include "hashdb_manager.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -48,13 +48,11 @@ class statistics_command_t {
   template<typename T>
   static void show_histogram(const std::string& hashdb_dir) {
 
-    // use map_manager
-    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
-//    typename map_manager_t<T>::const_iterator it = map_manager.begin();
-    typename map_manager_t<T>::map_iterator_t it = map_manager.begin();
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
 
     // there is nothing to report if the map is empty
-    if (it == map_manager.end()) {
+    if (it == hashdb_manager.end()) {
       std::cout << "The map is empty.\n";
       return;
     }
@@ -69,12 +67,10 @@ class statistics_command_t {
     std::map<uint32_t, uint64_t>* hash_histogram =
                 new std::map<uint32_t, uint64_t>();
     
-    // iterate over all hashes in map and set statistics variables
-    // note that *it is std::pair<T, uint64_t>
-    while (it != map_manager.end()) {
-
+    // iterate over hashdb and set statistics variables
+    while (it != hashdb_manager.end()) {
       // get count for this hash
-      uint32_t count = source_lookup_encoding::get_count(it->second);
+      uint32_t count = hashdb_manager.find_count(it->key);
 
       // update totals
       total_hashes += count;
@@ -100,7 +96,10 @@ class statistics_command_t {
                                            count, old_number + 1));
       }
 
-      ++it;
+      // now move forward by count
+      for (int i=0; i<count; i++) {
+        ++it;
+      }
     }
 
     // now show the statistics

@@ -19,103 +19,86 @@
 
 /**
  * \file
- * Provides a hashdb iterator which wraps map_multimap_iterator_t<T>.
- * Dereferences through pair<key, source_lookup_encoding>
- * into hashdb_element using help from hashdb_element_lookup_t.
+ * Provides a hashdb iterator which dereferences into hashdb_element_t.
  */
 
 #ifndef HASHDB_ITERATOR_HPP
 #define HASHDB_ITERATOR_HPP
-#include "map_multimap_iterator.hpp"
+#include "source_lookup_encoding.hpp"
 #include "hashdb_element.hpp"
-#include "hashdb_element_lookup.hpp"
 
 template<typename T>
 class hashdb_iterator_t {
   private:
 
-  // external resource required for creating a hashdb_element
-//  const hashdb_element_lookup_t<T> hashdb_element_lookup;
-  hashdb_element_lookup_t<T> hashdb_element_lookup;
+  const source_lookup_index_manager_t* source_lookup_index_manager;
+  uint32_t hash_block_size;
 
-  // the underlying map_multimap_iterator
-  map_multimap_iterator_t<T> map_multimap_iterator;
+  // the underlying multimap iterator
+  typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
+  typedef typename multimap_t::const_iterator multimap_iterator_t;
+//  typedef typename boost::btree::btree_multimap<T, uint64_t>::const_iterator multimap_iterator_t;
+  multimap_iterator_t multimap_iterator;
 
-  // the dereferenced value
-  bool dereferenced_value_is_cached;
-  hashdb_element_t<T> dereferenced_value;
+  // the cached "dereferenced" hashdb_element
+  hashdb_element_t<T> hashdb_element;
 
-  // elemental forward iterator accessors are increment, equal, and dereference
-  // increment
-  void increment() {
-    dereferenced_value_is_cached = false;
-    ++map_multimap_iterator;
-  }
-
-  // equal
-  bool equal(hashdb_iterator_t const& other) const {
-    // it is a program error if external resources differ
-    if (!(this->hashdb_element_lookup == other.hashdb_element_lookup)) {
-      assert(0);
-    }
-
-    return this->map_multimap_iterator == other.map_multimap_iterator;
-  }
-
-  // dereference
-  void dereference() {
-    if (dereferenced_value_is_cached) {
-      // already valid
-      return;
-    }
-
-    std::pair<T, uint64_t> hashdb_pair = *map_multimap_iterator;
-
-    dereferenced_value = hashdb_element_lookup(hashdb_pair);
-    dereferenced_value_is_cached = true;
+  // get hashdb_element
+  hashdb_element_t<T> get_hashdb_element() {
+    std::pair<std::string, std::string> source_strings =
+                          source_lookup_index_manager->find(
+                 source_lookup_encoding::get_source_lookup_index(
+                                  multimap_iterator->second));
+    return hashdb_element_t<T>(
+                 multimap_iterator->first,
+                 hash_block_size,
+                 source_strings.first,
+                 source_strings.second,
+                 source_lookup_encoding::get_hash_block_offset(
+                                multimap_iterator->second) * hash_block_size);
   }
 
   public:
-  // the constructor for the map_multimap type using the map_multimap iterators
-  hashdb_iterator_t(map_multimap_iterator_t<T> p_map_multimap_iterator,
-                    const hashdb_element_lookup_t<T> p_hashdb_element_lookup) :
-               hashdb_element_lookup(p_hashdb_element_lookup),
-               map_multimap_iterator(p_map_multimap_iterator),
-               dereferenced_value_is_cached(false),
-               dereferenced_value() {
+  // the constructor for the hashdb_iterator
+  hashdb_iterator_t(
+           const source_lookup_index_manager_t* p_source_lookup_index_manager,
+           uint32_t p_hash_block_size,
+           multimap_iterator_t p_multimap_iterator) :
+               source_lookup_index_manager(p_source_lookup_index_manager),
+               hash_block_size(p_hash_block_size),
+               multimap_iterator(p_multimap_iterator) {
   }
 
   // this useless default constructor is required by std::pair
   hashdb_iterator_t() :
-                      hashdb_element_lookup(),
-                      map_multimap_iterator(),
-                      dereferenced_value_is_cached(false),
-                      dereferenced_value() {
+                      source_lookup_index_manager(),
+                      hash_block_size(0),
+                      multimap_iterator() {
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=
   hashdb_iterator_t& operator++() {
-    increment();
+    ++multimap_iterator;
     return *this;
   }
   hashdb_iterator_t operator++(int) {  // c++11 delete would be better.
     hashdb_iterator_t temp(*this);
-    increment();
+    ++multimap_iterator;
     return temp;
   }
   hashdb_element_t<T>& operator*() {
-    dereference();
-    return dereferenced_value;
+    hashdb_element = get_hashdb_element();
+    return hashdb_element;
   }
   hashdb_element_t<T>* operator->() {
-    dereference();
-    return &dereferenced_value;
+    hashdb_element = get_hashdb_element();
+    return &hashdb_element;
   }
   bool operator==(const hashdb_iterator_t& other) const {
-    return equal(other);
+    return this->multimap_iterator == other.multimap_iterator;
   }
   bool operator!=(const hashdb_iterator_t& other) const {
-    return !equal(other);
+    return !(this->multimap_iterator == other.multimap_iterator);
   }
 };
 

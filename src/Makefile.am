@@ -22,7 +22,7 @@
 bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 
-#libhashdb_la_LDFLAGS = -static -avoid-version
+libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 #zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
@@ -41,7 +41,6 @@ HASHDB_INCS = \
 	dfxml_hashdigest_reader.hpp \
 	dfxml_hashdigest_reader_manager.hpp \
 	dfxml_hashdigest_writer.hpp \
-	duplicates_command.hpp \
 	main.cpp \
 	source_lookup_encoding.hpp \
 	source_lookup_index_iterator.hpp \
@@ -63,7 +62,6 @@ LIBHASHDB_INCS = \
 	hashdb_changes.hpp \
 	hashdb.cpp \
 	hashdb_element.hpp \
-	hashdb_element_lookup.hpp \
 	hashdb.hpp \
 	hashdb_iterator.hpp \
 	hashdb_manager.hpp \
@@ -74,10 +72,6 @@ LIBHASHDB_INCS = \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_iterator.hpp \
 	logger.hpp \
-	map_manager.hpp \
-	map_multimap_iterator.hpp \
-	map_multimap_manager.hpp \
-	multimap_manager.hpp \
 	mutex_lock.hpp \
 	tcp_client_manager.hpp
 

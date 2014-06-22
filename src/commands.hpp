@@ -38,7 +38,6 @@
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
 #include "statistics_command.hpp"
-#include "duplicates_command.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -339,32 +338,25 @@ class commands_t {
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
-    // Use map_manager to iterate over hashes.
-
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    map_manager_t<T> map_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
 
-    // get resources for hashdb_element lookup
-    source_lookup_index_manager_t source_lookup_index_manager(hashdb_dir1, READ_ONLY);
-    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir1);
-    hashdb_element_lookup_t<T> hashdb_element_lookup(
-                          &source_lookup_index_manager, &settings);
-
-    typename map_manager_t<T>::map_iterator_t map_it1 = map_manager1.begin();
+    // iterate over hashes.
+    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin deduplicate");
-    while (map_it1 != map_manager1.end()) {
+    while (it1 != hashdb_manager1.end()) {
 
       // for deduplicate, only keep hashes whose count=1
-      if (source_lookup_encoding::get_count(map_it1->second) == 1) {
+      if (hashdb_manager1.find_count(it1->key) == 1) {
         // good, use it
-        hashdb_manager2.insert(hashdb_element_lookup(*map_it1), changes);
+        hashdb_manager2.insert(*it1, changes);
       }
 
-      ++map_it1;
+      ++it1;
     }
 
     logger.add_timestamp("end deduplicate");
@@ -395,14 +387,15 @@ class commands_t {
     hashdb_settings_t revised_settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     logger.add_hashdb_settings(revised_settings);
 
-    // get the map manager and its iterator
-    map_manager_t<T> map_manager(hashdb_dir, READ_ONLY);
-    typename map_manager_t<T>::map_iterator_t it = map_manager.begin();
+    // open hashdb
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
 
+    // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
-    while (it != map_manager.end()) {
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    while (it != hashdb_manager.end()) {
       // add the hash to the bloom filter
-      bloom_rebuild_manager.add_hash_value(it->first);
+      bloom_rebuild_manager.add_hash_value(it->key);
       ++it;
     }
     logger.add_timestamp("end rebuild_bloom");
@@ -627,7 +620,30 @@ class commands_t {
       std::cerr << "Invalid number of duplicates: '" << duplicates_string << "'\n";
       exit(1);
     }
-    duplicates_command_t<T>::show_duplicates(hashdb_dir, duplicates_number);
+
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
+
+    // there is nothing to report if the map is empty
+    if (it == hashdb_manager.end()) {
+      std::cout << "The map is empty.\n";
+      return;
+    }
+
+    size_t line_number=0;
+    while (it != hashdb_manager.end()) {
+      uint32_t count = hashdb_manager.find_count(it->key);
+
+      if (count == duplicates_number) {
+        // show this hash in form "<index> \t <hexdigest> \n"
+        std::cout << ++line_number << "\t" << it->key.hexdigest() << "\t" << count << "\n";
+      }
+
+      // now move forward by count
+      for (int i=0; i<count; ++i) {
+        ++it;
+      }
+    }
   }
 
   // hash_table

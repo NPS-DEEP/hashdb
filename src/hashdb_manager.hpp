@@ -19,46 +19,70 @@
 
 /**
  * \file
- * Provides services for accessing hashdb as a whole.
- * Hides map_multimap_manager and bloom filter.
- * Notes hashdb changes in provided hashdb_changes.
+ * Provides services for accessing the multimap, including tracking changes.
  */
 
 #ifndef HASHDB_MANAGER_HPP
 #define HASHDB_MANAGER_HPP
 #include "file_modes.h"
-#include "map_multimap_manager.hpp"
-#include "map_multimap_iterator.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "source_lookup_index_manager.hpp"
-#include "hashdb_element_lookup.hpp"
 #include "hashdb_iterator.hpp"
+#include "hashdb_changes.hpp"
+#include "bloom_filter_manager.hpp"
+#include "source_lookup_encoding.hpp"
+#include <vector>
+#include <unistd.h>
+#include <sstream>
+#include <iostream>
+#include <cassert>
 
 template<typename T>  // hash type
 class hashdb_manager_t {
+
+  public:
+  typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
+  typedef typename multimap_t::const_iterator multimap_iterator_t;
+  typedef typename std::pair<multimap_iterator_t, multimap_iterator_t>
+                                               multimap_iterator_range_t;
+
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
+
+  // settings
   const hashdb_settings_t settings;
 
+  // multimap
+  multimap_t multimap;
+
+  // bloom filter manager
+  bloom_filter_manager_t<T> bloom_filter_manager;
+
+  // source lookup support
   source_lookup_index_manager_t source_lookup_index_manager;
-  const hashdb_element_lookup_t<T> hashdb_element_lookup;
-  map_multimap_manager_t<T> map_multimap_manager;
 
   // do not allow copy or assignment
   hashdb_manager_t(const hashdb_manager_t&);
   hashdb_manager_t& operator=(const hashdb_manager_t&);
 
   public:
-  hashdb_manager_t(const std::string& p_hashdb_dir, file_mode_type_t p_file_mode) :
+  hashdb_manager_t(const std::string& p_hashdb_dir,
+                   file_mode_type_t p_file_mode) :
                 hashdb_dir(p_hashdb_dir),
                 file_mode(p_file_mode),
                 settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
-                source_lookup_index_manager(hashdb_dir, file_mode),
-                hashdb_element_lookup(&source_lookup_index_manager,
-                                      &settings),
-                map_multimap_manager(hashdb_dir, file_mode) {
+                multimap(hashdb_dir,
+                         file_mode_type_to_btree_flags_bitmask(file_mode)),
+                bloom_filter_manager(hashdb_dir, file_mode,
+                               settings.bloom1_is_used,
+                               settings.bloom1_M_hash_size,
+                               settings.bloom1_k_hash_functions,
+                               settings.bloom2_is_used,
+                               settings.bloom2_M_hash_size,
+                               settings.bloom2_k_hash_functions),
+                source_lookup_index_manager(hashdb_dir, file_mode) {
   }
 
   // insert
@@ -89,11 +113,32 @@ class hashdb_manager_t {
                        source_lookup_index,
                        hashdb_element.file_offset / settings.hash_block_size);
 
-    // insert or note reason not to insert
-    map_multimap_manager.emplace(hashdb_element.key,
-                                 encoding,
-                                 settings.maximum_hash_duplicates,
-                                 changes);
+    // do not emplace if count > max count allowed
+    if (settings.maximum_hash_duplicates > 0
+             && bloom_filter_manager.is_positive(hashdb_element.key)
+             && multimap.count(hashdb_element.key) >= settings.maximum_hash_duplicates) {
+      ++changes.hashes_not_inserted_exceeds_max_duplicates;
+      return;
+    }
+
+    // add the element, even if an identical (key, value) pair is already there
+    multimap.emplace(hashdb_element.key, encoding);
+    ++changes.hashes_inserted;
+
+/*
+    std::pair<multimap_iterator_t, bool> response =
+                         multimap.emplace(hashdb_element.key, encoding);
+////zz not unique with bool:
+//    std::pair<multimap_iterator_t, bool> response =
+//                         multimap.emplace(hashdb_element.key, encoding);
+    if (response.second == true) {
+      // unique element added
+      ++changes.hashes_inserted;
+    } else {
+      // duplicate element not added
+      ++changes.hashes_not_inserted_duplicate_element;
+    }
+*/
   }
 
   // remove
@@ -127,54 +172,89 @@ class hashdb_manager_t {
                        source_lookup_index,
                        hashdb_element.file_offset / settings.hash_block_size);
 
-    // checks passed, remove or show reason not to remove
-    map_multimap_manager.remove(hashdb_element.key, encoding, changes);
+    // find and remove the uniquely identified element
+    multimap_iterator_range_t it = multimap.equal_range(hashdb_element.key);
+    multimap_iterator_t lower = it.first;
+    const multimap_iterator_t upper = it.second;
+    for (; lower != upper; ++lower) {
+      if (lower->second == encoding) {
+        // found it so erase it
+        multimap.erase(lower);
+        ++changes.hashes_removed;
+        return;
+      }
+    }
+
+    // the key with the source lookup encoding was not found
+    ++changes.hashes_not_removed_no_element;
+    return;
   }
 
   // remove key
   void remove_key(const T& key, hashdb_changes_t& changes) {
-    map_multimap_manager.remove_key(key, changes);
+
+    // erase elements of key
+    uint32_t count = multimap.erase(key);
+    
+    if (count == 0) {
+      // no key
+      ++changes.hashes_not_removed_no_hash;
+    } else {
+      changes.hashes_removed += count;
+    }
   }
 
   // find
   std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > find(const T& key) const {
 
-    // get the map_multimap iterator pair
-    std::pair<map_multimap_iterator_t<T>,
-              map_multimap_iterator_t<T> >
-                                it_pair(map_multimap_manager.find(key));
+    // get the multimap iterator pair
+    std::pair<multimap_iterator_t, multimap_iterator_t>
+                                        it_pair(multimap.equal_range(key));
 
     // return the hashdb_iterator pair for this key
     return std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> >(
-               hashdb_iterator_t<T>(it_pair.first, hashdb_element_lookup),
-               hashdb_iterator_t<T>(it_pair.second, hashdb_element_lookup));
+               hashdb_iterator_t<T>(&source_lookup_index_manager,
+                                    settings.hash_block_size,
+                                    it_pair.first),
+               hashdb_iterator_t<T>(&source_lookup_index_manager,
+                                    settings.hash_block_size,
+                                    it_pair.second));
   }
 
   // find_count
   uint32_t find_count(const T& key) const {
-    return map_multimap_manager.find_count(key);
+    // if key not in bloom filter then clearly count=0
+    if (!bloom_filter_manager.is_positive(key)) {
+      // key not present in bloom filter
+      return 0;
+    } else {
+      // return key from multimap
+      return multimap.count(key);
+    }
   }
 
   // begin
   hashdb_iterator_t<T> begin() const {
-    return hashdb_iterator_t<T>(map_multimap_manager.begin(),
-                                              hashdb_element_lookup);
+    return hashdb_iterator_t<T>(&source_lookup_index_manager,
+                                settings.hash_block_size,
+                                multimap.begin());
   }
 
   // end
   hashdb_iterator_t<T> end() const {
-    return hashdb_iterator_t<T>(map_multimap_manager.end(),
-                                              hashdb_element_lookup);
+    return hashdb_iterator_t<T>(&source_lookup_index_manager,
+                                settings.hash_block_size,
+                                multimap.end());
   }
 
   // map size
   size_t map_size() const {
-    return map_multimap_manager.map_size();
+    return 0;
   }
 
   // multimap size
   size_t multimap_size() const {
-    return map_multimap_manager.map_size();
+    return multimap.size();
   }
 
   // source lookup store size
