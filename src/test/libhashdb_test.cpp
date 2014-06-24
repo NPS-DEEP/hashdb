@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the map_multimap_manager.
+ * Test the libhashdb interfaces.
  */
 
 #include "directory_helper.hpp"

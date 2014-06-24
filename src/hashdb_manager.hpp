@@ -73,7 +73,7 @@ class hashdb_manager_t {
                 hashdb_dir(p_hashdb_dir),
                 file_mode(p_file_mode),
                 settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
-                multimap(hashdb_dir,
+                multimap(hashdb_dir + "/hash_store",
                          file_mode_type_to_btree_flags_bitmask(file_mode)),
                 bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
@@ -125,20 +125,8 @@ class hashdb_manager_t {
     multimap.emplace(hashdb_element.key, encoding);
     ++changes.hashes_inserted;
 
-/*
-    std::pair<multimap_iterator_t, bool> response =
-                         multimap.emplace(hashdb_element.key, encoding);
-////zz not unique with bool:
-//    std::pair<multimap_iterator_t, bool> response =
-//                         multimap.emplace(hashdb_element.key, encoding);
-    if (response.second == true) {
-      // unique element added
-      ++changes.hashes_inserted;
-    } else {
-      // duplicate element not added
-      ++changes.hashes_not_inserted_duplicate_element;
-    }
-*/
+    // add hash to bloom filter, too, even if already there
+    bloom_filter_manager.add_hash_value(hashdb_element.key);
   }
 
   // remove
@@ -228,7 +216,7 @@ class hashdb_manager_t {
       // key not present in bloom filter
       return 0;
     } else {
-      // return key from multimap
+      // return count from multimap
       return multimap.count(key);
     }
   }
@@ -247,13 +235,8 @@ class hashdb_manager_t {
                                 multimap.end());
   }
 
-  // map size
-  size_t map_size() const {
-    return 0;
-  }
-
   // multimap size
-  size_t multimap_size() const {
+  size_t map_size() const {
     return multimap.size();
   }
 

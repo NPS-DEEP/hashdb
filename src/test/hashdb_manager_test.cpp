@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the map_multimap_manager.
+ * Test the hashdb_manager.
  */
 
 #include <config.h>
@@ -78,7 +78,6 @@ void do_test() {
   // ************************************************************
   // check initial size
   BOOST_TEST_EQ(manager.map_size(), 0);
-  BOOST_TEST_EQ(manager.multimap_size(), 0);
 
   // check initial iterator
   BOOST_TEST_EQ((manager.begin() == manager.end()), true);
@@ -92,65 +91,96 @@ void do_test() {
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_inserted, 1);
+  BOOST_TEST_EQ(manager.map_size(), 1);
 
   // insert, mismatched hash block size
   element = hashdb_element_t<T>(k1,
                              5, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_mismatched_hash_block_size, 1);
+  BOOST_TEST_EQ(manager.map_size(), 1);
 
   // insert, file offset not aligned
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 5);
   manager.insert(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_inserted_file_offset_not_aligned, 1);
+  BOOST_TEST_EQ(manager.map_size(), 1);
+
+  // validate 2-element insert and delete capability
+  element = hashdb_element_t<T>(k2, 4096, "rep1", "file1", 4096);
+  manager.insert(element, changes);
+  BOOST_TEST_EQ(changes.hashes_inserted, 2);
+  BOOST_TEST_EQ(manager.map_size(), 2);
+  manager.insert(element, changes);
+  BOOST_TEST_EQ(changes.hashes_inserted, 3);
+  BOOST_TEST_EQ(manager.map_size(), 3);
+  manager.insert(element, changes);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 1);
+  BOOST_TEST_EQ(manager.map_size(), 3);
+  manager.remove(element, changes);
+  BOOST_TEST_EQ(changes.hashes_removed, 1);
+  BOOST_TEST_EQ(manager.map_size(), 2);
+  manager.remove(element, changes);
+  BOOST_TEST_EQ(changes.hashes_removed, 2);
+  BOOST_TEST_EQ(manager.map_size(), 1);
+  manager.remove(element, changes);
+  BOOST_TEST_EQ(changes.hashes_removed, 2);
+  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 1);
+  BOOST_TEST_EQ(manager.map_size(), 1);
 
   // insert, add second valid
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 4096);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_inserted, 2);
+  BOOST_TEST_EQ(changes.hashes_inserted, 4);
+  BOOST_TEST_EQ(manager.map_size(), 2);
 
   // insert, exceeds max duplicates
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 4096 * 2);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 1);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 2);
+  BOOST_TEST_EQ(manager.map_size(), 2);
 
-  // insert, duplicate element
+  // insert, exceeds max duplicates
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_exceeds_max_duplicates, 3);
+  BOOST_TEST_EQ(manager.map_size(), 2);
 
-  // remove, no element
-  element = hashdb_element_t<T>(k1,
-                             4096, "undefined_rep1", "file1", 0);
-  manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 1);
-
-  // remove successfully
+  // remove duplicate
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_removed, 1);
+  BOOST_TEST_EQ(changes.hashes_removed, 3);
+  BOOST_TEST_EQ(manager.map_size(), 1);
 
   // remove, no element
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
   BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 2);
+  BOOST_TEST_EQ(manager.map_size(), 1);
+
+  // remove, no element
+  element = hashdb_element_t<T>(k1,
+                             4096, "rep1", "file1", 0);
+  manager.remove(element, changes);
+  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 3);
+  BOOST_TEST_EQ(manager.map_size(), 1);
 
   // insert, valid
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_inserted, 3);
+  BOOST_TEST_EQ(changes.hashes_inserted, 5);
 
   // remove_key successfully
-  BOOST_TEST_EQ(changes.hashes_removed, 1);
+//  BOOST_TEST_EQ(changes.hashes_removed, 1);
   manager.remove_key(k1, changes);
-  BOOST_TEST_EQ(changes.hashes_removed, 3);
+  BOOST_TEST_EQ(changes.hashes_removed, 5);
 
   // remove_key no hash
   manager.remove_key(k1, changes);
@@ -172,7 +202,7 @@ void do_test() {
   element = hashdb_element_t<T>(k2,
                              4096, "rep1", "file1", 0);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 3);
+  BOOST_TEST_EQ(changes.hashes_not_removed_no_element, 4);
 
   // ************************************************************
   // find, find_count, size, iterator
@@ -185,7 +215,6 @@ void do_test() {
                              4096, "rep1", "file1", 0);
   manager.insert(element, changes);
   BOOST_TEST_EQ(manager.map_size(), 1);
-  BOOST_TEST_EQ(manager.multimap_size(), 1);
   hashdb_iterator_t<T> it(manager.begin());
   BOOST_TEST_EQ(it->key, k1);
   BOOST_TEST_EQ(it->hash_block_size, 4096);
@@ -205,8 +234,7 @@ void do_test() {
   manager.insert(element, changes);
 
   BOOST_TEST_EQ(manager.find_count(k1), 2);
-  BOOST_TEST_EQ(manager.map_size(), 2);
-  BOOST_TEST_EQ(manager.multimap_size(), 2);
+  BOOST_TEST_EQ(manager.map_size(), 3);
 
   hashdb_iterator_t<T> it2(manager.begin());
   ++it2;
@@ -225,6 +253,19 @@ void do_test() {
   ++it_pair.first;
   ++it_pair.first;
   BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
+
+  // ************************************************************
+  // install lots of data
+  // ************************************************************
+  // populate with 1,000,000 entries
+  T key;
+  BOOST_TEST_EQ(manager.map_size(), 3);
+  for (uint64_t n=0; n< 1000000; ++n) {
+    to_key(n+1000000, key);
+    element = hashdb_element_t<T>(key, 4096, "rep1", "file1", 0);
+    manager.insert(element, changes);
+  }
+  BOOST_TEST_EQ(manager.map_size(), 1000003);
 }
 
 int cpp_main(int argc, char* argv[]) {

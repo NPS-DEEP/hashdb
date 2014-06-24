@@ -45,10 +45,6 @@
 #include "dfxml_hashdigest_writer.hpp"
 
 static const char temp_dir[] = "temp_dir";
-/*
-static const char temp_map[] = "temp_dir/hash_store";
-static const char temp_multimap[] = "temp_dir/hash_duplicates_store";
-*/
 
 void run_tests() {
 

@@ -582,7 +582,6 @@ class commands_t {
 
     // there is nothing to report if the database is empty
     if (hashdb_manager.map_size() == 0
-     && hashdb_manager.multimap_size() == 0
      && hashdb_manager.source_lookup_store_size() == 0
      && hashdb_manager.repository_name_lookup_store_size() == 0
      && hashdb_manager.filename_lookup_store_size() == 0) {
@@ -593,8 +592,6 @@ class commands_t {
     // print size values
     std::cout << "  hash store: "
               << hashdb_manager.map_size() << "\n"
-              << "  hash duplicates store: "
-              << hashdb_manager.multimap_size() << "\n"
               << "  source lookup store: "
               << hashdb_manager.source_lookup_store_size() << "\n"
               << "  source repository name store: "

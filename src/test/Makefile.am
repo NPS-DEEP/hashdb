@@ -25,18 +25,11 @@ EXTRA_DIST = \
 
 bin_PROGRAMS = \
 	source_lookup_encoding_test \
-	map_and_multimap_test \
-	btree_bug_test \
-	map_manager_test \
-	multimap_manager_test \
-	map_multimap_iterator_test \
 	bloom_filter_manager_test \
 	settings_manager_test \
 	logger_test \
 	hashdb_element_test \
-	map_multimap_manager_test \
 	source_lookup_index_manager_test \
-	hashdb_iterator_test \
 	hashdb_manager_test \
 	dfxml_hashdigest_rw_test \
 	identified_blocks_reader_test \
@@ -51,18 +44,11 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
-map_and_multimap_test_LDADD = ../libhashdb.la
-btree_bug_test_LDADD = ../libhashdb.la
-map_manager_test_LDADD = ../libhashdb.la
-multimap_manager_test_LDADD = ../libhashdb.la
-map_multimap_iterator_test_LDADD = ../libhashdb.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_manager_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
 hashdb_element_test_LDADD = ../libhashdb.la
-map_multimap_manager_test_LDADD = ../libhashdb.la
 source_lookup_index_manager_test_LDADD = ../libhashdb.la
-hashdb_iterator_test_LDADD = ../libhashdb.la
 hashdb_manager_test_LDADD = ../libhashdb.la
 dfxml_hashdigest_rw_test_LDADD = ../libhashdb.la
 identified_blocks_reader_test_LDADD = ../libhashdb.la
@@ -92,30 +78,6 @@ source_lookup_encoding_test_SOURCES = \
 	boost_fix.hpp \
 	source_lookup_encoding_test.cpp
 
-map_and_multimap_test_SOURCES = \
-	boost_fix.hpp \
-	to_key_helper.hpp \
-	map_and_multimap_test.cpp
-
-btree_bug_test_SOURCES = \
-	boost_fix.hpp \
-	btree_bug_test.cpp
-
-map_manager_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	map_manager_test.cpp
-
-multimap_manager_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	multimap_manager_test.cpp
-
-map_multimap_iterator_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	map_multimap_iterator_test.cpp
-
 bloom_filter_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
@@ -135,20 +97,10 @@ hashdb_element_test_SOURCES = \
 	boost_fix.hpp \
 	hashdb_element_test.cpp
 
-map_multimap_manager_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	map_multimap_manager_test.cpp
-
 source_lookup_index_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
 	source_lookup_index_manager_test.cpp
-
-hashdb_iterator_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	hashdb_iterator_test.cpp
 
 hashdb_manager_test_SOURCES = \
 	boost_fix.hpp \

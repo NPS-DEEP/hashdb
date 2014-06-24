@@ -37,7 +37,6 @@ class hashdb_iterator_t {
   // the underlying multimap iterator
   typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
   typedef typename multimap_t::const_iterator multimap_iterator_t;
-//  typedef typename boost::btree::btree_multimap<T, uint64_t>::const_iterator multimap_iterator_t;
   multimap_iterator_t multimap_iterator;
 
   // the cached "dereferenced" hashdb_element
@@ -66,14 +65,32 @@ class hashdb_iterator_t {
            multimap_iterator_t p_multimap_iterator) :
                source_lookup_index_manager(p_source_lookup_index_manager),
                hash_block_size(p_hash_block_size),
-               multimap_iterator(p_multimap_iterator) {
+               multimap_iterator(p_multimap_iterator),
+               hashdb_element() {
   }
 
   // this useless default constructor is required by std::pair
   hashdb_iterator_t() :
                       source_lookup_index_manager(),
                       hash_block_size(0),
-                      multimap_iterator() {
+                      multimap_iterator(),
+                      hashdb_element() {
+  }
+
+  // override the copy constructor and the assignment operator to quiet the
+  // compiler about using a pointer data member
+  hashdb_iterator_t(const hashdb_iterator_t& other) :
+               source_lookup_index_manager(other.source_lookup_index_manager),
+               hash_block_size(other.hash_block_size),
+               multimap_iterator(other.multimap_iterator),
+               hashdb_element(other.hashdb_element) {
+  }
+  hashdb_iterator_t& operator=(const hashdb_iterator_t& other) {
+    source_lookup_index_manager = other.source_lookup_index_manager;
+    hash_block_size = other.hash_block_size;
+    multimap_iterator = other.multimap_iterator;
+    hashdb_element = other.hashdb_element;
+    return *this;
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=

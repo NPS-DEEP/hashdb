@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the map_multimap_manager.
+ * Test command interfaces.
  */
 
 #include <config.h>

@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the map_multimap_manager.
+ * Test the identified_blocks.txt reader.
  */
 
 #include <config.h>
