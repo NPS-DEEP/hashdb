@@ -50,24 +50,36 @@ for hashes with duplicates.
 Rebuilds the bloom filters in the <hashdb> hash database based on the
 <bloom filter settings> provided.
 
-.IP "server <hashdb> <socket>"
-Starts a query server service for <hashdb> at <socket> for
+.IP "server <hashdb> <port number>"
+Starts a query server service for <hashdb> at <port number> for
 servicing hashdb queries.
 
-.IP "scan <hashdb> <DFXML file>"
-Scans the <hashdb> for hashes that match hashes in the <DFXML file>
+.IP "scan <path_or_socket> <DFXML file>"
+Scans the <path_or_socket> for hashes that match hashes in the <DFXML file>
 and prints out matches.
 
 .IP "expand_identified_blocks <hashdb_dir> <identified_blocks.txt>"
 Prints out source information for each hash in <identified_blocks.txt>
-Source information includes repository name, filename, and file offset
+Source information includes repository name, filename, and file offset.
 
-.IP "get_sources <hashdb>"
+.IP "sources <hashdb>"
 Prints out the repository name and filename of where each hash in the
 <hashdb> came from.
 
-.IP "get_statistics <hashdb>"
+.IP "size <hashdb>"
+Prints out size information about the given <hashdb> database.
+
+.IP "statistics <hashdb>"
 Print out statistics about the given <hashdb> database.
+
+.IP "duplicates <hashdb> <number>"
+Prints out the hashes in the given <hashdb> database that are sourced
+the given <number> of times.
+
+.IP "hash_table <hashdb>"
+Prints out a table of hashes from the given <hashdb> database, indicating
+the repository name, filename, and file offset of where each hash was
+sourced.
 
 .SH HASHDB SETTINGS
 .B <hashdb settings>
@@ -79,22 +91,6 @@ establish the settings of a new hash database:
 .IP "-m, --max_duplicates=<maximum>"
 <maximum> number of hash duplicates allowed, or 0 for no limit
 (default 0)
-
-.IP "-t, --storage_type=<storage type>"
-<storage type> to use in the hash database, where <storage type>
-is one of: btree | hash | red-black-tree | sorted-vector
-(default btree)
-
-.IP "-a, --algorithm=<hash algorithm>"
-<hash algorithm> in use for the hash database, where <hash algorithm>
-is one of: md5 | sha1 | sha256
-(default md5)
-
-.IP "-b, --bits=<number>"
-<number> of source lookup index bits to use for the source lookup
-index, between 32 and 40 (default 32)
-The number of bits used for the hash block offset value is
-(64 - <number>).
 
 .SH BLOOM FILTER SETTINGS
 .B <bloom filter settings>
