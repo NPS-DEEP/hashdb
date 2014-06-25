@@ -33,7 +33,7 @@
 #include <iostream>
 
 /**
- * Provides hashdb metadata information as a string of XML information.
+ * Provides hashdb statistics.
  */
 class statistics_command_t {
   public:
