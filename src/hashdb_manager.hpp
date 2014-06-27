@@ -111,7 +111,7 @@ class hashdb_manager_t {
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
                        source_lookup_index,
-                       hashdb_element.file_offset / settings.hash_block_size);
+                       hashdb_element.file_offset);
 
     // do not emplace if count > max count allowed
     if (settings.maximum_hash_duplicates > 0
@@ -158,7 +158,7 @@ class hashdb_manager_t {
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
                        source_lookup_index,
-                       hashdb_element.file_offset / settings.hash_block_size);
+                       hashdb_element.file_offset);
 
     // find and remove the uniquely identified element
     multimap_iterator_range_t it = multimap.equal_range(hashdb_element.key);

@@ -29,39 +29,41 @@
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
 
+uint64_t encode(uint64_t index, uint64_t offset) {
+  return index<<34 | offset;
+}
+
+void test_encoding(uint64_t index, uint64_t offset, uint64_t encoding) {
+std::cout << "t.a " << " " << index << " " << offset << " " << encoding << "\n";
+  uint64_t temp_index = source_lookup_encoding::get_source_lookup_index(encoding);
+  uint64_t temp_offset = source_lookup_encoding::get_file_offset(encoding);
+  uint64_t temp_encoding = source_lookup_encoding::get_source_lookup_encoding(index, offset);
+  BOOST_TEST_EQ(index, temp_index);
+  BOOST_TEST_EQ(offset, temp_offset);
+  BOOST_TEST_EQ(encoding, temp_encoding);
+}
+
 int cpp_main(int argc, char* argv[]) {
 
-  // let any std::cout diagnostics be in hex
+  // make all std::cout diagnostics be in hex
   std::cout << std::hex;
 
-  // 32 bits, small values
-  uint64_t temp = 0xffffffffffffffff;
-  temp = source_lookup_encoding::get_source_lookup_encoding(2, 3);
-  BOOST_TEST_EQ(source_lookup_encoding::get_count(temp), 1);
-  BOOST_TEST_EQ(source_lookup_encoding::get_source_lookup_index(temp), 2);
-  BOOST_TEST_EQ(source_lookup_encoding::get_hash_block_offset(temp), 3);
+  // max values
+  uint64_t max_index = ((uint64_t)1<<30) - 1;
+  uint64_t max_offset = (((uint64_t)1<<34) - 1) * BYTE_ALIGNMENT;
 
-  // 32 bits, large value for source_lookup_index
-  temp = 0;
-  temp = source_lookup_encoding::get_source_lookup_encoding(0xfffffffe, 4);
-  BOOST_TEST_EQ(source_lookup_encoding::get_count(temp), 1);
-  BOOST_TEST_EQ(source_lookup_encoding::get_source_lookup_index(temp), 0xfffffffe);
-  BOOST_TEST_EQ(source_lookup_encoding::get_hash_block_offset(temp), 4);
+  // test encodings
+  // valid
+  test_encoding(0, 0, 0);
 
-  // 32 bits, large value for hash_block_offset
-  temp = 0;
-  temp = source_lookup_encoding::get_source_lookup_encoding(5, 0xfffffffe);
-  BOOST_TEST_EQ(source_lookup_encoding::get_count(temp), 1);
-  BOOST_TEST_EQ(source_lookup_encoding::get_source_lookup_index(temp), 5);
-  BOOST_TEST_EQ(source_lookup_encoding::get_hash_block_offset(temp), 0xfffffffe);
+  // valid
+  test_encoding(1, 2*BYTE_ALIGNMENT, (uint64_t)1<<34 | (uint64_t)2);
 
-  // 32 bits, invalid values
-  BOOST_TEST_THROWS(temp = source_lookup_encoding::get_source_lookup_encoding(0xffffffff, 0), std::runtime_error);
-  BOOST_TEST_THROWS(temp = source_lookup_encoding::get_source_lookup_encoding(0, 0xffffffff), std::runtime_error);
+  test_encoding(max_index, max_offset, max_index<<34 | max_offset/BYTE_ALIGNMENT);
 
-  // check count functionality
-  temp = source_lookup_encoding::get_source_lookup_encoding(2);
-  BOOST_TEST_EQ(source_lookup_encoding::get_count(temp), 2);
+  // source lookup index too large
+  BOOST_TEST_THROWS(test_encoding(max_index+1, max_offset, (max_index+1)<<34 | (max_offset/BYTE_ALIGNMENT)), std::runtime_error);
+  BOOST_TEST_THROWS(test_encoding(max_index, max_offset+1, (max_index<<34) | ((max_offset/BYTE_ALIGNMENT)+max_offset)), std::runtime_error);
 
   // done
   int status = boost::report_errors();

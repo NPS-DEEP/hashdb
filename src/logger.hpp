@@ -31,6 +31,7 @@
 #include "command_line.hpp"
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
+#include "hash_t_selector.h"
 #include <iostream>
 
 /**
@@ -105,6 +106,20 @@ class logger_t {
     x.add_timestamp(name);
   }
 
+  template<typename T>
+  void add_hashdb_configuration() {
+    if (closed) {
+      // logger closed
+      std::cout << "logger.add_hashdb_settings warning: logger closed\n";
+      return;
+    }
+
+    // see file configure.ac for configuration settings
+    x.xmlout("hashdigest_type", digest_name<T>());
+    x.xmlout("byte_alignment", BYTE_ALIGNMENT);
+
+  }
+
   void add_hashdb_settings(const hashdb_settings_t& settings) {
     if (closed) {
       // logger closed
@@ -123,26 +138,6 @@ class logger_t {
     }
 
     changes.report_changes(x);
-  }
-
-  /**
-   * Add hashdb_db_manager state to the log.
-   */
-/*
-  void add_hashdb_db_manager_state(const hashdb_db_manager_t manager) {
-    manager.report_status(x);
-
-    // zz maybe also to stdout
-  }
-*/
-  void add_hashdb_db_manager_state() {
-    if (closed) {
-      // logger closed
-      std::cout << "hashdb_change_logger.add_hashdb_db_manager_state warning: logger closed\n";
-      return;
-    }
-
-    x.xmlout("state", "TBD");
   }
 
   /**

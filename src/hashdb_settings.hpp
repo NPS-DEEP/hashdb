@@ -46,7 +46,6 @@ inline std::string bloom_state_to_string(bool state) {
 // hashdb tuning options
 struct hashdb_settings_t {
 
-  const std::string hashdb_version;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
   // bloom 1 and 2
@@ -60,7 +59,6 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        hashdb_version(PACKAGE_VERSION),
         hash_block_size(4096),
         maximum_hash_duplicates(0),
         bloom1_is_used(true),
@@ -73,7 +71,6 @@ struct hashdb_settings_t {
 
   void report_settings(std::ostream& os) const {
     os << "hashdb settings: ";
-    os << "hashdb version=" << hashdb_version << ", ";
     os << "hash block size=" << hash_block_size << ", ";
     os << "maximum hash duplicates=" << maximum_hash_duplicates << ", ";
 
@@ -87,7 +84,6 @@ struct hashdb_settings_t {
   }
 
   void report_settings(dfxml_writer& x) const {
-    x.xmlout("hashdb_version", hashdb_version);
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
 

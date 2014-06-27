@@ -355,7 +355,6 @@ AC_ARG_VAR(HASH_TYPE, [Set hash type to one of md5, sha1, sha256, sha512, straig
 if test x"${HASH_TYPE}" = "x"; then
   HASH_TYPE="md5"
 fi
-#if test x"${HASH_TYPE}" = "x" -o x"${HASH_TYPE}" = "xmd5"; then
 if test x"${HASH_TYPE}" = "xmd5"; then
   AC_DEFINE(USE_HASH_TYPE_MD5, 1, [define to compile for md5 type])
 elif test x"${HASH_TYPE}" = "xsha1"; then
@@ -369,6 +368,14 @@ elif test x"${HASH_TYPE}" = "xstraight64"; then
 else
   AC_MSG_ERROR([The HASH_TYPE value $HASH_TYPE provided is invalid])
 fi
+
+################################################################
+############## byte alignment required for the data
+AC_ARG_VAR(BYTE_ALIGNMENT, [Set the byte alignment size for data, default 512])
+if test x"${BYTE_ALIGNMENT}" = "x"; then
+  BYTE_ALIGNMENT="512"
+fi
+AC_DEFINE_UNQUOTED(BYTE_ALIGNMENT, [$BYTE_ALIGNMENT], [the byte alignment size for data])
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

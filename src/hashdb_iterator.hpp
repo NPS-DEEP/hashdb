@@ -53,8 +53,8 @@ class hashdb_iterator_t {
                  hash_block_size,
                  source_strings.first,
                  source_strings.second,
-                 source_lookup_encoding::get_hash_block_offset(
-                                multimap_iterator->second) * hash_block_size);
+                 source_lookup_encoding::get_file_offset(
+                                  multimap_iterator->second));
   }
 
   public:

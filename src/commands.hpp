@@ -114,7 +114,7 @@ class commands_t {
 
     logger_t logger(hashdb_dir, "create");
     logger.add("hashdb_dir", hashdb_dir);
-    logger.add("hashdigest_type", digest_name<T>());
+    logger.add_hashdb_configuration<T>();
     logger.add_hashdb_settings(settings);
 
     // create new history trail

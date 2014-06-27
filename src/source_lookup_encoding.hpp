@@ -19,14 +19,13 @@
 
 /**
  * \file
- * Provides algorithms for working with a uint64_t as a source lookup
- * encoding containing source lookup index, hash block offset, and count values.
- * This encoding is a performance optimization.
+ * Provides conversions between the source lookup encoding and the
+ * source lookup index and the file offset.
  *
- * bits are spread across uint64_t in one of the following ways:
- *   source lookup index (32-40) ... hash block offset (32-24).
- *   or
- *   count ... 0xffff
+ * Allocation is: 34 bits toward calculating file offset,
+ *                30 bits toward the source lookup index.
+ *
+ * Actual file offset = byte alignment offset * BYTE_ALIGNMENT
  */
 
 #ifndef SOURCE_LOOKUP_ENCODING_HPP
@@ -34,103 +33,59 @@
 #include <stdint.h>
 #include <cassert>
 #include <string>
-#include <sstream>
 #include <stdexcept>
-#include <iostream>
-#include <limits>
+//#include <iostream>
+//#include <limits>
 
-class source_lookup_encoding {
+namespace source_lookup_encoding {
 
-  private:
-
-  // the hardcoded bit distribution
-  static const uint8_t source_lookup_index_bits = 32;
-
-  // runtime error if source lookup index is too large
-  static inline void check_source_lookup_index(uint64_t index) {
-    uint64_t max = ((uint64_t)1<<source_lookup_index_bits) - 2;
-    if (index > max) {
-      std::ostringstream ss;
-      ss << "Error: The source lookup index is too large for the "
-         << (uint32_t)source_lookup_index_bits
-         << " index bits\ncurrently specified.\n";
-      ss << "Specifically, requested index " << index << " > max " << max << ".\n";
-      throw std::runtime_error(ss.str());
-    }
-  }
-
-  // runtime error if hash block offset is too large
-  static inline void check_hash_block_offset(uint64_t offset) {
-    uint64_t max = ((uint64_t)1<<(64 - source_lookup_index_bits)) - 2;
-    if (offset > max) {
-      std::ostringstream ss;
-      ss << "Error: The hash block offset value is too large for the "
-         << (uint32_t)source_lookup_index_bits
-         << " index bits\ncurrently specified.\n";
-      ss << "Specifically, requested offset " << offset << " > max " << max << ".\n";
-      throw std::runtime_error(ss.str());
-    }
-  }
-
-  // do not instantiate this
-  source_lookup_encoding();
-
-  public:
   /**
-   * Get the source lookup encoding for a source lookup index
-   * and hash block offset value given a bit size specification.
+   * Get the source lookup encoding given a source lookup index and file offset.
    */
   static uint64_t get_source_lookup_encoding(
                    uint64_t source_lookup_index,
-                   uint64_t hash_block_offset) {
+                   uint64_t file_offset) {
 
-    // validate request
-    check_source_lookup_index(source_lookup_index);
-    check_hash_block_offset(hash_block_offset);
-
-    return ((source_lookup_index << (64 - source_lookup_index_bits)) | hash_block_offset);
-  }
-
-  /**
-   * Get the source lookup encoding for a count value.
-   */
-  static uint64_t get_source_lookup_encoding(uint32_t count) {
-    return ((uint64_t)count<<32 | 0xffffffff);
-  }
-
-  /**
-   * Get the count value represented by the source lookup encoding.
-   */
-  static uint32_t get_count(uint64_t source_lookup_encoding) {
-    if ((source_lookup_encoding & 0xffffffff) == 0xffffffff) {
-      // the source lookup encoding indicates count mode, so return count value
-      return source_lookup_encoding>>32;
-    } else {
-      // the source lookup encoding indicates no count mode,
-      // so the count value is 1
-      return 1;
+    // runtime error if source lookup index is too large
+    uint64_t max1 = ((uint64_t)1<<30) - 1;
+    if (source_lookup_index > max1) {
+      throw std::runtime_error("Error: The source lookup index is too large.");
     }
+
+    // runtime error if file offset is too large
+    uint64_t max2 = (((uint64_t)1<<34) - 1) * BYTE_ALIGNMENT;
+    if (file_offset > max2) {
+      throw std::runtime_error("Error: The file offset is too large.");
+    }
+
+    // runtime error if file offset is not byte-aligned
+    if ((file_offset % BYTE_ALIGNMENT) != 0) {
+      throw std::runtime_error("Error: The file offset is not byte aligned.");
+    }
+
+    // return the value
+    return (source_lookup_index << 34) | (file_offset / BYTE_ALIGNMENT);
   }
 
   /**
-   * Get the source lookup index value given a bit size specification.
+   * Get the source lookup index given a source lookup encoding
    */
   static uint64_t get_source_lookup_index(
                    uint64_t source_lookup_encoding) {
 
-    return source_lookup_encoding >> (64 - source_lookup_index_bits);
+    return source_lookup_encoding >> 34;
   }
 
   /**
-   * Get the hash block offset value given a bit size specification.
+   * Get the file offset given a source lookup encoding
    */
-  static uint64_t get_hash_block_offset(
+  static uint64_t get_file_offset(
                    uint64_t source_lookup_encoding) {
 
     // calculate bit mask for the hash block offset bit fields
-    uint64_t bit_mask = ((uint64_t)1<<(64 - source_lookup_index_bits)) - 1;
+    uint64_t bit_mask = ((uint64_t)1<<34) - 1;
 
-    return (source_lookup_encoding & bit_mask);
+    return (source_lookup_encoding & bit_mask) * BYTE_ALIGNMENT;
   }
 };
 
