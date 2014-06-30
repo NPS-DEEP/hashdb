@@ -91,6 +91,12 @@ class hashdb_t__ {
                             filename(p_filename),
                             file_offset(p_file_offset) {
     }
+    import_element_t() :
+                            hash(),
+                            repository_name(),
+                            filename(),
+                            file_offset(0) {
+    }
   };
 
   /**
