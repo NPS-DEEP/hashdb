@@ -93,6 +93,8 @@ const char* hashdb_version() {
 
     // open logger
     logger = new logger_t(hashdb_dir, "hashdb library import");
+    logger->add_hashdb_configuration<hash_t>();
+    logger->add_hashdb_settings(settings);
     logger->add_timestamp("begin import");
   }
 

@@ -104,7 +104,7 @@ void do_test() {
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 5);
   manager.insert(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_inserted_file_offset_not_aligned, 1);
+  BOOST_TEST_EQ(changes.hashes_not_inserted_invalid_byte_alignment, 1);
   BOOST_TEST_EQ(manager.map_size(), 1);
 
   // validate 2-element insert and delete capability
@@ -196,7 +196,7 @@ void do_test() {
   element = hashdb_element_t<T>(k1,
                              4096, "rep1", "file1", 5);
   manager.remove(element, changes);
-  BOOST_TEST_EQ(changes.hashes_not_removed_file_offset_not_aligned, 1);
+  BOOST_TEST_EQ(changes.hashes_not_removed_invalid_byte_alignment, 1);
 
   // remove, no element
   element = hashdb_element_t<T>(k2,

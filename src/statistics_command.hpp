@@ -102,13 +102,11 @@ class statistics_command_t {
       }
     }
 
-    // now show the statistics
-
-    // totals
+    // show totals
     std::cout << "total hashes: " << total_hashes << "\n"
               << "unique hashes: " << total_unique_hashes << "\n";
 
-    // histogram
+    // show histogram
 //    std::cout << "Histogram of count, number of hashes with count:\n";
     // hash histogram as <count, number of hashes with count>
     std::map<uint32_t, uint64_t>::iterator hash_histogram_it2;
