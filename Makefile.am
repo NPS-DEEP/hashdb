@@ -99,9 +99,15 @@ windist: win32 win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
+pull:
+	git pull
+	(cd src/dfxml;git checkout master; git pull)
+	(cd src/btree;git checkout master; git pull)
+	(cd src/endian;git checkout master; git pull)
+
 clean-local:
 	rm -rf $(distdir).tar.gz
 	rm -rf $(distdir).zip
 
-.PHONY: exels execlean win32 win64 windist
+.PHONY: exels execlean win32 win64 windist pull
 
