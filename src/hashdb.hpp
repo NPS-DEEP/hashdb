@@ -106,16 +106,16 @@ class hashdb_t__ {
   typedef std::vector<import_element_t> import_input_t;
 
   /**
-   * The scan input is an array of pairs of uint64_t index values
-   * and hash values to be scanned for.
+   * The scan input is an array of hash values to be scanned for.
    */
   typedef std::vector<T> scan_input_t;
 
   /**
-   * The scan output is an array of pairs of uint32_t index values
-   * and uint32_t count values, where count indicates the number of
-   * source entries that contain this value.  The scan output does not
-   * contain scan responses for hashes that are not found (count=0).
+   * The scan output is an array of pairs of uint32_t index values that
+   * index into the input vector, and uint32_t count values, where count
+   * indicates the number of source entries that contain this hash value.
+   * The scan output does not contain scan responses for hashes
+   * that are not found (count=0).
    */
   typedef std::vector<std::pair<uint32_t, uint32_t> > scan_output_t;
 
