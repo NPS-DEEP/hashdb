@@ -1,5 +1,5 @@
 drawings = \
-	scan_hashid.pdf \
+	scan_hashdb.pdf \
 	source_lookup.pdf
 
 .SUFFIXES: .svg .pdf

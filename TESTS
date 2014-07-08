@@ -34,9 +34,9 @@ hashdb_manager remove -rmy_repo dfxml_in hashdb_out
 Simple example sequence for testing the scan_hashdb bulk_extractor scanner:
 Identify an image file to use, create a hashdb of it, and then scan it:
 
-$ mkdir test_scan_hashid
-$ cp Images/geotag-example.jpg test_scan_hashid/
-$ cd test_scan_hashid/
+$ mkdir test_scan_hashdb
+$ cp Images/geotag-example.jpg test_scan_hashdb/
+$ cd test_scan_hashdb/
 $ md5deep -p 4096 -d geotag-example.jpg > geo_dfxml
 $ hashdb_manager copy -r "myrep" geo_dfxml  geo_hashdb
 $ bulk_extractor -S query_type=use_path -S path=geo_hashdb -o be4 geotag-example.jpg 
@@ -55,7 +55,7 @@ Sequence for testing basic functional integrity.
 These tests were used to validate the port to Windows and Mac.
 
 Tests include import, export, and query by path and socket
-using the hashdb_checker tool and bulk_extractor via scan_hashid.
+using the hashdb_checker tool and bulk_extractor via scan_hashdb.
 
 # create dfxml file from md5deep
 md5deep -p 4096 -d myfile > my_dfxml
@@ -77,13 +77,13 @@ hashdb_manager server my_db
 # query_hash using the hashdb_checker tool using default socket
 hashdb_checker query_hash -q use_socket my_dfxml
 
-# query_hash using the bulk_extractor scan_hashid scanner using database
+# query_hash using the bulk_extractor scan_hashdb scanner using database
 bulk_extractor -S query_hash_type=use_path -S path=my_db -o out1 myfile
 
 # start server for serving lookups from my_db using default socket
 hashdb_manager server my_db
 
-# query_hash using the bulk_extractor scan_hashid scanner using default socket
+# query_hash using the bulk_extractor scan_hashdb scanner using default socket
 bulk_extractor -S query_hash_type=use_socket -o out2 myfile
 
 
@@ -174,7 +174,7 @@ error: elements not added under new repository name.
 Testing: /corp/nps/drives/nps-2009-domexusers/nps-2009-domexusers.E01
 using bulk_extractor:
 
-bulk_extractor -e hashid -S hashdb_mode=import -o out1 my.E01
+bulk_extractor -e hashdb -S hashdb_mode=import -o out1 my.E01
 
 Import generates 2,206,516 new feature lines in identified_blocks.
 

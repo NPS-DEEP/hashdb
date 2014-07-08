@@ -22,7 +22,6 @@
 
 \newcommand{\hdb}{\emph{hashdb}\xspace}
 \newcommand{\bulk}{\emph{bulk\_extractor}\xspace}
-\newcommand{\hashid}{\emph{hashid}\xspace}
 \newcommand{\mdd}{\emph{md5deep}\xspace}
 \newcommand{\bev}{\emph{Bulk Extractor Viewer}\xspace}
 
@@ -41,16 +40,16 @@ This demo uses the following resources:
 \item A \hdb block hash database containing block hashes
 from the previously encountered video file.
 \item The \hdb tool.
-\item \bulk compiled with the \hdb \hashid scanner.
+\item \bulk compiled with the \hdb scanner.
 \end{compactitem}
 
 Here is the workflow:
 
 \begin{figure}[H]
   \center
-  \includegraphics[scale=0.6]{drawings/scan_hashid}
+  \includegraphics[scale=0.6]{drawings/scan_hashdb}
   \caption*{Scan the media image for parts of a video file.}
-  \label{fig:scan_hashid}
+  \label{fig:scan_hashdb}
 \end{figure}
 
 This introductory demo goes straight to the point of finding
@@ -84,7 +83,7 @@ I am providing the custom builds shown here until the next release of \bulk.
   \begin{compactitem}
   \item \textbf{Windows}: Download and install the latest
   bulk\_extractor windowsinstaller.exe file
-  compiled with the \hdb \hashid scanner:
+  compiled with the \hdb scanner:
   \url{http://digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}.
 If you had a Command window open, please close and reopen it
 so that Windows can find \bulk.
