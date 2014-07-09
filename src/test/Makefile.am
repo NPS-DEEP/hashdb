@@ -37,7 +37,6 @@ bin_PROGRAMS = \
 	commands_test
 
 # to validate backward compatibility to c++98, add option -std=c++98
-#zzzzzzzzzzzzzzzzzzzzzzzzzzzzz change -isystem to -I
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/btree/include \
 	-isystem${top_srcdir}/src/endian/include \

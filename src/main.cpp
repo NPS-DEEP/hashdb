@@ -41,8 +41,8 @@
 #include "hashdb_settings.hpp"
 #include "usage.hpp"
 #include "bloom_filter_calculator.hpp"
-#include "command_line.hpp" // zz make this better
-#include "commands.hpp" // zz make this better
+#include "command_line.hpp"
+#include "commands.hpp"
 
 // Standard includes
 #include <cstdlib>

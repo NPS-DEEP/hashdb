@@ -186,20 +186,6 @@ AC_SYS_POSIX_TERMIOS
 ################################################################
 ## support required by libxml2
 
-# zzzzzzzzzzzzz
-# note: a recommended approach is to use PKG_CHECK_MODULES:
-#          PKG_CHECK_MODULES(XML, libxml-2.0)
-# but this requires compiling with per-target flags,
-# requiring 'AM_PROG_CC_C_O' and the addition of
-# XML_CFLAGS to hashdb_CPPFLAGS and XML_LIBS to hashdb_LDFLAGS,
-# which may be making mingw not work by disrupting names
-# and blocking the ability to find libraries.
-#
-# So instead, check for headers and libraries in the hardcoded path
-# expected for a standard Fedora installation
-# or hardwaire LDFLAGS for your path:
-# zzzzzzzzzzzzz
-
 # the win32 configuration of libxml2 requires zlib and iconv libraries
 if test  x"$mingw" = x"yes";  then
   AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
@@ -222,10 +208,6 @@ AX_BOOST_BASE([1.53],
   AX_BOOST_THREAD
   LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $BOOST_THREAD_LIB $LIBS"],
   [AC_MSG_ERROR([Boost 1.53 or newer is required to build hashdb])])
-
-################################################################
-## libboost_thread needs clock_gettime from librt
-##zzAC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([Could not find rt library])])
 
 ################################################################
 ## OpenSSL Support is required for hash_t and bloom
