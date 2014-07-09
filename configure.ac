@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.0.0-beta-1, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 1.0.0-beta-2, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
@@ -23,8 +23,6 @@ AC_CONFIG_FILES([Makefile
                  man/Makefile
                  doc/Makefile])
 
-#zz                 src/libhashdb/Makefile
-
 # define CC and CXX as desired for alternate compilers
 #CC=clang
 #CXX=clang++
@@ -36,7 +34,8 @@ AC_PROG_CC
 AM_PROG_CC_C_O                  dnl allow per-produce flags
 AC_PROG_CXX
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+#AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
@@ -116,13 +115,17 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 # PTHREAD support
 # With special nods to compiling under mingw
 
-if test  x"$mingw" = x"yes";  then
+case $host in 
+ *mingw*)
+  AC_MSG_NOTICE([mingw pthreads support])
   CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads -pthread "
   LDFLAGS="$LDFLAGS -mthreads -pthread "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
-else
+ ;;
+ *)
+  AC_MSG_NOTICE([normal pthreads support])
   m4_include([m4/ax_pthread.m4])
   AC_MSG_CHECKING([Running pthread test from http://www.gnu.org/software/autoconf-archive/ax_pthread.html..])
   AX_PTHREAD([
@@ -132,7 +135,7 @@ else
               CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
               CC="$PTHREAD_CC"],
             [AC_MSG_ERROR(bulk_extractor requires pthreads)])
-fi
+esac
 
 AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
 AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
@@ -208,7 +211,7 @@ PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4, [], [AC_MSG_ERROR([libxml2 failed])])
 
 # find the xml2 library
 AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_ERROR([Could not find libxml2 library required to build the hashid scanner])])
+    [AC_MSG_ERROR([Could not find libxml2 library required to build the hashdb scanner])])
 
 ################################################################
 ## support required by boost
@@ -222,7 +225,7 @@ AX_BOOST_BASE([1.53],
 
 ################################################################
 ## libboost_thread needs clock_gettime from librt
-AC_CHECK_LIB([rt], [clock_gettime])
+##zzAC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([Could not find rt library])])
 
 ################################################################
 ## OpenSSL Support is required for hash_t and bloom
