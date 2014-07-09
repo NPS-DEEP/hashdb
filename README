@@ -12,98 +12,11 @@ Hash databases may be imported and exported in DFXML format.
 The hashdb toolset includes the hashdb tool, hashdb library file
 libhashdb.a, and header file hashdb.hpp.
 
+hashdb builds and installs on Linux and OS X systems using
+configure; make; make install.  hashdb also cross-compiles to Windows
+from Fedora 20+ using mingw.
 
-Downloads and Websites
-----------------------
-The hashdb toolset is available for Windows, Linux, and Mac users.
-Please see the hashdb Wiki home page at https://github.com/simsong/hashdb/wiki
-
-
-Downloading the Development Tree
---------------------------------
-Download the sources with git:
-
-  $ git clone --recursive https://github.com/simsong/hashdb.git
-
-
-Installing Dependencies
------------------------
-A development envirnment and libraries are required.  The following steps
-install requisite dependencies on Fedora 19.
-
-   $ sudo yum update
-   $ sudo yum groupinstall development-tools
-   $ sudo yum install gcc-c++
-   $ sudo yum install libxml2-devel openssl-devel tre-devel
-   $ sudo yum install boost-devel
-
-Not all development tools are required.  The following should be sufficient
-in place of "sudo yum groupinstall development-tools":
-
-   $ sudo yum install git gcc gcc-c++ autoconf automake libtool
-
-
-Compiling hashdb
-----------------
-hashdb builds with the GNU auto tools. The maintainer has
-prevously run automake and autoconf to produce the script
-"configure". This script *should* be able to compile hashdb
-for your platform. 
-
-We recommend compiling hashdb with -O3 and that is the
-default. You can disable all optimization flags by specifying the
-configure option --with-noopt.
-
-To install on a Linux/MacOS system, use:
-   $ ./configure
-   $ make
-   $ sudo make install
-
-If you do not wish to run sudo, please install hashdb on linux/MacOS
-under $HOME/local as follows:
-   $ ./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/
-   $ make
-   $ install
-
-The following files are installed:
-   bin/hashdb
-   include/hashdb.hpp
-   lib/libhashdb.la
-   lib/libhashdb.a
-   share/man/man1/hashdb.1
-
-
-Linking hashdb into another application such as bulk_extractor
---------------------------------------------------------------
-If you wish to install at default paths, which requires sudo, type this:
-   $ ./configure
-   $ make
-   $ sudo make install
-
-If you wish to install at $HOME/local, which does not require sudo, type this:
-   $ ./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/
-   $ make
-   $ install
-
-================================================================
-
-To cross-compile from Fedora 19 to Windows, do the following:
-   1) Set up the mingw cross compiler environment:
-      $ cd src_win; ./CONFIGURE_F19.sh; cd ..
-   2) type "make win32" or "make win64", or to create a windows
-      installer, type "cd src_win; make".
-
-
-INSTALLING DEPENDENCIES ON UBUNTU:
-
-On Ubuntu 12.04, install packages using apt-get.
-
-INSTALLING DEPENDENCIES ON MAC:
-
-We recommend installing Mac dependencies using the MacPorts system. Once that is installed, try:
-
-  $ sudo port install autoconf automake libxml2-devel
-
-Note that port installs to /opt/local/bin, so file /etc/paths may need to be updated
-to include /opt/local/bin.
+Web links:
+Installing hashdb: https://github.com/simsong/hashdb/wiki/Installing-hashdb
+hashdb home page: https://github.com/simsong/hashdb/wiki
 

@@ -79,12 +79,14 @@ Now view the list of forensic paths common to both media images:
 %steps
 Here are the steps to perform this demo:
 \begin{compactenum}
-\item Download and install \hdb  and \bulk compiled with the \hdb scanner
-from
+\item Download and install \hdb from
 \url{http://digitalcorpora.org/downloads/hashdb}
-as described in the Scanner demo
-for finding part of a video file in a media image,
-\url{http://digitalcorpora.org/downloads/hashdb/demo/scanner\_demo.pdf}
+as described at
+\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
+\item Download and install \bulk compiled with \hdb from
+\url{http://digitalcorpora.org/downloads/hashdb}
+as described at
+\url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
 \item Identify two media images to compare.
 I'll call them \texttt{media\_image\_1} and \texttt{media\_image\_2}.
 Note that images are available at
@@ -96,12 +98,14 @@ and
 
 \item Import media image 1:
 \begin{verbatim}
-$ bulk_extractor -o outdir1 -S hashdb_mode=import media_image_1
+$ bulk_extractor -e hashdb -o outdir1 \
+  -S hashdb_mode=import media_image_1
 \end{verbatim}
 
 \item Import media image 2:
 \begin{verbatim}
-$ bulk_extractor -o outdir2 -S hashdb_mode=import media_image_2
+$ bulk_extractor -e hashdb -o outdir2 \
+  -S hashdb_mode=import media_image_2
 \end{verbatim}
 
 \item Create the intersection of media image 1 and 2
@@ -125,7 +129,7 @@ so that the remaining hashes are pertinent data common between the
 media images:
 \begin{verbatim}
 $ hashdb create intersection2.hdb
-$ hashdb subtract intersection.hdb false_positives.hdb \\
+$ hashdb subtract intersection.hdb false_positives.hdb \
          intersection2.hdb
 \end{verbatim}
 
@@ -150,23 +154,7 @@ import hashes from some media images or from the NSRL.
 
 Note that this demo uses the default hash block size of 4096 bytes
 and the default sector size of 512 bytes.
-This is not required.
-For example to perform a similarity analysis
-with a block fragment resolution of 64 bytes along every byte boundary,
-use a block size of 64 bytes and a sector size of 1 byte.
-The syntax for importing media images 1 and 2 would be:
-\begin{verbatim}
-$ bulk_extractor -o outdir1 \
-                 -S hashdb_mode=import \
-                 -S hashdb_block_size=64 \
-                 -S hashdb_sector_size=1 \
-                 media_image_1
-$ bulk_extractor -o outdir2 \
-                 -S hashdb_mode=import \
-                 -S hashdb_block_size=64 \
-                 -S hashdb_sector_size=1 \
-                 media_image_2
-\end{verbatim}
+Please see \bulk usage for options.
 
 \end{document}
 

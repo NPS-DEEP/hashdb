@@ -52,64 +52,36 @@ Here is the workflow:
   \label{fig:scan_hashdb}
 \end{figure}
 
-This introductory demo goes straight to the point of finding
-previously encountered data by using a pre-built block hash database.
-In the demo for preparing a block hash database, at
-\url{http://digitalcorpora.org/downloads/hashdb/demo/create\_hdb\_demo.pdf},
-we show the steps for creating the block hash database used in this demo.
-
+Setup:
 \begin{compactenum}
 \item Download and install \hdb from
 \url{http://digitalcorpora.org/downloads/hashdb}
 as described at
 \url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
-  \begin{compactitem}
-  \item \textbf{Windows}: Download and install the latest hashdb windowsinstaller.exe file:
-  \url{http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta-1-windowsinstaller.exe}.
-If you had a Command window open, please close and reopen it
-so that Windows can find the \hdb tool.
-
-  \item \textbf{Linux, Mac}: Download and build the latest hashdb distribution:
-  \url{http://digitalcorpora.org/downloads/hashdb/hashdb-1.0.0-beta-1.tar.gz}.
-  \end{compactitem}
 \item Download and install \bulk compiled with \hdb from
 \url{http://digitalcorpora.org/downloads/hashdb}
 as described at
 \url{https://github.com/simsong/hashdb/wiki/Installing-hashdb}.
-
-Currently, \bulk compiled with \hdb
-is not available from the \bulk distribution.
-I am providing the custom builds shown here until the next release of \bulk.
-  \begin{compactitem}
-  \item \textbf{Windows}: Download and install the latest
-  bulk\_extractor windowsinstaller.exe file
-  compiled with the \hdb scanner:
-  \url{http://digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.1-windowsinstaller.exe}.
-If you had a Command window open, please close and reopen it
-so that Windows can find \bulk.
-  \item \textbf{Linux, Mac}: Download and build the latest \bulk:
-  \url{http://digitalcorpora.org/downloads/hashdb/bulk\_extractor-1.4.5devel.tar.gz}.
-  \end{compactitem}
-
-\item Download the data files required for the demo into a working directory:
-  \begin{compactitem}
-  \item The database containing hash blocks of the demo video file:
-  \url{http://digitalcorpora.org/downloads/hashdb/demo/mock\_video.hdb.zip}
-  \item Media containing a fragment of the demo video file,
-  specifically, a contiguous 64KiB section
-  near the end of about 10 MiB of video data:
-  \url{http://digitalcorpora.org/downloads/hashdb/demo/mock\_video\_redacted\_image}
-  \end{compactitem}
-
-\item Extract the demo database
-by unziping the \texttt{mock\_video.hdb.zip} file
-into your working directory.
-Please check that it doesn't unzip into a nested subfolder.
-\item Scan for matching hash values: Using a command window, go to your working directory and then run \bulk,
+\item This demo requires hash dtabase \texttt{mock\_video.hdb}
+created by demo ``Demo: Creatng a Block Hash Database using \hdb and \mdd''
+available at
+\url{http://digitalcorpora.org/downloads/hashdb/demo/create\_hdb\_demo.pdf}.
+Please follow that demo to create your \texttt{mock\_video.hdb} hash database
+and copy it into your current working directory.
+\item Download the media file to scan from here:
+\url{http://digitalcorpora.org/downloads/hashdb/demo/mock\_video\_redacted\_image}.
+This media file contains a fragment of the demo video file,
+specifically, a contiguous 64KiB section
+near the end of about 10 MiB of video data:
+\end{compactenum}
+Steps:
+\begin{compactenum}
+\item Now scan for matching hash values:
+Using a command window, go to your working directory and then run \bulk,
 specifying the paths to the hash database and the media:
 \begin{verbatim}
-$ bulk_extractor -o outdir -S hashdb_mode=scan \
-  -S hashdb_path_or_socket=mock_video.hdb \
+$ bulk_extractor -e hashdb -o outdir -S hashdb_mode=scan \
+  -S hashdb_scan_path_or_socket=mock_video.hdb \
   mock_video_redacted_image
 \end{verbatim}
 \item View the feature file using an editor or use the \bev tool.
