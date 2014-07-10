@@ -22,6 +22,7 @@
 bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 
+hashdb_LDFLAGS = -static
 libhashdb_la_LDFLAGS = -static -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
