@@ -209,6 +209,9 @@ AX_BOOST_BASE([1.53],
   LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $BOOST_THREAD_LIB $LIBS"],
   [AC_MSG_ERROR([Boost 1.53 or newer is required to build hashdb])])
 
+# boost_thread may require librt, so to help out, try to add librt
+AC_CHECK_LIB([rt],[clock_gettime],,[AC_MSG_WARN([librt is not available])])
+
 ################################################################
 ## OpenSSL Support is required for hash_t and bloom
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
