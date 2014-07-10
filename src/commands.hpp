@@ -637,7 +637,7 @@ class commands_t {
       }
 
       // now move forward by count
-      for (int i=0; i<count; ++i) {
+      for (uint32_t i=0; i<count; ++i) {
         ++it;
       }
     }
