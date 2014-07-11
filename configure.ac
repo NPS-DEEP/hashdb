@@ -339,7 +339,7 @@ fi
 
 ################################################################
 ############## A hash type is required, default MD5
-AC_ARG_VAR(HASH_TYPE, [Set hash type to one of md5, sha1, sha256, sha512, straight64, default md5])
+AC_ARG_VAR(HASH_TYPE, [Set hash type to one of md5, sha1, sha256, sha512, straight16, straight64, default md5])
 if test x"${HASH_TYPE}" = "x"; then
   HASH_TYPE="md5"
 fi
@@ -351,6 +351,8 @@ elif test x"${HASH_TYPE}" = "xsha256"; then
   AC_DEFINE(USE_HASH_TYPE_SHA256, 1, [define to compile for sha256 type])
 elif test x"${HASH_TYPE}" = "xsha512"; then
   AC_DEFINE(USE_HASH_TYPE_SHA512, 1, [define to compile for sha512 type])
+elif test x"${HASH_TYPE}" = "xstraight16"; then
+  AC_DEFINE(USE_HASH_TYPE_STRAIGHT16, 1, [define to compile for straight16 type])
 elif test x"${HASH_TYPE}" = "xstraight64"; then
   AC_DEFINE(USE_HASH_TYPE_STRAIGHT64, 1, [define to compile for straight64 type])
 else

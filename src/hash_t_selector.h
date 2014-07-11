@@ -36,6 +36,15 @@ typedef sha256_t hash_t;
 #elif USE_HASH_TYPE_SHA512
 typedef sha512_t hash_t;
 
+#elif USE_HASH_TYPE_STRAIGHT16
+typedef hash__<EVP_md_null,16> hash_t;
+template<typename T>
+inline std::string digest_name();
+template<>
+inline std::string digest_name<hash_t>() {
+    return "STRAIGHT16";
+}
+
 #elif USE_HASH_TYPE_STRAIGHT64
 typedef hash__<EVP_md_null,64> hash_t;
 template<typename T>
