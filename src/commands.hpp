@@ -47,6 +47,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <time.h> // help random number generator
 
 /**
  * Provides the commands that hashdb_manager can execute.
@@ -661,6 +662,90 @@ class commands_t {
                 << it->file_offset << "\n";
       ++it;
     }
+  }
+
+  // functional analysis and testing: add_random
+  static void add_random(const std::string& repository_name,
+                     const std::string& hashdb_dir,
+                     const std::string& count_string) {
+
+    // initialize random seed
+    srand (time(NULL));
+
+    // convert count string to number
+    uint64_t count;
+    try {
+      count = boost::lexical_cast<uint64_t>(count_string);
+    } catch(...) {
+      std::cerr << "Invalid count: '" << count_string << "'\n";
+      exit(1);
+    }
+
+    // start logger
+    logger_t logger(hashdb_dir, "add_random");
+    logger.add("hashdb_dir", hashdb_dir);
+    logger.add("repository_name", repository_name);
+    logger.add("count", count);
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    hashdb_changes_t changes;
+
+    logger.add_timestamp("begin add_random");
+
+    // random key buffer
+    union key_buffer_t {
+      uint8_t key[sizeof(T)];
+      uint32_t i[2];
+      key_buffer_t() {
+        i[0]=rand();
+        i[1]=rand();
+        for (int n=8; n<sizeof(T); n++) {
+          key[n]=0;
+        }
+      }
+    };
+    key_buffer_t buffer;
+
+    // hash block size
+    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
+    size_t hash_block_size = settings.hash_block_size;
+
+    // insert count random hshes into the database
+    for (uint64_t i=0; i<count; i++) {
+
+      // occasionally report progress to stdout
+      if (i%1000000 == 0 && i > 0) {
+        std::stringstream ss2;
+        ss2 << "Processing " << i << " of " << count;
+        logger.add_timestamp(ss2.str());
+        std::cout << ss2 << "...\n";
+      }
+
+      // generate filename
+      std::stringstream ss;
+      ss << "file" << (i>>26);
+
+      // generate file offset
+      uint64_t file_offset = (i%(1<<26)) * hash_block_size;
+
+      // add element
+      hashdb_manager.insert(hashdb_element_t<T>(T(key_buffer_t().key),
+                                                hash_block_size,
+                                                repository_name,
+                                                ss.str(), // filename
+                                                file_offset),
+                               changes);
+    }
+
+    logger.add_timestamp("end add_random");
+    logger.add_hashdb_changes(changes);
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
   }
 };
 

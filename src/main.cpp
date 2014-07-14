@@ -374,13 +374,6 @@ int main(int argc,char **argv) {
     exit(1);
   }
 
-  // generate usable repository name if one is not provided
-  // this works globally because all commands that use repository_name
-  // uniformly require hashdb_arg1
-  if (repository_name_string == "") {
-    repository_name_string = "repository_" + hashdb_arg1;
-  }
-
   // run the command
   run_command<hash_t>();
 
@@ -409,6 +402,10 @@ void run_command() {
     require_parameter_count(1);
     commands_t<T>::create(hashdb_settings, hashdb_arg1);
   } else if (command == "import") {
+    // compose a repository name if one is not provided
+    if (repository_name_string == "") {
+      repository_name_string = "repository_" + hashdb_arg1;
+    }
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_parameter_count(2);
@@ -508,6 +505,15 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(1);
     commands_t<T>::hash_table(hashdb_arg1);
+  } else if (command == "add_random") {
+    // compose a repository name if one is not provided
+    if (repository_name_string == "") {
+      repository_name_string = "repository_add_random";
+    }
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_parameter_count(2);
+    commands_t<T>::add_random(repository_name_string, hashdb_arg1, hashdb_arg2);
   } else {
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }

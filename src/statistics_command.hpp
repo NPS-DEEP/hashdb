@@ -68,7 +68,15 @@ class statistics_command_t {
                 new std::map<uint32_t, uint64_t>();
     
     // iterate over hashdb and set statistics variables
+    uint64_t j=0;
+    uint64_t size = hashdb_manager.map_size();
     while (it != hashdb_manager.end()) {
+
+      // occasionally report progress to stdout
+      if ((++j)%1000000 == 0) {
+        std::cout << "Processing " << j << " of " << size << "...\n";
+      }
+
       // get count for this hash
       uint32_t count = hashdb_manager.find_count(it->key);
 

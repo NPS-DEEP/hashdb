@@ -39,12 +39,12 @@
 
 \subsubsection*{New Database}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{create [<settings>]+ <hashdb>} & Create a new hash database \\
+\texttt{create [-p<hash block size>] [-m<maximum duplicates>] <hashdb>} & Create a new hash database \\
 \end{tabular}
 
 \subsubsection*{Import/Export}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{import <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
+\texttt{import [-r repository name>] <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
 \texttt{export <hashdb.hdb> <dfxml.xml>} & Export hash database to DFXML file \\
 \end{tabular}
 
@@ -59,9 +59,10 @@
 \subsubsection*{Specialized Commands}
 \begin{tabular}{p{8 cm} p{9 cm} }
 \texttt{deduplicate <A.hdb> <B.hdb>} & Copy A to B except for hashes with duplicates \\
-\texttt{rebuild\_bloom [<settings>]+} & Rebuild Bloom filter \\
+\texttt{rebuild\_bloom [<bloom settings>]+} & Rebuild Bloom filter \\
 \texttt{server <hashdb.hdb> <port number>} & Start scan service at port \\
 \texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & Expands to include source information for each source \\
+\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Adds random hashes, useful for performance analysis
 \end{tabular}
 
 \subsubsection*{Scan Services}
@@ -77,12 +78,6 @@
 \texttt{statistics <hashdb.hdb>} & Prints hash distribution \\
 \texttt{duplicates <hashdb.hdb> <number>} & Prints hashes sourced the given number of times \\
 \texttt{hash\_table <hashdb.hdb>} & Prints all hashes along with source information\\
-\end{tabular}
-
-\subsubsection*{Settings}
-\begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{-p <hash block size>} & Block size, in bytes \\
-\texttt{-m <maximum>} & Maximum number of hash duplicates allowed, or 0 for unlimited\\
 \end{tabular}
 
 \vspace{10mm}
