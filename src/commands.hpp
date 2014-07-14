@@ -718,7 +718,7 @@ class commands_t {
         std::stringstream ss2;
         ss2 << "Processing " << i << " of " << count;
         logger.add_timestamp(ss2.str());
-        std::cout << ss2 << "...\n";
+        std::cout << ss2.str() << "...\n";
       }
 
       // generate filename
