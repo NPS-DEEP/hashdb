@@ -1,3 +1,5 @@
+HASHDB
+======
 Welcome to hashdb!
 
 The hashdb tools are used for finding blacklist data in raw media
@@ -16,7 +18,26 @@ hashdb builds and installs on Linux and OS X systems using
 configure; make; make install.  hashdb also cross-compiles to Windows
 from Fedora 20+ using mingw.
 
-Web links:
+Web links
+----------
 Installing hashdb: https://github.com/simsong/hashdb/wiki/Installing-hashdb
 hashdb home page: https://github.com/simsong/hashdb/wiki
+
+Bugs
+----
+Plese enter bugs on the [github issue tracker](https://github.com/simsong/hashdb/issues?state=open)
+
+Maintainer
+----------
+Bruce Allen <bdallen@nps.edu>
+
+License
+-------
+Please see [Licence](https://github.com/simsong/hashdb/wiki/License)
+
+Program Documentation
+---------------------
+To generate the program documentation with Doxygen, please type:
+ cd doc/doxygen
+ make
 
