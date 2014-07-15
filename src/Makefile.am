@@ -39,6 +39,7 @@ HASHDB_INCS = \
 	dfxml_hashdigest_reader_manager.hpp \
 	dfxml_hashdigest_writer.hpp \
 	main.cpp \
+	random_key.hpp \
 	source_lookup_encoding.hpp \
 	source_lookup_index_iterator.hpp \
 	source_lookup_index_manager.hpp \

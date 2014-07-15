@@ -38,6 +38,7 @@
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
 #include "statistics_command.hpp"
+#include "random_key.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -47,7 +48,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <time.h> // help random number generator
 
 /**
  * Provides the commands that hashdb_manager can execute.
@@ -692,20 +692,6 @@ class commands_t {
 
     logger.add_timestamp("begin add_random");
 
-    // random key buffer
-    union key_buffer_t {
-      uint8_t key[sizeof(T)];
-      uint32_t i[2];
-      key_buffer_t() {
-        i[0]=rand();
-        i[1]=rand();
-        for (int n=8; n<sizeof(T); n++) {
-          key[n]=0;
-        }
-      }
-    };
-    key_buffer_t buffer;
-
     // hash block size
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     size_t hash_block_size = settings.hash_block_size;
@@ -729,7 +715,7 @@ class commands_t {
       uint64_t file_offset = (i%(1<<26)) * hash_block_size;
 
       // add element
-      hashdb_manager.insert(hashdb_element_t<T>(T(key_buffer_t().key),
+      hashdb_manager.insert(hashdb_element_t<T>(random_key<T>(),
                                                 hash_block_size,
                                                 repository_name,
                                                 ss.str(), // filename
