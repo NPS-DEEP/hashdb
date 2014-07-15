@@ -20,8 +20,8 @@ from Fedora 20+ using mingw.
 
 Web links
 ----------
-Installing hashdb: https://github.com/simsong/hashdb/wiki/Installing-hashdb
-hashdb home page: https://github.com/simsong/hashdb/wiki
+* Installing hashdb: https://github.com/simsong/hashdb/wiki/Installing-hashdb
+* hashdb home page: https://github.com/simsong/hashdb/wiki
 
 Bugs
 ----
