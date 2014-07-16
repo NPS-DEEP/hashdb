@@ -38,6 +38,7 @@ Please see [Licence](https://github.com/simsong/hashdb/wiki/License)
 Program Documentation
 ---------------------
 To generate the program documentation with Doxygen, please type:
+
     cd doc/doxygen
     make
 
