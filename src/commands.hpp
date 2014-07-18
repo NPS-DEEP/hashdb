@@ -381,7 +381,7 @@ class commands_t {
     hashdb_changes_t changes;
     logger.add_timestamp("begin deduplicate");
 
-    progress_tracker_t progress_tracker(hashdb_manager1, &logger);
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
     while (it1 != hashdb_manager1.end()) {
 
       // for deduplicate, only keep hashes whose count=1
@@ -696,7 +696,7 @@ class commands_t {
       return;
     }
 
-    progress_tracker_t progress_tracker(count, &logger);
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
     while (it != hashdb_manager.end()) {
       std::cout << it->key.hexdigest() << "\t"
                 << it->repository_name << "\t"
