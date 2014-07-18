@@ -99,6 +99,11 @@ class dfxml_hashdigest_reader_manager_t {
   typename hashdb_elements_t::const_iterator end() const {
     return elements->end();
   }
+
+  // element size
+  size_t size() const {
+    return elements->size();
+  }
 };
 
 #endif

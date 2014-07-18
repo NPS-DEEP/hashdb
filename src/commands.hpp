@@ -66,12 +66,15 @@ class commands_t {
   static void intersect_optimized(const hashdb_manager_t<T>& smaller_hashdb,
                                   const hashdb_manager_t<T>& larger_hashdb,
                                   hashdb_manager_t<T>& hashdb3,
-                                  hashdb_changes_t& changes) {
+                                  hashdb_changes_t& changes,
+                                  logger_t* logger) {
 
     // get iterator for smaller db
     hashdb_iterator_t<T> smaller_it = smaller_hashdb.begin();
 
     // iterate over smaller db
+    progress_tracker_t progress_tracker(smaller_hashdb.map_size() +
+                                        larger_hashdb.map_size(), logger);
     while (smaller_it != smaller_hashdb.end()) {
 
       // see if hashdigest is in larger db
@@ -86,6 +89,7 @@ class commands_t {
         for (uint32_t i = 0; i<smaller_count; ++i) {
           hashdb_element_t<T> hashdb_element = *smaller_it;
           hashdb3.insert(hashdb_element, changes);
+          progress_tracker.track();
           ++smaller_it;
         }
 
@@ -94,14 +98,17 @@ class commands_t {
                                       larger_hashdb.find(matching_key);
         while (it_pair.first != it_pair.second) {
           hashdb3.insert(*it_pair.first, changes);
+          progress_tracker.track();
           ++it_pair.first;
         }
 
       } else {
         // no match, so just move on
+        progress_tracker.track();
         ++smaller_it;
       }
     }
+    progress_tracker.done();
   }
 
   public:
@@ -142,11 +149,18 @@ class commands_t {
 
     logger.add_timestamp("begin import");
 
+    // start progress tracker
+    progress_tracker_t progress_tracker(reader_manager.size(), &logger);
+
     // insert each entry from *it into the hashdb
     while (it != reader_manager.end()) {
+      // update progress tracker
+      progress_tracker.track();
+
       hashdb_manager.insert(*it, changes);
       ++it;
     }
+    progress_tracker.done();
     logger.add_timestamp("end import");
     logger.add_hashdb_changes(changes);
 
@@ -164,10 +178,14 @@ class commands_t {
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
     dfxml_hashdigest_writer_t<T> writer(dfxml_file);
     hashdb_iterator_t<T> it = hashdb_manager.begin();
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
+
     while (it != hashdb_manager.end()) {
+      progress_tracker.track();
       writer.add_hashdb_element(*it);
       ++it;
     }
+    progress_tracker.done();
   }
 
   // add A to B
@@ -179,14 +197,17 @@ class commands_t {
     logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
 
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin add");
     while (it1 != hashdb_manager1.end()) {
+      progress_tracker.track();
       hashdb_manager2.insert(*it1, changes);
       ++it1;
     }
+    progress_tracker.done();
     logger.add_timestamp("end add");
 
     logger.add_hashdb_changes(changes);
@@ -222,6 +243,8 @@ class commands_t {
     logger.add_timestamp("begin add_multiple");
 
     // while elements are in both, insert ordered by key, prefering it1 first
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size() +
+                                        hashdb_manager2.map_size(), &logger);
     while ((it1 != it1_end) && (it2 != it2_end)) {
       if (it1->key.hexdigest() <= it2->key.hexdigest()) {
         hashdb_manager3.insert(*it1, changes);
@@ -230,17 +253,21 @@ class commands_t {
         hashdb_manager3.insert(*it2, changes);
         ++it2;
       }
+      progress_tracker.track();
     }
 
     // hashdb1 or hashdb2 has become depleted so insert remaining elements
     while (it1 != it1_end) {
       hashdb_manager3.insert(*it1, changes);
       ++it1;
+      progress_tracker.track();
     }
     while (it2 != it2_end) {
       hashdb_manager3.insert(*it2, changes);
       ++it2;
+      progress_tracker.track();
     }
+    progress_tracker.done();
 
     logger.add_timestamp("end add_multiple");
     logger.add_hashdb_changes(changes);
@@ -273,11 +300,11 @@ class commands_t {
 
     logger.add_timestamp("begin intersect");
 
-    // optimise processing based on smaller db
+    // optimize processing based on smaller db
     if (manager1.map_size() <= manager2.map_size()) {
-      intersect_optimized(manager1, manager2, manager3, changes);
+      intersect_optimized(manager1, manager2, manager3, changes, &logger);
     } else {
-      intersect_optimized(manager2, manager1, manager3, changes);
+      intersect_optimized(manager2, manager1, manager3, changes, &logger);
     }
 
     logger.add_timestamp("end intersect");
@@ -310,6 +337,7 @@ class commands_t {
 
     logger.add_timestamp("begin subtract");
 
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
     while (it1 != hashdb_manager1.end()) {
       
       // subtract or copy the hash
@@ -320,7 +348,9 @@ class commands_t {
         hashdb_manager3.insert(*it1, changes);
       }
       ++it1;
+      progress_tracker.track();
     }
+    progress_tracker.done();
 
     logger.add_timestamp("end subtract");
 
@@ -350,6 +380,8 @@ class commands_t {
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
     logger.add_timestamp("begin deduplicate");
+
+    progress_tracker_t progress_tracker(hashdb_manager1, &logger);
     while (it1 != hashdb_manager1.end()) {
 
       // for deduplicate, only keep hashes whose count=1
@@ -359,7 +391,9 @@ class commands_t {
       }
 
       ++it1;
+      progress_tracker.track();
     }
+    progress_tracker.done();
 
     logger.add_timestamp("end deduplicate");
 
@@ -395,11 +429,14 @@ class commands_t {
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
     hashdb_iterator_t<T> it = hashdb_manager.begin();
+    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
     while (it != hashdb_manager.end()) {
       // add the hash to the bloom filter
       bloom_rebuild_manager.add_hash_value(it->key);
       ++it;
+      progress_tracker.track();
     }
+    progress_tracker.done();
     logger.add_timestamp("end rebuild_bloom");
 
     // provide summary
@@ -630,6 +667,7 @@ class commands_t {
     }
 
     size_t line_number=0;
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
     while (it != hashdb_manager.end()) {
       uint32_t count = hashdb_manager.find_count(it->key);
 
@@ -641,8 +679,10 @@ class commands_t {
       // now move forward by count
       for (uint32_t i=0; i<count; ++i) {
         ++it;
+        progress_tracker.track();
       }
     }
+    progress_tracker.done();
   }
 
   // hash_table
@@ -656,13 +696,16 @@ class commands_t {
       return;
     }
 
+    progress_tracker_t progress_tracker(count, &logger);
     while (it != hashdb_manager.end()) {
       std::cout << it->key.hexdigest() << "\t"
                 << it->repository_name << "\t"
                 << it->filename << "\t"
                 << it->file_offset << "\n";
       ++it;
+      progress_tracker.track();
     }
+    progress_tracker.done();
   }
 
   // functional analysis and testing: add_random
@@ -722,6 +765,7 @@ class commands_t {
                                changes);
     }
 
+    progress_tracker.done();
     logger.add_timestamp("end add_random");
     logger.add_hashdb_changes(changes);
 

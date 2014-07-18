@@ -110,6 +110,9 @@ class statistics_command_t {
       }
     }
 
+    // show final for progress tracker
+    progress_tracker.done();
+
     // show totals
     std::cout << "total hashes: " << total_hashes << "\n"
               << "unique hashes: " << total_unique_hashes << "\n";

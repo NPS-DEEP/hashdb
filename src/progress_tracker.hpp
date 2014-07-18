@@ -19,7 +19,8 @@
 
 /**
  * \file
- * Track progress and show that long iterative actions are not hung.
+ * Track progress to show that long iterative actions are not hung.
+ * Call track before operation, call done when done.
  * Writes progress to cout and optionally to logger_t.
  * Use total=0 if total is not known.
  */
@@ -40,6 +41,7 @@ class progress_tracker_t {
   uint64_t index;
   logger_t* logger;
   bool use_logger;
+  bool is_done;
 
   // do not allow copy or assignment
   progress_tracker_t(const progress_tracker_t&);
@@ -47,10 +49,12 @@ class progress_tracker_t {
 
   public:
   progress_tracker_t(uint64_t p_total) :
-               total(p_total), index(0), logger(0), use_logger(false) {
+                         total(p_total), index(0), logger(0),
+                         use_logger(false), is_done(false) {
   }
   progress_tracker_t(uint64_t p_total, logger_t* p_logger) :
-               total(p_total), index(0), logger(p_logger), use_logger(true) {
+                         total(p_total), index(0), logger(p_logger),
+                         use_logger(true), is_done(false) {
   }
 
   void track() {
@@ -71,12 +75,25 @@ class progress_tracker_t {
     ++index;
   }
 
-  ~progress_tracker_t() {
+  void done() {
     std::stringstream ss;
-    ss << "Processing " << index << " completed";
+    if (total > 0) {
+      // total is known
+      ss << "Processing " << index << " of " << total << " completed";
+    } else {
+      // total is not known
+      ss << "Processing " << index << " of " << index << " completed";
+    }
     std::cout << ss.str() << "\n";
     if (use_logger) {
       logger->add_timestamp(ss.str());
+    }
+    is_done = true;
+  }
+
+  ~progress_tracker_t() {
+    if (!is_done) {
+      std::cerr << "program error: progress_tracker.track_done not called.\n";
     }
   }
 };
