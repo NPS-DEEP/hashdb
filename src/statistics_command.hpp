@@ -28,6 +28,7 @@
 #include "hashdb_settings.hpp"
 #include "file_modes.h"
 #include "hashdb_manager.hpp"
+#include "progress_tracker.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -57,6 +58,9 @@ class statistics_command_t {
       return;
     }
 
+    // start progress tracker
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
+
     // total number of hashes in the database
     uint64_t total_hashes = 0;
 
@@ -68,14 +72,10 @@ class statistics_command_t {
                 new std::map<uint32_t, uint64_t>();
     
     // iterate over hashdb and set statistics variables
-    uint64_t j=0;
-    uint64_t size = hashdb_manager.map_size();
     while (it != hashdb_manager.end()) {
 
-      // occasionally report progress to stdout
-      if ((++j)%1000000 == 0) {
-        std::cout << "Processing " << j << " of " << size << "...\n";
-      }
+      // update progress tracker
+      progress_tracker.track();
 
       // get count for this hash
       uint32_t count = hashdb_manager.find_count(it->key);

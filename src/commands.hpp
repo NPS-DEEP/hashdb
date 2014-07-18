@@ -39,6 +39,7 @@
 #include "hashdb.hpp"
 #include "statistics_command.hpp"
 #include "random_key.hpp"
+#include "progress_tracker.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -692,6 +693,9 @@ class commands_t {
 
     logger.add_timestamp("begin add_random");
 
+    // start progress tracker
+    progress_tracker_t progress_tracker(count, &logger);
+
     // hash block size
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     size_t hash_block_size = settings.hash_block_size;
@@ -699,13 +703,8 @@ class commands_t {
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
 
-      // occasionally report progress to stdout
-      if (i%1000000 == 0 && i > 0) {
-        std::stringstream ss2;
-        ss2 << "Processing " << i << " of " << count;
-        logger.add_timestamp(ss2.str());
-        std::cout << ss2.str() << "...\n";
-      }
+      // update progress tracker
+      progress_tracker.track();
 
       // generate filename
       std::stringstream ss;
