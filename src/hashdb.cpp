@@ -48,6 +48,7 @@
 #include "hashdb_manager.hpp"
 #include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
+#include "history_manager.hpp"
 #include "logger.hpp"
 #include "tcp_client_manager.hpp"
 
@@ -226,7 +227,11 @@ const char* hashdb_version() {
         delete hashdb_manager;
         delete hashdb_changes;
         delete logger;
+
+        // create new history trail
+        history_manager_t::append_log_to_history(hashdb_dir);
         return;
+
       case HASHDB_SCAN:
         delete hashdb_manager;
         return;
