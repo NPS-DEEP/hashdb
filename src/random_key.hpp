@@ -34,7 +34,7 @@ T random_key() {
     uint8_t key[sizeof(T)];
     uint32_t words[(sizeof(T)+3)/4];
     key_buffer_t() {
-      for (int i=0; i<(sizeof(T)+3)/4; i++) {
+      for (size_t i=0; i<(sizeof(T)+3)/4; i++) {
         words[i]=rand();
       }
     }
