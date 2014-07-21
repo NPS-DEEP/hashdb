@@ -27,14 +27,14 @@
 
 template<typename T>
 T random_key() {
-  const size_t word_count = (sizeof(T)+3)/4;
+//  const size_t word_count = (sizeof(T)+3)/4;
 
   // random key buffer
   union key_buffer_t {
     uint8_t key[sizeof(T)];
-    uint32_t words[word_count];
+    uint32_t words[(sizeof(T)+3)/4];
     key_buffer_t() {
-      for (int i=0; i<word_count; i++) {
+      for (int i=0; i<(sizeof(T)+3)/4; i++) {
         words[i]=rand();
       }
     }
