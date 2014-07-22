@@ -22,6 +22,7 @@ if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing ]; 
     #libtoolize || glibtoolize
     automake --add-missing --copy
 else
+    automake --add-missing --copy
     autoreconf -f
 fi
 echo be sure to run ./configure

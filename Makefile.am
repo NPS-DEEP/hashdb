@@ -3,13 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 SRC_WIN = src_win
 include src_win/Makefile
 
-# if WANT_TESTS was set in configure then add src/test to SUBDIRS for inclusion
-if WANT_TESTS
-TEST_DIR = src/test
-endif
-
-#SUBDIRS = src src/libhashdb man doc $(TEST_DIR)
-SUBDIRS = src man doc $(TEST_DIR)
+SUBDIRS = src src/test man doc
 
 SRC_WIN_DIST = \
 	src_win/build_installer.nsi \

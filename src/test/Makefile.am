@@ -23,7 +23,7 @@ EXTRA_DIST = \
 	identified_blocks.txt \
 	sample_dfxml
 
-bin_PROGRAMS = \
+check_PROGRAMS = \
 	source_lookup_encoding_test \
 	bloom_filter_manager_test \
 	settings_manager_test \
@@ -35,6 +35,8 @@ bin_PROGRAMS = \
 	identified_blocks_reader_test \
 	libhashdb_test \
 	commands_test
+
+TESTS = $(check_PROGRAMS)
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \

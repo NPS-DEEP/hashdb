@@ -54,23 +54,6 @@ if test x"$has_nsis" == "xfalse" ; then
 fi
 
 ################################################################
-## only build tests if requested
-AC_ARG_ENABLE(tests,
-    [AS_HELP_STRING([--enable-tests],
-                    [enable building tests in the src/test directory])],
-      use_tests=yes,
-      use_tests=no)
-AM_CONDITIONAL([WANT_TESTS], [test x$use_tests == xyes])
-
-if test -r /bin/uname.exe ; then
-  if test `uname -o` == "Msys" ; then
-    AC_MSG_NOTICE([Compiling with Msys. Setting flags appropriately.])
-    LIBS="$LIBS -lws2_32 -lgdi32"
-    LDFLAGS="$LDFLAGS -Wl,--enable-auto-import"
-  fi
-fi
-
-################################################################
 ## Includes
 m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
