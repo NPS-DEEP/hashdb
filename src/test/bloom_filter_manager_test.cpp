@@ -36,6 +36,8 @@
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir_bloom_filter_manager_test";
+static const char temp_bloom1[] = "temp_dir_bloom_filter_manager_test/bloom_filter_1";
+static const char temp_bloom2[] = "temp_dir_bloom_filter_manager_test/bloom_filter_2";
 
 template<typename T>
 void run_rw_tests(std::string& hashdb_dir,
@@ -48,6 +50,9 @@ void run_rw_tests(std::string& hashdb_dir,
                   uint32_t bloom2_k_hash_functions) {
 
   T key;
+
+  remove(temp_bloom1);
+  remove(temp_bloom2);
 
   bloom_filter_manager_t<T> bloom(hashdb_dir, file_mode,
                   bloom1_is_used, bloom1_M_hash_size, bloom1_k_hash_functions,
