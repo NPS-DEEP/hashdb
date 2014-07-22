@@ -105,8 +105,8 @@ void do_test2() {
   hashdb_settings_t settings;
   commands_t<hash_t>::create(settings, "temp_dir");
 
-  // test ability to manage many repository names
-  for (int i=0; i<250; i++) {
+  // test ability to manage multiple repository names
+  for (int i=0; i<12; i++) {
     // generate unique repository name
     std::ostringstream ss;
     ss << "test_repository_name_" << i;
