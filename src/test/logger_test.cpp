@@ -34,8 +34,8 @@
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
 
-static const char temp_dir[] = "temp_dir";
-static const char temp_log[] = "temp_dir/log.xml";
+static const char temp_dir[] = "temp_dir_logger_test";
+static const char temp_log[] = "temp_dir_logger_test/log.xml";
 
 void run_test() {
 

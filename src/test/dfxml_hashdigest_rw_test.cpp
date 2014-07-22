@@ -44,7 +44,7 @@
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 
-static const char temp_dir[] = "temp_dir";
+static const char temp_dir[] = "temp_dir_dfxml_hashdigest_rw_test";
 
 void run_tests() {
 
@@ -58,7 +58,8 @@ void run_tests() {
 
   size_t count = 0;
 
-  dfxml_hashdigest_writer_t<hash_t> writer("temp_dir/temp_dfxml_output");
+  std::string temp_dfxml_output = std::string(temp_dir) + "/temp_dfxml_output";
+  dfxml_hashdigest_writer_t<hash_t> writer(temp_dfxml_output);
 
   while (it != manager.end()) {
     writer.add_hashdb_element(*it);

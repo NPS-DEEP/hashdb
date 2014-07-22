@@ -33,25 +33,27 @@
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 
+static const char temp_dir[] = "temp_dir_settings_manager_test";
+
 // Save with a changed value, then read, delete, write, and read,
 // then see if changed value is preserved.
 void run_test() {
 
   // clean up from any previous run
-  rm_hashdb_dir("temp_dir");
+  rm_hashdb_dir(temp_dir);
 
   // create and write settings
   hashdb_settings_t settings;
   settings.hash_block_size = 512;
 
   // write settings
-  hashdb_settings_manager_t::write_settings("temp_dir", settings);
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
 
   // read, delete, write, read settings
-  settings = hashdb_settings_manager_t::read_settings("temp_dir");
-  rm_hashdb_dir("temp_dir");
-  hashdb_settings_manager_t::write_settings("temp_dir", settings);
-  settings = hashdb_settings_manager_t::read_settings("temp_dir");
+  settings = hashdb_settings_manager_t::read_settings(temp_dir);
+  rm_hashdb_dir(temp_dir);
+  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+  settings = hashdb_settings_manager_t::read_settings(temp_dir);
 
   // attempt to read an invalid filename
   BOOST_TEST_EQ(settings.hash_block_size, 512);

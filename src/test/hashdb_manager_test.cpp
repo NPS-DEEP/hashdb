@@ -44,7 +44,7 @@
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
-static const char temp_dir[] = "temp_dir";
+static const char temp_dir[] = "temp_dir_hashdb_manager_test";
 
 void write_settings() {
   // clean up from any previous run

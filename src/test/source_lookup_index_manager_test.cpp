@@ -35,7 +35,7 @@
 #include "file_modes.h"
 #include <sys/stat.h> // makedir
 
-static const char temp_dir[] = "temp_dir";
+static const char temp_dir[] = "temp_dir_source_lookup_index_manager_test";
 
 void run_test() {
 
