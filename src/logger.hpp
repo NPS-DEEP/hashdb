@@ -33,6 +33,11 @@
 #include "hashdb_settings.hpp"
 #include "hash_t_selector.h"
 #include <iostream>
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
+inline void add_memory_usage_algorithm(dfxml_writer* writer, std::string name);
 
 /**
  * The hashdb change logger holds all possible change values,
@@ -106,6 +111,19 @@ class logger_t {
     x.add_timestamp(name);
   }
 
+  /**
+   * Emit a named memory usage report.
+   */
+  void add_memory_usage(const std::string& name) {
+    if (closed) {
+      // logger closed
+      std::cout << "logger.add_memory_usage warning: logger closed\n";
+      return;
+    }
+
+    add_memory_usage_algorithm(&x, name);
+  }
+
   template<typename T>
   void add_hashdb_configuration() {
     if (closed) {
@@ -154,6 +172,21 @@ class logger_t {
     x.xmlout(tag, value);
   }
 };
+
+inline void add_memory_usage_algorithm(dfxml_writer* logger, std::string name) {
+#ifdef HAVE_MALLINFO
+  struct mallinfo mi;
+  std::stringstream ss;
+  mi = mallinfo();
+  ss << "name='" << name
+     << "' allocated='" << mi.arena
+     << "' occupied='" << mi.uordblks << "'";
+
+  // add named memory usage
+  logger->xmlout("memory_usage", "",ss.str(), true);
+#endif
+}
+
 
 #endif
 

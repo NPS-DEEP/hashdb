@@ -62,14 +62,15 @@ class progress_tracker_t {
       std::stringstream ss;
       if (total > 0) {
         // total is known
-        ss << "Processing " << index << " of " << total;
+        ss << "Processing index " << index << " of " << total;
       } else {
         // total is not known
-        ss << "Processing " << index << " of ?";
+        ss << "Processing index " << index << " of ?";
       }
       std::cout << ss.str() << "...\n";
       if (use_logger) {
         logger->add_timestamp(ss.str());
+        logger->add_memory_usage(ss.str());
       }
     }
     ++index;
@@ -79,14 +80,15 @@ class progress_tracker_t {
     std::stringstream ss;
     if (total > 0) {
       // total is known
-      ss << "Processing " << index << " of " << total << " completed";
+      ss << "Processing index " << index << " of " << total << " completed";
     } else {
       // total is not known
-      ss << "Processing " << index << " of " << index << " completed";
+      ss << "Processing index " << index << " of " << index << " completed";
     }
     std::cout << ss.str() << "\n";
     if (use_logger) {
       logger->add_timestamp(ss.str());
+      logger->add_memory_usage(ss.str());
     }
     is_done = true;
   }

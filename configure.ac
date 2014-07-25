@@ -139,6 +139,13 @@ AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np 
 # end PTHREAD SUPPORT
 ################################################################
 
+################################################################
+# support for mallinfo for malloc usage reporting
+AC_CHECK_HEADERS([malloc.h])
+AC_CHECK_LIB([stdc++],[mallinfo],
+  [AC_DEFINE(HAVE_MALLINFO,1,[define 1 if stdc++ supports mallinfo])]
+  ,[])
+
 # Specific functions, may not be required
 AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
