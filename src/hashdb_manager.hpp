@@ -113,15 +113,30 @@ class hashdb_manager_t {
                        source_lookup_index,
                        hashdb_element.file_offset);
 
-    // do not emplace if count > max count allowed
-    if (settings.maximum_hash_duplicates > 0
-             && bloom_filter_manager.is_positive(hashdb_element.key)
-             && multimap.count(hashdb_element.key) >= settings.maximum_hash_duplicates) {
-      ++changes.hashes_not_inserted_exceeds_max_duplicates;
-      return;
+    // if the key may exist then check against duplicates and max count
+    if (bloom_filter_manager.is_positive(hashdb_element.key)) {
+      size_t count = 0;
+      multimap_iterator_t it = multimap.lower_bound(hashdb_element.key);
+      while (it != multimap.end() && it->first == hashdb_element.key) {
+        if (it->second == encoding) {
+          // this exact element already exists
+          ++changes.hashes_not_inserted_duplicate_element;
+          return;
+        }
+        ++count;
+        ++it;
+      }
+
+      // do not exceed max count allowed
+      if (settings.maximum_hash_duplicates > 0 &&
+                               count >= settings.maximum_hash_duplicates) {
+        // at maximum for this hash
+        ++changes.hashes_not_inserted_exceeds_max_duplicates;
+        return;
+      }
     }
 
-    // add the element, even if an identical (key, value) pair is already there
+    // add the element since all the checks passed
     multimap.emplace(hashdb_element.key, encoding);
     ++changes.hashes_inserted;
 

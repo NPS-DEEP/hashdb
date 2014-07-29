@@ -42,6 +42,7 @@ class hashdb_changes_t {
   uint32_t hashes_not_inserted_mismatched_hash_block_size;
   uint32_t hashes_not_inserted_invalid_byte_alignment;
   uint32_t hashes_not_inserted_exceeds_max_duplicates;
+  uint32_t hashes_not_inserted_duplicate_element;
 
   uint32_t hashes_removed;
   uint32_t hashes_not_removed_mismatched_hash_block_size;
@@ -55,6 +56,7 @@ class hashdb_changes_t {
                      hashes_not_inserted_mismatched_hash_block_size(0),
                      hashes_not_inserted_invalid_byte_alignment(0),
                      hashes_not_inserted_exceeds_max_duplicates(0),
+                     hashes_not_inserted_duplicate_element(0),
 
                      hashes_removed(0),
                      hashes_not_removed_mismatched_hash_block_size(0),
@@ -76,6 +78,8 @@ class hashdb_changes_t {
       x.xmlout("hashes_not_inserted_invalid_byte_alignment", hashes_not_inserted_invalid_byte_alignment);
     if (hashes_not_inserted_exceeds_max_duplicates)
       x.xmlout("hashes_not_inserted_exceeds_max_duplicates", hashes_not_inserted_exceeds_max_duplicates);
+    if (hashes_not_inserted_duplicate_element)
+      x.xmlout("hashes_not_inserted_duplicate_element", hashes_not_inserted_duplicate_element);
 
     // log any remove changes to x
     if (hashes_removed)
@@ -96,7 +100,8 @@ class hashdb_changes_t {
     bool has_insert_action = (hashes_inserted ||
                               hashes_not_inserted_mismatched_hash_block_size ||
                               hashes_not_inserted_invalid_byte_alignment ||
-                              hashes_not_inserted_exceeds_max_duplicates);
+                              hashes_not_inserted_exceeds_max_duplicates ||
+                              hashes_not_inserted_duplicate_element);
 
     bool has_remove_action = (hashes_removed ||
                               hashes_not_removed_mismatched_hash_block_size ||
@@ -119,6 +124,8 @@ class hashdb_changes_t {
        std::cout << "    hashes not inserted, invalid byte alignment=" << hashes_not_inserted_invalid_byte_alignment << "\n";
       if (hashes_not_inserted_exceeds_max_duplicates)
        std::cout << "    hashes not inserted, exceeds max duplicates=" << hashes_not_inserted_exceeds_max_duplicates << "\n";
+      if (hashes_not_inserted_duplicate_element)
+       std::cout << "    hashes not inserted, duplicate element=" << hashes_not_inserted_duplicate_element << "\n";
     }
 
     if (has_remove_action) {
