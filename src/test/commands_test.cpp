@@ -84,23 +84,42 @@ void do_test1() {
   // deduplicate
   commands_t<hash_t>::deduplicate(temp_dir1, temp_dir4);
 
-  // rebuild_bloom
-  commands_t<hash_t>::rebuild_bloom(settings, temp_dir1);
-
-  // server
-  // not tested
-
   // scan
   commands_t<hash_t>::scan(temp_dir5, "sample_dfxml");
+
+  // scan expanded
+  commands_t<hash_t>::scan_expanded(temp_dir5, "sample_dfxml");
 
   // expand_identified_blocks
   commands_t<hash_t>::expand_identified_blocks(temp_dir5, "identified_blocks.txt");
 
+  // server
+  // not tested
+
+  // size
+  commands_t<hash_t>::size(temp_dir5);
+
   // sources
   commands_t<hash_t>::sources(temp_dir5);
 
-  // statistics
-  commands_t<hash_t>::statistics(temp_dir5);
+  // histogram
+  commands_t<hash_t>::histogram(temp_dir5);
+
+  // duplicates
+  commands_t<hash_t>::duplicates(temp_dir5, "2");
+
+  // hash_table
+  commands_t<hash_t>::hash_table(temp_dir5);
+
+  // rebuild_bloom
+  commands_t<hash_t>::rebuild_bloom(settings, temp_dir5);
+
+  // add_random
+  commands_t<hash_t>::add_random("repo_random", temp_dir5, "100000");
+
+  // scan_random
+  // not tested because it takes time to run
+  // commands_t<hash_t>::scan_random(temp_dir5);
 }
 
 void do_test2() {
@@ -128,8 +147,8 @@ void do_test2() {
   // sources
   commands_t<hash_t>::sources(temp_dir);
 
-  // statistics
-  commands_t<hash_t>::statistics(temp_dir);
+  // histogram
+  commands_t<hash_t>::histogram(temp_dir);
 }
 
 int cpp_main(int argc, char* argv[]) {
