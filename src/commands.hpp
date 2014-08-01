@@ -909,7 +909,7 @@ T temp = random_key<T>();
     logger.add_timestamp("begin scan_random");
 
     // scan sets of random hashes where hash values are unlikely to match
-    for (int i=1; i<=10; i++) {
+    for (int i=1; i<=5; i++) {
       generate_scan_input(scan_input);
       std::stringstream ss1;
       ss1 << "generated random hash " << i;
@@ -918,12 +918,12 @@ T temp = random_key<T>();
       std::stringstream ss2;
       ss2 << "scanned random hash " << i;
       logger.add_timestamp(ss2.str());
-      std::cout << "scan random hash " << i << " of 10\n";
+      std::cout << "scan random hash " << i << " of 5\n";
     }
 
     // scan sets of random hashes where hash values all match
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-    for (int j=1; j<=10; j++) {
+    for (int j=1; j<=5; j++) {
       generate_scan_input(&hashdb_manager, scan_input);
       std::stringstream ss1;
       ss1 << "generated random matching hash " << j;
@@ -932,7 +932,7 @@ T temp = random_key<T>();
       std::stringstream ss2;
       ss2 << "scanned random matching hash " << j;
       logger.add_timestamp(ss2.str());
-      std::cout << "scan random matching hash " << j << " of 10\n";
+      std::cout << "scan random matching hash " << j << " of 5\n";
     }
 
     // close without appending this log event to history
