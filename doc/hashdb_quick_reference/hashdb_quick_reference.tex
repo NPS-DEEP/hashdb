@@ -1,7 +1,8 @@
 % pdflatex ch15.tex
 
 \documentclass[12pt]{article}
-\usepackage[margin=0.8in]{geometry}
+%\usepackage[margin=0.8in]{geometry}
+\usepackage[top=0.2in, bottom=0.2in, left=0.8in, right=0.8in]{geometry}
 \usepackage{paralist} % for compactitem, compactdesc, compactenum
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -13,9 +14,6 @@
 \usepackage{hyperref}
 \usepackage{url}
 
-%\date{}
-
-%\setlength{\parskip}{0pt}
 \setlength{\parindent}{0pt}
 
 \newcommand{\hdb}{\emph{hashdb}\xspace}
@@ -32,55 +30,61 @@
 \url{http://github.com/simsong/hashdb/wiki}
 \end{center}
 
-%\begin{table}[!ht]
-%\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
-%\end{tabular}
-%\end{table}
-
 \subsubsection*{New Database}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{create [-p<hash block size>] [-m<maximum duplicates>] <hashdb>} & Create a new hash database \\
+\hangindent=2em\texttt{create [-p<hash block size>] [-m<maximum duplicates>] <hashdb>} & Create a new hash database \\
 \end{tabular}
 
 \subsubsection*{Import/Export}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
+\hangindent=2em\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
 \texttt{export <hashdb.hdb> <dfxml.xml>} & Export hash database to DFXML file \\
 \end{tabular}
 
-\subsubsection*{Set Operations}
+\subsubsection*{Database Manipulation}
 \begin{tabular}{p{8 cm} p{9 cm} }
 \texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ \\
 \texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ \\
 \texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ \\
 \texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ \\
-\end{tabular}
-
-\subsubsection*{Specialized Commands}
-\begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{deduplicate <A.hdb> <B.hdb>} & Copy A to B except for hashes with duplicates \\
-\texttt{rebuild\_bloom [<bloom settings>]+} & Rebuild Bloom filter \\
-\texttt{server <hashdb.hdb> <port number>} & Start scan service at port \\
-\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & Expands to include source information for each source \\
-\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Adds random hashes, useful for performance analysis
+\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
 \end{tabular}
 
 \subsubsection*{Scan Services}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{scan <path or socket> <DFXML file>} & Scans for matches, prints count\\
-\texttt{scan\_expanded <path or socket> <DFXML file>} & Scans for matches, prints source information for each source \\
+\texttt{scan <path or socket> <DFXML file>} & Scan for matches, print count\\
+\hangindent=2em\texttt{scan\_expanded <path or socket> <DFXML file>} & \hangindent=2em Scan for matches, print source information for each source \\
+\hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
+\texttt{server <hashdb.hdb> <port number>} & Start scan service at port \\
 \end{tabular}
 
 \subsubsection*{Statistics}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{sources <hashdb.hdb>} & Prints all repository names and filenames \\
-\texttt{size <hashdb.hdb>} & Prints sizes of internal database tables \\
-\texttt{statistics <hashdb.hdb>} & Prints hash distribution \\
-\texttt{duplicates <hashdb.hdb> <number>} & Prints hashes sourced the given number of times \\
-\texttt{hash\_table <hashdb.hdb>} & Prints all hashes along with source information\\
+\texttt{size <hashdb.hdb>} & Print sizes of internal database tables \\
+\texttt{sources <hashdb.hdb>} & Print all repository names and filenames \\
+\texttt{histogram <hashdb.hdb>} & Print hash distribution \\
+\texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
+\texttt{hash\_table <hashdb.hdb>} & Print all hashes along with source information\\
 \end{tabular}
 
-\vspace{10mm}
+\subsubsection*{Tuning}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\texttt{rebuild\_bloom [<bloom settings>]+} & Rebuild Bloom filter \\
+\end{tabular}
+
+\subsubsection*{Analysis}
+\begin{tabular}{p{8 cm} p{9 cm} }
+\hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, generate statistics \\
+\texttt{scan\_random <hashdb.hdb>} & Scan for random hashes, generate statistics \\
+\end{tabular}
+
+\subsubsection*{\bulk Scanner}
+\begin{tabular}{p{15 cm} p{4 cm} }
+\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=import -o outdir1 my\_image1} & Import \\
+\hangindent=2em\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan \\
+\end{tabular}
+
+\vspace{2mm}
 \begin{center}
 \begin{footnotesize}
 \today

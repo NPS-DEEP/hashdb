@@ -446,17 +446,6 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t<T>::deduplicate(hashdb_arg1, hashdb_arg2);
-  } else if (command == "rebuild_bloom") {
-    require_no_hashdb_settings();
-    require_no_repository_name();
-    require_parameter_count(1);
-    commands_t<T>::rebuild_bloom(hashdb_settings, hashdb_arg1);
-  } else if (command == "server") {
-    require_no_hashdb_settings();
-    require_no_bloom_filter_settings();
-    require_no_repository_name();
-    require_parameter_count(2);
-    commands_t<T>::server(hashdb_arg1, hashdb_arg2);
   } else if (command == "scan") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
@@ -475,24 +464,30 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t<T>::expand_identified_blocks(hashdb_arg1, hashdb_arg2);
-  } else if (command == "sources") {
+  } else if (command == "server") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
-    require_parameter_count(1);
-    commands_t<T>::sources(hashdb_arg1);
+    require_parameter_count(2);
+    commands_t<T>::server(hashdb_arg1, hashdb_arg2);
   } else if (command == "size") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
     commands_t<T>::size(hashdb_arg1);
-  } else if (command == "statistics") {
+  } else if (command == "sources") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(1);
-    commands_t<T>::statistics(hashdb_arg1);
+    commands_t<T>::sources(hashdb_arg1);
+  } else if (command == "histogram") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t<T>::histogram(hashdb_arg1);
   } else if (command == "duplicates") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
@@ -505,6 +500,11 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(1);
     commands_t<T>::hash_table(hashdb_arg1);
+  } else if (command == "rebuild_bloom") {
+    require_no_hashdb_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t<T>::rebuild_bloom(hashdb_settings, hashdb_arg1);
   } else if (command == "add_random") {
     // compose a repository name if one is not provided
     if (repository_name_string == "") {
@@ -514,7 +514,14 @@ void run_command() {
     require_no_bloom_filter_settings();
     require_parameter_count(2);
     commands_t<T>::add_random(repository_name_string, hashdb_arg1, hashdb_arg2);
+  } else if (command == "scan_random") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t<T>::scan_random(hashdb_arg1);
   } else {
+    // invalid command
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
   }
 }

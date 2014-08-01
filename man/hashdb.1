@@ -46,31 +46,31 @@ source repository name and filename do not match.
 Copy hall hashes in <source hashdb> to <destination hashdb> except
 for hashes with duplicates.
 
-.IP "rebuild_bloom [<bloom filter settings>]+ <hashdb>"
-Rebuilds the bloom filters in the <hashdb> hash database based on the
-<bloom filter settings> provided.
-
-.IP "server <hashdb> <port number>"
-Starts a query server service for <hashdb> at <port number> for
-servicing hashdb queries.
-
 .IP "scan <path_or_socket> <DFXML file>"
 Scans the <path_or_socket> for hashes that match hashes in the <DFXML file>
-and prints out matches.
+and prints out match count for matches.
+
+.IP "scan_expanded <path_or_socket> <DFXML file>"
+Scans the <path_or_socket> for hashes that match hashes in the <DFXML file>
+and prints out source information for matches.
 
 .IP "expand_identified_blocks <hashdb_dir> <identified_blocks.txt>"
 Prints out source information for each hash in <identified_blocks.txt>
 Source information includes repository name, filename, and file offset.
 
-.IP "sources <hashdb>"
-Prints out the repository name and filename of where each hash in the
-<hashdb> came from.
+.IP "server <hashdb> <port number>"
+Starts a query server service for <hashdb> at <port number> for
+servicing hashdb queries.
 
 .IP "size <hashdb>"
 Prints out size information about the given <hashdb> database.
 
-.IP "statistics <hashdb>"
-Print out statistics about the given <hashdb> database.
+.IP "sources <hashdb>"
+Prints out the repository name and filename of where each hash in the
+<hashdb> came from.
+
+.IP "histogram <hashdb>"
+Print out a hash distribution for hashes in the given <hashdb> database.
 
 .IP "duplicates <hashdb> <number>"
 Prints out the hashes in the given <hashdb> database that are sourced
@@ -80,6 +80,16 @@ the given <number> of times.
 Prints out a table of hashes from the given <hashdb> database, indicating
 the repository name, filename, and file offset of where each hash was
 sourced.
+
+.IP "rebuild_bloom [<bloom filter settings>]+ <hashdb>"
+Rebuilds the bloom filters in the <hashdb> hash database based on the
+<bloom filter settings> provided.
+
+.IP "add_random [-r <repository name>] <hashdb> <count>"
+Add <count> random hashes into hash database <hashdb>, generating statistics.
+
+.IP "scan_random <hashdb>"
+Scans for random hashes in hash database <hashdb>, generating statistics.
 
 .SH HASHDB SETTINGS
 .B <hashdb settings>

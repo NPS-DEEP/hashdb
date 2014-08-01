@@ -25,6 +25,7 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 #include "command_line.hpp"
+#include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_manager.hpp"
 #include "history_manager.hpp"
@@ -37,7 +38,6 @@
 #include "identified_blocks_reader.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
-#include "statistics_command.hpp"
 #include "random_key.hpp"
 #include "progress_tracker.hpp"
 
@@ -55,9 +55,6 @@
  * This totally static class is a class rather than an namespace
  * so it can have private members.
  */
-
-// file modes:
-// READ_ONLY, RW_NEW, RW_MODIFY
 
 template<typename T>
 class commands_t {
@@ -109,6 +106,42 @@ class commands_t {
       }
     }
     progress_tracker.done();
+  }
+
+  // generate random scan input that is unlikely to match the hashdb
+  static void generate_scan_input(std::vector<T>* scan_input) {
+    scan_input->clear();
+    for (int i=0; i<1000000; i++) {
+      scan_input->push_back(random_key<T>());
+    }
+  }
+
+  // generate random scan input that matches the hashdb
+  static void generate_scan_input(hashdb_manager_t<T>* hashdb_manager,
+                      std::vector<T>* scan_input) {
+
+    // the hashdb must not be empty
+    if (hashdb_manager->map_size() == 0) {
+      std::cerr << "Map is empty.  Aborting.\n";
+      exit(1);
+    }
+
+    scan_input->clear();
+    for (int i=0; i<1000000; i++) {
+T temp = random_key<T>();
+
+      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
+//                                     hashdb_manager->find(random_key<T>());
+                                     hashdb_manager->find(temp);
+      if (it_pair.first == hashdb_manager->end()) {
+        // the random hash is greater than anything in hashdb so use first hash
+        scan_input->push_back(hashdb_manager->begin()->key);
+      } else {
+        // good, use the hash that is not less than the random hash
+        scan_input->push_back(it_pair.first->key);
+      }
+//std::cout << "key: " << temp.hexdigest() << ", using " << scan_input->back() << "\n";
+    }
   }
 
   public:
@@ -409,66 +442,6 @@ class commands_t {
 
   }
 
-  // rebuild bloom
-  static void rebuild_bloom(const hashdb_settings_t& settings,
-                            const std::string& hashdb_dir) {
-
-    logger_t logger(hashdb_dir, "rebuild_bloom");
-    logger.add("hashdb_dir", hashdb_dir);
-
-    // start the bloom rebuild manager
-    bloom_rebuild_manager_t<T> bloom_rebuild_manager(hashdb_dir, settings);
-
-    // log the revised settings
-    hashdb_settings_t revised_settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
-    logger.add_hashdb_settings(revised_settings);
-
-    // open hashdb
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // add hashes to the bloom filter
-    logger.add_timestamp("begin rebuild_bloom");
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
-    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
-    while (it != hashdb_manager.end()) {
-      // add the hash to the bloom filter
-      bloom_rebuild_manager.add_hash_value(it->key);
-      ++it;
-      progress_tracker.track();
-    }
-    progress_tracker.done();
-    logger.add_timestamp("end rebuild_bloom");
-
-    // provide summary
-    logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
-  }
-
-  // server
-  static void server(const std::string& hashdb_dir,
-                     const std::string& port_number_string) {
-
-    uint16_t port_number;
-    try {
-      port_number = boost::lexical_cast<uint16_t>(port_number_string);
-    } catch(...) {
-      std::cerr << "Invalid port: '" << port_number_string << "'\n";
-      exit(1);
-    }
-
-    // start the server
-    std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
-    tcp_server_manager_t<T> tcp_server_manager(hashdb_dir, port_number);
-//    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
-/*
-    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
-    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
-    std::string buffer;
-    getline(std::cin, buffer);
-    std::cout << "Done.\n";
-*/
-  }
-
   // scan
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
@@ -593,25 +566,29 @@ class commands_t {
     }
   }
 
-  // print sources referenced in this database
-  static void sources(const std::string& hashdb_dir) {
+  // server
+  static void server(const std::string& hashdb_dir,
+                     const std::string& port_number_string) {
 
-    // open the source lookup index manager for hashdb_dir
-    source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
-    source_lookup_index_iterator_t it = manager.begin();
-
-    // there is nothing to report if the source lookup index map is empty
-    if (it == manager.end()) {
-      std::cout << "The source lookup index map is empty.\n";
-      return;
+    uint16_t port_number;
+    try {
+      port_number = boost::lexical_cast<uint16_t>(port_number_string);
+    } catch(...) {
+      std::cerr << "Invalid port: '" << port_number_string << "'\n";
+      exit(1);
     }
 
-    // report each entry
-    while (it != manager.end()) {
-      std::cout << "repository name='" << it->first
-                << "', filename='" << it->second << "'\n";
-      ++it;
-    }
+    // start the server
+    std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
+    tcp_server_manager_t<T> tcp_server_manager(hashdb_dir, port_number);
+//    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
+/*
+    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
+    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
+    std::string buffer;
+    getline(std::cin, buffer);
+    std::cout << "Done.\n";
+*/
   }
 
   // show hashdb size values
@@ -639,9 +616,109 @@ class commands_t {
               << hashdb_manager.filename_lookup_store_size() << "\n";
   }
 
-  // show hashdb statistics
-  static void statistics(const std::string& hashdb_dir) {
-    statistics_command_t::show_statistics<T>(hashdb_dir);
+  // print sources referenced in this database
+  static void sources(const std::string& hashdb_dir) {
+
+    // open the source lookup index manager for hashdb_dir
+    source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
+    source_lookup_index_iterator_t it = manager.begin();
+
+    // there is nothing to report if the source lookup index map is empty
+    if (it == manager.end()) {
+      std::cout << "The source lookup index map is empty.\n";
+      return;
+    }
+
+    // report each entry
+    while (it != manager.end()) {
+      std::cout << "repository name='" << it->first
+                << "', filename='" << it->second << "'\n";
+      ++it;
+    }
+  }
+
+  // show hashdb hash histogram
+  static void histogram(const std::string& hashdb_dir) {
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
+
+    // there is nothing to report if the map is empty
+    if (it == hashdb_manager.end()) {
+      std::cout << "The map is empty.\n";
+      return;
+    }
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
+
+    // total number of hashes in the database
+    uint64_t total_hashes = 0;
+
+    // total number of unique hashes
+    uint64_t total_unique_hashes = 0;
+
+    // hash histogram as <count, number of hashes with count>
+    std::map<uint32_t, uint64_t>* hash_histogram =
+                new std::map<uint32_t, uint64_t>();
+    
+    // iterate over hashdb and set variables for calculating the histogram
+    while (it != hashdb_manager.end()) {
+
+      // update progress tracker
+      progress_tracker.track();
+
+      // get count for this hash
+      uint32_t count = hashdb_manager.find_count(it->key);
+
+      // update totals
+      total_hashes += count;
+      if (count == 1) {
+        ++total_unique_hashes;
+      }
+
+      // update hash_histogram information
+      // look for existing entry
+      std::map<uint32_t, uint64_t>::iterator hash_histogram_it = hash_histogram->find(count);
+      if (hash_histogram_it == hash_histogram->end()) {
+
+        // this is the first hash found with this count value
+        // so start a new element for it
+        hash_histogram->insert(std::pair<uint32_t, uint64_t>(count, 1));
+
+      } else {
+
+        // increment existing value for number of hashes with this count
+        uint64_t old_number = hash_histogram_it->second;
+        hash_histogram->erase(count);
+        hash_histogram->insert(std::pair<uint32_t, uint64_t>(
+                                           count, old_number + 1));
+      }
+
+      // now move forward by count
+      for (uint32_t i=0; i<count; i++) {
+        ++it;
+      }
+    }
+
+    // show final for progress tracker
+    progress_tracker.done();
+
+    // show totals
+    std::cout << "total hashes: " << total_hashes << "\n"
+              << "unique hashes: " << total_unique_hashes << "\n";
+
+    // show hash histogram
+//    std::cout << "Histogram of count, number of hashes with count:\n";
+    // hash histogram as <count, number of hashes with count>
+    std::map<uint32_t, uint64_t>::iterator hash_histogram_it2;
+    for (hash_histogram_it2 = hash_histogram->begin();
+         hash_histogram_it2 != hash_histogram->end(); ++hash_histogram_it2) {
+      std::cout << "duplicates=" << hash_histogram_it2->first
+                << ", distinct hashes=" << hash_histogram_it2->second
+                << ", total=" << hash_histogram_it2->first *
+                                 hash_histogram_it2->second << "\n";
+    }
+    delete hash_histogram;
   }
 
   // show hashdb duplicates for a given duplicates count
@@ -708,6 +785,41 @@ class commands_t {
     progress_tracker.done();
   }
 
+  // rebuild bloom
+  static void rebuild_bloom(const hashdb_settings_t& settings,
+                            const std::string& hashdb_dir) {
+
+    logger_t logger(hashdb_dir, "rebuild_bloom");
+    logger.add("hashdb_dir", hashdb_dir);
+
+    // start the bloom rebuild manager
+    bloom_rebuild_manager_t<T> bloom_rebuild_manager(hashdb_dir, settings);
+
+    // log the revised settings
+    hashdb_settings_t revised_settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
+    logger.add_hashdb_settings(revised_settings);
+
+    // open hashdb
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // add hashes to the bloom filter
+    logger.add_timestamp("begin rebuild_bloom");
+    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
+    while (it != hashdb_manager.end()) {
+      // add the hash to the bloom filter
+      bloom_rebuild_manager.add_hash_value(it->key);
+      ++it;
+      progress_tracker.track();
+    }
+    progress_tracker.done();
+    logger.add_timestamp("end rebuild_bloom");
+
+    // provide summary
+    logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
+  }
+
   // functional analysis and testing: add_random
   static void add_random(const std::string& repository_name,
                      const std::string& hashdb_dir,
@@ -739,7 +851,7 @@ class commands_t {
     // start progress tracker
     progress_tracker_t progress_tracker(count, &logger);
 
-    // hash block size
+    // get hash block size
     hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
     size_t hash_block_size = settings.hash_block_size;
 
@@ -775,6 +887,57 @@ class commands_t {
 
     // also write changes to cout
     std::cout << changes << "\n";
+  }
+
+  // functional analysis and testing: scan_random
+  // Performs two scans: first with no matches, then with all matches.
+  static void scan_random(const std::string& hashdb_dir) {
+
+    // create space on the heap for the scan input and output vectors
+    std::vector<T>* scan_input = new std::vector<T>;
+    typename hashdb_t__<T>::scan_output_t* scan_output = new typename hashdb_t__<T>::scan_output_t();
+
+    // create the hashdb scan service
+    hashdb_t__<T> hashdb(hashdb_dir);
+
+    // initialize random seed
+    srand (time(NULL));
+
+    // start logger
+    logger_t logger(hashdb_dir, "scan_random");
+    logger.add("hashdb_dir", hashdb_dir);
+    logger.add_timestamp("begin scan_random");
+
+    // scan sets of random hashes where hash values are unlikely to match
+    for (int i=1; i<=10; i++) {
+      generate_scan_input(scan_input);
+      std::stringstream ss1;
+      ss1 << "generated random hash " << i;
+      logger.add_timestamp(ss1.str());
+      hashdb.scan(*scan_input, *scan_output);
+      std::stringstream ss2;
+      ss2 << "scanned random hash " << i;
+      logger.add_timestamp(ss2.str());
+      std::cout << "scan random hash " << i << " of 10\n";
+    }
+
+    // scan sets of random hashes where hash values all match
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    for (int j=1; j<=10; j++) {
+      generate_scan_input(&hashdb_manager, scan_input);
+      std::stringstream ss1;
+      ss1 << "generated random matching hash " << j;
+      logger.add_timestamp(ss1.str());
+      hashdb.scan(*scan_input, *scan_output);
+      std::stringstream ss2;
+      ss2 << "scanned random matching hash " << j;
+      logger.add_timestamp(ss2.str());
+      std::cout << "scan random matching hash " << j << " of 10\n";
+    }
+
+    // close without appending this log event to history
+    logger.add_timestamp("end scan_random");
+    logger.close();
   }
 };
 
