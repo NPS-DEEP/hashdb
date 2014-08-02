@@ -21,7 +21,8 @@
 
 EXTRA_DIST = \
 	identified_blocks.txt \
-	sample_dfxml
+	sample_dfxml4096.xml \
+	sample_dfxml512.xml
 
 check_PROGRAMS = \
 	source_lookup_encoding_test \
@@ -63,6 +64,9 @@ run_tests:
 	  echo Begin $$test ... ; \
 	  ./$$test; \
 	done
+
+clean-local:
+	rm -rf temp_dir* temp_dfxml_out
 
 # test with valgrind memory analysis
 run_tests_valgrind:

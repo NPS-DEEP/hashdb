@@ -64,7 +64,7 @@ void do_test1() {
   commands_t<hash_t>::create(settings, temp_dir5);
 
   // import
-  commands_t<hash_t>::import("test_repository_name", "sample_dfxml", temp_dir1);
+  commands_t<hash_t>::import("test_repository_name", "sample_dfxml4096.xml", temp_dir1);
 
   // export
   commands_t<hash_t>::do_export(temp_dir1, "temp_dfxml_out");
@@ -85,10 +85,10 @@ void do_test1() {
   commands_t<hash_t>::deduplicate(temp_dir1, temp_dir4);
 
   // scan
-  commands_t<hash_t>::scan(temp_dir5, "sample_dfxml");
+  commands_t<hash_t>::scan(temp_dir5, "sample_dfxml4096.xml");
 
   // scan expanded
-  commands_t<hash_t>::scan_expanded(temp_dir5, "sample_dfxml");
+  commands_t<hash_t>::scan_expanded(temp_dir5, "sample_dfxml4096.xml");
 
   // expand_identified_blocks
   commands_t<hash_t>::expand_identified_blocks(temp_dir5, "identified_blocks.txt");
@@ -138,7 +138,7 @@ void do_test2() {
     ss << "test_repository_name_" << i;
 
     // import
-    commands_t<hash_t>::import(ss.str(), "sample_dfxml", temp_dir);
+    commands_t<hash_t>::import(ss.str(), "sample_dfxml4096.xml", temp_dir);
   }
 
   // size

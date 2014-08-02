@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dfxml xmloutputversion='1.0'>
+  <metadata 
+  xmlns='http://md5deep.sourceforge.net/md5deep/' 
+  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+  xmlns:dc='http://purl.org/dc/elements/1.1/'>
+    <dc:type>Hash List</dc:type>
+  </metadata>
+  <creator version='1.0'>
+    <program>MD5DEEP</program>
+    <version>4.3</version>
+    <build_environment>
+      <compiler>GCC 4.8</compiler>
+    </build_environment>
+    <execution_environment>
+      <os_sysname>Linux</os_sysname>
+      <os_release>3.14.4-200.fc20.x86_64</os_release>
+      <os_version>#1 SMP Tue May 13 13:51:08 UTC 2014</os_version>
+      <host>localhost.localdomain</host>
+      <arch>x86_64</arch>
+      <command_line>md5deep -p 512 -d sample_dfxml</command_line>
+      <uid>1000</uid>
+      <start_time>2014-08-01T17:56:48Z</start_time>
+    </execution_environment>
+  </creator>
+  <configuration>
+    <algorithms>
+      <algorithm name='md5' enabled='1'/>
+      <algorithm name='sha1' enabled='0'/>
+      <algorithm name='sha256' enabled='0'/>
+      <algorithm name='tiger' enabled='0'/>
+      <algorithm name='whirlpool' enabled='0'/>
+    </algorithms>
+  </configuration>
+  <fileobject>
+    <filename>/home/bdallen/hashdb/src/test/temp_dir/sample_dfxml</filename>
+    <filesize>12471</filesize>
+    <ctime>2014-08-01T16:47:41Z</ctime>
+    <mtime>2014-08-01T16:47:41Z</mtime>
+    <atime>2014-08-01T16:47:55Z</atime>
+    <byte_run file_offset='0' len='512'>   
+      <hashdigest type='MD5'>3ab44a7afe9846886569747aabdb91ce</hashdigest>
+    </byte_run>
+    <byte_run file_offset='512' len='512'>   
+      <hashdigest type='MD5'>3be94b22ef5d00d6ae67d87f30b61129</hashdigest>
+    </byte_run>
+    <byte_run file_offset='1024' len='512'>   
+      <hashdigest type='MD5'>828632c846b5b5a28d2218551dc6f22a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='1536' len='512'>   
+      <hashdigest type='MD5'>ceb229152de2fa20c6915964e44024e9</hashdigest>
+    </byte_run>
+    <byte_run file_offset='2048' len='512'>   
+      <hashdigest type='MD5'>e19570762a786488a3d2f8f2a6d60e45</hashdigest>
+    </byte_run>
+    <byte_run file_offset='2560' len='512'>   
+      <hashdigest type='MD5'>20ea3d2b07212b8f6fff150ac9314338</hashdigest>
+    </byte_run>
+    <byte_run file_offset='3072' len='512'>   
+      <hashdigest type='MD5'>2f5adbc01f1b4e96301069933f80d3f7</hashdigest>
+    </byte_run>
+    <byte_run file_offset='3584' len='512'>   
+      <hashdigest type='MD5'>b795bb32c6762b6483921a2dd0f9f952</hashdigest>
+    </byte_run>
+    <byte_run file_offset='4096' len='512'>   
+      <hashdigest type='MD5'>754a7cef8cde493eb1eeb036c285582a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='4608' len='512'>   
+      <hashdigest type='MD5'>d6600677c71bcaf26f49181998ae1df1</hashdigest>
+    </byte_run>
+    <byte_run file_offset='5120' len='512'>   
+      <hashdigest type='MD5'>5b8399d3cf04b09845f645febbb6c230</hashdigest>
+    </byte_run>
+    <byte_run file_offset='5632' len='512'>   
+      <hashdigest type='MD5'>edac1e212a0a658d2e49820c49f197a3</hashdigest>
+    </byte_run>
+    <byte_run file_offset='6144' len='512'>   
+      <hashdigest type='MD5'>07e97cb188b2931cb52840f813550a2a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='6656' len='512'>   
+      <hashdigest type='MD5'>5726b9f2cc31ec2450362782faa6ce0b</hashdigest>
+    </byte_run>
+    <byte_run file_offset='7168' len='512'>   
+      <hashdigest type='MD5'>b43db9852bf154bc6ddda63e8f05f028</hashdigest>
+    </byte_run>
+    <byte_run file_offset='7680' len='512'>   
+      <hashdigest type='MD5'>b6e442f5590fbcf41180ccf78cda92b5</hashdigest>
+    </byte_run>
+    <byte_run file_offset='8192' len='512'>   
+      <hashdigest type='MD5'>dfa5086e168de811b48161c1a88038ac</hashdigest>
+    </byte_run>
+    <byte_run file_offset='8704' len='512'>   
+      <hashdigest type='MD5'>b57fa4425c52b07de49bc8d37ee0810f</hashdigest>
+    </byte_run>
+    <byte_run file_offset='9216' len='512'>   
+      <hashdigest type='MD5'>90c08b66e41c528678fb8d46553de076</hashdigest>
+    </byte_run>
+    <byte_run file_offset='9728' len='512'>   
+      <hashdigest type='MD5'>625d811743fbe43622063b6fdf4ebbea</hashdigest>
+    </byte_run>
+    <byte_run file_offset='10240' len='512'>   
+      <hashdigest type='MD5'>cee4edd51c388aa66120ca07ff6f305a</hashdigest>
+    </byte_run>
+    <byte_run file_offset='10752' len='512'>   
+      <hashdigest type='MD5'>0100f8746486c001dde731987f1f2681</hashdigest>
+    </byte_run>
+    <byte_run file_offset='11264' len='512'>   
+      <hashdigest type='MD5'>16873e6973bb4f4a2571e7da9aa68080</hashdigest>
+    </byte_run>
+    <byte_run file_offset='11776' len='512'>   
+      <hashdigest type='MD5'>a9896430d0c59a1acfa9f9c7d1b1d968</hashdigest>
+    </byte_run>
+    <byte_run file_offset='12288' len='183'>   
+      <hashdigest type='MD5'>e20507dc39f0bc76d6dbc3f6021d7c1a</hashdigest>
+    </byte_run>
+    <hashdigest type='MD5'>65c67a4bc99efcbe12a87ec04df5a368</hashdigest>
+  </fileobject>
+  <rusage>
+    <utime>0.002000</utime>
+    <stime>0.001000</stime>
+    <maxrss>1960</maxrss>
+    <minflt>546</minflt>
+    <majflt>1</majflt>
+    <nswap>0</nswap>
+    <inblock>480</inblock>
+    <oublock>16</oublock>
+    <clocktime>0.000978</clocktime>
+  </rusage>
+</dfxml>

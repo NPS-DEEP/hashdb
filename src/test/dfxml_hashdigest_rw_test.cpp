@@ -50,7 +50,7 @@ void run_tests() {
 
   make_dir_if_not_there(temp_dir);
 
-  dfxml_hashdigest_reader_manager_t<hash_t> manager("sample_dfxml", "my repository");
+  dfxml_hashdigest_reader_manager_t<hash_t> manager("sample_dfxml4096.xml", "my repository");
 
   dfxml_hashdigest_reader_manager_t<hash_t>::const_iterator it = manager.begin();
 

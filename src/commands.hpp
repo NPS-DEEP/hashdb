@@ -49,6 +49,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <boost/filesystem.hpp> // for scan_random command
 
 /**
  * Provides the commands that hashdb_manager can execute.
@@ -111,7 +112,7 @@ class commands_t {
   // generate random scan input that is unlikely to match the hashdb
   static void generate_scan_input(std::vector<T>* scan_input) {
     scan_input->clear();
-    for (int i=0; i<1000000; i++) {
+    for (int i=0; i<100000; i++) {
       scan_input->push_back(random_key<T>());
     }
   }
@@ -127,7 +128,7 @@ class commands_t {
     }
 
     scan_input->clear();
-    for (int i=0; i<1000000; i++) {
+    for (int i=0; i<100000; i++) {
 T temp = random_key<T>();
 
       std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
@@ -142,6 +143,40 @@ T temp = random_key<T>();
       }
 //std::cout << "key: " << temp.hexdigest() << ", using " << scan_input->back() << "\n";
     }
+  }
+
+  // create a copy of the hashdb
+  static void create_hashdb_copy(const std::string hashdb_dir,
+                                 const std::string hashdb_dir_copy) {
+    boost::filesystem::path hashdb_path(hashdb_dir);
+    boost::filesystem::path hashdb_path_copy(hashdb_dir_copy);
+    std::cout << "creating temporary hash database " << hashdb_dir_copy << "\n";
+    remove_all(hashdb_path_copy);
+    copy_directory(hashdb_path, hashdb_path_copy);
+    std::string files[] = {"bloom_filter_1", "bloom_filter_2", "hash_store",
+                           "history.xml", "log.xml", "settings.xml",
+                           "source_filename_store.dat",
+                           "source_filename_store.idx1",
+                           "source_filename_store.idx2",
+                           "source_lookup_store.dat",
+                           "source_lookup_store.idx1",
+                           "source_lookup_store.idx2",
+                           "source_repository_name_store.dat",
+                           "source_repository_name_store.idx1",
+                           "source_repository_name_store.idx2"};
+    for (int i=0; i<15; i++) {
+      std::string from_string = hashdb_dir + "/" + files[i];
+      std::string to_string = hashdb_dir_copy + "/" + files[i];
+//      boost::filesystem::copy_file(boost::filesystem::path(from_string),
+//                                   boost::filesystem::path(to_string));
+    }
+  }
+
+  // remove the copy of the hashdb
+  static void delete_hashdb_copy(const std::string hashdb_dir_copy) {
+    std::cout << "deleting temporary hash database " << hashdb_dir_copy << "\n";
+    boost::filesystem::path hashdb_path_copy(hashdb_dir_copy);
+    remove_all(hashdb_path_copy);
   }
 
   public:
@@ -908,8 +943,35 @@ T temp = random_key<T>();
     logger.add("hashdb_dir", hashdb_dir);
     logger.add_timestamp("begin scan_random");
 
+    // create a copy of the hashdb
+    std::string hashdb_dir_copy = hashdb_dir + "/_temp_copy.hdb";
+    create_hashdb_copy(hashdb_dir, hashdb_dir_copy);
+
+    // scan sets of random hashes where hash values all match
+
+    {
+      // open the copy for obtaining valid hash values
+      hashdb_manager_t<T> copied_hashdb_manager(hashdb_dir_copy, READ_ONLY);
+
+      // perform the sets of scans
+      for (int j=1; j<=100; j++) {
+        generate_scan_input(&copied_hashdb_manager, scan_input);
+        std::stringstream ss1;
+        ss1 << "generated random matching hash " << j;
+        logger.add_timestamp(ss1.str());
+        hashdb.scan(*scan_input, *scan_output);
+        std::stringstream ss2;
+        ss2 << "scanned random matching hash " << j;
+        logger.add_timestamp(ss2.str());
+        std::cout << "scan random matching hash " << j << " of 100\n";
+      }
+    }
+
+    // delete copy of hashdb
+    delete_hashdb_copy(hashdb_dir_copy);
+
     // scan sets of random hashes where hash values are unlikely to match
-    for (int i=1; i<=10; i++) {
+    for (int i=1; i<=100; i++) {
       generate_scan_input(scan_input);
       std::stringstream ss1;
       ss1 << "generated random hash " << i;
@@ -918,21 +980,7 @@ T temp = random_key<T>();
       std::stringstream ss2;
       ss2 << "scanned random hash " << i;
       logger.add_timestamp(ss2.str());
-      std::cout << "scan random hash " << i << " of 10\n";
-    }
-
-    // scan sets of random hashes where hash values all match
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-    for (int j=1; j<=10; j++) {
-      generate_scan_input(&hashdb_manager, scan_input);
-      std::stringstream ss1;
-      ss1 << "generated random matching hash " << j;
-      logger.add_timestamp(ss1.str());
-      hashdb.scan(*scan_input, *scan_output);
-      std::stringstream ss2;
-      ss2 << "scanned random matching hash " << j;
-      logger.add_timestamp(ss2.str());
-      std::cout << "scan random matching hash " << j << " of 10\n";
+      std::cout << "scan random hash " << i << " of 100\n";
     }
 
     // close without appending this log event to history
