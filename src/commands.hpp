@@ -145,40 +145,6 @@ T temp = random_key<T>();
     }
   }
 
-  // create a copy of the hashdb
-  static void create_hashdb_copy(const std::string hashdb_dir,
-                                 const std::string hashdb_dir_copy) {
-    boost::filesystem::path hashdb_path(hashdb_dir);
-    boost::filesystem::path hashdb_path_copy(hashdb_dir_copy);
-    std::cout << "creating temporary hash database " << hashdb_dir_copy << "\n";
-    remove_all(hashdb_path_copy);
-    copy_directory(hashdb_path, hashdb_path_copy);
-    std::string files[] = {"bloom_filter_1", "bloom_filter_2", "hash_store",
-                           "history.xml", "log.xml", "settings.xml",
-                           "source_filename_store.dat",
-                           "source_filename_store.idx1",
-                           "source_filename_store.idx2",
-                           "source_lookup_store.dat",
-                           "source_lookup_store.idx1",
-                           "source_lookup_store.idx2",
-                           "source_repository_name_store.dat",
-                           "source_repository_name_store.idx1",
-                           "source_repository_name_store.idx2"};
-    for (int i=0; i<15; i++) {
-      std::string from_string = hashdb_dir + "/" + files[i];
-      std::string to_string = hashdb_dir_copy + "/" + files[i];
-//      boost::filesystem::copy_file(boost::filesystem::path(from_string),
-//                                   boost::filesystem::path(to_string));
-    }
-  }
-
-  // remove the copy of the hashdb
-  static void delete_hashdb_copy(const std::string hashdb_dir_copy) {
-    std::cout << "deleting temporary hash database " << hashdb_dir_copy << "\n";
-    boost::filesystem::path hashdb_path_copy(hashdb_dir_copy);
-    remove_all(hashdb_path_copy);
-  }
-
   public:
 
   // create
@@ -926,13 +892,15 @@ T temp = random_key<T>();
 
   // functional analysis and testing: scan_random
   // Performs two scans: first with no matches, then with all matches.
-  static void scan_random(const std::string& hashdb_dir) {
+  static void scan_random(const std::string& hashdb_dir,
+                          const std::string& hashdb_dir_copy) {
 
     // create space on the heap for the scan input and output vectors
     std::vector<T>* scan_input = new std::vector<T>;
-    typename hashdb_t__<T>::scan_output_t* scan_output = new typename hashdb_t__<T>::scan_output_t();
+    typename hashdb_t__<T>::scan_output_t* scan_output =
+                                  new typename hashdb_t__<T>::scan_output_t();
 
-    // create the hashdb scan service
+    // create the hashdb scan service for scanning with random hash
     hashdb_t__<T> hashdb(hashdb_dir);
 
     // initialize random seed
@@ -941,46 +909,60 @@ T temp = random_key<T>();
     // start logger
     logger_t logger(hashdb_dir, "scan_random");
     logger.add("hashdb_dir", hashdb_dir);
-    logger.add_timestamp("begin scan_random");
-
-    // create a copy of the hashdb
-    std::string hashdb_dir_copy = hashdb_dir + "/_temp_copy.hdb";
-    create_hashdb_copy(hashdb_dir, hashdb_dir_copy);
-
-    // scan sets of random hashes where hash values all match
-
-    {
-      // open the copy for obtaining valid hash values
-      hashdb_manager_t<T> copied_hashdb_manager(hashdb_dir_copy, READ_ONLY);
-
-      // perform the sets of scans
-      for (int j=1; j<=100; j++) {
-        generate_scan_input(&copied_hashdb_manager, scan_input);
-        std::stringstream ss1;
-        ss1 << "generated random matching hash " << j;
-        logger.add_timestamp(ss1.str());
-        hashdb.scan(*scan_input, *scan_output);
-        std::stringstream ss2;
-        ss2 << "scanned random matching hash " << j;
-        logger.add_timestamp(ss2.str());
-        std::cout << "scan random matching hash " << j << " of 100\n";
-      }
-    }
-
-    // delete copy of hashdb
-    delete_hashdb_copy(hashdb_dir_copy);
 
     // scan sets of random hashes where hash values are unlikely to match
+    logger.add_timestamp("begin scan_random with random hash on hashdb");
     for (int i=1; i<=100; i++) {
+      // generate set of random hashes
       generate_scan_input(scan_input);
       std::stringstream ss1;
       ss1 << "generated random hash " << i;
       logger.add_timestamp(ss1.str());
+
+      // scan set of random hashes
       hashdb.scan(*scan_input, *scan_output);
       std::stringstream ss2;
       ss2 << "scanned random hash " << i;
       logger.add_timestamp(ss2.str());
       std::cout << "scan random hash " << i << " of 100\n";
+
+      // make sure no hashes were found
+      if (scan_output->size() > 0) {
+        std::cerr << "Unexpected event: match found, count "
+                  << scan_output->size() << ", are the databases different?\n";
+      
+      }
+    }
+
+    // scan sets of random hashes where hash values all match
+
+    // open hashdb_dir to use for obtaining valid hash values
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // create the hashdb scan service for scanning from the copy
+    hashdb_t__<T> hashdb_copy(hashdb_dir_copy);
+
+    // scan sets of random hashes where all hash values match
+    logger.add_timestamp("begin scan_random with random matching hashes on hashdb copy");
+    for (int j=1; j<=100; j++) {
+      // generate set of random hashes that match
+      generate_scan_input(&hashdb_manager, scan_input);
+      std::stringstream ss1;
+      ss1 << "generated random matching hash " << j;
+      logger.add_timestamp(ss1.str());
+
+      // scan set of random hashes that match
+      hashdb.scan(*scan_input, *scan_output);
+      std::stringstream ss2;
+      ss2 << "scanned random matching hash " << j;
+      logger.add_timestamp(ss2.str());
+      std::cout << "scan random matching hash " << j << " of 100\n";
+
+      // make sure every hash was found
+      if (scan_output->size() != scan_input->size()) {
+        std::cerr << "Unexpected event: match not found, count "
+                  << scan_output->size() << ", are the databases different?\n";
+      }
     }
 
     // close without appending this log event to history

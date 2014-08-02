@@ -518,8 +518,8 @@ void run_command() {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
-    require_parameter_count(1);
-    commands_t<T>::scan_random(hashdb_arg1);
+    require_parameter_count(2);
+    commands_t<T>::scan_random(hashdb_arg1, hashdb_arg2);
   } else {
     // invalid command
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";
