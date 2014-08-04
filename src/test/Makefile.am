@@ -22,7 +22,8 @@
 EXTRA_DIST = \
 	identified_blocks.txt \
 	sample_dfxml4096.xml \
-	sample_dfxml512.xml
+	sample_dfxml512.xml \
+	vg.supp
 
 check_PROGRAMS = \
 	source_lookup_encoding_test \
@@ -32,7 +33,6 @@ check_PROGRAMS = \
 	hashdb_element_test \
 	source_lookup_index_manager_test \
 	hashdb_manager_test \
-	dfxml_hashdigest_rw_test \
 	identified_blocks_reader_test \
 	libhashdb_test \
 	commands_test
@@ -44,7 +44,8 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/btree/include \
 	-isystem${top_srcdir}/src/endian/include \
 	-I${top_srcdir}/src \
-	$(XML_CFLAGS)
+	$(XML_CFLAGS) \
+	-DDATADIR=\"$(srcdir)/\"
 
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_manager_test_LDADD = ../libhashdb.la
@@ -52,7 +53,6 @@ logger_test_LDADD = ../libhashdb.la
 hashdb_element_test_LDADD = ../libhashdb.la
 source_lookup_index_manager_test_LDADD = ../libhashdb.la
 hashdb_manager_test_LDADD = ../libhashdb.la
-dfxml_hashdigest_rw_test_LDADD = ../libhashdb.la
 identified_blocks_reader_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
 commands_test_LDADD = ../libhashdb.la
@@ -66,7 +66,7 @@ run_tests:
 	done
 
 clean-local:
-	rm -rf temp_dir* temp_dfxml_out
+	rm -rf temp_dir* temp_dfxml_out.xml
 
 # test with valgrind memory analysis
 run_tests_valgrind:
@@ -86,6 +86,7 @@ source_lookup_encoding_test_SOURCES = \
 bloom_filter_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
+	to_key_helper.hpp \
 	bloom_filter_manager_test.cpp
 
 settings_manager_test_SOURCES = \
@@ -110,12 +111,8 @@ source_lookup_index_manager_test_SOURCES = \
 hashdb_manager_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
+	to_key_helper.hpp \
 	hashdb_manager_test.cpp
-
-dfxml_hashdigest_rw_test_SOURCES = \
-	boost_fix.hpp \
-	directory_helper.hpp \
-	dfxml_hashdigest_rw_test.cpp
 
 identified_blocks_reader_test_SOURCES = \
 	boost_fix.hpp \
@@ -124,6 +121,7 @@ identified_blocks_reader_test_SOURCES = \
 libhashdb_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
+	to_key_helper.hpp \
 	libhashdb_test.cpp
 	
 commands_test_SOURCES = \

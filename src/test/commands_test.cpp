@@ -39,12 +39,15 @@
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
-static const std::string temp_dir("temp_dir_commands_test");
-static const std::string temp_dir1("temp_dir1_commands_test");
-static const std::string temp_dir2("temp_dir2_commands_test");
-static const std::string temp_dir3("temp_dir3_commands_test");
-static const std::string temp_dir4("temp_dir4_commands_test");
-static const std::string temp_dir5("temp_dir5_commands_test");
+static const std::string temp_dir("temp_dir_commands_test.hdb");
+static const std::string temp_dir1("temp_dir1_commands_test.hdb");
+static const std::string temp_dir2("temp_dir2_commands_test.hdb");
+static const std::string temp_dir3("temp_dir3_commands_test.hdb");
+static const std::string temp_dir4("temp_dir4_commands_test.hdb");
+static const std::string temp_dir5("temp_dir5_commands_test.hdb");
+static const std::string identified_blocks(DATADIR "identified_blocks.txt");
+static const std::string sample_dfxml4096(DATADIR "sample_dfxml4096.xml");
+static const std::string sample_dfxml512(DATADIR "sample_dfxml512.xml");
 
 // validate correct size of db
 void check_size(const std::string hashdb_dir, size_t size) {
@@ -72,7 +75,7 @@ void do_test1() {
   commands_t<hash_t>::create(settings, temp_dir5);
 
   // import
-  commands_t<hash_t>::import("test_repository_name", "sample_dfxml4096.xml", temp_dir1);
+  commands_t<hash_t>::import("test_repository_name", sample_dfxml4096, temp_dir1);
 
   // export
   commands_t<hash_t>::do_export(temp_dir1, "temp_dfxml_out.xml");
@@ -93,13 +96,13 @@ void do_test1() {
   commands_t<hash_t>::deduplicate(temp_dir1, temp_dir4);
 
   // scan
-  commands_t<hash_t>::scan(temp_dir5, "sample_dfxml4096.xml");
+  commands_t<hash_t>::scan(temp_dir5, sample_dfxml4096);
 
   // scan expanded
-  commands_t<hash_t>::scan_expanded(temp_dir5, "sample_dfxml4096.xml");
+  commands_t<hash_t>::scan_expanded(temp_dir5, sample_dfxml4096);
 
   // expand_identified_blocks
-  commands_t<hash_t>::expand_identified_blocks(temp_dir5, "identified_blocks.txt");
+  commands_t<hash_t>::expand_identified_blocks(temp_dir5, identified_blocks);
 
   // server
   // not tested
@@ -147,11 +150,11 @@ void do_test2() {
     ss << "test_repository_name_" << i;
 
     // import
-    commands_t<hash_t>::import(ss.str(), "sample_dfxml4096.xml", temp_dir);
+    commands_t<hash_t>::import(ss.str(), sample_dfxml4096, temp_dir);
   }
 
   // duplicate import should not add elements
-  commands_t<hash_t>::import("test_repository_name_0", "sample_dfxml4096.xml", temp_dir);
+  commands_t<hash_t>::import("test_repository_name_0", sample_dfxml4096, temp_dir);
 
   // validate correct size
   check_size(temp_dir, 74*12);
@@ -169,7 +172,7 @@ void do_test3() {
   commands_t<hash_t>::create(settings, temp_dir2);
 
   // import
-  commands_t<hash_t>::import("test_repository_name", "sample_dfxml4096.xml", temp_dir1);
+  commands_t<hash_t>::import("test_repository_name", sample_dfxml4096, temp_dir1);
   check_size(temp_dir1, 74);
 
   // export
@@ -194,8 +197,8 @@ void do_test4() {
   commands_t<hash_t>::create(settings, temp_dir2);
 
   // import
-  commands_t<hash_t>::import("test_repository_name", "sample_dfxml512.xml", temp_dir1);
-  commands_t<hash_t>::import("test_repository_name2", "sample_dfxml512.xml", temp_dir1);
+  commands_t<hash_t>::import("test_repository_name", sample_dfxml512, temp_dir1);
+  commands_t<hash_t>::import("test_repository_name2", sample_dfxml512, temp_dir1);
   check_size(temp_dir1, 24);
 
   // export

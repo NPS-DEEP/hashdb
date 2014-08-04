@@ -42,7 +42,7 @@
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
-static const char temp_dir[] = "temp_dir_libhashdb_test";
+static const char temp_dir[] = "temp_dir_libhashdb_test.hdb";
 
 typedef hashdb_t__<hash_t> hashdb_t;
 

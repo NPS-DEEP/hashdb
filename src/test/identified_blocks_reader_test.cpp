@@ -32,9 +32,10 @@
 #include "identified_blocks_reader_iterator.hpp"
 #include "identified_blocks_reader.hpp"
 
+static const std::string identified_blocks(DATADIR "identified_blocks.txt");
 
 void do_test() {
-  identified_blocks_reader_t reader("identified_blocks.txt");
+  identified_blocks_reader_t reader(identified_blocks);
   identified_blocks_reader_iterator_t it = reader.begin();
   BOOST_TEST_EQ(it->first, "10485760");
   BOOST_TEST_EQ(it->second, "3b6b477d391f73f67c1c01e2141dbb17");
