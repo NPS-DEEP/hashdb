@@ -40,7 +40,7 @@
 
 class identified_blocks_reader_iterator_t {
 
-  std::fstream* in;
+  std::ifstream* in;
 
   std::pair<std::string, std::string> dereferenced_value;
   size_t feature_count;
@@ -111,7 +111,7 @@ class identified_blocks_reader_iterator_t {
   }
 
   public:
-  identified_blocks_reader_iterator_t(std::fstream* p_in, bool p_at_end) :
+  identified_blocks_reader_iterator_t(std::ifstream* p_in, bool p_at_end) :
              in(p_in),
              dereferenced_value(),
              feature_count(0),

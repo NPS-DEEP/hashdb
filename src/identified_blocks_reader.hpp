@@ -42,7 +42,7 @@
 class identified_blocks_reader_t {
 
   std::string filename;
-  std::fstream in;
+  std::ifstream in;
 
   public:
   identified_blocks_reader_t(std::string p_filename) :
