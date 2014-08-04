@@ -175,12 +175,24 @@ class logger_t {
 
 inline void add_memory_usage_algorithm(dfxml_writer* logger, std::string name) {
 #ifdef HAVE_MALLINFO
+  // NOTE: this data may not be useful, we need a better way
   struct mallinfo mi;
   std::stringstream ss;
   mi = mallinfo();
   ss << "name='" << name
-     << "' allocated='" << mi.arena
-     << "' occupied='" << mi.uordblks << "'";
+//     << "' allocated='" << mi.arena
+     << "' occupied='" << mi.uordblks
+//     << "' arena='" << mi.arena
+//     << "' ordblks='" << mi.ordblks
+//     << "' smblks='" << mi.smblks
+//     << "' hblks='" << mi.hblks
+//     << "' hblkhd='" << mi.hblkhd
+//     << "' usmblks='" << mi.usmblks
+//     << "' fsmblks='" << mi.fsmblks
+//     << "' uordblks='" << mi.uordblks
+//     << "' fordblks='" << mi.fordblks
+//     << "' keepcost='" << mi.keepcost
+     << "'";
 
   // add named memory usage
   logger->xmlout("memory_usage", "",ss.str(), true);
