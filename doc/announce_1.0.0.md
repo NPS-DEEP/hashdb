@@ -67,9 +67,9 @@ not be added.
 
 Availability
 ============
-Release source code: http://digitalcorpora.org/downloads/hashdb/
-Windows installer: http://digitalcorpora.org/downloads/hashdb/
-GIT repository: https://github.com/simsong/hashdb
+* Release source code: http://digitalcorpora.org/downloads/hashdb/
+* Windows installer: http://digitalcorpora.org/downloads/hashdb/
+* GIT repository: https://github.com/simsong/hashdb
 
 Contacts
 ========
