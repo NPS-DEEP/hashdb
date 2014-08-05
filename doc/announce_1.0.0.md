@@ -26,10 +26,10 @@ supported intersect command.
 * Statistical summaries. Statistics commands were added to allow users to obtain informa-
 tion about the contents of the database.
 Statistics now available include:
-** The list of repository names and filenames stored in the database.
-** The sizes of internal database tables.
-** Information about the frequency of hash duplicates.
-** The list of all hashes along with source information.
+    * The list of repository names and filenames stored in the database.
+    * The sizes of internal database tables.
+    * Information about the frequency of hash duplicates.
+    * The list of all hashes along with source information.
 
 * A simplified user interface. Database creation was moved into its own function and sep-
 arated from the copy commands to eliminate the need for complex command syntax.
