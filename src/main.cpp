@@ -179,7 +179,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHV p:m:t:a:b:A:B:C:D:E:F:r:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHV p:m:A:B:C:D:E:F:r:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
