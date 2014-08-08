@@ -81,7 +81,7 @@ void do_test1() {
   commands_t<hash_t>::do_export(temp_dir1, "temp_dfxml_out.xml");
 
   // add
-  commands_t<hash_t>::add(temp_dir1, temp_dir1);
+  commands_t<hash_t>::add(temp_dir1, temp_dir2);
   
   // add_multiple
   commands_t<hash_t>::add_multiple(temp_dir1, temp_dir2, temp_dir3);
