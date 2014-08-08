@@ -21,7 +21,8 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/test/Makefile
                  man/Makefile
-                 doc/Makefile])
+                 doc/Makefile
+                 python/Makefile])
 
 # define CC and CXX as desired for alternate compilers
 #CC=clang
