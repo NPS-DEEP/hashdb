@@ -45,9 +45,9 @@ static const std::string temp_dir2("temp_dir2_commands_test.hdb");
 static const std::string temp_dir3("temp_dir3_commands_test.hdb");
 static const std::string temp_dir4("temp_dir4_commands_test.hdb");
 static const std::string temp_dir5("temp_dir5_commands_test.hdb");
-static const std::string identified_blocks(DATADIR "identified_blocks.txt");
-static const std::string sample_dfxml4096(DATADIR "sample_dfxml4096.xml");
-static const std::string sample_dfxml512(DATADIR "sample_dfxml512.xml");
+static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
+static const std::string sample_dfxml4096(HASHDB_TEST_DATADIR "sample_dfxml4096.xml");
+static const std::string sample_dfxml512(HASHDB_TEST_DATADIR "sample_dfxml512.xml");
 
 // validate correct size of db
 void check_size(const std::string hashdb_dir, size_t size) {

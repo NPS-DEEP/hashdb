@@ -32,7 +32,7 @@
 #include "identified_blocks_reader_iterator.hpp"
 #include "identified_blocks_reader.hpp"
 
-static const std::string identified_blocks(DATADIR "identified_blocks.txt");
+static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
 
 void do_test() {
   identified_blocks_reader_t reader(identified_blocks);

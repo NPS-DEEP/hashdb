@@ -45,7 +45,7 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/endian/include \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS) \
-	-DDATADIR=\"$(srcdir)/\"
+	-DHASHDB_TEST_DATADIR=\"$(srcdir)/\"
 
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_manager_test_LDADD = ../libhashdb.la

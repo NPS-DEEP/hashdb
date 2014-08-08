@@ -12,6 +12,7 @@ Bug Fixes
 Use of these options now provide an error rather than quietly
 disregarding their use.
 * Improve syntax of change report written to stdout.
+* Fix so test suite builds for Windows.
 
 Availability
 ============
