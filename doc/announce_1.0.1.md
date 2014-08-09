@@ -14,6 +14,7 @@ disregarding their use.
 * Improve syntax of change report written to stdout.
 * Fix so test suite builds for Windows.
 * Fix command test to not add to self.
+* Add the Users Manual to the distribution.
 
 Availability
 ============

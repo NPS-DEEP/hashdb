@@ -1,0 +1,132 @@
+
+\section{Worked Example: Finding Similarity Between Disk Images}
+The worked example provided is intended to further illustrate how to use \hash to answer specific questions and perform specific tasks.  This example uses a publicly available dataset and can be replicated by readers of this manual.  In this example, we walk through the process of using \hash (and \bulk) to find the similarities between two separate disk images. We generate a hash database of block hashes from each media image and then obtain common block hashes by taking the intersection of the two databases.\\
+
+First, we download two files to use for comparison. The disk images are called \texttt{jo-favorites} \texttt{-usb-2009-12-11.E01} and \texttt{jo-work-usb-2009-12-11.E01}. Both files are available at \url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/}. Specifically with this example, we will be comparing the contents of two fictional USB drives.\\
+
+Then, we run \bulk on each disk image separately:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{bulk_extractor -o workOutput -S hashdb_mode=import  jo-work-usb-2009-12-11.E01}
+\end{Verbatim}
+
+\bulk writes the following output to the screen, indicating a successful run:
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+bulk_extractor version: 1.4.1
+Input file: jo-work-usb-2009-12-11.E01
+Output directory: workOutput
+Disk Size: 131072000
+Threads: 1
+21:57:21 Offset 67MB (51.20%) Done in  0:00:24 at 21:57:45
+All data are read; waiting for threads to finish...
+Time elapsed waiting for 1 thread to finish:
+    1 sec (timeout in 59 min 59 sec.)
+All Threads Finished!
+Producer time spent waiting: 38.5587 sec.
+Average consumer time spent waiting: 1.85768 sec.
+*******************************************
+** bulk_extractor is probably CPU bound. **
+**    Run on a computer with more cores  **
+**      to get better performance.       **
+*******************************************
+Phase 2. Shutting down scanners
+Phase 3. Creating Histograms
+   ccn histogram...   ccn_track2 histogram...   domain histogram...
+   email histogram...   ether histogram...   find histogram...
+   ip histogram...   telephone histogram...   url histogram...
+   url microsoft-live...   url services...   url facebook-address...
+   url facebook-id...   url searches...
+Elapsed time: 47.6743 sec.
+Total MB processed: 1310
+Overall performance: 2.74932 MBytes/sec (2.74932 MBytes/sec/thread)
+Total email features found: 31
+\end{Verbatim}
+\endgroup
+
+
+Next, run \bulk on the other usb drive disk image:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{bulk_extractor -o favoritesOutput -S hashdb_mode=import jo-favorites-usb-2009-11.E01}
+\end{Verbatim}
+
+\bulk runs, printing the following to the screen: 
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+bulk_extractor version: 1.4.1
+Input file: jo-favorites-usb-2009-12-11.E01
+Output directory: favoritesOutput
+Disk Size: 1048576000
+Threads: 1
+21:59:44 Offset 67MB (6.40%) Done in  0:05:07 at 22:04:51
+22:00:08 Offset 150MB (14.40%) Done in  0:04:30 at 22:04:38
+22:00:32 Offset 234MB (22.40%) Done in  0:03:59 at 22:04:31
+22:00:40 Offset 318MB (30.40%) Done in  0:02:55 at 22:03:35
+22:00:41 Offset 402MB (38.40%) Done in  0:02:05 at 22:02:46
+22:00:42 Offset 486MB (46.40%) Done in  0:01:31 at 22:02:13
+22:00:44 Offset 570MB (54.40%) Done in  0:01:07 at 22:01:51
+22:00:45 Offset 654MB (62.40%) Done in  0:00:49 at 22:01:34
+22:00:47 Offset 738MB (70.40%) Done in  0:00:35 at 22:01:22
+22:00:48 Offset 822MB (78.40%) Done in  0:00:23 at 22:01:11
+22:00:50 Offset 905MB (86.40%) Done in  0:00:13 at 22:01:03
+22:00:51 Offset 989MB (94.40%) Done in  0:00:05 at 22:00:56
+All data are read; waiting for threads to finish...
+Time elapsed waiting for 1 thread to finish:
+     (timeout in 60 min .)
+All Threads Finished!
+Producer time spent waiting: 76.8042 sec.
+Average consumer time spent waiting: 1.79526 sec.
+*******************************************
+** bulk_extractor is probably CPU bound. **
+**    Run on a computer with more cores  **
+**      to get better performance.       **
+*******************************************
+Phase 2. Shutting down scanners
+Phase 3. Creating Histograms
+   ccn histogram...   ccn_track2 histogram...   domain histogram...
+   email histogram...   ether histogram...   find histogram...
+   ip histogram...   telephone histogram...   url histogram...
+   url microsoft-live...   url services...   url facebook-address...
+   url facebook-id...   url searches...
+Elapsed time: 89.1399 sec.
+Total MB processed: 10485
+Overall performance: 11.7633 MBytes/sec (11.7633 MBytes/sec/thread)
+Total email features found: 2
+\end{Verbatim}
+\endgroup
+
+After \bulk runs, two output directories are created. Each directory contains a hash database called \textit{hashdb.hdb}. The hash databases each contain cryptographic block hashes produced from the disk images. Next, we create a database that will store the intersection of the two disk images. The following command creates the database \textit{intersection.hdb}:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb create intersection.hdb}
+\end{Verbatim}
+
+Next, we populate the database \textit{intersection.hdb} with values that are common between the two databases using the following command:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb intersect workOutput/hashdb.hdb favoritesOutput/hashdb.hdb intersection.hdb}
+\end{Verbatim}
+
+\hash prints the following indicating that 32 hashes were inserted successfully and 8 hashes were not inserted because they were considered to be duplicate elements (same hash and same source information):
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+hashdb changes (insert):
+    hashes inserted=32
+    hashes not inserted, duplicate element=8
+\end{Verbatim}
+\endgroup
+
+Now, the database \textit{intersection.hdb} contains hashes common to both disk images. \\
+
+Here are some ways to gain knowledge from the common hashes identified:
+\begin{itemize}
+\item Constrain the matches further by using the \texttt{intersect} command
+to intersect the database with a blacklist database,
+and then use the \texttt{get\_sources} command
+to find the blacklist filenames that these hash values correspond to.
+\item Use \bulk \textbf{Viewer} to navigate to the data that these hashes were generated from
+to see if the raw data there is significant.
+\item If the scanned image contains a file system,
+try to use the \textbf{fiwalk} tool to carve the files from which the hash values
+were calculated.
+\end{itemize}
