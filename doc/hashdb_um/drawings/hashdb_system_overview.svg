@@ -449,7 +449,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.5"
-     inkscape:cx="558.6615"
+     inkscape:cx="562.6615"
      inkscape:cy="292.54855"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -480,19 +480,6 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(238.75,-184.375)">
-    <g
-       id="g3996"
-       transform="matrix(1.25,0,0,-1.25,-220,823.8624)">
-      <g
-         id="g3998"
-         clip-path="url(#clipPath4000)">
-        <path
-           inkscape:connector-curvature="0"
-           d="m 0,6.1035e-5 960,0 0,539.999998965 -960,0 L 0,6.1035e-5 z"
-           style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none"
-           id="path4004" />
-      </g>
-    </g>
     <path
        inkscape:connector-curvature="0"
        d="m 128.625,687.7374 534.75,0 0,-409.5 -534.75,0 0,409.5 z"
