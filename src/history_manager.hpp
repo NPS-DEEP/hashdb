@@ -222,7 +222,10 @@ class history_manager_t {
       outf.close();
 
       // rename scratch file to history file, replacing existing history file
-      std::rename(scratch.c_str(), history_filename.c_str());
+      int status = std::rename(scratch.c_str(), history_filename.c_str());
+      if (status != 0) {
+        std::cerr << "unable to move scratch file '" << scratch << "' to '" << history_filename << "'.\n";
+      }
     } catch (history_manager_failure_exception_t &e) {
       std::cerr << "Warning: unable to write hashdb history file.\n";
     }
