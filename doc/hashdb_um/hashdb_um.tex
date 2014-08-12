@@ -223,7 +223,9 @@ The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and prod
 \label{createDFXML}
 Users may create DFXML files to import hashes from by using the
 \textbf{md5deep} tool.
-To download and install \textbf{md5deep} go to \url{http://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
+\textbf{md5deep} is available at \url{http://md5deep.sourceforge.net}.
+For additional instructions on downloading and installing
+\textbf{md5deep}, go to \url{http://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
 
 Choose a file or directory to use as the source of data for the hash file output. For this manual, we use the file \texttt{mock\_video.mp4} available at \url{http://digitalcorpora.org/downloads/hashdb/demo/}. Then, run \textbf{md5deep} with the following command:\\
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -278,7 +280,7 @@ It can be difficult to follow for all but advanced users but provides full attri
 
 \subsection{Using the Hash Databases}
 \label{usingSection}
-\hash provides the capability for users to scan the database for matching hash blocks locally or remotely via a socket. Users can also query for hash source information and information about the hash database itself. \hash provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hash API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hash tool. 
+\hash provides the capability for users to scan the database for matching hash blocks locally or remotely via a socket. Users can also query for hash source information and information about the hash database itself. \hash provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes to the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hash API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hash tool. 
 
 \subsubsection{\bulk}
 \bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
@@ -338,7 +340,9 @@ Note: sudo is not required. If you do not wish to use sudo,  build and install \
 \verbbf{make install}
 \end{Verbatim}
 \textbf{Download and Install \bulk}\\
-Many of the capabilities provided by \hash are best utilized using the \bulk program using the \textit{hashdb} scanner. The scanner is included in version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hash must be installed first for \bulk to build properly with \hash. \bulk will automatically install the \textit{hashdb} scanner but only if the \hash library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.
+The \bulk \hash scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
+This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hash must be installed first for \bulk to build properly with \hash. \bulk will automatically install the \textit{hashdb} scanner but only if the \hash library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.
+
 \subsubsection{Installing on Windows}
 \label{InstallingOnWindows}
 Windows users should download the Windows Installer for \hash. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.0.0 as of publication of this manual).\\
@@ -364,11 +368,16 @@ When the installer file is executed, the installation will begin and show a dial
 \end{figure}
 
 \textbf{Download and Install \bulk}\\
-Many of the capabilities provided by \hash are best utilized using the \bulk program using the \textit{hashdb} scanner. The scanner is installed in version 1.4.5 or later. For detailed instructions on downloading and installing \textbf{bulk\_extractor}, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. 
+The \bulk \hash scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
+This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}.
 
-\subsection {Run \hash Tools}
+\subsection {\hash Commands}
 \label{Running}
-The core capabilities provided by \hash involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hash users need to start by building a database (if an existing database is not available for use). This section describes the steps to set up a database and import information into it using a DFXML file. Then, it describes the basic steps used to scan media for the hash values contained in the newly created database. Note, there are other ways to populate a database, including using other hash databases (discussed in Section \ref{updateSection}) and through the use of the import capability provided by the API (discussed in Section \ref{APISection}) as is provided by the \bulk \hash scanner (discussed in Section \ref{bulkextractorSection}).\\
+The core capabilities provided by \hash involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hash users need to start by building a database (if an existing database is not available for use).
+Users then import hashes using a DFXML file or by using the \bulk \hash scaner, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
+Users then scan for hashes that match.
+Additional commands are provided to support statistical analysis, performance tuning and performance analysis.
+This section describes \hash commands, along with examples, for performing these tasks.
 
 \subsubsection{Creating a Hash Database}
 A hash database must be created before hashes can be added to it.
@@ -414,9 +423,13 @@ The above two commands produce identical results, creating the database \textit{
 \end{tabular}
 \end{table}
 
-\subsubsection{Importing to and Exporting from a Hash Database}
+\subsubsection{Importing and Exporting between a DFXML File and a Hash Database}
+Commands to import and export hashes are shown in Table \ref{tab:importExport}.
+Once a database has been created, it may be populated with hash values from a DFXML file.
+Note that there are other ways to populate a database besides importing from a DFXML file, including using other hash databases (discussed in Section \ref{updateSection}),
+by using the \bulk \hash scanner (discussed in Section \ref{bulkextractorSection}),
+and through the use of the import capability provided by the API (discussed in Section \ref{APISection}). \\
 
-Now that the database has been created, the next step is to populate the database with hash values from a DFXML file. Commands to import and export hashes are shown in Table \ref{tab:importExport}.
 Using the DFXML file created in the previous section, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import -r mock_video_repository mock_video.xml mock_video.hdb}
@@ -440,7 +453,7 @@ In the above command the option \textbf{-r} is used along with the repository na
 \end{table}
 
 
-This \textbf{import} command used above imports the contents of \texttt{mock\_video.xml} into the database \textit{mock\_video.hdb}. \hash prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
+This \textbf{import} command in the above example imports the contents of \texttt{mock\_video.xml} into the database \textit{mock\_video.hdb}. \hash prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
 
 \begingroup
 \footnotesize
@@ -488,8 +501,8 @@ Users can also run the following command to get information about the contents o
 \end{Verbatim}
 
 \subsubsection{Manipulating Hash Databases}
-Databases may need to be merged or common hash values may need to be subtracted out before they are used for scanning against.
-These commands are outlined in Table \ref{tab:databaseManipulation}.
+Databases may need to be merged together or common hash values may need to be subtracted out in order for them to be more suitable for scanning against.
+Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
 
 \begin{table}[!ht]
 \centering
@@ -515,11 +528,13 @@ These commands are outlined in Table \ref{tab:databaseManipulation}.
 \end{table}
 
 \subsubsection{Tracking Changes in Hash Databases}
-Statistics about database changes are reported on the console and to the log file and history file inside the hash database.  These statistics are shown in Table \ref{tab:changeStatistics}.
+Statistics about hash database changes are reported on the console and to the log file and history file inside the hash database.
+These statistics show the number of hashes inserted or removed as a result of a command, and also show the number of hashes not inserted or not removed because specific conditions were not met.
+These statistics are shown in Table \ref{tab:changeStatistics}.
 \begin{table}[!ht]
 
 \centering
-\caption{Database Statistics tracked in the file \texttt{log.xml}}
+\caption{Database Statistics reported on the console and tracked in the file \texttt{log.xml}}
 \label{tab:changeStatistics}
 \begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
@@ -561,7 +576,7 @@ hash value, repository name, filename, and its file offset do not exist in the d
 
 \subsubsection{Scanning Media for Hash Values}
 \hash can be used to determine if a file, directory or disk image has content that matches another file, directory or disk image. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content. To scan media for hash values, run using the \bulk \textit{hashdb} scanner on a media image file and provide a hash database created by \hash as input.
-Scan services are shown in Table \ref{tab:scanServices}.
+Scan services are shown in Table \ref{tab:scanServices}. \\
 
 \begin{table}[!ht]
 \centering
@@ -582,9 +597,9 @@ Scan services are shown in Table \ref{tab:scanServices}.
 \end{tabular}
 \end{table}
 
-First, download the media that you would like to scan. For this example, we use a video file called \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\ 
+First, identify the media that you would like to scan. For this example, we download and use video file \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\ 
 
-Second, identify the existing hash database that will be used to search for hash value matches. In the previous section we created the database \textit{\textbf{mock\_video.hdb}}. That database contains all of the block hash values from a media image. \\
+Second, identify the existing hash database that will be used to search for hash value matches. We'll use the database \textit{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
 
 Finally, run \bulk from the command line and send the required parameters to the \textit{hashdb} scanner using the \textbf{-S} option. Run the following command: 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -593,8 +608,11 @@ Finally, run \bulk from the command line and send the required parameters to the
 \end{Verbatim}
 This command tells \bulk to enable the \textit{hashdb} scanner and to run it in ``scan'' mode to try to match the values found in the local database \textit{\textbf{mock\_video.hdb}}. Note: other run options using \bulk are discussed further in \ref{bulkextractorSection}.\\
 
-The following is the output printed to the command line as a result of the above command:
-\begingroup
+Listing \ref{bulkHashScan} shows the output printed to the command line as a result of the above \bulk \hash scan command. \\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption=Output from \bulk \hash scan, label=bulkHashScan]
+
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
 bulk_extractor version: 1.4.1
@@ -624,7 +642,7 @@ Total MB processed: 125
 Overall performance: 1.98746 MBytes/sec (0.496864 MBytes/sec/thread)
 Total email features found: 0
 \end{Verbatim}
-\endgroup
+\end{lstlisting}
 
 All hash block matches discovered in the hash database are printed to the \bulk output file \texttt{identified\_blocks.txt}. Listing \ref{identifiedBlocks} shows the contents of that file after the \bulk run. Each line of the file corresponds to one hash block from the input data provided that was matched in the database. The number at the beginning of the line is the Forensic Path.\\
 
@@ -693,7 +711,7 @@ Users may be put off by the quantity of matches incurred by low-entropy data in 
 These commands are provided to manage false positives.
 
 \subsubsection{Statistics}
-Various metadata statistics is available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
+Various metadata statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
 Table \ref{tab:statistics} describes available statistics.
 
 \begin{table}[!ht]
@@ -723,7 +741,7 @@ The Bloom filter may be tuned, see Table \ref{tab:tuning}.
 \begin{table}[!ht]
 \centering
 \caption{Commands Available in \hash Command Line Tool to obtain Metadata Statistics about a Hash Database}
-\label{tab:statistics}
+\label{tab:tuning}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
@@ -733,8 +751,8 @@ The Bloom filter may be tuned, see Table \ref{tab:tuning}.
 \end{tabular}
 \end{table}
 
-\subsubsection{Analysis}
-Analysis commands for analyzing \hash performance are available, see Table \ref{tab:analysis}.
+\subsubsection{Performance Analysis}
+Performance analysis commands for analyzing \hash performance are available, see Table \ref{tab:analysis}.
 
 \begin{table}[!ht]
 \centering
@@ -751,15 +769,14 @@ Analysis commands for analyzing \hash performance are available, see Table \ref{
 \end{tabular}
 \end{table}
 
-\subsection{Using \hash with the \bulk Scanner}
-\subsubsection{Importing Hashes and Scanning for Hashes}
+\subsection{Importing and Scanning Using the \bulk \hash Scanner}
 The \bulk \hash scanner may be used to import hashes and to scan for hashes.
-Basic \bulk scanner syntax is shown in Table \ref{tab:beScanner}.
+The syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to perform \hash Performance Analysis}
-\label{tab:statistics}
+\caption{\bulk \hash Scanner Commands}
+\label{tab:hashdbScanner}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
@@ -850,7 +867,7 @@ Note, \bulk will place feature file and other output not relevant to the \hash a
 
 \subsection{Updating Hash Databases}
 \label{updateSection}
-\hash provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:updateDatabases}. \hash databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For each of the commands, the databases described in the arguments must be existing databases. For example, the following command will  copy all non-duplicate values from \textit{mock\_video.hdb} into \textit{mock\_video\_dedup.hdb} :
+\hash provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hash databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For each of the commands, the databases described in the arguments must be existing databases. For example, the following command will  copy all non-duplicate values from \textit{mock\_video.hdb} into \textit{mock\_video\_dedup.hdb} :
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb deduplicate mock_video.hdb mock_video_dedup.hdb}
 \end{Verbatim}
