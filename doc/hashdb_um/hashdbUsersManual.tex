@@ -612,9 +612,6 @@ Listing \ref{bulkHashScan} shows the output printed to the command line as a res
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Output from \bulk \hash scan, label=bulkHashScan]
-
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
 bulk_extractor version: 1.4.1
 Input file: mock_video_redacted_image
 Output directory: outdir1
@@ -641,7 +638,6 @@ Elapsed time: 6.33812 sec.
 Total MB processed: 125
 Overall performance: 1.98746 MBytes/sec (0.496864 MBytes/sec/thread)
 Total email features found: 0
-\end{Verbatim}
 \end{lstlisting}
 
 All hash block matches discovered in the hash database are printed to the \bulk output file \texttt{identified\_blocks.txt}. Listing \ref{identifiedBlocks} shows the contents of that file after the \bulk run. Each line of the file corresponds to one hash block from the input data provided that was matched in the database. The number at the beginning of the line is the Forensic Path.\\
