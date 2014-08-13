@@ -158,6 +158,7 @@ int main(int argc,char **argv) {
     const struct option long_options[] = {
       // general
       {"help", no_argument, 0, 'h'},
+      {"Help", no_argument, 0, 'H'},
       {"Version", no_argument, 0, 'V'},
 
       // hashdb settings
@@ -194,7 +195,7 @@ int main(int argc,char **argv) {
         exit(0);
         break;
       }
-      case 'H': {	// help
+      case 'H': {	// Help
         usage();
         detailed_usage();
         exit(0);
