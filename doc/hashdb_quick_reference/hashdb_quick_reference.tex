@@ -32,7 +32,7 @@
 
 \subsubsection*{New Database}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\hangindent=2em\texttt{create [-p<hash block size>] [-m<maximum duplicates>] <hashdb.hdb>} & Create a new hash database \\
+\hangindent=2em\texttt{create [-p<hash block size>] [-m<maximum duplicates>] [<bloom settings>] <hashdb.hdb>} & Create a new hash database \\
 \end{tabular}
 
 \subsubsection*{Import/Export}
@@ -69,13 +69,13 @@
 
 \subsubsection*{Tuning}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{rebuild\_bloom [<bloom settings>]+} & Rebuild Bloom filter \\
+\texttt{rebuild\_bloom [<bloom settings>]} & Rebuild Bloom filter \\
 \end{tabular}
 
 \subsubsection*{Performance Analysis}
 \begin{tabular}{p{8 cm} p{9 cm} }
-\hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, generate statistics \\
-\texttt{scan\_random <hashdb.hdb> <copy.hdb>} & Scan for random hashes, generate statistics \\
+\hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
+\texttt{scan\_random <hashdb.hdb> <copy.hdb>} & Scan random hashes, log performance in \texttt{log.xml}\\
 \end{tabular}
 
 \subsubsection*{\bulk Scanner}
