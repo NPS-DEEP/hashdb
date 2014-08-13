@@ -15,6 +15,7 @@ disregarding their use.
 * Fix so test suite builds for Windows.
 * Fix command test to not add to self.
 * Add the Users Manual to the distribution.
+* Categorize usage text and fix and clarify usage language.
 
 Availability
 ============
