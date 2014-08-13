@@ -1,0 +1,23 @@
+\begin{thebibliography}{1}
+
+\bibitem{beusersguide}
+{\sc Bradley, J., and Garfinkel, S.}
+\newblock bulk\_extractor users guide, September 2013.
+\newblock
+  \url{http://digitalcorpora.org/downloads/bulk_extractor/doc/BEUsersManual.pdf}.
+
+\bibitem{dfxmlpaper}
+{\sc Garfinkel, S.}
+\newblock Digital forensics {XML} and the {DFXML} toolset.
+\newblock {\em Digital Investigation 8\/} (February 2012), 161--174.
+\newblock
+  \url{http://www.sciencedirect.com/science/article/pii/S1742287611000910}.
+
+\bibitem{hashEncoding}
+{\sc Young, J., Foster, K., Garfinkel, S., and Fairbanks, K.}
+\newblock Distinct sector hashes for target file detection.
+\newblock {\em IEEE Computer\/} (December 2012).
+\newblock
+  \url{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6311397}.
+
+\end{thebibliography}
