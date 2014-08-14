@@ -67,7 +67,7 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/history.xml").c_str());
   remove((hashdb_dir + "/log.xml").c_str());
   remove((hashdb_dir + "/settings.xml").c_str());
-  remove((hashdb_dir + "/settings.xml.backup").c_str());
+  remove((hashdb_dir + "/_old_settings.xml").c_str());
   remove((hashdb_dir + "/source_filename_store.dat").c_str());
   remove((hashdb_dir + "/source_filename_store.idx1").c_str());
   remove((hashdb_dir + "/source_filename_store.idx2").c_str());

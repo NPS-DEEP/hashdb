@@ -27,11 +27,12 @@
 #include "command_line.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
+#include "hashdb_settings_store.hpp"
+#include "hashdb_directory_manager.hpp"
 #include "history_manager.hpp"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
-#include "bloom_rebuild_manager.hpp"
+#include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader_manager.hpp"
 #include "dfxml_hashdigest_writer.hpp"
@@ -150,19 +151,24 @@ T temp = random_key<T>();
   // create
   static void create(const hashdb_settings_t& settings,
                      const std::string& hashdb_dir) {
-    hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+
+    // create the hashdb directory
+    hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
+
+    // write the settings
+    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+    // log the creation event
+    logger_t logger(hashdb_dir, "create");
+    logger.add("hashdb_dir", hashdb_dir);
 
     // get hashdb files to exist because other file modes require them
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
 
-    logger_t logger(hashdb_dir, "create");
-    logger.add("hashdb_dir", hashdb_dir);
+    // close logger
     logger.add_hashdb_configuration<T>();
     logger.add_hashdb_settings(settings);
-
-    // create new history trail
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
   }
 
   // import
@@ -194,13 +200,14 @@ T temp = random_key<T>();
       hashdb_manager.insert(*it, changes);
       ++it;
     }
+
+    // close tracker
     progress_tracker.done();
+
+    // close logger
     logger.add_timestamp("end import");
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << changes << "\n";
@@ -241,14 +248,16 @@ T temp = random_key<T>();
       hashdb_manager2.insert(*it1, changes);
       ++it1;
     }
+
+    // close tracker
     progress_tracker.done();
+
+    // close logger
     logger.add_timestamp("end add");
-
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
+
+    // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
@@ -301,14 +310,16 @@ T temp = random_key<T>();
       ++it2;
       progress_tracker.track();
     }
+
+    // close tracker
     progress_tracker.done();
 
+    // close logger
     logger.add_timestamp("end add_multiple");
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
+
+    // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
     history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
@@ -341,12 +352,12 @@ T temp = random_key<T>();
       intersect_optimized(manager2, manager1, manager3, changes, &logger);
     }
 
+    // close logger
     logger.add_timestamp("end intersect");
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
+
+    // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
     history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
@@ -384,15 +395,16 @@ T temp = random_key<T>();
       ++it1;
       progress_tracker.track();
     }
+
+    // close tracker
     progress_tracker.done();
 
+    // close logger
     logger.add_timestamp("end subtract");
-
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
+
+    // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
     history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
@@ -427,15 +439,16 @@ T temp = random_key<T>();
       ++it1;
       progress_tracker.track();
     }
+
+    // close tracker
     progress_tracker.done();
 
+    // close logger
     logger.add_timestamp("end deduplicate");
-
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
+
+    // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
@@ -787,18 +800,44 @@ T temp = random_key<T>();
   }
 
   // rebuild bloom
-  static void rebuild_bloom(const hashdb_settings_t& settings,
+  static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,
                             const std::string& hashdb_dir) {
 
     logger_t logger(hashdb_dir, "rebuild_bloom");
     logger.add("hashdb_dir", hashdb_dir);
 
-    // start the bloom rebuild manager
-    bloom_rebuild_manager_t<T> bloom_rebuild_manager(hashdb_dir, settings);
+    // read existing settings
+    hashdb_settings_t settings;
+    settings = hashdb_settings_store_t::read_settings(hashdb_dir);
 
-    // log the revised settings
-    hashdb_settings_t revised_settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
-    logger.add_hashdb_settings(revised_settings);
+    // change the bloom filter settings
+    settings.bloom1_is_used = new_bloom_settings.bloom1_is_used;
+    settings.bloom1_M_hash_size = new_bloom_settings.bloom1_M_hash_size;
+    settings.bloom1_k_hash_functions = new_bloom_settings.bloom1_k_hash_functions;
+    settings.bloom2_is_used = new_bloom_settings.bloom2_is_used;
+    settings.bloom2_M_hash_size = new_bloom_settings.bloom2_M_hash_size;
+    settings.bloom2_k_hash_functions = new_bloom_settings.bloom2_k_hash_functions;
+
+    // write back the changed settings
+    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+    // log the new settings
+    logger.add_hashdb_settings(settings);
+
+    // remove existing bloom files
+    std::string filename1 = hashdb_dir + "/bloom_filter_1";
+    std::string filename2 = hashdb_dir + "/bloom_filter_2";
+    remove(filename1.c_str());
+    remove(filename2.c_str());
+
+    // open the bloom filter manager
+    bloom_filter_manager_t<T> bloom_filter_manager(hashdb_dir, RW_NEW,
+                               settings.bloom1_is_used,
+                               settings.bloom1_M_hash_size,
+                               settings.bloom1_k_hash_functions,
+                               settings.bloom2_is_used,
+                               settings.bloom2_M_hash_size,
+                               settings.bloom2_k_hash_functions);
 
     // open hashdb
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
@@ -809,16 +848,17 @@ T temp = random_key<T>();
     progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
     while (it != hashdb_manager.end()) {
       // add the hash to the bloom filter
-      bloom_rebuild_manager.add_hash_value(it->key);
+      bloom_filter_manager.add_hash_value(it->key);
       ++it;
       progress_tracker.track();
     }
-    progress_tracker.done();
-    logger.add_timestamp("end rebuild_bloom");
 
-    // provide summary
+    // close tracker
+    progress_tracker.done();
+
+    // close logger
+    logger.add_timestamp("end rebuild_bloom");
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
   }
 
   // functional analysis and testing: add_random
@@ -853,8 +893,7 @@ T temp = random_key<T>();
     progress_tracker_t progress_tracker(count, &logger);
 
     // get hash block size
-    hashdb_settings_t settings = hashdb_settings_manager_t::read_settings(hashdb_dir);
-    size_t hash_block_size = settings.hash_block_size;
+    size_t hash_block_size = hashdb_manager.settings.hash_block_size;
 
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
@@ -878,13 +917,13 @@ T temp = random_key<T>();
                                changes);
     }
 
+    // close tracker
     progress_tracker.done();
+
+    // close logger
     logger.add_timestamp("end add_random");
     logger.add_hashdb_changes(changes);
-
-    // provide summary
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << changes << "\n";
@@ -930,7 +969,6 @@ T temp = random_key<T>();
       if (scan_output->size() > 0) {
         std::cerr << "Unexpected event: match found, count "
                   << scan_output->size() << ", are the databases different?\n";
-      
       }
     }
 
@@ -965,7 +1003,7 @@ T temp = random_key<T>();
       }
     }
 
-    // close without appending this log event to history
+    // close logger
     logger.add_timestamp("end scan_random");
     logger.close();
   }

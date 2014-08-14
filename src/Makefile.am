@@ -52,20 +52,20 @@ LIBHASHDB_INCS = \
 	bi_store.hpp \
 	bloom_filter_calculator.hpp \
 	bloom_filter_manager.hpp \
-	bloom_rebuild_manager.hpp \
 	command_line.cpp \
 	command_line.hpp \
 	file_modes.h \
 	hash_t_selector.h \
 	hashdb_changes.hpp \
 	hashdb.cpp \
+	hashdb_directory_manager.hpp \
 	hashdb_element.hpp \
 	hashdb.hpp \
 	hashdb_iterator.hpp \
 	hashdb_manager.hpp \
 	hashdb_settings.hpp \
-	hashdb_settings_manager.hpp \
 	hashdb_settings_reader.hpp \
+	hashdb_settings_store.hpp \
 	history_manager.hpp \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_iterator.hpp \

@@ -32,8 +32,9 @@
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
+#include "hashdb_settings_store.hpp"
 #include "file_modes.h"
+#include "hashdb_directory_manager.hpp"
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
 #include "hashdb_element.hpp"
@@ -50,10 +51,13 @@ void write_settings() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
 
+  // create the hashdb directory
+  hashdb_directory_manager_t::create_new_hashdb_dir(temp_dir);
+
   // create working settings
   hashdb_settings_t settings;
   settings.maximum_hash_duplicates = 4;
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+  hashdb_settings_store_t::write_settings(temp_dir, settings);
 }
 
 template<typename T>
@@ -264,15 +268,20 @@ void do_test() {
 
 int cpp_main(int argc, char* argv[]) {
 
+std::cout << "hmt.a\n";
   make_dir_if_not_there(temp_dir);
 
+std::cout << "hmt.a\n";
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 
   write_settings();
+std::cout << "hmt.a\n";
   do_test<hash_t>();
 
+std::cout << "hmt.a\n";
   // done
   int status = boost::report_errors();
+std::cout << "hmt.a\n";
   return status;
 }
 

@@ -26,7 +26,6 @@
 #define HASHDB_MANAGER_HPP
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
 #include "source_lookup_index_manager.hpp"
 #include "hashdb_iterator.hpp"
 #include "hashdb_changes.hpp"
@@ -47,13 +46,11 @@ class hashdb_manager_t {
   typedef typename std::pair<multimap_iterator_t, multimap_iterator_t>
                                                multimap_iterator_range_t;
 
-  private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
-
-  // settings
   const hashdb_settings_t settings;
 
+  private:
   // multimap
   multimap_t multimap;
 
@@ -72,7 +69,7 @@ class hashdb_manager_t {
                    file_mode_type_t p_file_mode) :
                 hashdb_dir(p_hashdb_dir),
                 file_mode(p_file_mode),
-                settings(hashdb_settings_manager_t::read_settings(hashdb_dir)),
+                settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
                 multimap(hashdb_dir + "/hash_store",
                          file_mode_type_to_btree_flags_bitmask(file_mode)),
                 bloom_filter_manager(hashdb_dir, file_mode,

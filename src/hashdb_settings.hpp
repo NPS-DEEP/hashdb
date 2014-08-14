@@ -22,10 +22,9 @@
  * This file manages the hashdb settings.
  */
 
-#ifndef    hashdb_settings_hpp
-#define    hashdb_settings_hpp
+#ifndef    HASHDB_SETTINGS_HPP
+#define    HASHDB_SETTINGS_HPP
 
-//#include "hashdb_types.h"
 #include "dfxml/src/dfxml_writer.h"
 #include <string>
 #include <sstream>

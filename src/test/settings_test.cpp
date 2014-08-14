@@ -29,11 +29,12 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
+#include "hashdb_directory_manager.hpp"
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
+#include "hashdb_settings_store.hpp"
 
-static const char temp_dir[] = "temp_dir_settings_manager_test";
+static const char temp_dir[] = "temp_dir_settings_test";
 
 // Save with a changed value, then read, delete, write, and read,
 // then see if changed value is preserved.
@@ -44,18 +45,22 @@ void run_test() {
 
   // create and write settings
   hashdb_settings_t settings;
+
+  // change a parameter from its default
   settings.hash_block_size = 512;
 
   // write settings
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
+  hashdb_directory_manager_t::create_new_hashdb_dir(temp_dir);
+  hashdb_settings_store_t::write_settings(temp_dir, settings);
 
   // read, delete, write, read settings
-  settings = hashdb_settings_manager_t::read_settings(temp_dir);
+  settings = hashdb_settings_store_t::read_settings(temp_dir);
   rm_hashdb_dir(temp_dir);
-  hashdb_settings_manager_t::write_settings(temp_dir, settings);
-  settings = hashdb_settings_manager_t::read_settings(temp_dir);
+  hashdb_directory_manager_t::create_new_hashdb_dir(temp_dir);
+  hashdb_settings_store_t::write_settings(temp_dir, settings);
+  settings = hashdb_settings_store_t::read_settings(temp_dir);
 
-  // attempt to read an invalid filename
+  // check persistence of the changed parameter
   BOOST_TEST_EQ(settings.hash_block_size, 512);
 }
 

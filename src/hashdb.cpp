@@ -43,8 +43,9 @@
 #include <stdint.h>
 #include <climits>
 #include "file_modes.h"
+#include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
+#include "hashdb_settings_store.hpp"
 #include "hashdb_manager.hpp"
 #include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
@@ -82,11 +83,14 @@ const char* hashdb_version() {
     pthread_mutex_init(&M,NULL);
 #endif
 
+    // create the hashdb directory
+    hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
+
     // create and write settings to hashdb_dir
     hashdb_settings_t settings;
     settings.hash_block_size = block_size;
     settings.maximum_hash_duplicates = max_duplicates;
-    hashdb_settings_manager_t::write_settings(hashdb_dir, settings);
+    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
     // create hashdb_manager
     hashdb_manager = new hashdb_manager_t<hash_t>(hashdb_dir, RW_NEW);

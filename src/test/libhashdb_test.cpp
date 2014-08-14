@@ -33,8 +33,6 @@
 #include "hashdb.hpp"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
-#include "hashdb_settings.hpp"
-#include "hashdb_settings_manager.hpp"
 #include "../hash_t_selector.h"
 
 // map types:

@@ -32,6 +32,7 @@
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
 #include "hash_t_selector.h"
+#include "history_manager.hpp"
 #include <iostream>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -40,11 +41,12 @@
 inline void add_memory_usage_algorithm(dfxml_writer* writer, std::string name);
 
 /**
- * The hashdb change logger holds all possible change values,
- * and is used for reporting changes to the database.
+ * The logger logs commands performed that relate to the database.
+ * Upon closure, the log is additionally appended to the history log.
  */
 class logger_t {
   private:
+  const std::string hashdb_dir;
   dfxml_writer x;
   bool closed;
 
@@ -53,7 +55,8 @@ class logger_t {
 
   public:
 
-  logger_t(std::string hashdb_dir, std::string name) :
+  logger_t(std::string p_hashdb_dir, std::string name) :
+                    hashdb_dir(p_hashdb_dir),
                     x(hashdb_dir+"/log.xml", false),
                     closed(false) {
 
@@ -66,9 +69,12 @@ class logger_t {
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_line_t::command_line_string);
   }
 
+/*
+???????????zzzzzzzz
   // create a "closed" logger
   logger_t() : x(), closed(true) {
   }
+*/
 
   ~logger_t() {
     if (!closed) {
@@ -96,6 +102,9 @@ class logger_t {
     // mark this logger as closed
     x.flush();
     closed = true;
+
+    // append log to history
+    history_manager_t::append_log_to_history(hashdb_dir);
   }
 
   /**

@@ -28,7 +28,7 @@ EXTRA_DIST = \
 check_PROGRAMS = \
 	source_lookup_encoding_test \
 	bloom_filter_manager_test \
-	settings_manager_test \
+	settings_test \
 	logger_test \
 	hashdb_element_test \
 	source_lookup_index_manager_test \
@@ -48,7 +48,7 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-DHASHDB_TEST_DATADIR=\"$(srcdir)/\"
 
 bloom_filter_manager_test_LDADD = ../libhashdb.la
-settings_manager_test_LDADD = ../libhashdb.la
+settings_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
 hashdb_element_test_LDADD = ../libhashdb.la
 source_lookup_index_manager_test_LDADD = ../libhashdb.la
@@ -89,10 +89,10 @@ bloom_filter_manager_test_SOURCES = \
 	to_key_helper.hpp \
 	bloom_filter_manager_test.cpp
 
-settings_manager_test_SOURCES = \
+settings_test_SOURCES = \
 	boost_fix.hpp \
 	directory_helper.hpp \
-	settings_manager_test.cpp
+	settings_test.cpp
 
 logger_test_SOURCES = \
 	boost_fix.hpp \
