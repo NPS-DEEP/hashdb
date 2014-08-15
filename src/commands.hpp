@@ -146,6 +146,59 @@ T temp = random_key<T>();
     }
   }
 
+  static void require_compatibility(const hashdb_manager_t<T>& hashdb1,
+                                    const hashdb_manager_t<T>& hashdb2) {
+
+    // databases should not be the same one
+    if (hashdb1.hashdb_dir == hashdb2.hashdb_dir) {
+      std::cerr << "Error: the databases must not be the same one: '"
+                << hashdb1.hashdb_dir << "', '"
+                << hashdb2.hashdb_dir << "'\n";
+      exit(1);
+    }
+
+    // hash block size must match
+    if (hashdb1.settings.hash_block_size != hashdb2.settings.hash_block_size) {
+      std::cerr << "Error: the databases have unequal hash block sizes.\n"
+                << hashdb1.hashdb_dir
+                << " hash block size: " << hashdb1.settings.hash_block_size
+                << "\n" << hashdb2.hashdb_dir
+                << " hash block size: " << hashdb2.settings.hash_block_size
+                << "\n";
+      exit(1);
+    }
+  }
+
+  static void require_compatibility(const hashdb_manager_t<T>& hashdb1,
+                                    const hashdb_manager_t<T>& hashdb2,
+                                    const hashdb_manager_t<T>& hashdb3) {
+
+    // databases should not be the same one
+    if (hashdb1.hashdb_dir == hashdb2.hashdb_dir
+     || hashdb2.hashdb_dir == hashdb3.hashdb_dir
+     || hashdb1.hashdb_dir == hashdb3.hashdb_dir) {
+      std::cerr << "Error: the databases must not be the same one: '"
+                << hashdb1.hashdb_dir << "', '"
+                << hashdb2.hashdb_dir << "', '"
+                << hashdb3.hashdb_dir << "'\n";
+      exit(1);
+    }
+
+    // hash block size must match
+    if (hashdb1.settings.hash_block_size != hashdb2.settings.hash_block_size
+     || hashdb1.settings.hash_block_size != hashdb3.settings.hash_block_size) {
+      std::cerr << "Error: the databases have unequal hash block sizes.\n"
+                << hashdb1.hashdb_dir
+                << " hash block size: " << hashdb1.settings.hash_block_size
+                << "\n" << hashdb2.hashdb_dir
+                << " hash block size: " << hashdb2.settings.hash_block_size
+                << "\n" << hashdb3.hashdb_dir
+                << " hash block size: " << hashdb3.settings.hash_block_size
+                << "\n";
+      exit(1);
+    }
+  }
+
   public:
 
   // create
@@ -236,13 +289,15 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
+
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
-    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
 
-    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
+    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     logger.add_timestamp("begin add");
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
     while (it1 != hashdb_manager1.end()) {
       progress_tracker.track();
       hashdb_manager2.insert(*it1, changes);
@@ -276,6 +331,7 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_iterator_t<T> it2 = hashdb_manager2.begin();
@@ -341,6 +397,7 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     const hashdb_manager_t<T> manager1(hashdb_dir1, READ_ONLY);
     const hashdb_manager_t<T> manager2(hashdb_dir2, READ_ONLY);
     hashdb_manager_t<T> manager3(hashdb_dir3, RW_MODIFY);
+    require_compatibility(manager1, manager2, manager3);
     hashdb_changes_t changes;
 
     logger.add_timestamp("begin intersect");
@@ -376,6 +433,7 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
     hashdb_changes_t changes;
 
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
@@ -421,6 +479,7 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
 
     // iterate over hashes.
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
