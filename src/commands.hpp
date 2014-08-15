@@ -176,11 +176,12 @@ T temp = random_key<T>();
                      const std::string& dfxml_file,
                      const std::string& hashdb_dir) {
 
+hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     logger_t logger(hashdb_dir, "import");
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+//    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
 
     typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();

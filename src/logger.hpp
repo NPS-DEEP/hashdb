@@ -70,7 +70,6 @@ class logger_t {
   }
 
 /*
-???????????zzzzzzzz
   // create a "closed" logger
   logger_t() : x(), closed(true) {
   }

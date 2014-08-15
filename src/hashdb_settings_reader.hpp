@@ -131,27 +131,26 @@ class hashdb_settings_reader_t {
       // abort
       std::ostringstream s;
       s << "hashdb_settings_reader_t(): invalid number: '"
-        << number_string << "'\n" << "Cannot continue.\n";
+        << number_string << "'.";
       throw std::runtime_error(s.str());
     }
   }
 
   __attribute__((noreturn)) static void exit_invalid_state(std::string message) {
     std::ostringstream s;
-    s << "Error: " << message << "\n" << "Cannot continue.\n";
+    s << message;
     throw std::runtime_error(s.str());
   }
 
   __attribute__((noreturn)) static void exit_invalid_text(std::string message, std::string text) {
     std::ostringstream s;
-    s << "Error: " << message << ":'" << text << "'\n" << "Cannot continue.\n";
+    s << message << ": '" << text << "'.";
     throw std::runtime_error(s.str());
   }
 
   __attribute__((noreturn)) static void exit_invalid_index(size_t index) {
     std::ostringstream s;
-    s << "Error: invalid bloom filter index "
-      << index << "\n" << "Cannot continue.\n";
+    s << "Invalid bloom filter index " << index << ".";
     throw std::runtime_error(s.str());
   }
 
@@ -283,10 +282,7 @@ class hashdb_settings_reader_t {
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);
     if (!file_is_present) {
       std::ostringstream ss3;
-      ss3 << "Error:\nSettings file '"
-          << filename << "' does not exist.\n"
-          << "Is the path to the hash database correct?\n"
-          << "Cannot continue.\n";
+      ss3 << "Settings file '" << filename << "' does not exist.";
       throw std::runtime_error(ss3.str());
     }
 
@@ -336,8 +332,7 @@ class hashdb_settings_reader_t {
     } else {
       // something went wrong
       std::ostringstream ss4;
-      ss4 << "malformed settings in file '" << filename
-          << "'.  Unable to continue.\n";
+      ss4 << "malformed settings in file '" << filename << "'.";
       throw std::runtime_error(ss4.str());
     }
   }

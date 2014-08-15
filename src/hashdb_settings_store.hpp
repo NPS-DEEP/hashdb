@@ -38,9 +38,22 @@ class hashdb_settings_store_t {
   public:
 
   static hashdb_settings_t read_settings(const std::string& hashdb_dir) {
+    // hashdb_dir must exist
+    if (access(hashdb_dir.c_str(), F_OK) != 0) {
+      std::cerr << "Unable to read database '" << hashdb_dir
+                << "'.  Aborting.\n";
+      exit(1);
+    }
+
     hashdb_settings_t settings;
     std::string filename = hashdb_dir + "/settings.xml";
-    hashdb_settings_reader_t::read_settings(filename, settings);
+    try {
+      hashdb_settings_reader_t::read_settings(filename, settings);
+    } catch (std::runtime_error& e) {
+      std::cerr << "Unable to read database settings: " << e.what() 
+                << "\nAborting.\n";
+      exit(1);
+    }
     return settings;
   }
 
