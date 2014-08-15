@@ -93,11 +93,12 @@ windist: win32 win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
+# NOTE: for now, use older endian module so we can use available Boost versions
 pull:
 	git pull
 	(cd src/dfxml;git checkout master; git pull)
 	(cd src/btree;git checkout master; git pull)
-	(cd src/endian;git checkout master; git pull)
+	(cd src/endian;git checkout master; git pull; git checkout 05ac935)
 
 clean-local:
 	rm -rf $(distdir).tar.gz
