@@ -50,20 +50,20 @@ int cpp_main(int argc, char* argv[]) {
 
   // max values
   uint64_t max_index = ((uint64_t)1<<30) - 1;
-  uint64_t max_offset = (((uint64_t)1<<34) - 1) * BYTE_ALIGNMENT;
+  uint64_t max_offset = (((uint64_t)1<<34) - 1) * HASHDB_BYTE_ALIGNMENT;
 
   // test encodings
   // valid
   test_encoding(0, 0, 0);
 
   // valid
-  test_encoding(1, 2*BYTE_ALIGNMENT, (uint64_t)1<<34 | (uint64_t)2);
+  test_encoding(1, 2*HASHDB_BYTE_ALIGNMENT, (uint64_t)1<<34 | (uint64_t)2);
 
-  test_encoding(max_index, max_offset, max_index<<34 | max_offset/BYTE_ALIGNMENT);
+  test_encoding(max_index, max_offset, max_index<<34 | max_offset/HASHDB_BYTE_ALIGNMENT);
 
   // source lookup index too large
-  BOOST_TEST_THROWS(test_encoding(max_index+1, max_offset, (max_index+1)<<34 | (max_offset/BYTE_ALIGNMENT)), std::runtime_error);
-  BOOST_TEST_THROWS(test_encoding(max_index, max_offset+1, (max_index<<34) | ((max_offset/BYTE_ALIGNMENT)+max_offset)), std::runtime_error);
+  BOOST_TEST_THROWS(test_encoding(max_index+1, max_offset, (max_index+1)<<34 | (max_offset/HASHDB_BYTE_ALIGNMENT)), std::runtime_error);
+  BOOST_TEST_THROWS(test_encoding(max_index, max_offset+1, (max_index<<34) | ((max_offset/HASHDB_BYTE_ALIGNMENT)+max_offset)), std::runtime_error);
 
   // done
   int status = boost::report_errors();

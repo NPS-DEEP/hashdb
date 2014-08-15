@@ -136,8 +136,8 @@ class hashdb_settings_reader_t {
     } catch(...) {
       // abort
       std::ostringstream s;
-      s << "hashdb_settings_reader_t(): invalid number: '"
-        << number_string << "'.";
+      s << "Invalid number when reading settings: '"
+        << number_string << "'";
       throw std::runtime_error(s.str());
     }
   }

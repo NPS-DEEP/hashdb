@@ -151,9 +151,10 @@ T temp = random_key<T>();
 
     // databases should not be the same one
     if (hashdb1.hashdb_dir == hashdb2.hashdb_dir) {
-      std::cerr << "Error: the databases must not be the same one: '"
+      std::cerr << "Error: the databases must not be the same one:\n'"
                 << hashdb1.hashdb_dir << "', '"
-                << hashdb2.hashdb_dir << "'\n";
+                << hashdb2.hashdb_dir << "'\n"
+                << "Aborting.\n";
       exit(1);
     }
 
@@ -164,7 +165,8 @@ T temp = random_key<T>();
                 << " hash block size: " << hashdb1.settings.hash_block_size
                 << "\n" << hashdb2.hashdb_dir
                 << " hash block size: " << hashdb2.settings.hash_block_size
-                << "\n";
+                << "\n"
+                << "Aborting.\n";
       exit(1);
     }
   }
@@ -177,10 +179,11 @@ T temp = random_key<T>();
     if (hashdb1.hashdb_dir == hashdb2.hashdb_dir
      || hashdb2.hashdb_dir == hashdb3.hashdb_dir
      || hashdb1.hashdb_dir == hashdb3.hashdb_dir) {
-      std::cerr << "Error: the databases must not be the same one: '"
+      std::cerr << "Error: the databases must not be the same one:\n'"
                 << hashdb1.hashdb_dir << "', '"
                 << hashdb2.hashdb_dir << "', '"
-                << hashdb3.hashdb_dir << "'\n";
+                << hashdb3.hashdb_dir << "'\n"
+                << "Aborting.\n";
       exit(1);
     }
 
@@ -194,7 +197,8 @@ T temp = random_key<T>();
                 << " hash block size: " << hashdb2.settings.hash_block_size
                 << "\n" << hashdb3.hashdb_dir
                 << " hash block size: " << hashdb3.settings.hash_block_size
-                << "\n";
+                << "\n"
+                << "Aborting.\n";
       exit(1);
     }
   }

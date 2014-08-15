@@ -61,8 +61,8 @@ class hashdb_settings_store_t {
     uint32_t hashdb_settings_version = 1;
     if (settings.settings_version != hashdb_settings_version) {
       std::cerr << "Database version error in settings version.\n"
-                << "The datatabase uses settings version " << settings.settings_version
-                << " but hashdb uses settings version " << hashdb_settings_version
+                << "The datatabase at '" << hashdb_dir << "' uses settings version " << settings.settings_version
+                << "\nbut hashdb uses settings version " << hashdb_settings_version
                 << ".\nAborting.\n";
       exit(1);
     }
@@ -70,8 +70,8 @@ class hashdb_settings_store_t {
     // validate that the settings hash digest type is compatible with hashdb
     if (settings.hash_digest_type != digest_name<hash_t>()) {
       std::cerr << "Database hash digest mismatch.\n"
-                << "Database hash digest type " << settings.hash_digest_type
-                << " is not compatible with hashdb hash digest type "
+                << "Database '" << hashdb_dir << "' hash digest type " << settings.hash_digest_type
+                << "\nis not compatible with hashdb hash digest type "
                 << digest_name<hash_t>()
                 << ".\nAborting.\n";
       exit(1);
@@ -80,8 +80,8 @@ class hashdb_settings_store_t {
     // validate that the byte alignment setting is compatible with hashdb
     if (settings.byte_alignment != HASHDB_BYTE_ALIGNMENT) {
       std::cerr << "Database byte alignment error.\n"
-                << "Database byte alignment " << settings.byte_alignment
-                << " is not compatible with hashdb byte alignment "
+                << "Database '" << hashdb_dir << "' byte alignment " << settings.byte_alignment
+                << "\nis not compatible with hashdb byte alignment "
                 << HASHDB_BYTE_ALIGNMENT
                 << ".\nAborting.\n";
       exit(1);
