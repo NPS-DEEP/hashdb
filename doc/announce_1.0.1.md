@@ -8,14 +8,15 @@ Major improvements
 
 Bug Fixes
 =========
-* Discontinued command options -t, -a, and -b have been removed.
-Use of these options now provide an error rather than quietly
-disregarding their use.
-* Improve syntax of change report written to stdout.
+* Improve error detection and reporting in the event of invalid input
+    * Discontinued command options -t, -a, and -b are removed.  Use of these options now provide an error rather than quietly disregarding their use.
+    * Improve wording for the change report written to stdout.
+    * Detect when the database configuration is different from the hashdb configuration, and fail gracefully.
+
 * Fix so test suite builds for Windows.
-* Fix command test to not add to self.
+* Fix the command test so that it does not add a database to itself.  This is an error condition and it can corrupt the database.
 * Add the Users Manual to the distribution.
-* Categorize usage text and fix and clarify usage language.
+* Organize the commands in the usage text into categories, and fix and clarify usage language.
 
 Availability
 ============

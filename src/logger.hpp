@@ -132,20 +132,6 @@ class logger_t {
     add_memory_usage_algorithm(&x, name);
   }
 
-  template<typename T>
-  void add_hashdb_configuration() {
-    if (closed) {
-      // logger closed
-      std::cout << "logger.add_hashdb_settings warning: logger closed\n";
-      return;
-    }
-
-    // see file configure.ac for configuration settings
-    x.xmlout("hashdigest_type", digest_name<T>());
-    x.xmlout("byte_alignment", BYTE_ALIGNMENT);
-
-  }
-
   void add_hashdb_settings(const hashdb_settings_t& settings) {
     if (closed) {
       // logger closed

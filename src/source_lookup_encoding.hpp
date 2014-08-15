@@ -25,7 +25,7 @@
  * Allocation is: 34 bits toward calculating file offset,
  *                30 bits toward the source lookup index.
  *
- * Actual file offset = byte alignment offset * BYTE_ALIGNMENT
+ * Actual file offset = byte alignment offset * HASHDB_BYTE_ALIGNMENT
  */
 
 #ifndef SOURCE_LOOKUP_ENCODING_HPP
@@ -53,18 +53,18 @@ namespace source_lookup_encoding {
     }
 
     // runtime error if file offset is too large
-    uint64_t max2 = (((uint64_t)1<<34) - 1) * BYTE_ALIGNMENT;
+    uint64_t max2 = (((uint64_t)1<<34) - 1) * HASHDB_BYTE_ALIGNMENT;
     if (file_offset > max2) {
       throw std::runtime_error("Error: The file offset is too large.");
     }
 
     // runtime error if file offset is not byte-aligned
-    if ((file_offset % BYTE_ALIGNMENT) != 0) {
+    if ((file_offset % HASHDB_BYTE_ALIGNMENT) != 0) {
       throw std::runtime_error("Error: The file offset is not byte aligned.");
     }
 
     // return the value
-    return (source_lookup_index << 34) | (file_offset / BYTE_ALIGNMENT);
+    return (source_lookup_index << 34) | (file_offset / HASHDB_BYTE_ALIGNMENT);
   }
 
   /**
@@ -85,7 +85,7 @@ namespace source_lookup_encoding {
     // calculate bit mask for the hash block offset bit fields
     uint64_t bit_mask = ((uint64_t)1<<34) - 1;
 
-    return (source_lookup_encoding & bit_mask) * BYTE_ALIGNMENT;
+    return (source_lookup_encoding & bit_mask) * HASHDB_BYTE_ALIGNMENT;
   }
 };
 

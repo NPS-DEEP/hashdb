@@ -166,7 +166,6 @@ T temp = random_key<T>();
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
 
     // close logger
-    logger.add_hashdb_configuration<T>();
     logger.add_hashdb_settings(settings);
     logger.close();
   }

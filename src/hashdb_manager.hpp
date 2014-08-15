@@ -91,8 +91,8 @@ class hashdb_manager_t {
       return;
     }
 
-    // validate the byte alignment, see configure.ac for BYTE_ALIGNMENT
-    if (hashdb_element.file_offset % BYTE_ALIGNMENT != 0) {
+    // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
+    if (hashdb_element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
       ++changes.hashes_not_inserted_invalid_byte_alignment;
       return;
     }
@@ -150,8 +150,8 @@ class hashdb_manager_t {
       return;
     }
 
-    // validate the byte alignment, see configure.ac for BYTE_ALIGNMENT
-    if (hashdb_element.file_offset % BYTE_ALIGNMENT != 0) {
+    // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
+    if (hashdb_element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
       ++changes.hashes_not_removed_invalid_byte_alignment;
       return;
     }

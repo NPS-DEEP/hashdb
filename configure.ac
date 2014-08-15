@@ -352,11 +352,11 @@ fi
 
 ################################################################
 ############## byte alignment required for the data
-AC_ARG_VAR(BYTE_ALIGNMENT, [Set the byte alignment size for data, default 512])
-if test x"${BYTE_ALIGNMENT}" = "x"; then
-  BYTE_ALIGNMENT="512"
+AC_ARG_VAR(HASHDB_BYTE_ALIGNMENT, [Set the byte alignment size for data, default 512])
+if test x"${HASHDB_BYTE_ALIGNMENT}" = "x"; then
+  HASHDB_BYTE_ALIGNMENT="512"
 fi
-AC_DEFINE_UNQUOTED(BYTE_ALIGNMENT, [$BYTE_ALIGNMENT], [the byte alignment size for data])
+AC_DEFINE_UNQUOTED(HASHDB_BYTE_ALIGNMENT, [$HASHDB_BYTE_ALIGNMENT], [the byte alignment size for data])
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])
