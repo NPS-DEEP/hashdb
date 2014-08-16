@@ -2,7 +2,7 @@
 
 \documentclass[12pt]{article}
 %\usepackage[margin=0.8in]{geometry}
-\usepackage[top=0.2in, bottom=0.2in, left=0.8in, right=0.8in]{geometry}
+\usepackage[top=0.2in, bottom=0.2in, left=0.4in, right=0.4in]{geometry}
 \usepackage{paralist} % for compactitem, compactdesc, compactenum
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -31,18 +31,18 @@
 \end{center}
 
 \subsubsection*{New Database}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \hangindent=2em\texttt{create [-p<hash block size>] [-m<maximum duplicates>] [<bloom settings>] <hashdb.hdb>} & Create a new hash database \\
 \end{tabular}
 
 \subsubsection*{Import/Export}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \hangindent=2em\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
 \texttt{export <hashdb.hdb> <dfxml.xml>} & Export hash database to DFXML file \\
 \end{tabular}
 
 \subsubsection*{Database Manipulation}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ \\
 \texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ \\
 \texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ \\
@@ -51,7 +51,7 @@
 \end{tabular}
 
 \subsubsection*{Scan Services}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \texttt{scan <path or socket> <DFXML file>} & Scan for matches, print count\\
 \hangindent=2em\texttt{scan\_expanded <path or socket> <DFXML file>} & \hangindent=2em Scan for matches, print source information for each source \\
 \hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
@@ -59,7 +59,7 @@
 \end{tabular}
 
 \subsubsection*{Statistics}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \texttt{size <hashdb.hdb>} & Print sizes of internal database tables \\
 \texttt{sources <hashdb.hdb>} & Print all repository names and filenames \\
 \texttt{histogram <hashdb.hdb>} & Print hash distribution \\
@@ -68,12 +68,12 @@
 \end{tabular}
 
 \subsubsection*{Tuning}
-\begin{tabular}{p{8 cm} p{9 cm} }
-\texttt{rebuild\_bloom [<bloom settings>]} & Rebuild Bloom filter \\
+\begin{tabular}{p{10 cm} p{9 cm} }
+\hangindent=2em\texttt{rebuild\_bloom [<bloom settings>] <hashdb.hdb>} & Rebuild Bloom filter \\
 \end{tabular}
 
 \subsubsection*{Performance Analysis}
-\begin{tabular}{p{8 cm} p{9 cm} }
+\begin{tabular}{p{10 cm} p{9 cm} }
 \hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
 \texttt{scan\_random <hashdb.hdb> <copy.hdb>} & Scan random hashes, log performance in \texttt{log.xml}\\
 \end{tabular}

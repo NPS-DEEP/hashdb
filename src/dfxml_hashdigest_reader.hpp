@@ -163,8 +163,10 @@ class dfxml_hashdigest_reader_t {
           user_data.has_byte_run_file_offset_attribute = true;
         } catch(...) {
           // abort
-          std::cerr << "dfxml_hashdigest_reader_t::on_start_element(): invalid byte_run file_offset attribute: '" << file_offset_string << "'\n";
-          return;
+          std::ostringstream ss1;
+          ss1 << "Invalid file_offset value: '"
+            << file_offset_string << "'";
+          throw std::runtime_error(ss1.str());
         }
       } else if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("len"))) {
         std::string len_string((const char*)attributes[i+1]);
@@ -173,8 +175,10 @@ class dfxml_hashdigest_reader_t {
           user_data.has_byte_run_len_attribute = true;
         } catch(...) {
           // abort
-          std::cerr << "dfxml_hashdigest_reader_t::on_start_element(): invalid byte_run len attribute: '" << len_string << "'\n";
-          return;
+          std::ostringstream ss2;
+          ss2 << "Invalid byte_run len value: '"
+            << len_string << "'";
+          throw std::runtime_error(ss2.str());
         }
       }
 
@@ -320,7 +324,7 @@ class dfxml_hashdigest_reader_t {
                        const char* msg,
                        ...) {
     va_list arglist;
-    printf("dfxml_hashdigest_reader on_error(): ");
+    printf("Error reading DFXML file: ");
     va_start(arglist, msg);
     vprintf(msg, arglist);
     va_end(arglist);
@@ -331,7 +335,7 @@ class dfxml_hashdigest_reader_t {
                              const char* msg,
                              ...) {
     va_list arglist;
-    printf("dfxml_hashdigest_reader on_fatal_error(): ");
+    printf("Fatal error reading DFXML file: ");
     va_start(arglist, msg);
     vprintf(msg, arglist);
     va_end(arglist);
@@ -346,7 +350,7 @@ class dfxml_hashdigest_reader_t {
    */
 
   public:
-  static bool do_read(
+  static void do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
                 TC* consumer) {
@@ -396,10 +400,12 @@ class dfxml_hashdigest_reader_t {
 
     if (sax_parser_resource == 0) {
       // good, no failure
-      return true;
+      return;
     } else {
       // something went wrong
-      return false;
+      std::ostringstream ss3;
+      ss3 << "malformed DFXML file '" << dfxml_file << "'";
+      throw std::runtime_error(ss3.str());
     }
   }
 };

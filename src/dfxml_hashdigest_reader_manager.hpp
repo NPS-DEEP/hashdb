@@ -82,10 +82,16 @@ class dfxml_hashdigest_reader_manager_t {
     elements = new hashdb_elements_t();
     reader_consumer_t consumer(elements);
 
-    dfxml_hashdigest_reader_t<reader_consumer_t, T>::do_read(
+    try {
+      dfxml_hashdigest_reader_t<reader_consumer_t, T>::do_read(
                                    dfxml_filename,
                                    default_repository_name,
                                    &consumer);
+    } catch (std::runtime_error& e) {
+      std::cerr << "Unable to read DFXML file: " << e.what() 
+                << ".\nAborting.\n";
+      exit(1);
+    }
   }
 
   ~dfxml_hashdigest_reader_manager_t() {

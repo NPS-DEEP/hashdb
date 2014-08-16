@@ -60,6 +60,14 @@ class logger_t {
                     x(hashdb_dir+"/log.xml", false),
                     closed(false) {
 
+    // hashdb_dir containing settings.xml must exist
+    std::string filename = hashdb_dir + "/settings.xml";
+    if (access(filename.c_str(), F_OK) != 0) {
+      std::cerr << "Unable to read database '" << hashdb_dir
+                << "'.\nAborting.\n";
+      exit(1);
+    }
+
     // log the preamble
     x.push("log");
 
@@ -68,12 +76,6 @@ class logger_t {
     x.push("command", ss.str());
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_line_t::command_line_string);
   }
-
-/*
-  // create a "closed" logger
-  logger_t() : x(), closed(true) {
-  }
-*/
 
   ~logger_t() {
     if (!closed) {

@@ -215,12 +215,12 @@ T temp = random_key<T>();
     // write the settings
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
+    // get hashdb files to exist because other file modes require them
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
+
     // log the creation event
     logger_t logger(hashdb_dir, "create");
     logger.add("hashdb_dir", hashdb_dir);
-
-    // get hashdb files to exist because other file modes require them
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
 
     // close logger
     logger.add_hashdb_settings(settings);
@@ -232,17 +232,24 @@ T temp = random_key<T>();
                      const std::string& dfxml_file,
                      const std::string& hashdb_dir) {
 
-hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    // require that dfxml_file exists
+    if (access(dfxml_file.c_str(), F_OK) != 0) {
+      std::cerr << "DFXML File '" << dfxml_file
+                << "' does not exist.  Aborting.\n";
+      exit(1);
+    }
+
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    hashdb_changes_t changes;
+
     logger_t logger(hashdb_dir, "import");
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-//    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    logger.add_timestamp("begin reading DFXML file");
     dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
-
     typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
-
-    hashdb_changes_t changes;
 
     logger.add_timestamp("begin import");
 
@@ -274,7 +281,16 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // lets require that dfxml_file does not exist yet
+    if (access(dfxml_file.c_str(), F_OK) == 0) {
+      std::cerr << "File '" << dfxml_file << "' already exists.  Aborting.\n";
+      exit(1);
+    }
+
+    // open the dfxml_file
     dfxml_hashdigest_writer_t<T> writer(dfxml_file);
+
     hashdb_iterator_t<T> it = hashdb_manager.begin();
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
@@ -290,16 +306,16 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
 
-    logger_t logger(hashdb_dir2, "add");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
-
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
     hashdb_changes_t changes;
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
+
+    logger_t logger(hashdb_dir2, "add");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add");
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
     while (it1 != hashdb_manager1.end()) {
@@ -328,10 +344,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
                            const std::string& hashdb_dir2,
                            const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir3, "add_multiple");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
-    logger.add("hashdb_dir3", hashdb_dir3);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
@@ -343,6 +355,10 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     hashdb_iterator_t<T> it2_end = hashdb_manager2.end();
 
     hashdb_changes_t changes;
+    logger_t logger(hashdb_dir3, "add_multiple");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin add_multiple");
 
     // while elements are in both, insert ordered by key, prefering it1 first
@@ -392,11 +408,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
                         const std::string& hashdb_dir2,
                         const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir3, "intersect");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
-    logger.add("hashdb_dir3", hashdb_dir3);
-
     // resources
     const hashdb_manager_t<T> manager1(hashdb_dir1, READ_ONLY);
     const hashdb_manager_t<T> manager2(hashdb_dir2, READ_ONLY);
@@ -404,6 +415,10 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     require_compatibility(manager1, manager2, manager3);
     hashdb_changes_t changes;
 
+    logger_t logger(hashdb_dir3, "intersect");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin intersect");
 
     // optimize processing based on smaller db
@@ -431,9 +446,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
 
-    logger_t logger(hashdb_dir2, "subtract");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
@@ -442,6 +454,9 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
 
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
 
+    logger_t logger(hashdb_dir2, "subtract");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin subtract");
 
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
@@ -478,9 +493,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
-    logger_t logger(hashdb_dir2, "deduplicate");
-    logger.add("hashdb_dir1", hashdb_dir1);
-    logger.add("hashdb_dir2", hashdb_dir2);
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
@@ -488,6 +500,10 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     // iterate over hashes.
     hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
+
+    logger_t logger(hashdb_dir2, "deduplicate");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin deduplicate");
 
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
@@ -866,9 +882,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
   static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,
                             const std::string& hashdb_dir) {
 
-    logger_t logger(hashdb_dir, "rebuild_bloom");
-    logger.add("hashdb_dir", hashdb_dir);
-
     // read existing settings
     hashdb_settings_t settings;
     settings = hashdb_settings_store_t::read_settings(hashdb_dir);
@@ -883,6 +896,9 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
 
     // write back the changed settings
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+    logger_t logger(hashdb_dir, "rebuild_bloom");
+    logger.add("hashdb_dir", hashdb_dir);
 
     // log the new settings
     logger.add_hashdb_settings(settings);
@@ -941,15 +957,15 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
       exit(1);
     }
 
+    // open resources
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    hashdb_changes_t changes;
+
     // start logger
     logger_t logger(hashdb_dir, "add_random");
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
     logger.add("count", count);
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
-
-    hashdb_changes_t changes;
-
     logger.add_timestamp("begin add_random");
 
     // start progress tracker
@@ -997,13 +1013,19 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
   static void scan_random(const std::string& hashdb_dir,
                           const std::string& hashdb_dir_copy) {
 
+    // open hashdb_dir to use for obtaining valid hash values
+    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // create the hashdb scan service for scanning with random hash
+    hashdb_t__<T> hashdb(hashdb_dir);
+
+    // create the hashdb scan service for scanning from the copy
+    hashdb_t__<T> hashdb_copy(hashdb_dir_copy);
+
     // create space on the heap for the scan input and output vectors
     std::vector<T>* scan_input = new std::vector<T>;
     typename hashdb_t__<T>::scan_output_t* scan_output =
                                   new typename hashdb_t__<T>::scan_output_t();
-
-    // create the hashdb scan service for scanning with random hash
-    hashdb_t__<T> hashdb(hashdb_dir);
 
     // initialize random seed
     srand (time(NULL));
@@ -1036,12 +1058,6 @@ hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
     }
 
     // scan sets of random hashes where hash values all match
-
-    // open hashdb_dir to use for obtaining valid hash values
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // create the hashdb scan service for scanning from the copy
-    hashdb_t__<T> hashdb_copy(hashdb_dir_copy);
 
     // scan sets of random hashes where all hash values match
     logger.add_timestamp("begin scan_random with random matching hashes on hashdb copy");
