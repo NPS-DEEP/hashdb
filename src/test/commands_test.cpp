@@ -32,7 +32,6 @@
 #include "directory_helper.hpp"
 #include "../hash_t_selector.h"
 #include "commands.hpp"
-#include "../hash_t_selector.h"
 #include "hashdb_manager.hpp"
 #include "file_modes.h"
 
@@ -45,6 +44,11 @@ static const std::string temp_dir2("temp_dir2_commands_test.hdb");
 static const std::string temp_dir3("temp_dir3_commands_test.hdb");
 static const std::string temp_dir4("temp_dir4_commands_test.hdb");
 static const std::string temp_dir5("temp_dir5_commands_test.hdb");
+static const std::string temp_dir6("temp_dir6_commands_test.hdb");
+static const std::string temp_dir7("temp_dir7_commands_test.hdb");
+static const std::string temp_dir8("temp_dir8_commands_test.hdb");
+static const char* temp_dfxml_file = "temp_dfxml_out.xml";
+
 static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
 static const std::string sample_dfxml4096(HASHDB_TEST_DATADIR "sample_dfxml4096.xml");
 static const std::string sample_dfxml512(HASHDB_TEST_DATADIR "sample_dfxml512.xml");
@@ -55,86 +59,155 @@ void check_size(const std::string hashdb_dir, size_t size) {
   BOOST_TEST_EQ(manager.map_size(), size);
 }
 
-// validate all commands in general
-void do_test1() {
- 
-  // clean up from any previous run
+// import/export: import1, export, import2 should retain size of 74
+void test_import_export() {
+  hashdb_settings_t settings;
+  rm_hashdb_dir(temp_dir1);
+  rm_hashdb_dir(temp_dir2);
+  remove(temp_dfxml_file);
+
+  // import
+  commands_t<hash_t>::create(settings, temp_dir1);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t<hash_t>::do_export(temp_dir1, "temp_dfxml_out.xml");
+  commands_t<hash_t>::create(settings, temp_dir2);
+  commands_t<hash_t>::import("repository2", temp_dfxml_file, temp_dir2);
+  check_size(temp_dir2, 74);
+}
+
+// database manipulation commands
+void test_database_manipulation() {
+  hashdb_settings_t settings;
   rm_hashdb_dir(temp_dir1);
   rm_hashdb_dir(temp_dir2);
   rm_hashdb_dir(temp_dir3);
   rm_hashdb_dir(temp_dir4);
   rm_hashdb_dir(temp_dir5);
-
-  // create new hashdbs
-  hashdb_settings_t settings;
-  settings.bloom1_is_used = false;
+  rm_hashdb_dir(temp_dir6);
+  rm_hashdb_dir(temp_dir7);
+  rm_hashdb_dir(temp_dir8);
   commands_t<hash_t>::create(settings, temp_dir1);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir1);
   commands_t<hash_t>::create(settings, temp_dir2);
-  commands_t<hash_t>::create(settings, temp_dir3);
-  commands_t<hash_t>::create(settings, temp_dir4);
-  commands_t<hash_t>::create(settings, temp_dir5);
+  commands_t<hash_t>::import("repository2", sample_dfxml4096, temp_dir2);
 
-  // import
-  commands_t<hash_t>::import("test_repository_name", sample_dfxml4096, temp_dir1);
-
-  // export
-  commands_t<hash_t>::do_export(temp_dir1, "temp_dfxml_out.xml");
-
-  // add
+  // add temp_dir1 to temp_dir2
+  std::cout << "add\n";
   commands_t<hash_t>::add(temp_dir1, temp_dir2);
+  check_size(temp_dir1, 74);
+  check_size(temp_dir2, 2 * 74);
   
   // add_multiple
+  std::cout << "add_multiple\n";
+  commands_t<hash_t>::create(settings, temp_dir3);
   commands_t<hash_t>::add_multiple(temp_dir1, temp_dir2, temp_dir3);
+  check_size(temp_dir3, 2 * 74);
 
   // intersect
-  commands_t<hash_t>::intersect(temp_dir1, temp_dir3, temp_dir2);
+  std::cout << "intersect\n";
+  commands_t<hash_t>::create(settings, temp_dir4);
+  commands_t<hash_t>::intersect(temp_dir1, temp_dir3, temp_dir4);
+  check_size(temp_dir4, 2 * 74);
 
   // subtract
-  commands_t<hash_t>::subtract(temp_dir1, temp_dir2, temp_dir3);
+  std::cout << "subtract\n";
+  commands_t<hash_t>::create(settings, temp_dir5);
+  commands_t<hash_t>::subtract(temp_dir1, temp_dir4, temp_dir5);
+  check_size(temp_dir5, 0);
 
   // deduplicate
-  commands_t<hash_t>::deduplicate(temp_dir1, temp_dir4);
+  std::cout << "deduplicate1\n";
+  commands_t<hash_t>::create(settings, temp_dir6);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir6);
+  commands_t<hash_t>::create(settings, temp_dir7);
+  commands_t<hash_t>::deduplicate(temp_dir6, temp_dir7);
+  check_size(temp_dir7, 74);
+  std::cout << "deduplicate2\n";
+  commands_t<hash_t>::import("repository2", sample_dfxml4096, temp_dir6);
+  commands_t<hash_t>::create(settings, temp_dir8);
+  commands_t<hash_t>::deduplicate(temp_dir6, temp_dir8);
+  check_size(temp_dir8, 0);
+}
+
+// scan services
+void test_scan_services() {
+
+  // setup
+  hashdb_settings_t settings;
+  rm_hashdb_dir(temp_dir1);
+  commands_t<hash_t>::create(settings, temp_dir1);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir1);
 
   // scan
-  commands_t<hash_t>::scan(temp_dir5, sample_dfxml4096);
+  commands_t<hash_t>::scan(temp_dir1, sample_dfxml4096);
 
   // scan expanded
-  commands_t<hash_t>::scan_expanded(temp_dir5, sample_dfxml4096);
+  commands_t<hash_t>::scan_expanded(temp_dir1, sample_dfxml4096);
 
   // expand_identified_blocks
-  commands_t<hash_t>::expand_identified_blocks(temp_dir5, identified_blocks);
+  commands_t<hash_t>::expand_identified_blocks(temp_dir1, identified_blocks);
 
   // server
   // not tested
+}
+
+// statistics
+void test_statistics() {
+
+  // setup
+  hashdb_settings_t settings;
+  rm_hashdb_dir(temp_dir1);
+  commands_t<hash_t>::create(settings, temp_dir1);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir1);
 
   // size
-  commands_t<hash_t>::size(temp_dir5);
+  commands_t<hash_t>::size(temp_dir1);
 
   // sources
-  commands_t<hash_t>::sources(temp_dir5);
+  commands_t<hash_t>::sources(temp_dir1);
 
   // histogram
-  commands_t<hash_t>::histogram(temp_dir5);
+  commands_t<hash_t>::histogram(temp_dir1);
 
   // duplicates
-  commands_t<hash_t>::duplicates(temp_dir5, "2");
+  commands_t<hash_t>::duplicates(temp_dir1, "2");
 
   // hash_table
-  commands_t<hash_t>::hash_table(temp_dir5);
+  commands_t<hash_t>::hash_table(temp_dir1);
+}
+
+// tuning
+void test_tuning() {
+
+  // setup
+  hashdb_settings_t settings;
+  rm_hashdb_dir(temp_dir1);
+  commands_t<hash_t>::create(settings, temp_dir1);
+  commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir1);
 
   // rebuild_bloom
-  commands_t<hash_t>::rebuild_bloom(settings, temp_dir5);
+  settings.bloom1_M_hash_size = 20;
+  commands_t<hash_t>::rebuild_bloom(settings, temp_dir1);
+}
+
+// performance analysis
+void test_performance_analysis() {
+
+  // setup
+  hashdb_settings_t settings;
+  rm_hashdb_dir(temp_dir1);
+  commands_t<hash_t>::create(settings, temp_dir1);
 
   // add_random
-  commands_t<hash_t>::add_random("repo_random", temp_dir5, "100000");
+  commands_t<hash_t>::add_random("repo_random", temp_dir1, "100000");
 
   // scan_random
   // not tested because it takes time to run
-  // commands_t<hash_t>::scan_random(temp_dir5);
+  // commands_t<hash_t>::scan_random(temp_dir1);
 }
 
 // validate use of multiple repository names
-void do_test2() {
+void test_multiple_repository_names() {
   
   // clean up from any previous run
   rm_hashdb_dir(temp_dir);
@@ -161,10 +234,11 @@ void do_test2() {
 }
 
 // validate block size control for 4096
-void do_test3() {
+void test_block_size_4096() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir1);
   rm_hashdb_dir(temp_dir2);
+  remove(temp_dfxml_file);
 
   // create new hashdb
   hashdb_settings_t settings;
@@ -184,10 +258,11 @@ void do_test3() {
 }
 
 // validate block size control for 512 and max count of 1
-void do_test4() {
+void test_block_size_512_and_count_1() {
   // clean up from any previous run
   rm_hashdb_dir(temp_dir1);
   rm_hashdb_dir(temp_dir2);
+  remove(temp_dfxml_file);
 
   // create new hashdb
   hashdb_settings_t settings;
@@ -210,14 +285,24 @@ void do_test4() {
 }
 
 int cpp_main(int argc, char* argv[]) {
-  std::cout << "test1\n";
-  do_test1();
-  std::cout << "test2\n";
-  do_test2();
-  std::cout << "test3\n";
-  do_test3();
-  std::cout << "test4\n";
-  do_test4();
+  std::cout << "test import and export\n";
+  test_import_export();
+  std::cout << "test database manipulation\n";
+  test_database_manipulation();
+  std::cout << "test scan services\n";
+  test_scan_services();
+  std::cout << "test statistics\n";
+  test_statistics();
+  std::cout << "test tuning\n";
+  test_tuning();
+  std::cout << "test performance analysis\n";
+  test_performance_analysis();
+  std::cout << "test multiple repository names\n";
+  test_multiple_repository_names();
+  std::cout << "test block size 4096\n";
+  test_block_size_4096();
+  std::cout << "test block size 512 and count 1\n";
+  test_block_size_512_and_count_1();
   return 0;
 }
 
