@@ -1006,6 +1006,16 @@ T temp = random_key<T>();
 
     // also write changes to cout
     std::cout << changes << "\n";
+
+    // give user a chance to check memory usage before leaving
+    while (true) {
+      std::cout << "Done.  Check Memory usage, if desired, then type 'q' to end: ";
+      std::string response_string;
+      std::getline(std::cin, response_string);
+      if (response_string == "q" || response_string == "Q") {
+        break;
+      }
+    }
   }
 
   // functional analysis and testing: scan_random
