@@ -159,6 +159,7 @@ int main(int argc,char **argv) {
       // general
       {"help", no_argument, 0, 'h'},
       {"Help", no_argument, 0, 'H'},
+      {"version", no_argument, 0, 'v'},
       {"Version", no_argument, 0, 'V'},
 
       // hashdb settings
@@ -180,7 +181,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHV p:m:A:B:C:D:E:F:r:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvV p:m:A:B:C:D:E:F:r:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -198,6 +199,11 @@ int main(int argc,char **argv) {
       case 'H': {	// Help
         usage();
         detailed_usage();
+        exit(0);
+        break;
+      }
+      case 'v': {	// version
+        std::cout << "hashdb_manager " << PACKAGE_VERSION << "\n";
         exit(0);
         break;
       }

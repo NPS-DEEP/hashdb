@@ -47,10 +47,10 @@ void usage() {
   // print usage
   std::cout
   << "hashdb Version " << PACKAGE_VERSION  << "\n"
-  << "Usage: hashdb -h | -H | -V | <command>\n"
+  << "Usage: hashdb -h | -H | -v | -V | <command>\n"
   << "  -h, --help     print this message\n"
   << "  -H, --Help     print detailed help including usage notes and examples\n"
-  << "  -V, --Version  print version number\n"
+  << "  -v, -V, --version, --Version    print version number\n"
   << "\n"
   << "hashdb supports the following commands:\n"
   << "\n"
