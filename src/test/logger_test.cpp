@@ -33,40 +33,40 @@
 #include "logger.hpp"
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
+#include "hashdb_settings_store.hpp"
 
 static const char temp_dir[] = "temp_dir_logger_test";
 static const char temp_log[] = "temp_dir_logger_test/log.xml";
 
 void run_test() {
 
+  rm_hashdb_dir(temp_dir);
   make_dir_if_not_there(temp_dir);
-
-  remove(temp_log);
-
   hashdb_settings_t settings;
+  hashdb_settings_store_t::write_settings(temp_dir, settings);
+
+
   hashdb_changes_t changes;
 
+  // check basic usability
   logger_t logger(temp_dir, "logger test");
   logger.add_timestamp("my_timestamp");
   logger.add_hashdb_settings(settings);
   logger.add_hashdb_changes(changes);
   logger.add("add_by_itself", 3);
 
-  // emits xml to stdout.
-//  logger_t closed_logger;
-
-  // This may emit an "already closed" warning.
-//  closed_logger.close(); // logger may emit a warning
+  // check that logger is not usable once closed
+  logger.close();
+  BOOST_TEST_THROWS(logger.add_timestamp("already closed"), std::runtime_error);
+  BOOST_TEST_THROWS(logger.close(), std::runtime_error);
 }
 
 int cpp_main(int argc, char* argv[]) {
-//  std::cout << "logger_test correctly emits an xml tag, a close warning, and a request to inspect log.xml.\n";
 
   run_test();
 
   // done
-  std::cout << "Logger test completed.\n";
-//  std::cout << "inspect temp_dir/log.xml if desired.\n";
+  std::cout << "Logger test completed, inspect log.xml if desired.\n";
   return 0;
 }
 
