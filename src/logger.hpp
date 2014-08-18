@@ -86,13 +86,12 @@ class logger_t {
   /**
    * You can close the logger and use the log before the logger is disposed
    * by calling close.
-   * Do not use the logger after closing it; this will corrupt the log file.
+   * Do not close the logger twice because this will corrupt the log file.
    */
   void close() {
     if (closed) {
       // logger closed
-      std::cout << "hashdb_change_logger.close warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.close: log file already closed");
     }
 
     // log closure for x
@@ -114,8 +113,7 @@ class logger_t {
   void add_timestamp(const std::string& name) {
     if (closed) {
       // logger closed
-      std::cout << "logger.add_timestamp warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.add_timestamp: log file already closed");
     }
 
     x.add_timestamp(name);
@@ -127,8 +125,7 @@ class logger_t {
   void add_memory_usage(const std::string& name) {
     if (closed) {
       // logger closed
-      std::cout << "logger.add_memory_usage warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.add_memory_usage: log file already closed");
     }
 
     add_memory_usage_algorithm(&x, name);
@@ -137,8 +134,7 @@ class logger_t {
   void add_hashdb_settings(const hashdb_settings_t& settings) {
     if (closed) {
       // logger closed
-      std::cout << "logger.add_hashdb_settings warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.add_hashdb_settings: log file already closed");
     }
 
     settings.report_settings(x);
@@ -147,8 +143,7 @@ class logger_t {
   void add_hashdb_changes(const hashdb_changes_t& changes) {
     if (closed) {
       // logger closed
-      std::cout << "logger.add_hashdb_changes warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.add_hashdb_changes: log file already closed");
     }
 
     changes.report_changes(x);
@@ -161,8 +156,7 @@ class logger_t {
   void add(const std::string& tag, const T& value) {
     if (closed) {
       // logger closed
-      std::cout << "hashdb_change_logger.add warning: logger closed\n";
-      return;
+      throw std::runtime_error("logger.add: log file already closed");
     }
 
     x.xmlout(tag, value);
