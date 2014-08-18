@@ -199,7 +199,8 @@ void test_performance_analysis() {
   commands_t<hash_t>::create(settings, temp_dir1);
 
   // add_random
-  commands_t<hash_t>::add_random("repo_random", temp_dir1, "100000");
+  // not tested because it requires user input "q" to complete.
+  // commands_t<hash_t>::add_random("repo_random", temp_dir1, "100000");
 
   // scan_random
   // not tested because it takes time to run
