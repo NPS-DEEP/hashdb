@@ -503,6 +503,8 @@ Users can also run the following command to get information about the contents o
 \subsubsection{Manipulating Hash Databases}
 Databases may need to be merged together or common hash values may need to be subtracted out in order for them to be more suitable for scanning against.
 Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
+Except for the \textbf{deduplicate} command, the target database must already exist.
+For the \textbf{deduplicate} command, if the target does not exist, one will be created with the same configuration settings as the source.
 
 \begin{table}[!ht]
 \centering
@@ -522,7 +524,7 @@ Commands that manipulate hash databases are outlined in Table \ref{tab:databaseM
 \hline
 \textbf{subtract} & subtract $<$source db1$>$ $<$source db2$>$ $<$destination db$>$&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db}\\
 \hline
-\textbf{deduplicate} & deduplicate $<$source db$>$ $<$destination db$>$&   Copies all non-duplicate hash values from \textit{source db1} into \textit{destination db}\\
+\textbf{deduplicate} & deduplicate $<$source db$>$ $<$destination db$>$&   Copies all non-duplicate hash values from \textit{source db} into \textit{destination db}\\
 \hline
 \end{tabular}
 \end{table}
@@ -702,7 +704,7 @@ video.xml,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file offset=104
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. For now, \hash provides commands for this:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
-\item Alternatively, use the ``deduplicate'' command to remove all hash values that have been imported more than once.
+\item Alternatively, use the ``deduplicate'' command to copy all hash values that have been imported exactly once.
 \end{itemize}
 These commands are provided to manage false positives.
 

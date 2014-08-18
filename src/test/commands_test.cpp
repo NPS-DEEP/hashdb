@@ -119,12 +119,12 @@ void test_database_manipulation() {
   std::cout << "deduplicate1\n";
   commands_t<hash_t>::create(settings, temp_dir6);
   commands_t<hash_t>::import("repository1", sample_dfxml4096, temp_dir6);
-  commands_t<hash_t>::create(settings, temp_dir7);
   commands_t<hash_t>::deduplicate(temp_dir6, temp_dir7);
   check_size(temp_dir7, 74);
   std::cout << "deduplicate2\n";
   commands_t<hash_t>::import("repository2", sample_dfxml4096, temp_dir6);
-  commands_t<hash_t>::create(settings, temp_dir8);
+  commands_t<hash_t>::deduplicate(temp_dir6, temp_dir8);
+  // check ability to open existing target
   commands_t<hash_t>::deduplicate(temp_dir6, temp_dir8);
   check_size(temp_dir8, 0);
 }

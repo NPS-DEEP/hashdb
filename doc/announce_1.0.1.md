@@ -15,9 +15,11 @@ Bug Fixes
     * Detect when multiple databases being referenced are not compatible with each other, specifically, if their hash block size is different or if the databases is the same one.
 * Fix so test suite builds for Windows.
 * Fix the command test so that it does not add a database to itself.  This is an error condition and it can corrupt the database.
+* Add more validation checks to the commands test set.
 * Add the Users Manual to the distribution.
 * Organize the commands in the usage text into categories, and fix and clarify usage language.
 * Set endian module to revision sha1=05ac935 since the newer endian module is not compatible with available Boost versions.
+* Improve usability of the deduplicate command by creating the target database if it is not already there.
 
 Availability
 ============

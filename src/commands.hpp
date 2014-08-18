@@ -493,7 +493,16 @@ T temp = random_key<T>();
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
 
+    // open resources for hashdb1
     hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
+
+    // if hashdb_dir2 does not exist, create it with the settings of hashdb_dir1
+    std::string filename = hashdb_dir2 + "/settings.xml";
+    if (access(filename.c_str(), F_OK) != 0) {
+      create(hashdb_manager1.settings, hashdb_dir2);
+    }
+
+    // open resources for hashdb2
     hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
