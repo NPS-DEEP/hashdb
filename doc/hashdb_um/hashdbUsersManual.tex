@@ -696,9 +696,9 @@ which shows that the block at Forensic path 12464640 matches the block 10498048 
 \end{lstlisting}
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. First column is the forensic path, second is the hash value, and third is the repository name, filename, and file offset}, label=identifiedSourceLine]
-12464640 1d0abbddf1344ac751d17604bdd9ebe8 repository name=repository_demo_
-video.xml,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file offset=104
-98048
+12464640 1d0abbddf1344ac751d17604bdd9ebe8 repository_name=repository_demo_
+video.xml,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file_offset=10498
+048
 \end{lstlisting}
 
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. For now, \hash provides commands for this:

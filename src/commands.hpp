@@ -658,9 +658,9 @@ T temp = random_key<T>();
         // offset tab hashdigest tab repository name, filename
         std::cout << it->first << "\t"
                   << it_pair.first->key.hexdigest() << "\t"
-                  << "repository name=" << it_pair.first->repository_name
+                  << "repository_name=" << it_pair.first->repository_name
                   << ",filename=" << it_pair.first->filename
-                  << ",file offset=" << it_pair.first->file_offset
+                  << ",file_offset=" << it_pair.first->file_offset
                   << "\n";
 
         ++it_pair.first;

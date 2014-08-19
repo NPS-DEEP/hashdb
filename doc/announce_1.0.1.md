@@ -20,6 +20,7 @@ Bug Fixes
 * Organize the commands in the usage text into categories, and fix and clarify usage language.
 * Set endian module to revision sha1=05ac935 since the newer endian module is not compatible with available Boost versions.
 * Improve usability of the deduplicate command by creating the target database if it is not already there.
+* Improve parsability of output from the expand_identified_blocks command.
 
 Availability
 ============
