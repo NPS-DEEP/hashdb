@@ -42,7 +42,7 @@ namespace source_lookup_encoding {
   /**
    * Get the source lookup encoding given a source lookup index and file offset.
    */
-  static uint64_t get_source_lookup_encoding(
+  inline static uint64_t get_source_lookup_encoding(
                    uint64_t source_lookup_index,
                    uint64_t file_offset) {
 
@@ -70,7 +70,7 @@ namespace source_lookup_encoding {
   /**
    * Get the source lookup index given a source lookup encoding
    */
-  static uint64_t get_source_lookup_index(
+  inline static uint64_t get_source_lookup_index(
                    uint64_t source_lookup_encoding) {
 
     return source_lookup_encoding >> 34;
@@ -79,7 +79,7 @@ namespace source_lookup_encoding {
   /**
    * Get the file offset given a source lookup encoding
    */
-  static uint64_t get_file_offset(
+  inline static uint64_t get_file_offset(
                    uint64_t source_lookup_encoding) {
 
     // calculate bit mask for the hash block offset bit fields
