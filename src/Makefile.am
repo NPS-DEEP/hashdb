@@ -36,7 +36,9 @@ hashdb_LDADD = libhashdb.la
 HASHDB_INCS = \
 	commands.hpp \
 	dfxml_hashdigest_reader.hpp \
-	dfxml_hashdigest_reader_manager.hpp \
+	dfxml_import_consumer.hpp \
+	dfxml_scan_consumer.hpp \
+	dfxml_scan_expanded_consumer.hpp \
 	dfxml_hashdigest_writer.hpp \
 	main.cpp \
 	progress_tracker.hpp \

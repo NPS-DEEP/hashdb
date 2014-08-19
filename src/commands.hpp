@@ -34,7 +34,10 @@
 #include "hashdb_iterator.hpp"
 #include "bloom_filter_manager.hpp"
 #include "logger.hpp"
-#include "dfxml_hashdigest_reader_manager.hpp"
+#include "dfxml_hashdigest_reader.hpp"
+#include "dfxml_import_consumer.hpp"
+#include "dfxml_scan_consumer.hpp"
+#include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 #include "tcp_server_manager.hpp"
@@ -246,24 +249,18 @@ T temp = random_key<T>();
     logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-
-    logger.add_timestamp("begin reading DFXML file");
-    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
-    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
-
     logger.add_timestamp("begin import");
 
     // start progress tracker
-    progress_tracker_t progress_tracker(reader_manager.size(), &logger);
+    progress_tracker_t progress_tracker(0, &logger);
 
-    // insert each entry from *it into the hashdb
-    while (it != reader_manager.end()) {
-      // update progress tracker
-      progress_tracker.track();
+    // create the consumer
+    dfxml_import_consumer_t<T> consumer(
+                                &hashdb_manager, &changes, &progress_tracker);
 
-      hashdb_manager.insert(*it, changes);
-      ++it;
-    }
+    // run the dfxml hashdigest reader using the import consumer
+    dfxml_hashdigest_reader_t<dfxml_import_consumer_t<T>, T>::
+                              do_read(dfxml_file, repository_name, &consumer);
 
     // close tracker
     progress_tracker.done();
@@ -548,16 +545,6 @@ T temp = random_key<T>();
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
 
-    // get dfxml reader
-    std::string repository_name = "not used";
-    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
-
-    // done if no entries
-    if (reader_manager.begin() == reader_manager.end()) {
-      std::cout << "No entries in DFXML file\n";
-      return;
-    }
-
     // create space on the heap for the scan input and output vectors
     std::vector<T>* scan_input = new std::vector<T>;
     typename hashdb_t__<T>::scan_output_t* scan_output = new typename hashdb_t__<T>::scan_output_t();
@@ -565,12 +552,13 @@ T temp = random_key<T>();
     // create the hashdb scan service
     hashdb_t__<T> hashdb(path_or_socket);
 
-    // get dfxml block hash entries into the scan_input request vector
-    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
-    while (it != reader_manager.end()) {
-      scan_input->push_back(it->key);
-      ++it;
-    }
+    // create the consumer
+    dfxml_scan_consumer_t<T> consumer(scan_input);
+
+    // run the dfxml hashdigest reader using the scan consumer
+    std::string repository_name = "not used";
+    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t<T>, T>::
+                              do_read(dfxml_file, repository_name, &consumer);
 
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
@@ -599,36 +587,13 @@ T temp = random_key<T>();
     // open hashdb
     hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // get dfxml reader
+    // create the consumer
+    dfxml_scan_expanded_consumer_t<T> consumer(&hashdb_manager);
+
+    // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_manager_t<T> reader_manager(dfxml_file, repository_name);
-
-    typename dfxml_hashdigest_reader_manager_t<T>::const_iterator it = reader_manager.begin();
-
-    // search hashdb for hash values in dfxml
-    while (it != reader_manager.end()) {
-
-      uint32_t count = hashdb_manager.find_count(it->key);
-      if (count == 0) {
-        ++it;
-        continue;
-      }
-
-      // get range of hash match
-      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > range_it_pair(
-                                             hashdb_manager.find(it->key));
-//      hashdb_iterator_t<T> hashdb_it = range_it_pair.first;
-//      hashdb_iterator_t<T> hashdb_it_end = range_it_pair.second;
-
-      while (range_it_pair.first != range_it_pair.second) {
-        hashdb_element_t<T> e = *(range_it_pair.first);
-        std::cout << e.key.hexdigest() << "\t"
-                  << "repository name='" << e.repository_name
-                  << "', filename='" << e.filename << "\n";
-        ++range_it_pair.first;
-      }
-      ++it;
-    }
+    dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t<T>, T>::
+                              do_read(dfxml_file, repository_name, &consumer);
   }
 
   // expand identified_blocks.txt
