@@ -22,6 +22,8 @@
 %define macros for commonly used terms that require special formatting
 \newcommand \hash {\textit{hashdb}\xspace}
 \newcommand \bulk {\textbf{bulk\_extractor}\xspace}
+\newcommand \mdd {\textbf{md5deep}\xspace}
+\newcommand \fiwalk {\textbf{fiwalk}\xspace}
 
 \hypersetup{%
     pdfborder = {0 0 0}
@@ -183,7 +185,10 @@ Figure \ref{fig:overviewFigure} provides an overview of the capabilities include
 
 
 \subsection{DFXML}
+\label{createDFXML}
 \hash populates the hash databases using DFXML files (or via the API using the import command, introduced in Section \ref{usingSection}). DFXML is an XML language designed to represent a wide range of forensic information and forensic processing results. It allows the sharing of structured information between independent tools and organizations \cite{dfxmlpaper}.\\
+
+\subsubsection{Creating a DFXML file using \textbf{md5deep}}
 
 The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and produces DFXML files. Listing \ref{md5excerpt} shows an excerpt of the DFXML file created by \textbf{md5deep}. The portion of the file of interest to \hash is contained in the ``byte\_run'' tag. The ``file\_offset'' attribute is the number of bytes into the file where the cryptographic block hash was calculated. The The  ``len'' attribute indicates the size of the block.  The ``hashdigest'' tag identifies that hash algorithm (MD5) and the long hexadecimal hash value. The ``filename'' tag indicates the filename to which the hashes can be attributed. \\
 \lstset{style=customfile}
@@ -219,8 +224,6 @@ The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and prod
 
 \end{lstlisting}  
 
-\subsubsection{Creating a DFXML file}
-\label{createDFXML}
 Users may create DFXML files to import hashes from by using the
 \textbf{md5deep} tool.
 \textbf{md5deep} is available at \url{http://md5deep.sourceforge.net}.
@@ -240,6 +243,34 @@ The above command specifies:
  The file \texttt{mock\_video.xml} will be used in the next step to create the hash database. However, any DFXML file containing block hash values can be used in \hash.\\
 
 Note, for this example we are using only one file to populate the DFXML. However, users will typically be creating a block hash file from thousands of files in hundred of directories. To create a block hash file that recursively includes all files and directories contained within a directory, use the command \textbf{mdf5deep -r $<$directoryname$>$} along with the other options specified above.
+
+\subsubsection{Creating a DFXML file using \textbf{fiwalk}}
+The \textbf{fiwalk} tool can create block hashes of files in filesystems
+in an image,
+see \url{http://www.forensicswiki.org/wiki/Fiwalk}.
+\textbf{fiwalk} is part of The Sleuth Kit\textregistered\xspace (TSK),
+available from \url{https://github.com/sleuthkit/sleuthkit}. \\
+
+For example run \textbf{fiwalk} with the following command:\\
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{fiwalk -x -S 4096 my_image.E01 > my_image.xml}
+\end{Verbatim}
+The above command specifies:
+\begin{itemize}
+\item Send output to stdout \textbf{-x} option.
+\item Perform sector hashes every 4096 bytes \textbf{-s} option.
+\item Perform sector hashes on the file system in the \texttt{my\_image.E01} image.
+\item Direct output to file \texttt{my\_image.xml}.
+\end{itemize}
+
+\subsubsection{Creating a DFXML file using \textbf{hashdb}}
+The \texttt{export} command of the \textbf{hashdb} tool writes out the block hashes in a hash database along with their source information. \\
+
+For example run \textbf{hashdb} with the following command:\\
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
+\end{Verbatim}
+The above command specifies to export hashes and their source information from hash databse \texttt{mock\_video.hdb} to DFXML file \texttt{demoVideoHashes.xml}.
 
 \subsection{Contents of a Hash Database}
 Each \hash database is contained in a directory called \textit{$<$databasename$>$.hdb} and contains a number of files. These files are:
@@ -339,9 +370,6 @@ Note: sudo is not required. If you do not wish to use sudo,  build and install \
 \verbbf{make}
 \verbbf{make install}
 \end{Verbatim}
-\textbf{Download and Install \bulk}\\
-The \bulk \hash scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
-This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hash must be installed first for \bulk to build properly with \hash. \bulk will automatically install the \textit{hashdb} scanner but only if the \hash library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.
 
 \subsubsection{Installing on Windows}
 \label{InstallingOnWindows}
@@ -367,17 +395,34 @@ When the installer file is executed, the installation will begin and show a dial
 	\label{fig:windowsInstaller}
 \end{figure}
 
+\subsubsection{Installing Other Related Tools}
+
 \textbf{Download and Install \bulk}\\
 The \bulk \hash scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
-This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}.
+This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hash must be installed first for \bulk to build properly with \hash. \bulk will automatically install the \textit{hashdb} scanner but only if the \hash library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.\\
+
+\textbf{Download and Install \mdd}\\
+\mdd is available at
+\url{https://github.com/jessek/hashdeep/releases/tag/release-4.4}.
+Additional platform-specific installation structions are provided at
+\url{https://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
+
+\textbf{Download and Install \fiwalk}\\
+Please see \url{http://www.forensicswiki.org/wiki/Fiwalk}.
+\textbf{fiwalk} is part of The Sleuth Kit\textregistered\xspace (TSK),
+available from \url{https://github.com/sleuthkit/sleuthkit}. \\
 
 \subsection {\hash Commands}
 \label{Running}
 The core capabilities provided by \hash involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hash users need to start by building a database (if an existing database is not available for use).
 Users then import hashes using a DFXML file or by using the \bulk \hash scaner, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
 Users then scan for hashes that match.
-Additional commands are provided to support statistical analysis, performance tuning and performance analysis.
+Additional commands are provided to support statistical analysis, performance tuning and performance analysis.\\
+
 This section describes \hash commands, along with examples, for performing these tasks.
+For more examples of command usage, please see Section \ref{UseCases}.
+For a \hash quick reference summary, please see Appendix \ref{QuickReference}
+and \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
 
 \subsubsection{Creating a Hash Database}
 A hash database must be created before hashes can be added to it.
@@ -487,7 +532,7 @@ The file \texttt{log.xml} will show that a set of hash blocks have just been ins
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Excerpt of the \texttt{log.xml} indicating hash blocks were inserted, label=logexcerpt]
 ...   
-   <repository_name>repository_mock_video.xml</repository_name>
+   <repository_name>mock_video_repository</repository_name>
     <timestamp name='begin import' delta='0.024016' total='0.024016'/>
     <timestamp name='end import' delta='0.015009' total='0.039025'/>
     <hashdb_changes>
@@ -606,7 +651,7 @@ Second, identify the existing hash database that will be used to search for hash
 Finally, run \bulk from the command line and send the required parameters to the \textit{hashdb} scanner using the \textbf{-S} option. Run the following command: 
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{bulk_extractor -e hashdb -o outdir -S hashdb_mode=scan \\}
-\textbf{        -S hashdb_path_or_socket=mock_video.hdb mock_video_redacted_image}
+\textbf{    -S hashdb_scan_path_or_socket=mock_video.hdb mock_video_redacted_image}
 \end{Verbatim}
 This command tells \bulk to enable the \textit{hashdb} scanner and to run it in ``scan'' mode to try to match the values found in the local database \textit{\textbf{mock\_video.hdb}}. Note: other run options using \bulk are discussed further in \ref{bulkextractorSection}.\\
 
@@ -696,9 +741,8 @@ which shows that the block at Forensic path 12464640 matches the block 10498048 
 \end{lstlisting}
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. First column is the forensic path, second is the hash value, and third is the repository name, filename, and file offset}, label=identifiedSourceLine]
-12464640 1d0abbddf1344ac751d17604bdd9ebe8 repository_name=repository_demo_
-video.xml,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file_offset=10498
-048
+12464640 1d0abbddf1344ac751d17604bdd9ebe8 repository_name=mock_video_repos
+itory,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file_offset=10498048
 \end{lstlisting}
 
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. For now, \hash provides commands for this:
@@ -788,8 +832,8 @@ The syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 
 
 \section{Use Cases for \hash}
-There are many different ways to utilize the functionality provided by the \hash tool. In this section, we highlight some of the most common uses of the system. 
-
+\label{UseCases}
+There are many different ways to utilize the functionality provided by the \hash tool. In this section, we highlight some of the most common uses of the system.
 
 \subsection{Querying for Source or Database Information}
  Users can scan a hash database directly using various querying commands. Those commands are outlined in Table \ref{tab:scanServices}.  The ``scan'' command allows users to search for hash blocks in a DFXML file that match hash blocks in a database. This can be used to determine if content from raw media matches fragments of previously encountered data contained in a database. For example, a forensic investigator may have a disk image in evidence. Using that disk image and third party tool such as \textbf{md5deep}, the investigator can generate a DFXML file of sector block hashes. The investigator can then run the ``scan'' command with the DFXML file to see if any content from the disk image matches hash blocks of known fragments of previously encountered data. The ``sources'' and ``statistics,'' commands provide information about the source of the hash blocks and statistics about the database itself.
@@ -841,18 +885,18 @@ There is no security in the current protocol. It should only be used on a privat
 \label{bulkextractorSection}
 The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner. Options include
 \begin{itemize}
-\item hashdb\_mode - the mode for the scanner. One of [none|import|scan] - ``none'' the scanner is active but performs no action, ``import'' - the scanner imports block hashes, ``scan'' - the scanner scans for matching block hashes
-\item hashdb\_block\_size - Block size, in bytes, used to generate hashes. The default is 4096.
-\item hashdb\_ignore\_empty\_blocks - Selects to ignore empty blocks.  One of [YES|NO].  The default is YES.
-\item hashdb\_scan\_path\_or\_socket - The file path to a hash database or
+\item \texttt{hashdb\_mode} - the mode for the scanner. One of [none|import|scan] - ``none'' the scanner is active but performs no action, ``import'' - the scanner imports block hashes, ``scan'' - the scanner scans for matching block hashes
+\item \texttt{hashdb\_block\_size} - Block size, in bytes, used to generate hashes. The default is 4096.
+\item \texttt{hashdb\_ignore\_empty\_blocks} - Selects to ignore empty blocks.  One of [YES|NO].  The default is YES.
+\item \texttt{hashdb\_scan\_path\_or\_socket} - The file path to a hash database or
     socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.
-\item hashdb\_scan\_sector\_size - Selects the scan sector size.  Scans along sector boundaries.
+\item \texttt{hashdb\_scan\_sector\_size} - Selects the scan sector size.  Scans along sector boundaries.
       Valid only in scan mode. Default value is 512.
-\item hashdb\_import\_sector\_size - Selects the import sector size.  Imports along sector boundaries.
+\item \texttt{hashdb\_import\_sector\_size} - Selects the import sector size.  Imports along sector boundaries.
       Valid only in import mode. Default value is 4096.
-\item hashdb\_import\_repository\_name - Selects the repository name to attribute the import to.
+\item \texttt{hashdb\_import\_repository\_name} - Selects the repository name to attribute the import to.
       Valid only in import mode. Default value is ``default\_repository''.
-\item hashdb\_import\_max\_duplicates - The maximum number of duplicates to import
+\item \texttt{hashdb\_import\_max\_duplicates} - The maximum number of duplicates to import
     for a given hash value.  Valid only in import mode. The default is 0 for no limit.
 \end{itemize}
 
@@ -921,21 +965,21 @@ because the output is sorted by hash value.
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Excerpt of a DFXML exported by \hash, label=dfxmlHashExport]
   <fileobject>
-    <repository_name>repository_mock_video.xml</repository_name>
+    <repository_name>mock_video_repository</repository_name>
     <filename>/home/bdallen/demo/mock_video.mp4</filename>
     <byte_run file_offset='6938624' len='4096'>
       <hashdigest type='MD5'>0016aa775765eb7929ec06dea25b6f0e</hashdigest>
     </byte_run>
   </fileobject>
   <fileobject>
-    <repository_name>repository_mock_video.xml</repository_name>
+    <repository_name>mock_video_repository</repository_name>
     <filename>/home/bdallen/demo/mock_video.mp4</filename>
     <byte_run file_offset='3837952' len='4096'>
       <hashdigest type='MD5'>00183a37c80b3ee02cb4bdd3e7d7e9d2</hashdigest>
     </byte_run>
   </fileobject>\
   <fileobject>
-    <repository_name>repository_mock_video.xml</repository_name>
+    <repository_name>mock_video_repository</repository_name>
     <filename>/home/bdallen/demo/mock_video.mp4</filename>
     <byte_run file_offset='5652480' len='4096'>
       <hashdigest type='MD5'>00513c9484ebc957eb928adf30504bc9</hashdigest>
@@ -962,6 +1006,10 @@ There are other articles related to block hashing, and its practical and researc
 \newpage
 \appendix
 \appendixpage
+
+\section{\hash Quick Reference}
+\label{QuickReference}
+\includegraphics[scale=.8]{hashdb_quick_reference}
 
 \section{Output of \hash Help Command}
 \label{HelpOutput}
