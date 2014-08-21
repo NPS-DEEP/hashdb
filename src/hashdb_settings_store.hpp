@@ -100,9 +100,12 @@ class hashdb_settings_store_t {
 
     // if present, move existing settings to old
     if (access(filename.c_str(), F_OK) == 0) {
+      std::remove(filename_old.c_str());
       int status = std::rename(filename.c_str(), filename_old.c_str());
       if (status != 0) {
-        std::cerr << "Warning: unable to back up '" << filename << "' to '" << filename_old << "'.\n";
+        std::cerr << "Warning: unable to back up '" << filename
+                  << "' to '" << filename_old << "': "
+                  << strerror(status) << "\n";
       }
     }
 

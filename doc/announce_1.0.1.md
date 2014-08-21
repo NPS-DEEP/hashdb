@@ -14,6 +14,7 @@ Bug Fixes
     * Detect when the database configuration is different from the hashdb configuration, and fail gracefully.
     * Detect when multiple databases being referenced are not compatible with each other, specifically, if their hash block size is different or if the databases is the same one.
 * Fix so test suite builds for Windows.
+* Fix Windows bug where the history and setting xml file failed to back up.  The failure was that on Windows, std::rename fails to rename to target if a file is at the target path.
 * Fix the command test so that it does not add a database to itself.  This is an error condition and it can corrupt the database.
 * Add more validation checks to the commands test set.
 * Add the Users Manual to the distribution.

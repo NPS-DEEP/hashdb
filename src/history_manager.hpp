@@ -117,33 +117,6 @@ class history_manager_t {
     lines.pop_back();
   }
 
-/*
-  static void write_lines(const std::string& filename,
-                   const std::vector<std::string>& lines) {
-
-    // define scratch file
-    std::string scratchfile = filename + ".scratch";
-
-    // open scratch file
-    std::fstream outf;
-    outf.open(scratchfile.c_str(),std::ios_base::out);
-    if (!outf.is_open()) {
-      throw history_manager_failure_exception_t();
-    }
-
-    // copy lines to scratch file
-    for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it) {
-      outf << line << std::endl;
-    }
-
-    // close outfile
-    outf.close();
-
-    // move scratch file onto file
-    std::rename
-  }
-*/
-
   // embed lines within new tag and indent embedded lines two spaces
   static void embed_in_tag(std::string tag, std::vector<std::string>& lines) {
     std::string open_tag = "<" + tag + ">";
@@ -164,19 +137,40 @@ class history_manager_t {
     lines.push_back("  " + close_tag);
   }
 
+  // windows rename does not overwrite, so do this
+  static void move_onto(std::string history_file, std::string backup_history_file) {
+
+    // remove existing history file; it will not exist if the db is new
+    std::remove(backup_history_file.c_str());
+
+    // rename scratch file to history file, replacing existing history file
+    int status = std::rename(history_file.c_str(), backup_history_file.c_str());
+    if (status != 0) {
+      std::cerr << "Warning: unable to back up '" << history_file
+                << "' to '" << backup_history_file << "': "
+                << strerror(status) << "\n";
+    }
+  }
+
   public:
   /**
    * Append hashdb log to history.
    */
   static void append_log_to_history(const std::string& hashdb_dir) {
-    try {
 
+    const std::string history_filename = hashdb_dir + "/history.xml";
+    const std::string old_history_filename = hashdb_dir + "/_old_history.xml";
+
+    // move history to old_history if it history exists
+    if (access(history_filename.c_str(), F_OK) == 0) {
+      move_onto(history_filename.c_str(), old_history_filename.c_str());
+    }
+
+    try {
       // read the old history lines, if available
-      const std::string history_filename = hashdb_dir + "/history.xml";
       std::vector<std::string> history_lines;
-      bool has_history = (access(history_filename.c_str(), F_OK) == 0);
-      if (has_history) {
-        read_lines(history_filename, history_lines);
+      if (access(old_history_filename.c_str(), F_OK) == 0) {
+        read_lines(old_history_filename, history_lines);
 
         // strip off header and outer tags
         strip_xml_header(history_lines);
@@ -192,12 +186,11 @@ class history_manager_t {
       strip_xml_header(log_lines);
       strip_outer_tag("log", log_lines);
 
-      // open scratch history output stream
-      const std::string scratch = history_filename + ".scratch";
+      // open history output stream
       std::fstream outf;
-      outf.open(scratch.c_str(),std::ios_base::out);
+      outf.open(history_filename.c_str(),std::ios_base::out);
       if (!outf.is_open()) {
-        std::cerr << "append_log_to_history: unable to open scratch file\n";
+        std::cerr << "append_log_to_history: unable to open history file\n";
         throw history_manager_failure_exception_t();
       }
 
@@ -221,11 +214,6 @@ class history_manager_t {
       // close outfile
       outf.close();
 
-      // rename scratch file to history file, replacing existing history file
-      int status = std::rename(scratch.c_str(), history_filename.c_str());
-      if (status != 0) {
-        std::cerr << "unable to move scratch file '" << scratch << "' to '" << history_filename << "'.\n";
-      }
     } catch (history_manager_failure_exception_t &e) {
       std::cerr << "Warning: unable to write hashdb history file.\n";
     }
@@ -236,38 +224,40 @@ class history_manager_t {
    */
   static void merge_history_to_history(const std::string& old_hashdb_dir,
                                        const std::string& new_hashdb_dir) {
+
+    const std::string old_history_filename = old_hashdb_dir + "/history.xml";
+    const std::string new_history_filename = new_hashdb_dir + "/history.xml";
+    const std::string old_new_history_filename = new_hashdb_dir + "/_old_history.xml";
+
+    // move new_history to old_new_history if new_history exists
+    move_onto(new_history_filename.c_str(), old_new_history_filename.c_str());
+
     try {
 
-      // read the old history lines
-      const std::string old_history_filename = old_hashdb_dir + "/history.xml";
+      // read old history lines
       std::vector<std::string> old_history_lines;
       read_lines(old_history_filename, old_history_lines);
 
-      // strip off header and outer tags from old history
+      // strip off header and outer tags from old history lines
       strip_xml_header(old_history_lines);
       strip_outer_tag("history", old_history_lines);
 
       // embed old history lines inside new "old_history" tag
       embed_in_tag("old_history", old_history_lines);
 
-      // read any new history lines, if available
-      const std::string new_history_filename = new_hashdb_dir + "/history.xml";
+      // read new history lines
       std::vector<std::string> new_history_lines;
-      bool has_new_history = (access(new_history_filename.c_str(), F_OK) == 0);
-      if (has_new_history) {
-        read_lines(new_history_filename, new_history_lines);
+      read_lines(old_new_history_filename, new_history_lines);
 
-        // strip off header and outer tags of new history lines
-        strip_xml_header(new_history_lines);
-        strip_outer_tag("history", new_history_lines);
-      }
+      // strip off header and outer tags of new history lines
+      strip_xml_header(new_history_lines);
+      strip_outer_tag("history", new_history_lines);
 
-      // open scratch history output stream
-      const std::string scratch = new_history_filename + ".scratch";
+      // open new history output stream
       std::fstream outf;
-      outf.open(scratch.c_str(),std::ios_base::out);
+      outf.open(new_history_filename.c_str(),std::ios_base::out);
       if (!outf.is_open()) {
-        std::cerr << "merge_history_to_history: unable to open scratch file\n";
+        std::cerr << "merge_history_to_history: unable to open new history file\n";
         throw history_manager_failure_exception_t();
       }
 
@@ -291,8 +281,6 @@ class history_manager_t {
       // close outfile
       outf.close();
 
-      // rename scratch file to history file, replacing existing history file
-      std::rename(scratch.c_str(), new_history_filename.c_str());
     } catch (history_manager_failure_exception_t &e) {
       std::cerr << "Warning: unable to write hashdb history file.\n";
     }
