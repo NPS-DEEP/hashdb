@@ -30,6 +30,7 @@
 #define BLOOM_FILTER_MANAGER_HPP
 #include "bloom.h"
 #include "file_modes.h"
+#include "hashdb_settings.hpp"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cassert>
@@ -196,21 +197,21 @@ class bloom_filter_manager_t {
   /**
    * throw std::runtime_error if invalid.
    */
-  static void validate_bloom_settings(hashdb_settings_t hashdb_settings) {
+  static void validate_bloom_settings(hashdb_settings_t settings) {
     std::ostringstream ss;
 
     // check that bloom hash size is not too loarge for the running system
     uint32_t max_M_hash_size = (sizeof(size_t) * 8) -1;
-    if (hashdb_settings.bloom1_M_hash_size > max_M_hash_size) {
+    if (settings.bloom1_M_hash_size > max_M_hash_size) {
       ss << "bloom1 bits per hash, "
-         << hashdb_settings.bloom1_M_hash_size
+         << settings.bloom1_M_hash_size
          << ", exceeds " << max_M_hash_size
          << ", which is the limit on this system";
       throw std::runtime_error(ss.str());
     }
-    if (hashdb_settings.bloom2_M_hash_size > max_M_hash_size) {
+    if (settings.bloom2_M_hash_size > max_M_hash_size) {
       ss << "bloom1 bits per hash, "
-         << hashdb_settings.bloom2_M_hash_size
+         << settings.bloom2_M_hash_size
          << ", exceeds " << max_M_hash_size
          << ", which is the limit on this system";
       throw std::runtime_error(ss.str());
@@ -218,31 +219,31 @@ class bloom_filter_manager_t {
 
     // check that bloom hash size is not too small
     uint32_t min_M_hash_size = 3;
-    if (hashdb_settings.bloom1_M_hash_size < min_M_hash_size) {
+    if (settings.bloom1_M_hash_size < min_M_hash_size) {
       ss << "bloom1 bits per hash, "
-         << hashdb_settings.bloom1_M_hash_size
+         << settings.bloom1_M_hash_size
          << ", must not be less than " << min_M_hash_size;
       throw std::runtime_error(ss.str());
     }
-    if (hashdb_settings.bloom2_M_hash_size < min_M_hash_size) {
+    if (settings.bloom2_M_hash_size < min_M_hash_size) {
       ss << "bloom2 bits per hash, "
-         << hashdb_settings.bloom2_M_hash_size
+         << settings.bloom2_M_hash_size
          << ", must not be less than " << min_M_hash_size;
       throw std::runtime_error(ss.str());
     }
 
     // check that the number of hash functions, k hash functions, is reasonable
-    if (hashdb_settings.bloom1_k_hash_functions < 1
-     || hashdb_settings.bloom1_k_hash_functions > 5) {
+    if (settings.bloom1_k_hash_functions < 1
+     || settings.bloom1_k_hash_functions > 5) {
       std::cerr << "bloom1 k hash functions, "
-                << hashdb_settings.bloom1_k_hash_functions
+                << settings.bloom1_k_hash_functions
                 << ", must be between 1 and 5\n";
       throw std::runtime_error(ss.str());
     }
-    if (hashdb_settings.bloom2_k_hash_functions < 1
-     || hashdb_settings.bloom2_k_hash_functions > 5) {
+    if (settings.bloom2_k_hash_functions < 1
+     || settings.bloom2_k_hash_functions > 5) {
       std::cerr << "bloom2 k hash functions, "
-                << hashdb_settings.bloom2_k_hash_functions
+                << settings.bloom2_k_hash_functions
                 << ", must be between 2 and 5\n";
       throw std::runtime_error(ss.str());
     }

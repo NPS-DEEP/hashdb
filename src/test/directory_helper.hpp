@@ -65,6 +65,7 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/bloom_filter_2").c_str());
   remove((hashdb_dir + "/hash_store").c_str());
   remove((hashdb_dir + "/history.xml").c_str());
+  remove((hashdb_dir + "/_old_history.xml").c_str());
   remove((hashdb_dir + "/log.xml").c_str());
   remove((hashdb_dir + "/settings.xml").c_str());
   remove((hashdb_dir + "/_old_settings.xml").c_str());
