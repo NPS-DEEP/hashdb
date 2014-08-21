@@ -40,7 +40,6 @@
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "usage.hpp"
-#include "bloom_filter_calculator.hpp"
 #include "command_line.hpp"
 #include "commands.hpp"
 
@@ -147,7 +146,7 @@ int main(int argc,char **argv) {
 
   // manage when there are no arguments
   if(argc==1) {
-      usage();
+      usage<hash_t>();
       exit(1);
   }
 
@@ -192,12 +191,12 @@ int main(int argc,char **argv) {
     }
     switch (ch) {
       case 'h': {	// help
-        usage();
+        usage<hash_t>();
         exit(0);
         break;
       }
       case 'H': {	// Help
-        usage();
+        usage<hash_t>();
         detailed_usage();
         exit(0);
         break;
@@ -236,7 +235,7 @@ int main(int argc,char **argv) {
       }
 
       // bloom filter settings
-      case 'A': {	// b1 bloom 1 state
+      case 'A': {	// bloom1 <state>
         has_bloom_filter_settings = true;
         bool is_ok_bloom1_state = string_to_bloom_state(optarg, hashdb_settings.bloom1_is_used);
         if (!is_ok_bloom1_state) {
@@ -245,20 +244,20 @@ int main(int argc,char **argv) {
         }
         break;
       }
-      case 'B': {	// b1n bloom 1 expected total number of hashes
+      case 'B': {	// bloom1_n <n> expected total number of hashes
         has_bloom_filter_settings = true;
         has_bloom1_n = true;
         try {
           uint64_t n1 = boost::lexical_cast<uint64_t>(optarg);
           hashdb_settings.bloom1_k_hash_functions = 3;
-          hashdb_settings.bloom1_M_hash_size = bloom_filter_calculator::approximate_n_to_M(n1);
+          hashdb_settings.bloom1_M_hash_size = bloom_filter_manager_t<hash_t>::approximate_n_to_M(n1);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 1 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
       }
-      case 'C': {	// b1kM bloom 1 k hash functions and M hash size
+      case 'C': {	// bloom1_kM <k:M> k hash functions and M hash size
         has_bloom_filter_settings = true;
         has_bloom1_kM = true;
         std::vector<std::string> params = split(std::string(optarg), ':');
@@ -277,7 +276,7 @@ int main(int argc,char **argv) {
         exit(1);
         break;
       }
-      case 'D': {	// b2 bloom 2 state
+      case 'D': {	// bloom2 <state>
         has_bloom_filter_settings = true;
         bool is_ok_bloom2_state = string_to_bloom_state(optarg, hashdb_settings.bloom2_is_used);
         if (!is_ok_bloom2_state) {
@@ -286,20 +285,20 @@ int main(int argc,char **argv) {
         }
         break;
       }
-      case 'E': {	// b2n bloom 2 expected total number of hashes
+      case 'E': {	// bloom2_n <n> expected total number of hashes
         has_bloom_filter_settings = true;
         has_bloom2_n = true;
         try {
           uint64_t n2 = boost::lexical_cast<uint64_t>(optarg);
           hashdb_settings.bloom2_k_hash_functions = 3;
-          hashdb_settings.bloom2_M_hash_size = bloom_filter_calculator::approximate_n_to_M(n2);
+          hashdb_settings.bloom2_M_hash_size = bloom_filter_manager_t<hash_t>::approximate_n_to_M(n2);
         } catch (...) {
           std::cerr << "Invalid value for bloom filter 2 expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
       }
-      case 'F': {	// b2kM bloom 2 k hash functions and M hash size
+      case 'F': {	// bloom2_kM <k:M> k hash functions and M hash size
         has_bloom_filter_settings = true;
         has_bloom2_kM = true;
         std::vector<std::string> params = split(std::string(optarg), ':');
@@ -364,20 +363,12 @@ int main(int argc,char **argv) {
     exit(1);
   }
 
-  // check that bloom hash size is compatible with the running system
-  uint32_t temp_st = (sizeof(size_t) * 8) -1;
-  uint32_t temp_b1 = hashdb_settings.bloom1_M_hash_size;
-  uint32_t temp_b2 = hashdb_settings.bloom2_M_hash_size;
-  if (temp_b1 > temp_st) {
-    std::cerr << "Error: Bloom 1 bits per hash, " << temp_b1
-              << ", exceeds " << temp_st
-              << ", which is the limit on this system.\n";
-    exit(1);
-  }
-  if (temp_b2 > temp_st) {
-    std::cerr << "Error: Bloom 2 bits per hash, " << temp_b2
-              << ", exceeds " << temp_st
-              << ", which is the limit on this system.\n";
+  // check that bloom filter parameters are valid
+  try {
+    bloom_filter_manager_t<hash_t>::validate_bloom_settings(hashdb_settings);
+  } catch (std::runtime_error& e) {
+    std::cerr << "Bloom filter input error: " << e.what()
+              << ".\nAborting.\n";
     exit(1);
   }
 

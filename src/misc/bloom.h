@@ -35,15 +35,6 @@
 #include <pthread.h>
 #endif
 
-//#ifdef WIN32
-//// note that winsock2.h is not needed by bloom.h, but if winsock2.h is needed
-//// elsewhere, winsock2.h will complain if windows.h is already included.
-//#include <winsock2.h> // not needed by bloom.h but needed by windows.h
-//#include <windows.h>
-//#include <windowsx.h>
-//#include <wincrypt.h>
-//#endif
-
 #ifndef __BEGIN_DECLS
 #if defined(__cplusplus)
 #define __BEGIN_DECLS   extern "C" {

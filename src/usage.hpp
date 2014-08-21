@@ -38,9 +38,10 @@
 #include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
-#include "bloom_filter_calculator.hpp"
+#include "bloom_filter_manager.hpp"
 #include "hashdb_settings.hpp"
 
+template<class T>
 void usage() {
   hashdb_settings_t s;
 
@@ -67,7 +68,7 @@ void usage() {
   << "    --bloom1 <state>\n"
   << "      sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
   << "    --bloom1_n <n>\n"
-  << "      expected total number <n> of unique hashes (default " << bloom_filter_calculator::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
+  << "      expected total number <n> of unique hashes (default " << bloom_filter_manager_t<T>::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
   << "    --bloom1_kM <k:M>\n"
   << "      number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
   << "      and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --bloom1_n)\n"
@@ -229,7 +230,7 @@ void usage() {
   << "    --bloom1 <state>\n"
   << "      sets bloom filter 1 <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
   << "    --bloom1_n <n>\n"
-  << "      expected total number <n> of unique hashes (default " << bloom_filter_calculator::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
+  << "      expected total number <n> of unique hashes (default " << bloom_filter_manager_t<T>::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
   << "    --bloom1_kM <k:M>\n"
   << "      number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
   << "      and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --bloom1_n)\n"

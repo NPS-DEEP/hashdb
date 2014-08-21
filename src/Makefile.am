@@ -52,7 +52,6 @@ HASHDB_INCS = \
 LIBHASHDB_INCS = \
 	bi_data_types.hpp \
 	bi_store.hpp \
-	bloom_filter_calculator.hpp \
 	bloom_filter_manager.hpp \
 	command_line.cpp \
 	command_line.hpp \
