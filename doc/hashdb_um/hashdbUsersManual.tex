@@ -173,6 +173,7 @@ Figure \ref{fig:overviewFigure} provides an overview of the capabilities include
 \end{figure}
 
 \subsection{Hash Blocks}
+\label{HashBlocks}
 \hash relies on block hashing rather than file hashing. A hash block is a contiguous sequence of bytes, typically 4KiB in size. Tools using block hashing calculate cryptographic hashes from hash blocks, along with information about where the hash blocks are sourced from. To increase the probability of finding matching hashes in sector-based disk images, hashes are generated at each sector boundary. Figure \ref{fig:sectorboundaries} illustrates cryptographic hashes generated from 4KiB hash blocks aligned on 512 byte sector boundaries. Block size is selectable in tools such as \textbf{md5deep}. In our work, we use a block size of 4KiB.\\
 
 \begin{figure}
@@ -186,11 +187,19 @@ Figure \ref{fig:overviewFigure} provides an overview of the capabilities include
 
 \subsection{DFXML}
 \label{createDFXML}
-\hash populates the hash databases using DFXML files (or via the API using the import command, introduced in Section \ref{usingSection}). DFXML is an XML language designed to represent a wide range of forensic information and forensic processing results. It allows the sharing of structured information between independent tools and organizations \cite{dfxmlpaper}.\\
+\hash can be used to populate hash databases by importing block hashes from DFXML files.
+DFXML is an XML language designed to represent a wide range of forensic information and forensic processing results. It allows the sharing of structured information between independent tools and organizations \cite{dfxmlpaper}.\\
+
+Please note that \hash does not require DFXML files to import hashes.
+The \bulk \hash scanner can import hashes directly into a new hash database,
+see Section \ref{ImportingAndScanning} for importing using the \bulk \hash scanner.
+Also, third party tools can be created for importing hashes
+directly into a hash database by interfacing with the \hash library API,
+see Section \ref{usingSection}.
 
 \subsubsection{Creating a DFXML file using \textbf{md5deep}}
 
-The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and produces DFXML files. Listing \ref{md5excerpt} shows an excerpt of the DFXML file created by \textbf{md5deep}. The portion of the file of interest to \hash is contained in the ``byte\_run'' tag. The ``file\_offset'' attribute is the number of bytes into the file where the cryptographic block hash was calculated. The The  ``len'' attribute indicates the size of the block.  The ``hashdigest'' tag identifies that hash algorithm (MD5) and the long hexadecimal hash value. The ``filename'' tag indicates the filename to which the hashes can be attributed. \\
+The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and produces DFXML files. Listing \ref{md5excerpt} shows an excerpt of the DFXML file created by \textbf{md5deep}. The portion of the file of interest to \hash is contained in the ``byte\_run'' tag. The ``file\_offset'' attribute is the number of bytes into the file where the cryptographic block hash was calculated. The  ``len'' attribute indicates the size of the block.  The ``hashdigest'' tag identifies that hash algorithm (MD5) and the long hexadecimal hash value. The ``filename'' tag indicates the filename to which the hashes can be attributed. \\
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Excerpt of a DFXML report file showing the MD5 output, label=md5excerpt]
   <fileobject>
@@ -291,20 +300,22 @@ source_repository_name_store.idx1
 source_repository_name_store.idx2
 \end{verbatim}
 
-These files include XML files containing configuration settings and logs, a Bloom filter file used for improving the speed of hash lookups, binary files containing stored hashes from multiple sources and binary files that allow lookup of hash source names. Of these files, the following may be of interest to the user:
+These files include XML files containing configuration settings and logs, a Bloom filter file used for improving the speed of hash lookups, binary files containing stored hashes from multiple sources and binary files that allow lookup of hash source names. Of these files, the history, settings, and log files may be of interest to the user:
 \begin{itemize}
 \item \texttt{log.xml} \\
 Every time a command is run that changes the content of the database, this file is replaced with a log of the run.
-The log includes the command name, information about \hash including the command typed and how \hash was compiled, information about the operating system \hash was just run on, a copy of the \hash settings, timestamps indicating how much time the command took, and the specific \hash changes applied, described in more detail in Section \ref{updateSection}.
-\item \texttt{settings.xml} \\
-This file includes the build environment and execution environment, described above, and the settings requested by the user when the block hash database was created, see \hash settings and Bloom filter settings options.
+The log includes the command name, information about \hash including the command typed and how \hash was compiled, information about the operating system \hash was just run on, timestamps indicating how much time the command took, and the specific \hash changes applied, described in more detail in Section \ref{Running}.
 \item \texttt{history.xml} \\
-The purpose of this file is to retain full attribution for a database.
-On every change, \texttt{log.xml} is appended.
-On every change applied from another database
+The purpose of this file is to provide full attribution for a database.
+Every \hash command executed that changes the state of the database
+is logged into the \texttt{log.xml} file and is appended to the \texttt{history.xml} file.
+For \hash commands that involve manipulations from another database
 (or from two databases, as is the case with the \texttt{add\_multiple} command),
-the history of that database or databases is also appended.
-It can be difficult to follow for all but advanced users but provides full attribution nonetheless.
+the history file of those databases are also appended.
+It can be difficult to follow the \texttt{history.xml} file because of its XML format, but it provides full attribution nonetheless.
+\item \texttt{settings.xml} \\
+This file contains the settings requested by the user when the block hash database was created, see \hash settings and Bloom filter settings options.
+This file also contains internal \hash configuration and versioning information that is specific to how the \hash tool was compiled.
 \end{itemize}
 
 
@@ -427,11 +438,30 @@ and \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
 \subsubsection{Creating a Hash Database}
 A hash database must be created before hashes can be added to it.
 The command to create a hash database is shown in Table \ref{tab:createDatabase}.
+Table \ref{tab:hashDBSettings} shows the optional parameters that can be used to specify database settings.
+% zzzz need table for Bloom settings
+Bloom filter settings for performance tuning are not shown.\\
+
+\textbf{Hash Block Size}\\
+This setting specifies the hash block size used to generate hashes.
+The hash block size must be greater than or equal to the sector size of 512,
+and must be divisible by 512 in order to be byte aligned, as discussed
+in Section \ref{HashBlocks}.\\
+
+\textbf{Maximum Duplicates}\\
+This setting specifies the maximum number of duplicates of a hash value
+that \hash may put into the database.
+A default value of 0 means unlimited, but this may be unreasonable.
+For example if a block is repeated many times and is thus not interesting,
+limit storing its duplicates using this setting.\\
+
+\textbf{Example}\\
 To create an (empty) hash database named \textbf{\textit{mock\_video.hdb}}, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb create mock_video.hdb}
 \end{Verbatim}
-The above command will create a database with all of the default hash database settings. Most users will not need to change those settings. Our DFXML file was created with a default block size of 4096 bytes. Table \ref{tab:hashDBSettings} shows the optional parameters that can be used to specify database settings. Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
+The above command will create a database with all of the default hash database settings. Most users will not need to change those settings. Our DFXML file was created with a default block size of 4096 bytes.
+Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb create --max\_duplicates=20 mock_video.hdb}
 \verbbf{hashdb create -m 20 mock_video.hdb}
@@ -812,6 +842,7 @@ Performance analysis commands for analyzing \hash performance are available, see
 \end{table}
 
 \subsection{Importing and Scanning Using the \bulk \hash Scanner}
+\label{ImportingAndScanning}
 The \bulk \hash scanner may be used to import hashes and to scan for hashes.
 The syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 
