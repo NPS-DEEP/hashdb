@@ -67,6 +67,11 @@ class hashdb_directory_manager_t {
     }
 #endif
   }
+
+  static bool is_hashdb_dir(const std::string& hashdb_dir) {
+    std::string settings_filename = hashdb_dir + "/settings.xml";
+    return (access(settings_filename.c_str(), F_OK) == 0);
+  }
 };
 
 #endif

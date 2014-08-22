@@ -303,7 +303,15 @@ class commands_t {
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
 
+    // open hashdb_manager1 for reading
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+
+    // if hashdb2 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
+      create(hashdb_manager1.settings, hashdb_dir2);
+    }
+
+    // open hashdb_manager2 for writing
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
@@ -341,8 +349,16 @@ class commands_t {
                            const std::string& hashdb_dir2,
                            const std::string& hashdb_dir3) {
 
+    // open hashdb_manager1 and hashdb_manager2 for reading
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+
+    // if hashdb3 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+      create(hashdb_manager1.settings, hashdb_dir3);
+    }
+
+    // open hashdb3 for writing
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
@@ -405,10 +421,18 @@ class commands_t {
                         const std::string& hashdb_dir2,
                         const std::string& hashdb_dir3) {
 
-    // resources
+    // open hashdb_manager1 and hashdb_manager2 for reading
     const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
     const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
+
+    // if hashdb3 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+      create(manager1.settings, hashdb_dir3);
+    }
+    // open hashdb3 for writing
     hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
+
+    // resources
     require_compatibility(manager1, manager2, manager3);
     hashdb_changes_t changes;
 
@@ -443,15 +467,23 @@ class commands_t {
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
 
+    // open hashdb_manager1 and hashdb_manager2 for reading
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
     hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+
+    // if hashdb3 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+      create(hashdb_manager1.settings, hashdb_dir3);
+    }
+    // open hashdb3 for writing
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
     hashdb_changes_t changes;
 
     hashdb_iterator_t it1 = hashdb_manager1.begin();
 
-    logger_t logger(hashdb_dir2, "subtract");
+    logger_t logger(hashdb_dir3, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin subtract");
@@ -493,9 +525,8 @@ class commands_t {
     // open resources for hashdb1
     hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
 
-    // if hashdb_dir2 does not exist, create it with the settings of hashdb_dir1
-    std::string filename = hashdb_dir2 + "/settings.xml";
-    if (access(filename.c_str(), F_OK) != 0) {
+    // if hashdb2 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
       create(hashdb_manager1.settings, hashdb_dir2);
     }
 

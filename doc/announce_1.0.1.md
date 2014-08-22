@@ -14,6 +14,7 @@ Bug Fixes
     * Detect when the database configuration is different from the hashdb configuration, and fail gracefully.
     * Detect when multiple databases being referenced are not compatible with each other, specifically, if their hash block size is different or if the databases is the same one.
     * Prevent creation of a database when the hash block size is invalid.
+* Fix history log bug in subtract command where change was incorrectly logged to hashdb2 instead of hashdb3.
 * Fix so test suite builds for Windows.
 * Fix Windows bug where the history and setting xml file failed to back up.  The failure was that on Windows, std::rename fails to rename to target if a file is at the target path.
 * Fix the command test so that it does not add a database to itself.  This is an error condition and it can corrupt the database.
