@@ -30,32 +30,31 @@
 #include "hashdb_manager.hpp"
 #include "hashdb_iterator.hpp"
 
-template<typename T>
 class dfxml_scan_expanded_consumer_t {
 
   private:
-  hashdb_manager_t<T>* hashdb_manager;
+  hashdb_manager_t* hashdb_manager;
 
   // do not allow copy or assignment
   dfxml_scan_expanded_consumer_t(const dfxml_scan_expanded_consumer_t&);
   dfxml_scan_expanded_consumer_t& operator=(const dfxml_scan_expanded_consumer_t&);
 
   public:
-  dfxml_scan_expanded_consumer_t(hashdb_manager_t<T>* p_hashdb_manager) :
+  dfxml_scan_expanded_consumer_t(hashdb_manager_t* p_hashdb_manager) :
         hashdb_manager(p_hashdb_manager) {
   }
 
   // to consume, have dfxml_hashdigest_reader call here
-  void consume(const hashdb_element_t<T>& hashdb_element) {
+  void consume(const hashdb_element_t& hashdb_element) {
 
     // consume the hashdb_element by scanning and displaying results immediately
 
     // get range of hash match
-    std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > range_it_pair(
+    std::pair<hashdb_iterator_t, hashdb_iterator_t > range_it_pair(
                                      hashdb_manager->find(hashdb_element.key));
 
     while (range_it_pair.first != range_it_pair.second) {
-      hashdb_element_t<T> e = *(range_it_pair.first);
+      hashdb_element_t e = *(range_it_pair.first);
       std::cout << e.key.hexdigest() << "\t"
                 << "repository_name='" << e.repository_name
                 << "', filename='" << e.filename << "\n";

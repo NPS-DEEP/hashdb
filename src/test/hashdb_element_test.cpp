@@ -27,12 +27,11 @@
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include "boost_fix.hpp"
-#include "../hash_t_selector.h"
 #include "hashdb_element.hpp"
 
 void run_test() {
 
-  hashdb_element_t<hash_t> element;
+  hashdb_element_t element;
   BOOST_TEST_EQ(element.hash_block_size, 0);
 }
 

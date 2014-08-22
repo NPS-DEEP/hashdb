@@ -39,7 +39,6 @@ static const char temp_dir[] = "temp_dir_bloom_filter_manager_test";
 static const char temp_bloom1[] = "temp_dir_bloom_filter_manager_test/bloom_filter_1";
 static const char temp_bloom2[] = "temp_dir_bloom_filter_manager_test/bloom_filter_2";
 
-template<typename T>
 void run_rw_tests(std::string& hashdb_dir,
                   file_mode_type_t file_mode,
                   bool bloom1_is_used,
@@ -49,12 +48,12 @@ void run_rw_tests(std::string& hashdb_dir,
                   uint32_t bloom2_M_hash_size,
                   uint32_t bloom2_k_hash_functions) {
 
-  T key;
+  hash_t key;
 
   remove(temp_bloom1);
   remove(temp_bloom2);
 
-  bloom_filter_manager_t<T> bloom(hashdb_dir, file_mode,
+  bloom_filter_manager_t bloom(hashdb_dir, file_mode,
                   bloom1_is_used, bloom1_M_hash_size, bloom1_k_hash_functions,
                   bloom2_is_used, bloom2_M_hash_size, bloom2_k_hash_functions);
 
@@ -73,9 +72,9 @@ int cpp_main(int argc, char* argv[]) {
 
   static std::string temp_dir_string(temp_dir);
 //std::cout << "bfmt.a\n";
-  run_rw_tests<hash_t>(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
+  run_rw_tests(temp_dir_string, RW_NEW, true, 28, 2, false, 28, 2);
 //std::cout << "bfmt.b\n";
-  run_rw_tests<hash_t>(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
+  run_rw_tests(temp_dir_string, RW_NEW, false, 28, 2, true, 28, 2);
 //std::cout << "bfmt.c\n";
 
   // done

@@ -44,6 +44,7 @@
 #include "hashdb.hpp"
 #include "random_key.hpp"
 #include "progress_tracker.hpp"
+#include "hash_t_selector.h"
 
 // Standard includes
 #include <cstdlib>
@@ -61,18 +62,17 @@
  * so it can have private members.
  */
 
-template<typename T>
 class commands_t {
   private:
   // perform intersection, optimized for speed
-  static void intersect_optimized(const hashdb_manager_t<T>& smaller_hashdb,
-                                  const hashdb_manager_t<T>& larger_hashdb,
-                                  hashdb_manager_t<T>& hashdb3,
+  static void intersect_optimized(const hashdb_manager_t& smaller_hashdb,
+                                  const hashdb_manager_t& larger_hashdb,
+                                  hashdb_manager_t& hashdb3,
                                   hashdb_changes_t& changes,
                                   logger_t* logger) {
 
     // get iterator for smaller db
-    hashdb_iterator_t<T> smaller_it = smaller_hashdb.begin();
+    hashdb_iterator_t smaller_it = smaller_hashdb.begin();
 
     // iterate over smaller db
     progress_tracker_t progress_tracker(smaller_hashdb.map_size() +
@@ -84,19 +84,19 @@ class commands_t {
 
       if (larger_count > 0) {
         // there is a match in larger db
-        T matching_key = smaller_it->key;
+        hash_t matching_key = smaller_it->key;
 
         // add hashes from smaller
         uint32_t smaller_count = smaller_hashdb.find_count(matching_key);
         for (uint32_t i = 0; i<smaller_count; ++i) {
-          hashdb_element_t<T> hashdb_element = *smaller_it;
+          hashdb_element_t hashdb_element = *smaller_it;
           hashdb3.insert(hashdb_element, changes);
           progress_tracker.track();
           ++smaller_it;
         }
 
         // add hashes from larger
-        std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
+        std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
                                       larger_hashdb.find(matching_key);
         while (it_pair.first != it_pair.second) {
           hashdb3.insert(*it_pair.first, changes);
@@ -114,16 +114,16 @@ class commands_t {
   }
 
   // generate random scan input that is unlikely to match the hashdb
-  static void generate_scan_input(std::vector<T>* scan_input) {
+  static void generate_scan_input(std::vector<hash_t>* scan_input) {
     scan_input->clear();
     for (int i=0; i<100000; i++) {
-      scan_input->push_back(random_key<T>());
+      scan_input->push_back(random_key());
     }
   }
 
   // generate random scan input that matches the hashdb
-  static void generate_scan_input(hashdb_manager_t<T>* hashdb_manager,
-                      std::vector<T>* scan_input) {
+  static void generate_scan_input(hashdb_manager_t* hashdb_manager,
+                      std::vector<hash_t>* scan_input) {
 
     // the hashdb must not be empty
     if (hashdb_manager->map_size() == 0) {
@@ -133,10 +133,10 @@ class commands_t {
 
     scan_input->clear();
     for (int i=0; i<100000; i++) {
-T temp = random_key<T>();
+    hash_t temp = random_key();
 
-      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
-//                                     hashdb_manager->find(random_key<T>());
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+//                                     hashdb_manager->find(random_key());
                                      hashdb_manager->find(temp);
       if (it_pair.first == hashdb_manager->end()) {
         // the random hash is greater than anything in hashdb so use first hash
@@ -149,8 +149,8 @@ T temp = random_key<T>();
     }
   }
 
-  static void require_compatibility(const hashdb_manager_t<T>& hashdb1,
-                                    const hashdb_manager_t<T>& hashdb2) {
+  static void require_compatibility(const hashdb_manager_t& hashdb1,
+                                    const hashdb_manager_t& hashdb2) {
 
     // databases should not be the same one
     if (hashdb1.hashdb_dir == hashdb2.hashdb_dir) {
@@ -174,9 +174,9 @@ T temp = random_key<T>();
     }
   }
 
-  static void require_compatibility(const hashdb_manager_t<T>& hashdb1,
-                                    const hashdb_manager_t<T>& hashdb2,
-                                    const hashdb_manager_t<T>& hashdb3) {
+  static void require_compatibility(const hashdb_manager_t& hashdb1,
+                                    const hashdb_manager_t& hashdb2,
+                                    const hashdb_manager_t& hashdb3) {
 
     // databases should not be the same one
     if (hashdb1.hashdb_dir == hashdb2.hashdb_dir
@@ -219,7 +219,7 @@ T temp = random_key<T>();
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
     // get hashdb files to exist because other file modes require them
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_NEW);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_NEW);
 
     // log the creation event
     logger_t logger(hashdb_dir, "create");
@@ -242,7 +242,7 @@ T temp = random_key<T>();
       exit(1);
     }
 
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
     hashdb_changes_t changes;
 
     logger_t logger(hashdb_dir, "import");
@@ -255,11 +255,11 @@ T temp = random_key<T>();
     progress_tracker_t progress_tracker(0, &logger);
 
     // create the consumer
-    dfxml_import_consumer_t<T> consumer(
+    dfxml_import_consumer_t consumer(
                                 &hashdb_manager, &changes, &progress_tracker);
 
     // run the dfxml hashdigest reader using the import consumer
-    dfxml_hashdigest_reader_t<dfxml_import_consumer_t<T>, T>::
+    dfxml_hashdigest_reader_t<dfxml_import_consumer_t>::
                               do_read(dfxml_file, repository_name, &consumer);
 
     // close tracker
@@ -277,7 +277,7 @@ T temp = random_key<T>();
   // export
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // lets require that dfxml_file does not exist yet
     if (access(dfxml_file.c_str(), F_OK) == 0) {
@@ -286,9 +286,9 @@ T temp = random_key<T>();
     }
 
     // open the dfxml_file
-    dfxml_hashdigest_writer_t<T> writer(dfxml_file);
+    dfxml_hashdigest_writer_t writer(dfxml_file);
 
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    hashdb_iterator_t it = hashdb_manager.begin();
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
     while (it != hashdb_manager.end()) {
@@ -303,12 +303,12 @@ T temp = random_key<T>();
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
 
-    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
     hashdb_changes_t changes;
-    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
 
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -341,15 +341,15 @@ T temp = random_key<T>();
                            const std::string& hashdb_dir2,
                            const std::string& hashdb_dir3) {
 
-    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
-    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
-    hashdb_iterator_t<T> it2 = hashdb_manager2.begin();
-    hashdb_iterator_t<T> it1_end = hashdb_manager1.end();
-    hashdb_iterator_t<T> it2_end = hashdb_manager2.end();
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+    hashdb_iterator_t it2 = hashdb_manager2.begin();
+    hashdb_iterator_t it1_end = hashdb_manager1.end();
+    hashdb_iterator_t it2_end = hashdb_manager2.end();
 
     hashdb_changes_t changes;
     logger_t logger(hashdb_dir3, "add_multiple");
@@ -406,9 +406,9 @@ T temp = random_key<T>();
                         const std::string& hashdb_dir3) {
 
     // resources
-    const hashdb_manager_t<T> manager1(hashdb_dir1, READ_ONLY);
-    const hashdb_manager_t<T> manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t<T> manager3(hashdb_dir3, RW_MODIFY);
+    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
     require_compatibility(manager1, manager2, manager3);
     hashdb_changes_t changes;
 
@@ -443,13 +443,13 @@ T temp = random_key<T>();
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
 
-    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
-    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, READ_ONLY);
-    hashdb_manager_t<T> hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
     hashdb_changes_t changes;
 
-    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
 
     logger_t logger(hashdb_dir2, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -491,7 +491,7 @@ T temp = random_key<T>();
                           const std::string& hashdb_dir2) {
 
     // open resources for hashdb1
-    hashdb_manager_t<T> hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
 
     // if hashdb_dir2 does not exist, create it with the settings of hashdb_dir1
     std::string filename = hashdb_dir2 + "/settings.xml";
@@ -500,11 +500,11 @@ T temp = random_key<T>();
     }
 
     // open resources for hashdb2
-    hashdb_manager_t<T> hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
     // iterate over hashes.
-    hashdb_iterator_t<T> it1 = hashdb_manager1.begin();
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
     hashdb_changes_t changes;
 
     logger_t logger(hashdb_dir2, "deduplicate");
@@ -546,25 +546,25 @@ T temp = random_key<T>();
                    const std::string& dfxml_file) {
 
     // create space on the heap for the scan input and output vectors
-    std::vector<T>* scan_input = new std::vector<T>;
-    typename hashdb_t__<T>::scan_output_t* scan_output = new typename hashdb_t__<T>::scan_output_t();
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+    typename hashdb_t__<hash_t>::scan_output_t* scan_output = new typename hashdb_t__<hash_t>::scan_output_t();
 
     // create the hashdb scan service
-    hashdb_t__<T> hashdb(path_or_socket);
+    hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // create the consumer
-    dfxml_scan_consumer_t<T> consumer(scan_input);
+    dfxml_scan_consumer_t consumer(scan_input);
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t<T>, T>::
+    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
                               do_read(dfxml_file, repository_name, &consumer);
 
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
 
     // show hash values that match
-    typename hashdb_t__<T>::scan_output_t::const_iterator it2(scan_output->begin());
+    typename hashdb_t__<hash_t>::scan_output_t::const_iterator it2(scan_output->begin());
     while (it2 != scan_output->end()) {
       // print: '<index> \t <hexdigest> \t <count> \n' where count>0
       if (it2->second > 0) {
@@ -585,14 +585,14 @@ T temp = random_key<T>();
                             const std::string& dfxml_file) {
 
     // open hashdb
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // create the consumer
-    dfxml_scan_expanded_consumer_t<T> consumer(&hashdb_manager);
+    dfxml_scan_expanded_consumer_t consumer(&hashdb_manager);
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t<T>, T>::
+    dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
                               do_read(dfxml_file, repository_name, &consumer);
   }
 
@@ -601,7 +601,7 @@ T temp = random_key<T>();
                             const std::string& identified_blocks_file) {
 
     // open hashdb
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the identified_blocks.txt file reader
     identified_blocks_reader_t reader(identified_blocks_file);
@@ -610,14 +610,14 @@ T temp = random_key<T>();
     identified_blocks_reader_iterator_t it;
     for (it = reader.begin(); it != reader.end(); ++it) {
       // check that the hashdigest length is correct
-      if (T::size()*2 != it->second.length()) {
+      if (hash_t::size()*2 != it->second.length()) {
         std::cout << "Invalid hashdigest length, hashdigest ignored.\n";
         continue;
       }
 
       // find matching range for this key
-      std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > it_pair =
-             hashdb_manager.find(T::fromhex(it->second));
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+             hashdb_manager.find(hash_t::fromhex(it->second));
       while (it_pair.first != it_pair.second) {
         // write match to output:
         // offset tab hashdigest tab repository name, filename
@@ -647,7 +647,7 @@ T temp = random_key<T>();
 
     // start the server
     std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
-    tcp_server_manager_t<T> tcp_server_manager(hashdb_dir, port_number);
+    tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
 //    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
 /*
     std::cout << "The hashdb service server is running.  Press Return to quit.\n";
@@ -661,7 +661,7 @@ T temp = random_key<T>();
   // show hashdb size values
   static void size(const std::string& hashdb_dir) {
     // open hashdb
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // there is nothing to report if the database is empty
     if (hashdb_manager.map_size() == 0
@@ -706,8 +706,8 @@ T temp = random_key<T>();
 
   // show hashdb hash histogram
   static void histogram(const std::string& hashdb_dir) {
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t it = hashdb_manager.begin();
 
     // there is nothing to report if the map is empty
     if (it == hashdb_manager.end()) {
@@ -801,8 +801,8 @@ T temp = random_key<T>();
       exit(1);
     }
 
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t it = hashdb_manager.begin();
 
     // there is nothing to report if the map is empty
     if (it == hashdb_manager.end()) {
@@ -831,8 +831,8 @@ T temp = random_key<T>();
 
   // hash_table
   static void hash_table(const std::string& hashdb_dir) {
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_iterator_t it = hashdb_manager.begin();
 
     // there is nothing to report if the hash database is empty
     if (it == hashdb_manager.end()) {
@@ -884,7 +884,7 @@ T temp = random_key<T>();
     remove(filename2.c_str());
 
     // open the bloom filter manager
-    bloom_filter_manager_t<T> bloom_filter_manager(hashdb_dir, RW_NEW,
+    bloom_filter_manager_t bloom_filter_manager(hashdb_dir, RW_NEW,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions,
@@ -893,11 +893,11 @@ T temp = random_key<T>();
                                settings.bloom2_k_hash_functions);
 
     // open hashdb
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
-    hashdb_iterator_t<T> it = hashdb_manager.begin();
+    hashdb_iterator_t it = hashdb_manager.begin();
     progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
     while (it != hashdb_manager.end()) {
       // add the hash to the bloom filter
@@ -932,7 +932,7 @@ T temp = random_key<T>();
     }
 
     // open resources
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, RW_MODIFY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
     hashdb_changes_t changes;
 
     // start logger
@@ -962,12 +962,12 @@ T temp = random_key<T>();
       uint64_t file_offset = (i%(1<<26)) * hash_block_size;
 
       // add element
-      hashdb_manager.insert(hashdb_element_t<T>(random_key<T>(),
-                                                hash_block_size,
-                                                repository_name,
-                                                ss.str(), // filename
-                                                file_offset),
-                               changes);
+      hashdb_manager.insert(hashdb_element_t(random_key(),
+                                             hash_block_size,
+                                             repository_name,
+                                             ss.str(), // filename
+                                             file_offset),
+                                             changes);
     }
 
     // close tracker
@@ -998,18 +998,18 @@ T temp = random_key<T>();
                           const std::string& hashdb_dir_copy) {
 
     // open hashdb_dir to use for obtaining valid hash values
-    hashdb_manager_t<T> hashdb_manager(hashdb_dir, READ_ONLY);
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // create the hashdb scan service for scanning with random hash
-    hashdb_t__<T> hashdb(hashdb_dir);
+    hashdb_t__<hash_t> hashdb(hashdb_dir);
 
     // create the hashdb scan service for scanning from the copy
-    hashdb_t__<T> hashdb_copy(hashdb_dir_copy);
+    hashdb_t__<hash_t> hashdb_copy(hashdb_dir_copy);
 
     // create space on the heap for the scan input and output vectors
-    std::vector<T>* scan_input = new std::vector<T>;
-    typename hashdb_t__<T>::scan_output_t* scan_output =
-                                  new typename hashdb_t__<T>::scan_output_t();
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+    typename hashdb_t__<hash_t>::scan_output_t* scan_output =
+                             new typename hashdb_t__<hash_t>::scan_output_t();
 
     // initialize random seed
     srand (time(NULL));

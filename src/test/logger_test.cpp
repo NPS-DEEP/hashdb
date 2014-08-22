@@ -36,7 +36,6 @@
 #include "hashdb_settings_store.hpp"
 
 static const char temp_dir[] = "temp_dir_logger_test";
-static const char temp_log[] = "temp_dir_logger_test/log.xml";
 
 void run_test() {
 

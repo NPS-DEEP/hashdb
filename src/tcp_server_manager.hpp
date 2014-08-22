@@ -30,16 +30,16 @@
 #include "hashdb.hpp"
 #include "hashdb_manager.hpp"
 #include "file_modes.h"
+#include "hash_t_selector.h"
 #include <boost/bind.hpp>
 #define BOOST_THREAD_USE_LIB // required because of compiler rules for Windows
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
 
-template<typename T>
 class tcp_server_manager_t {
 
   private:
-  hashdb_manager_t<T> hashdb_manager;
+  hashdb_manager_t hashdb_manager;
   boost::asio::io_service io_service;
   boost::mutex scan_mutex;
 
@@ -83,8 +83,8 @@ class tcp_server_manager_t {
     }
 
     // allocate request and response vectors on heap
-    std::vector<T>* request_ptr = new std::vector<T>(request_size);
-    typename hashdb_t__<T>::scan_output_t* response_ptr = new typename hashdb_t__<T>::scan_output_t();
+    std::vector<hash_t>* request_ptr = new std::vector<hash_t>(request_size);
+    typename hashdb_t__<hash_t>::scan_output_t* response_ptr = new typename hashdb_t__<hash_t>::scan_output_t();
 
     // read the request
     boost::asio::read(*socket_ptr, boost::asio::buffer(*request_ptr));

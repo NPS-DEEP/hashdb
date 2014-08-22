@@ -31,17 +31,17 @@
 #include "hashdb_changes.hpp"
 #include "bloom_filter_manager.hpp"
 #include "source_lookup_encoding.hpp"
+#include "hash_t_selector.h"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <cassert>
 
-template<typename T>  // hash type
 class hashdb_manager_t {
 
   public:
-  typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
+  typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
   typedef typename multimap_t::const_iterator multimap_iterator_t;
   typedef typename std::pair<multimap_iterator_t, multimap_iterator_t>
                                                multimap_iterator_range_t;
@@ -55,7 +55,7 @@ class hashdb_manager_t {
   multimap_t multimap;
 
   // bloom filter manager
-  bloom_filter_manager_t<T> bloom_filter_manager;
+  bloom_filter_manager_t bloom_filter_manager;
 
   // source lookup support
   source_lookup_index_manager_t source_lookup_index_manager;
@@ -83,7 +83,7 @@ class hashdb_manager_t {
   }
 
   // insert
-  void insert(const hashdb_element_t<T>& hashdb_element, hashdb_changes_t& changes) {
+  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
@@ -142,7 +142,7 @@ class hashdb_manager_t {
   }
 
   // remove
-  void remove(const hashdb_element_t<T>& hashdb_element, hashdb_changes_t& changes) {
+  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
 
     // validate block size
     if (hashdb_element.hash_block_size != settings.hash_block_size) {
@@ -191,7 +191,7 @@ class hashdb_manager_t {
   }
 
   // remove key
-  void remove_key(const T& key, hashdb_changes_t& changes) {
+  void remove_key(const hash_t& key, hashdb_changes_t& changes) {
 
     // erase elements of key
     uint32_t count = multimap.erase(key);
@@ -205,24 +205,24 @@ class hashdb_manager_t {
   }
 
   // find
-  std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> > find(const T& key) const {
+  std::pair<hashdb_iterator_t, hashdb_iterator_t > find(const hash_t& key) const {
 
     // get the multimap iterator pair
     std::pair<multimap_iterator_t, multimap_iterator_t>
                                         it_pair(multimap.equal_range(key));
 
     // return the hashdb_iterator pair for this key
-    return std::pair<hashdb_iterator_t<T>, hashdb_iterator_t<T> >(
-               hashdb_iterator_t<T>(&source_lookup_index_manager,
-                                    settings.hash_block_size,
-                                    it_pair.first),
-               hashdb_iterator_t<T>(&source_lookup_index_manager,
-                                    settings.hash_block_size,
-                                    it_pair.second));
+    return std::pair<hashdb_iterator_t, hashdb_iterator_t >(
+               hashdb_iterator_t(&source_lookup_index_manager,
+                                 settings.hash_block_size,
+                                 it_pair.first),
+               hashdb_iterator_t(&source_lookup_index_manager,
+                                 settings.hash_block_size,
+                                 it_pair.second));
   }
 
   // find_count
-  uint32_t find_count(const T& key) const {
+  uint32_t find_count(const hash_t& key) const {
     // if key not in bloom filter then clearly count=0
     if (!bloom_filter_manager.is_positive(key)) {
       // key not present in bloom filter
@@ -234,17 +234,17 @@ class hashdb_manager_t {
   }
 
   // begin
-  hashdb_iterator_t<T> begin() const {
-    return hashdb_iterator_t<T>(&source_lookup_index_manager,
-                                settings.hash_block_size,
-                                multimap.begin());
+  hashdb_iterator_t begin() const {
+    return hashdb_iterator_t(&source_lookup_index_manager,
+                             settings.hash_block_size,
+                             multimap.begin());
   }
 
   // end
-  hashdb_iterator_t<T> end() const {
-    return hashdb_iterator_t<T>(&source_lookup_index_manager,
-                                settings.hash_block_size,
-                                multimap.end());
+  hashdb_iterator_t end() const {
+    return hashdb_iterator_t(&source_lookup_index_manager,
+                             settings.hash_block_size,
+                             multimap.end());
   }
 
   // multimap size

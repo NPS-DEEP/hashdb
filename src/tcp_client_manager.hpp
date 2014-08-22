@@ -27,6 +27,7 @@
 #define TCP_CLIENT_MANAGER_HPP
 
 #include <config.h>
+#include "hash_t_selector.h"
 #include "hashdb.hpp"
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
@@ -36,7 +37,6 @@
 #include <pthread.h>
 #endif
 
-template<typename T>
 class tcp_client_manager_t {
   private:
   typedef boost::asio::ip::tcp::socket* socket_ptr_t;
@@ -132,7 +132,7 @@ class tcp_client_manager_t {
   }
 
   // scan
-  int scan(const std::vector<T>& request, typename hashdb_t__<T>::scan_output_t& response) {
+  int scan(const std::vector<hash_t>& request, typename hashdb_t__<hash_t>::scan_output_t& response) {
 
     // clear any exsting response
     response.clear();
@@ -164,7 +164,7 @@ class tcp_client_manager_t {
            boost::asio::buffer(&response_count, sizeof(response_count)));
 
       // allocate the response vector with the expected size
-      response = typename hashdb_t__<T>::scan_output_t(response_count);
+      response = typename hashdb_t__<hash_t>::scan_output_t(response_count);
 
       // read the response vector
       boost::asio::read(*socket, boost::asio::buffer(response));

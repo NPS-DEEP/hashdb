@@ -93,7 +93,7 @@ const char* hashdb_version() {
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
     // create hashdb_manager
-    hashdb_manager = new hashdb_manager_t<hash_t>(hashdb_dir, RW_NEW);
+    hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
     hashdb_changes = new hashdb_changes_t;
 
     // open logger
@@ -121,7 +121,7 @@ const char* hashdb_version() {
 
     while (it != input.end()) {
       // convert input to hashdb_element_t
-      hashdb_element_t<hash_t> hashdb_element(it->hash,
+      hashdb_element_t hashdb_element(it->hash,
                                          block_size,
                                          it->repository_name,
                                          it->filename,
@@ -160,10 +160,10 @@ const char* hashdb_version() {
     // open the correct scan resource
     if (mode == HASHDB_SCAN) {
       // open hashdb_manager for scanning
-      hashdb_manager = new hashdb_manager_t<hash_t>(hashdb_dir, READ_ONLY);
+      hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
     } else if (mode == HASHDB_SCAN_SOCKET) {
       // open TCP socket service for scanning
-      tcp_client_manager = new tcp_client_manager_t<hash_t>(path_or_socket);
+      tcp_client_manager = new tcp_client_manager_t(path_or_socket);
     } else {
       assert(0);
       exit(1);

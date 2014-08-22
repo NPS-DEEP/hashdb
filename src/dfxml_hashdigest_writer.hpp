@@ -24,7 +24,7 @@
 
 #ifndef DFXML_HASHDIGEST_WRITER_HPP
 #define DFXML_HASHDIGEST_WRITER_HPP
-//#include "hashdb_types.h"
+#include "hash_t_selector.h"
 #include "dfxml/src/dfxml_writer.h"
 #include "command_line.hpp"
 
@@ -37,7 +37,6 @@
 /**
  * Provides the service of exporting the hashdb in DFXML format.
  */
-template<typename T>
 class dfxml_hashdigest_writer_t {
 
   private:
@@ -65,7 +64,7 @@ class dfxml_hashdigest_writer_t {
     x.close();
   }
 
-  void add_hashdb_element(const hashdb_element_t<T>& element) {
+  void add_hashdb_element(const hashdb_element_t& element) {
 
     // start the fileobject tag
     x.push("fileobject");
@@ -84,7 +83,7 @@ class dfxml_hashdigest_writer_t {
 
     // write the hashdigest
     std::stringstream ss2;
-    ss2 << "type='" << digest_name<T>() << "'";
+    ss2 << "type='" << digest_name<hash_t>() << "'";
     x.xmlout("hashdigest", element.key.hexdigest(), ss2.str(), false);
 
     // close the byte_run tag

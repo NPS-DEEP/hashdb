@@ -38,8 +38,8 @@
 #include <iostream>
 #include <sstream>
 #include <errno.h>
+#include "hash_t_selector.h"
 
-template<class T>
 class bloom_filter_manager_t {
   public:
   const std::string filename1;
@@ -83,7 +83,7 @@ class bloom_filter_manager_t {
         break;
       case RW_NEW:
         success = bloom.create(filename.c_str(),
-                     sizeof(T) * 8,
+                     sizeof(hash_t) * 8,
                      M_hash_size,
                      k_hash_functions,
                      "no message");
@@ -141,7 +141,7 @@ class bloom_filter_manager_t {
                bloom2_M_hash_size, bloom2_k_hash_functions);
   }
 
-  void add_hash_value(const T& key) {
+  void add_hash_value(const hash_t& key) {
 //std::cerr << "bloom_filter add_hash_value.a " << key << " " << filename << std::endl;
     if (bloom1_is_used) {
       bloom1.add(key.digest);
@@ -152,7 +152,7 @@ class bloom_filter_manager_t {
 //std::cerr << "bloom_filter add_hash_value.b" << std::endl;
   }
 
-  bool is_positive(const T& key) const {
+  bool is_positive(const hash_t& key) const {
 //std::cerr << "bloom_filter is_positive.a " << key << " " << bloom.query(key.digest) << " " << filename << std::endl;
     if (bloom1_is_used && !bloom1.query(key.digest)) {
       // not in bloom1

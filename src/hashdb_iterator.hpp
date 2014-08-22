@@ -26,8 +26,8 @@
 #define HASHDB_ITERATOR_HPP
 #include "source_lookup_encoding.hpp"
 #include "hashdb_element.hpp"
+#include "hash_t_selector.h"
 
-template<typename T>
 class hashdb_iterator_t {
   private:
 
@@ -35,20 +35,20 @@ class hashdb_iterator_t {
   uint32_t hash_block_size;
 
   // the underlying multimap iterator
-  typedef boost::btree::btree_multimap<T, uint64_t> multimap_t;
+  typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
   typedef typename multimap_t::const_iterator multimap_iterator_t;
   multimap_iterator_t multimap_iterator;
 
   // the cached "dereferenced" hashdb_element
-  hashdb_element_t<T> hashdb_element;
+  hashdb_element_t hashdb_element;
 
   // get hashdb_element
-  hashdb_element_t<T> get_hashdb_element() {
+  hashdb_element_t get_hashdb_element() {
     std::pair<std::string, std::string> source_strings =
                           source_lookup_index_manager->find(
                  source_lookup_encoding::get_source_lookup_index(
                                   multimap_iterator->second));
-    return hashdb_element_t<T>(
+    return hashdb_element_t(
                  multimap_iterator->first,
                  hash_block_size,
                  source_strings.first,
@@ -103,11 +103,11 @@ class hashdb_iterator_t {
     ++multimap_iterator;
     return temp;
   }
-  hashdb_element_t<T>& operator*() {
+  hashdb_element_t& operator*() {
     hashdb_element = get_hashdb_element();
     return hashdb_element;
   }
-  hashdb_element_t<T>* operator->() {
+  hashdb_element_t* operator->() {
     hashdb_element = get_hashdb_element();
     return &hashdb_element;
   }

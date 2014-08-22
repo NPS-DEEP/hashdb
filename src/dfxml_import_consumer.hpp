@@ -31,11 +31,10 @@
 #include "hashdb_changes.hpp"
 #include "progress_tracker.hpp"
 
-template<typename T>
 class dfxml_import_consumer_t {
 
   private:
-  hashdb_manager_t<T>* hashdb_manager;
+  hashdb_manager_t* hashdb_manager;
   hashdb_changes_t* hashdb_changes;
   progress_tracker_t* progress_tracker;
 
@@ -45,7 +44,7 @@ class dfxml_import_consumer_t {
 
   public:
   dfxml_import_consumer_t(
-              hashdb_manager_t<T>* p_hashdb_manager,
+              hashdb_manager_t* p_hashdb_manager,
               hashdb_changes_t* p_hashdb_changes,
               progress_tracker_t* p_progress_tracker) :
         hashdb_manager(p_hashdb_manager),
@@ -54,7 +53,7 @@ class dfxml_import_consumer_t {
   }
 
   // to consume, have dfxml_hashdigest_reader call here
-  void consume(const hashdb_element_t<T>& hashdb_element) {
+  void consume(const hashdb_element_t& hashdb_element) {
 
     // update progress tracker
     progress_tracker->track();

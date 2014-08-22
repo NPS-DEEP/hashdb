@@ -29,23 +29,23 @@
 #include <cstring>
 #include <stdint.h>
 #include <iostream>
+#include "hash_t_selector.h"
 
 /**
  * A hashdb element fully describes a hash source.
  */
-template<typename T>
 class hashdb_element_t {
 
   public:
 
-  T key;
+  hash_t key;
   uint32_t hash_block_size;         // typically 4096
   std::string repository_name;
   std::string filename;
   uint64_t file_offset;        // should be a multiple of hash_block_size
   
   // fully specified
-  hashdb_element_t(const T& p_key,
+  hashdb_element_t(const hash_t& p_key,
                    uint32_t p_block_size,
                    const std::string p_repository_name,
                    const std::string p_filename,
@@ -58,7 +58,7 @@ class hashdb_element_t {
   }
 
   // key-based with no source information
-  hashdb_element_t(const T& p_key) :
+  hashdb_element_t(const hash_t& p_key) :
           key(p_key),
           hash_block_size(0),
           repository_name(""),

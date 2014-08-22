@@ -40,11 +40,9 @@ extern "C"
 const char* hashdb_version();
 
 // required inside hashdb_t__
-template<typename T>
 class hashdb_manager_t;
 class hashdb_changes_t;
 class logger_t;
-template<typename T>
 class tcp_client_manager_t;
 
 /**
@@ -62,10 +60,10 @@ class hashdb_t__ {
                        HASHDB_SCAN_SOCKET};
   const std::string hashdb_dir;
   const hashdb_modes_t mode;
-  hashdb_manager_t<T> *hashdb_manager;
+  hashdb_manager_t *hashdb_manager;
   hashdb_changes_t *hashdb_changes;
   logger_t *logger;
-  tcp_client_manager_t<T> *tcp_client_manager;
+  tcp_client_manager_t *tcp_client_manager;
   const uint32_t block_size;
   const uint32_t max_duplicates;
 

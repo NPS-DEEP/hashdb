@@ -20,26 +20,26 @@
 #ifndef RANDOM_KEY_HPP
 #define RANDOM_KEY_HPP
 #include <time.h> // for random number generator
+#include "hash_t_selector.h"
 
 /**
  * Provides a randomly generated key.
  */
 
-template<typename T>
-T random_key() {
-//  const size_t word_count = (sizeof(T)+3)/4;
+hash_t random_key() {
+//  const size_t word_count = (sizeof(hash_t)+3)/4;
 
   // random key buffer
   union key_buffer_t {
-    uint8_t key[sizeof(T)];
-    uint32_t words[(sizeof(T)+3)/4];
+    uint8_t key[sizeof(hash_t)];
+    uint32_t words[(sizeof(hash_t)+3)/4];
     key_buffer_t() {
-      for (size_t i=0; i<(sizeof(T)+3)/4; i++) {
+      for (size_t i=0; i<(sizeof(hash_t)+3)/4; i++) {
         words[i]=rand();
       }
     }
   };
-  return T(key_buffer_t().key);
+  return hash_t(key_buffer_t().key);
 }
 
 #endif

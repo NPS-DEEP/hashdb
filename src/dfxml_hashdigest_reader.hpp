@@ -31,16 +31,16 @@
 
 #ifndef DFXML_HASHDIGEST_READER_HPP
 #define DFXML_HASHDIGEST_READER_HPP
-//#include "hashdb_types.h"
 
 #include <libxml/parser.h>
 #include <iostream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
+#include "hash_t_selector.h"
 
 // a class is used just to keep members private
-// Note that TC is the consumer and T is the hash algorithm.
-template <class TC, class T>
+// Note that TC is the consumer.
+template <class TC>
 class dfxml_hashdigest_reader_t {
   private:
 
@@ -120,13 +120,13 @@ class dfxml_hashdigest_reader_t {
     uint64_t file_offset = user_data.byte_run_file_offset_attribute;
 
     // create the hashdb element
-    if (hashdigest_type != digest_name<T>()) {
+    if (hashdigest_type != digest_name<hash_t>()) {
       std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
                 << hashdigest_type << ", hashdigest entry ignored.\n";
       return;
     }
-    hashdb_element_t<T> hashdb_element(
-               T::fromhex(hashdigest),
+    hashdb_element_t hashdb_element(
+               hash_t::fromhex(hashdigest),
                hash_block_size,
                selected_repository_name,
                filename,
