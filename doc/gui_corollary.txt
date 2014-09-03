@@ -1,0 +1,29 @@
+A hashdb GUI is not scheduled for development.
+The notes here are for reference only and are provided to help illustrate
+how the GUI view would map to typed hashdb commands.
+
+Main screen:
+
+category name         button name
+-------------         -----------
+
+New Database          create
+
+Import/Export         import
+                      export
+
+etc.
+
+-------------------------------------
+For each button press, a new screen would open.
+Screens may have buttons for activating a file chooser
+or text boxes for options or values.
+
+Some screens are described here:
+
+create: include text boxes for options and a finder box for the new directory.
+
+import: This may have additional buttons to help set up to import
+using md5deep or fiwalk.
+
+
