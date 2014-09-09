@@ -578,7 +578,7 @@ class commands_t {
 
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    typename hashdb_t__<hash_t>::scan_output_t* scan_output = new typename hashdb_t__<hash_t>::scan_output_t();
+    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
 
     // create the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
@@ -595,7 +595,7 @@ class commands_t {
     hashdb.scan(*scan_input, *scan_output);
 
     // show hash values that match
-    typename hashdb_t__<hash_t>::scan_output_t::const_iterator it2(scan_output->begin());
+    hashdb_t__<hash_t>::scan_output_t::const_iterator it2(scan_output->begin());
     while (it2 != scan_output->end()) {
       // print: '<index> \t <hexdigest> \t <count> \n' where count>0
       if (it2->second > 0) {
@@ -1039,8 +1039,8 @@ class commands_t {
 
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    typename hashdb_t__<hash_t>::scan_output_t* scan_output =
-                             new typename hashdb_t__<hash_t>::scan_output_t();
+    hashdb_t__<hash_t>::scan_output_t* scan_output =
+                             new hashdb_t__<hash_t>::scan_output_t();
 
     // initialize random seed
     srand (time(NULL));

@@ -36,7 +36,7 @@ class hashdb_iterator_t {
 
   // the underlying multimap iterator
   typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
-  typedef typename multimap_t::const_iterator multimap_iterator_t;
+  typedef multimap_t::const_iterator multimap_iterator_t;
   multimap_iterator_t multimap_iterator;
 
   // the cached "dereferenced" hashdb_element

@@ -42,8 +42,8 @@ class hashdb_manager_t {
 
   public:
   typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
-  typedef typename multimap_t::const_iterator multimap_iterator_t;
-  typedef typename std::pair<multimap_iterator_t, multimap_iterator_t>
+  typedef multimap_t::const_iterator multimap_iterator_t;
+  typedef std::pair<multimap_iterator_t, multimap_iterator_t>
                                                multimap_iterator_range_t;
 
   const std::string hashdb_dir;
