@@ -86,7 +86,7 @@ def plot_scan_random_total():
         ys.append(n*.1)
 
     plot.plot(totals, ys)
-    fig.savefig(filename+"_timestamp_random_total.pdf")
+    fig.savefig(plotname+"_timestamp_random_total.pdf")
 
 def plot_scan_random_delta():
     fig = plot.figure(figsize=plotsize)
@@ -100,7 +100,7 @@ def plot_scan_random_delta():
         xes.append(n*.1)
 
     plot.bar(xes, deltas, width=0.08)
-    fig.savefig(filename+"_timestamp_random_delta.pdf")
+    fig.savefig(plotname+"_timestamp_random_delta.pdf")
 
 def plot_scan_random_matching_total():
     fig = plot.figure(figsize=plotsize)
@@ -114,7 +114,7 @@ def plot_scan_random_matching_total():
         ys.append(n*.1)
 
     plot.plot(scan_random_matching_totals, ys)
-    fig.savefig(filename+"_timestamp_random_matching_total.pdf")
+    fig.savefig(plotname+"_timestamp_random_matching_total.pdf")
 
 def plot_scan_random_matching_delta():
     fig = plot.figure(figsize=plotsize)
@@ -128,7 +128,7 @@ def plot_scan_random_matching_delta():
         xes.append(n*.1)
 
     plot.bar(xes, scan_random_matching_deltas, width=0.08)
-    fig.savefig(filename+"_timestamp_random_matching_delta.pdf")
+    fig.savefig(plotname+"_timestamp_random_matching_delta.pdf")
 
 # main
 if __name__=="__main__":
@@ -145,9 +145,11 @@ if __name__=="__main__":
 
     # plot based on command indicated
     if command == 'add_random':
+        print("graph for add_random")
         plot_add_random_total()
         plot_add_random_delta()
     elif command == 'scan_random':
+        print("graph for scan_random")
         plot_scan_random_total()
         plot_scan_random_delta()
         plot_scan_random_matching_total()
