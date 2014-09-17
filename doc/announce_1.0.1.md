@@ -30,6 +30,27 @@ Bug Fixes
 * Improve the import command performance by importing hashes as they are read from the DFXML file rather than buffering them all before importing them.  This change also improves runtime progress feedback.
 * Fix for compatibility with CentOS 6.4 which uses C++ v4.4.7.
 
+Functional Changes (PENDING)
+==================
+The following functional changes are made to improve workflow or add capability:
+* Change expand_identified_blocks <hashdb> <identified blocks file> > destfile to expand_identified_blocks <hashdb> <be_out_dir>.  hashdb will use file <be_out_dir>/identified_blocks.txt to create new file <be_out_dir>/identified_blocks_expanded.txt.  First, hashdb will copy all comment lines, then hashdb will add comment line containing column headers offset, hash, repository name, filename, file offset.  The feature lines will no longer be in JSON format; the repository_name=, filename=, and offset= fields will be removed.
+* Add command scan_hash <hashdb> <hex hash value> to print out expanded repository name, filename, and file offset for each hash that matches.
+* Add statistics command file_hash_table <hashdb> <filename> to show the hash table associated with the filename.  When searching for filename, be case insensitive.
+* Add command add_repository <source hashdb> <destination hashdb> <repository name> to allow adding just the hashes of a selected repository.
+* Add command subtract_repository <source hashdb> <destination hashdb> <repository name> in order to reflexively support the opposite of add_repository.
+* Add command subtract_exact <source hashdb 1> <source hashdb 2> <destination hashdb> to create a destination database that does not contain hashes where the repository name and filename exactly match.
+Note: I thought the subtract_exact capability was available, but it was not; just subtract was available.  subtract_exact is being added to allow undo capability.
+* Add command intersect_exact <source hashdb 1> <source hashdb 2> <destination hashdb> to find intersection of exact match.  The repository name and filename must exactly match.  This capability was missing.
+
+Changes to bulk_extractor in support of these changes (PENDING)
+=====================================================
+* Make BEViewer find Image at relative path on Windows systems.
+* Force file list in Reports tree to refresh to accomodate showing new identified_blocks_expanded.txt file that hashdb can crate.
+* Change GUI to permit easy copy of filename so it can be pasted elsewhere.
+* Make BEViewer print whole feature line for identified_blocks_expanded.txt similar to how it is printed for identified_blocks.txt.
+* To avoid incorrectly manage hash values, we may want to make the md5 of the image bulk_extractor is hashing visible to the scanner so that each feature in identified_blocks.txt includes this file hash value.
+
+
 Availability
 ============
 * Release source code: http://digitalcorpora.org/downloads/hashdb/
