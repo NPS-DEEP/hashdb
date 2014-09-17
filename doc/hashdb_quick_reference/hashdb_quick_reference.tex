@@ -30,56 +30,72 @@
 \url{http://github.com/simsong/hashdb/wiki}
 \end{center}
 
-\subsubsection*{New Database}
-\begin{tabular}{p{10 cm} p{9 cm} }
-\hangindent=2em\texttt{create [-p<hash block size>] [-m<maximum duplicates>] [<bloom settings>] <hashdb.hdb>} & Create a new hash database \\
+\textbf{New Database} \\
+\begin{tabular}{p{4.5 in} l}
+\small\texttt{create [-p<hash block size>] [-m<maximum duplicates>] [<bloom settings>] <hashdb.hdb>} &
+Create a new hash database \\
 \end{tabular}
-
-\subsubsection*{Import/Export}
-\begin{tabular}{p{10 cm} p{9 cm} }
-\hangindent=2em\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} & Import from DFXML into hash database \\
-\texttt{export <hashdb.hdb> <dfxml.xml>} & Export hash database to DFXML file \\
+\\
+\\
+\textbf{Import/Export} \\
+\begin{tabular}{p{4.5 in} l}
+\small\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} &
+Import from DFXML into hash database \\
+\small\texttt{export <hashdb.hdb> <dfxml.xml>} &
+Export hash database to DFXML file \\
 \end{tabular}
-
-\subsubsection*{Database Manipulation}
-\begin{tabular}{p{10 cm} p{9 cm} }
-\texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ \\
-\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ \\
-\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ \\
-\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ \\
-\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
+\\
+\\
+\textbf{Database Manipulation} \\
+\begin{tabular}{p{4 in} l}
+\small\texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ for all A \\
+\small\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & $A \cup B \rightarrow B$ where repository name matches \\
+\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ for all A and B \\
+\small\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for any matchcing hash\\
+\small\texttt{intersect\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for exact matches\\
+\small\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for any matching hash \\
+\small\texttt{subtract\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for exact matches \\
+\small\texttt{subtract\_repository <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ where repository name matches \\
+\small\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
 \end{tabular}
-
-\subsubsection*{Scan Services}
-\begin{tabular}{p{10 cm} p{9 cm} }
-\texttt{scan <path or socket> <DFXML file>} & Scan for matches, print count\\
-\hangindent=2em\texttt{scan\_expanded <path or socket> <DFXML file>} & \hangindent=2em Scan for matches, print source information for each source \\
-\hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
+\\
+\\
+\textbf{Scan Services} \\
+\begin{tabular}{p{3.6 in} p{4 in}}
+\small\texttt{scan <path or socket> <DFXML file>} & Scan for matches, print count\\
+\small\texttt{scan\_expanded <hashdb.hdb> <DFXML file>} & \hangindent=2em Scan for matches, print source information for each source \\
+\small\texttt{scan\_expanded\_hash <hashdb.hdb> <hex hash value>} & \hangindent=2em Scan for matches for given hash, print source information for each source \\
+\small\texttt{expand\_identified\_blocks <hashdb.hdb> <be\_dir>} & Expand to include source information for each source \\
 \texttt{server <hashdb.hdb> <port number>} & Start scan service at port \\
 \end{tabular}
-
-\subsubsection*{Statistics}
-\begin{tabular}{p{10 cm} p{9 cm} }
+\\
+\\
+\textbf{Statistics}\\
+\begin{tabular}{p{3.6 in} l}
 \texttt{size <hashdb.hdb>} & Print sizes of internal database tables \\
 \texttt{sources <hashdb.hdb>} & Print all repository names and filenames \\
 \texttt{histogram <hashdb.hdb>} & Print hash distribution \\
 \texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
 \texttt{hash\_table <hashdb.hdb>} & Print all hashes along with source information\\
+\texttt{hash\_table\_file <hashdb.hdb>} & Print all hashes along with source information for file\\
 \end{tabular}
-
-\subsubsection*{Tuning}
-\begin{tabular}{p{10 cm} p{9 cm} }
+\\
+\\
+\textbf{Tuning}\\
+\begin{tabular}{p{4.0 in} l}
 \hangindent=2em\texttt{rebuild\_bloom [<bloom settings>] <hashdb.hdb>} & Rebuild Bloom filter \\
 \end{tabular}
-
-\subsubsection*{Performance Analysis}
-\begin{tabular}{p{10 cm} p{9 cm} }
+\\
+\\
+\textbf{Performance Analysis}\\
+\begin{tabular}{p{4.0 in} l}
 \hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
 \texttt{scan\_random <hashdb.hdb> <copy.hdb>} & Scan random hashes, log performance in \texttt{log.xml}\\
 \end{tabular}
-
-\subsubsection*{\bulk Scanner}
-\begin{tabular}{p{15 cm} p{4 cm} }
+\\
+\\
+\textbf{\bulk Scanner}\\
+\begin{tabular}{p{6.0 in} l}
 \texttt{bulk\_extractor -e hashdb -S hashdb\_mode=import -o outdir1 my\_image1} & Import \\
 \hangindent=2em\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan \\
 \end{tabular}
