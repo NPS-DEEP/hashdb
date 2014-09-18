@@ -30,9 +30,10 @@ Bug Fixes
 * Improve the import command performance by importing hashes as they are read from the DFXML file rather than buffering them all before importing them.  This change also improves runtime progress feedback.
 * Fix for compatibility with CentOS 6.4 which uses C++ v4.4.7.
 
-Functional Changes (PENDING)
-==================
-The following functional changes are made to improve workflow or add capability:
+Functional Changes Planned for v1.0.2
+=====================================
+The following functional changes are planned for v1.0.2 to improve workflow and add capability:
+* Allow any hash block size by crating hashdb with -p 0.
 * Change expand_identified_blocks <hashdb> <identified blocks file> > destfile to expand_identified_blocks <hashdb> <be_out_dir>.  hashdb will use file <be_out_dir>/identified_blocks.txt to create new file <be_out_dir>/identified_blocks_expanded.txt.  First, hashdb will copy all comment lines, then hashdb will add comment line containing column headers offset, hash, repository name, filename, file offset.  The feature lines will no longer be in JSON format; the repository_name=, filename=, and offset= fields will be removed.
 * Add command scan_hash <hashdb> <hex hash value> to print out expanded repository name, filename, and file offset for each hash that matches.
 * Add statistics command file_hash_table <hashdb> <filename> to show the hash table associated with the filename.  When searching for filename, be case insensitive.
@@ -41,15 +42,26 @@ The following functional changes are made to improve workflow or add capability:
 * Add command subtract_exact <source hashdb 1> <source hashdb 2> <destination hashdb> to create a destination database that does not contain hashes where the repository name and filename exactly match.
 Note: I thought the subtract_exact capability was available, but it was not; just subtract was available.  subtract_exact is being added to allow undo capability.
 * Add command intersect_exact <source hashdb 1> <source hashdb 2> <destination hashdb> to find intersection of exact match.  The repository name and filename must exactly match.  This capability was missing.
+* Remove the expand_identified_blocks command.  This provided processing specific to bulk_extractor.  Equivalent support will be provided through the hashdb API and the bulk_extrator hashdb scanner.
+* Check Boost RO attach and find and remove the single-attach database limitation.
+* Instead of versioning the database as a whole, version each part of the database individually.
+* Add a file size field to the source database.  The source database lookup shall contain: repository name index, filename index, file size.
+* To hashdb API, file hashdb.hpp, add interface:
+    * get_metadata(repository_name, filename).
 
-Changes to bulk_extractor in support of these changes (PENDING)
-=====================================================
+Changes to bulk_extractor in support of these changes planned for v2.0.2
+========================================================================
 * Make BEViewer find Image at relative path on Windows systems.
 * Force file list in Reports tree to refresh to accomodate showing new identified_blocks_expanded.txt file that hashdb can crate.
 * Change GUI to permit easy copy of filename so it can be pasted elsewhere.
 * Make BEViewer print whole feature line for identified_blocks_expanded.txt similar to how it is printed for identified_blocks.txt.
 * To avoid incorrectly manage hash values, we may want to make the md5 of the image bulk_extractor is hashing visible to the scanner so that each feature in identified_blocks.txt includes this file hash value.
-
+* Zero-byte extend file blocks when ingesting files recursively via bulk_extractor.
+* Add code in the finalization state of the hashdb scanner for generating post-processing statistics:
+    * Print files that the image fully contained.
+    * For partial matches, print number of blocks out of total blocks matched for each file.
+* Make BEViewer allow copy of the file field.  Currently, this is a text field that cannot be selected or copied.
+* Remove the Byte Order Marking from the beginning of the identified_blocks.txt feature file.
 
 Availability
 ============
