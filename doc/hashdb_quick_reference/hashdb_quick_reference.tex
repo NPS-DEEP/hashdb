@@ -46,15 +46,28 @@ Export hash database to DFXML file \\
 \end{tabular}
 \\
 \\
+%\textbf{Database Manipulation before} \\
+%\begin{tabular}{p{4 in} l}
+%\small\texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ for all A \\
+%\small\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & $A \cup B \rightarrow B$ where repository name matches \\
+%\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ for all A and B \\
+%\small\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for any matchcing hash\\
+%\small\texttt{intersect\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for exact matches\\
+%\small\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for any matching hash \\
+%\small\texttt{subtract\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for exact matches \\
+%\small\texttt{subtract\_repository <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ where repository name matches \\
+%\small\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
+%\end{tabular}
+%\\
+%\\
 \textbf{Database Manipulation} \\
-\begin{tabular}{p{3.6 in} p{4 in}}
-\small\texttt{add <A.hdb> <B.hdb>} & $A \cup B \rightarrow B$ for all A \\
-\hangindent=2em\small\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & $A \cup B \rightarrow B$ where repository name matches \\
-\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ for all A and B \\
-\small\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for any matchcing hash\\
-\small\texttt{intersect\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ for exact matches\\
-\small\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for any matching hash \\
-\small\texttt{subtract\_exact <A.hdb> <B.hdb> <C.hdb>} & $A \cap \overline B \rightarrow C$ for exact matches \\
+\begin{tabular}{p{3.6 in} p{3.4 in}}
+\small\texttt{add <A.hdb> <B.hdb>} & $A + B \rightarrow B$ Add A into B \\
+\hangindent=2em\small\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A + B \rightarrow B$ Add A into B but only when the repository name matches \\
+\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ add A and B into C\\
+\small\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add intersection of A and B into C\\
+\small\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add A but not B into C\\
+\small\texttt{subtract\_hash <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add A but not hashes in B into C\\
 \small\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
 \end{tabular}
 \\
@@ -72,7 +85,7 @@ Export hash database to DFXML file \\
 \small\texttt{sources <hashdb.hdb>} & Print all repository names and filenames \\
 \small\texttt{histogram <hashdb.hdb>} & Print hash distribution \\
 \small\texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
-\small\texttt{hash\_table <hashdb.hdb> <file name>} & Print all hash information for file\\
+\small\texttt{hash\_table <hashdb.hdb> <filename>} & Print all hash information for file\\
 \end{tabular}
 \\
 \\
