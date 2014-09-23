@@ -1,7 +1,13 @@
-		Announcing hashdb 1.0.1
-		        <DATE>
+                     Announcing hashdb 1.0.1
+                              <DATE>
+
+                          RELEASE NOTES
 
 hashdb Version 1.0.1 has been released for Linux, MacOS and Windows.
+
+Release source code and Windows installer: http://digitalcorpora.org/downloads/bulk_extractor/
+
+GIT repository: https://github.com/simsong/bulk_extractor
 
 #Major improvements
 
@@ -46,7 +52,7 @@ Changes:
 Only export the filesize field for the zero-block entry since it only needs to be specified once.
 * Update output of scans to include file size information.
 * Change the _bulk\_extractor_ hashdb scanner so that
-when importing hashes via the _hashdb_ scanner, it will gather file size iniformation.  It will obtain the file size from information available in the scanner params object and will forward it to _hashdb_.
+when importing hashes via the _hashdb_ scanner, it will gather file size iniformation.  It will obtain the file size from information available in `sbuf.pagesize` and will forward it to _hashdb_.
 * The hash database source data will be versioned to preserve backward compatibility.  Versioning will be managed by either incrementing the hashdb database version number or by adding a separate versioning scheme specific to the source data.
 
 # Functional Change: Improve identified_blocks.txt output (in progress)
@@ -64,17 +70,8 @@ offset, hash, repository name, filename, and file offset.
 * Remove the `expand_identified_blocks <hashdb> <identified blocks file> > destfile` command
 since it will be obsoleted.
 
-# Functional Change: Discontinue Socket Support (in progress)
-Discontinue support for scanning for hashes across a network socket to a hashdb server.  Motivations for this change include:
-
-* Simplifying the User Interface.
-* Avoiding redesign that would have been necessitated by the change in the scan interface.
-* Simplifying the _hashdb_ code.
-
-Change:
-
-* Remove the _hashdb_ server and client code.  Remove the Boost.asio dependency.
-* Reword interface parameters such as `path_or_socket` to just `path`.
+# Functional Change: Modify Socket Support (in progress)
+* Change the internal response data structure so that instead of expecting match records with counts, it will expect complete source information for each match.
 
 Functional Change: Allow hash storage for blocks of any size (in progress)
 ================================================
@@ -94,7 +91,7 @@ Specifically, allow option -p 0 when creating a hash database.
  * _hashdb_ accepts block sizes of any value.
  * All file offsets are 0 since block sizes are not used and file offsets are not defined.
 
-# Change to Import/Export (in progress)
+# Add Import/Export Information (in progress)
 File sizes will be managed during import and export.  To support this:
 
 * A file size field in the source data data structure is added to hold the file size.
@@ -126,6 +123,7 @@ The following functional changes enable additional support for statistical analy
 which prints the entire hash table, which is unworkably large, with `hash_table <hashdb> <filename>`,
 which prints the entire hash table for the specified file.
 Hashes from multiple files will be shown if hashes from the same filename have been added from multiple repositories.
+* Add a `-q` option for quiet mode, to suppress status output for statistics commands that take a long time to run.  An example line of status output is: `Processing index 100000 of 5644399...`.
 
 # Changes to _BEViewer_ (in progress)
 * Make _BEViewer_ find Image at relative path on Windows systems.
@@ -148,6 +146,7 @@ Hashes from multiple files will be shown if hashes from the same filename have b
  3. Search the arrays using a secant search, which is like a binary search but with interpolation to reduce the number of cache line reads.
  
  If storing a billion hashes in this filter, there will be 2 bytes of data stored per hash (2GB), 2^24 64-bit pointers in the trie node (128 MB), and some overhead in the allocation efficiency.  However, you will effectively get 5 bytes of hash matching, where the equivalent bloom filter would require 2^40 bits or 128GB of memory.
+* Allow filename globbing for the `hash table [-q] <hashdb.hdb> <filename>` command.
 
 #Potential future changes to bulk_extractor
 * Add code in the finalization state of the hashdb scanner for generating post-processing statistics:
