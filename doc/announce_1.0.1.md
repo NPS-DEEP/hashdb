@@ -44,9 +44,9 @@ Changes:
 * Update the import command to capture the file size from the DFXML input.  The file size field captured is located inside the fileobject tag adjacent to the filename tag.
 * Update the export command to additionally export the filesize field.
 Only export the filesize field for the zero-block entry since it only needs to be specified once.
-* Add interface `size_t get_file_size(repository_name, filename)` to the hashdb API, file hashdb.hpp to allow access to the file size of a specified file.
+* Update output of scans to include file size information.
 * Change the _bulk\_extractor_ hashdb scanner so that
-when importing hashes via the _hashdb_ scanner, it will gather file size iniformation.  It will obtain the file size from information available in the scanner params object and will forward it to the _hashdb_ `get_file_size` API.
+when importing hashes via the _hashdb_ scanner, it will gather file size iniformation.  It will obtain the file size from information available in the scanner params object and will forward it to _hashdb_.
 * The hash database source data will be versioned to preserve backward compatibility.  Versioning will be managed by either incrementing the hashdb database version number or by adding a separate versioning scheme specific to the source data.
 
 # Functional Change: Improve identified_blocks.txt output (in progress)
@@ -113,6 +113,7 @@ to allow adding the hashes specific to a selected repository.
 * Change the `scan <path_or_socket> <DFXML file>` command to `scan <hashdb.hdb> <DFXML file>`.
  * Change `path_or_socket` to `hashdb.hdb` since socket is discontinued.
  * Change output to include the repository name, filename, and file offset for each source that matches the given hash since this provides a more complete report.
+ * Add file size information to the output since hashdb is changed to additionally track the file size.
 * Remove the `scan_expanded` command since it is replaced by the new `scan` command.
 * Add command `scan_hash <hashdb.hdb> <hash value>` to allow capability to scan for a specific hash value.
 * Remove command `expand_identified_blocks <hashdb.hdb>`.  This command is obsoleted since the _bulk\_extractor_ _hashdb_ scanner now produces this information.
