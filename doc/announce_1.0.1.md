@@ -138,6 +138,7 @@ Hashes from multiple files will be shown if hashes from the same filename have b
 * Zero-byte extend file blocks when ingesting files recursively via bulk\_extractor.
 * Remove the Byte Order Marking (BOM) from the beginning of the `identified_blocks.txt` feature file.
 * Remove the code marker separator that incorrectly shows up next to the filename of recursively scanned files in feature file `identified_blocks.txt`.
+* Limit the maximum number of lines allowed for the identified_blocks.txt file in order to bound its growth.
 
 #Potential future changes to hashdb
 * As a speed performance optimization, presort hashes before adding them.
