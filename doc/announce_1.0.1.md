@@ -73,7 +73,7 @@ Discontinue support for scanning for hashes across a network socket to a hashdb 
 
 Change:
 
-* Remove the _hashdb_ server code.
+* Remove the _hashdb_ server and client code.  Remove the Boost.asio dependency.
 * Reword interface parameters such as `path_or_socket` to just `path`.
 
 Functional Change: Allow hash storage for blocks of any size (in progress)
