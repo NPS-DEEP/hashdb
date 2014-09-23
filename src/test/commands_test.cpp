@@ -285,7 +285,31 @@ void test_block_size_512_and_count_1() {
   check_size(temp_dir1, 24);
 }
 
+// test check for valid hash block size
+void test_block_size_0() {
+  // clean up from any previous run
+  rm_hashdb_dir(temp_dir1);
+
+  // create new hashdb
+  hashdb_settings_t settings;
+  settings.hash_block_size = 0;
+  commands_t::create(settings, temp_dir1);
+
+  // import
+  commands_t::import("test_repository_name", sample_dfxml4096, temp_dir1);
+
+  // with hash_block_size=0, total should be every hash, including remainder
+  check_size(temp_dir1, 75);
+}
+
 int cpp_main(int argc, char* argv[]) {
+  std::cout << "test new database\n";
+  std::cout << "  test default block size 4096\n";
+  test_block_size_4096();
+  std::cout << "  test block size 512 and maximum duplicates count 1\n";
+  test_block_size_512_and_count_1();
+  std::cout << "  test use of block size 0\n";
+  test_block_size_0();
   std::cout << "test import and export\n";
   test_import_export();
   std::cout << "test database manipulation\n";
@@ -300,10 +324,6 @@ int cpp_main(int argc, char* argv[]) {
   test_performance_analysis();
   std::cout << "test multiple repository names\n";
   test_multiple_repository_names();
-  std::cout << "test block size 4096\n";
-  test_block_size_4096();
-  std::cout << "test block size 512 and count 1\n";
-  test_block_size_512_and_count_1();
   return 0;
 }
 

@@ -84,7 +84,6 @@ Changes:
 * Allow a block partition size of zero in order to enable blocks of any size.
 Specifically, allow option -p 0 when creating a hash database.
 * have the _hashdb_ `hashdb_manager` code allow hash blocks of any size when the hash block size is configured to be zero.
-* Use zero for the file offset value when the hash block size is configured to be zero.
 
 # Add New Database Use Case (in progress)
 * Change the `create` command to accept `-r 0` as a parameter value.  When 0 is used:

@@ -221,8 +221,7 @@ int main(int argc,char **argv) {
         }
 
         // make sure hash block size is valid
-        if (hashdb_settings.hash_block_size == 0
-         || hashdb_settings.hash_block_size % HASHDB_BYTE_ALIGNMENT != 0) {
+        if (hashdb_settings.hash_block_size % HASHDB_BYTE_ALIGNMENT != 0) {
           std::cerr << "Invalid value for hash block size: "
                     << hashdb_settings.hash_block_size
                     << ".  Value must be > 0 and divisible by "

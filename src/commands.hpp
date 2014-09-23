@@ -989,7 +989,7 @@ class commands_t {
       std::stringstream ss;
       ss << "file" << (i>>26);
 
-      // generate file offset
+      // generate file offset or 0 if hash_block_size is 0
       uint64_t file_offset = (i%(1<<26)) * hash_block_size;
 
       // add element
