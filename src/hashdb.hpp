@@ -140,6 +140,57 @@ class hashdb_t__ {
   int scan(const scan_input_t& scan_input,
            scan_output_t& scan_output) const;
 
+  //************************************************************
+  // scan, returning full source information
+  //************************************************************
+  // data structure for one returned scan full element
+  struct scan_full_element_t {
+    T hash;
+    std::string repository_name;
+    std::string filename;
+    uint64_t file_offset;
+    uint32_t count;
+    std::string source_filename;
+    uint64_t source_file_size;
+    T source_file_hash;
+
+    scan_full_element_t(const T p_hash,
+                        const std::string p_repository_name,
+                        const std::string p_filename,
+                        uint64_t p_file_offset,
+                        uint32_t p_count,
+                        std::string p_source_filename,
+                        uint64_t p_source_file_size,
+                        T p_source_file_hash) :
+                            hash(p_hash),
+                            repository_name(p_repository_name),
+                            filename(p_filename),
+                            file_offset(p_file_offset),
+                            count(p_count),
+                            source_filename(p_source_filename),
+                            source_file_size(p_source_file_size),
+                            source_file_hash(p_source_file_hash) {
+    }
+
+    scan_full_element_t() :
+                            hash(),
+                            repository_name(),
+                            filename(),
+                            file_offset(0),
+                            count(0),
+                            source_filename(),
+                            source_file_size() {
+    }
+  };
+
+  typedef std::vector<scan_full_element_t> scan_full_output_t;
+
+  int scan_full(const scan_input_t& input, scan_full_output_t& output) const;
+                
+  //************************************************************
+  // end scan, returning full source information
+  //************************************************************
+
 
 #ifdef HAVE_CXX11
   hashdb_t__(const hashdb_t__& other) = delete;

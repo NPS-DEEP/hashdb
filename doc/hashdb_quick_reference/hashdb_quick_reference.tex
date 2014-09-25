@@ -104,9 +104,9 @@ Export hash database to DFXML file \\
 \\
 \\
 \textbf{\bulk Scanner}\\
-\begin{tabular}{p{6.0 in} l}
-\small\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=import -o outdir1 my\_image1} & Import \\
-\hangindent=2em\small\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path= outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan \\
+\begin{tabular}{p{5.8 in} l}
+\small\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 -R my\_import\_dir} & Import directory\\
+\hangindent=2em\small\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image\\
 \end{tabular}
 
 \vspace{2mm}

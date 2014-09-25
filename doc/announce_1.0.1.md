@@ -86,9 +86,8 @@ Specifically, allow option -p 0 when creating a hash database.
 * have the _hashdb_ `hashdb_manager` code allow hash blocks of any size when the hash block size is configured to be zero.
 
 # Add New Database Use Case (in progress)
-* Change the `create` command to accept `-r 0` as a parameter value.  When 0 is used:
- * _hashdb_ accepts block sizes of any value.
- * All file offsets are 0 since block sizes are not used and file offsets are not defined.
+* Change the `create` command to accept `-p 0` as a parameter value.  When 0 is used:
+ * _hashdb_ accepts block sizes of any value, otherwise, values of mismatched block size are not used.
 
 # Add Import/Export Information (in progress)
 File sizes will be managed during import and export.  To support this:
@@ -136,6 +135,7 @@ Hashes from multiple files will be shown if hashes from the same filename have b
 * Remove the Byte Order Marking (BOM) from the beginning of the `identified_blocks.txt` feature file.
 * Remove the code marker separator that incorrectly shows up next to the filename of recursively scanned files in feature file `identified_blocks.txt`.
 * Limit the maximum number of lines allowed for the identified_blocks.txt file in order to bound its growth.
+* Permit simultaneous import and scan operations.
 
 #Potential future changes to hashdb
 * As a speed performance optimization, presort hashes before adding them.

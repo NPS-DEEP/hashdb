@@ -578,7 +578,7 @@ class commands_t {
 
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
+    hashdb_t__<hash_t>::scan_full_output_t* scan_output = new hashdb_t__<hash_t>::scan_full_output_t();
 
     // create the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
@@ -592,17 +592,23 @@ class commands_t {
                               do_read(dfxml_file, repository_name, &consumer);
 
     // perform the scan
-    hashdb.scan(*scan_input, *scan_output);
+//    hashdb.scan(*scan_input, *scan_output);
+    hashdb.scan_full(*scan_input, *scan_output);
 
-    // show hash values that match
-    hashdb_t__<hash_t>::scan_output_t::const_iterator it2(scan_output->begin());
+    // show column titles
+    std::cout << "# block hash, repository name, filename, file offset, count, source filename, source file size, source file hash\n";
+
+    // show the matches
+    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it2(scan_output->begin());
     while (it2 != scan_output->end()) {
-      // print: '<index> \t <hexdigest> \t <count> \n' where count>0
-      if (it2->second > 0) {
-        std::cout << it2->first << "\t"
-                  << (*scan_input)[it2->first] << "\t" // hexdigest
-                  << it2->second << "\n";
-      }
+      std::cout << it2->hash.hexdigest() << ", "
+                << it2->repository_name << ", "
+                << it2->filename << ", "
+                << it2->file_offset << ", "
+                << it2->count << ", "
+                << it2->source_filename << ", "
+                << it2->source_file_size << ", "
+                << it2->source_file_hash.hexdigest() << "\n";
       ++it2;
     }
 

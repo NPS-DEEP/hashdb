@@ -218,6 +218,65 @@ const char* hashdb_version() {
     return 0;
   }
 
+  // scan full
+  template<>
+  int hashdb_t__<hash_t>::scan_full(const scan_input_t& input, scan_full_output_t& output) const {
+
+    if (mode == HASHDB_SCAN_SOCKET) {
+      // run scan using tcp_client_manager
+      std::cerr << "Error: Socket scan is currently not supported.\n";
+      return -1;
+    }
+
+    // check mode
+    if (mode != HASHDB_SCAN) {
+      std::cerr << "Error: unable to scan, wrong scan mode.\n";
+      return -1;
+    }
+
+    // run scan using hashdb_manager
+
+    // clear any old output
+    output.clear();
+           
+    // perform all scans in one locked operation.
+    // There is basically no cost for grouping since this iterates db access.
+    // There is gain if this is a large sorted request.
+    MUTEX_LOCK(&M);
+
+    // scan each input in turn
+    uint32_t input_size = (uint32_t)input.size();
+    for (uint32_t i=0; i<input_size; i++) {
+
+      // find matching range for this key
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+             hashdb_manager->find(input[i]);
+      while (it_pair.first != it_pair.second) {
+
+        uint32_t count = hashdb_manager->find_count(input[i]);
+
+        scan_full_element_t scan_full_element(
+                  it_pair.first->key,
+                  it_pair.first->repository_name,
+                  it_pair.first->filename,
+                  it_pair.first->file_offset,
+                  count,
+                  "source filename TBD",
+                  0, // TBD
+                  hash_t() // TBD
+                  );
+
+        output.push_back(scan_full_element);
+        ++it_pair.first;
+      }
+    }
+
+    MUTEX_UNLOCK(&M);
+
+    // good, done
+    return 0;
+  }
+
   // destructor
   template<>
   hashdb_t__<hash_t>::~hashdb_t__() {
