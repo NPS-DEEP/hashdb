@@ -146,6 +146,8 @@ Hashes from multiple files will be shown if hashes from the same filename have b
  
  If storing a billion hashes in this filter, there will be 2 bytes of data stored per hash (2GB), 2^24 64-bit pointers in the trie node (128 MB), and some overhead in the allocation efficiency.  However, you will effectively get 5 bytes of hash matching, where the equivalent bloom filter would require 2^40 bits or 128GB of memory.
 * Allow filename globbing for the `hash table [-q] <hashdb.hdb> <filename>` command.
+* Add a B-Tree tuning hint least\_memory or all hint possibilities settable when the database is created.
+* Possibly add flush at intervals.  Peformance analysis for flush has not been tested.
 
 #Potential future changes to bulk_extractor
 * Add code in the finalization state of the hashdb scanner for generating post-processing statistics:
