@@ -50,6 +50,9 @@ class hashdb_changes_t {
   uint32_t hashes_not_removed_no_hash;
   uint32_t hashes_not_removed_no_element;
 
+  uint32_t source_metadata_inserted;
+  uint32_t source_metadata_not_inserted_already_present;
+
   hashdb_changes_t() :
 
                      hashes_inserted(0),
@@ -62,7 +65,10 @@ class hashdb_changes_t {
                      hashes_not_removed_mismatched_hash_block_size(0),
                      hashes_not_removed_invalid_byte_alignment(0),
                      hashes_not_removed_no_hash(0),
-                     hashes_not_removed_no_element(0) {
+                     hashes_not_removed_no_element(0),
+
+                     source_metadata_inserted(0),
+                     source_metadata_not_inserted_already_present(0) {
   }
 
   void report_changes(dfxml_writer& x) const {
@@ -93,6 +99,12 @@ class hashdb_changes_t {
     if (hashes_not_removed_no_element)
       x.xmlout("hashes_not_removed_no_element", hashes_not_removed_no_element);
 
+    // log any source metadata changes to x
+    if (source_metadata_inserted)
+      x.xmlout("source_metadata_inserted", source_metadata_inserted);
+    if (source_metadata_not_inserted_already_present)
+      x.xmlout("source_metadata_not_inserted_already_present", source_metadata_not_inserted_already_present);
+
     x.pop();
   }
 
@@ -109,7 +121,10 @@ class hashdb_changes_t {
                               hashes_not_removed_no_hash ||
                               hashes_not_removed_no_element); 
 
-    if (!has_insert_action && !has_remove_action) {
+    bool has_source_metadata_insert_action = (source_metadata_inserted ||
+                              source_metadata_not_inserted_already_present);
+
+    if (!has_insert_action && !has_remove_action && !has_source_metadata_insert_action) {
       std::cout << "No hashdb changes.\n";
     }
 
@@ -130,7 +145,7 @@ class hashdb_changes_t {
 
     if (has_remove_action) {
       // log any remove changes to stdout
-        std::cout << "hashdb changes (remove):\n";
+      std::cout << "hashdb changes (remove):\n";
       if (hashes_removed)
         std::cout << "    hashes removed: " << hashes_removed << "\n";
       if (hashes_not_removed_mismatched_hash_block_size)
@@ -141,6 +156,15 @@ class hashdb_changes_t {
         std::cout << "    hashes not removed (no hash): " << hashes_not_removed_no_hash << "\n";
       if (hashes_not_removed_no_element)
         std::cout << "    hashes not removed (no element): " << hashes_not_removed_no_element << "\n";
+    }
+
+    if (has_source_metadata_insert_action) {
+      // log any insert source metadata changes to stdout
+      std::cout << "hashdb changes (insert source metadata):\n";
+      if (source_metadata_inserted)
+       std::cout << "    source metadata inserted: " << source_metadata_inserted << "\n";
+      if (source_metadata_not_inserted_already_present)
+       std::cout << "    source metadata not inserted (already present): " << source_metadata_not_inserted_already_present<< "\n";
     }
   }
 };

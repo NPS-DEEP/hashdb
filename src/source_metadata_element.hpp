@@ -23,8 +23,8 @@
  * and its source.
  */
 
-#ifndef HASHDB_ELEMENT_HPP
-#define HASHDB_ELEMENT_HPP
+#ifndef SOURCE_METADATA_ELEMENT_HPP
+#define SOURCE_METADATA_ELEMENT_HPP
 
 #include <cstring>
 #include <stdint.h>
@@ -32,47 +32,34 @@
 #include "hash_t_selector.h"
 
 /**
- * A hashdb element fully describes a hash source.
+ * A source metadata element fully describes a source.
  */
-class hashdb_element_t {
+class source_metadata_element_t {
 
   public:
 
-  hash_t key;
-  uint32_t hash_block_size;         // typically 4096
-  std::string repository_name;
-  std::string filename;
-  uint64_t file_offset;        // should be a multiple of hash_block_size
+  const std::string repository_name;
+  const std::string filename;
+  const uint64_t file_size;
+  const hash_t file_hash;
   
   // fully specified
-  hashdb_element_t(const hash_t& p_key,
-                   uint32_t p_block_size,
-                   const std::string& p_repository_name,
-                   const std::string& p_filename,
-                   uint64_t p_file_offset) :
-          key(p_key),
-          hash_block_size(p_block_size),
+  source_metadata_element_t(const std::string& p_repository_name,
+                            const std::string& p_filename,
+                            uint64_t p_file_size,
+                            const hash_t p_file_hash) :
           repository_name(p_repository_name),
           filename(p_filename),
-          file_offset(p_file_offset) {
-  }
-
-  // key-based with no source information
-  hashdb_element_t(const hash_t& p_key) :
-          key(p_key),
-          hash_block_size(0),
-          repository_name(""),
-          filename(""),
-          file_offset(0) {
+          file_size(p_file_size),
+          file_hash(p_file_hash) {
   }
 
   // empty
-  hashdb_element_t() :
-          key(),
-          hash_block_size(0),
+  source_metadata_element_t() :
           repository_name(""),
           filename(""),
-          file_offset(0) {
+          file_size(0),
+          file_hash(0) {
   }
 };
 

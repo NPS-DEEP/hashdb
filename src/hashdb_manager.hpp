@@ -27,11 +27,13 @@
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "source_lookup_index_manager.hpp"
-#include "source_metadata_manager.hpp"
 #include "hashdb_iterator.hpp"
 #include "hashdb_changes.hpp"
 #include "bloom_filter_manager.hpp"
 #include "source_lookup_encoding.hpp"
+#include "source_metadata.hpp"
+#include "source_metadata_element.hpp"
+#include "source_metadata_manager.hpp"
 #include "hash_t_selector.h"
 #include <vector>
 #include <unistd.h>
@@ -145,6 +147,34 @@ class hashdb_manager_t {
 
     // add hash to bloom filter, too, even if already there
     bloom_filter_manager.add_hash_value(hashdb_element.key);
+  }
+
+  // insert source metadata
+  void insert_source_metadata(
+                 const source_metadata_element_t& source_metadata_element,
+                 hashdb_changes_t& changes) {
+
+    // acquire existing or new source lookup index
+    std::pair<bool, uint64_t> lookup_pair =
+         source_lookup_index_manager.insert(
+                                 source_metadata_element.repository_name,
+                                 source_metadata_element.filename);
+    uint64_t source_lookup_index = lookup_pair.second;
+
+    // create the source metadata element
+    source_metadata_t source_metadata(source_lookup_index,
+                                      source_metadata_element.file_hash,
+                                      source_metadata_element.file_size);
+
+    // insert the metadata into the source metadata store
+    bool status = source_metadata_manager.insert(source_metadata);
+
+    // log change
+    if (status == true) {
+      ++changes.source_metadata_inserted;
+    } else {
+      ++changes.source_metadata_not_inserted_already_present;
+    }
   }
 
   // remove

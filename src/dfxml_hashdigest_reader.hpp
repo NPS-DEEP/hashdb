@@ -40,7 +40,8 @@
 
 // a class is used just to keep members private
 // Note that HC is the hash consumer.
-template <class HC>
+// Note that SC is the source metadata consumer.
+template <class HC, class SC>
 class dfxml_hashdigest_reader_t {
   private:
 
@@ -55,45 +56,54 @@ class dfxml_hashdigest_reader_t {
   struct user_data_t {
 
     // input values provided by do_read()
-    std::string default_repository_name;
+    const std::string default_repository_name;
     HC* hash_consumer;
+    SC* source_metadata_consumer;
 
     // state variables
-    bool is_at_repository_name;
-    bool is_at_filename;
-    bool is_at_hashdigest;
-    bool has_filename;
-    bool has_repository_name;
-    bool has_byte_run_file_offset_attribute;
-    bool has_byte_run_len_attribute;
-    bool has_hashdigest_type_attribute;
+    bool under_fileobject;
+    bool under_repository_name;
+    bool under_filename;
+    bool under_filesize;
+    bool under_fileobject_hashdigest;
+    bool under_byte_run;
+    bool under_byte_run_hashdigest;
 
-    // parsed xml values
-    std::string repository_name;
-    std::string filename;
-    uint64_t byte_run_file_offset_attribute;
-    uint32_t byte_run_len_attribute;
-    std::string hashdigest_type_attribute;
-    std::string hashdigest;
+    // parsed byte run values
+    std::string byte_run_file_offset;
+    std::string byte_run_len;
+    std::string byte_run_hashdigest_type;
+    std::string byte_run_hashdigest;
+
+    // parsed fileobject values
+    std::string fileobject_repository_name;
+    std::string fileobject_filename;
+    std::string fileobject_filesize;
+    std::string fileobject_hashdigest_type;
+    std::string fileobject_hashdigest;
 
     user_data_t(const std::string& p_default_repository_name,
-                                                      HC* p_hash_consumer) :
+                                             HC* p_hash_consumer,
+                                             SC* p_source_metadata_consumer) :
                          default_repository_name(p_default_repository_name),
                          hash_consumer(p_hash_consumer),
-                         is_at_repository_name(false),
-                         is_at_filename(false),
-                         is_at_hashdigest(false),
-                         has_filename(false),
-                         has_repository_name(false),
-                         has_byte_run_file_offset_attribute(false),
-                         has_byte_run_len_attribute(false),
-                         has_hashdigest_type_attribute(false),
-                         repository_name(""),
-                         filename(""),
-                         byte_run_file_offset_attribute(0),
-                         byte_run_len_attribute(0),
-                         hashdigest_type_attribute(""),
-                         hashdigest("") {
+                         source_metadata_consumer(p_source_metadata_consumer),
+                         under_fileobject(false),
+                         under_repository_name(false),
+                         under_filename(false),
+                         under_filesize(false),
+                         under_fileobject_hashdigest(false),
+                         under_byte_run(false),
+                         under_byte_run_hashdigest(false),
+                         byte_run_file_offset(""),
+                         byte_run_len(""),
+                         byte_run_hashdigest_type(""),
+                         byte_run_hashdigest(""),
+                         fileobject_repository_name(""),
+                         fileobject_filename(""),
+                         fileobject_filesize(""),
+                         fileobject_hashdigest_type(""),
+                         fileobject_hashdigest("") {
     }
     // don't allow these
     private:
@@ -105,43 +115,102 @@ class dfxml_hashdigest_reader_t {
   // static sax handler helpers
   // ************************************************************
 
-  static void consume_hashdigest(user_data_t& user_data) {
+  static void consume_byte_run_hash(user_data_t& user_data) {
 
-    // pull together fields for the hashdb element
+    // pull together byte_run fields for the hashdb element
 
-    std::string hashdigest = user_data.hashdigest;
-    std::string hashdigest_type = user_data.hashdigest_type_attribute;
-    uint32_t hash_block_size = user_data.byte_run_len_attribute;
+    // establish the repository name
+    std::string repository_name = (user_data.fileobject_repository_name == "") ?
+                                    user_data.default_repository_name :
+                                    user_data.fileobject_repository_name;
 
-    // get the repository name from xml or use default
-    std::string selected_repository_name = (user_data.has_repository_name) ?
-                user_data.repository_name : user_data.default_repository_name;
-
-    std::string filename = user_data.filename;
-    uint64_t file_offset = user_data.byte_run_file_offset_attribute;
-
-    // create the hashdb element
-    if (hashdigest_type != digest_name<hash_t>()) {
-      std::cout << "dfxml_hashdigest_reader: Wrong hashdigest type: "
-                << hashdigest_type << ", hashdigest entry ignored.\n";
+    // validate hash
+    if (user_data.byte_run_hashdigest.size() != hash_t::size()*2) {
+      std::cerr << "Invalid hashdigest: '"
+                << user_data.byte_run_hashdigest << "', entry ignored.\n";
       return;
     }
+
+    // get file_offset
+    uint64_t file_offset;
+    try {
+      file_offset = boost::lexical_cast<uint64_t>(user_data.byte_run_file_offset);
+    } catch(...) {
+      std::cerr << "Invalid file_offset value: '"
+                << user_data.byte_run_file_offset << "', entry ignored.\n";
+      return;
+    }
+
+    // get hash_block_size
+      uint32_t hash_block_size;
+    try {
+      hash_block_size = boost::lexical_cast<uint64_t>(user_data.byte_run_len);
+    } catch(...) {
+      std::cerr << "Invalid byte_run value: '"
+                << user_data.byte_run_len << "', entry ignored.\n";
+      return;
+    }
+
+    // validate hashdigest type
+    if (user_data.byte_run_hashdigest_type != digest_name<hash_t>()) {
+      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type: "
+                << user_data.byte_run_hashdigest_type << "', entry ignored.\n";
+      return;
+    }
+ 
+    // create the hashdb element
     hashdb_element_t hashdb_element(
-               hash_t::fromhex(hashdigest),
+               hash_t::fromhex(user_data.byte_run_hashdigest),
                hash_block_size,
-               selected_repository_name,
-               filename,
+               repository_name,
+               user_data.fileobject_filename,
                file_offset);
 
     // call the hash consumer
     user_data.hash_consumer->consume(hashdb_element);
   }
 
+  static void consume_source_metadata(user_data_t& user_data) {
+
+    // validate hashdigest type
+    if (user_data.fileobject_hashdigest_type != digest_name<hash_t>()) {
+      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type: "
+                << user_data.fileobject_hashdigest_type << "', entry ignored.\n";
+      return;
+    }
+
+    // validate hash
+    if (user_data.fileobject_hashdigest.size() != hash_t::size()*2) {
+      std::cerr << "Invalid hashdigest: '"
+                << user_data.fileobject_hashdigest << "', entry ignored.\n";
+      return;
+    }
+
+    // get file size
+    uint64_t file_size;
+    try {
+      file_size = boost::lexical_cast<uint64_t>(user_data.fileobject_filesize);
+    } catch(...) {
+      std::cerr << "Invalid filesize value: '"
+                << user_data.fileobject_filesize << "', entry ignored.\n";
+      return;
+    }
+
+
+    // create the source metadata element
+    source_metadata_element_t source_metadata_element(
+               user_data.fileobject_repository_name,
+               user_data.fileobject_filename,
+               file_size,
+               hash_t::fromhex(user_data.fileobject_hashdigest));
+ 
+    // call the consumer
+    user_data.source_metadata_consumer->consume(source_metadata_element);
+  }
+
   // parse byte_run tag for possible file_offset or len attributes
   static void parse_byte_run_attributes(user_data_t& user_data,
-                                        const xmlChar** attributes) {
-    user_data.has_byte_run_file_offset_attribute = false;
-    user_data.has_byte_run_len_attribute = false;
+                                    const xmlChar** attributes) {
 
     if (attributes == NULL) {
       // no attributes
@@ -157,40 +226,18 @@ class dfxml_hashdigest_reader_t {
       }
 
       if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("file_offset"))) {
-        std::string file_offset_string((const char*)attributes[i+1]);
-        try {
-          user_data.byte_run_file_offset_attribute
-                     = boost::lexical_cast<uint64_t>(file_offset_string);
-          user_data.has_byte_run_file_offset_attribute = true;
-        } catch(...) {
-          // abort
-          std::ostringstream ss1;
-          ss1 << "Invalid file_offset value: '"
-            << file_offset_string << "'";
-          throw std::runtime_error(ss1.str());
-        }
+        user_data.byte_run_file_offset = std::string ((const char*)attributes[i+1]);
       } else if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("len"))) {
-        std::string len_string((const char*)attributes[i+1]);
-        try {
-          user_data.byte_run_len_attribute = boost::lexical_cast<uint32_t>(len_string);
-          user_data.has_byte_run_len_attribute = true;
-        } catch(...) {
-          // abort
-          std::ostringstream ss2;
-          ss2 << "Invalid byte_run len value: '"
-            << len_string << "'";
-          throw std::runtime_error(ss2.str());
-        }
+        user_data.byte_run_len = std::string((const char*)attributes[i+1]);
       }
 
       i += 2;
     }
   }
 
-  // parse "hashdigest" tag for possible "type" attribute
-  static void parse_hashdigest_attributes(user_data_t& user_data,
+  // parse byte_run hashdigest tag for possible "type" attribute
+  static void parse_byte_run_hashdigest_attributes(user_data_t& user_data,
                                           const xmlChar** attributes) {
-    user_data.has_hashdigest_type_attribute = false;
 
     if (attributes == NULL) {
       // no attributes
@@ -205,10 +252,31 @@ class dfxml_hashdigest_reader_t {
       }
 
       if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("type"))) {
-        user_data.has_hashdigest_type_attribute = true;
-        user_data.hashdigest_type_attribute = std::string((const char*)attributes[i+1]);
+        user_data.byte_run_hashdigest_type = std::string((const char*)attributes[i+1]);
+      }
+      i += 2;
+    }
+  }
+
+  // parse fileobject hashdigest tag for possible "type" attribute
+  static void parse_fileobject_hashdigest_attributes(user_data_t& user_data,
+                                          const xmlChar** attributes) {
+
+    if (attributes == NULL) {
+      // no attributes
+      return;
+    }
+
+    // parse attributes
+    int i=0;
+    while (true) {
+      if (attributes[i] == NULL || attributes[i+1] == NULL) {
+        return;
       }
 
+      if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("type"))) {
+        user_data.fileobject_hashdigest_type = std::string((const char*)attributes[i+1]);
+      }
       i += 2;
     }
   }
@@ -223,85 +291,169 @@ class dfxml_hashdigest_reader_t {
     // no action
   }
 
+  // example syntax:
+  // <fileobject>
+  //   <repository_name>repo</repository_name>
+  //   <filename>/home/bdallen/demo/demo_video.mp4</filename>
+  //   <filesize>10630146</filesize>
+  //   <byte_run file_offset='0' len='4096'>   
+  //     <hashdigest type='MD5'>63641a3c008a3d26a192c778dd088868</hashdigest>
+  //   </byte_run>
+  //   <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
+  // </fileobject>
+ 
   static void on_start_element(void* p_user_data,
                                const xmlChar* name,
                                const xmlChar** attributes) {
-    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
-    user_data.is_at_repository_name = false;
-    user_data.is_at_filename = false;
 
+    // set up convenient reference to user data
+    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
+
+    // set state based on tag name
+
+    // fileobject
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("fileobject"))) {
-      // a filename tag is required after a fileobject tag
-      user_data.has_filename = false;
+      user_data.under_fileobject = true;
+
+    // repository_name
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("repository_name"))) {
-      // repository_name establishes the repository name for future hashdigest values
-      user_data.is_at_repository_name = true;
-      user_data.has_repository_name = false;
+      user_data.under_repository_name = true;
+
+    // filename
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("filename"))) {
-      // a filename tag establishes the filename for future hashdigest values
-      user_data.is_at_filename = true;
-      user_data.has_filename = false;
+      user_data.under_filename = true;
+
+    // file size
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("filesize"))) {
+      user_data.under_filesize = true;
+
+    // byte_run
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_run"))) {
+      user_data.under_byte_run = true;
       parse_byte_run_attributes(user_data, attributes);
+
+    // hashdigest
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest"))) {
-      user_data.is_at_hashdigest = true;
-      parse_hashdigest_attributes(user_data, attributes);
+      if (user_data.under_byte_run) {
+        user_data.under_byte_run_hashdigest = true;
+        parse_byte_run_hashdigest_attributes(user_data, attributes);
+      } else {
+        user_data.under_fileobject_hashdigest = true;
+        parse_fileobject_hashdigest_attributes(user_data, attributes);
+      }
+
+    } else {
+      // no action for other tag names
     }
   }
 
   static void on_end_element(void* p_user_data,
                              const xmlChar* name) {
-    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
-//      std::cout << "dfxml_hashdigest_reader_t::on_end_name " << name << "\n";
-    // no action
-    user_data.is_at_repository_name = false;
-    user_data.is_at_filename = false;
-    user_data.is_at_hashdigest = false;
 
+    // set up convenient reference to user data
+    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
+
+    // fileobject
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("fileobject"))) {
-      user_data.has_filename = false;
-      user_data.has_repository_name = false;
+      consume_source_metadata(user_data);
+      user_data.under_fileobject = false;
+      user_data.fileobject_repository_name = "";
+      user_data.fileobject_filename = "";
+      user_data.fileobject_filesize = "";
+      user_data.fileobject_hashdigest_type = "";
+      user_data.fileobject_hashdigest = "";
+
+    // repository_name
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("repository_name"))) {
+      user_data.under_repository_name = false;
+
+    // filename
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("filename"))) {
+      user_data.under_filename = false;
+
+    // file size
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("filesize"))) {
+      user_data.under_filesize = false;
+
+    // byte_run
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_run"))) {
+      consume_byte_run_hash(user_data);
+      user_data.under_byte_run = false;
+      user_data.byte_run_file_offset = "";
+      user_data.byte_run_len = "";
+      user_data.byte_run_hashdigest_type = "";
+      user_data.byte_run_hashdigest = "";
+
+    // hashdigest
+    } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest"))) {
+      if (user_data.under_byte_run) {
+        user_data.under_byte_run_hashdigest = false;
+      } else {
+        user_data.under_fileobject_hashdigest = false;
+      }
+
+    } else {
+      // no action for other tag names
     }
   }
 
   static void on_characters(void* p_user_data,
                             const xmlChar* characters,
                             int len) {
+
+  // NOTE: under* booleans are treated flat so they don't hide state.
+
+  // example syntax:
+  // <fileobject>
+  //   <repository_name>repo</repository_name>
+  //   <filename>/home/bdallen/demo/demo_video.mp4</filename>
+  //   <filesize>10630146</filesize>
+  //   <byte_run file_offset='0' len='4096'>   
+  //     <hashdigest type='MD5'>63641a3c008a3d26a192c778dd088868</hashdigest>
+  //   </byte_run>
+  //   <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
+  // </fileobject>
+ 
+    // set up convenient reference to user data
     user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
 
-//      std::cout << "dfxml_hashdigest_reader_t::on_characters\n";
-    if (user_data.is_at_repository_name) {
-      // get repository name to be used for the hashdigest
+    // repository name
+    if (user_data.under_repository_name) {
       char repository_name_chars[len+1];
       strncpy(repository_name_chars, (const char *)characters, len);
       repository_name_chars[len] = (char)NULL;
-      user_data.repository_name = std::string(repository_name_chars);
-      user_data.has_repository_name = true;
+      user_data.fileobject_repository_name = std::string(repository_name_chars);
 
-    } else if (user_data.is_at_filename) {
-      // get filename to be used for the hashdigest
+    // filename
+    } else if (user_data.under_filename) {
       char filename_chars[len+1];
       strncpy(filename_chars, (const char *)characters, len);
       filename_chars[len] = (char)NULL;
-      user_data.filename = std::string(filename_chars);
-      user_data.has_filename = true;
+      user_data.fileobject_filename = std::string(filename_chars);
 
-    } else if (user_data.is_at_hashdigest
-               && user_data.has_byte_run_file_offset_attribute
-               && user_data.has_byte_run_len_attribute) {
+    // filesize
+    } else if (user_data.under_filesize) {
+      char filesize_chars[len+1];
+      strncpy(filesize_chars, (const char *)characters, len);
+      filesize_chars[len] = (char)NULL;
+      user_data.fileobject_filesize = std::string(filesize_chars);
 
-      // get hashdigest
-      char hashdigest_chars[len+1];
-      strncpy(hashdigest_chars, (const char *)characters, len);
-      hashdigest_chars[len] = (char)NULL;
-      user_data.hashdigest = std::string(hashdigest_chars);
+    // fileobject hashdigest
+    } else if (user_data.under_fileobject_hashdigest) {
+      char fileobject_hashdigest_chars[len+1];
+      strncpy(fileobject_hashdigest_chars, (const char *)characters, len);
+      fileobject_hashdigest_chars[len] = (char)NULL;
+      user_data.fileobject_hashdigest = std::string(fileobject_hashdigest_chars);
 
-      // consume hashdigest
-      consume_hashdigest(user_data);
+    // byte_run hashdigest
+    } else if (user_data.under_byte_run_hashdigest) {
+      char byte_run_hashdigest_chars[len+1];
+      strncpy(byte_run_hashdigest_chars, (const char *)characters, len);
+      byte_run_hashdigest_chars[len] = (char)NULL;
+      user_data.byte_run_hashdigest = std::string(byte_run_hashdigest_chars);
 
-      // hashdigest consumed the byte_run information
-      user_data.has_byte_run_file_offset_attribute = false;
-      user_data.has_byte_run_len_attribute = false;
+    } else {
+      // no action for other tag names
     }
   }
 
@@ -354,7 +506,8 @@ class dfxml_hashdigest_reader_t {
   static void do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
-                HC* hash_consumer) {
+                HC* hash_consumer,
+                SC* source_metadata_consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
     xmlSAXHandler sax_handlers = {
@@ -389,7 +542,8 @@ class dfxml_hashdigest_reader_t {
     };
 
     // set up the data structure for the sax handlers to use
-    user_data_t user_data(default_repository_name, hash_consumer);
+    user_data_t user_data(default_repository_name,
+                          hash_consumer, source_metadata_consumer);
 
     // perform the sax parse on the file
     int sax_parser_resource = xmlSAXUserParseFile(

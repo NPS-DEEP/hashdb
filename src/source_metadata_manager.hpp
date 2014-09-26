@@ -57,7 +57,7 @@ class source_metadata_manager_t {
   boost::btree::flags::bitmask get_btree_flags(file_mode_type_t p_file_mode_type) {
     if (file_mode == READ_ONLY) return boost::btree::flags::read_only;
     if (file_mode == RW_NEW) return boost::btree::flags::truncate;
-    if (file_mode == READ_ONLY) return boost::btree::flags::read_write;
+    if (file_mode == RW_MODIFY) return boost::btree::flags::read_write;
     assert(0);
   }
 
@@ -138,6 +138,20 @@ class source_metadata_manager_t {
     return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
                                   source_metadata_iterator_t(range.first),
                                   source_metadata_iterator_t(range.second));
+  }
+
+  /**
+   * Return begin iterator ordered by source_lookup_index.
+   */
+  source_metadata_iterator_t begin() {
+    return source_metadata_iterator_t(idx1_btree.begin());
+  }
+
+  /**
+   * Return end iterator ordered by source_lookup_index.
+   */
+  source_metadata_iterator_t end() {
+    return source_metadata_iterator_t(idx1_btree.end());
   }
 };
 

@@ -24,42 +24,39 @@
  * required to consume the imported hashdb elements.
  */
 
-#ifndef DFXML_IMPORT_HASH_CONSUMER_HPP
-#define DFXML_IMPORT_HASH_CONSUMER_HPP
+#ifndef DFXML_IMPORT_SOURCE_METADATA_CONSUMER_HPP
+#define DFXML_IMPORT_SOURCE_METADATA_CONSUMER_HPP
 #include "hashdb_element.hpp"
 #include "hashdb_manager.hpp"
 #include "hashdb_changes.hpp"
 #include "progress_tracker.hpp"
 
-class dfxml_import_hash_consumer_t {
+class dfxml_import_source_metadata_consumer_t {
 
   private:
   hashdb_manager_t* hashdb_manager;
   hashdb_changes_t* hashdb_changes;
-  progress_tracker_t* progress_tracker;
 
   // do not allow copy or assignment
-  dfxml_import_hash_consumer_t(const dfxml_import_hash_consumer_t&);
-  dfxml_import_hash_consumer_t& operator=(const dfxml_import_hash_consumer_t&);
+  dfxml_import_source_metadata_consumer_t(
+                            const dfxml_import_source_metadata_consumer_t&);
+  dfxml_import_source_metadata_consumer_t& operator=(
+                            const dfxml_import_source_metadata_consumer_t&);
 
   public:
-  dfxml_import_hash_consumer_t(
+  dfxml_import_source_metadata_consumer_t(
               hashdb_manager_t* p_hashdb_manager,
-              hashdb_changes_t* p_hashdb_changes,
-              progress_tracker_t* p_progress_tracker) :
+              hashdb_changes_t* p_hashdb_changes) :
         hashdb_manager(p_hashdb_manager),
-        hashdb_changes(p_hashdb_changes),
-        progress_tracker(p_progress_tracker) {
+        hashdb_changes(p_hashdb_changes) {
   }
 
   // to consume, have dfxml_hashdigest_reader call here
-  void consume(const hashdb_element_t& hashdb_element) {
+  void consume(const source_metadata_element_t& source_metadata_element) {
 
-    // update progress tracker
-    progress_tracker->track();
-
-    // consume the hashdb_element by importing it
-    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+    // consume the source metadata element by importing it
+    hashdb_manager->insert_source_metadata(source_metadata_element,
+                                           *hashdb_changes);
   }
 };
 

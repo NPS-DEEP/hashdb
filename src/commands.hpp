@@ -36,10 +36,13 @@
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_hash_consumer.hpp"
+#include "dfxml_import_source_metadata_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
 #include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
+#include "source_metadata_iterator.hpp"
+#include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
 #include "random_key.hpp"
@@ -254,13 +257,18 @@ class commands_t {
     // start progress tracker
     progress_tracker_t progress_tracker(0, &logger);
 
-    // create the consumer
+    // create the hash consumer
     dfxml_import_hash_consumer_t hash_consumer(
                                 &hashdb_manager, &changes, &progress_tracker);
 
+    // create the source metadata consumer
+    dfxml_import_source_metadata_consumer_t source_metadata_consumer(
+                                &hashdb_manager, &changes);
+
     // run the dfxml hashdigest reader using the import hash consumer
-    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t>::
-                         do_read(dfxml_file, repository_name, &hash_consumer);
+    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t, dfxml_import_source_metadata_consumer_t>::
+                         do_read(dfxml_file, repository_name,
+                                 &hash_consumer, &source_metadata_consumer);
 
     // close tracker
     progress_tracker.done();
@@ -586,6 +594,7 @@ class commands_t {
     // create the consumer
     dfxml_scan_consumer_t consumer(scan_input);
 
+/*zzzz
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
     dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
@@ -611,6 +620,7 @@ class commands_t {
                 << it2->source_file_hash.hexdigest() << "\n";
       ++it2;
     }
+*/
 
     // delete heap allocation
     delete scan_input;
@@ -627,10 +637,12 @@ class commands_t {
     // create the consumer
     dfxml_scan_expanded_consumer_t consumer(&hashdb_manager);
 
+/* zz
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
     dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
                               do_read(dfxml_file, repository_name, &consumer);
+*/
   }
 
   // expand identified_blocks.txt
@@ -734,10 +746,30 @@ class commands_t {
     }
 
     // report each entry
+    std::cout << "source lookup table:\n";
     while (it != manager.end()) {
       std::cout << "repository name='" << it->first
                 << "', filename='" << it->second << "'\n";
       ++it;
+    }
+
+    // open the source metadata manager
+    source_metadata_manager_t source_metadata_manager(hashdb_dir, READ_ONLY);
+    source_metadata_iterator_t it2 = source_metadata_manager.begin();
+
+    // report each entry
+    std::cout << "source metadata table:\n";
+    while (it2 != source_metadata_manager.end()) {
+
+      std::pair<std::string, std::string> pair_string;
+      pair_string = manager.find(it2->source_lookup_index);
+
+      std::cout << "repository name='" << pair_string.first
+                << "', filename='" << pair_string.second
+                << "', hash='" << it2->hash.hexdigest()
+                << "', file size='" << it2->file_size
+                << "'\n";
+      ++it2;
     }
   }
 

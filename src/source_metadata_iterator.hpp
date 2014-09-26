@@ -114,16 +114,27 @@ class source_metadata_iterator_t {
   }
 
   bool operator==(const source_metadata_iterator_t& other) const {
-    return this->type == other.type &&
-           this->idx1_it == other.idx1_it &&
-           this->idx2_it == other.idx2_it &&
-           this->idx3_it == other.idx3_it;
+    if (this->type != other.type) {
+      return false;
+    }
+    switch(type) {
+      case IDX1_BTREE: return this->idx1_it == other.idx1_it;
+      case IDX2_BTREE: return this->idx2_it == other.idx2_it;
+      case IDX3_BTREE: return this->idx3_it == other.idx3_it;
+      default: assert(0); std::exit(1);
+    }
   }
+
   bool operator!=(const source_metadata_iterator_t& other) const {
-    return this->type != other.type ||
-           this->idx1_it != other.idx1_it ||
-           this->idx2_it != other.idx2_it ||
-           this->idx3_it != other.idx3_it;
+    if (this->type != other.type) {
+      return true;
+    }
+    switch(type) {
+      case IDX1_BTREE: return this->idx1_it != other.idx1_it;
+      case IDX2_BTREE: return this->idx2_it != other.idx2_it;
+      case IDX3_BTREE: return this->idx3_it != other.idx3_it;
+      default: assert(0); std::exit(1);
+    }
   }
 };
 
