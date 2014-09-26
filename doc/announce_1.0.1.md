@@ -148,11 +148,16 @@ Hashes from multiple files will be shown if hashes from the same filename have b
 * Allow filename globbing for the `hash table [-q] <hashdb.hdb> <filename>` command.
 * Add a B-Tree tuning hint least\_memory or all hint possibilities settable when the database is created.
 * Possibly add flush at intervals.  Peformance analysis for flush has not been tested.
+* Document how 0.17 was calculated as the number for calculating M from n in the Bloom filter, and document the percent false positive range this provides.
 
 #Potential future changes to bulk_extractor
 * Add code in the finalization state of the hashdb scanner for generating post-processing statistics:
  * Print files that the image fully contained.
  * For partial matches, print number of blocks out of total blocks matched for each file.
+
+# Alternative Design Considerations
+* The ideal k for the False Positive Rate (FPR) is about 6-7, but it does not make that big a difference in the FPR and using k=3 cuts down on the number of random accesses (i.e. 3 cache line loads instead of 6).
+* An ideal bloom filter uses 1.44 log2(1/FPR) bits per key whereas the theoretical minimum for any data structure is log2(1/FPR).  A 1-level trie structure has redundancy in each of the buckets for a total space of about log2(average leaf node size)+log2(1/FPR) per key.  The overhead could be removed if we were to implement a binary trie in each leaf node, but the structure has too high of an access time and too high of development complexity to be useful.
 
 Availability
 ============
