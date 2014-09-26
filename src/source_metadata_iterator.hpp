@@ -19,12 +19,13 @@
 
 /**
  * \file
- * Provides a hashdb iterator which dereferences into hashdb_element_t.
+ * Provides an iterator which dereferences into source_metadata_t.
  */
 
 #ifndef SOURCE_METADATA_ITERATOR_HPP
 #define SOURCE_METADATA_ITERATOR_HPP
-#include "source_metadata_manager.hpp"
+#include "boost/btree/index_helpers.hpp"
+#include "boost/btree/btree_index_set.hpp"
 #include "hash_t_selector.h"
 
 class source_metadata_iterator_t {
@@ -33,15 +34,15 @@ class source_metadata_iterator_t {
   // btrees to manage multi-index lookups
   typedef typename boost::btree::btree_index_set<source_metadata_t> idx1_btree_t;
   typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, hash_ordering> idx2_btree_t;
-  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, file_size_ordering> idx2_btree_t;
+  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, file_size_ordering> idx3_btree_t;
 
   enum btree_iterator_type_t {IDX_NONE_BTREE, IDX1_BTREE, IDX2_BTREE, IDX3_BTREE};
 
   // state
   btree_iterator_type_t type;
   idx1_btree_t::const_iterator idx1_it;
-  idx2_btree_t::iterator_range idx2_it;
-  idx3_btree_t::iterator_range idx3_it;
+  idx2_btree_t::const_iterator idx2_it;
+  idx3_btree_t::const_iterator idx3_it;
 
   // the cached "dereferenced" source metadata
   source_metadata_t source_metadata;
@@ -69,7 +70,7 @@ class source_metadata_iterator_t {
   // this useless default constructor is required by std::pair
   source_metadata_iterator_t() :
                   type(IDX_NONE_BTREE),
-                  idx1_range(), idx2_range(), idx3_range(),
+                  idx1_it(), idx2_it(), idx3_it(),
                   source_metadata() {
   }
 
@@ -93,7 +94,7 @@ class source_metadata_iterator_t {
     }
   }
 
-  hashdb_element_t& operator*() {
+  source_metadata_t& operator*() {
     switch(type) {
       case IDX1_BTREE: source_metadata = *idx1_it; break;
       case IDX2_BTREE: source_metadata = *idx2_it; break;
@@ -102,7 +103,7 @@ class source_metadata_iterator_t {
     }
     return source_metadata;
   }
-  hashdb_element_t* operator->() {
+  source_metadata_t* operator->() {
     switch(type) {
       case IDX1_BTREE: source_metadata = *idx1_it; break;
       case IDX2_BTREE: source_metadata = *idx2_it; break;
@@ -114,15 +115,15 @@ class source_metadata_iterator_t {
 
   bool operator==(const source_metadata_iterator_t& other) const {
     return this->type == other.type &&
-           this->idx1_it == other.idx1_t &&
-           this->idx2_it == other.idx2_t &&
-           this->idx3_it == other.idx3_t;
+           this->idx1_it == other.idx1_it &&
+           this->idx2_it == other.idx2_it &&
+           this->idx3_it == other.idx3_it;
   }
   bool operator!=(const source_metadata_iterator_t& other) const {
     return this->type != other.type ||
-           this->idx1_it != other.idx1_t ||
-           this->idx2_it != other.idx2_t ||
-           this->idx3_it != other.idx3_t;
+           this->idx1_it != other.idx1_it ||
+           this->idx2_it != other.idx2_it ||
+           this->idx3_it != other.idx3_it;
   }
 };
 

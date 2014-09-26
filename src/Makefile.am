@@ -46,6 +46,9 @@ HASHDB_INCS = \
 	source_lookup_encoding.hpp \
 	source_lookup_index_iterator.hpp \
 	source_lookup_index_manager.hpp \
+	source_metadata.hpp \
+	source_metadata_iterator.hpp \
+	source_metadata_manager.hpp \
 	tcp_server_manager.hpp \
 	usage.hpp
 

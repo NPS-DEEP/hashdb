@@ -27,6 +27,7 @@
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "source_lookup_index_manager.hpp"
+#include "source_metadata_manager.hpp"
 #include "hashdb_iterator.hpp"
 #include "hashdb_changes.hpp"
 #include "bloom_filter_manager.hpp"
@@ -60,6 +61,9 @@ class hashdb_manager_t {
   // source lookup support
   source_lookup_index_manager_t source_lookup_index_manager;
 
+  // source metadata lookup support
+  source_metadata_manager_t source_metadata_manager;
+
   // do not allow copy or assignment
   hashdb_manager_t(const hashdb_manager_t&);
   hashdb_manager_t& operator=(const hashdb_manager_t&);
@@ -79,7 +83,8 @@ class hashdb_manager_t {
                                settings.bloom2_is_used,
                                settings.bloom2_M_hash_size,
                                settings.bloom2_k_hash_functions),
-                source_lookup_index_manager(hashdb_dir, file_mode) {
+                source_lookup_index_manager(hashdb_dir, file_mode),
+                source_metadata_manager(hashdb_dir, file_mode) {
   }
 
   // insert

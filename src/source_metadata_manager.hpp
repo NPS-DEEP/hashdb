@@ -27,6 +27,7 @@
 
 #include "hash_t_selector.h" // to define hash_t
 #include "source_metadata.hpp"
+#include "source_metadata_iterator.hpp"
 #include <string>
 #include "boost/btree/index_helpers.hpp"
 #include "boost/btree/btree_index_set.hpp"
@@ -37,7 +38,7 @@ class source_metadata_manager_t {
   // btrees to manage multi-index lookups
   typedef typename boost::btree::btree_index_set<source_metadata_t> idx1_btree_t;
   typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, hash_ordering> idx2_btree_t;
-  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, file_size_ordering> idx2_btree_t;
+  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, file_size_ordering> idx3_btree_t;
 
   // settings
   const std::string hashdb_dir;
@@ -53,10 +54,11 @@ class source_metadata_manager_t {
   idx3_btree_t idx3_btree;
 
   // convert file_mode_type to btree flags
-  boost::btree::flags::bitmask get_flags(file_mode_type_t p_file_mode_type) {
+  boost::btree::flags::bitmask get_btree_flags(file_mode_type_t p_file_mode_type) {
     if (file_mode == READ_ONLY) return boost::btree::flags::read_only;
     if (file_mode == RW_NEW) return boost::btree::flags::truncate;
     if (file_mode == READ_ONLY) return boost::btree::flags::read_write;
+    assert(0);
   }
 
   // disallow these
@@ -95,43 +97,47 @@ class source_metadata_manager_t {
     if (it == idx1_btree.end()) {
 
       // good, add the entry
-      typename idx1_btree::file_position pos;
+      typename idx1_btree_t::file_position pos;
       pos = idx1_btree.push_back(source_metadata);
       idx1_btree.insert_file_position(pos);
       idx2_btree.insert_file_position(pos);
       idx3_btree.insert_file_position(pos);
       return true;
+    } else {
+      // source metadata is already present.
+      // zz could validate equality.
+      return false;
     }
   }
 
   // find by source lookup index
-  std::pair<source_metada_iterator_t, source_metadata_iterator_t>
+  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
                   find_by_source_lookup_index(uint64_t source_lookup_index) {
     idx1_btree_t::const_iterator_range range =
                                   idx1_btree.equal_range(source_lookup_index);
-    return std::pair<source_metada_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator(range.first),
-                                  source_metadata_iterator(range.second));
+    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
+                                  source_metadata_iterator_t(range.first),
+                                  source_metadata_iterator_t(range.second));
   }
 
   // find by hash
-  std::pair<source_metada_iterator_t, source_metadata_iterator_t>
+  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
                   find_by_hash(hash_t hash) {
     idx2_btree_t::const_iterator_range range =
-                                  idx2_btree.equal_range(source_lookup_index);
-    return std::pair<source_metada_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator(range.first),
-                                  source_metadata_iterator(range.second));
+                                  idx2_btree.equal_range(hash);
+    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
+                                  source_metadata_iterator_t(range.first),
+                                  source_metadata_iterator_t(range.second));
   }
 
   // find by file size
-  std::pair<source_metada_iterator_t, source_metadata_iterator_t>
-                  find_by_file_size(hash_t hash) {
+  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
+                  find_by_file_size(uint64_t file_size) {
     idx3_btree_t::const_iterator_range range =
-                                  idx3_btree.equal_range(source_lookup_index);
-    return std::pair<source_metada_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator(range.first),
-                                  source_metadata_iterator(range.second));
+                                  idx3_btree.equal_range(file_size);
+    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
+                                  source_metadata_iterator_t(range.first),
+                                  source_metadata_iterator_t(range.second));
   }
 };
 

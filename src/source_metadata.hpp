@@ -47,23 +47,46 @@ struct source_metadata_t {
           file_size(p_file_size) {
   }
 
+/*
   // order by source_lookup_index
   bool operator < (const source_metadata_t& rhs) const {
     return source_lookup_index < rhs.source_lookup_index;
   }
+*/
 };
+
+// zzzzzzzzzzzzzz
+// ordering by source_lookup_index
+inline bool operator<(const source_metadata_t& lhs, const source_metadata_t& rhs) {return lhs.source_lookup_index < rhs.source_lookup_index;}
+inline bool operator<(const source_metadata_t& lhs, uint64_t rhs) {return lhs.source_lookup_index < rhs;}
+inline bool operator<(uint64_t lhs, const source_metadata_t& rhs) {return lhs < rhs.source_lookup_index;}
+// zzzzzzzzzzzzzz
 
 // function object for hash ordering
 struct hash_ordering {
   bool operator()(const source_metadata_t& x, const source_metadata_t& y) const {
     return x.hash < y.hash;
   }
+// zzzzzzzzzzzzzz
+  bool operator()(const source_metadata_t& x, const hash_t& y) const {
+    return x.hash < y;
+  }
+  bool operator()(const hash_t& x, const source_metadata_t& y) const {
+    return x < y.hash;
+  }
+// zzzzzzzzzzzzzz
 };
 
 // function object for file size ordering
 struct file_size_ordering {
   bool operator()(const source_metadata_t& x, const source_metadata_t& y) const {
     return x.file_size < y.file_size;
+  }
+  bool operator()(const source_metadata_t& x, uint64_t y) const {
+    return x.file_size < y;
+  }
+  bool operator()(uint64_t x, const source_metadata_t& y) const {
+    return x < y.file_size;
   }
 };
 
@@ -78,13 +101,13 @@ struct index_reference<source_metadata_t> {
 template <>
 inline void index_serialize<source_metadata_t>(
                   const source_metadata_t& udt, flat_file_type& file) {
-  index_serialize(udt.source_lookup_index);
-  index_serialize(udt.hash);
-  index_serialize(udt.file_size);
+  index_serialize(udt.source_lookup_index, file);
+  index_serialize(udt.hash, file);
+  index_serialize(udt.file_size, file);
 }
 
 template <>
-inline void index_reference<source_metadata_t>::type
+inline index_reference<source_metadata_t>::type
                      index_deserialize<source_metadata_t>(const char** flat) {
   source_metadata_t udt;
   udt.source_lookup_index = index_deserialize<uint64_t>(flat);
