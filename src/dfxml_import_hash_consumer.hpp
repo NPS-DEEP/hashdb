@@ -31,7 +31,7 @@
 #include "hashdb_changes.hpp"
 #include "progress_tracker.hpp"
 
-class dfxml_import_consumer_t {
+class dfxml_import_hash_consumer_t {
 
   private:
   hashdb_manager_t* hashdb_manager;
@@ -39,11 +39,11 @@ class dfxml_import_consumer_t {
   progress_tracker_t* progress_tracker;
 
   // do not allow copy or assignment
-  dfxml_import_consumer_t(const dfxml_import_consumer_t&);
-  dfxml_import_consumer_t& operator=(const dfxml_import_consumer_t&);
+  dfxml_import_hash_consumer_t(const dfxml_import_hash_consumer_t&);
+  dfxml_import_hash_consumer_t& operator=(const dfxml_import_hash_consumer_t&);
 
   public:
-  dfxml_import_consumer_t(
+  dfxml_import_hash_consumer_t(
               hashdb_manager_t* p_hashdb_manager,
               hashdb_changes_t* p_hashdb_changes,
               progress_tracker_t* p_progress_tracker) :

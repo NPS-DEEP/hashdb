@@ -35,7 +35,7 @@
 #include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
-#include "dfxml_import_consumer.hpp"
+#include "dfxml_import_hash_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
 #include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
@@ -255,12 +255,12 @@ class commands_t {
     progress_tracker_t progress_tracker(0, &logger);
 
     // create the consumer
-    dfxml_import_consumer_t consumer(
+    dfxml_import_hash_consumer_t hash_consumer(
                                 &hashdb_manager, &changes, &progress_tracker);
 
-    // run the dfxml hashdigest reader using the import consumer
-    dfxml_hashdigest_reader_t<dfxml_import_consumer_t>::
-                              do_read(dfxml_file, repository_name, &consumer);
+    // run the dfxml hashdigest reader using the import hash consumer
+    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t>::
+                         do_read(dfxml_file, repository_name, &hash_consumer);
 
     // close tracker
     progress_tracker.done();

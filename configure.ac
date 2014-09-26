@@ -25,6 +25,7 @@ AC_CONFIG_FILES([Makefile
                  python/Makefile])
 
 # define CC and CXX as desired for alternate compilers
+# for example "./configure CC=clang CXX=clang++"
 #CC=clang
 #CXX=clang++
 

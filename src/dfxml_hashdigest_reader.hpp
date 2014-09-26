@@ -21,7 +21,7 @@
  * \file
  * Provides the service of reading hash data from a DFXML file
  * typically created by md5deep or by a hashdb_manager export operation
- * and calling a consumer to process the hash data.
+ * and calling a hash consumer to process the hash data.
  */
 
 /**
@@ -39,8 +39,8 @@
 #include "hash_t_selector.h"
 
 // a class is used just to keep members private
-// Note that TC is the consumer.
-template <class TC>
+// Note that HC is the hash consumer.
+template <class HC>
 class dfxml_hashdigest_reader_t {
   private:
 
@@ -56,7 +56,7 @@ class dfxml_hashdigest_reader_t {
 
     // input values provided by do_read()
     std::string default_repository_name;
-    TC* consumer;
+    HC* hash_consumer;
 
     // state variables
     bool is_at_repository_name;
@@ -76,9 +76,10 @@ class dfxml_hashdigest_reader_t {
     std::string hashdigest_type_attribute;
     std::string hashdigest;
 
-    user_data_t(const std::string& p_default_repository_name, TC* p_consumer) :
+    user_data_t(const std::string& p_default_repository_name,
+                                                      HC* p_hash_consumer) :
                          default_repository_name(p_default_repository_name),
-                         consumer(p_consumer),
+                         hash_consumer(p_hash_consumer),
                          is_at_repository_name(false),
                          is_at_filename(false),
                          is_at_hashdigest(false),
@@ -132,8 +133,8 @@ class dfxml_hashdigest_reader_t {
                filename,
                file_offset);
 
-    // call the consumer
-    user_data.consumer->consume(hashdb_element);
+    // call the hash consumer
+    user_data.hash_consumer->consume(hashdb_element);
   }
 
   // parse byte_run tag for possible file_offset or len attributes
@@ -353,7 +354,7 @@ class dfxml_hashdigest_reader_t {
   static void do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
-                TC* consumer) {
+                HC* hash_consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
     xmlSAXHandler sax_handlers = {
@@ -388,7 +389,7 @@ class dfxml_hashdigest_reader_t {
     };
 
     // set up the data structure for the sax handlers to use
-    user_data_t user_data(default_repository_name, consumer);
+    user_data_t user_data(default_repository_name, hash_consumer);
 
     // perform the sax parse on the file
     int sax_parser_resource = xmlSAXUserParseFile(
