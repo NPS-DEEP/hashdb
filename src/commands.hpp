@@ -790,8 +790,8 @@ class commands_t {
     // total number of hashes in the database
     uint64_t total_hashes = 0;
 
-    // total number of unique hashes
-    uint64_t total_unique_hashes = 0;
+    // total number of distinct hashes
+    uint64_t total_distinct_hashes = 0;
 
     // hash histogram as <count, number of hashes with count>
     std::map<uint32_t, uint64_t>* hash_histogram =
@@ -809,7 +809,7 @@ class commands_t {
       // update totals
       total_hashes += count;
       if (count == 1) {
-        ++total_unique_hashes;
+        ++total_distinct_hashes;
       }
 
       // update hash_histogram information
@@ -841,7 +841,7 @@ class commands_t {
 
     // show totals
     std::cout << "total hashes: " << total_hashes << "\n"
-              << "unique hashes: " << total_unique_hashes << "\n";
+              << "distinct hashes: " << total_distinct_hashes << "\n";
 
     // show hash histogram
 //    std::cout << "Histogram of count, number of hashes with count:\n";

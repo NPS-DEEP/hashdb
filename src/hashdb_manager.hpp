@@ -209,7 +209,7 @@ class hashdb_manager_t {
                        source_lookup_index,
                        hashdb_element.file_offset);
 
-    // find and remove the uniquely identified element
+    // find and remove the distinct identified element
     multimap_iterator_range_t it = multimap.equal_range(hashdb_element.key);
     multimap_iterator_t lower = it.first;
     const multimap_iterator_t upper = it.second;
