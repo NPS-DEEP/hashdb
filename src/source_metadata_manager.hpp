@@ -69,10 +69,10 @@ class source_metadata_manager_t {
   source_metadata_manager_t (const std::string p_hashdb_dir,
                            file_mode_type_t p_file_mode_type) :
        hashdb_dir(p_hashdb_dir),
-       dat_filename(hashdb_dir + "source_metadata_store.dat"),
-       idx1_filename(hashdb_dir + "source_metadata_store.idx1"),
-       idx2_filename(hashdb_dir + "source_metadata_store.idx2"),
-       idx3_filename(hashdb_dir + "source_metadata_store.idx3"),
+       dat_filename(hashdb_dir + "/source_metadata_store.dat"),
+       idx1_filename(hashdb_dir + "/source_metadata_store.idx1"),
+       idx2_filename(hashdb_dir + "/source_metadata_store.idx2"),
+       idx3_filename(hashdb_dir + "/source_metadata_store.idx3"),
        file_mode(p_file_mode_type),
        btree_flags(get_btree_flags(file_mode)),
        idx1_btree(idx1_filename, dat_filename, btree_flags),
@@ -91,7 +91,7 @@ class source_metadata_manager_t {
       assert(0);
     }
 
-    // source lookup index must exist
+    // source lookup index should not exist yet in source metadata
     typename idx1_btree_t::iterator it = idx1_btree.find(
                                         source_metadata.source_lookup_index);
     if (it == idx1_btree.end()) {

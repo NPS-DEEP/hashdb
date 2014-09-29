@@ -266,9 +266,10 @@ class commands_t {
                                 &hashdb_manager, &changes);
 
     // run the dfxml hashdigest reader using the import hash consumer
-    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t, dfxml_import_source_metadata_consumer_t>::
-                         do_read(dfxml_file, repository_name,
-                                 &hash_consumer, &source_metadata_consumer);
+    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t,
+                              dfxml_import_source_metadata_consumer_t>::
+             do_read(dfxml_file, repository_name,
+                     &hash_consumer, &source_metadata_consumer);
 
     // close tracker
     progress_tracker.done();
@@ -296,6 +297,7 @@ class commands_t {
     // open the dfxml_file
     dfxml_hashdigest_writer_t writer(dfxml_file);
 
+    // add hash entries from hashdb_manager
     hashdb_iterator_t it = hashdb_manager.begin();
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
@@ -305,6 +307,53 @@ class commands_t {
       ++it;
     }
     progress_tracker.done();
+
+    // add source lookup information from source_lookup_index_manager
+    // and source_metadata_manager
+    source_lookup_index_manager_t source_lookup_index_manager(
+                                               hashdb_dir, READ_ONLY);
+    source_metadata_manager_t source_metadata_manager(
+                                               hashdb_dir, READ_ONLY);
+    source_lookup_index_iterator_t it2 = source_lookup_index_manager.begin();
+    while (it2 != source_lookup_index_manager.end()) {
+
+      // get the repository name and filename
+      std::pair<std::string, std::string> lookup_pair = *it2;
+
+      // get the source lookup index, making sure that it is valid
+      std::pair<bool, uint64_t> index_pair = source_lookup_index_manager.find(
+                                       lookup_pair.first, lookup_pair.second);
+      if (index_pair.first == false) {
+        std::cerr << "commands.do_export: unexpected missing index.\n";
+        ++it2;
+        continue;
+      }
+
+      // get source metadata iterator range for this source lookup index
+      std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
+           metadata_iterator_pair =
+                       source_metadata_manager.find_by_source_lookup_index(
+                       index_pair.second);
+
+      // make sure source metadata is there
+      if (metadata_iterator_pair.first == metadata_iterator_pair.second) {
+        std::cerr << "commands.do_export: unexpected missing range.\n";
+        ++it2;
+        continue;
+      }
+
+      // write out the source metadata
+      writer.add_source_metadata(lookup_pair, *(metadata_iterator_pair.first));
+
+      // make sure the metadata iterator has just one entry
+      ++metadata_iterator_pair.first;
+      if (metadata_iterator_pair.first != metadata_iterator_pair.second) {
+        std::cerr << "commands.do_export: unexpected extra range.\n";
+        ++it2;
+        continue;
+      }
+      ++it2;
+    }
   }
 
   // add A to B

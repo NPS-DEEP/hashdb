@@ -64,6 +64,7 @@ class dfxml_hashdigest_writer_t {
     x.close();
   }
 
+  // add a hashdb element
   void add_hashdb_element(const hashdb_element_t& element) {
 
     // start the fileobject tag
@@ -73,7 +74,7 @@ class dfxml_hashdigest_writer_t {
     x.xmlout("repository_name", element.repository_name);
 
     // write the filename tag
-    x.xmlout("filename", std::string(element.filename));
+    x.xmlout("filename", element.filename);
 
     // start the byte_run tag with its file_offset attribute
     std::stringstream ss;
@@ -92,6 +93,34 @@ class dfxml_hashdigest_writer_t {
     // close the fileobject tag
     x.pop();
   }
+
+  // add a source metadata record
+  void add_source_metadata(const std::pair<std::string, std::string>& lookup_pair,
+                           const source_metadata_t& source_metadata) {
+
+    // start the fileobject tag
+    x.push("fileobject");
+
+    // write the repository name tag
+    x.xmlout("repository_name", lookup_pair.first);
+
+    // write the filename tag
+    x.xmlout("filename", lookup_pair.second);
+
+    // write the file size
+    x.xmlout("filesize", source_metadata.file_size);
+
+    // write the file hashdigest
+    std::stringstream ss2;
+    ss2 << "type='" << digest_name<hash_t>() << "'";
+    x.xmlout("hashdigest", source_metadata.hash.hexdigest(), ss2.str(), false);
+
+    // close the fileobject tag
+    x.pop();
+  }
+
+
+
 };
 #endif
 

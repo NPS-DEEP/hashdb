@@ -119,11 +119,6 @@ class dfxml_hashdigest_reader_t {
 
     // pull together byte_run fields for the hashdb element
 
-    // establish the repository name
-    std::string repository_name = (user_data.fileobject_repository_name == "") ?
-                                    user_data.default_repository_name :
-                                    user_data.fileobject_repository_name;
-
     // validate hash
     if (user_data.byte_run_hashdigest.size() != hash_t::size()*2) {
       std::cerr << "Invalid hashdigest: '"
@@ -162,7 +157,7 @@ class dfxml_hashdigest_reader_t {
     hashdb_element_t hashdb_element(
                hash_t::fromhex(user_data.byte_run_hashdigest),
                hash_block_size,
-               repository_name,
+               user_data.fileobject_repository_name,
                user_data.fileobject_filename,
                file_offset);
 
@@ -315,6 +310,13 @@ class dfxml_hashdigest_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("fileobject"))) {
       user_data.under_fileobject = true;
 
+      // clear fields under fileobject
+      user_data.fileobject_repository_name = user_data.default_repository_name;
+      user_data.fileobject_filename = "";
+      user_data.fileobject_filesize = "";
+      user_data.fileobject_hashdigest_type = "";
+      user_data.fileobject_hashdigest = "";
+
     // repository_name
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("repository_name"))) {
       user_data.under_repository_name = true;
@@ -330,6 +332,13 @@ class dfxml_hashdigest_reader_t {
     // byte_run
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_run"))) {
       user_data.under_byte_run = true;
+
+      // clear fields under byte_run
+      user_data.byte_run_file_offset = "";
+      user_data.byte_run_len = "";
+      user_data.byte_run_hashdigest_type = "";
+      user_data.byte_run_hashdigest = "";
+
       parse_byte_run_attributes(user_data, attributes);
 
     // hashdigest
@@ -357,11 +366,6 @@ class dfxml_hashdigest_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("fileobject"))) {
       consume_source_metadata(user_data);
       user_data.under_fileobject = false;
-      user_data.fileobject_repository_name = "";
-      user_data.fileobject_filename = "";
-      user_data.fileobject_filesize = "";
-      user_data.fileobject_hashdigest_type = "";
-      user_data.fileobject_hashdigest = "";
 
     // repository_name
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("repository_name"))) {
@@ -379,10 +383,6 @@ class dfxml_hashdigest_reader_t {
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_run"))) {
       consume_byte_run_hash(user_data);
       user_data.under_byte_run = false;
-      user_data.byte_run_file_offset = "";
-      user_data.byte_run_len = "";
-      user_data.byte_run_hashdigest_type = "";
-      user_data.byte_run_hashdigest = "";
 
     // hashdigest
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hashdigest"))) {
