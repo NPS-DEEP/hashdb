@@ -21,45 +21,35 @@
  * \file
  * Unfortunately, the existing hashdigest reader output is hard to consume.
  * To get by, we use this consumer, which contains the pointer to the
- * hashdb manager.
+ * scan input data structure.
  */
 
-#ifndef DFXML_SCAN_EXPANDED_CONSUMER_HPP
-#define DFXML_SCAN_EXPANDED_CONSUMER_HPP
+#ifndef DFXML_SCAN_HASH_CONSUMER_HPP
+#define DFXML_SCAN_HASH_CONSUMER_HPP
+#include "hashdb.hpp"
 #include "hashdb_element.hpp"
-#include "hashdb_manager.hpp"
-#include "hashdb_iterator.hpp"
+#include "hash_t_selector.h"
 
-class dfxml_scan_expanded_consumer_t {
+class dfxml_scan_hash_consumer_t {
 
   private:
-  hashdb_manager_t* hashdb_manager;
+  std::vector<hash_t>* scan_input;
 
   // do not allow copy or assignment
-  dfxml_scan_expanded_consumer_t(const dfxml_scan_expanded_consumer_t&);
-  dfxml_scan_expanded_consumer_t& operator=(const dfxml_scan_expanded_consumer_t&);
+  dfxml_scan_hash_consumer_t(const dfxml_scan_hash_consumer_t&);
+  dfxml_scan_hash_consumer_t& operator=(const dfxml_scan_hash_consumer_t&);
 
   public:
-  dfxml_scan_expanded_consumer_t(hashdb_manager_t* p_hashdb_manager) :
-        hashdb_manager(p_hashdb_manager) {
+  dfxml_scan_hash_consumer_t(
+              std::vector<hash_t>* p_scan_input) :
+        scan_input(p_scan_input) {
   }
 
   // to consume, have dfxml_hashdigest_reader call here
   void consume(const hashdb_element_t& hashdb_element) {
 
-    // consume the hashdb_element by scanning and displaying results immediately
-
-    // get range of hash match
-    std::pair<hashdb_iterator_t, hashdb_iterator_t > range_it_pair(
-                                     hashdb_manager->find(hashdb_element.key));
-
-    while (range_it_pair.first != range_it_pair.second) {
-      hashdb_element_t e = *(range_it_pair.first);
-      std::cout << e.key.hexdigest() << "\t"
-                << "repository_name='" << e.repository_name
-                << "', filename='" << e.filename << "\n";
-      ++range_it_pair.first;
-    }
+    // consume the hashdb_element by adding it to scan_input
+    scan_input->push_back(hashdb_element.key);
   }
 };
 

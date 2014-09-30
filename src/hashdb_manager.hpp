@@ -258,6 +258,27 @@ class hashdb_manager_t {
                                  it_pair.second));
   }
 
+  /**
+   * Obtain source metadata given repository name and filename.
+   * Return true and metadata else false and empty metadata.
+   */
+  std::pair<bool, source_metadata_t> find_source_metadata(
+                                     const std::string& repository_name,
+                                     const std::string& filename) {
+
+    // find the source lookup index associated with repository name and filename
+    std::pair<bool, uint64_t> lookup_pair =
+         source_lookup_index_manager.find(repository_name, filename);
+
+    if (lookup_pair.first == false) {
+      // source lookup index not defined for this lookup pair
+      return std::pair<bool, source_metadata_t>(
+                                    false, source_metadata_t());
+    } else {
+      return source_metadata_manager.find(lookup_pair.second);
+    }
+  }
+
   // find_count
   uint32_t find_count(const hash_t& key) const {
     // if key not in bloom filter then clearly count=0
@@ -284,6 +305,16 @@ class hashdb_manager_t {
                              multimap.end());
   }
 
+  // begin source lookup index iterator
+  source_lookup_index_iterator_t begin_source_lookup_index() {
+    return source_lookup_index_manager.begin();
+  }
+
+  // end source metadata
+  source_lookup_index_iterator_t end_source_lookup_index() {
+    return source_lookup_index_manager.end();
+  }
+
   // multimap size
   size_t map_size() const {
     return multimap.size();
@@ -302,6 +333,11 @@ class hashdb_manager_t {
   // filename lookup store size
   size_t filename_lookup_store_size() const {
     return source_lookup_index_manager.filename_lookup_store_size();
+  }
+
+  // source metadata lookup store size
+  size_t source_metadata_lookup_store_size() const {
+    return source_metadata_manager.size();
   }
 };
 

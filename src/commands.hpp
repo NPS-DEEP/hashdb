@@ -37,8 +37,8 @@
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_hash_consumer.hpp"
 #include "dfxml_import_source_metadata_consumer.hpp"
-#include "dfxml_scan_consumer.hpp"
-#include "dfxml_scan_expanded_consumer.hpp"
+#include "dfxml_scan_hash_consumer.hpp"
+#include "dfxml_scan_source_metadata_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "identified_blocks_reader.hpp"
 #include "source_metadata_iterator.hpp"
@@ -312,46 +312,18 @@ class commands_t {
     // and source_metadata_manager
     source_lookup_index_manager_t source_lookup_index_manager(
                                                hashdb_dir, READ_ONLY);
-    source_metadata_manager_t source_metadata_manager(
-                                               hashdb_dir, READ_ONLY);
     source_lookup_index_iterator_t it2 = source_lookup_index_manager.begin();
     while (it2 != source_lookup_index_manager.end()) {
 
       // get the repository name and filename
       std::pair<std::string, std::string> lookup_pair = *it2;
 
-      // get the source lookup index, making sure that it is valid
-      std::pair<bool, uint64_t> index_pair = source_lookup_index_manager.find(
-                                       lookup_pair.first, lookup_pair.second);
-      if (index_pair.first == false) {
-        std::cerr << "commands.do_export: unexpected missing index.\n";
-        ++it2;
-        continue;
-      }
-
-      // get source metadata iterator range for this source lookup index
-      std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
-           metadata_iterator_pair =
-                       source_metadata_manager.find_by_source_lookup_index(
-                       index_pair.second);
-
-      // make sure source metadata is there
-      if (metadata_iterator_pair.first == metadata_iterator_pair.second) {
-        std::cerr << "commands.do_export: unexpected missing range.\n";
-        ++it2;
-        continue;
-      }
+      // get the source element pair from the repository name and filename
+      std::pair<bool, source_metadata_t> source_metadata_pair =
+                 hashdb_manager.find_source_metadata(it2->first, it2->second);
 
       // write out the source metadata
-      writer.add_source_metadata(lookup_pair, *(metadata_iterator_pair.first));
-
-      // make sure the metadata iterator has just one entry
-      ++metadata_iterator_pair.first;
-      if (metadata_iterator_pair.first != metadata_iterator_pair.second) {
-        std::cerr << "commands.do_export: unexpected extra range.\n";
-        ++it2;
-        continue;
-      }
+      writer.add_source_metadata(lookup_pair, source_metadata_pair);
       ++it2;
     }
   }
@@ -634,51 +606,60 @@ class commands_t {
                    const std::string& dfxml_file) {
 
     // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_full_output_t* scan_output = new hashdb_t__<hash_t>::scan_full_output_t();
+    std::vector<hash_t>* scan_hash_input = new std::vector<hash_t>;
+    hashdb_t__<hash_t>::scan_full_output_t* scan_full_output = new hashdb_t__<hash_t>::scan_full_output_t();
+
+    // create space for the source metadata elements even though they will not
+    // be used
+    std::vector<source_metadata_element_t>* scan_source_metadata_input =
+                      new std::vector<source_metadata_element_t>;
 
     // create the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
 
-    // create the consumer
-    dfxml_scan_consumer_t consumer(scan_input);
+    // create the hash consumer
+    dfxml_scan_hash_consumer_t hash_consumer(scan_hash_input);
 
-/*zzzz
-    // run the dfxml hashdigest reader using the scan consumer
+    // create the source metadata consumer
+    dfxml_scan_source_metadata_consumer_t source_metadata_consumer(
+                                                  scan_source_metadata_input);
+
+    // run the dfxml hashdigest reader using the scan consumers
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
-                              do_read(dfxml_file, repository_name, &consumer);
+    dfxml_hashdigest_reader_t<dfxml_scan_hash_consumer_t,
+                              dfxml_scan_source_metadata_consumer_t>::
+                              do_read(dfxml_file, repository_name,
+                              &hash_consumer, &source_metadata_consumer);
 
     // perform the scan
-//    hashdb.scan(*scan_input, *scan_output);
-    hashdb.scan_full(*scan_input, *scan_output);
+    hashdb.scan_full(*scan_hash_input, *scan_full_output);
 
     // show column titles
-    std::cout << "# block hash, repository name, filename, file offset, count, source filename, source file size, source file hash\n";
+    std::cout << "# block hash, repository name, filename, file offset, count, file size, file hash\n";
 
     // show the matches
-    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it2(scan_output->begin());
-    while (it2 != scan_output->end()) {
+    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it2(scan_full_output->begin());
+    while (it2 != scan_full_output->end()) {
       std::cout << it2->hash.hexdigest() << ", "
                 << it2->repository_name << ", "
                 << it2->filename << ", "
                 << it2->file_offset << ", "
                 << it2->count << ", "
-                << it2->source_filename << ", "
-                << it2->source_file_size << ", "
-                << it2->source_file_hash.hexdigest() << "\n";
+                << it2->file_size << ", "
+                << it2->file_hash.hexdigest() << "\n";
       ++it2;
     }
-*/
 
     // delete heap allocation
-    delete scan_input;
-    delete scan_output;
+    delete scan_hash_input;
+    delete scan_source_metadata_input;
+    delete scan_full_output;
   }
 
   // scan expanded, does not use socket
   static void scan_expanded(const std::string& hashdb_dir,
                             const std::string& dfxml_file) {
+/* zz
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -686,7 +667,6 @@ class commands_t {
     // create the consumer
     dfxml_scan_expanded_consumer_t consumer(&hashdb_manager);
 
-/* zz
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
     dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
@@ -778,47 +758,47 @@ class commands_t {
               << "  source repository name store: "
               << hashdb_manager.repository_name_lookup_store_size() << "\n"
               << "  source filename store: "
-              << hashdb_manager.filename_lookup_store_size() << "\n";
+              << hashdb_manager.filename_lookup_store_size() << "\n"
+              << "  source metadata store: "
+              << hashdb_manager.source_metadata_lookup_store_size() << "\n";
   }
 
   // print sources referenced in this database
   static void sources(const std::string& hashdb_dir) {
 
-    // open the source lookup index manager for hashdb_dir
-    source_lookup_index_manager_t manager(hashdb_dir, READ_ONLY);
-    source_lookup_index_iterator_t it = manager.begin();
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // get the source lookup index iterator
+    source_lookup_index_iterator_t it = hashdb_manager.begin_source_lookup_index();
 
     // there is nothing to report if the source lookup index map is empty
-    if (it == manager.end()) {
+    if (it == hashdb_manager.end_source_lookup_index()) {
       std::cout << "The source lookup index map is empty.\n";
       return;
     }
 
     // report each entry
-    std::cout << "source lookup table:\n";
-    while (it != manager.end()) {
-      std::cout << "repository name='" << it->first
-                << "', filename='" << it->second << "'\n";
+    while (it != hashdb_manager.end_source_lookup_index()) {
+
+      // put in repository name and filename
+      std::stringstream ss;
+      ss << "repository name='" << it->first
+         << "', filename='" << it->second;
+
+      // get source metadata, if present
+      std::pair<bool, source_metadata_t> metadata_pair =
+                   hashdb_manager.find_source_metadata(it->first, it->second);
+      if (metadata_pair.first == true) {
+        // put in metadata
+        ss << "', hash='" << metadata_pair.second.hash.hexdigest()
+           << "', file size='" << metadata_pair.second.file_size;
+      }
+
+      // print composed source line
+      std::cout << ss.str() << "'\n";
+
       ++it;
-    }
-
-    // open the source metadata manager
-    source_metadata_manager_t source_metadata_manager(hashdb_dir, READ_ONLY);
-    source_metadata_iterator_t it2 = source_metadata_manager.begin();
-
-    // report each entry
-    std::cout << "source metadata table:\n";
-    while (it2 != source_metadata_manager.end()) {
-
-      std::pair<std::string, std::string> pair_string;
-      pair_string = manager.find(it2->source_lookup_index);
-
-      std::cout << "repository name='" << pair_string.first
-                << "', filename='" << pair_string.second
-                << "', hash='" << it2->hash.hexdigest()
-                << "', file size='" << it2->file_size
-                << "'\n";
-      ++it2;
     }
   }
 

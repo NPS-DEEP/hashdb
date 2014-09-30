@@ -152,6 +152,7 @@ Hashes from multiple files will be shown if hashes from the same filename have b
 * Document how 0.17 was calculated as the number for calculating M from n in the Bloom filter, and document the percent false positive range this provides.
 
 #Potential future changes to bulk_extractor
+* Fix makefile dependency rules in src_win so make does not first require make clean.
 * Add code in the finalization state of the hashdb scanner for generating post-processing statistics:
  * Print files that the image fully contained.
  * For partial matches, print number of blocks out of total blocks matched for each file.

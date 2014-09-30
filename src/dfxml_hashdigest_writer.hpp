@@ -95,8 +95,9 @@ class dfxml_hashdigest_writer_t {
   }
 
   // add a source metadata record
-  void add_source_metadata(const std::pair<std::string, std::string>& lookup_pair,
-                           const source_metadata_t& source_metadata) {
+  void add_source_metadata(
+            const std::pair<std::string, std::string>& lookup_pair,
+            const std::pair<bool, source_metadata_t>& source_metadata_pair) {
 
     // start the fileobject tag
     x.push("fileobject");
@@ -107,20 +108,20 @@ class dfxml_hashdigest_writer_t {
     // write the filename tag
     x.xmlout("filename", lookup_pair.second);
 
-    // write the file size
-    x.xmlout("filesize", source_metadata.file_size);
+    if (source_metadata_pair.first == true) {
+      // write the file size
+      x.xmlout("filesize", source_metadata_pair.second.file_size);
 
-    // write the file hashdigest
-    std::stringstream ss2;
-    ss2 << "type='" << digest_name<hash_t>() << "'";
-    x.xmlout("hashdigest", source_metadata.hash.hexdigest(), ss2.str(), false);
+      // write the file hashdigest
+      std::stringstream ss2;
+      ss2 << "type='" << digest_name<hash_t>() << "'";
+      x.xmlout("hashdigest", source_metadata_pair.second.hash.hexdigest(), ss2.str(), false);
+    }
 
     // close the fileobject tag
     x.pop();
   }
-
-
-
 };
+
 #endif
 

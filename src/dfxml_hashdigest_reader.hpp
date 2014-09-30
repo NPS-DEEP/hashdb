@@ -148,7 +148,7 @@ class dfxml_hashdigest_reader_t {
 
     // validate hashdigest type
     if (user_data.byte_run_hashdigest_type != digest_name<hash_t>()) {
-      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type: "
+      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type for byte_run: "
                 << user_data.byte_run_hashdigest_type << "', entry ignored.\n";
       return;
     }
@@ -166,10 +166,16 @@ class dfxml_hashdigest_reader_t {
   }
 
   static void consume_source_metadata(user_data_t& user_data) {
+    // do not consume unless all metadata fields are there
+    if (user_data.fileobject_hashdigest_type == "" ||
+        user_data.fileobject_hashdigest == "" ||
+        user_data.fileobject_filesize == "") {
+      return;
+    }
 
     // validate hashdigest type
     if (user_data.fileobject_hashdigest_type != digest_name<hash_t>()) {
-      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type: "
+      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type for fileobject: "
                 << user_data.fileobject_hashdigest_type << "', entry ignored.\n";
       return;
     }

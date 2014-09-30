@@ -150,26 +150,23 @@ class hashdb_t__ {
     std::string filename;
     uint64_t file_offset;
     uint32_t count;
-    std::string source_filename;
-    uint64_t source_file_size;
-    T source_file_hash;
+    uint64_t file_size;
+    T file_hash;
 
     scan_full_element_t(const T p_hash,
                         const std::string p_repository_name,
                         const std::string p_filename,
                         uint64_t p_file_offset,
                         uint32_t p_count,
-                        std::string p_source_filename,
-                        uint64_t p_source_file_size,
-                        T p_source_file_hash) :
+                        uint64_t p_file_size,
+                        T p_file_hash) :
                             hash(p_hash),
                             repository_name(p_repository_name),
                             filename(p_filename),
                             file_offset(p_file_offset),
                             count(p_count),
-                            source_filename(p_source_filename),
-                            source_file_size(p_source_file_size),
-                            source_file_hash(p_source_file_hash) {
+                            file_size(p_file_size),
+                            file_hash(p_file_hash) {
     }
 
     scan_full_element_t() :
@@ -178,8 +175,7 @@ class hashdb_t__ {
                             filename(),
                             file_offset(0),
                             count(0),
-                            source_filename(),
-                            source_file_size() {
+                            file_size() {
     }
   };
 

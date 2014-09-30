@@ -110,6 +110,40 @@ class source_metadata_manager_t {
     }
   }
 
+  /**
+   * Find source metadata given source lookup index.
+   * Return true and source metadata else false and empty source metadata.
+   */
+  std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) {
+
+    // get source metadata iterator range for this source lookup index
+    std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
+           metadata_iterator_pair = idx1_btree.equal_range(source_lookup_index);
+
+    if (metadata_iterator_pair.first == metadata_iterator_pair.second) {
+
+      // no source metadata for this source lookup index
+      return (std::pair<bool, source_metadata_t>(false, source_metadata_t()));
+
+    } else {
+      
+      // prepare the response
+      std::pair<bool, source_metadata_t> source_metadata_pair(
+                                true, *(metadata_iterator_pair.first));
+
+      // make sure the metadata iterator has just one entry
+      ++metadata_iterator_pair.first;
+      if (metadata_iterator_pair.first != metadata_iterator_pair.second) {
+        // unexpected duplicate entry
+        std::cerr << "source_metadata_manager range error.\n";
+        assert(0);
+      }
+
+      // return the source metadata
+      return source_metadata_pair;
+    }
+  }
+
   // find by source lookup index
   std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
                   find_by_source_lookup_index(uint64_t source_lookup_index) {
@@ -152,6 +186,11 @@ class source_metadata_manager_t {
    */
   source_metadata_iterator_t end() {
     return source_metadata_iterator_t(idx1_btree.end());
+  }
+
+  // size
+  size_t size() const {
+    return idx1_btree.size();
   }
 };
 

@@ -253,7 +253,14 @@ const char* hashdb_version() {
              hashdb_manager->find(input[i]);
       while (it_pair.first != it_pair.second) {
 
+        // look up count
         uint32_t count = hashdb_manager->find_count(input[i]);
+
+        // look up source metadata
+        std::pair<bool, source_metadata_t> source_metadata_pair =
+             hashdb_manager->find_source_metadata(
+                                       it_pair.first->repository_name,
+                                       it_pair.first->filename);
 
         scan_full_element_t scan_full_element(
                   it_pair.first->key,
@@ -261,10 +268,8 @@ const char* hashdb_version() {
                   it_pair.first->filename,
                   it_pair.first->file_offset,
                   count,
-                  "source filename TBD",
-                  0, // TBD
-                  hash_t() // TBD
-                  );
+                  source_metadata_pair.second.file_size,
+                  source_metadata_pair.second.hash);
 
         output.push_back(scan_full_element);
         ++it_pair.first;

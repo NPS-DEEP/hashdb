@@ -38,8 +38,8 @@ HASHDB_INCS = \
 	dfxml_hashdigest_reader.hpp \
 	dfxml_import_hash_consumer.hpp \
 	dfxml_import_source_metadata_consumer.hpp \
-	dfxml_scan_consumer.hpp \
-	dfxml_scan_expanded_consumer.hpp \
+	dfxml_scan_hash_consumer.hpp \
+	dfxml_scan_source_metadata_consumer.hpp \
 	dfxml_hashdigest_writer.hpp \
 	main.cpp \
 	progress_tracker.hpp \
@@ -48,6 +48,7 @@ HASHDB_INCS = \
 	source_lookup_index_iterator.hpp \
 	source_lookup_index_manager.hpp \
 	source_metadata.hpp \
+	source_metadata_element.hpp \
 	source_metadata_iterator.hpp \
 	source_metadata_manager.hpp \
 	tcp_server_manager.hpp \
