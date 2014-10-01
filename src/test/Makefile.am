@@ -20,7 +20,6 @@
 # This file assists in building test programs.
 
 EXTRA_DIST = \
-	identified_blocks.txt \
 	sample_dfxml4096.xml \
 	sample_dfxml512.xml \
 	vg.supp
@@ -33,7 +32,6 @@ check_PROGRAMS = \
 	hashdb_element_test \
 	source_lookup_index_manager_test \
 	hashdb_manager_test \
-	identified_blocks_reader_test \
 	libhashdb_test \
 	commands_test
 
@@ -53,7 +51,6 @@ logger_test_LDADD = ../libhashdb.la
 hashdb_element_test_LDADD = ../libhashdb.la
 source_lookup_index_manager_test_LDADD = ../libhashdb.la
 hashdb_manager_test_LDADD = ../libhashdb.la
-identified_blocks_reader_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
 commands_test_LDADD = ../libhashdb.la
 
@@ -113,10 +110,6 @@ hashdb_manager_test_SOURCES = \
 	directory_helper.hpp \
 	to_key_helper.hpp \
 	hashdb_manager_test.cpp
-
-identified_blocks_reader_test_SOURCES = \
-	boost_fix.hpp \
-	identified_blocks_reader_test.cpp
 
 libhashdb_test_SOURCES = \
 	boost_fix.hpp \

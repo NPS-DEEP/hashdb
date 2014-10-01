@@ -40,7 +40,6 @@
 #include "dfxml_scan_hash_consumer.hpp"
 #include "dfxml_scan_source_metadata_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
-#include "identified_blocks_reader.hpp"
 #include "source_metadata_iterator.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
@@ -654,43 +653,6 @@ class commands_t {
     delete scan_hash_input;
     delete scan_source_metadata_input;
     delete scan_full_output;
-  }
-
-  // expand identified_blocks.txt
-  static void expand_identified_blocks(const std::string& hashdb_dir,
-                            const std::string& identified_blocks_file) {
-
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // get the identified_blocks.txt file reader
-    identified_blocks_reader_t reader(identified_blocks_file);
-
-    // read identified blocks from input and write out matches
-    identified_blocks_reader_iterator_t it;
-    for (it = reader.begin(); it != reader.end(); ++it) {
-      // check that the hashdigest length is correct
-      if (hash_t::size()*2 != it->second.length()) {
-        std::cout << "Invalid hashdigest length, hashdigest ignored.\n";
-        continue;
-      }
-
-      // find matching range for this key
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-             hashdb_manager.find(hash_t::fromhex(it->second));
-      while (it_pair.first != it_pair.second) {
-        // write match to output:
-        // offset tab hashdigest tab repository name, filename
-        std::cout << it->first << "\t"
-                  << it_pair.first->key.hexdigest() << "\t"
-                  << "repository_name=" << it_pair.first->repository_name
-                  << ",filename=" << it_pair.first->filename
-                  << ",file_offset=" << it_pair.first->file_offset
-                  << "\n";
-
-        ++it_pair.first;
-      }
-    }
   }
 
   // server
