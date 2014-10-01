@@ -455,24 +455,14 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::scan(hashdb_arg1, hashdb_arg2);
-  } else if (command == "scan_expanded") {
-    require_no_hashdb_settings();
-    require_no_bloom_filter_settings();
-    require_no_repository_name();
-    require_parameter_count(2);
-    commands_t::scan_expanded(hashdb_arg1, hashdb_arg2);
-  } else if (command == "expand_identified_blocks") {
-    require_no_hashdb_settings();
-    require_no_bloom_filter_settings();
-    require_no_repository_name();
-    require_parameter_count(2);
-    commands_t::expand_identified_blocks(hashdb_arg1, hashdb_arg2);
+/*
   } else if (command == "server") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::server(hashdb_arg1, hashdb_arg2);
+*/
   } else if (command == "size") {
     require_no_hashdb_settings();
     require_no_bloom_filter_settings();

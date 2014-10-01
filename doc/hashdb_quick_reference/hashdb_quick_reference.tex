@@ -74,9 +74,11 @@ Export hash database to DFXML file \\
 \\
 \textbf{Scan Services} \\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\small\texttt{scan <path or socket> <dfxml.xml>} & Scan DFXML file for matching hashes \\
-\small\texttt{scan\_hash <path or socket> <hash value>} & Scan for hash match \\
-\small\texttt{server <hashdb.hdb> <port number>} & Start scan service at port\\
+%\small\texttt{scan <path or socket> <dfxml.xml>} & Scan DFXML file for matching hashes \\
+\small\texttt{scan <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matching hashes \\
+%\small\texttt{scan\_hash <path or socket> <hash value>} & Scan for hash match \\
+\small\texttt{scan\_hash <hashdb.hdb> <hash value>} & Scan for hash match \\
+\small\texttt{server <hashdb.hdb> <port number>} & Start scan service at port (currently not available)\\
 \end{tabular}
 \\
 \\

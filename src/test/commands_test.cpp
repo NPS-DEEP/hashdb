@@ -140,15 +140,6 @@ void test_scan_services() {
 
   // scan
   commands_t::scan(temp_dir1, sample_dfxml4096);
-
-  // scan expanded
-  commands_t::scan_expanded(temp_dir1, sample_dfxml4096);
-
-  // expand_identified_blocks
-  commands_t::expand_identified_blocks(temp_dir1, identified_blocks);
-
-  // server
-  // not tested
 }
 
 // statistics

@@ -656,24 +656,6 @@ class commands_t {
     delete scan_full_output;
   }
 
-  // scan expanded, does not use socket
-  static void scan_expanded(const std::string& hashdb_dir,
-                            const std::string& dfxml_file) {
-/* zz
-
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // create the consumer
-    dfxml_scan_expanded_consumer_t consumer(&hashdb_manager);
-
-    // run the dfxml hashdigest reader using the scan consumer
-    std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
-                              do_read(dfxml_file, repository_name, &consumer);
-*/
-  }
-
   // expand identified_blocks.txt
   static void expand_identified_blocks(const std::string& hashdb_dir,
                             const std::string& identified_blocks_file) {
