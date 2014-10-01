@@ -209,6 +209,24 @@ class commands_t {
   }
 
   // print the scan output vector
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+  static void print_scan_output(
+              const std::vector<hash_t>& scan_input,
+              const typename hashdb_t__<hash_t>::scan_output_t& scan_output) {
+    typename hashdb_t__<hash_t>::scan_output_t::const_iterator it(scan_output.begin());
+    while (it != scan_output.end()) {
+      // print: '<index> \t <hexdigest> \t <count> \n' where count>0
+      if (it->second > 0) {
+      std::cout << it->first << "\t"
+                << scan_input[it->first] << "\t" // hexdigest
+                << it->second << "\n";
+      }
+      ++it;
+    }
+  }
+
+/*
+  // print the full scan output vector zzzzzzz
   static void show_scan_full_output(
              const hashdb_t__<hash_t>::scan_full_output_t& scan_full_output) {
 
@@ -228,6 +246,7 @@ class commands_t {
       ++it;
     }
   }
+*/
 
   public:
 
@@ -626,8 +645,8 @@ class commands_t {
                    const std::string& dfxml_file) {
 
     // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_hash_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_full_output_t* scan_full_output = new hashdb_t__<hash_t>::scan_full_output_t();
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
 
     // create space for the source metadata elements even though they will not
     // be used
@@ -638,9 +657,9 @@ class commands_t {
     hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // create the hash consumer
-    dfxml_scan_hash_consumer_t hash_consumer(scan_hash_input);
+    dfxml_scan_hash_consumer_t hash_consumer(scan_input);
 
-    // create the source metadata consumer
+    // create the source metadata consumer even though not used
     dfxml_scan_source_metadata_consumer_t source_metadata_consumer(
                                                   scan_source_metadata_input);
 
@@ -652,15 +671,15 @@ class commands_t {
                               &hash_consumer, &source_metadata_consumer);
 
     // perform the scan
-    hashdb.scan_full(*scan_hash_input, *scan_full_output);
+    hashdb.scan(*scan_input, *scan_output);
 
     // show the matches
-    show_scan_full_output(*scan_full_output);
+    print_scan_output(*scan_input, *scan_output);
 
     // delete heap allocation
-    delete scan_hash_input;
+    delete scan_input;
     delete scan_source_metadata_input;
-    delete scan_full_output;
+    delete scan_output;
   }
 
   // scan hash
@@ -668,8 +687,8 @@ class commands_t {
                    const std::string& hash_string) {
 
     // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_hash_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_full_output_t* scan_full_output = new hashdb_t__<hash_t>::scan_full_output_t();
+    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
+    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
 
     // validate the hash string
 #ifdef USE_HASH_TYPE_STRAIGHT64
@@ -687,20 +706,20 @@ class commands_t {
     }
 
     // put the hash into the scan hash input for scanning
-    scan_hash_input->push_back(hash_t::fromhex(hash_string));
+    scan_input->push_back(hash_t::fromhex(hash_string));
 
     // open the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // perform the scan
-    hashdb.scan_full(*scan_hash_input, *scan_full_output);
+    hashdb.scan(*scan_input, *scan_output);
 
     // show the matches
-    show_scan_full_output(*scan_full_output);
+    print_scan_output(*scan_input, *scan_output);
 
     // delete heap allocation
-    delete scan_hash_input;
-    delete scan_full_output;
+    delete scan_input;
+    delete scan_output;
   }
 
   // server

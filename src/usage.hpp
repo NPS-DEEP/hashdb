@@ -168,7 +168,6 @@ void usage() {
   << "                      lookup source\n"
   << "    <hash value>      the hash value to scan for\n"
   << "\n"
-/*
   << "  server <hashdb> <port number>\n"
   << "    Starts a query server service for <hashdb> at <port number> for\n"
   << "    servicing hashdb queries.\n"
@@ -178,7 +177,6 @@ void usage() {
   << "    <port number>  the TCP port to make available for clients, for\n"
   << "                   example '14500'\n"
   << "\n"
-*/
   << "Statistics:\n"
   << "  size <hashdb>\n"
   << "    Prints out size information for the given <hashdb> database.\n"
@@ -339,8 +337,8 @@ void detailed_usage() {
   << "my_dfxml.xml and directs output to stdout:\n"
   << "    hashdb scan my_hashdb.hdb my_dfxml.xml\n"
   << "\n"
-  << "This example searches my_hashdb.hdb for hashes that match hash value d2d9...\n"
-  << "and directs output to stdout:\n"
+  << "This example searches my_hashdb.hdb for hashes that match MD5 hash value\n"
+  << "d2d95... and directs output to stdout:\n"
   << "    hashdb scan_hash my_hashdb.hdb d2d958b44c481cc41b0121b3b4afae85\n"
   << "\n"
   << "This example prints out source metadata of where all hashes in my_hashdb.hdb\n"

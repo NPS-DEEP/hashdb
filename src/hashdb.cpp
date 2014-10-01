@@ -218,6 +218,7 @@ const char* hashdb_version() {
     return 0;
   }
 
+/*
   // scan full
   template<>
   int hashdb_t__<hash_t>::scan_full(const scan_input_t& input, scan_full_output_t& output) const {
@@ -281,6 +282,7 @@ const char* hashdb_version() {
     // good, done
     return 0;
   }
+*/
 
   // destructor
   template<>
