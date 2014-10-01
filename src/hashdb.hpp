@@ -176,6 +176,12 @@ class hashdb_t__ {
                             file_offset(0),
                             count(0),
                             file_size() {
+
+//zz??
+      // zero out the hash digest
+      for (uint32_t i=0; i<T::size(); i++) {
+        hash.digest[i] = 0;
+      }
     }
   };
 

@@ -455,6 +455,12 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(2);
     commands_t::scan(hashdb_arg1, hashdb_arg2);
+  } else if (command == "scan_hash") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(2);
+    commands_t::scan_hash(hashdb_arg1, hashdb_arg2);
 /*
   } else if (command == "server") {
     require_no_hashdb_settings();

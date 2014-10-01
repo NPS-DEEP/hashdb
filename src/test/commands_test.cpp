@@ -34,6 +34,7 @@
 #include "commands.hpp"
 #include "hashdb_manager.hpp"
 #include "file_modes.h"
+#include "to_key_helper.hpp"
 
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
@@ -140,6 +141,9 @@ void test_scan_services() {
 
   // scan
   commands_t::scan(temp_dir1, sample_dfxml4096);
+  hash_t k1;
+  to_key(1, k1);
+  commands_t::scan_hash(temp_dir1, k1.hexdigest());
 }
 
 // statistics

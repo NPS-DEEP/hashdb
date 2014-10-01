@@ -208,6 +208,27 @@ class commands_t {
     }
   }
 
+  // print the scan output vector
+  static void show_scan_full_output(
+             const hashdb_t__<hash_t>::scan_full_output_t& scan_full_output) {
+
+    // show column titles
+    std::cout << "# block hash, repository name, filename, file offset, count, file size, file hash\n";
+
+    // show the matches
+    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it(scan_full_output.begin());
+    while (it != scan_full_output.end()) {
+      std::cout << it->hash.hexdigest() << ", "
+                << it->repository_name << ", "
+                << it->filename << ", "
+                << it->file_offset << ", "
+                << it->count << ", "
+                << it->file_size << ", "
+                << it->file_hash.hexdigest() << "\n";
+      ++it;
+    }
+  }
+
   public:
 
   // create
@@ -613,7 +634,7 @@ class commands_t {
     std::vector<source_metadata_element_t>* scan_source_metadata_input =
                       new std::vector<source_metadata_element_t>;
 
-    // create the hashdb scan service
+    // open the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // create the hash consumer
@@ -633,25 +654,52 @@ class commands_t {
     // perform the scan
     hashdb.scan_full(*scan_hash_input, *scan_full_output);
 
-    // show column titles
-    std::cout << "# block hash, repository name, filename, file offset, count, file size, file hash\n";
-
     // show the matches
-    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it2(scan_full_output->begin());
-    while (it2 != scan_full_output->end()) {
-      std::cout << it2->hash.hexdigest() << ", "
-                << it2->repository_name << ", "
-                << it2->filename << ", "
-                << it2->file_offset << ", "
-                << it2->count << ", "
-                << it2->file_size << ", "
-                << it2->file_hash.hexdigest() << "\n";
-      ++it2;
-    }
+    show_scan_full_output(*scan_full_output);
 
     // delete heap allocation
     delete scan_hash_input;
     delete scan_source_metadata_input;
+    delete scan_full_output;
+  }
+
+  // scan hash
+  static void scan_hash(const std::string& path_or_socket,
+                   const std::string& hash_string) {
+
+    // create space on the heap for the scan input and output vectors
+    std::vector<hash_t>* scan_hash_input = new std::vector<hash_t>;
+    hashdb_t__<hash_t>::scan_full_output_t* scan_full_output = new hashdb_t__<hash_t>::scan_full_output_t();
+
+    // validate the hash string
+#ifdef USE_HASH_TYPE_STRAIGHT64
+    // data is used directly as the hash
+    if (hash_string.size() != hash_t::size())
+#else
+    // a hash value is calculated from the hash string
+    if (hash_string.size() != hash_t::size()*2)
+#endif
+    {
+      std::cerr << "Hash string length " << hash_string.size()
+                << " is invalid for " << digest_name<hash_t>()
+                << ".  Aborting.\n";
+      exit(1);
+    }
+
+    // put the hash into the scan hash input for scanning
+    scan_hash_input->push_back(hash_t::fromhex(hash_string));
+
+    // open the hashdb scan service
+    hashdb_t__<hash_t> hashdb(path_or_socket);
+
+    // perform the scan
+    hashdb.scan_full(*scan_hash_input, *scan_full_output);
+
+    // show the matches
+    show_scan_full_output(*scan_full_output);
+
+    // delete heap allocation
+    delete scan_hash_input;
     delete scan_full_output;
   }
 

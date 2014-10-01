@@ -37,6 +37,10 @@ struct source_metadata_t {
   uint64_t file_size;
 
   source_metadata_t() : source_lookup_index(0), hash(), file_size(0) {
+    // zero out the hash digest
+    for (uint32_t i=0; i<hash_t::size(); i++) {
+      hash.digest[i] = 0;
+    }
   }
 
   source_metadata_t(uint64_t p_source_lookup_index,
