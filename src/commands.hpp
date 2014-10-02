@@ -47,6 +47,9 @@
 #include "random_key.hpp"
 #include "progress_tracker.hpp"
 #include "hash_t_selector.h"
+#include "identified_blocks.hpp"
+#include "identified_blocks_reader.hpp"
+#include "identified_blocks_reader_iterator.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -960,6 +963,49 @@ class commands_t {
     }
     progress_tracker.done();
   }
+
+  // explain identified_blocks.txt
+  static void explain_identified_blocks(const std::string& hashdb_dir,
+                            const std::string& identified_blocks_file,
+                            const std::string& count_string) {
+
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // get the identified_blocks.txt file reader
+    identified_blocks_reader_t reader(identified_blocks_file);
+
+    // read identified blocks from input and write out matches
+    identified_blocks_reader_iterator_t it;
+    for (it = reader.begin(); it!= reader.end(); ++it) {
+
+      // identified_blocks: offset_string, key, count
+      identified_blocks_t identified_blocks = *it;
+
+/*
+    while(it != reader.end()) {
+      hashdigest_t hashdigest(it->second, hashdigest_type_string);
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+             hashdb_manager.find(hashdigest);
+      while (it_pair.first != it_pair.second) {
+        // write match to output:
+        // offset tab hashdigest tab repository name, filename
+        std::cout << it->first << "\t"
+                  << it_pair.first->hashdigest << "\t"
+                  << "repository name=" << it_pair.first->repository_name
+                  << ",filename=" << it_pair.first->filename
+                  << ",file offset=" << it_pair.first->file_offset
+                  << "\n";
+
+        ++it_pair.first;
+      }
+      ++it;
+    }
+*/
+  }
+  }
+
+
 
   // rebuild bloom
   static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,

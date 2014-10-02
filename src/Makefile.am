@@ -42,6 +42,8 @@ HASHDB_INCS = \
 	dfxml_scan_hash_consumer.hpp \
 	dfxml_scan_source_metadata_consumer.hpp \
 	dfxml_hashdigest_writer.hpp \
+	identified_blocks_reader.hpp \
+	identified_blocks_reader_iterator.hpp \
 	main.cpp \
 	progress_tracker.hpp \
 	random_key.hpp \

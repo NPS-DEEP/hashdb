@@ -497,6 +497,12 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(1);
     commands_t::hash_table(hashdb_arg1);
+  } else if (command == "explain_identified_blocks") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(3);
+    commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "rebuild_bloom") {
     require_no_hashdb_settings();
     require_no_repository_name();

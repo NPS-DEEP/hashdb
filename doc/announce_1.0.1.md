@@ -114,7 +114,8 @@ to allow adding the hashes specific to a selected repository.
 
 ### Fix Scan Service Interfaces
 * Add command `scan_hash <hashdb.hdb> <hash value>` to allow capability to scan for a specific hash value.
-* Remove command `expand_identified_blocks <hashdb.hdb>`.  This command is obsoleted since the _bulk\_extractor_ _hashdb_ scanner now produces this information.
+* Remove command `expand_identified_blocks <hashdb.hdb>`.  This command produced too much information as designed.
+Alternate functionality is provided by the new `explain_identified_blocks` statistical command.
 
 ### Improve Statistics interfaces
 Existing capabilities for analyzing hash databases are too limited.
