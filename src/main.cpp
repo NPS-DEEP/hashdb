@@ -508,6 +508,12 @@ void run_command() {
     require_no_repository_name();
     require_parameter_count(1);
     commands_t::rebuild_bloom(hashdb_settings, hashdb_arg1);
+  } else if (command == "upgrade_hashdb") {
+    require_no_hashdb_settings();
+    require_no_bloom_filter_settings();
+    require_no_repository_name();
+    require_parameter_count(1);
+    commands_t::upgrade_hashdb(hashdb_arg1);
   } else if (command == "add_random") {
     // compose a repository name if one is not provided
     if (repository_name_string == "") {

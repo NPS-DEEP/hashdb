@@ -1151,6 +1151,21 @@ class commands_t {
     logger.close();
   }
 
+  // upgrade hashdb
+  static void upgrade_hashdb(const std::string& hashdb_dir) {
+
+    // start logger
+    logger_t logger(hashdb_dir, "upgrade_hashdb");
+    logger.add("hashdb_dir", hashdb_dir);
+
+    // open resources
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    // close logger
+    logger.add_timestamp("end upgrad_hashdb");
+    logger.close();
+  }
+
   // functional analysis and testing: add_random
   static void add_random(const std::string& repository_name,
                      const std::string& hashdb_dir,
