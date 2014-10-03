@@ -48,14 +48,6 @@ struct identified_blocks_t {
       key.digest[i] = 0;
     }
   }
-
-/*
-  identified_blocks_t& operator=(const identified_blocks_t& other) {
-    offset_string = other.offset_string;
-    key = other.key;
-    count = other.count;
-  }
-*/
 };
 
 #endif

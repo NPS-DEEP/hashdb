@@ -968,44 +968,109 @@ class commands_t {
   static void explain_identified_blocks(const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             const std::string& count_string) {
-
+/*
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the identified_blocks.txt file reader
-    identified_blocks_reader_t reader(identified_blocks_file);
 
-    // read identified blocks from input and write out matches
+    // create a Set for tracking whether the hash has been seen before
+    std::set<hash_t>* seen_hashes = new std::set<hash_t>;
+
+    // create a source lookup index Set for tracking source lookup indexes
+    std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
+
+    // get the maximum duplicates count
+    uint32_t requested_max = boost::lexical_cast<uint32_t>(count_string);
+
+    // pass 1 of identified_blocks.txt
+    identified_blocks_reader_t reader1(identified_blocks_file);
     identified_blocks_reader_iterator_t it;
-    for (it = reader.begin(); it!= reader.end(); ++it) {
+    for (it = reader1.begin(); it!= reader1.end(); ++it) {
 
       // identified_blocks: offset_string, key, count
       identified_blocks_t identified_blocks = *it;
 
-/*
-    while(it != reader.end()) {
-      hashdigest_t hashdigest(it->second, hashdigest_type_string);
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-             hashdb_manager.find(hashdigest);
-      while (it_pair.first != it_pair.second) {
-        // write match to output:
-        // offset tab hashdigest tab repository name, filename
-        std::cout << it->first << "\t"
-                  << it_pair.first->hashdigest << "\t"
-                  << "repository name=" << it_pair.first->repository_name
-                  << ",filename=" << it_pair.first->filename
-                  << ",file offset=" << it_pair.first->file_offset
-                  << "\n";
-
-        ++it_pair.first;
+      // skip if hash already seen
+      if (seen_hashes->find(identified_blocks.key) != seen_hashes->end()) {
+        continue;
       }
-      ++it;
+
+      // add the hash
+      seen_hashes->insert(identified_blocks.key);
+
+      // skip if count > requested max
+      uint32_t count = hashdb_manager.find_count(identified_blocks.key);
+      if (count > requested_max) {
+        continue;
+      }
+
+      // the hash is interesting
+
+      // note all sources associated with it
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+                                  hashdb_manager.find(identified_blocks.key);
+      while (it_pair.first != it_pair.second) {
+        // find the source lookup index
+
+        // get the hashdb element from the key
+        hashdb_element_t hashdb_element = *(it_pair.first);
+
+        // get the source metadata from the repository name and filename
+        source_metadata_t source_metadata =
+                     hashdb_manager.find_source_metadata(
+                     hashdb_element.repository_name, hashdb_element.filename);
+
+        // using the source lookup index in the source metadata,
+        // add the source lookup index to the source lookup index Set
+        source_lookup_indexes.insert(source_metadata.source_lookup_index);
+      }
     }
+          
+    // pass 2 of identified_blocks.txt
+    seen_hashes->clear();
+
+    // start the identified_blocks reader iterator, NOTE: new reader required
+    identified_blocks_reader_t reader2(identified_blocks_file);
+    identified_blocks_reader_iterator_t it2;
+    for (it2 = reader2.begin(); it2!= reader2.end(); ++it2) {
+
+      // identified_blocks: offset_string, key, count
+      identified_blocks_t identified_blocks = *it2;
+
+      // skip if hash already seen
+      if (seen_hashes->find(identified_blocks.key) != seen_hashes->end()) {
+        continue;
+      }
+
+      // add the hash
+      seen_hashes->insert(identified_blocks.key);
+
+      // report the hash and all of its associated sources
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+                                  hashdb_manager.find(identified_blocks.key);
+      while (it_pair.first != it_pair.second) {
+        // get the hash element
+        hashdb_element_t hashdb_element = *(it_pair.first);
+
+        // get the source metadata
+        source_metadata_t source_metadata =
+                     hashdb_manager.find_source_metadata(
+                     hashdb_element.repository_name, hashdb_element.filename);
+
+        // print out the hash from fields in hashdb_element and source_metadata
+        std::cout << hashdb_element.key.hexdigest() << ","
+                  << hashdb_element.repository_name << ","
+                  << hashdb_element.filename << ","
+                  << source_metadata.file_size << ","
+                  << source_metadata.file_hash.hexdigest() << "\n";
+      }
+    }
+
+    delete seen_hashes;
+    delete source_lookup_indexes;
 */
   }
-  }
-
-
 
   // rebuild bloom
   static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,

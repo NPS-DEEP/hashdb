@@ -42,8 +42,8 @@ class identified_blocks_reader_iterator_t {
 
   std::fstream* in;
 
-  identified_blocks_t dereferenced_value;
-  size_t feature_count;
+  identified_blocks_t identified_blocks; // cached dereferenced value
+  size_t line_count;
   bool at_end;
 
   // read feature or set at_end=true
@@ -52,6 +52,7 @@ class identified_blocks_reader_iterator_t {
     // parse the next available line
     std::string line;
     while(getline(*in, line)) {
+      ++line_count;
 
       // skip comment lines
       if (line[0] == '#') {
@@ -95,9 +96,8 @@ class identified_blocks_reader_iterator_t {
       hash_t key = hash_t::fromhex(hash_string);
 
       // count
-      std::string count_string = line.substr(tab_index1);
+      std::string count_string = line.substr(tab_index2+1);
       uint32_t count;
-std::cout << "count: '" << count_string << "'\n";
       try {
         count = boost::lexical_cast<uint32_t>(count_string);
       } catch (...) {
@@ -105,7 +105,7 @@ std::cout << "count: '" << count_string << "'\n";
       }
 
       // got here, so line is valid
-      dereferenced_value = identified_blocks_t(offset_string, key, count);
+      identified_blocks = identified_blocks_t(offset_string, key, count);
 
       return;
     }
@@ -114,7 +114,6 @@ std::cout << "count: '" << count_string << "'\n";
     at_end = true;
   }
 
-  // elemental forward iterator accessors are increment, equal, and dereference
   // increment
   void increment() {
     read_feature();
@@ -122,29 +121,26 @@ std::cout << "count: '" << count_string << "'\n";
 
   // equal
   bool equal(identified_blocks_reader_iterator_t const& other) const {
-    // only equal if same reader and both at end or both at same count
+    // not equal if files are different
+    if (this->in != other.in) {
+      return false;
+    }
+
+    // only equal if same reader and both at end or both at same line
     if (this->at_end && other.at_end && (this->in == other.in)) {
       return true;
     }
-    if (this->feature_count == other.feature_count) {
+    if (this->line_count == other.line_count) {
       return true;
     }
     return false;
   }
 
-  // dereference
-  void dereference() {
-    if (at_end) {
-      std::cout << "identified_blocks_reader_iterator invalid dereference\n";
-// compiler warning      throw std::runtime_error("dereferenced when at end");
-    }
-  }
-
   public:
   identified_blocks_reader_iterator_t(std::fstream* p_in, bool p_at_end) :
              in(p_in),
-             dereferenced_value(),
-             feature_count(0),
+             identified_blocks(),
+             line_count(0),
              at_end(p_at_end) {
     if (!at_end) {
       read_feature();
@@ -154,16 +150,16 @@ std::cout << "count: '" << count_string << "'\n";
   // this is bad because it can live longer than &in
   identified_blocks_reader_iterator_t(const identified_blocks_reader_iterator_t& other) :
                     in(other.in),
-                    dereferenced_value(other.dereferenced_value),
-                    feature_count(other.feature_count),
+                    identified_blocks(other.identified_blocks),
+                    line_count(other.line_count),
                     at_end(other.at_end) {
   }
 
   // this is bad because it can live longer than &in
   identified_blocks_reader_iterator_t& operator=(const identified_blocks_reader_iterator_t& other) {
     in = other.in;
-    dereferenced_value = other.dereferenced_value;
-    feature_count = other.feature_count;
+    identified_blocks = other.identified_blocks;
+    line_count = other.line_count;
     at_end = other.at_end;
     return *this;
   }
@@ -171,8 +167,8 @@ std::cout << "count: '" << count_string << "'\n";
   // this useless default constructor is required by std::pair
   identified_blocks_reader_iterator_t() :
                     in(),
-                    dereferenced_value(),
-                    feature_count(0),
+                    identified_blocks(),
+                    line_count(0),
                     at_end(true) {
   }
 
@@ -187,12 +183,12 @@ std::cout << "count: '" << count_string << "'\n";
     return temp;
   }
   identified_blocks_t& operator*() {
-    dereference();
-    return dereferenced_value;
+    if (at_end) assert(0);
+    return identified_blocks;
   }
   identified_blocks_t* operator->() {
-    dereference();
-    return &dereferenced_value;
+    if (at_end) assert(0);
+    return &identified_blocks;
   }
   bool operator==(const identified_blocks_reader_iterator_t& other) const {
     return equal(other);

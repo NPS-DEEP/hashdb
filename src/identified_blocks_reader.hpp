@@ -50,16 +50,7 @@ class identified_blocks_reader_t {
                     filename(p_filename),
                     in(filename.c_str()) {
 
-/*
-    // identified_blocks.txt must exist
-    if(access(filename.c_str(),R_OK)){
-      std::cerr << "Error: unable to read identified_blocks.txt feature file '" << filename << "'.\n";
-      std::cerr << "Cannot continue.\n";
-      exit(1);
-    }
-*/
-
-    // see that in initialized
+    // see that the identified blocks file opened
     if (!in.is_open()) {
       std::cout << "Cannot open " << filename << ": " << strerror(errno) << "\n";
       exit(1);
