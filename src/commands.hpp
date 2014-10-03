@@ -338,14 +338,14 @@ class commands_t {
 
         // print out this hash and its source information
         std::cout << feature.key.hexdigest()
-                  << "," << source_pair.first  // repository name
-                  << "," << source_pair.second // filename
-                  << "," << file_offset;
+                  << ", " << source_pair.first  // repository name
+                  << ", " << source_pair.second // filename
+                  << ", " << file_offset;
 
         if (metadata_pair.first == true) {
           // also print the available source metadata
-          std::cout << "," << metadata_pair.second.file_size
-                    << "," << metadata_pair.second.file_hash.hexdigest();
+          std::cout << ", " << metadata_pair.second.file_size
+                    << ", " << metadata_pair.second.file_hash.hexdigest();
         }
         std::cout << "\n";
       }
