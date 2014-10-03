@@ -140,56 +140,6 @@ class hashdb_t__ {
   int scan(const scan_input_t& scan_input,
            scan_output_t& scan_output) const;
 
-/* zz
-  // scan, returning full source information
-  // data structure for one returned scan full element
-  struct scan_full_element_t {
-    T hash;
-    std::string repository_name;
-    std::string filename;
-    uint64_t file_offset;
-    uint32_t count;
-    uint64_t file_size;
-    T file_hash;
-
-    scan_full_element_t(const T p_hash,
-                        const std::string p_repository_name,
-                        const std::string p_filename,
-                        uint64_t p_file_offset,
-                        uint32_t p_count,
-                        uint64_t p_file_size,
-                        T p_file_hash) :
-                            hash(p_hash),
-                            repository_name(p_repository_name),
-                            filename(p_filename),
-                            file_offset(p_file_offset),
-                            count(p_count),
-                            file_size(p_file_size),
-                            file_hash(p_file_hash) {
-    }
-
-    scan_full_element_t() :
-                            hash(),
-                            repository_name(),
-                            filename(),
-                            file_offset(0),
-                            count(0),
-                            file_size() {
-
-//zz??
-      // zero out the hash digest
-      for (uint32_t i=0; i<T::size(); i++) {
-        hash.digest[i] = 0;
-      }
-    }
-  };
-
-  typedef std::vector<scan_full_element_t> scan_full_output_t;
-
-  int scan_full(const scan_input_t& input, scan_full_output_t& output) const;
-*/
-                
-
 #ifdef HAVE_CXX11
   hashdb_t__(const hashdb_t__& other) = delete;
 #else

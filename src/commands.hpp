@@ -47,7 +47,7 @@
 #include "random_key.hpp"
 #include "progress_tracker.hpp"
 #include "hash_t_selector.h"
-#include "identified_blocks.hpp"
+#include "identified_blocks_feature.hpp"
 #include "identified_blocks_reader.hpp"
 #include "identified_blocks_reader_iterator.hpp"
 
@@ -212,7 +212,6 @@ class commands_t {
   }
 
   // print the scan output vector
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
   static void print_scan_output(
               const std::vector<hash_t>& scan_input,
               const typename hashdb_t__<hash_t>::scan_output_t& scan_output) {
@@ -228,28 +227,131 @@ class commands_t {
     }
   }
 
-/*
-  // print the full scan output vector zzzzzzz
-  static void show_scan_full_output(
-             const hashdb_t__<hash_t>::scan_full_output_t& scan_full_output) {
+  // explain identified_blocks.txt
+  static void explain_pass1(const hashdb_manager_t& hashdb_manager,
+                            const std::string& identified_blocks_file,
+                            uint32_t requested_max,
+                            std::set<uint64_t>& source_lookup_indexes) {
 
-    // show column titles
-    std::cout << "# block hash, repository name, filename, file offset, count, file size, file hash\n";
+    // create a hash Set for tracking whether the hash has been seen before
+    std::set<hash_t>* seen_hashes = new std::set<hash_t>;
 
-    // show the matches
-    hashdb_t__<hash_t>::scan_full_output_t::const_iterator it(scan_full_output.begin());
-    while (it != scan_full_output.end()) {
-      std::cout << it->hash.hexdigest() << ", "
-                << it->repository_name << ", "
-                << it->filename << ", "
-                << it->file_offset << ", "
-                << it->count << ", "
-                << it->file_size << ", "
-                << it->file_hash.hexdigest() << "\n";
-      ++it;
+    // get the identified_blocks.txt file reader
+    identified_blocks_reader_t reader(identified_blocks_file);
+    identified_blocks_reader_iterator_t it;
+    for (it = reader.begin(); it!= reader.end(); ++it) {
+
+      // identified_blocks_feature consists of: offset_string, key, count
+      identified_blocks_feature_t feature = *it;
+
+      // skip if hash already seen
+      if (seen_hashes->find(feature.key) != seen_hashes->end()) {
+        continue;
+      }
+
+      // add the hash
+      seen_hashes->insert(feature.key);
+
+      // skip if hash count > requested max
+      if (hashdb_manager.find_count(feature.key) > requested_max) {
+        continue;
+      }
+
+      // the hash is interesting
+
+      // get the iterator for this hash value
+      std::pair<hashdb_manager_t::multimap_iterator_t,
+                hashdb_manager_t::multimap_iterator_t> it_pair =
+                                  hashdb_manager.find_native(feature.key);
+
+      // note all sources associated with the hash
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+
+        // get the source lookup index for this entry
+        uint64_t source_lookup_encoding = (it_pair.first)->second;
+        uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
+
+        // add the source lookup index to the source lookup index Set
+        source_lookup_indexes.insert(source_lookup_index);
+      }
     }
+    delete seen_hashes;
   }
-*/
+
+  static void explain_pass2(const hashdb_manager_t& hashdb_manager,
+                            const std::string& identified_blocks_file,
+                            const std::set<uint64_t>& source_lookup_indexes) {
+
+    // create a hash Set for tracking whether the hash has been seen before
+    std::set<hash_t>* seen_hashes = new std::set<hash_t>;
+
+    // show column titles for the report
+    std::cout << "# block hash, repository name, filename, file offset, file size, file hash\n";
+
+    // start the identified_blocks reader iterator
+    identified_blocks_reader_t reader(identified_blocks_file);
+    identified_blocks_reader_iterator_t it;
+    for (it = reader.begin(); it!= reader.end(); ++it) {
+
+      // identified_blocks_feature consists of: offset_string, key, count
+      identified_blocks_feature_t feature = *it;
+
+      // skip if hash already seen
+      if (seen_hashes->find(feature.key) != seen_hashes->end()) {
+        continue;
+      }
+
+      // add the hash
+      seen_hashes->insert(feature.key);
+
+      // get the iterator for this hash value
+      std::pair<hashdb_manager_t::multimap_iterator_t,
+                hashdb_manager_t::multimap_iterator_t> it_pair =
+                                  hashdb_manager.find_native(feature.key);
+
+      // go through each source for this hash
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+
+        // get the source lookup index for this entry
+        uint64_t source_lookup_encoding = (it_pair.first)->second;
+        uint64_t source_lookup_index =
+         source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
+
+        // skip the source unless it is in the interesting sources list
+        if (source_lookup_indexes.find(source_lookup_index) ==
+                                               source_lookup_indexes.end()) {
+          continue;
+        }
+
+        // get the source repository name and filename
+        std::pair<std::string, std::string> source_pair =
+                 hashdb_manager.find_source_pair(source_lookup_index);
+
+        // get the source file offset
+        uint64_t file_offset = source_lookup_encoding::get_file_offset(
+                                                  (it_pair.first)->second);
+
+        // get source metadata, if available
+        std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(
+                     source_pair.first, source_pair.second);
+
+        // print out this hash and its source information
+        std::cout << feature.key.hexdigest()
+                  << "," << source_pair.first  // repository name
+                  << "," << source_pair.second // filename
+                  << "," << file_offset;
+
+        if (metadata_pair.first == true) {
+          // also print the available source metadata
+          std::cout << "," << metadata_pair.second.file_size
+                    << "," << metadata_pair.second.file_hash.hexdigest();
+        }
+        std::cout << "\n";
+      }
+    }
+    delete seen_hashes;
+  }
 
   public:
 
@@ -805,7 +907,7 @@ class commands_t {
                    hashdb_manager.find_source_metadata(it->first, it->second);
       if (metadata_pair.first == true) {
         // put in metadata
-        ss << "', hash='" << metadata_pair.second.hash.hexdigest()
+        ss << "', hash='" << metadata_pair.second.file_hash.hexdigest()
            << "', file size='" << metadata_pair.second.file_size;
       }
 
@@ -968,108 +1070,23 @@ class commands_t {
   static void explain_identified_blocks(const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             const std::string& count_string) {
-/*
+
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // get the identified_blocks.txt file reader
-
-    // create a Set for tracking whether the hash has been seen before
-    std::set<hash_t>* seen_hashes = new std::set<hash_t>;
-
-    // create a source lookup index Set for tracking source lookup indexes
-    std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
 
     // get the maximum duplicates count
     uint32_t requested_max = boost::lexical_cast<uint32_t>(count_string);
 
-    // pass 1 of identified_blocks.txt
-    identified_blocks_reader_t reader1(identified_blocks_file);
-    identified_blocks_reader_iterator_t it;
-    for (it = reader1.begin(); it!= reader1.end(); ++it) {
+    // create a source lookup index Set for tracking source lookup indexes
+    std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
 
-      // identified_blocks: offset_string, key, count
-      identified_blocks_t identified_blocks = *it;
+    explain_pass1(hashdb_manager, identified_blocks_file, requested_max, 
+                  *source_lookup_indexes);
 
-      // skip if hash already seen
-      if (seen_hashes->find(identified_blocks.key) != seen_hashes->end()) {
-        continue;
-      }
+    explain_pass2(hashdb_manager, identified_blocks_file,
+                  *source_lookup_indexes);
 
-      // add the hash
-      seen_hashes->insert(identified_blocks.key);
-
-      // skip if count > requested max
-      uint32_t count = hashdb_manager.find_count(identified_blocks.key);
-      if (count > requested_max) {
-        continue;
-      }
-
-      // the hash is interesting
-
-      // note all sources associated with it
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-                                  hashdb_manager.find(identified_blocks.key);
-      while (it_pair.first != it_pair.second) {
-        // find the source lookup index
-
-        // get the hashdb element from the key
-        hashdb_element_t hashdb_element = *(it_pair.first);
-
-        // get the source metadata from the repository name and filename
-        source_metadata_t source_metadata =
-                     hashdb_manager.find_source_metadata(
-                     hashdb_element.repository_name, hashdb_element.filename);
-
-        // using the source lookup index in the source metadata,
-        // add the source lookup index to the source lookup index Set
-        source_lookup_indexes.insert(source_metadata.source_lookup_index);
-      }
-    }
-          
-    // pass 2 of identified_blocks.txt
-    seen_hashes->clear();
-
-    // start the identified_blocks reader iterator, NOTE: new reader required
-    identified_blocks_reader_t reader2(identified_blocks_file);
-    identified_blocks_reader_iterator_t it2;
-    for (it2 = reader2.begin(); it2!= reader2.end(); ++it2) {
-
-      // identified_blocks: offset_string, key, count
-      identified_blocks_t identified_blocks = *it2;
-
-      // skip if hash already seen
-      if (seen_hashes->find(identified_blocks.key) != seen_hashes->end()) {
-        continue;
-      }
-
-      // add the hash
-      seen_hashes->insert(identified_blocks.key);
-
-      // report the hash and all of its associated sources
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-                                  hashdb_manager.find(identified_blocks.key);
-      while (it_pair.first != it_pair.second) {
-        // get the hash element
-        hashdb_element_t hashdb_element = *(it_pair.first);
-
-        // get the source metadata
-        source_metadata_t source_metadata =
-                     hashdb_manager.find_source_metadata(
-                     hashdb_element.repository_name, hashdb_element.filename);
-
-        // print out the hash from fields in hashdb_element and source_metadata
-        std::cout << hashdb_element.key.hexdigest() << ","
-                  << hashdb_element.repository_name << ","
-                  << hashdb_element.filename << ","
-                  << source_metadata.file_size << ","
-                  << source_metadata.file_hash.hexdigest() << "\n";
-      }
-    }
-
-    delete seen_hashes;
     delete source_lookup_indexes;
-*/
   }
 
   // rebuild bloom

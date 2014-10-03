@@ -241,7 +241,10 @@ class hashdb_manager_t {
     }
   }
 
-  // find
+  /**
+   * Find returning a fancy hashdb_iterator pair where the iterator
+   * dereferences to hashdb_element.
+   */
   std::pair<hashdb_iterator_t, hashdb_iterator_t > find(const hash_t& key) const {
 
     // get the multimap iterator pair
@@ -259,12 +262,28 @@ class hashdb_manager_t {
   }
 
   /**
+   * Find returning a native multimap iterator pair.
+   */
+  std::pair<multimap_iterator_t, multimap_iterator_t > find_native(const hash_t& key) const {
+    return multimap.equal_range(key);
+  }
+
+  /**
+   * Find the source pair of repository name and filenam strings
+   * from the source lookup index.  It is fatal if the lookup fails.
+   */
+  std::pair<std::string, std::string> find_source_pair(
+                                      uint64_t source_lookup_index) const {
+    return source_lookup_index_manager.find(source_lookup_index);
+  }
+
+  /**
    * Obtain source metadata given repository name and filename.
    * Return true and metadata else false and empty metadata.
    */
   std::pair<bool, source_metadata_t> find_source_metadata(
                                      const std::string& repository_name,
-                                     const std::string& filename) {
+                                     const std::string& filename) const {
 
     // find the source lookup index associated with repository name and filename
     std::pair<bool, uint64_t> lookup_pair =

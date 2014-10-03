@@ -115,7 +115,7 @@ class dfxml_hashdigest_writer_t {
       // write the file hashdigest
       std::stringstream ss2;
       ss2 << "type='" << digest_name<hash_t>() << "'";
-      x.xmlout("hashdigest", source_metadata_pair.second.hash.hexdigest(), ss2.str(), false);
+      x.xmlout("hashdigest", source_metadata_pair.second.file_hash.hexdigest(), ss2.str(), false);
     }
 
     // close the fileobject tag

@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides iterator to identified_blocks_t for an identified blocks reader.
+ * Provides iterator to identified_blocks_feature_t for an identified blocks reader.
  */
 
 #ifndef IDENTIFIED_BLOCKS_READER_ITERATOR_HPP
@@ -36,13 +36,13 @@
 //#include <algorithm>
 //#include <vector>
 #include <errno.h>
-#include "identified_blocks.hpp"
+#include "identified_blocks_feature.hpp"
 
 class identified_blocks_reader_iterator_t {
 
   std::fstream* in;
 
-  identified_blocks_t identified_blocks; // cached dereferenced value
+  identified_blocks_feature_t cached_feature; // cached dereferenced value
   size_t line_count;
   bool at_end;
 
@@ -105,7 +105,7 @@ class identified_blocks_reader_iterator_t {
       }
 
       // got here, so line is valid
-      identified_blocks = identified_blocks_t(offset_string, key, count);
+      cached_feature = identified_blocks_feature_t(offset_string, key, count);
 
       return;
     }
@@ -139,7 +139,7 @@ class identified_blocks_reader_iterator_t {
   public:
   identified_blocks_reader_iterator_t(std::fstream* p_in, bool p_at_end) :
              in(p_in),
-             identified_blocks(),
+             cached_feature(),
              line_count(0),
              at_end(p_at_end) {
     if (!at_end) {
@@ -150,7 +150,7 @@ class identified_blocks_reader_iterator_t {
   // this is bad because it can live longer than &in
   identified_blocks_reader_iterator_t(const identified_blocks_reader_iterator_t& other) :
                     in(other.in),
-                    identified_blocks(other.identified_blocks),
+                    cached_feature(other.cached_feature),
                     line_count(other.line_count),
                     at_end(other.at_end) {
   }
@@ -158,7 +158,7 @@ class identified_blocks_reader_iterator_t {
   // this is bad because it can live longer than &in
   identified_blocks_reader_iterator_t& operator=(const identified_blocks_reader_iterator_t& other) {
     in = other.in;
-    identified_blocks = other.identified_blocks;
+    cached_feature = other.cached_feature;
     line_count = other.line_count;
     at_end = other.at_end;
     return *this;
@@ -167,7 +167,7 @@ class identified_blocks_reader_iterator_t {
   // this useless default constructor is required by std::pair
   identified_blocks_reader_iterator_t() :
                     in(),
-                    identified_blocks(),
+                    cached_feature(),
                     line_count(0),
                     at_end(true) {
   }
@@ -182,13 +182,13 @@ class identified_blocks_reader_iterator_t {
     increment();
     return temp;
   }
-  identified_blocks_t& operator*() {
+  identified_blocks_feature_t& operator*() {
     if (at_end) assert(0);
-    return identified_blocks;
+    return cached_feature;
   }
-  identified_blocks_t* operator->() {
+  identified_blocks_feature_t* operator->() {
     if (at_end) assert(0);
-    return &identified_blocks;
+    return &cached_feature;
   }
   bool operator==(const identified_blocks_reader_iterator_t& other) const {
     return equal(other);

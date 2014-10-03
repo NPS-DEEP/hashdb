@@ -114,7 +114,7 @@ class source_metadata_manager_t {
    * Find source metadata given source lookup index.
    * Return true and source metadata else false and empty source metadata.
    */
-  std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) {
+  std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) const {
 
     // get source metadata iterator range for this source lookup index
     std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
