@@ -96,7 +96,13 @@ class identified_blocks_reader_iterator_t {
       hash_t key = hash_t::fromhex(hash_string);
 
       // count
+      // If there is a space after the count, truncate it there
       std::string count_string = line.substr(tab_index2+1);
+      size_t space_index = count_string.find(' ');
+      if (space_index != std::string::npos) {
+          count_string.erase(space_index,std::string::npos);
+      }
+
       uint32_t count;
       try {
         count = boost::lexical_cast<uint32_t>(count_string);
