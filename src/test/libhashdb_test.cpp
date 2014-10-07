@@ -34,6 +34,7 @@
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "../hash_t_selector.h"
+#include "source_metadata.hpp"
 
 // map types:
 // MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
@@ -64,8 +65,19 @@ void do_import() {
   // import some elements
   int status;
   status = hashdb.import(import_input);
+  BOOST_TEST_EQ(status, 0);
 
-  // invalid mode
+  // import metadata
+  hash_t k2;
+  to_key(1, k2);
+  status = hashdb.import_metadata("rep1", "file1", 10000, k2);
+  BOOST_TEST_EQ(status, 0);
+  status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
+  BOOST_TEST_EQ(status, 0);
+  status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
+  BOOST_TEST_EQ(status, 0);
+
+  // invalid mode to scan when importing
   hashdb_t::scan_input_t scan_input;
   hashdb_t::scan_output_t scan_output;
   std::cout << "may emit scan mode error here.\n";

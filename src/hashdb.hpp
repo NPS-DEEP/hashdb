@@ -130,6 +130,14 @@ class hashdb_t__ {
   int import(const import_input_t& import_input);
 
   /**
+   * Import specific source metadata.
+   */
+  int import_metadata(const std::string& repository_name,
+                      const std::string& filename,
+                      uint64_t file_size,
+                      T file_hash);
+
+  /**
    * Constructor for scanning.
    */
   hashdb_t__(const std::string& path_or_socket);

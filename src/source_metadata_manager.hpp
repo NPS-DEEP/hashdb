@@ -26,40 +26,39 @@
 #define SOURCE_METADATA_MANAGER_HPP
 
 #include "hash_t_selector.h" // to define hash_t
-#include "source_metadata.hpp"
-#include "source_metadata_iterator.hpp"
 #include <string>
 #include "boost/btree/index_helpers.hpp"
 #include "boost/btree/btree_index_set.hpp"
+#include "file_modes.h"
+#include "source_metadata.hpp"
 
 class source_metadata_manager_t {
-  private:
 
-  // btrees to manage multi-index lookups
-  typedef typename boost::btree::btree_index_set<source_metadata_t> idx1_btree_t;
-  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, hash_ordering> idx2_btree_t;
-  typedef typename boost::btree::btree_index_set<source_metadata_t, default_traits, file_size_ordering> idx3_btree_t;
+  private:
+  struct map_value_t {
+    uint64_t file_size;
+    hash_t file_hash;
+    map_value_t(uint64_t p_file_size, hash_t p_file_hash) :
+                           file_size(p_file_size), file_hash(p_file_hash) {
+    }
+    map_value_t() : file_size(0), file_hash() {
+      // zero out the file hash digest
+      for (uint32_t i=0; i<hash_t::size(); i++) {
+        file_hash.digest[i] = 0;
+      }
+    }
+  };
+
+  typedef typename std::pair<uint64_t, map_value_t> map_element_t;
+  typedef typename boost::btree::btree_map<uint64_t, map_value_t> map_t;
 
   // settings
   const std::string hashdb_dir;
-  const std::string dat_filename;
-  const std::string idx1_filename; // source_lookup_index
-  const std::string idx2_filename; // hash
-  const std::string idx3_filename; // file_size
   const file_mode_type_t file_mode;
-  const boost::btree::flags::bitmask btree_flags;
+//  const boost::btree::flags::bitmask btree_flags;
+//  const std::string source_metadata_store_filename;
 
-  idx1_btree_t idx1_btree;
-  idx2_btree_t idx2_btree;
-  idx3_btree_t idx3_btree;
-
-  // convert file_mode_type to btree flags
-  boost::btree::flags::bitmask get_btree_flags(file_mode_type_t p_file_mode_type) {
-    if (file_mode == READ_ONLY) return boost::btree::flags::read_only;
-    if (file_mode == RW_NEW) return boost::btree::flags::truncate;
-    if (file_mode == RW_MODIFY) return boost::btree::flags::read_write;
-    assert(0);
-  }
+  map_t map;
 
   // disallow these
   source_metadata_manager_t(const source_metadata_manager_t&);
@@ -69,45 +68,29 @@ class source_metadata_manager_t {
   source_metadata_manager_t (const std::string p_hashdb_dir,
                            file_mode_type_t p_file_mode_type) :
        hashdb_dir(p_hashdb_dir),
-       dat_filename(hashdb_dir + "/source_metadata_store.dat"),
-       idx1_filename(hashdb_dir + "/source_metadata_store.idx1"),
-       idx2_filename(hashdb_dir + "/source_metadata_store.idx2"),
-       idx3_filename(hashdb_dir + "/source_metadata_store.idx3"),
        file_mode(p_file_mode_type),
-       btree_flags(get_btree_flags(file_mode)),
-       idx1_btree(idx1_filename, dat_filename, btree_flags),
-       idx2_btree(idx2_filename, dat_filename, btree_flags),
-       idx3_btree(idx3_filename, dat_filename, btree_flags) {
+       map(hashdb_dir + "/source_metadata_store",
+           file_mode_type_to_btree_flags_bitmask(file_mode)) {
   }
 
   /**
    * Insert and return true but if source_lookup_index is already there,
    * return false.
    */
-  bool insert(source_metadata_t source_metadata) {
+  bool insert(const source_metadata_t& source_metadata) {
 
     // btree must be writable
     if (file_mode == READ_ONLY) {
       assert(0);
     }
 
-    // source lookup index should not exist yet in source metadata
-    typename idx1_btree_t::iterator it = idx1_btree.find(
-                                        source_metadata.source_lookup_index);
-    if (it == idx1_btree.end()) {
+    // emplace
+    std::pair<map_t::const_iterator, bool> response = map.emplace(
+           source_metadata.source_lookup_index,
+           map_value_t(source_metadata.file_size, source_metadata.file_hash));
 
-      // good, add the entry
-      typename idx1_btree_t::file_position pos;
-      pos = idx1_btree.push_back(source_metadata);
-      idx1_btree.insert_file_position(pos);
-      idx2_btree.insert_file_position(pos);
-      idx3_btree.insert_file_position(pos);
-      return true;
-    } else {
-      // source metadata is already present.
-      // zz could validate equality.
-      return false;
-    }
+    // return success of emplace
+    return response.second;
   }
 
   /**
@@ -116,81 +99,23 @@ class source_metadata_manager_t {
    */
   std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) const {
 
-    // get source metadata iterator range for this source lookup index
-    std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
-           metadata_iterator_pair = idx1_btree.equal_range(source_lookup_index);
+    // use map iterator to dereference the source metadata
+    map_t::const_iterator it = map.find(source_lookup_index);
 
-    if (metadata_iterator_pair.first == metadata_iterator_pair.second) {
-
-      // no source metadata for this source lookup index
-      return (std::pair<bool, source_metadata_t>(false, source_metadata_t()));
-
+    if (it == map.end()) {
+      // not there
+      return std::pair<bool, source_metadata_t>(false, source_metadata_t());
     } else {
-      
-      // prepare the response
-      std::pair<bool, source_metadata_t> source_metadata_pair(
-                                true, *(metadata_iterator_pair.first));
-
-      // make sure the metadata iterator has just one entry
-      ++metadata_iterator_pair.first;
-      if (metadata_iterator_pair.first != metadata_iterator_pair.second) {
-        // unexpected duplicate entry
-        std::cerr << "source_metadata_manager range error.\n";
-        assert(0);
-      }
-
-      // return the source metadata
-      return source_metadata_pair;
+      // compose and return source metadata
+      source_metadata_t source_metadata(
+                    it->first, it->second.file_size, it->second.file_hash);
+      return std::pair<bool, source_metadata_t>(true, source_metadata);
     }
-  }
-
-  // find by source lookup index
-  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
-                  find_by_source_lookup_index(uint64_t source_lookup_index) {
-    idx1_btree_t::const_iterator_range range =
-                                  idx1_btree.equal_range(source_lookup_index);
-    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator_t(range.first),
-                                  source_metadata_iterator_t(range.second));
-  }
-
-  // find by hash
-  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
-                  find_by_hash(hash_t hash) {
-    idx2_btree_t::const_iterator_range range =
-                                  idx2_btree.equal_range(hash);
-    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator_t(range.first),
-                                  source_metadata_iterator_t(range.second));
-  }
-
-  // find by file size
-  std::pair<source_metadata_iterator_t, source_metadata_iterator_t>
-                  find_by_file_size(uint64_t file_size) {
-    idx3_btree_t::const_iterator_range range =
-                                  idx3_btree.equal_range(file_size);
-    return std::pair<source_metadata_iterator_t, source_metadata_iterator_t>(
-                                  source_metadata_iterator_t(range.first),
-                                  source_metadata_iterator_t(range.second));
-  }
-
-  /**
-   * Return begin iterator ordered by source_lookup_index.
-   */
-  source_metadata_iterator_t begin() {
-    return source_metadata_iterator_t(idx1_btree.begin());
-  }
-
-  /**
-   * Return end iterator ordered by source_lookup_index.
-   */
-  source_metadata_iterator_t end() {
-    return source_metadata_iterator_t(idx1_btree.end());
   }
 
   // size
   size_t size() const {
-    return idx1_btree.size();
+    return map.size();
   }
 };
 

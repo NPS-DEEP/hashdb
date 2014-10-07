@@ -52,6 +52,7 @@
 #include "history_manager.hpp"
 #include "logger.hpp"
 #include "tcp_client_manager.hpp"
+#include "source_metadata_element.hpp"
 
 // this implementation uses pthread lock to protect the hash database
 #include "mutex_lock.hpp"
@@ -132,6 +133,32 @@ const char* hashdb_version() {
 
       ++it;
     }
+
+    MUTEX_UNLOCK(&M);
+
+    // good, done
+    return 0;
+  }
+
+  // import metadata
+  template<>
+  int hashdb_t__<hash_t>::import_metadata(const std::string& repository_name,
+                                          const std::string& filename,
+                                          uint64_t file_size,
+                                          hash_t file_hash) {
+
+    // check mode
+    if (mode != HASHDB_IMPORT) {
+      return -1;
+    }
+
+    // lock while importing
+    MUTEX_LOCK(&M);
+
+    // insert the source metadata
+    hashdb_manager->insert_source_metadata(source_metadata_element_t(
+                        repository_name, filename, file_size, file_hash),
+                        *hashdb_changes);
 
     MUTEX_UNLOCK(&M);
 

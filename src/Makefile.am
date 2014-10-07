@@ -43,6 +43,7 @@ HASHDB_INCS = \
 	dfxml_scan_hash_consumer.hpp \
 	dfxml_scan_source_metadata_consumer.hpp \
 	dfxml_hashdigest_writer.hpp \
+	identified_blocks_feature.hpp \
 	identified_blocks_reader.hpp \
 	identified_blocks_reader_iterator.hpp \
 	main.cpp \
@@ -53,7 +54,6 @@ HASHDB_INCS = \
 	source_lookup_index_manager.hpp \
 	source_metadata.hpp \
 	source_metadata_element.hpp \
-	source_metadata_iterator.hpp \
 	source_metadata_manager.hpp \
 	tcp_server_manager.hpp \
 	usage.hpp

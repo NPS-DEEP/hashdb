@@ -78,10 +78,7 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/source_repository_name_store.dat").c_str());
   remove((hashdb_dir + "/source_repository_name_store.idx1").c_str());
   remove((hashdb_dir + "/source_repository_name_store.idx2").c_str());
-  remove((hashdb_dir + "/source_metadata_store.dat").c_str());
-  remove((hashdb_dir + "/source_metadata_store.idx1").c_str());
-  remove((hashdb_dir + "/source_metadata_store.idx2").c_str());
-  remove((hashdb_dir + "/source_metadata_store.idx3").c_str());
+  remove((hashdb_dir + "/source_metadata_store").c_str());
   remove((hashdb_dir + "/temp_dfxml_output").c_str());
 
   if (access(hashdb_dir.c_str(), F_OK) == 0) {

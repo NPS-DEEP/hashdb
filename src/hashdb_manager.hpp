@@ -163,8 +163,8 @@ class hashdb_manager_t {
 
     // create the source metadata element
     source_metadata_t source_metadata(source_lookup_index,
-                                      source_metadata_element.file_hash,
-                                      source_metadata_element.file_size);
+                                      source_metadata_element.file_size,
+                                      source_metadata_element.file_hash);
 
     // insert the metadata into the source metadata store
     bool status = source_metadata_manager.insert(source_metadata);

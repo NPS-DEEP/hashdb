@@ -2,7 +2,7 @@
 
 \documentclass[12pt]{article}
 %\usepackage[margin=0.8in]{geometry}
-\usepackage[top=1.0in, bottom=0.6in, left=0.6in, right=1.0in]{geometry}
+\usepackage[top=0.6in, bottom=0.6in, left=0.6in, right=0.6in]{geometry}
 \usepackage{paralist} % for compactitem, compactdesc, compactenum
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -87,6 +87,7 @@ Export hash database to DFXML file \\
 \small\texttt{histogram [-q] <hashdb.hdb>} & Print hash distribution \\
 \small\texttt{duplicates [-q] <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
 \small\texttt{hash\_table [-q] <hashdb.hdb> <filename>} & Print hashes, sources, and file sizes for filename\\
+\hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
 \hangindent=2em\small\texttt{explain\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt> <number>} & \hangindent=2em Print information about less frequently observed hashes\\
 \end{tabular}
 \\

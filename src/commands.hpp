@@ -40,7 +40,6 @@
 #include "dfxml_scan_hash_consumer.hpp"
 #include "dfxml_scan_source_metadata_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
-#include "source_metadata_iterator.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
@@ -907,8 +906,8 @@ class commands_t {
                    hashdb_manager.find_source_metadata(it->first, it->second);
       if (metadata_pair.first == true) {
         // put in metadata
-        ss << "', hash='" << metadata_pair.second.file_hash.hexdigest()
-           << "', file size='" << metadata_pair.second.file_size;
+        ss << "', file size='" << metadata_pair.second.file_size
+           << "', file hash='" << metadata_pair.second.file_hash.hexdigest();
       }
 
       // print composed source line
@@ -1064,6 +1063,53 @@ class commands_t {
       progress_tracker.track();
     }
     progress_tracker.done();
+  }
+
+  // expand identified_blocks.txt
+  static void expand_identified_blocks(const std::string& hashdb_dir,
+                            const std::string& identified_blocks_file) {
+
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // get the identified_blocks.txt file reader
+    identified_blocks_reader_t reader(identified_blocks_file);
+
+    // read identified blocks from input and write out matches
+    // identified_blocks_feature consists of: offset_string, key, count
+    identified_blocks_reader_iterator_t it;
+    for (it = reader.begin(); it != reader.end(); ++it) {
+
+      // find matching range for this key
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+      hashdb_manager.find(it->key);
+
+      // go through each source for this hash
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+
+        // get source metadata, if available
+        std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(
+                     it_pair.first->repository_name, it_pair.first->filename);
+
+        // write match to output:
+        // offset tab hashdigest tab repository name, filename, file offset,
+        // and, if available, file_size and file_hash metadata
+        std::cout << it->offset_string << "\t"
+                  << it->key.hexdigest() << "\t"
+                  << "repository_name=" << it_pair.first->repository_name
+                  << ",filename=" << it_pair.first->filename
+                  << ",file_offset=" << it_pair.first->file_offset;
+
+        // also print out the available source metadata
+        if (metadata_pair.first == true) {
+          std::cout << ",file_size=" << metadata_pair.second.file_size
+                    << ",file_hash=" << metadata_pair.second.file_hash.hexdigest();
+        }
+
+        std::cout << "\n";
+      }
+    }
   }
 
   // explain identified_blocks.txt

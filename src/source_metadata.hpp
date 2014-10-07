@@ -33,10 +33,10 @@
 // the source_metadata_t UDT
 struct source_metadata_t {
   uint64_t source_lookup_index;
-  hash_t file_hash;
   uint64_t file_size;
+  hash_t file_hash;
 
-  source_metadata_t() : source_lookup_index(0), file_hash(), file_size(0) {
+  source_metadata_t() : source_lookup_index(0), file_size(0), file_hash() {
     // zero out the file hash digest
     for (uint32_t i=0; i<hash_t::size(); i++) {
       file_hash.digest[i] = 0;
@@ -44,81 +44,13 @@ struct source_metadata_t {
   }
 
   source_metadata_t(uint64_t p_source_lookup_index,
-                    hash_t p_hash,
-                    uint64_t p_file_size) :
+                    uint64_t p_file_size,
+                    hash_t p_hash) :
           source_lookup_index(p_source_lookup_index),
-          file_hash(p_hash),
-          file_size(p_file_size) {
-  }
-
-/*
-  // order by source_lookup_index
-  bool operator < (const source_metadata_t& rhs) const {
-    return source_lookup_index < rhs.source_lookup_index;
-  }
-*/
-};
-
-// zzzzzzzzzzzzzz
-// ordering by source_lookup_index
-inline bool operator<(const source_metadata_t& lhs, const source_metadata_t& rhs) {return lhs.source_lookup_index < rhs.source_lookup_index;}
-inline bool operator<(const source_metadata_t& lhs, uint64_t rhs) {return lhs.source_lookup_index < rhs;}
-inline bool operator<(uint64_t lhs, const source_metadata_t& rhs) {return lhs < rhs.source_lookup_index;}
-// zzzzzzzzzzzzzz
-
-// function object for file hash ordering
-struct hash_ordering {
-  bool operator()(const source_metadata_t& x, const source_metadata_t& y) const {
-    return x.file_hash < y.file_hash;
-  }
-// zzzzzzzzzzzzzz
-  bool operator()(const source_metadata_t& x, const hash_t& y) const {
-    return x.file_hash < y;
-  }
-  bool operator()(const hash_t& x, const source_metadata_t& y) const {
-    return x < y.file_hash;
-  }
-// zzzzzzzzzzzzzz
-};
-
-// function object for file size ordering
-struct file_size_ordering {
-  bool operator()(const source_metadata_t& x, const source_metadata_t& y) const {
-    return x.file_size < y.file_size;
-  }
-  bool operator()(const source_metadata_t& x, uint64_t y) const {
-    return x.file_size < y;
-  }
-  bool operator()(uint64_t x, const source_metadata_t& y) const {
-    return x < y.file_size;
+          file_size(p_file_size),
+          file_hash(p_hash) {
   }
 };
 
-// specializations to support btree indexes
-namespace boost {
-namespace btree {
-template <>
-struct index_reference<source_metadata_t> {
-  typedef const source_metadata_t type;
-};
-
-template <>
-inline void index_serialize<source_metadata_t>(
-                  const source_metadata_t& udt, flat_file_type& file) {
-  index_serialize(udt.source_lookup_index, file);
-  index_serialize(udt.file_hash, file);
-  index_serialize(udt.file_size, file);
-}
-
-template <>
-inline index_reference<source_metadata_t>::type
-                     index_deserialize<source_metadata_t>(const char** flat) {
-  source_metadata_t udt;
-  udt.source_lookup_index = index_deserialize<uint64_t>(flat);
-  udt.file_hash = index_deserialize<hash_t>(flat);
-  udt.file_size = index_deserialize<uint64_t>(flat);
-  return udt;
-}
-}} // namespaces
 
 #endif
