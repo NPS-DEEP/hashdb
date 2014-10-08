@@ -58,4 +58,34 @@ inline std::string digest_name<hash_t>() {
 #error A valid hash type macro is required
 #endif
 
+inline std::pair<bool, hash_t>safe_hash_from_hex(
+                                       const std::string& hash_string) {
+#ifdef USE_HASH_TYPE_STRAIGHT64
+  // data is used directly as the hash
+  if (hash_string.size() != hash_t::size())
+#else
+  // a hash value is calculated from the hash string
+  if (hash_string.size() != hash_t::size()*2)
+#endif
+  {
+    // bad hash
+    std::cerr << "Hash string '" << hash_string
+              << "' length " << hash_string.size()
+              << " is invalid for " << digest_name<hash_t>()
+              << ".\n";
+    hash_t blank_hash;
+
+    // zero out the blank hash digest
+    for (uint32_t i=0; i<hash_t::size(); i++) {
+      blank_hash.digest[i] = 0;
+    }
+
+    return std::pair<bool, hash_t>(false, blank_hash);
+
+  } else {
+    // parse and return success
+    return std::pair<bool, hash_t>(true, hash_t::fromhex(hash_string));
+  }
+}
+
 #endif

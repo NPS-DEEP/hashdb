@@ -19,35 +19,33 @@
 
 /**
  * \file
- * Provides a record of information from an identified_blocks.txt file.
+ * Holds the fields of a feature line
  */
 
-#ifndef IDENTIFIED_BLOCKS_FEATURE_HPP
-#define IDENTIFIED_BLOCKS_FEATURE_HPP
+#ifndef FEATURE_LINE_HPP
+#define FEATURE_LINE_HPP
 
 #include <cstring>
-#include <stdint.h>
-#include <iostream>
-#include "hash_t_selector.h"
 
-//struct identified_blocks_feature_t {
-struct identified_blocks_feature_t {
-  std::string offset_string;
-  hash_t key;
-  uint32_t count;
+struct feature_line_t {
+  std::string forensic_path;
+  std::string feature;
+  std::string context;
 
-  identified_blocks_feature_t(std::string p_offset_string,
-                      hash_t p_key,
-                      uint32_t p_count) :
-              offset_string(p_offset_string), key(p_key), count(p_count) {
+  feature_line_t(std::string p_forensic_path, 
+                 std::string p_feature, 
+                 std::string p_context) :
+                                forensic_path(p_forensic_path),
+                                feature(p_feature), 
+                                context(p_context) {
   }
-
-  identified_blocks_feature_t() : offset_string(""), key(), count(0) {
-    // zero out the hash digest
-    for (uint32_t i=0; i<hash_t::size(); i++) {
-      key.digest[i] = 0;
-    }
+/*
+  feature_line_t& operator=(const feature_line_t& other) {
+    forensic_path = other.forensic_path;
+    feature = other.feature;
+    context = other.context;
   }
+*/
 };
 
 #endif

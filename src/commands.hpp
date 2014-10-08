@@ -46,9 +46,8 @@
 #include "random_key.hpp"
 #include "progress_tracker.hpp"
 #include "hash_t_selector.h"
-#include "identified_blocks_feature.hpp"
-#include "identified_blocks_reader.hpp"
-#include "identified_blocks_reader_iterator.hpp"
+#include "feature_file_reader.hpp"
+#include "feature_line.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -226,7 +225,8 @@ class commands_t {
     }
   }
 
-  // explain identified_blocks.txt
+  // Get set of sources associated with hashes that have been observed
+  // no more than requested_max times.  This set is used in explain_pass2.
   static void explain_pass1(const hashdb_manager_t& hashdb_manager,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max,
@@ -236,23 +236,29 @@ class commands_t {
     std::set<hash_t>* seen_hashes = new std::set<hash_t>;
 
     // get the identified_blocks.txt file reader
-    identified_blocks_reader_t reader(identified_blocks_file);
-    identified_blocks_reader_iterator_t it;
-    for (it = reader.begin(); it!= reader.end(); ++it) {
+    feature_file_reader_t reader(identified_blocks_file);
+    while (!reader.at_eof()) {
 
-      // identified_blocks_feature consists of: offset_string, key, count
-      identified_blocks_feature_t feature = *it;
+      feature_line_t feature_line = reader.read();
+
+      // validate the hash string
+      std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(feature_line.feature);
+      if (hash_pair.first == false) {
+        // bad hash value
+        continue;
+      }
+      hash_t hash = hash_pair.second;
 
       // skip if hash already seen
-      if (seen_hashes->find(feature.key) != seen_hashes->end()) {
+      if (seen_hashes->find(hash) != seen_hashes->end()) {
         continue;
       }
 
       // add the hash
-      seen_hashes->insert(feature.key);
+      seen_hashes->insert(hash);
 
       // skip if hash count > requested max
-      if (hashdb_manager.find_count(feature.key) > requested_max) {
+      if (hashdb_manager.find_count(hash) > requested_max) {
         continue;
       }
 
@@ -261,7 +267,7 @@ class commands_t {
       // get the iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
                 hashdb_manager_t::multimap_iterator_t> it_pair =
-                                  hashdb_manager.find_native(feature.key);
+                                  hashdb_manager.find_native(hash);
 
       // note all sources associated with the hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
@@ -277,6 +283,8 @@ class commands_t {
     delete seen_hashes;
   }
 
+  // Once for each unique hash in identified_blocks.txt, show each hash
+  // along with the minimally observed sources identified in explain_pass1.
   static void explain_pass2(const hashdb_manager_t& hashdb_manager,
                             const std::string& identified_blocks_file,
                             const std::set<uint64_t>& source_lookup_indexes) {
@@ -285,28 +293,34 @@ class commands_t {
     std::set<hash_t>* seen_hashes = new std::set<hash_t>;
 
     // show column titles for the report
-    std::cout << "# block hash, repository name, filename, file offset, file size, file hash\n";
+    std::cout << "# block hash, count, repository name, filename, file offset, file size, file hash\n";
 
-    // start the identified_blocks reader iterator
-    identified_blocks_reader_t reader(identified_blocks_file);
-    identified_blocks_reader_iterator_t it;
-    for (it = reader.begin(); it!= reader.end(); ++it) {
+    // get the identified_blocks.txt file reader
+    feature_file_reader_t reader(identified_blocks_file);
+    while (!reader.at_eof()) {
 
-      // identified_blocks_feature consists of: offset_string, key, count
-      identified_blocks_feature_t feature = *it;
+      feature_line_t feature_line = reader.read();
+
+      // validate the hash string
+      std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(feature_line.feature);
+      if (hash_pair.first == false) {
+        // bad hash value
+        continue;
+      }
+      hash_t hash = hash_pair.second;
 
       // skip if hash already seen
-      if (seen_hashes->find(feature.key) != seen_hashes->end()) {
+      if (seen_hashes->find(hash) != seen_hashes->end()) {
         continue;
       }
 
       // add the hash
-      seen_hashes->insert(feature.key);
+      seen_hashes->insert(hash);
 
       // get the iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
                 hashdb_manager_t::multimap_iterator_t> it_pair =
-                                  hashdb_manager.find_native(feature.key);
+                                  hashdb_manager.find_native(hash);
 
       // go through each source for this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
@@ -335,8 +349,9 @@ class commands_t {
                      hashdb_manager.find_source_metadata(
                      source_pair.first, source_pair.second);
 
-        // print out this hash and its source information
-        std::cout << feature.key.hexdigest()
+        // print out this hash, its context, and its source information
+        std::cout << feature_line.feature
+                  << ", " << feature_line.context
                   << ", " << source_pair.first  // repository name
                   << ", " << source_pair.second // filename
                   << ", " << file_offset;
@@ -795,22 +810,14 @@ class commands_t {
     hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
 
     // validate the hash string
-#ifdef USE_HASH_TYPE_STRAIGHT64
-    // data is used directly as the hash
-    if (hash_string.size() != hash_t::size())
-#else
-    // a hash value is calculated from the hash string
-    if (hash_string.size() != hash_t::size()*2)
-#endif
-    {
-      std::cerr << "Hash string length " << hash_string.size()
-                << " is invalid for " << digest_name<hash_t>()
-                << ".  Aborting.\n";
+    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
+    if (hash_pair.first == false) {
+      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
       exit(1);
     }
 
     // put the hash into the scan hash input for scanning
-    scan_input->push_back(hash_t::fromhex(hash_string));
+    scan_input->push_back(hash_pair.second);
 
     // open the hashdb scan service
     hashdb_t__<hash_t> hashdb(path_or_socket);
@@ -1073,16 +1080,24 @@ class commands_t {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the identified_blocks.txt file reader
-    identified_blocks_reader_t reader(identified_blocks_file);
+    feature_file_reader_t reader(identified_blocks_file);
 
     // read identified blocks from input and write out matches
     // identified_blocks_feature consists of: offset_string, key, count
-    identified_blocks_reader_iterator_t it;
-    for (it = reader.begin(); it != reader.end(); ++it) {
+    while (!reader.at_eof()) {
+      feature_line_t feature_line = reader.read();
+
+      // get the hash from the hash string
+      std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(feature_line.feature);
+      if (hash_pair.first == false) {
+        // bad hash value
+        continue;
+      }
+      hash_t hash = hash_pair.second;
 
       // find matching range for this key
       std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-      hashdb_manager.find(it->key);
+      hashdb_manager.find(hash);
 
       // go through each source for this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
@@ -1095,8 +1110,9 @@ class commands_t {
         // write match to output:
         // offset tab hashdigest tab repository name, filename, file offset,
         // and, if available, file_size and file_hash metadata
-        std::cout << it->offset_string << "\t"
-                  << it->key.hexdigest() << "\t"
+        std::cout << feature_line.forensic_path << "\t"
+                  << feature_line.feature << "\t"
+                  << feature_line.context << ","
                   << "repository_name=" << it_pair.first->repository_name
                   << ",filename=" << it_pair.first->filename
                   << ",file_offset=" << it_pair.first->file_offset;
@@ -1126,6 +1142,7 @@ class commands_t {
     // create a source lookup index Set for tracking source lookup indexes
     std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
 
+    // get set of source lookup indexes for sources
     explain_pass1(hashdb_manager, identified_blocks_file, requested_max, 
                   *source_lookup_indexes);
 

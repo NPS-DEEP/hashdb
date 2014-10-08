@@ -120,7 +120,8 @@ class dfxml_hashdigest_reader_t {
     // pull together byte_run fields for the hashdb element
 
     // validate hash
-    if (user_data.byte_run_hashdigest.size() != hash_t::size()*2) {
+    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(user_data.byte_run_hashdigest);
+    if (hash_pair.first == false) {
       std::cerr << "Invalid hashdigest: '"
                 << user_data.byte_run_hashdigest << "', entry ignored.\n";
       return;
@@ -155,7 +156,7 @@ class dfxml_hashdigest_reader_t {
  
     // create the hashdb element
     hashdb_element_t hashdb_element(
-               hash_t::fromhex(user_data.byte_run_hashdigest),
+               hash_pair.second,
                hash_block_size,
                user_data.fileobject_repository_name,
                user_data.fileobject_filename,
@@ -181,7 +182,8 @@ class dfxml_hashdigest_reader_t {
     }
 
     // validate hash
-    if (user_data.fileobject_hashdigest.size() != hash_t::size()*2) {
+    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(user_data.fileobject_hashdigest);
+    if (hash_pair.first == false) {
       std::cerr << "Invalid hashdigest: '"
                 << user_data.fileobject_hashdigest << "', entry ignored.\n";
       return;
@@ -203,7 +205,7 @@ class dfxml_hashdigest_reader_t {
                user_data.fileobject_repository_name,
                user_data.fileobject_filename,
                file_size,
-               hash_t::fromhex(user_data.fileobject_hashdigest));
+               hash_pair.second);
  
     // call the consumer
     user_data.source_metadata_consumer->consume(source_metadata_element);
