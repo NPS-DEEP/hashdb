@@ -66,6 +66,9 @@
  */
 
 class commands_t {
+  // support expalin_identified_blocks
+  typedef std::map<hash_t, std::string> hashes_t;
+
   private:
   // perform intersection, optimized for speed
   static void intersect_optimized(const hashdb_manager_t& smaller_hashdb,
@@ -230,7 +233,7 @@ class commands_t {
                             const hashdb_manager_t& hashdb_manager,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max,
-                            std::set<hash_t>& hashes,
+                            hashes_t& hashes,
                             std::set<uint64_t>& source_lookup_indexes) {
 
     // get the identified_blocks.txt file reader
@@ -258,7 +261,7 @@ class commands_t {
       }
 
       // the hash is interesting
-      hashes.insert(hash);
+      hashes.insert(std::pair<hash_t, std::string>(hash, feature_line.context));
 
       // get the iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
@@ -281,31 +284,24 @@ class commands_t {
   // print table of relavent hashes
   static void print_identified_hashes(
                             const hashdb_manager_t& hashdb_manager,
-                            std::set<hash_t>& hashes,
+                            hashes_t& hashes,
                             std::set<uint64_t>& source_lookup_indexes) {
 
-    // print json preamble for block hashes
-    std::cout << "\"block_hashes\":[\n";
-
     // iterate through block hashes
-    bool is_hash_first_round = true;
-    for (std::set<hash_t>::iterator it = hashes.begin(); it != hashes.end(); ++it) {
+    for (hashes_t::iterator it = hashes.begin(); it != hashes.end(); ++it) {
 
-      // maybe add hash entry separator
-      if (!is_hash_first_round) {
-        std::cout << ",\n";
-      }
+      // print this block hash
+      std::cout << "[\"" << it->first << "\"";
 
-      // print block hash start
-      std::cout << "{\"block_hash\":\"" << *it << "\"[";
+      // print the context field containing count and any flags
+      std::cout << "," << it->second;
 
       // get the multimap iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
                 hashdb_manager_t::multimap_iterator_t> it_pair =
-                                  hashdb_manager.find_native(*it);
+                                  hashdb_manager.find_native(it->first);
 
       // print sources associated with this hash value
-      bool is_source_first_round = true;
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
         // get the source lookup index for this entry
@@ -316,28 +312,16 @@ class commands_t {
         // maybe add source index and file offset
         if (source_lookup_indexes.find(source_lookup_index) != source_lookup_indexes.end()) {
 
-          // maybe add source entry separator
-          if (!is_source_first_round) {
-            std::cout << ",";
-          }
-
-          // add entry
-          std::cout << "{\"source_id\":" << source_lookup_index
+          // add source_id and file_offset entry
+          std::cout << ",{\"source_id\":" << source_lookup_index
                     << ",\"file_offset\":" << file_offset
                     << "}";
-
-          // no longer the first pass
-          is_source_first_round = false;
         }
       }
-       is_hash_first_round = false;
 
       // done printing sources for this block hash
-      std::cout << "]}";
+      std::cout << "]\n";
     }
-
-    // print json closure for block hashes
-    std::cout << "]\n";
   }
 
   // print table of relavent sources
@@ -345,11 +329,7 @@ class commands_t {
                             const hashdb_manager_t& hashdb_manager,
                             std::set<uint64_t>& source_lookup_indexes) {
 
-    // print json preamble for sources
-    std::cout << "\"sources\":[\n";
-
     // iterate through sources
-    bool is_first_round = true;
     for (std::set<uint64_t>::iterator it = source_lookup_indexes.begin();
                     it!=source_lookup_indexes.end(); ++it) {
 
@@ -362,11 +342,6 @@ class commands_t {
                      hashdb_manager.find_source_metadata(
                      source_pair.first, source_pair.second);
 
-      // maybe add entry separator
-      if (!is_first_round) {
-        std::cout << ",\n";
-      }
-
       // print out the source metadata
       std::cout << "{\"source_id\":" << *it
                 << ",\"repository_name\":\"" << source_pair.first
@@ -377,15 +352,9 @@ class commands_t {
         std::cout << "\",\"file_size\":" << metadata_pair.second.file_size
                   << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest();
       }
-
-      std::cout << "\"}";
-
-      // no longer the first pass
-      is_first_round = false;
+      // print json closure this source
+      std::cout << "\"}\n";
     }
-
-    // print json closure for sources
-    std::cout << "]\n";
   }
 
   public:
@@ -1175,8 +1144,8 @@ class commands_t {
     // get the maximum duplicates count
     uint32_t requested_max = boost::lexical_cast<uint32_t>(count_string);
 
-    // create a hash set for tracking whether the hash will be used
-    std::set<hash_t>* hashes = new std::set<hash_t>;
+    // create a hash set for tracking hashes that will be used
+    hashes_t* hashes = new hashes_t;
 
     // create a source lookup index set for tracking source lookup indexes
     std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
@@ -1186,21 +1155,12 @@ class commands_t {
                                 requested_max, 
                                 *hashes, *source_lookup_indexes);
 
-    // print json open wrapper
-    std::cout << "{";
-
     // print identified hashes
     print_identified_hashes(hashdb_manager,
                              *hashes, *source_lookup_indexes);
 
-    // print json separator
-    std::cout << ",";
-
     // print identified sources
     print_identified_sources(hashdb_manager, *source_lookup_indexes);
-
-    // print json close wrapper
-    std::cout << "}\n";
 
     // clean up
     delete hashes;
