@@ -228,7 +228,7 @@ class commands_t {
     }
   }
 
-  // ingest table of relavent hashes and table of relavent sources
+  // ingest table of relevant hashes and table of their sources
   static void identify_hashes_and_sources(
                             const hashdb_manager_t& hashdb_manager,
                             const std::string& identified_blocks_file,
@@ -268,24 +268,52 @@ class commands_t {
                 hashdb_manager_t::multimap_iterator_t> it_pair =
                                   hashdb_manager.find_native(hash);
 
-      // note all sources associated with the hash
+      // note the source lookup index for all sources associated with this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
         // get the source lookup index for this entry
         uint64_t source_lookup_encoding = (it_pair.first)->second;
         uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
 
-        // add the source lookup index to the source lookup index Set
+        // add the source lookup index to the source lookup index set
         source_lookup_indexes.insert(source_lookup_index);
       }
     }
   }
 
-  // print table of relavent hashes
+  // remove "count":NN[,]? field from string
+  static void remove_count_field(std::string& context) {
+    // find the '"count":' field, the '}' and any ','.
+    size_t pos_count = context.find("\"count\":");
+    size_t pos_closebrace =  context.find("}");
+    size_t pos_comma = context.find(",");
+
+    // validate input
+    if (pos_count == std::string::npos) {
+      // no count field present.
+      std::cerr << "Unexpected input: no count field found.\n";
+      return;
+    }
+    if (pos_closebrace == std::string::npos) {
+      // no } present.
+      std::cerr << "Unexpected input: no close brace found.\n";
+      return;
+    }
+
+    // remove the count field
+    if (pos_comma < pos_closebrace) {
+      // remove count field up to and including the comma
+      context.erase(pos_count, pos_comma - pos_count+1);
+    } else {
+      // remove count field up to but not including the close brace
+      context.erase(pos_count, pos_closebrace - pos_count);
+    }
+  }
+
+  // print table of relevant hashes
   static void print_identified_hashes(
                             const hashdb_manager_t& hashdb_manager,
-                            hashes_t& hashes,
-                            std::set<uint64_t>& source_lookup_indexes) {
+                            hashes_t& hashes) {
 
     // iterate through block hashes
     for (hashes_t::iterator it = hashes.begin(); it != hashes.end(); ++it) {
@@ -293,38 +321,56 @@ class commands_t {
       // print this block hash
       std::cout << "[\"" << it->first << "\"";
 
-      // print the context field containing count and any flags
-      std::cout << "," << it->second;
+      // get the context field without the count, specifically, just the flags
+      std::string context = it->second;
+      remove_count_field(context);
+
+      // print the reduced context field 
+      std::cout << "," << context;
+
+      // print the source array open bracket
+      std::cout << ",[";
 
       // get the multimap iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
                 hashdb_manager_t::multimap_iterator_t> it_pair =
                                   hashdb_manager.find_native(it->first);
 
+      // track when to put in the comma
+      bool is_first_round = true;
+
       // print sources associated with this hash value
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
-        // get the source lookup index for this entry
+        // get the source lookup index and file offset for this entry
         uint64_t source_lookup_encoding = (it_pair.first)->second;
         uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
         uint64_t file_offset = source_lookup_encoding::get_file_offset(source_lookup_encoding);
 
-        // maybe add source index and file offset
-        if (source_lookup_indexes.find(source_lookup_index) != source_lookup_indexes.end()) {
-
-          // add source_id and file_offset entry
-          std::cout << ",{\"source_id\":" << source_lookup_index
-                    << ",\"file_offset\":" << file_offset
-                    << "}";
+        // maybe add comma
+        if (is_first_round == true) {
+          // not first round anymore
+          is_first_round = false;
+        } else {
+          // prepend comma
+          std::cout << ",";
         }
+
+        // add source_id and file_offset entry
+        std::cout << "{\"source_id\":" << source_lookup_index
+                  << ",\"file_offset\":" << file_offset
+                  << "}";
       }
 
-      // done printing sources for this block hash
+      // done printing the source array
+      std::cout << "]";
+
+      // done printing this block hash
       std::cout << "]\n";
     }
   }
 
-  // print table of relavent sources
+  // print table of relevant sources
   static void print_identified_sources(
                             const hashdb_manager_t& hashdb_manager,
                             std::set<uint64_t>& source_lookup_indexes) {
@@ -1150,14 +1196,13 @@ class commands_t {
     // create a source lookup index set for tracking source lookup indexes
     std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
 
-    // ingest table of relavent hashes and table of relavent sources
+    // ingest table of relevant hashes and table of relevant sources
     identify_hashes_and_sources(hashdb_manager, identified_blocks_file,
                                 requested_max, 
                                 *hashes, *source_lookup_indexes);
 
     // print identified hashes
-    print_identified_hashes(hashdb_manager,
-                             *hashes, *source_lookup_indexes);
+    print_identified_hashes(hashdb_manager, *hashes);
 
     // print identified sources
     print_identified_sources(hashdb_manager, *source_lookup_indexes);
