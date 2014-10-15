@@ -51,6 +51,7 @@ static const std::string temp_dir5("temp_dir5_commands_test.hdb");
 static const std::string temp_dir6("temp_dir6_commands_test.hdb");
 static const std::string temp_dir7("temp_dir7_commands_test.hdb");
 static const std::string temp_dir8("temp_dir8_commands_test.hdb");
+static const std::string temp_dir9("temp_dir9_commands_test.hdb");
 static const char* temp_dfxml_file = "temp_dfxml_out.xml";
 
 static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
@@ -90,6 +91,7 @@ void test_database_manipulation() {
   rm_hashdb_dir(temp_dir6);
   rm_hashdb_dir(temp_dir7);
   rm_hashdb_dir(temp_dir8);
+  rm_hashdb_dir(temp_dir9);
   commands_t::create(settings, temp_dir1);
   commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
   commands_t::create(settings, temp_dir2);
@@ -106,6 +108,11 @@ void test_database_manipulation() {
   commands_t::create(settings, temp_dir3);
   commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir3);
   check_size(temp_dir3, 2 * 74);
+
+  // add_repository
+  std::cout << "add_repository\n";
+  commands_t::add_repository(temp_dir2, temp_dir9, "repository1");
+  check_size(temp_dir9, 74);
 
   // intersect
   std::cout << "intersect\n";
@@ -244,20 +251,16 @@ void test_block_size_4096() {
   commands_t::create(settings, temp_dir1);
   commands_t::create(settings, temp_dir2);
 
-std::cout << "ct.a\n";
   // import
   commands_t::import(temp_dir1, sample_dfxml4096, "test_repository_name");
   check_size(temp_dir1, 74);
 
-std::cout << "ct.b\n";
   // export
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
 
-std::cout << "ct.c\n";
   // import
   commands_t::import(temp_dir2, "temp_dfxml_out.xml", "test_repository_name");
   check_size(temp_dir2, 74);
-std::cout << "ct.d\n";
 }
 
 // validate block size control for 512 and max count of 1
@@ -326,6 +329,7 @@ int cpp_main(int argc, char* argv[]) {
   test_performance_analysis();
   std::cout << "test multiple repository names\n";
   test_multiple_repository_names();
+std::cerr << "ct.cpp_main end\n";
   return 0;
 }
 

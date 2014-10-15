@@ -639,6 +639,57 @@ class commands_t {
     std::cout << changes << "\n";
   }
 
+  // add A to B when repository matches
+  static void add_repository(const std::string& hashdb_dir1,
+                             const std::string& hashdb_dir2,
+                             const std::string& repository_name) {
+
+    // open hashdb_manager1 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+
+    // if hashdb2 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
+      create(hashdb_manager1.settings, hashdb_dir2);
+    }
+
+    // open hashdb_manager2 for writing
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
+
+    hashdb_changes_t changes;
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+
+    logger_t logger(hashdb_dir2, "add_repository");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add_timestamp("begin add_repository");
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end()) {
+      progress_tracker.track();
+
+      // add hashdb_element when the repository name matches
+      if (it1->repository_name == repository_name) {
+        hashdb_manager2.insert(*it1, changes);
+      }
+
+      ++it1;
+    }
+
+    // close tracker
+    progress_tracker.done();
+
+    // close logger
+    logger.add_timestamp("end add_repository");
+    logger.add_hashdb_changes(changes);
+    logger.close();
+
+    // merge history
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
+  }
+
   // intersect
   static void intersect(const std::string& hashdb_dir1,
                         const std::string& hashdb_dir2,

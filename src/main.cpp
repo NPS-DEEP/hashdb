@@ -408,6 +408,9 @@ void run_command() {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::add_multiple(hashdb_arg1, hashdb_arg2, hashdb_arg3);
+  } else if (command == "add_repository") {
+    no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
+    require_parameter_count(3);
   } else if (command == "intersect") {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(3);
