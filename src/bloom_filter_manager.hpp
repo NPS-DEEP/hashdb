@@ -43,18 +43,13 @@
 class bloom_filter_manager_t {
   public:
   const std::string filename1;
-  const std::string filename2;
   const file_mode_type_t file_mode;
   const bool bloom1_is_used;
   const uint32_t bloom1_M_hash_size; // number of bloom function bits, e.g. 28
   const uint32_t bloom1_k_hash_functions; // number of hash functions, e.g. 2
-  const bool bloom2_is_used;
-  const uint32_t bloom2_M_hash_size;
-  const uint32_t bloom2_k_hash_functions;
 
   private:
   NSRLBloom bloom1;
-  NSRLBloom bloom2;
 
   // disallow these
   bloom_filter_manager_t(const bloom_filter_manager_t&);
@@ -118,27 +113,17 @@ class bloom_filter_manager_t {
                           file_mode_type_t p_file_mode,
                           bool p_bloom1_is_used,
                           uint32_t p_bloom1_M_hash_size,
-                          uint32_t p_bloom1_k_hash_functions,
-                          bool p_bloom2_is_used,
-                          uint32_t p_bloom2_M_hash_size,
-                          uint32_t p_bloom2_k_hash_functions) :
+                          uint32_t p_bloom1_k_hash_functions) :
           filename1(p_hashdb_dir + "/bloom_filter_1"),
-          filename2(p_hashdb_dir + "/bloom_filter_2"),
           file_mode(p_file_mode),
 
           bloom1_is_used(p_bloom1_is_used),
           bloom1_M_hash_size(p_bloom1_M_hash_size),
           bloom1_k_hash_functions(p_bloom1_k_hash_functions),
-          bloom2_is_used(p_bloom2_is_used),
-          bloom2_M_hash_size(p_bloom2_M_hash_size),
-          bloom2_k_hash_functions(p_bloom2_k_hash_functions),
-          bloom1(),
-          bloom2() {
+          bloom1() {
 
     open_bloom(bloom1, filename1, bloom1_is_used,
                bloom1_M_hash_size, bloom1_k_hash_functions);
-    open_bloom(bloom2, filename2, bloom2_is_used,
-               bloom2_M_hash_size, bloom2_k_hash_functions);
   }
 
   void add_hash_value(const hash_t& key) {
@@ -146,12 +131,12 @@ class bloom_filter_manager_t {
     if (bloom1_is_used) {
       bloom1.add(key.digest);
     }
-    if (bloom2_is_used) {
-      bloom2.add(key.digest);
-    }
 //std::cerr << "bloom_filter add_hash_value.b" << std::endl;
   }
 
+  /**
+   * True if found or if filter is disabled.
+   */
   bool is_positive(const hash_t& key) const {
 //std::cerr << "bloom_filter is_positive.a " << key << " " << bloom.query(key.digest) << " " << filename << std::endl;
     if (bloom1_is_used && !bloom1.query(key.digest)) {
@@ -159,13 +144,8 @@ class bloom_filter_manager_t {
 //std::cerr << "bloom_filter is_positive.b" << std::endl;
       return false;
     }
-    if (bloom2_is_used && !bloom2.query(key.digest)) {
-      // not in bloom2
-//std::cerr << "bloom_filter is_positive.b" << std::endl;
-      return false;
-    }
 
-    // At this point, either it is present in both or neither filter are used.
+    // At this point, either it is present in both or filter is not used.
     // Either way, we must indicate the potential positive.
     return true;
   }
@@ -203,15 +183,8 @@ class bloom_filter_manager_t {
     // check that bloom hash size is not too loarge for the running system
     uint32_t max_M_hash_size = (sizeof(size_t) * 8) -1;
     if (settings.bloom1_M_hash_size > max_M_hash_size) {
-      ss << "bloom1 bits per hash, "
+      ss << "bloom bits per hash, "
          << settings.bloom1_M_hash_size
-         << ", exceeds " << max_M_hash_size
-         << ", which is the limit on this system";
-      throw std::runtime_error(ss.str());
-    }
-    if (settings.bloom2_M_hash_size > max_M_hash_size) {
-      ss << "bloom1 bits per hash, "
-         << settings.bloom2_M_hash_size
          << ", exceeds " << max_M_hash_size
          << ", which is the limit on this system";
       throw std::runtime_error(ss.str());
@@ -220,14 +193,8 @@ class bloom_filter_manager_t {
     // check that bloom hash size is not too small
     uint32_t min_M_hash_size = 3;
     if (settings.bloom1_M_hash_size < min_M_hash_size) {
-      ss << "bloom1 bits per hash, "
+      ss << "bloom bits per hash, "
          << settings.bloom1_M_hash_size
-         << ", must not be less than " << min_M_hash_size;
-      throw std::runtime_error(ss.str());
-    }
-    if (settings.bloom2_M_hash_size < min_M_hash_size) {
-      ss << "bloom2 bits per hash, "
-         << settings.bloom2_M_hash_size
          << ", must not be less than " << min_M_hash_size;
       throw std::runtime_error(ss.str());
     }
@@ -235,16 +202,9 @@ class bloom_filter_manager_t {
     // check that the number of hash functions, k hash functions, is reasonable
     if (settings.bloom1_k_hash_functions < 1
      || settings.bloom1_k_hash_functions > 5) {
-      std::cerr << "bloom1 k hash functions, "
+      std::cerr << "bloom k hash functions, "
                 << settings.bloom1_k_hash_functions
                 << ", must be between 1 and 5\n";
-      throw std::runtime_error(ss.str());
-    }
-    if (settings.bloom2_k_hash_functions < 1
-     || settings.bloom2_k_hash_functions > 5) {
-      std::cerr << "bloom2 k hash functions, "
-                << settings.bloom2_k_hash_functions
-                << ", must be between 2 and 5\n";
       throw std::runtime_error(ss.str());
     }
   }

@@ -17,7 +17,7 @@ commands:
 .IP "create [<hashdb settings>]+ [<bloom filter settings>]+ <hashdb>"
 Create a new hash database.
 
-.IP "import [-r <repository name>] <DFXML file> <hashdb>"
+.IP "import [-r <repository name>] <hashdb> <DFXML file>"
 Import hashes from file <DFXML file> into hash database <hashdb>.
 
 .IP "export <hashdb> <DFXML file>"
@@ -81,7 +81,7 @@ Prints out source information for each hash in <identified blocks file>
 by referencing source information in <hashdb>.  Source information
 includes repository name, filename, and file offset.
 
-.IP "explain_identified_blocks <hashdb> <identified_blocks.txt> <number>\n"
+.IP "explain_identified_blocks [-m <number>] <hashdb> <identified_blocks.txt>"
 Prints source information from the <hashdb> database for hashes in the
 <identified_blocks.txt> file that are not repeated more than the <number>
 of times.

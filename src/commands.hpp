@@ -325,7 +325,7 @@ class commands_t {
       std::string context = it->second;
       remove_count_field(context);
 
-      // print the reduced context field 
+      // print the reduced context field
       std::cout << "," << context;
 
       // print the source array open bracket
@@ -428,9 +428,9 @@ class commands_t {
   }
 
   // import
-  static void import(const std::string& repository_name,
+  static void import(const std::string& hashdb_dir,
                      const std::string& dfxml_file,
-                     const std::string& hashdb_dir) {
+                     const std::string& repository_name) {
 
     // require that dfxml_file exists
     if (access(dfxml_file.c_str(), F_OK) != 0) {
@@ -1180,15 +1180,13 @@ class commands_t {
   }
 
   // explain identified_blocks.txt
-  static void explain_identified_blocks(const std::string& hashdb_dir,
+  static void explain_identified_blocks(
+                            const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
-                            const std::string& count_string) {
+                            uint32_t requested_max) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // get the maximum duplicates count
-    uint32_t requested_max = boost::lexical_cast<uint32_t>(count_string);
 
     // create a hash set for tracking hashes that will be used
     hashes_t* hashes = new hashes_t;
@@ -1224,9 +1222,6 @@ class commands_t {
     settings.bloom1_is_used = new_bloom_settings.bloom1_is_used;
     settings.bloom1_M_hash_size = new_bloom_settings.bloom1_M_hash_size;
     settings.bloom1_k_hash_functions = new_bloom_settings.bloom1_k_hash_functions;
-    settings.bloom2_is_used = new_bloom_settings.bloom2_is_used;
-    settings.bloom2_M_hash_size = new_bloom_settings.bloom2_M_hash_size;
-    settings.bloom2_k_hash_functions = new_bloom_settings.bloom2_k_hash_functions;
 
     // write back the changed settings
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
@@ -1247,10 +1242,7 @@ class commands_t {
     bloom_filter_manager_t bloom_filter_manager(hashdb_dir, RW_NEW,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
-                               settings.bloom1_k_hash_functions,
-                               settings.bloom2_is_used,
-                               settings.bloom2_M_hash_size,
-                               settings.bloom2_k_hash_functions);
+                               settings.bloom1_k_hash_functions);
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1290,9 +1282,9 @@ class commands_t {
   }
 
   // functional analysis and testing: add_random
-  static void add_random(const std::string& repository_name,
-                     const std::string& hashdb_dir,
-                     const std::string& count_string) {
+  static void add_random(const std::string& hashdb_dir,
+                         const std::string& count_string,
+                         const std::string& repository_name) {
 
     // initialize random seed
     srand (time(NULL));

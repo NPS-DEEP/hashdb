@@ -32,14 +32,14 @@
 
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em \small\texttt{create [-p<hash block size>] [-m<maximum duplicates>] [<bloom settings>] <hashdb.hdb>} &
+\hangindent=2em \small\texttt{create [-p <hash block size>] [-m <maximum duplicates>] [<bloom settings>] <hashdb.hdb>} &
 Create a new hash database \\
 \end{tabular}
 \\
 \\
 \textbf{Import/Export} \\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em\small\texttt{import [-r <repository name>] <dfxml.xml> <hashdb.hdb>} &
+\hangindent=2em\small\texttt{import [-r <repository name>] <hashdb.hdb> <dfxml.xml>} &
 Import from DFXML file into hash database \\
 \small\texttt{export <hashdb.hdb> <dfxml.xml>} &
 Export hash database to DFXML file \\
@@ -88,7 +88,7 @@ Export hash database to DFXML file \\
 \small\texttt{duplicates [-q] <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
 \small\texttt{hash\_table [-q] <hashdb.hdb> <filename>} & Print hashes, sources, and file sizes for filename\\
 \hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
-\hangindent=2em\small\texttt{explain\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt> <number>} & \hangindent=2em Print information about less frequently observed hashes\\
+\hangindent=2em\small\texttt{explain\_identified\_blocks [-m <number>] <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Print information about less frequently observed hashes\\
 \end{tabular}
 \\
 \\

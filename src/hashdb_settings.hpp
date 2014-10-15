@@ -55,9 +55,6 @@ struct hashdb_settings_t {
   bool     bloom1_is_used;
   uint32_t bloom1_M_hash_size;      // size of the bloom filter hash, in bits
   uint32_t bloom1_k_hash_functions; // number of hash filter functions
-  bool     bloom2_is_used;
-  uint32_t bloom2_M_hash_size;      // size of the bloom filter hash, in bits
-  uint32_t bloom2_k_hash_functions; // number of hash filter functions
 
   // note: POD, so permit default copy and equals
 
@@ -69,10 +66,7 @@ struct hashdb_settings_t {
         maximum_hash_duplicates(0),
         bloom1_is_used(true),
         bloom1_M_hash_size(28),
-        bloom1_k_hash_functions(3),
-        bloom2_is_used(false),
-        bloom2_M_hash_size(28),
-        bloom2_k_hash_functions(3) {
+        bloom1_k_hash_functions(3) {
   }
 
   void report_settings(std::ostream& os) const {
@@ -85,9 +79,6 @@ struct hashdb_settings_t {
     os << "bloom 1 used: " << bloom_state_to_string(bloom1_is_used) << "\n";
     os << "bloom 1 k hash functions: " << bloom1_k_hash_functions << "\n";
     os << "bloom 1 M hash size: " << bloom1_M_hash_size << "\n";
-    os << "bloom 2 used: " << bloom_state_to_string(bloom2_is_used) << "\n";
-    os << "bloom 2 k hash functions: " << bloom2_k_hash_functions << "\n";
-    os << "bloom 2 M hash size: " << bloom2_M_hash_size << "\n";
   }
 
   void report_settings(dfxml_writer& x) const {
@@ -100,10 +91,6 @@ struct hashdb_settings_t {
     x.xmlout("bloom1_used", bloom_state_to_string(bloom1_is_used));
     x.xmlout("bloom1_k_hash_functions", (uint64_t)bloom1_k_hash_functions);
     x.xmlout("bloom1_M_hash_size", (uint64_t)bloom1_M_hash_size);
- 
-    x.xmlout("bloom2_used", bloom_state_to_string(bloom2_is_used));
-    x.xmlout("bloom2_k_hash_functions", (uint64_t)bloom2_k_hash_functions);
-    x.xmlout("bloom2_M_hash_size", (uint64_t)bloom2_M_hash_size);
   }
 };
 

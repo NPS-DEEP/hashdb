@@ -36,6 +36,9 @@
 #include "file_modes.h"
 #include "to_key_helper.hpp"
 
+// for progress tracker
+bool quiet_mode;
+
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
@@ -69,10 +72,10 @@ void test_import_export() {
 
   // import
   commands_t::create(settings, temp_dir1);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
   commands_t::create(settings, temp_dir2);
-  commands_t::import("repository2", temp_dfxml_file, temp_dir2);
+  commands_t::import(temp_dir2, temp_dfxml_file, "repository2");
   check_size(temp_dir2, 74);
 }
 
@@ -88,9 +91,9 @@ void test_database_manipulation() {
   rm_hashdb_dir(temp_dir7);
   rm_hashdb_dir(temp_dir8);
   commands_t::create(settings, temp_dir1);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
   commands_t::create(settings, temp_dir2);
-  commands_t::import("repository2", sample_dfxml4096, temp_dir2);
+  commands_t::import(temp_dir2, sample_dfxml4096, "repository2");
 
   // add temp_dir1 to temp_dir2
   std::cout << "add\n";
@@ -119,11 +122,11 @@ void test_database_manipulation() {
   // deduplicate
   std::cout << "deduplicate1\n";
   commands_t::create(settings, temp_dir6);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir6);
+  commands_t::import(temp_dir6, sample_dfxml4096, "repository1");
   commands_t::deduplicate(temp_dir6, temp_dir7);
   check_size(temp_dir7, 74);
   std::cout << "deduplicate2\n";
-  commands_t::import("repository2", sample_dfxml4096, temp_dir6);
+  commands_t::import(temp_dir6, sample_dfxml4096, "repository2");
   commands_t::deduplicate(temp_dir6, temp_dir8);
   // check ability to open existing target
   commands_t::deduplicate(temp_dir6, temp_dir8);
@@ -137,7 +140,7 @@ void test_scan_services() {
   hashdb_settings_t settings;
   rm_hashdb_dir(temp_dir1);
   commands_t::create(settings, temp_dir1);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
 
   // scan
   commands_t::scan(temp_dir1, sample_dfxml4096);
@@ -153,7 +156,7 @@ void test_statistics() {
   hashdb_settings_t settings;
   rm_hashdb_dir(temp_dir1);
   commands_t::create(settings, temp_dir1);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
 
   // size
   commands_t::size(temp_dir1);
@@ -178,7 +181,7 @@ void test_tuning() {
   hashdb_settings_t settings;
   rm_hashdb_dir(temp_dir1);
   commands_t::create(settings, temp_dir1);
-  commands_t::import("repository1", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
 
   // rebuild_bloom
   settings.bloom1_M_hash_size = 20;
@@ -219,11 +222,11 @@ void test_multiple_repository_names() {
     ss << "test_repository_name_" << i;
 
     // import
-    commands_t::import(ss.str(), sample_dfxml4096, temp_dir);
+    commands_t::import(temp_dir, sample_dfxml4096, ss.str());
   }
 
   // duplicate import should not add elements
-  commands_t::import("test_repository_name_0", sample_dfxml4096, temp_dir);
+  commands_t::import(temp_dir, sample_dfxml4096, "test_repository_name_0");
 
   // validate correct size
   check_size(temp_dir, 74*12);
@@ -241,16 +244,20 @@ void test_block_size_4096() {
   commands_t::create(settings, temp_dir1);
   commands_t::create(settings, temp_dir2);
 
+std::cout << "ct.a\n";
   // import
-  commands_t::import("test_repository_name", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "test_repository_name");
   check_size(temp_dir1, 74);
 
+std::cout << "ct.b\n";
   // export
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
 
+std::cout << "ct.c\n";
   // import
-  commands_t::import("test_repository_name", "temp_dfxml_out.xml", temp_dir2);
+  commands_t::import(temp_dir2, "temp_dfxml_out.xml", "test_repository_name");
   check_size(temp_dir2, 74);
+std::cout << "ct.d\n";
 }
 
 // validate block size control for 512 and max count of 1
@@ -268,15 +275,15 @@ void test_block_size_512_and_count_1() {
   commands_t::create(settings, temp_dir2);
 
   // import
-  commands_t::import("test_repository_name", sample_dfxml512, temp_dir1);
-  commands_t::import("test_repository_name2", sample_dfxml512, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml512, "test_repository_name");
+  commands_t::import(temp_dir1, sample_dfxml512, "test_repository_name2");
   check_size(temp_dir1, 24);
 
   // export
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
 
   // import
-  commands_t::import("test_repository_name", "temp_dfxml_out.xml", temp_dir2);
+  commands_t::import(temp_dir2, "temp_dfxml_out.xml", "test_repository_name");
   check_size(temp_dir1, 24);
 }
 
@@ -291,7 +298,7 @@ void test_block_size_0() {
   commands_t::create(settings, temp_dir1);
 
   // import
-  commands_t::import("test_repository_name", sample_dfxml4096, temp_dir1);
+  commands_t::import(temp_dir1, sample_dfxml4096, "test_repository_name");
 
   // with hash_block_size=0, total should be every hash, including remainder
   check_size(temp_dir1, 75);

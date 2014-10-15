@@ -81,10 +81,7 @@ class hashdb_manager_t {
                 bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
-                               settings.bloom1_k_hash_functions,
-                               settings.bloom2_is_used,
-                               settings.bloom2_M_hash_size,
-                               settings.bloom2_k_hash_functions),
+                               settings.bloom1_k_hash_functions),
                 source_lookup_index_manager(hashdb_dir, file_mode),
                 source_metadata_manager(hashdb_dir, file_mode) {
   }

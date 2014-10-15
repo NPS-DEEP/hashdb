@@ -35,6 +35,8 @@
 #include <sstream>
 #include <iostream>
 
+extern bool quiet_mode;
+
 class progress_tracker_t {
   private:
   const uint64_t total;
@@ -67,7 +69,9 @@ class progress_tracker_t {
         // total is not known
         ss << "Processing index " << index << " of ?";
       }
-      std::cout << ss.str() << "...\n";
+      if (!quiet_mode) {
+        std::cout << ss.str() << "...\n";
+      }
       if (use_logger) {
         logger->add_timestamp(ss.str());
         logger->add_memory_usage(ss.str());
@@ -85,7 +89,9 @@ class progress_tracker_t {
       // total is not known
       ss << "Processing index " << index << " of " << index << " completed";
     }
-    std::cout << ss.str() << "\n";
+    if (!quiet_mode) {
+      std::cout << ss.str() << "\n";
+    }
     if (use_logger) {
       logger->add_timestamp(ss.str());
       logger->add_memory_usage(ss.str());

@@ -119,9 +119,6 @@ class hashdb_settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_k_hash_functions"))) return BLOOM1_K_HASH_FUNCTIONS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_M_hash_size"))) return BLOOM1_M_HASH_SIZE;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_used"))) return BLOOM2_USED;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_k_hash_functions"))) return BLOOM2_K_HASH_FUNCTIONS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom2_M_hash_size"))) return BLOOM2_M_HASH_SIZE;
     return NO_NODE;
   }
 
@@ -223,24 +220,6 @@ class hashdb_settings_reader_t {
       uint32_t M;
       xmlChar_to_number(characters, len, M);
       user_data.settings->bloom1_M_hash_size = M;
-
-    } else if (user_data.active_node == BLOOM2_USED) {
-      std::string bloom2_state_string;
-      xmlChar_to_string(characters, len, bloom2_state_string);
-      is_valid = string_to_bloom_state(bloom2_state_string, user_data.settings->bloom2_is_used);
-      if (!is_valid) {
-        exit_invalid_state("Error: invalid bloom 2 selection\n");
-      }
-
-    } else if (user_data.active_node == BLOOM2_K_HASH_FUNCTIONS) {
-      uint32_t k;
-      xmlChar_to_number(characters, len, k);
-      user_data.settings->bloom2_k_hash_functions = k;
-
-    } else if (user_data.active_node == BLOOM2_M_HASH_SIZE) {
-      uint32_t M;
-      xmlChar_to_number(characters, len, M);
-      user_data.settings->bloom2_M_hash_size = M;
     }
   }
 
