@@ -2,7 +2,7 @@
 
 \documentclass[12pt]{article}
 %\usepackage[margin=0.8in]{geometry}
-\usepackage[top=0.6in, bottom=0.6in, left=0.6in, right=0.6in]{geometry}
+\usepackage[top=0.4in, bottom=0.4in, left=0.6in, right=0.6in]{geometry}
 \usepackage{paralist} % for compactitem, compactdesc, compactenum
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -63,9 +63,10 @@ Export hash database to DFXML file \\
 \textbf{Database Manipulation} \\
 \begin{tabular}{p{3.6 in} p{3.4 in}}
 \small\texttt{add <A.hdb> <B.hdb>} & $A + B \rightarrow B$ Add A into B \\
+\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A + B \rightarrow C$ add A and B into C\\
 \hangindent=2em\small\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A + B \rightarrow B$ Add A into B but only when the repository name matches \\
-\small\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A \cup B \rightarrow C$ add A and B into C\\
 \small\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add intersection of A and B into C\\
+\small\texttt{intersect\_hash <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ intersect into C when hashes match\\
 \small\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add A but not B into C\\
 \small\texttt{subtract\_hash <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add A but not hashes in B into C\\
 \small\texttt{deduplicate <A.hdb> <B.hdb>} & Copy $A \rightarrow B$ except for hashes with duplicates \\
@@ -109,7 +110,7 @@ Export hash database to DFXML file \\
 \textbf{\bulk Scanner}\\
 \begin{tabular}{p{5.8 in} l}
 \small\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 -R my\_import\_dir} & Import directory\\
-\hangindent=2em\small\texttt{bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image\\
+\hangindent=2em\small\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image\\
 \end{tabular}
 
 \vspace{2mm}
