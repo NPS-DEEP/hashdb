@@ -51,17 +51,16 @@ static const std::string temp_dir5("temp_dir5_commands_test.hdb");
 static const std::string temp_dir6("temp_dir6_commands_test.hdb");
 static const std::string temp_dir7("temp_dir7_commands_test.hdb");
 static const std::string temp_dir8("temp_dir8_commands_test.hdb");
-static const std::string temp_dir9("temp_dir9_commands_test.hdb");
 static const char* temp_dfxml_file = "temp_dfxml_out.xml";
 
 static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
 static const std::string sample_dfxml4096(HASHDB_TEST_DATADIR "sample_dfxml4096.xml");
 static const std::string sample_dfxml512(HASHDB_TEST_DATADIR "sample_dfxml512.xml");
 
-// validate correct size of db
-void check_size(const std::string hashdb_dir, size_t size) {
+// get size of db
+size_t map_size(const std::string& hashdb_dir) {
   hashdb_manager_t manager(hashdb_dir, READ_ONLY);
-  BOOST_TEST_EQ(manager.map_size(), size);
+  return manager.map_size();
 }
 
 // import/export: import1, export, import2 should retain size of 74
@@ -77,7 +76,7 @@ void test_import_export() {
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
   commands_t::create(settings, temp_dir2);
   commands_t::import(temp_dir2, temp_dfxml_file, "repository2");
-  check_size(temp_dir2, 74);
+  BOOST_TEST_EQ(map_size(temp_dir2), 74);
 }
 
 // database manipulation commands
@@ -91,53 +90,94 @@ void test_database_manipulation() {
   rm_hashdb_dir(temp_dir6);
   rm_hashdb_dir(temp_dir7);
   rm_hashdb_dir(temp_dir8);
-  rm_hashdb_dir(temp_dir9);
   commands_t::create(settings, temp_dir1);
   commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
   commands_t::create(settings, temp_dir2);
   commands_t::import(temp_dir2, sample_dfxml4096, "repository2");
+  commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir3);
 
-  // add temp_dir1 to temp_dir2
-  std::cout << "add\n";
-  commands_t::add(temp_dir1, temp_dir2);
-  check_size(temp_dir1, 74);
-  check_size(temp_dir2, 2 * 74);
-  
+  // add
+  commands_t::add(temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add(temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add(temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  rm_hashdb_dir(temp_dir4);
+
   // add_multiple
   std::cout << "add_multiple\n";
-  commands_t::create(settings, temp_dir3);
-  commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir3);
-  check_size(temp_dir3, 2 * 74);
+  commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir3), 2*74);
+  commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir3), 2*74);
+  rm_hashdb_dir(temp_dir4);
 
   // add_repository
   std::cout << "add_repository\n";
-  commands_t::add_repository(temp_dir2, temp_dir9, "repository1");
-  check_size(temp_dir9, 74);
+  commands_t::add_repository(temp_dir1, temp_dir4, "invalid_repository");
+  BOOST_TEST_EQ(map_size(temp_dir4), 0);
+  commands_t::add_repository(temp_dir1, temp_dir4, "repository1");
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add_repository(temp_dir1, temp_dir4, "repository1");
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add_repository(temp_dir2, temp_dir4, "repository1");
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add_repository(temp_dir2, temp_dir4, "repository2");
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  rm_hashdb_dir(temp_dir4);
 
   // intersect
   std::cout << "intersect\n";
-  commands_t::create(settings, temp_dir4);
+  commands_t::intersect(temp_dir1, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 0);
   commands_t::intersect(temp_dir1, temp_dir3, temp_dir4);
-  check_size(temp_dir4, 2 * 74);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  rm_hashdb_dir(temp_dir4);
+
+  // intersect hash
+  std::cout << "intersect_hash\n";
+  commands_t::intersect_hash(temp_dir1, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  commands_t::intersect_hash(temp_dir1, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  rm_hashdb_dir(temp_dir4);
 
   // subtract
   std::cout << "subtract\n";
-  commands_t::create(settings, temp_dir5);
-  commands_t::subtract(temp_dir1, temp_dir4, temp_dir5);
-  check_size(temp_dir5, 0);
+  commands_t::subtract(temp_dir3, temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::subtract(temp_dir3, temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add(temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 74);
+  commands_t::add(temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  commands_t::subtract(temp_dir3, temp_dir2, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 2*74);
+  commands_t::subtract(temp_dir3, temp_dir4, temp_dir5);
+  BOOST_TEST_EQ(map_size(temp_dir5), 0);
+  rm_hashdb_dir(temp_dir4);
+  rm_hashdb_dir(temp_dir5);
+
+  // subtract_hash
+  std::cout << "subtract_hash\n";
+  commands_t::subtract_hash(temp_dir3, temp_dir1, temp_dir4);
+  BOOST_TEST_EQ(map_size(temp_dir4), 0);
+  rm_hashdb_dir(temp_dir4);
 
   // deduplicate
   std::cout << "deduplicate1\n";
   commands_t::create(settings, temp_dir6);
   commands_t::import(temp_dir6, sample_dfxml4096, "repository1");
   commands_t::deduplicate(temp_dir6, temp_dir7);
-  check_size(temp_dir7, 74);
+  BOOST_TEST_EQ(map_size(temp_dir7), 74);
   std::cout << "deduplicate2\n";
   commands_t::import(temp_dir6, sample_dfxml4096, "repository2");
   commands_t::deduplicate(temp_dir6, temp_dir8);
   // check ability to open existing target
   commands_t::deduplicate(temp_dir6, temp_dir8);
-  check_size(temp_dir8, 0);
+  BOOST_TEST_EQ(map_size(temp_dir8), 0);
 }
 
 // scan services
@@ -236,7 +276,7 @@ void test_multiple_repository_names() {
   commands_t::import(temp_dir, sample_dfxml4096, "test_repository_name_0");
 
   // validate correct size
-  check_size(temp_dir, 74*12);
+  BOOST_TEST_EQ(map_size(temp_dir), 74*12);
 }
 
 // validate block size control for 4096
@@ -253,14 +293,14 @@ void test_block_size_4096() {
 
   // import
   commands_t::import(temp_dir1, sample_dfxml4096, "test_repository_name");
-  check_size(temp_dir1, 74);
+  BOOST_TEST_EQ(map_size(temp_dir1), 74);
 
   // export
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
 
   // import
   commands_t::import(temp_dir2, "temp_dfxml_out.xml", "test_repository_name");
-  check_size(temp_dir2, 74);
+  BOOST_TEST_EQ(map_size(temp_dir2), 74);
 }
 
 // validate block size control for 512 and max count of 1
@@ -280,14 +320,14 @@ void test_block_size_512_and_count_1() {
   // import
   commands_t::import(temp_dir1, sample_dfxml512, "test_repository_name");
   commands_t::import(temp_dir1, sample_dfxml512, "test_repository_name2");
-  check_size(temp_dir1, 24);
+  BOOST_TEST_EQ(map_size(temp_dir1), 24);
 
   // export
   commands_t::do_export(temp_dir1, "temp_dfxml_out.xml");
 
   // import
   commands_t::import(temp_dir2, "temp_dfxml_out.xml", "test_repository_name");
-  check_size(temp_dir1, 24);
+  BOOST_TEST_EQ(map_size(temp_dir1), 24);
 }
 
 // test check for valid hash block size
@@ -304,7 +344,7 @@ void test_block_size_0() {
   commands_t::import(temp_dir1, sample_dfxml4096, "test_repository_name");
 
   // with hash_block_size=0, total should be every hash, including remainder
-  check_size(temp_dir1, 75);
+  BOOST_TEST_EQ(map_size(temp_dir1), 75);
 }
 
 int cpp_main(int argc, char* argv[]) {

@@ -85,6 +85,39 @@ class commands_t {
                                         larger_hashdb.map_size(), logger);
     while (smaller_it != smaller_hashdb.end()) {
 
+      // get iterator for this hash in the larger db
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+                                        larger_hashdb.find(smaller_it->key);
+
+      // iterate through hash matches in larger db to find exact source matches
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+        if (*smaller_it == *(it_pair.first)) {
+          // the hashdb_element is an exact match so add it to hashdb3
+          hashdb3.insert(*smaller_it, changes);
+        }
+        progress_tracker.track();
+      }
+      progress_tracker.track();
+      ++smaller_it;
+    }
+    progress_tracker.done();
+  }
+
+  // perform hash intersection, optimized for speed
+  static void intersect_hash_optimized(const hashdb_manager_t& smaller_hashdb,
+                                       const hashdb_manager_t& larger_hashdb,
+                                       hashdb_manager_t& hashdb3,
+                                       hashdb_changes_t& changes,
+                                       logger_t* logger) {
+
+    // get iterator for smaller db
+    hashdb_iterator_t smaller_it = smaller_hashdb.begin();
+
+    // iterate over smaller db
+    progress_tracker_t progress_tracker(smaller_hashdb.map_size() +
+                                        larger_hashdb.map_size(), logger);
+    while (smaller_it != smaller_hashdb.end()) {
+
       // see if hashdigest is in larger db
       uint32_t larger_count = larger_hashdb.find_count(smaller_it->key);
 
@@ -736,7 +769,53 @@ class commands_t {
     std::cout << changes << "\n";
   }
 
-  // subtract: hashdb1 - hashdb 2 -> hashdb3
+  // intersect_hash
+  static void intersect_hash(const std::string& hashdb_dir1,
+                             const std::string& hashdb_dir2,
+                             const std::string& hashdb_dir3) {
+
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
+
+    // if hashdb3 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+      create(manager1.settings, hashdb_dir3);
+    }
+    // open hashdb3 for writing
+    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
+
+    // resources
+    require_compatibility(manager1, manager2, manager3);
+    hashdb_changes_t changes;
+
+    logger_t logger(hashdb_dir3, "intersect_hash");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add("hashdb_dir3", hashdb_dir3);
+    logger.add_timestamp("begin intersect_hash");
+
+    // optimize processing based on smaller db
+    if (manager1.map_size() <= manager2.map_size()) {
+      intersect_hash_optimized(manager1, manager2, manager3, changes, &logger);
+    } else {
+      intersect_hash_optimized(manager2, manager1, manager3, changes, &logger);
+    }
+
+    // close logger
+    logger.add_timestamp("end intersect_hash");
+    logger.add_hashdb_changes(changes);
+    logger.close();
+
+    // merge history
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
+  }
+
+  // subtract: hashdb1 - hashdb 2 -> hashdb3 for exact match
   static void subtract(const std::string& hashdb_dir1,
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
@@ -765,6 +844,70 @@ class commands_t {
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
     while (it1 != hashdb_manager1.end()) {
       
+      // look for exact match in hashdb_manager2
+      bool exact_match = false;
+      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+                                          hashdb_manager2.find(it1->key);
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+        if (*(it_pair.first) == *it1) {
+          exact_match = true;
+          break;
+        }
+      }
+
+      // maybe add the hashdb_element to hashdb_manager3
+      if (!exact_match) {
+        hashdb_manager3.insert(*it1, changes);
+      }
+      ++it1;
+      progress_tracker.track();
+    }
+
+    // close tracker
+    progress_tracker.done();
+
+    // close logger
+    logger.add_timestamp("end subtract");
+    logger.add_hashdb_changes(changes);
+    logger.close();
+
+    // merge history
+    history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
+    history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
+
+    // also write changes to cout
+    std::cout << changes << "\n";
+  }
+
+  // subtract_hash: hashdb1 - hashdb 2 -> hashdb3
+  static void subtract_hash(const std::string& hashdb_dir1,
+                            const std::string& hashdb_dir2,
+                            const std::string& hashdb_dir3) {
+
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
+
+    // if hashdb3 does not exist, create it with settings from hashdb1
+    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+      create(hashdb_manager1.settings, hashdb_dir3);
+    }
+    // open hashdb3 for writing
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+    hashdb_changes_t changes;
+
+    hashdb_iterator_t it1 = hashdb_manager1.begin();
+
+    logger_t logger(hashdb_dir3, "subtract_hash");
+    logger.add("hashdb_dir1", hashdb_dir1);
+    logger.add("hashdb_dir2", hashdb_dir2);
+    logger.add_timestamp("begin subtract_hash");
+
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end()) {
+      
       // subtract or copy the hash
       if (hashdb_manager2.find_count(it1->key) > 0) {
         // hashdb2 has the hash so drop the hash
@@ -780,7 +923,7 @@ class commands_t {
     progress_tracker.done();
 
     // close logger
-    logger.add_timestamp("end subtract");
+    logger.add_timestamp("end subtract_hash");
     logger.add_hashdb_changes(changes);
     logger.close();
 

@@ -74,6 +74,14 @@ class hashdb_element_t {
           filename(""),
           file_offset(0) {
   }
+
+  // equality
+  bool operator==(const hashdb_element_t& other) const {
+    return this->key == other.key &&
+           this->repository_name == other.repository_name &&
+           this->filename == other.filename &&
+           this->file_offset == other.file_offset;
+  }
 };
 
 #endif
