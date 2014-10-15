@@ -40,8 +40,6 @@
 #include "hashdb_element.hpp"
 #include "../hash_t_selector.h"
 
-// map types:
-// MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
 // file modes:
 // READ_ONLY, RW_NEW, RW_MODIFY
 
@@ -60,7 +58,7 @@ void write_settings() {
   hashdb_settings_store_t::write_settings(temp_dir, settings);
 }
 
-void do_test() {
+void rw_new_tests() {
 
   // valid hashdigest values
   hash_t k1;
@@ -256,22 +254,24 @@ void do_test() {
   BOOST_TEST_EQ(manager.map_size(), 1000003);
 }
 
+void ro_tests() {
+  // validate that two managers can open the same database read_only
+  hashdb_manager_t manager1(temp_dir, READ_ONLY);
+  BOOST_TEST_EQ(manager1.map_size(), 1000003);
+  hashdb_manager_t manager2(temp_dir, READ_ONLY);
+  BOOST_TEST_EQ(manager2.map_size(), 1000003);
+}
+
 int cpp_main(int argc, char* argv[]) {
 
-std::cout << "hmt.a\n";
   make_dir_if_not_there(temp_dir);
 
-std::cout << "hmt.a\n";
-// MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
-
   write_settings();
-std::cout << "hmt.a\n";
-  do_test();
+  rw_new_tests();
+  ro_tests();
 
-std::cout << "hmt.a\n";
   // done
   int status = boost::report_errors();
-std::cout << "hmt.a\n";
   return status;
 }
 
