@@ -275,6 +275,15 @@ class hashdb_manager_t {
   }
 
   /**
+   * Return true and source lookup index else false and 0.
+   */
+  std::pair<bool, uint64_t> find_source_lookup_index(
+                                     const std::string& repository_name,
+                                     const std::string& filename) const {
+    return source_lookup_index_manager.find(repository_name, filename);
+  }
+
+  /**
    * Obtain source metadata given repository name and filename.
    * Return true and metadata else false and empty metadata.
    */

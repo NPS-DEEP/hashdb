@@ -1280,26 +1280,64 @@ class commands_t {
   }
 
   // hash_table
-  static void hash_table(const std::string& hashdb_dir) {
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    hashdb_iterator_t it = hashdb_manager.begin();
+  static void hash_table(const std::string& hashdb_dir,
+                         const std::string& repository_name,
+                         const std::string& filename) {
 
-    // there is nothing to report if the hash database is empty
-    if (it == hashdb_manager.end()) {
-      std::cout << "The hash database is empty.\n";
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // see if source exists
+    std::pair<bool, uint64_t> lookup_pair =
+           hashdb_manager.find_source_lookup_index(repository_name, filename);
+    if (lookup_pair.first == false) {
+      // the database does not have the requested source
+      std::cout << "Nothing for this source was found.\n"
+                << "Are the repository name and filename correct?\n";
       return;
+    } else {
+      // print the source
+      std::cout << "{\"repository_name\":\"" << repository_name
+                << "\",\"filename\":\"" << filename
+                << "\"";
     }
 
+    // see if source metadata exists
+    std::pair<bool, source_metadata_t> metadata_pair =
+               hashdb_manager.find_source_metadata(repository_name, filename);
+    if (metadata_pair.first == false) {
+      // no metadata
+    } else {
+      // print the metadata
+      std::cout << ",\"file_size\":" << metadata_pair.second.file_size
+                << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest()
+                << "\"";
+    }
+
+    // close the json line
+    std::cout << "}\n";
+
+
+    // show hashes for the requested source
+    bool any_found = false;
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
+    hashdb_iterator_t it = hashdb_manager.begin();
     while (it != hashdb_manager.end()) {
-      std::cout << it->key.hexdigest() << "\t"
-                << it->repository_name << "\t"
-                << it->filename << "\t"
-                << it->file_offset << "\n";
+      if (it->repository_name == repository_name &&
+          it->filename == filename) {
+        // show the hash and its offset
+        std::cout << "[\"" << it->key.hexdigest() << "\",{\"file_offset\":"
+                  << it->file_offset << "}]\n";
+        any_found = true;
+      }
       ++it;
       progress_tracker.track();
     }
     progress_tracker.done();
+
+    // there may be nothing to report
+    if (!any_found) {
+      std::cout << "There are no hashes in the database from this source.\n";
+    }
   }
 
   // expand identified_blocks.txt

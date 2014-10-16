@@ -218,7 +218,8 @@ void test_statistics() {
   commands_t::duplicates(temp_dir1, "2");
 
   // hash_table
-  commands_t::hash_table(temp_dir1);
+  commands_t::hash_table(temp_dir1, "repository1", sample_dfxml4096);
+  commands_t::hash_table(temp_dir1, "invalid_repository", sample_dfxml4096);
 }
 
 // tuning
@@ -369,7 +370,6 @@ int cpp_main(int argc, char* argv[]) {
   test_performance_analysis();
   std::cout << "test multiple repository names\n";
   test_multiple_repository_names();
-std::cerr << "ct.cpp_main end\n";
   return 0;
 }
 

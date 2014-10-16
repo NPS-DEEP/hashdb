@@ -75,8 +75,8 @@ static bool has_bloom_kM = false;              // C
 static size_t parameter_count = 0;
 
 // option values
-static uint32_t hash_block_size = 0;
-static uint32_t max = 0;
+static uint32_t optional_hash_block_size = 0;
+static uint32_t optional_max = 0;
 static std::string repository_name_string = "";
 static bool bloom_is_used = false;
 static uint32_t bloom_k_hash_functions = 0;
@@ -187,16 +187,16 @@ int main(int argc,char **argv) {
       case 'p': {	// hash block size
         has_hash_block_size = true;
         try {
-          hash_block_size = boost::lexical_cast<uint32_t>(optarg);
+          optional_hash_block_size = boost::lexical_cast<uint32_t>(optarg);
         } catch (...) {
           std::cerr << "Invalid value for hash_block_size: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
 
         // make sure hash block size is valid
-        if (hash_block_size % HASHDB_BYTE_ALIGNMENT != 0) {
+        if (optional_hash_block_size % HASHDB_BYTE_ALIGNMENT != 0) {
           std::cerr << "Invalid value for hash block size: "
-                    << hash_block_size
+                    << optional_hash_block_size
                     << ".  Value must be > 0 and divisible by "
                     << HASHDB_BYTE_ALIGNMENT << ".\n" << see_usage << "\n";
           exit(1);
@@ -206,7 +206,7 @@ int main(int argc,char **argv) {
       case 'm': {	// maximum
         has_max = true;
         try {
-          max = boost::lexical_cast<uint32_t>(optarg);
+          optional_max = boost::lexical_cast<uint32_t>(optarg);
         } catch (...) {
           std::cerr << "Invalid value for max: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -381,10 +381,10 @@ void run_command() {
     require_parameter_count(1);
     hashdb_settings_t create_settings;
     if (has_hash_block_size) {
-      create_settings.hash_block_size = hash_block_size;
+      create_settings.hash_block_size = optional_hash_block_size;
     }
     if (has_max) {
-      create_settings.maximum_hash_duplicates = max;
+      create_settings.maximum_hash_duplicates = optional_max;
     }
     manage_bloom_settings(create_settings);
     commands_t::create(create_settings, hashdb_arg1);
@@ -461,8 +461,8 @@ void run_command() {
     commands_t::duplicates(hashdb_arg1, hashdb_arg2);
   } else if (command == "hash_table") {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
-    require_parameter_count(1);
-    commands_t::hash_table(hashdb_arg1);
+    require_parameter_count(3);
+    commands_t::hash_table(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "expand_identified_blocks") {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);
@@ -470,7 +470,7 @@ void run_command() {
   } else if (command == "explain_identified_blocks") {
     no_p(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);
-    uint32_t identified_blocks_number = (has_max) ? max :
+    uint32_t identified_blocks_number = (has_max) ? optional_max :
                              default_explain_identified_blocks_number;
     commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2,
                                                    identified_blocks_number);
