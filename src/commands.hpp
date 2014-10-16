@@ -249,15 +249,16 @@ class commands_t {
   static void print_scan_output(
               const std::vector<hash_t>& scan_input,
               const typename hashdb_t__<hash_t>::scan_output_t& scan_output) {
-    typename hashdb_t__<hash_t>::scan_output_t::const_iterator it(scan_output.begin());
-    while (it != scan_output.end()) {
-      // print: '<index> \t <hexdigest> \t <count> \n' where count>0
-      if (it->second > 0) {
-      std::cout << it->first << "\t"
-                << scan_input[it->first] << "\t" // hexdigest
-                << it->second << "\n";
-      }
-      ++it;
+
+    // check that there are matches
+    if (scan_output.size() == 0) {
+      std::cout << "There are no matches.\n";
+      return;
+    }
+
+    // print matches
+    for (hashdb_t__<hash_t>::scan_output_t::const_iterator it=scan_output.begin(); it != scan_output.end(); ++it) {
+      std::cout << "[\"" << scan_input[it->first] << "\",{\"count\":" << it->second << "}]\n";
     }
   }
 
