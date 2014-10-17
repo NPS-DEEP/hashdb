@@ -295,7 +295,7 @@ void usage() {
   << "    <hashdb>       the  hash database for which the bloom filters will be\n"
   << "                   rebuilt\n"
   << "\n"
-  << "  upgrade_hashdb <hashdb>\n"
+  << "  upgrade <hashdb>\n"
   << "    Make hashdb v1.0.0 compatible with hashdb v1.1.0.\n"
   << "\n"
   << "    Parameters:\n"

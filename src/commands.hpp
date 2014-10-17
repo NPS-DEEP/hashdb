@@ -476,6 +476,8 @@ class commands_t {
     // close logger
     logger.add_hashdb_settings(settings);
     logger.close();
+
+    std::cout << "Database created.\n";
   }
 
   // import
@@ -1124,16 +1126,16 @@ class commands_t {
     }
 
     // print size values
-    std::cout << "  hash store: "
-              << hashdb_manager.map_size() << "\n"
-              << "  source lookup store: "
-              << hashdb_manager.source_lookup_store_size() << "\n"
-              << "  source repository name store: "
-              << hashdb_manager.repository_name_lookup_store_size() << "\n"
-              << "  source filename store: "
-              << hashdb_manager.filename_lookup_store_size() << "\n"
-              << "  source metadata store: "
-              << hashdb_manager.source_metadata_lookup_store_size() << "\n";
+    std::cout << "{\"hash_store\":"
+              << hashdb_manager.map_size() << ", "
+              << "\"source_lookup_store\":"
+              << hashdb_manager.source_lookup_store_size() << ", "
+              << "\"source_repository_name_store\":"
+              << hashdb_manager.repository_name_lookup_store_size() << ", "
+              << "\"source_filename_store\":"
+              << hashdb_manager.filename_lookup_store_size() << ", "
+              << "\"source_metadata_store\":"
+              << hashdb_manager.source_metadata_lookup_store_size() << "}\n";
   }
 
   // print sources referenced in this database
@@ -1155,7 +1157,7 @@ class commands_t {
     for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
       std::cout << "{";
       print_source_fields(hashdb_manager, it->key);
-      std::cout << "}";
+      std::cout << "}\n";
     }
   }
 
@@ -1226,19 +1228,17 @@ class commands_t {
     progress_tracker.done();
 
     // show totals
-    std::cout << "total hashes: " << total_hashes << "\n"
-              << "distinct hashes: " << total_distinct_hashes << "\n";
+    std::cout << "{\"total_hashes\": " << total_hashes << ", "
+              << "\"total_distinct_hashes\": " << total_distinct_hashes << "}\n";
 
-    // show hash histogram
-//    std::cout << "Histogram of count, number of hashes with count:\n";
-    // hash histogram as <count, number of hashes with count>
+    // show hash histogram as <count, number of hashes with count>
     std::map<uint32_t, uint64_t>::iterator hash_histogram_it2;
     for (hash_histogram_it2 = hash_histogram->begin();
          hash_histogram_it2 != hash_histogram->end(); ++hash_histogram_it2) {
-      std::cout << "duplicates=" << hash_histogram_it2->first
-                << ", distinct hashes=" << hash_histogram_it2->second
-                << ", total=" << hash_histogram_it2->first *
-                                 hash_histogram_it2->second << "\n";
+      std::cout << "{\"duplicates\":" << hash_histogram_it2->first
+                << ", \"distinct_hashes\":" << hash_histogram_it2->second
+                << ", \"total\":" << hash_histogram_it2->first *
+                                 hash_histogram_it2->second << "}\n";
     }
     delete hash_histogram;
   }
@@ -1259,20 +1259,16 @@ class commands_t {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
     hashdb_iterator_t it = hashdb_manager.begin();
 
-    // there is nothing to report if the map is empty
-    if (it == hashdb_manager.end()) {
-      std::cout << "The map is empty.\n";
-      return;
-    }
-
-    size_t line_number=0;
+    // look through all hashes for entries with this count
+    bool any_found = false;
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
     while (it != hashdb_manager.end()) {
       uint32_t count = hashdb_manager.find_count(it->key);
 
       if (count == duplicates_number) {
-        // show this hash in form "<index> \t <hexdigest> \n"
-        std::cout << ++line_number << "\t" << it->key.hexdigest() << "\t" << count << "\n";
+        any_found = true;
+        // this is the same format as that used in print_scan_output
+        std::cout << "[\"" << it->key.hexdigest() << "\",{\"count\":" << count << "}]\n";
       }
 
       // now move forward by count
@@ -1282,6 +1278,12 @@ class commands_t {
       }
     }
     progress_tracker.done();
+
+    // say so if nothing was found
+    if (!any_found) {
+      std::cout << "No hashes were found with this count.\n";
+      return;
+    }
   }
 
   // hash_table
@@ -1478,21 +1480,25 @@ class commands_t {
     // close logger
     logger.add_timestamp("end rebuild_bloom");
     logger.close();
+
+    std::cout << "rebuild_bloom complete.\n";
   }
 
   // upgrade hashdb
-  static void upgrade_hashdb(const std::string& hashdb_dir) {
+  static void upgrade(const std::string& hashdb_dir) {
 
     // start logger
-    logger_t logger(hashdb_dir, "upgrade_hashdb");
+    logger_t logger(hashdb_dir, "upgrade");
     logger.add("hashdb_dir", hashdb_dir);
 
     // open resources
     hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
 
     // close logger
-    logger.add_timestamp("end upgrad_hashdb");
+    logger.add_timestamp("end upgrade");
     logger.close();
+
+    std::cout << "Upgrade complete.\n";
   }
 
   // functional analysis and testing: add_random
