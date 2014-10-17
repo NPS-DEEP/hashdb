@@ -44,15 +44,19 @@ class hashdb_iterator_t {
 
   // get hashdb_element
   hashdb_element_t get_hashdb_element() {
-    std::pair<std::string, std::string> source_strings =
+    std::pair<bool, std::pair<std::string, std::string> > source_strings =
                           source_lookup_index_manager->find(
                  source_lookup_encoding::get_source_lookup_index(
                                   multimap_iterator->second));
+    if (source_strings.first == false) {
+      assert(0);
+    }
+
     return hashdb_element_t(
                  multimap_iterator->first,
                  hash_block_size,
-                 source_strings.first,
-                 source_strings.second,
+                 source_strings.second.first,
+                 source_strings.second.second,
                  source_lookup_encoding::get_file_offset(
                                   multimap_iterator->second));
   }

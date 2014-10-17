@@ -96,17 +96,22 @@ class dfxml_hashdigest_writer_t {
 
   // add a source metadata record
   void add_source_metadata(
-            const std::pair<std::string, std::string>& lookup_pair,
+            const std::pair<bool, std::pair<std::string, std::string> >& lookup_pair,
             const std::pair<bool, source_metadata_t>& source_metadata_pair) {
+
+    // error if invalid lookup pair
+    if (lookup_pair.first == false) {
+      assert(0);
+    }
 
     // start the fileobject tag
     x.push("fileobject");
 
     // write the repository name tag
-    x.xmlout("repository_name", lookup_pair.first);
+    x.xmlout("repository_name", lookup_pair.second.first);
 
     // write the filename tag
-    x.xmlout("filename", lookup_pair.second);
+    x.xmlout("filename", lookup_pair.second.second);
 
     if (source_metadata_pair.first == true) {
       // write the file size

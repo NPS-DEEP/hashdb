@@ -26,15 +26,11 @@
 
 #ifndef SOURCE_LOOKUP_INDEX_MANAGER_HPP
 #define SOURCE_LOOKUP_INDEX_MANAGER_HPP
-//#include "hashdb_types.h"
-//#include "settings.hpp"
 #include "dfxml/src/dfxml_writer.h"
 #include "bi_data_types.hpp"
 #include <boost/btree/support/string_view.hpp>
 #include "bi_store.hpp"
 #include <string>
-#include "source_lookup_index_iterator.hpp"
-//#include <cassert>
 
 /**
  * Provides interfaces for managing source lookup storage.
@@ -79,6 +75,8 @@ class source_lookup_index_manager_t {
   source_lookup_index_manager_t& operator=(const source_lookup_index_manager_t&);
 
   public:
+  typedef boost::btree::btree_index_set<bi_data_64_pair_t>::iterator source_lookup_index_iterator_t;
+
   source_lookup_index_manager_t (const std::string p_hashdb_dir,
                            file_mode_type_t p_file_mode_type) :
        hashdb_dir(p_hashdb_dir), file_mode_type(p_file_mode_type),
@@ -172,18 +170,19 @@ class source_lookup_index_manager_t {
 
   /**
    * Find the repository name and filename from the source lookup index.
-   * It is an error for the source lookup index to be invalid.
    */
   
-  std::pair<std::string, std::string> find(uint64_t source_lookup_index) const {
+  std::pair<bool, std::pair<std::string, std::string> >
+                          find(uint64_t source_lookup_index) const {
+
+    typedef std::pair<std::string, std::string> string_pair_t;
 
     // get the lookup pair from the index
     std::pair<uint64_t, uint64_t> lookup_pair;
     bool status1 = source_lookup_store.get_value(
                                      source_lookup_index, lookup_pair);
     if (status1 == false) {
-      // program error
-      assert(0);
+      return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
     // get repository name from repository name index
@@ -191,8 +190,7 @@ class source_lookup_index_manager_t {
     bool status2 = repository_name_lookup_store.get_value(
                                     lookup_pair.first, repository_name_sv);
     if (status2 != true) {
-      // program error
-      assert(0);
+      return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
     // get filename from filename index
@@ -200,31 +198,22 @@ class source_lookup_index_manager_t {
     bool status3 = filename_lookup_store.get_value(
                                     lookup_pair.second, filename_sv);
     if (status3 != true) {
-      // program error
-      assert(0);
+      return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
     std::pair<std::string, std::string> string_pair(to_string(repository_name_sv),
                                                to_string(filename_sv));
-    return string_pair;
+    return std::pair<bool, string_pair_t>(true, string_pair);
   }
 
   // begin
-  source_lookup_index_iterator_t begin() {
-    return source_lookup_index_iterator_t(
-                                &source_lookup_store,
-                                &repository_name_lookup_store,
-                                &filename_lookup_store,
-                                source_lookup_store.index_by_key_begin());
+  source_lookup_index_iterator_t begin() const {
+    return source_lookup_store.index_by_key_begin();
   }
 
   // end
-  source_lookup_index_iterator_t end() {
-    return source_lookup_index_iterator_t(
-                                &source_lookup_store,
-                                &repository_name_lookup_store,
-                                &filename_lookup_store,
-                                source_lookup_store.index_by_key_end());
+  source_lookup_index_iterator_t end() const {
+    return source_lookup_store.index_by_key_end();
   }
 
   // sizes

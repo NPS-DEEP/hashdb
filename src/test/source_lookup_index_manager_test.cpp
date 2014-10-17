@@ -31,7 +31,6 @@
 #include "boost_fix.hpp"
 #include "directory_helper.hpp"
 #include "source_lookup_index_manager.hpp"
-#include "source_lookup_index_iterator.hpp"
 #include "file_modes.h"
 #include <sys/stat.h> // makedir
 
@@ -44,7 +43,6 @@ void run_test() {
 
   source_lookup_index_manager_t manager(temp_dir, RW_NEW);
   std::pair<bool, uint64_t> pair_bool_64;
-  std::pair<std::string, std::string> pair_string;
 
   // check that the empty iterator is functional
   BOOST_TEST_EQ(manager.begin() == manager.end(), true);
@@ -95,24 +93,26 @@ void run_test() {
   BOOST_TEST_EQ(pair_bool_64.second, 0);
 
   // find from index
+  std::pair<bool, std::pair<std::string, std::string> > pair_string;
   pair_string = manager.find(1);
-  BOOST_TEST_EQ(pair_string.first, "rep_a");
-  BOOST_TEST_EQ(pair_string.second, "file_a");
+  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
+  BOOST_TEST_EQ(pair_string.second.second, "file_a");
 
   // find from index
   pair_string = manager.find(2);
-  BOOST_TEST_EQ(pair_string.first, "rep_a");
-  BOOST_TEST_EQ(pair_string.second, "file_b");
+  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
+  BOOST_TEST_EQ(pair_string.second.second, "file_b");
 
   // find from index
   pair_string = manager.find(3);
-  BOOST_TEST_EQ(pair_string.first, "rep_b");
-  BOOST_TEST_EQ(pair_string.second, "file_a");
+  BOOST_TEST_EQ(pair_string.second.first, "rep_b");
+  BOOST_TEST_EQ(pair_string.second.second, "file_a");
 
   // check the iterator with values available
-  source_lookup_index_iterator_t it = manager.begin();
-  BOOST_TEST_EQ(it->first, "rep_a");
-  BOOST_TEST_EQ(it->second, "file_a");
+  source_lookup_index_manager_t::source_lookup_index_iterator_t it = manager.begin();
+  pair_string = manager.find(it->key);
+  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
+  BOOST_TEST_EQ(pair_string.second.second, "file_a");
   ++it; ++it; ++it; ++it;
 }
 

@@ -49,7 +49,6 @@ HASHDB_INCS = \
 	progress_tracker.hpp \
 	random_key.hpp \
 	source_lookup_encoding.hpp \
-	source_lookup_index_iterator.hpp \
 	source_lookup_index_manager.hpp \
 	source_metadata.hpp \
 	source_metadata_element.hpp \

@@ -262,6 +262,36 @@ class commands_t {
     }
   }
 
+  // print source fields
+  static void print_source_fields(const hashdb_manager_t& hashdb_manager,
+                                  uint64_t source_lookup_index) {
+    // get the repository name and filename
+    std::pair<bool, std::pair<std::string, std::string> > source_pair =
+                     hashdb_manager.find_source_pair(source_lookup_index);
+
+    // get source metadata, if available
+    std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(source_lookup_index);
+
+    // print the source ID
+    std::cout << "\"source_id\":" << source_lookup_index
+              << "\"";
+
+    // print the source
+    if (source_pair.first == true) {
+      std::cout << ",\"repository_name\":\"" << source_pair.second.first
+                << "\",\"filename\":\"" << source_pair.second.second
+                << "\"";
+    }
+
+    if (metadata_pair.first == true) {
+      // print the metadata
+      std::cout << ",\"file_size\":" << metadata_pair.second.file_size
+                << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest()
+                << "\"";
+    }
+  }
+
   // ingest table of relevant hashes and table of their sources
   static void identify_hashes_and_sources(
                             const hashdb_manager_t& hashdb_manager,
@@ -329,7 +359,7 @@ class commands_t {
       return;
     }
     if (pos_closebrace == std::string::npos) {
-      // no } present.
+      // no close brace present.
       std::cerr << "Unexpected input: no close brace found.\n";
       return;
     }
@@ -409,30 +439,18 @@ class commands_t {
                             const hashdb_manager_t& hashdb_manager,
                             std::set<uint64_t>& source_lookup_indexes) {
 
+    if (source_lookup_indexes.size() == 0) {
+      std::cout << "There are no sources to report.\n";
+      return;
+    }
+
     // iterate through sources
     for (std::set<uint64_t>::iterator it = source_lookup_indexes.begin();
-                    it!=source_lookup_indexes.end(); ++it) {
+                                   it!=source_lookup_indexes.end(); ++it) {
 
-      // get the repository name and filename
-      std::pair<std::string, std::string> source_pair =
-                                  hashdb_manager.find_source_pair(*it);
-
-      // get source metadata, if available
-      std::pair<bool, source_metadata_t> metadata_pair =
-                     hashdb_manager.find_source_metadata(
-                     source_pair.first, source_pair.second);
-
-      // print out the source metadata
-      std::cout << "{\"source_id\":" << *it
-                << ",\"repository_name\":\"" << source_pair.first
-                << "\",\"filename\":\"" << source_pair.second;
-
-      if (metadata_pair.first == true) {
-        // also print the available source metadata
-        std::cout << "\",\"file_size\":" << metadata_pair.second.file_size
-                  << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest();
-      }
-      // print json closure this source
+      // print the source
+      std::cout << "{";
+      print_source_fields(hashdb_manager, *it);
       std::cout << "\"}\n";
     }
   }
@@ -525,7 +543,7 @@ class commands_t {
     // open the dfxml_file
     dfxml_hashdigest_writer_t writer(dfxml_file);
 
-    // add hash entries from hashdb_manager
+    // export hash entries from hashdb_manager
     hashdb_iterator_t it = hashdb_manager.begin();
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
@@ -536,22 +554,25 @@ class commands_t {
     }
     progress_tracker.done();
 
-    // add source lookup information from source_lookup_index_manager
+    // export source lookup information from source_lookup_index_manager
     // and source_metadata_manager
     source_lookup_index_manager_t source_lookup_index_manager(
                                                hashdb_dir, READ_ONLY);
-    source_lookup_index_iterator_t it2 = source_lookup_index_manager.begin();
+    source_lookup_index_manager_t::source_lookup_index_iterator_t it2 =
+                                       source_lookup_index_manager.begin();
     while (it2 != source_lookup_index_manager.end()) {
+      uint64_t source_lookup_index = it2->key;
 
-      // get the repository name and filename
-      std::pair<std::string, std::string> lookup_pair = *it2;
+      // get the repository name and filename, if available
+      std::pair<bool, std::pair<std::string, std::string> > source_pair =
+                     hashdb_manager.find_source_pair(source_lookup_index);
 
-      // get the source element pair from the repository name and filename
-      std::pair<bool, source_metadata_t> source_metadata_pair =
-                 hashdb_manager.find_source_metadata(it2->first, it2->second);
+      // get source metadata, if available
+      std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(source_lookup_index);
 
-      // write out the source metadata
-      writer.add_source_metadata(lookup_pair, source_metadata_pair);
+      // write out the source and its metadata
+      writer.add_source_metadata(source_pair, metadata_pair);
       ++it2;
     }
   }
@@ -1123,35 +1144,19 @@ class commands_t {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // get the source lookup index iterator
-    source_lookup_index_iterator_t it = hashdb_manager.begin_source_lookup_index();
+    source_lookup_index_manager_t::source_lookup_index_iterator_t it = hashdb_manager.begin_source_lookup_index();
 
-    // there is nothing to report if the source lookup index map is empty
+    // see if the source lookup index map is empty
     if (it == hashdb_manager.end_source_lookup_index()) {
-      std::cout << "The source lookup index map is empty.\n";
+      std::cout << "There are no sources in this database.\n";
       return;
     }
 
     // report each entry
-    while (it != hashdb_manager.end_source_lookup_index()) {
-
-      // put in repository name and filename
-      std::stringstream ss;
-      ss << "repository name='" << it->first
-         << "', filename='" << it->second;
-
-      // get source metadata, if present
-      std::pair<bool, source_metadata_t> metadata_pair =
-                   hashdb_manager.find_source_metadata(it->first, it->second);
-      if (metadata_pair.first == true) {
-        // put in metadata
-        ss << "', file size='" << metadata_pair.second.file_size
-           << "', file hash='" << metadata_pair.second.file_hash.hexdigest();
-      }
-
-      // print composed source line
-      std::cout << ss.str() << "'\n";
-
-      ++it;
+    for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
+      std::cout << "{";
+      print_source_fields(hashdb_manager, it->key);
+      std::cout << "}";
     }
   }
 
@@ -1295,28 +1300,12 @@ class commands_t {
       std::cout << "Nothing for this source was found.\n"
                 << "Are the repository name and filename correct?\n";
       return;
-    } else {
-      // print the source
-      std::cout << "{\"repository_name\":\"" << repository_name
-                << "\",\"filename\":\"" << filename
-                << "\"";
     }
 
-    // see if source metadata exists
-    std::pair<bool, source_metadata_t> metadata_pair =
-               hashdb_manager.find_source_metadata(repository_name, filename);
-    if (metadata_pair.first == false) {
-      // no metadata
-    } else {
-      // print the metadata
-      std::cout << ",\"file_size\":" << metadata_pair.second.file_size
-                << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest()
-                << "\"";
-    }
-
-    // close the json line
+    // print source information
+    std::cout << "{";
+    print_source_fields(hashdb_manager, lookup_pair.second);
     std::cout << "}\n";
-
 
     // show hashes for the requested source
     bool any_found = false;
@@ -1382,32 +1371,25 @@ class commands_t {
       std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
       hashdb_manager.find(hash);
 
-      // go through each source for this hash
+      // go through each hashdb_element source for this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
-        // get source metadata, if available
-        std::pair<bool, source_metadata_t> metadata_pair =
-                     hashdb_manager.find_source_metadata(
+        // get source lookup index
+        std::pair<bool, uint64_t> source_pair =
+               hashdb_manager.find_source_lookup_index(
                      it_pair.first->repository_name, it_pair.first->filename);
+        if (source_pair.first == false) {
+          // program error
+          assert(0);
+        }
 
         // write match to output:
-        // offset tab hashdigest tab repository name, filename, file offset,
-        // and, if available, file_size and file_hash metadata
+        // offset tab hashdigest tab { context, source information }
         std::cout << feature_line.forensic_path << "\t"
                   << feature_line.feature << "\t"
-                  << "{" << context << ","
-                  << "\"repository_name\":\"" << it_pair.first->repository_name
-                  << "\",\"filename\":\"" << it_pair.first->filename
-                  << "\",\"file_offset\":" << it_pair.first->file_offset;
-
-        // also print out the available source metadata
-        if (metadata_pair.first == true) {
-          std::cout << ",\"file_size\":" << metadata_pair.second.file_size
-                    << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest()
-                    << "\"}\n";
-        } else {
-          std::cout << "}\n";
-        }
+                  << "{" << context << ",";
+        print_source_fields(hashdb_manager, source_pair.second);
+        std::cout << "}\n";
       }
     }
   }

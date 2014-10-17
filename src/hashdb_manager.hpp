@@ -267,9 +267,9 @@ class hashdb_manager_t {
 
   /**
    * Find the source pair of repository name and filenam strings
-   * from the source lookup index.  It is fatal if the lookup fails.
+   * from the source lookup index.
    */
-  std::pair<std::string, std::string> find_source_pair(
+  std::pair<bool, std::pair<std::string, std::string> > find_source_pair(
                                       uint64_t source_lookup_index) const {
     return source_lookup_index_manager.find(source_lookup_index);
   }
@@ -283,10 +283,12 @@ class hashdb_manager_t {
     return source_lookup_index_manager.find(repository_name, filename);
   }
 
-  /**
-   * Obtain source metadata given repository name and filename.
-   * Return true and metadata else false and empty metadata.
-   */
+//  /**
+//   * Obtain source metadata given repository name and filename.
+//   * Return true and metadata else false and empty metadata.
+//   */
+/*
+zzzzzzzzzzzz
   std::pair<bool, source_metadata_t> find_source_metadata(
                                      const std::string& repository_name,
                                      const std::string& filename) const {
@@ -302,6 +304,15 @@ class hashdb_manager_t {
     } else {
       return source_metadata_manager.find(lookup_pair.second);
     }
+  }
+*/
+
+  /**
+   * Obtain source metadata given the source lookup index.
+   */
+  std::pair<bool, source_metadata_t> find_source_metadata(
+                                     uint64_t source_lookup_index) const {
+    return source_metadata_manager.find(source_lookup_index);
   }
 
   // find_count
@@ -331,12 +342,12 @@ class hashdb_manager_t {
   }
 
   // begin source lookup index iterator
-  source_lookup_index_iterator_t begin_source_lookup_index() {
+  source_lookup_index_manager_t::source_lookup_index_iterator_t begin_source_lookup_index() {
     return source_lookup_index_manager.begin();
   }
 
   // end source metadata
-  source_lookup_index_iterator_t end_source_lookup_index() {
+  source_lookup_index_manager_t::source_lookup_index_iterator_t end_source_lookup_index() {
     return source_lookup_index_manager.end();
   }
 
