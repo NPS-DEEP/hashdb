@@ -274,8 +274,7 @@ class commands_t {
                      hashdb_manager.find_source_metadata(source_lookup_index);
 
     // print the source ID
-    std::cout << "\"source_id\":" << source_lookup_index
-              << "\"";
+    std::cout << "\"source_id\":" << source_lookup_index;
 
     // print the source
     if (source_pair.first == true) {
@@ -451,7 +450,7 @@ class commands_t {
       // print the source
       std::cout << "{";
       print_source_fields(hashdb_manager, *it);
-      std::cout << "\"}\n";
+      std::cout << "}\n";
     }
   }
 
