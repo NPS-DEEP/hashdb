@@ -1126,6 +1126,17 @@ class commands_t {
     }
 
     // print size values
+    std::cout << "  hash store: "
+              << hashdb_manager.map_size() << "\n"
+              << "  source lookup store: "
+              << hashdb_manager.source_lookup_store_size() << "\n"
+              << "  source repository name store: "
+              << hashdb_manager.repository_name_lookup_store_size() << "\n"
+              << "  source filename store: "
+              << hashdb_manager.filename_lookup_store_size() << "\n"
+              << "  source metadata store: "
+              << hashdb_manager.source_metadata_lookup_store_size() << "\n";
+/* 
     std::cout << "{\"hash_store\":"
               << hashdb_manager.map_size() << ", "
               << "\"source_lookup_store\":"
@@ -1136,6 +1147,7 @@ class commands_t {
               << hashdb_manager.filename_lookup_store_size() << ", "
               << "\"source_metadata_store\":"
               << hashdb_manager.source_metadata_lookup_store_size() << "}\n";
+*/
   }
 
   // print sources referenced in this database
