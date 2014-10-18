@@ -39,6 +39,7 @@
   #include <winsock2.h>
 #endif
 #include <sys/stat.h>
+#include <unistd.h>
 #include <string>
 
 class hashdb_directory_manager_t {
