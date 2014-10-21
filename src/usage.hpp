@@ -54,7 +54,7 @@ void usage() {
   << "  -h, --help     print this message\n"
   << "  -H, --Help     print detailed help including usage notes and examples\n"
   << "  -v, -V, --version, --Version    print version number\n"
-  << "  -q             quiet mode\n"
+  << "  -q, --quiet    quiet mode\n"
   << "\n"
   << "hashdb supports the following commands:\n"
   << "\n"

@@ -132,6 +132,7 @@ int main(int argc,char **argv) {
       {"Help", no_argument, 0, 'H'},
       {"version", no_argument, 0, 'v'},
       {"Version", no_argument, 0, 'V'},
+      {"quiet", no_argument, 0, 'q'},
 
       // options
       {"hash_block_size", required_argument, 0, 'p'},
