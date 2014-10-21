@@ -1016,6 +1016,13 @@ class commands_t {
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
 
+    // open the hashdb scan service
+    hashdb_t__<hash_t> hashdb;
+    std::pair<bool, std::string> open_pair = hashdb.open_scan(path_or_socket);
+    if (open_pair.first == false) {
+      std::cerr << open_pair.second << "\nAborting.\n";
+    }
+
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
     hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
@@ -1024,9 +1031,6 @@ class commands_t {
     // be used
     std::vector<source_metadata_element_t>* scan_source_metadata_input =
                       new std::vector<source_metadata_element_t>;
-
-    // open the hashdb scan service
-    hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // create the hash consumer
     dfxml_scan_hash_consumer_t hash_consumer(scan_input);
@@ -1058,6 +1062,13 @@ class commands_t {
   static void scan_hash(const std::string& path_or_socket,
                    const std::string& hash_string) {
 
+    // open the hashdb scan service
+    hashdb_t__<hash_t> hashdb;
+    std::pair<bool, std::string> open_pair = hashdb.open_scan(path_or_socket);
+    if (open_pair.first == false) {
+      std::cerr << open_pair.second << "\nAborting.\n";
+    }
+
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
     hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
@@ -1071,9 +1082,6 @@ class commands_t {
 
     // put the hash into the scan hash input for scanning
     scan_input->push_back(hash_pair.second);
-
-    // open the hashdb scan service
-    hashdb_t__<hash_t> hashdb(path_or_socket);
 
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
@@ -1599,11 +1607,19 @@ class commands_t {
     // open hashdb_dir to use for obtaining valid hash values
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // create the hashdb scan service for scanning with random hash
-    hashdb_t__<hash_t> hashdb(hashdb_dir);
+    // open the hashdb scan service for scanning with random hash
+    hashdb_t__<hash_t> hashdb;
+    std::pair<bool, std::string> open_pair = hashdb.open_scan(hashdb_dir);
+    if (open_pair.first == false) {
+      std::cerr << open_pair.second << "\nAborting.\n";
+    }
 
-    // create the hashdb scan service for scanning from the copy
-    hashdb_t__<hash_t> hashdb_copy(hashdb_dir_copy);
+    // open the hashdb scan service for scanning from the copy
+    hashdb_t__<hash_t> hashdb_copy;
+    std::pair<bool, std::string> open_pair_copy = hashdb.open_scan(hashdb_dir_copy);
+    if (open_pair_copy.first == false) {
+      std::cerr << open_pair_copy.second << "\nAborting.\n";
+    }
 
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
@@ -1640,9 +1656,7 @@ class commands_t {
       }
     }
 
-    // scan sets of random hashes where hash values all match
-
-    // scan sets of random hashes where all hash values match
+    // scan copy for sets of random hashes where all hash values match
     logger.add_timestamp("begin scan_random with random matching hashes on hashdb copy");
     for (int j=1; j<=100; j++) {
       // generate set of random hashes that match
@@ -1652,7 +1666,7 @@ class commands_t {
       logger.add_timestamp(ss1.str());
 
       // scan set of random hashes that match
-      hashdb.scan(*scan_input, *scan_output);
+      hashdb_copy.scan(*scan_input, *scan_output);
       std::stringstream ss2;
       ss2 << "scanned random matching hash " << j;
       logger.add_timestamp(ss2.str());

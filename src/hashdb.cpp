@@ -65,42 +65,60 @@ const char* hashdb_version() {
   return PACKAGE_VERSION;
 }
 
-  // constructor for importing
+  // constructor
   template<>
-  hashdb_t__<hash_t>::hashdb_t__(const std::string& p_hashdb_dir,
-                                 uint32_t p_block_size,
-                                 uint32_t p_max_duplicates) :
-                   hashdb_dir(p_hashdb_dir),
-                   mode(HASHDB_IMPORT),
+  hashdb_t__<hash_t>::hashdb_t__() :
+                   hashdb_dir(""),
+                   mode(HASHDB_NONE),
                    hashdb_manager(0),
                    hashdb_changes(0),
                    logger(0),
                    tcp_client_manager(0),
-                   block_size(p_block_size),
-                   max_duplicates(p_max_duplicates),
+                   block_size(0),
+                   max_duplicates(0),
                    M() {
 
 #ifdef HAVE_PTHREAD
     pthread_mutex_init(&M,NULL);
 #endif
+  }
 
-    // create the hashdb directory
-    hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
 
-    // create and write settings to hashdb_dir
-    hashdb_settings_t settings;
-    settings.hash_block_size = block_size;
-    settings.maximum_hash_duplicates = max_duplicates;
-    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+  // open for importing, return true else false with error string.
+  template<>
+  std::pair<bool, std::string> hashdb_t__<hash_t>::open_import(
+                                           const std::string& p_hashdb_dir,
+                                           uint32_t p_block_size,
+                                           uint32_t p_max_duplicates) {
 
-    // create hashdb_manager
-    hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
-    hashdb_changes = new hashdb_changes_t;
+      hashdb_dir = p_hashdb_dir;
+      mode = HASHDB_IMPORT;
+      block_size = p_block_size;
+      max_duplicates = p_max_duplicates;
 
-    // open logger
-    logger = new logger_t(hashdb_dir, "hashdb library import");
-    logger->add_hashdb_settings(settings);
-    logger->add_timestamp("begin import");
+    try {
+      // create the hashdb directory
+      hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
+
+      // create and write settings to hashdb_dir
+      hashdb_settings_t settings;
+      settings.hash_block_size = block_size;
+      settings.maximum_hash_duplicates = max_duplicates;
+      hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+      // create hashdb_manager
+      hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
+      hashdb_changes = new hashdb_changes_t;
+
+      // open logger
+      logger = new logger_t(hashdb_dir, "hashdb library import");
+      logger->add_hashdb_settings(settings);
+      logger->add_timestamp("begin import");
+
+      return std::pair<bool, std::string>(true, "");
+    } catch (std::runtime_error& e) {
+      return std::pair<bool, std::string>(false, e.what());
+    }
   }
 
   // import
@@ -166,34 +184,27 @@ const char* hashdb_version() {
     return 0;
   }
 
-  // constructor for scanning
+  // Open for scanning, return true else false with error string.
   template<>
-  hashdb_t__<hash_t>::hashdb_t__(const std::string& path_or_socket) :
-                     hashdb_dir(path_or_socket),
-                     mode(path_or_socket.find("tcp://") == 0
-                         ? HASHDB_SCAN_SOCKET : HASHDB_SCAN),
-                     hashdb_manager(0),
-                     hashdb_changes(0),
-                     logger(0),
-                     tcp_client_manager(0),
-                     block_size(0),
-                     max_duplicates(0),
-                     M() {
+  std::pair<bool, std::string> hashdb_t__<hash_t>::open_scan(
+                                          const std::string& path_or_socket) {
+    hashdb_dir = path_or_socket;
+    mode = (path_or_socket.find("tcp://") == 0)
+                         ? HASHDB_SCAN_SOCKET : HASHDB_SCAN;
 
-#ifdef HAVE_PTHREAD
-    pthread_mutex_init(&M,NULL);
-#endif
-
-    // open the correct scan resource
-    if (mode == HASHDB_SCAN) {
-      // open hashdb_manager for scanning
-      hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
-    } else if (mode == HASHDB_SCAN_SOCKET) {
-      // open TCP socket service for scanning
-      tcp_client_manager = new tcp_client_manager_t(path_or_socket);
-    } else {
-      assert(0);
-      exit(1);
+    try {
+      if (mode == HASHDB_SCAN) {
+        // open hashdb_manager for scanning
+        hashdb_manager = new hashdb_manager_t(hashdb_dir, READ_ONLY);
+      } else if (mode == HASHDB_SCAN_SOCKET) {
+        // open TCP socket service for scanning
+        tcp_client_manager = new tcp_client_manager_t(path_or_socket);
+      } else {
+        return std::pair<bool, std::string>(false, "invalid mode for open");
+      }
+      return std::pair<bool, std::string>(true, "");
+    } catch (std::runtime_error& e) {
+      return std::pair<bool, std::string>(false, e.what());
     }
   }
 

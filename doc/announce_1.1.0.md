@@ -35,6 +35,7 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * Improve the import command performance by importing hashes as they are read from the DFXML file rather than buffering them all before importing them.  This change also improves runtime progress feedback.
 * Fix for compatibility with CentOS 6.4 which uses C++ v4.4.7.
 * Correct wording to indicate distinct hashes, not unique hashes.
+* Fix `scan_random` command to correctly scan duplicates from fresh copy rather than from the already open database.
 
 # Bug Fixes (in progress)
 

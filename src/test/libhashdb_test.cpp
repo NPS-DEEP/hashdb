@@ -60,7 +60,9 @@ void do_import() {
   import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 4097)); // invalid
 
   // create new database
-  hashdb_t hashdb(temp_dir, 4096, 20);
+  hashdb_t hashdb;
+  std::pair<bool, std::string> import_pair = hashdb.open_import(temp_dir, 4096, 20);
+  BOOST_TEST_EQ(import_pair.first, true);
 
   // import some elements
   int status;
@@ -94,7 +96,9 @@ void do_scan() {
   to_key(0, k2);
 
   // open to scan
-  hashdb_t hashdb(temp_dir);
+  hashdb_t hashdb;
+  std::pair<bool, std::string> open_pair = hashdb.open_scan(temp_dir);
+  BOOST_TEST_EQ(open_pair.first, true);
 
   hashdb_t::scan_input_t input;
   hashdb_t::scan_output_t output;

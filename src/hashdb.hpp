@@ -58,14 +58,14 @@ class hashdb_t__ {
                        HASHDB_IMPORT,
                        HASHDB_SCAN,
                        HASHDB_SCAN_SOCKET};
-  const std::string hashdb_dir;
-  const hashdb_modes_t mode;
+  std::string hashdb_dir;
+  hashdb_modes_t mode;
   hashdb_manager_t *hashdb_manager;
   hashdb_changes_t *hashdb_changes;
   logger_t *logger;
   tcp_client_manager_t *tcp_client_manager;
-  const uint32_t block_size;
-  const uint32_t max_duplicates;
+  uint32_t block_size;
+  uint32_t max_duplicates;
 
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;  // mutext protecting database access
@@ -118,11 +118,16 @@ class hashdb_t__ {
   typedef std::vector<std::pair<uint32_t, uint32_t> > scan_output_t;
 
   /**
-   * Constructor for importing.
+   * Constructor.
    */
-  hashdb_t__(const std::string& hashdb_dir,
-             uint32_t p_block_size,
-             uint32_t p_max_duplicates);
+  hashdb_t__();
+
+  /**
+   * Open for importing, return true else false with error string.
+   */
+  std::pair<bool, std::string> open_import(const std::string& p_hashdb_dir,
+                                           uint32_t p_block_size,
+                                           uint32_t p_max_duplicates);
 
   /**
    * Import.
@@ -130,7 +135,7 @@ class hashdb_t__ {
   int import(const import_input_t& import_input);
 
   /**
-   * Import specific source metadata.
+   * Import source metadata.
    */
   int import_metadata(const std::string& repository_name,
                       const std::string& filename,
@@ -138,9 +143,9 @@ class hashdb_t__ {
                       T file_hash);
 
   /**
-   * Constructor for scanning.
+   * Open for scanning, return true else false with error string.
    */
-  hashdb_t__(const std::string& path_or_socket);
+  std::pair<bool, std::string> open_scan(const std::string& path_or_socket);
 
   /**
    * Scan.
