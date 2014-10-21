@@ -169,12 +169,12 @@ int main(int argc,char **argv) {
         break;
       }
       case 'v': {	// version
-        std::cout << "hashdb_manager " << PACKAGE_VERSION << "\n";
+        std::cout << "hashdb " << PACKAGE_VERSION << "\n";
         exit(0);
         break;
       }
       case 'V': {	// Version
-        std::cout << "hashdb_manager " << PACKAGE_VERSION << "\n";
+        std::cout << "hashdb " << PACKAGE_VERSION << "\n";
         exit(0);
         break;
       }
