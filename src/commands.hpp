@@ -378,6 +378,11 @@ class commands_t {
                             const hashdb_manager_t& hashdb_manager,
                             hashes_t& hashes) {
 
+    if (hashes.size() == 0) {
+      std::cout << "# There are no hashes to report.\n";
+      return;
+    }
+
     // iterate through block hashes
     for (hashes_t::iterator it = hashes.begin(); it != hashes.end(); ++it) {
 
@@ -439,7 +444,7 @@ class commands_t {
                             std::set<uint64_t>& source_lookup_indexes) {
 
     if (source_lookup_indexes.size() == 0) {
-      std::cout << "There are no sources to report.\n";
+      std::cout << "# There are no sources to report.\n";
       return;
     }
 
@@ -1435,10 +1440,16 @@ class commands_t {
                                 requested_max, 
                                 *hashes, *source_lookup_indexes);
 
+    // print file header information
+    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
+              << "# explain_identified_blocks-command-Version: 1\n";
+
     // print identified hashes
+    std::cout << "# hashes\n";
     print_identified_hashes(hashdb_manager, *hashes);
 
     // print identified sources
+    std::cout << "# sources\n";
     print_identified_sources(hashdb_manager, *source_lookup_indexes);
 
     // clean up
