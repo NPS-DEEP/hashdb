@@ -1,8 +1,9 @@
-hashdb Version 1.0.1
-Usage: hashdb -h | -H | -V | <command>
+hashdb Version 1.1.0
+Usage: hashdb -h | -H | -v | -V | <command>
   -h, --help     print this message
   -H, --Help     print detailed help including usage notes and examples
-  -V, --Version  print version number
+  -v, -V, --version, --Version    print version number
+  -q, --quiet    quiet mode
 
 hashdb supports the following commands:
 
@@ -12,23 +13,25 @@ New database:
 
     Options:
     -p, --hash_block_size=<hash block size>
-      <hash block size>, in bytes, used to generate hashes (default 4096)
+      <hash block size>, in bytes, of hashes(default 4096)
+      expected <hash block size>, in bytes, or 0 for no restriction
+      (default 4096)
     -m, --max_duplicates=<maximum>
       <maximum> number of hash duplicates allowed, or 0 for no limit
       (default 0)
-    --bloom1 <state>
-      sets bloom filter 1 <state> to enabled | disabled (default enabled)
-    --bloom1_n <n>
-      expected total number <n> of unique hashes (default 45634027)
-    --bloom1_kM <k:M>
+    --bloom <state>
+      sets bloom filter <state> to enabled | disabled (default enabled)
+    --bloom_n <n>
+      expected total number <n> of distinct hashes (default 45634027)
+    --bloom_kM <k:M>
       number of hash functions <k> and bits per hash <M> (default <k>=3
-      and <M>=28 or <M>=value calculated from value in --bloom1_n)
+      and <M>=28 or <M>=value calculated from value in --bloom_n)
 
     Parameters:
     <hashdb>   the file path to the new hash database to create
 
 Import/Export:
-  import [-r <repository name>] <DFXML file> <hashdb>
+  import [-r <repository name>] <hashdb> <DFXML file>
     Import hashes from file <DFXML file> into hash database <hashdb>.
 
     Options:
@@ -37,8 +40,8 @@ Import/Export:
       (default is "repository_" followed by the <DFXML file> path).
 
     Parameters:
-    <DFXML file>   the DFXML file to import hashes from
     <hashdb>       the hash database to insert the imported hashes into
+    <DFXML file>   the DFXML file to import hashes from
 
   export <hashdb> <DFXML file>
     Export hashes from the <hashdb> to a <DFXML file>.
@@ -64,7 +67,27 @@ Database manipulation:
     <source hashdb 2>     a second hash database to copy hashes from
     <destination hashdb>  the destination hash database to copy hashes into
 
+  add_repository <source hashdb> <destination hashdb> <repository name>
+    Copies hashes from the <source hashdb> to the <destination hashdb>
+    when the <repository name> matches
+
+    Parameters:
+    <source hashdb>       the source hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+    <repository name>     the repository name to match when adding hashes
+
   intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copies hashes that are common to both <source hashdb 1> and
+    <source hashdb 2> into <destination hashdb>.  Hashes and their sources
+    must match.
+
+    Parameters:
+    <source hashdb 1>     a hash databases to copy the intersection of
+    <source hashdb 2>     a second hash databases to copy the intersection of
+    <destination hashdb>  the destination hash database to copy the
+                          intersection of exact matches into
+
+  intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
     Copies hashes that are common to both <source hashdb 1> and
     <source hashdb 2> into <destination hashdb>.  Hashes match when hash
     values match, even if their associated source repository name and
@@ -78,6 +101,18 @@ Database manipulation:
 
   subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
     Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
+    into <destination hashdb>.  Hashes and their sources must match.
+
+    Parameters:
+    <source hashdb 1>     the hash database containing hash values to be
+                          added if they are not also in the other database
+    <source hashdb 2>     the hash database containing the hash values that
+                          will not be added
+    <destination hashdb>  the hash database to add the difference of the
+                          exact matches into
+
+  subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
     into <destination hashdb>.  Hashes match when hash values match, even if
     their associated source repository name and filename do not match.
 
@@ -87,7 +122,7 @@ Database manipulation:
     <source hashdb 2>     the hash database containing the hash values that
                           will not be added
     <destination hashdb>  the hash database to add the difference of the
-                          hash databases into
+                          hashes into
 
   deduplicate <source hashdb> <destination hashdb>
     Copy hashes in <source hashdb> into <destination hashdb> except
@@ -99,33 +134,23 @@ Database manipulation:
     <destination hashdb>  the hash database to copy hashes to when source
                           hashes appear only once
 
-  scan <path or socket> <DFXML file>
-    Scans the <path or socket> for hashes that match hashes in the
-    <DFXML file> and prints out matches.
+Scan services:
+  scan <hashdb> <DFXML file>
+    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
+    and prints out matches.
 
     Parameters:
-    <path or socket>  the file path or socket endpoint to the hash
-                      database to use as the lookup source, for example
-                      my_db.hdb or 'tcp://localhost:14500'
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
     <DFXML file>      the DFXML file containing hashes to scan for
 
-  scan_expanded <hashdb> <DFXML file>
-    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
-    and prints out the repository name, filename, and file offset for
-    each hash that matches.
+  scan_hash <hashdb> <hash value>
+    Scans the <hashdb> for the specified <hash value> and prints out matches.
 
     Parameters:
-    <hashdb>       the hash database to use as the lookup source
-    <DFXML file>   the DFXML file containing hashes to scan for
-
-  expand_identified_blocks <hashdb> <identified blocks file>
-    Prints out source information for each hash in <identified blocks file>
-    by referencing source information in <hashdb>.  Source information
-    includes repository name, filename, and file offset.
-
-    Parameters:
-    <hashdb>                  the hash database to use as the lookup source
-    <identified blocks file>  the identified blocks feature file
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <hash value>      the hash value to scan for
 
   server <hashdb> <port number>
     Starts a query server service for <hashdb> at <port number> for
@@ -165,30 +190,64 @@ Statistics:
     <hashdb>       the hash database to print duplicate hashes about
     <number>       the requested number of duplicate hashes
 
-  hash_table <hashdb>
-    Prints out a table of hashes from the given <hashdb> database,
-    indicating the repository name, filename, and file offset of where
-    each hash was sourced.
+  hash_table <hashdb> <repository name> <filename>
+    Prints out the hashes and offsets from the given <hashdb> database
+    for the <repository name> and <filename> source requested.
 
     Parameters:
-    <hashdb>       the hash database to print duplicate hashes for
+    <hashdb>              the hash database to print duplicate hashes for
+    <repository name>     the repository name to match
+    <filename >           the filename to match
+
+  expand_identified_blocks <hashdb> <identified blocks file>
+    Prints out source information for each hash in <identified blocks file>
+    by referencing source information in <hashdb>.  Source information
+    includes repository name, filename, and file offset.
+
+    Parameters:
+    <hashdb>                  the hash database to use as the lookup source
+                              associated with the identified blocks file
+    <identified_blocks.txt>   the identified blocks feature file generated
+                              by bulk_extractor
+
+  explain_identified_blocks [-m <number>] <hashdb>
+                            <identified_blocks.txt> <number>
+    Prints source information from the <hashdb> database for hashes in the
+    <identified_blocks.txt> file that are not repeated more than the <number>
+    of times.
+
+    Options:
+    -m <number>               the maximum number of repeats allowed before
+                              a hash is dropped (default 20).
+
+    Parameters:
+    <hashdb>                  the hash database to use as the lookup source
+                              associated with the identified blocks file
+    <identified_blocks.txt>   the identified blocks feature file generated
+                              by bulk_extractor
 
 Tuning:
   rebuild_bloom [options] <hashdb>
     Rebuilds the bloom filters in the <hashdb> hash database.
 
     Options:
-    --bloom1 <state>
-      sets bloom filter 1 <state> to enabled | disabled (default enabled)
-    --bloom1_n <n>
-      expected total number <n> of unique hashes (default 45634027)
-    --bloom1_kM <k:M>
+    --bloom <state>
+      sets bloom filter <state> to enabled | disabled (default enabled)
+    --bloom_n <n>
+      expected total number <n> of distinct hashes (default 45634027)
+    --bloom_kM <k:M>
       number of hash functions <k> and bits per hash <M> (default <k>=3
-      and <M>=28 or <M>=value calculated from value in --bloom1_n)
+      and <M>=28 or <M>=value calculated from value in --bloom_n)
 
     Parameters:
     <hashdb>       the  hash database for which the bloom filters will be
                    rebuilt
+
+  upgrade <hashdb>
+    Make hashdb v1.0.0 compatible with hashdb v1.1.0.
+
+    Parameters:
+    <hashdb>       the hash database to upgrade
 
 Performance analysis:
   add_random [-r <repository name>] <hashdb> <count>
@@ -246,10 +305,10 @@ This example creates a new hash database named my_hashdb.hdb with default
 settings:
     hashdb create my_hashdb.hdb
 
-This example imports hashes from DFXML input file my_dfxml_file.xml to hash
-database my_hashdb.hdb, categorizing the hashes as sourced from repository
+This example imports hashes into hash database my_hashdb.hdb from DFXML input
+file my_dfxml_file.xml, categorizing the hashes as sourced from repository
 "my repository":
-    hashdb import -r "my repository" my_dfxml_file.xml my_hashdb.hdb
+    hashdb import -r "my repository" my_hashdb.hdb my_dfxml_file.xml
 
 This example exports hashes in my_hashdb.hdb to output DFXML file my_dfxml.xml:
     hashdb export my_hashdb my_dfxml.xml
@@ -273,7 +332,7 @@ that appear only once in my_hashdb1.hdb into new database my_hashdb2.hdb:
 
 This example rebuilds the Bloom filters for hash database my_hashdb.hdb to
 optimize it to work well with 50,000,000 different hash values:
-    hashdb rebuild_bloom --bloom1_n 50000000 my_hashdb.hdb
+    hashdb rebuild_bloom --bloom_n 50000000 my_hashdb.hdb
 
 This example starts hashdb as a server service for the hash database at
 path my_hashdb.hdb at port number "14500":
@@ -288,17 +347,12 @@ This example searches my_hashdb.hdb for hashes that match those in DFXML file
 my_dfxml.xml and directs output to stdout:
     hashdb scan my_hashdb.hdb my_dfxml.xml
 
-This example searches my_hashdb.hdb for hashes that match those in DFXML file
-my_dfxml.xml and directs expanded output to stdout:
-    hashdb scan_expanded my_hashdb.hdb my_dfxml.xml
+This example searches my_hashdb.hdb for hashes that match MD5 hash value
+d2d95... and directs output to stdout:
+    hashdb scan_hash my_hashdb.hdb d2d958b44c481cc41b0121b3b4afae85
 
-This example references my_hashdb.hdb and input file identified_blocks.txt
-to generate output file my_identified_blocks_with_source_info.txt:
-    hashdb expand_identified_blocks my_hashdb.hdb identified_blocks.txt >
-    my_identified_blocks_with_source_info.txt
-
-This example prints out the repository name and filename of where all
-hashes in my_hashdb.hdb came from:
+This example prints out source metadata of where all hashes in my_hashdb.hdb
+came from:
     hashdb sources my_hashdb.hdb
 
 This example prints out size information about the hash database at file
@@ -339,10 +393,10 @@ parameters.  Specifically:
 hashed with a hash block size of 512 bytes.
 "-m 2" specifies that when there are duplicate hashes, only the first
 two hashes of a duplicate hash value will be copied.
-"--bloom1 enabled" specifies that Bloom filter 1 is enabled.
-"--bloom1_n 50000000" specifies that Bloom filter 1 should be sized to expect
+"--bloom enabled" specifies that the Bloom filter is enabled.
+"--bloom_n 50000000" specifies that the Bloom filter should be sized to expect
 50,000,000 different hash values.
-    hashdb create -p 512 -m 2 --bloom1 enabled --bloom1_n 50000000
+    hashdb create -p 512 -m 2 --bloom enabled --bloom_n 50000000
     my_hashdb.hdb
 
 Using the md5deep tool to generate hash data:
