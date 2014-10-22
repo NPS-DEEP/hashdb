@@ -70,7 +70,7 @@ class progress_tracker_t {
         ss << "Processing index " << index << " of ?";
       }
       if (!quiet_mode) {
-        std::cout << ss.str() << "...\n";
+        std::cout << ss.str() << "..." << std::endl;
       }
       if (use_logger) {
         logger->add_timestamp(ss.str());
@@ -90,7 +90,7 @@ class progress_tracker_t {
       ss << "Processing index " << index << " of " << index << " completed";
     }
     if (!quiet_mode) {
-      std::cout << ss.str() << "\n";
+      std::cout << ss.str() << std::endl;
     }
     if (use_logger) {
       logger->add_timestamp(ss.str());
