@@ -99,6 +99,8 @@ allows adding the hashes specific to a selected repository.
 
 ###Scan Services
 * New command `scan_hash <hashdb.hdb> <hash value>` allows the ability to scan for a specific hash value.
+* New command `scan_expanded_hash <hashdb.hdb> <hash value>` allows the ability to scan for a specific hash value, displaying all sources.
+* Command `scan_expanded <hashdb.hdb> <hash value>` is modified to identify fileobject tags within the DFXML and group found objects by these filenames.
 
 ### Statistics
 Previous analysis interfaces did not scale well when working with large datasets.  The following interface changes enable more scalable analysis of large data:

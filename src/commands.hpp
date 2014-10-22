@@ -39,6 +39,7 @@
 #include "dfxml_import_source_metadata_consumer.hpp"
 #include "dfxml_scan_hash_consumer.hpp"
 #include "dfxml_scan_source_metadata_consumer.hpp"
+#include "dfxml_scan_expanded_smc.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
@@ -48,6 +49,7 @@
 #include "hash_t_selector.h"
 #include "feature_file_reader.hpp"
 #include "feature_line.hpp"
+#include "json_helper.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -262,6 +264,7 @@ class commands_t {
     }
   }
 
+/*
   // print source fields
   static void print_source_fields(const hashdb_manager_t& hashdb_manager,
                                   uint64_t source_lookup_index) {
@@ -290,6 +293,7 @@ class commands_t {
                 << "\"";
     }
   }
+*/
 
   // ingest table of relevant hashes and table of their sources
   static void identify_hashes_and_sources(
@@ -454,7 +458,7 @@ class commands_t {
 
       // print the source
       std::cout << "{";
-      print_source_fields(hashdb_manager, *it);
+      json_helper_t::print_source_fields(hashdb_manager, *it);
       std::cout << "}\n";
     }
   }
@@ -1063,9 +1067,48 @@ class commands_t {
     delete scan_output;
   }
 
+  // scan expanded
+  static void scan_expanded(const std::string& hashdb_dir,
+                            const std::string& dfxml_file) {
+
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // create space on the heap for the scan input vector
+    std::vector<hash_t>* hashes = new std::vector<hash_t>;
+
+    // create the hash consumer
+    dfxml_scan_hash_consumer_t hash_consumer(hashes);
+
+    // create the source metadata consumer
+    dfxml_scan_expanded_smc_t source_metadata_consumer(
+                                           &hashdb_manager, hashes);
+
+    // print file header information
+    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
+              << "# scan_expanded-command-Version: 1\n";
+
+    // run the dfxml hashdigest reader using the scan consumers
+    std::string repository_name = "not used";
+    dfxml_hashdigest_reader_t<dfxml_scan_hash_consumer_t,
+                              dfxml_scan_expanded_smc_t>::
+                              do_read(dfxml_file, repository_name,
+                              &hash_consumer, &source_metadata_consumer);
+
+    // delete heap allocation
+    delete hashes;
+  }
+
   // scan hash
   static void scan_hash(const std::string& path_or_socket,
                    const std::string& hash_string) {
+
+    // validate the hash string
+    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
+    if (hash_pair.first == false) {
+      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
+      exit(1);
+    }
 
     // open the hashdb scan service
     hashdb_t__<hash_t> hashdb;
@@ -1077,13 +1120,6 @@ class commands_t {
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
     hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
-
-    // validate the hash string
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
-      exit(1);
-    }
 
     // put the hash into the scan hash input for scanning
     scan_input->push_back(hash_pair.second);
@@ -1097,6 +1133,53 @@ class commands_t {
     // delete heap allocation
     delete scan_input;
     delete scan_output;
+  }
+
+  // scan expanded hash
+  static void scan_expanded_hash(const std::string& hashdb_dir,
+                            const std::string& hash_string) {
+
+    // validate the hash string
+    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
+    if (hash_pair.first == false) {
+      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
+      exit(1);
+    }
+
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+
+    // find matching range for this key
+    std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
+    hashdb_manager.find(hash_pair.second);
+
+    // check for no match
+    if (it_pair.first == it_pair.second) {
+      std::cout << "There are no matches.\n";
+      return;
+    }
+
+    // go through each hashdb_element source for this hash
+    for (; it_pair.first != it_pair.second; ++it_pair.first) {
+
+      // print the hash
+      std::cout << "[\"" << hash_string << "\", {";
+
+      // get source lookup index
+      std::pair<bool, uint64_t> source_pair =
+               hashdb_manager.find_source_lookup_index(
+                     it_pair.first->repository_name, it_pair.first->filename);
+      if (source_pair.first == false) {
+        // program error
+        assert(0);
+      }
+
+      // print source fields
+      json_helper_t::print_source_fields(hashdb_manager, source_pair.second);
+
+      // close the JSON line
+      std::cout << "}]\n";
+    }
   }
 
   // server
@@ -1181,7 +1264,7 @@ class commands_t {
     // report each entry
     for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
       std::cout << "{";
-      print_source_fields(hashdb_manager, it->key);
+      json_helper_t::print_source_fields(hashdb_manager, it->key);
       std::cout << "}\n";
     }
   }
@@ -1330,7 +1413,7 @@ class commands_t {
 
     // print source information
     std::cout << "{";
-    print_source_fields(hashdb_manager, lookup_pair.second);
+    json_helper_t::print_source_fields(hashdb_manager, lookup_pair.second);
     std::cout << "}\n";
 
     // show hashes for the requested source
@@ -1414,7 +1497,7 @@ class commands_t {
         std::cout << feature_line.forensic_path << "\t"
                   << feature_line.feature << "\t"
                   << "{" << context << ",";
-        print_source_fields(hashdb_manager, source_pair.second);
+        json_helper_t::print_source_fields(hashdb_manager, source_pair.second);
         std::cout << "}\n";
       }
     }

@@ -440,6 +440,14 @@ void run_command() {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::scan_hash(hashdb_arg1, hashdb_arg2);
+  } else if (command == "scan_expanded") {
+    no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
+    require_parameter_count(2);
+    commands_t::scan_expanded(hashdb_arg1, hashdb_arg2);
+  } else if (command == "scan_expanded_hash") {
+    no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
+    require_parameter_count(2);
+    commands_t::scan_expanded_hash(hashdb_arg1, hashdb_arg2);
   } else if (command == "server") {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);
