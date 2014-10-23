@@ -33,53 +33,21 @@
 #include <boost/asio.hpp>
 #include "mutex_lock.hpp" // define MUTEX_LOCK
 
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
+typedef boost::asio::ip::tcp::socket* socket_ptr_t;
+
+static __thread bool socket_is_connected = false;
+static __thread socket_ptr_t socket_ptr;
 
 class tcp_client_manager_t {
   private:
-  typedef boost::asio::ip::tcp::socket* socket_ptr_t;
-
   boost::asio::io_service io_service;
   boost::asio::ip::tcp::resolver::iterator resolver_iterator;
-  std::map<pthread_t, socket_ptr_t> sockets;
+  std::vector<socket_ptr_t> sockets;
 #ifdef HAVE_PTHREAD
   pthread_mutex_t M;                  // mutext
 #else
   int M;                              // placeholder
 #endif
-
-  // ************************************************************
-  // thread-safe socket acquisition
-  // ************************************************************
-  socket_ptr_t get_socket() {
-    pthread_t this_pthread = pthread_self();
-
-    MUTEX_LOCK(&M);
-
-    // find and return the socket assocated with this pthread
-    if (sockets.find(this_pthread) != sockets.end()) {
-      MUTEX_UNLOCK(&M);
-      return sockets[this_pthread];
-    }
-
-    // create the socket for this pthread
-    socket_ptr_t socket_ptr(new boost::asio::ip::tcp::socket(io_service));
-
-    // connect this socket
-    boost::asio::connect(*socket_ptr, resolver_iterator);
-
-    // improve speed by disabling nagle's algorithm
-    socket_ptr->set_option(boost::asio::ip::tcp::no_delay(true));
-
-    // add the socket prepared for this thread to the sockets map
-    sockets[this_pthread] = socket_ptr;
-
-    // return the freshly created socket
-    MUTEX_UNLOCK(&M);
-    return socket_ptr;
-  }
 
   // helper: get the resolver iterator
   static boost::asio::ip::tcp::resolver::iterator get_resolver_iterator(
@@ -113,21 +81,15 @@ class tcp_client_manager_t {
   tcp_client_manager_t(const std::string& socket_string) :
         io_service(),
         resolver_iterator(get_resolver_iterator(&io_service, socket_string)),
-        sockets(),
         M() {
-#ifdef HAVE_PTHREAD
-    pthread_mutex_init(&M,NULL);
-#endif
   }
 
   ~tcp_client_manager_t() {
     // close sockets
-    for (std::map<pthread_t, socket_ptr_t>::const_iterator it = sockets.begin();
-         it != sockets.end(); ++it) {
-      socket_ptr_t socket_ptr = it->second;
-
-      socket_ptr->close();
-      delete socket_ptr;
+    for (std::vector<socket_ptr_t>::const_iterator it = sockets.begin(); it != sockets.end(); ++it) {
+      socket_ptr_t socket = *it;
+      socket->close();
+      delete socket;
     }
   }
 
@@ -144,30 +106,48 @@ class tcp_client_manager_t {
 
     try {
 
-      // get, possibly establishing, the connnected socket for this thread
-      socket_ptr_t socket = get_socket();
+      // make sure the thread's socket is connected
+      if (!socket_is_connected) {
+
+        // create the socket for this pthread
+        socket_ptr = new boost::asio::ip::tcp::socket(io_service);
+
+        // connect this socket
+        boost::asio::connect(*socket_ptr, resolver_iterator);
+
+        // improve speed by disabling nagle's algorithm
+        socket_ptr->set_option(boost::asio::ip::tcp::no_delay(true));
+
+        // save pointer for destructor
+        MUTEX_LOCK(&M);
+        sockets.push_back(socket_ptr);
+        MUTEX_UNLOCK(&M);
+
+        // mark thread's socket as connected
+        socket_is_connected = true;
+      }
 
       // write the request_count
       uint32_t request_count = request.size();
       boost::asio::write(
-           *socket,
+           *socket_ptr,
            boost::asio::buffer(&request_count, sizeof(request_count)));
 
       // write the request vector
       boost::asio::write(
-           *socket, boost::asio::buffer(request));
+           *socket_ptr, boost::asio::buffer(request));
 
       // read the response_count
       uint32_t response_count;
       boost::asio::read(
-           *socket,
+           *socket_ptr,
            boost::asio::buffer(&response_count, sizeof(response_count)));
 
       // allocate the response vector with the expected size
       response = hashdb_t__<hash_t>::scan_output_t(response_count);
 
       // read the response vector
-      boost::asio::read(*socket, boost::asio::buffer(response));
+      boost::asio::read(*socket_ptr, boost::asio::buffer(response));
 
       // good, return 0
       return 0;
