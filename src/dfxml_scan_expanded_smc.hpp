@@ -89,6 +89,9 @@ class dfxml_scan_expanded_smc_t{
       // add closure marking and flush
       std::cout << "# end-processing {\"filename\":\"" << source_metadata_element.filename << "\"}" << std::endl;
     }
+
+    // clear out the hashes since they have been consumed
+    hashes->clear();
   }
 };
 
