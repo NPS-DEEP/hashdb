@@ -116,6 +116,7 @@ which prints the entire hash table for the specified file.
 
 ###Miscellaneous
 * A `-q` option for quiet mode is now available to suppress status output for statistics commands that take a long time to run.  An example line of status output is: `Processing index 100000 of 5644399...`
+* A `-f flags` option is provided for controlling B-Tree settings.
 
 # Changes to the _bulk\_extractor_ _hashdb_ scanner
 * When importing, the _hashdb_ scanner additionally imports source file size and file hash metadata.
@@ -126,7 +127,7 @@ which prints the entire hash table for the specified file.
 
 # Proposed Future Changes to _BEViewer_
 * Make _BEViewer_ find Image at relative path on Windows systems.
-* Force file list in _BEViewer_ Reports tree to refresh to accomodate showing new `identified_blocks_expanded.txt` file that hashdb can crate.
+* Force file list in _BEViewer_ Reports tree to refresh to accommodate showing new `identified_blocks_expanded.txt` file that hashdb can crate.
 * Change _BEViewer_ GUI to permit easy copy of filename so it can be pasted elsewhere.
 * Make _BEViewer_ print the whole feature line for `identified_blocks_expanded.txt` similar to how it is printed for `identified_blocks.txt`.
 
