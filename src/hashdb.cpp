@@ -265,9 +265,9 @@ const char* hashdb_version() {
       case HASHDB_IMPORT:
         logger->add_timestamp("end import");
         logger->add_hashdb_changes(*hashdb_changes);
+        delete logger;
         delete hashdb_manager;
         delete hashdb_changes;
-        delete logger;
 
         // create new history trail
         history_manager_t::append_log_to_history(hashdb_dir);

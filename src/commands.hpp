@@ -485,6 +485,7 @@ class commands_t {
     // close logger
     logger.add_hashdb_settings(settings);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "Database created.\n";
   }
@@ -534,6 +535,7 @@ class commands_t {
     logger.add_timestamp("end import");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << changes << "\n";
@@ -624,6 +626,7 @@ class commands_t {
     logger.add_timestamp("end add");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
@@ -695,6 +698,7 @@ class commands_t {
     logger.add_timestamp("end add_multiple");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -747,6 +751,7 @@ class commands_t {
     logger.add_timestamp("end add_repository");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
@@ -792,6 +797,7 @@ class commands_t {
     logger.add_timestamp("end intersect");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -838,6 +844,7 @@ class commands_t {
     logger.add_timestamp("end intersect_hash");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -902,6 +909,7 @@ class commands_t {
     logger.add_timestamp("end subtract");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -958,6 +966,7 @@ class commands_t {
     logger.add_timestamp("end subtract_hash");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -1012,6 +1021,7 @@ class commands_t {
     logger.add_timestamp("end deduplicate");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
@@ -1594,6 +1604,7 @@ class commands_t {
     // close logger
     logger.add_timestamp("end rebuild_bloom");
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "rebuild_bloom complete.\n";
   }
@@ -1611,6 +1622,7 @@ class commands_t {
     // close logger
     logger.add_timestamp("end upgrade");
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "Upgrade complete.\n";
   }
@@ -1678,6 +1690,7 @@ class commands_t {
     logger.add_timestamp("end add_random");
     logger.add_hashdb_changes(changes);
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << changes << "\n";
@@ -1776,6 +1789,7 @@ class commands_t {
     // close logger
     logger.add_timestamp("end scan_random");
     logger.close();
+    history_manager_t::append_log_to_history(hashdb_dir);
   }
 };
 
