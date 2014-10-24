@@ -86,8 +86,6 @@ class hashdb_manager_t {
                                settings.bloom1_k_hash_functions),
                 source_lookup_index_manager(hashdb_dir, file_mode),
                 source_metadata_manager(hashdb_dir, file_mode) {
-                         (file_mode_type_to_btree_flags_bitmask(file_mode) |
-                         globals_t::btree_flags) << "\n";
   }
 
   // insert
