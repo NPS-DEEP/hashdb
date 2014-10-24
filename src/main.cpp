@@ -41,6 +41,7 @@
 #include "usage.hpp"
 #include "command_line.hpp"
 #include "commands.hpp"
+#include "globals.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -52,6 +53,7 @@
 #include <vector>
 #include <cassert>
 #include <boost/lexical_cast.hpp>
+#include <boost/btree/helpers.hpp>
 #include <getopt.h>
 
 #ifdef HAVE_MCHECK
@@ -59,9 +61,6 @@
 #endif
 
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
-
-const uint32_t default_explain_identified_blocks_number = 20;
-bool quiet_mode = false;
 
 // options
 static bool has_hash_block_size = false; // p
@@ -133,6 +132,7 @@ int main(int argc,char **argv) {
       {"version", no_argument, 0, 'v'},
       {"Version", no_argument, 0, 'V'},
       {"quiet", no_argument, 0, 'q'},
+      {"flags", required_argument, 0, 'f'},
 
       // options
       {"hash_block_size", required_argument, 0, 'p'},
@@ -148,7 +148,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVq p:m:r:A:B:C:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqf:p:m:r:A:B:C:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -181,7 +181,32 @@ int main(int argc,char **argv) {
       }
 
       case 'q': {	// quiet mode
-        quiet_mode = true;
+        globals_t::quiet_mode = true;
+        break;
+      }
+
+      case 'f': {	// btree flags
+        std::vector<std::string> flags = split(std::string(optarg), ':');
+        for (std::vector<std::string>::iterator flags_it = flags.begin(); flags_it != flags.end(); ++flags_it) {
+          if (*flags_it == "preload") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::preload;
+          } else if (*flags_it == "cache_branches") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::cache_branches;
+          } else if (*flags_it == "least_memory") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::least_memory;
+          } else if (*flags_it == "low_memory") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::low_memory;
+          } else if (*flags_it == "balanced") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::balanced;
+          } else if (*flags_it == "fast") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::fast;
+          } else if (*flags_it == "fastest") {
+            globals_t::btree_flags |= boost::btree::flags::bitmask::fastest;
+          } else {
+            std::cerr << "Invalid B-Tree flag value '" << *flags_it << "'\n";
+            exit(1);
+          }
+        }
         break;
       }
 
@@ -480,7 +505,7 @@ void run_command() {
     no_p(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     uint32_t identified_blocks_number = (has_max) ? optional_max :
-                             default_explain_identified_blocks_number;
+                         globals_t::default_explain_identified_blocks_number;
     commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2,
                                                    identified_blocks_number);
   } else if (command == "rebuild_bloom") {

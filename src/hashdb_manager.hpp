@@ -35,6 +35,7 @@
 #include "source_metadata_element.hpp"
 #include "source_metadata_manager.hpp"
 #include "hash_t_selector.h"
+#include "globals.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -77,13 +78,17 @@ class hashdb_manager_t {
                 file_mode(p_file_mode),
                 settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
                 multimap(hashdb_dir + "/hash_store",
-                         file_mode_type_to_btree_flags_bitmask(file_mode)),
+                         file_mode_type_to_btree_flags_bitmask(file_mode) |
+                         globals_t::btree_flags),
                 bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions),
                 source_lookup_index_manager(hashdb_dir, file_mode),
                 source_metadata_manager(hashdb_dir, file_mode) {
+std::cout << "hashdb_manager flags: " << 
+                         (file_mode_type_to_btree_flags_bitmask(file_mode) |
+                         globals_t::btree_flags) << "\n";
   }
 
   // insert

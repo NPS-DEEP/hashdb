@@ -34,8 +34,7 @@
 #include <cstdio>
 #include <sstream>
 #include <iostream>
-
-extern bool quiet_mode;
+#include "globals.hpp"
 
 class progress_tracker_t {
   private:
@@ -69,7 +68,7 @@ class progress_tracker_t {
         // total is not known
         ss << "Processing index " << index << " of ?";
       }
-      if (!quiet_mode) {
+      if (!globals_t::quiet_mode) {
         std::cout << ss.str() << "..." << std::endl;
       }
       if (use_logger) {
@@ -89,7 +88,7 @@ class progress_tracker_t {
       // total is not known
       ss << "Processing index " << index << " of " << index << " completed";
     }
-    if (!quiet_mode) {
+    if (!globals_t::quiet_mode) {
       std::cout << ss.str() << std::endl;
     }
     if (use_logger) {

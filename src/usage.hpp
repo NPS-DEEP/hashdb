@@ -41,8 +41,7 @@
 #include "bloom_filter_manager.hpp"
 #include "hashdb_settings.hpp"
 #include "hash_t_selector.h"
-
-extern const uint32_t default_explain_identified_blocks_number;
+#include "globals.hpp"
 
 void usage() {
   hashdb_settings_t s;
@@ -51,10 +50,13 @@ void usage() {
   std::cout
   << "hashdb Version " << PACKAGE_VERSION  << "\n"
   << "Usage: hashdb -h | -H | -v | -V | <command>\n"
-  << "  -h, --help     print this message\n"
-  << "  -H, --Help     print detailed help including usage notes and examples\n"
+  << "  -h, --help         print this message\n"
+//  << "  -H, --Help         print detailed help including usage notes and examples\n"
+  << "  -H, --Help         print this message plus usage notes and examples\n"
   << "  -v, -V, --version, --Version    print version number\n"
-  << "  -q, --quiet    quiet mode\n"
+  << "  -q, --quiet        quiet mode\n"
+  << "  -f, --flags=flags  set B-Tree flags, any of: preload:cache_branches:\n"
+  << "                     least_memory:low_memoy:balanced:fast:fastest\n"
   << "\n"
   << "hashdb supports the following commands:\n"
   << "\n"
@@ -288,7 +290,7 @@ void usage() {
   << "    Options:\n"
   << "    -m <number>               the maximum number of repeats allowed before\n"
   << "                              a hash is dropped (default "
-                        << default_explain_identified_blocks_number << ").\n"
+                   << globals_t::default_explain_identified_blocks_number << ").\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>                  the hash database to use as the lookup source\n"
