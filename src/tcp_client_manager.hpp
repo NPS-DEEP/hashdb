@@ -81,6 +81,7 @@ class tcp_client_manager_t {
   tcp_client_manager_t(const std::string& socket_string) :
         io_service(),
         resolver_iterator(get_resolver_iterator(&io_service, socket_string)),
+        sockets(),
         M() {
   }
 
