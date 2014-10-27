@@ -87,6 +87,7 @@ The following user interface changes provide missing usability or enable further
 ### Import/Export
 New storage _source\_metadata\_store_ is added for storing the source file size and the source file hash digest.
 
+* The parameter ordering of the `import` command is changed to be more intuitive: the database parameter is provided before the dfxml filename parameter.
 * The source file size and file hash are now imported from DFXML.
 * The source file size and hash are now exported to DFXML.
 
