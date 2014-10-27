@@ -37,6 +37,7 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * Correct wording to indicate distinct hashes, not unique hashes.
 * Fix `scan_random` command to correctly scan duplicates from fresh copy rather than from the already open database.
 * Flush every progress status line.  Before, progress did not appear until the stdout buffer was full.
+* Non-standard spacing was removed from the `size` command.
 
 # Known Deficiencies
 * On Windows systems, hashdb cannot open the same database multiple times in read-only mode.

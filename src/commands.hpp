@@ -1232,15 +1232,15 @@ class commands_t {
     }
 
     // print size values
-    std::cout << "  hash store: "
+    std::cout << "hash store: "
               << hashdb_manager.map_size() << "\n"
-              << "  source lookup store: "
+              << "source lookup store: "
               << hashdb_manager.source_lookup_store_size() << "\n"
-              << "  source repository name store: "
+              << "source repository name store: "
               << hashdb_manager.repository_name_lookup_store_size() << "\n"
-              << "  source filename store: "
+              << "source filename store: "
               << hashdb_manager.filename_lookup_store_size() << "\n"
-              << "  source metadata store: "
+              << "source metadata store: "
               << hashdb_manager.source_metadata_lookup_store_size() << "\n";
 /* 
     std::cout << "{\"hash_store\":"
