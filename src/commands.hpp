@@ -250,7 +250,7 @@ class commands_t {
   // print the scan output vector
   static void print_scan_output(
               const std::vector<hash_t>& scan_input,
-              const typename hashdb_t__<hash_t>::scan_output_t& scan_output) {
+              const hashdb_t__<hash_t>::scan_output_t& scan_output) {
 
     // check that there are matches
     if (scan_output.size() == 0) {
