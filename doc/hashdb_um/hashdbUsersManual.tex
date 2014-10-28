@@ -326,13 +326,27 @@ This file also contains internal \hash configuration and versioning information 
 \label{usingSection}
 \hash provides the capability for users to scan the database for matching hash blocks locally or remotely via a socket. Users can also query for hash source information and information about the hash database itself. \hash provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes to the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hash API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hash tool. 
 
-\subsubsection{\bulk}
+\subsection{\bulk}
 \bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
 
 \bulk has multiple scanners that extract features. One particular scanner, the \textit{hashdb} scanner links the full set of \bulk capabilities directly to the \hash tool. The \textit{hashdb} scanner uses the \hash API to create and import data into hash databases  directly from the data processed by \bulk. The scanner also can be run with a hash database as input (again using the \hash API) will scan the data processed by \bulk for matching hash values.\\
 
-The functionality of \hash is provided through command line operation and the available API. The following section describes how to download, install and run \hash. 
+\subsubsection{Forensic Path}
+The \bulk program introduced the concept of the ``forensic path''. The forensic path is a description of the origination of a piece of data. It might come from, for example, a flat file, a data stream, or a decompression of some type of data. Consider an HTTP stream that contains a GZIP-compressed email as shown in Figure ~\ref{fig:forensicPath}. A series of \bulk scanners will first find the ZLIB compressed regions in the HTTP stream that contain the email, decompress them, and then find the features in that email which may include email addresses, names and phone numbers. Using this method, \bulk can find email addresses in compressed data. The forensic path for the email addresses found indicate that it originated in an email, that was GZIP compressed and found in an HTTP stream. The forensic path of the email addresses features found might be represented as shown in the example feature file in Listing \ref{forensicPathExcerpt}. It is worth nothing that the \textit{hashdb} scanner can recognize a matching block embedded in part of another file. No other existing digital forensic tool can do this; other tools find only completely unembedded files.\\
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption=Forensic Path of email address features found in \bulk, label=forensicPathExcerpt]
+11052168704-GZIP-3437  live.com  eMn='domexuser@live.com';var  srf_sDispM
+11052168704-GZIP-3475  live.com  pMn='domexuser@live.com';var  srf_sDreCk
+11052168704-GZIP-3512  live.com  eCk='domexuser@live.com';var  srf_sFT='<
+\end{lstlisting}
 
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.55]{drawings/forensic_path}
+	\caption{Forensic path of features found in email lead back to HTTP Stream}
+	\label{fig:forensicPath}
+\end{figure}
 
 
 %\section{Running \hash}
@@ -639,6 +653,7 @@ Users will prefer to run statistical commands such as this to get information ab
 \end{Verbatim}
 
 \subsection{Database Manipulation}
+\label{DatabaseManipulation}
 Databases may need to be merged together or common hash values may need to be subtracted out in order for them to be more suitable for scanning against.
 Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
 Destination databases are created if they do not exist yet.
@@ -791,63 +806,44 @@ Total email features found: 0
 
 All hash block matches discovered in the hash database are printed to the \bulk output file \texttt{identified\_blocks.txt}. Listing \ref{identifiedBlocks} shows the contents of that file after the \bulk run. Each line of the file corresponds to one hash block from the input data provided that was matched in the database. The number at the beginning of the line is the Forensic Path.\\
 
-The \bulk program introduced the concept of the ``forensic path''. The forensic path is a description of the origination of a piece of data. It might come from, for example, a flat file, a data stream, or a decompression of some type of data. Consider an HTTP stream that contains a GZIP-compressed email as shown in Figure ~\ref{fig:forensicPath}. A series of \bulk scanners will first find the ZLIB compressed regions in the HTTP stream that contain the email, decompress them, and then find the features in that email which may include email addresses, names and phone numbers. Using this method, \bulk can find email addresses in compressed data. The forensic path for the email addresses found indicate that it originated in an email, that was GZIP compressed and found in an HTTP stream. The forensic path of the email addresses features found might be represented as shown in the example feature file in Listing \ref{forensicPathExcerpt}. It is worth nothing that the \textit{hashdb} scanner can recognize a matching block embedded in part of another file. No other existing digital forensic tool can do this; other tools find only completely unembedded files.\\
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption=Forensic Path of email address features found in \bulk, label=forensicPathExcerpt]
-11052168704-GZIP-3437  live.com  eMn='domexuser@live.com';var  srf_sDispM
-11052168704-GZIP-3475  live.com  pMn='domexuser@live.com';var  srf_sDreCk
-11052168704-GZIP-3512  live.com  eCk='domexuser@live.com';var  srf_sFT='<
-\end{lstlisting}
-
-
-\begin{figure}
-	\center
-	\includegraphics[scale=.55]{drawings/forensic_path}
-	\caption{Forensic path of features found in email lead back to HTTP Stream}
-	\label{fig:forensicPath}
-\end{figure}
 
 The second column of the \texttt{identified\_blocks.txt} file shows the actual block hash value. The final column is the number of times this block hash value has been added to the hash database. It is a count of hash duplicates. Hash duplicates occur when the hash value is the same but any part of the source information including repository name, filename or offset, is unique. In this case, each hash values shown has only been added to the database once.\\
-
-To identify the source information associated with the hash values found in \texttt{identified\_blocks.txt}, type the following command using the hash database and \texttt{identified\_blocks.txt} file as input (command should be run from the same directory in which you ran \bulk):
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb expand_identified_blocks mock_video.hdb outdir/identified_blocks.txt} 
-\textbf{  > identified_sources.txt}
-\end{Verbatim}
-The above command pipes the output directly into the file \texttt{identified\_sources.txt}. Each line of the file will provide the source information for one of the identified hash blocks. An example line from this file is shown in Listing \ref{identifiedSourceLine},
-which shows that the block at Forensic path 12464640 matches the block 10498048 bytes into the \texttt{mock\_video.mp4} files in the hash database, indicating a positive match.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={The \texttt{identified\_blocks.txt} file produced by \bulk's \textit{hashdb} scanner. First column is the forensic path, second is the hash value, and third is the number of times the hash value occurs in the database}, label=identifiedBlocks]
 # BANNER FILE NOT PROVIDED (-b option)
-# BULK_EXTRACTOR-Version: 1.4.1 ($Rev: 10844 $)
+# BULK_EXTRACTOR-Version: 1.5.5-dev ($Rev: 10844 $)
 # Feature-Recorder: identified_blocks
-# Filename: mock_video_redacted_image
+# Filename: /home/bdallen/demo8/demo_video_redacted_image
 # Feature-File-Version: 1.1
-12452352	3b6b477d391f73f67c1c01e2141dbb17	1
-12456448	89a170b6b9a948d21d1d6ee1e7cdc467	1
-12460544	f58a09656658c6b41e244b4a6091592c	1
-12464640	1d0abbddf1344ac751d17604bdd9ebe8	1
-12468736	16d75027533b0a5ab900089a244384a0	1
-12472832	97068927ff7ca0c4d27ac527474065bc	1
-12476928	80a403ea48854676501a02e390a69699	1
-12481024	7de953ea563c4df1f8369d8dd2cfb4d9	1
-12485120	1b803bd6e014d1855e6f8413041c2b07	1
-12489216	cf49adf3285b983d9f8d60497290bfd2	1
-12493312	4cc415709e205ac0ef5b5dcfb77936b6	1
-12497408	0c5c611edc8dfd34f85c6cbf88702e51	1
-12501504	4a93e65fb187d71c2b8b5697f1460e3d	1
-12505600	a667f79e6446222092257af1780f6a9f	1
-12509696	aec94ab99f591f507b3c27424a0b52c5	1
-12513792	c6361fe0eb4f7b13bac6529e1cdd8ea4	1
+12452352	3b6b477d391f73f67c1c01e2141dbb17	{"count":1}
+12456448	89a170b6b9a948d21d1d6ee1e7cdc467	{"count":1}
+12460544	f58a09656658c6b41e244b4a6091592c	{"count":1}
+12464640	1d0abbddf1344ac751d17604bdd9ebe8	{"count":1}
+12468736	16d75027533b0a5ab900089a244384a0	{"count":1}
+12472832	97068927ff7ca0c4d27ac527474065bc	{"count":1}
+12476928	80a403ea48854676501a02e390a69699	{"count":1}
+12481024	7de953ea563c4df1f8369d8dd2cfb4d9	{"count":1}
+12485120	1b803bd6e014d1855e6f8413041c2b07	{"count":1}
+12489216	cf49adf3285b983d9f8d60497290bfd2	{"count":1}
+12493312	4cc415709e205ac0ef5b5dcfb77936b6	{"count":1}
+12497408	0c5c611edc8dfd34f85c6cbf88702e51	{"count":1}
+12501504	4a93e65fb187d71c2b8b5697f1460e3d	{"count":1}
+12505600	a667f79e6446222092257af1780f6a9f	{"count":1}
+12509696	aec94ab99f591f507b3c27424a0b52c5	{"count":1}
+12513792	c6361fe0eb4f7b13bac6529e1cdd8ea4	{"count":1}
 \end{lstlisting}
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. First column is the forensic path, second is the hash value, and third is the repository name, filename, and file offset}, label=identifiedSourceLine]
-12464640 1d0abbddf1344ac751d17604bdd9ebe8 repository_name=mock_video_repos
-itory,filename=C:\md5deep\md5deep-4.3\mock_video.mp4,file_offset=10498048
+12464640	1d0abbddf1344ac751d17604bdd9ebe8	{"count":1,"source
+_id":1,"repository_name":"temp1","filename":"/home/bdallen/demo8/demo_vide
+o.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc09740e939d"
+}
 \end{lstlisting}
 
-Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. For now, \hash provides commands for this:
+Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
+\textbf{\autoref{DatabaseManipulation}}
+, can mitigate this, for example:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
 \item Alternatively, use the ``deduplicate'' command to copy all hash values that have been imported exactly once.
@@ -856,7 +852,7 @@ These commands are provided to manage false positives.
 
 \subsection{Statistics}
 Various statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
-Table \ref{tab:statistics} describes available statistics.
+Table \ref{tab:statistics} describes available statistics.\\
 
 \begin{table}[!ht]
 \centering
@@ -882,6 +878,70 @@ Table \ref{tab:statistics} describes available statistics.
 \hline
 \end{tabular}
 \end{table}
+
+To identify the source information associated with the hash values found in \texttt{identified\_blocks.txt}, type the following command using the hash database and \texttt{identified\_blocks.txt} file as input (command should be run from the same directory in which you ran \bulk):
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb expand_identified_blocks mock_video.hdb outdir/identified_blocks.txt} 
+\textbf{  > identified_sources.txt}
+\end{Verbatim}
+The above command pipes the output directly into the file \texttt{identified\_sources.txt}. Each line of the file will provide the source information for one of the identified hash blocks. An example line from this file is shown in Listing \ref{identifiedSourceLine},
+which shows that the block at Forensic path 12464640 matches the block 10498048 bytes into the \texttt{mock\_video.mp4} files in the hash database, indicating a positive match.\\
+
+A table of more relevant hashes and source information may be generated using the \verb+explain_identified_blocks+ command.
+To generate these tables for \texttt{identified\_blocks.txt}, type the following command using the hash database and \texttt{identified\_blocks.txt} file as input (command should be run from the same directory in which you ran \bulk):
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb explain_identified_blocks mock_video.hdb outdir/identified_blocks.txt} 
+\textbf{  > explained_hashes_and_sources.txt}
+\end{Verbatim}
+The above command pipes the output directly into the file \texttt{explain\_hashes\_and\_sources.txt}.
+The output of this command is shown in Listing \ref{explainHashesAndSources}.
+The first table in file \texttt{explain\_hashes\_and\_sources.txt}
+shows block hashes, their source ID, and the offset into the file where they were sourced from.
+The second table in the file shows sources, in this case, just one source corresponding to source ID 1.
+Each line of source information describes
+the repository name, filename, file size, and file hash for a given source ID.\\
+
+\begin{lstlisting}[float, caption={The \texttt{identified\_hashes\_and\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file using the \texttt{explain\_identified\_blocks} command}, label=explainHashesAndSources]
+# hashdb-Version: 1.1.0-alpha1
+# explain_identified_blocks-command-Version: 1
+# hashes
+["0c5c611edc8dfd34f85c6cbf88702e51",{},[{"source_id":1,"file_offset":10530
+816}]]
+["16d75027533b0a5ab900089a244384a0",{},[{"source_id":1,"file_offset":10502
+144}]]
+["1b803bd6e014d1855e6f8413041c2b07",{},[{"source_id":1,"file_offset":10518
+528}]]
+["1d0abbddf1344ac751d17604bdd9ebe8",{},[{"source_id":1,"file_offset":10498
+048}]]
+["3b6b477d391f73f67c1c01e2141dbb17",{},[{"source_id":1,"file_offset":10485
+760}]]
+["4a93e65fb187d71c2b8b5697f1460e3d",{},[{"source_id":1,"file_offset":10534
+912}]]
+["4cc415709e205ac0ef5b5dcfb77936b6",{},[{"source_id":1,"file_offset":10526
+720}]]
+["7de953ea563c4df1f8369d8dd2cfb4d9",{},[{"source_id":1,"file_offset":10514
+432}]]
+["80a403ea48854676501a02e390a69699",{},[{"source_id":1,"file_offset":10510
+336}]]
+["89a170b6b9a948d21d1d6ee1e7cdc467",{},[{"source_id":1,"file_offset":10489
+856}]]
+["97068927ff7ca0c4d27ac527474065bc",{},[{"source_id":1,"file_offset":10506
+240}]]
+["a667f79e6446222092257af1780f6a9f",{},[{"source_id":1,"file_offset":10539
+008}]]
+["aec94ab99f591f507b3c27424a0b52c5",{},[{"source_id":1,"file_offset":10543
+104}]]
+["c6361fe0eb4f7b13bac6529e1cdd8ea4",{},[{"source_id":1,"file_offset":10547
+200}]]
+["cf49adf3285b983d9f8d60497290bfd2",{},[{"source_id":1,"file_offset":10522
+624}]]
+["f58a09656658c6b41e244b4a6091592c",{},[{"source_id":1,"file_offset":10493
+952}]]
+# sources
+{"source_id":1,"repository_name":"temp1","filename":"/home/bdallen/demo8/d
+emo_video.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc097
+40e939d"}
+\end{lstlisting}
 
 \subsection{Tuning}
 Tuning commands are provided to improve performance or allow upgrade capability,
@@ -1021,12 +1081,11 @@ There is no security in the current protocol. It should only be used on a privat
 
 \subsection{Writing Software that works with \hash}
 \label{APISection}
-\hash provides an API that other software programs can use to access two important database capabilities. The file \texttt{hashdb.hpp} found in the \textit{src} directory contains the complete specification of the API. That complete file is also contained in Appendix \ref{hashdbapi} of this document.  The two key features provided by the API include the ability to import values into a hash database and the ability to scan media for any values matching those in a given hash database.  The \bulk program uses the \hash API to implement both of these capabilities.  The following section provides more information on how to access these features. \\
+\hash provides an API that other software programs can use to access two important database capabilities. The file \texttt{hashdb.hpp} found in the \textit{src} directory contains the complete specification of the API. That complete file is also contained in Appendix \ref{hashdbapi} of this document.  The two key features provided by the API include the ability to import values into a hash database and the ability to scan media for any values matching those in a given hash database.  The \bulk program uses the \hash API to implement both of these capabilities.\\
 
 \subsection{Scanning or Importing to a Database Using \bulk}
 \label{bulkextractorSection}
-The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner. Options include
-%zzzzzzz
+The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner.\\
 
 For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from the disk image \texttt{my\_image} to a hash database:
 \begin{Verbatim}[commandchars=\\\{\}]
