@@ -41,42 +41,6 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \thispagestyle{empty}
 \mbox{}
 \newpage
-\section*{One Page Quickstart for Linux and Mac Users}
-This page provides a very brief introduction to downloading, installing and running \hash (creating a database and populating it) on Linux and MacOS systems. 
-\begin{enumerate}
-\item Download the latest version of \hash. It can be obtained from \url{http://digitalcorpora.org/downloads/hashdb}. The file is called \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. 
-
-\item Un-tar and un-zip the file.  In the newly created \textit{hashdb-x.y.z} directory, run the following commands:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{./configure}
-\verbbf{make}
-\verbbf{sudo make install}
-\end{Verbatim}
-[Refer to \textbf{\Autoref{Installation}}. Note, for full functionality, some users may need to first download and install dependent library files. Instructions are outlined in the referenced section.]
-
-\item Navigate to the directory where you would like to create a hash database. Then, to run \hash from the command line, type the following instructions: 
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create sample.hdb}
-\end{Verbatim} 
-
-In the above instructions, \textit{\textbf{sample.hdb}} is that empty database that will be created with default database settings. 
-
-\item Next, import data into the database, you will need a DFXML file containing block hash values. If you do not already have one, see \textbf{\Autoref{createDFXML}} for instructions on creating one. To populate the hash database with the hashes from the DFXML file called \texttt{sample.xml}, type the following instructions from the directory where you created the database:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import sample.xml sample.hdb}
-\end{Verbatim} 
-This command, if executed successfully, will print the number of hash values inserted. For example: 
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
-hashdb changes (insert):
-    hashes inserted: 2595
-\end{Verbatim}
-\endgroup
-\item Additionally, the file \texttt{log.xml} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will show the number of hash values that have been inserted [see \textbf{\Autoref{updateSection} }for more information on the change statistics tracked in the log file].
-\end{enumerate}
-\newpage
 
 \section*{One Page Quickstart for Windows Users}
  This page provides a very brief introduction to downloading, installing and running \hash on Windows systems. 
@@ -90,9 +54,9 @@ hashdb changes (insert):
 \verbbf{hashdb create sample.hdb}
 \end{Verbatim} 
 
-In the above instructions, \textit{\textbf{sample.hdb}} is that empty database that will be created with default database settings.
+In the above instructions, \texttt{\textbf{sample.hdb}} is thet empty database that will be created with default database settings.
 
-\item Next, import data into the database, you will need a DFXML file containing sector hash values. If you do not already have one, see \textbf{\Autoref{createDFXML}} for instructions on creating one. To populate the hash database with the hashes from the DFXML file called \texttt{sample.xml}, type the following instructions from the directory where you created the database:
+\item Next, import data into the database. You will need a DFXML file containing sector hash values. If you do not already have one, see \textbf{\Autoref{createDFXML}} for instructions on creating one. To populate the hash database with the hashes from the DFXML file called \texttt{sample.xml}, type the following instructions from the directory where you created the database:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import sample.xml sample.hdb}
 \end{Verbatim} 
@@ -104,11 +68,47 @@ hashdb changes (insert):
     hashes inserted: 2595
 \end{Verbatim}
 \endgroup
-\item Additionally, the file \texttt{log.xml} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will show the number of hash values that have been inserted [see \textbf{\Autoref{updateSection}} for more information on the change statistics tracked in the log file].
+\item Additionally, the file \texttt{log.xml} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will show the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices}} for more information on the change statistics tracked in the log file].
  
 
 \end{enumerate}
 
+\newpage
+\section*{One Page Quickstart for Linux and Mac Users}
+This page provides a very brief introduction to downloading, installing and running \hash (creating a database and populating it) on Linux and MacOS systems. 
+\begin{enumerate}
+\item Download the latest version of \hash. It can be obtained from \url{http://digitalcorpora.org/downloads/hashdb}. The file is called \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. 
+
+\item Un-tar and un-zip the file.  In the newly created \textit{hashdb-x.y.z} directory, run the following commands:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{./configure}
+\verbbf{make}
+\verbbf{sudo make install}
+\end{Verbatim}
+Note, users will likely need to first download and install dependent library files. Instructions are outlined in the referenced section.  [Refer to \textbf{\Autoref{Installation}}].
+
+\item Navigate to the directory where you would like to create a hash database. Then, to run \hash from the command line, type the following instructions: 
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb create sample.hdb}
+\end{Verbatim} 
+
+In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings. 
+
+\item Next, import data into the database. You will need a DFXML file containing block hash values. If you do not already have one, see \textbf{\Autoref{createDFXML}} for instructions on creating one. To populate the hash database with the hashes from the DFXML file called \texttt{sample.xml}, type the following instructions from the directory where you created the database:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb import sample.xml sample.hdb}
+\end{Verbatim} 
+This command, if executed successfully, will print the number of hash values inserted. For example: 
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+hashdb changes (insert):
+    hashes inserted: 2595
+\end{Verbatim}
+\endgroup
+\item Additionally, the file \texttt{log.xml} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will show the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices} }for more information on the change statistics tracked in the log file].
+\end{enumerate}
 \newpage
 
 
@@ -127,7 +127,7 @@ hashdb changes (insert):
 \hash is a tool that can be used to find data in raw media using cryptographic hashes calculated from blocks of data. It is a useful forensic investigation tool for tasks such as malware detection, child exploitation detection or corporate espionage investigations. The tool provides several capabilities that include:
 \begin{itemize}
 \item Creating hash databases of MD5 block hashes, as opposed to file hashes.
-\item Importing hash values from Digital Forensic XML (DFXML) files created by other programs such as \textbf{md5deep}.
+\item Importing hash values from Digital Forensic XML (DFXML) files created by other programs such as \textbf{md5deep} or \textbf{fiwalk}.
 \item Scanning the hash database for matching hash values using either the local or remote system. 
 \item Providing the source information for hash values. 
 \end{itemize}
@@ -191,12 +191,12 @@ Figure \ref{fig:overviewFigure} provides an overview of the capabilities include
 \hash can be used to populate hash databases by importing block hashes from DFXML files.
 DFXML is an XML language designed to represent a wide range of forensic information and forensic processing results. It allows the sharing of structured information between independent tools and organizations \cite{dfxmlpaper}.\\
 
-Please note that \hash does not require DFXML files to import hashes.
+Note that \hash does not require DFXML files to import hashes.
 The \bulk \hash scanner can import hashes directly into a new hash database,
-see Section \ref{ImportingAndScanning} for importing using the \bulk \hash scanner.
+see \textbf{\autoref{ImportingAndScanning}} for importing using the \bulk \hash scanner.
 Also, third party tools can be created for importing hashes
 directly into a hash database by interfacing with the \hash library API,
-see Section \ref{usingSection}.
+see \textbf{autoref{usingSection}}.
 
 \subsubsection{Creating a DFXML file using \textbf{md5deep}}
 
@@ -306,7 +306,7 @@ These files include XML files containing configuration settings and logs, a Bloo
 \begin{itemize}
 \item \texttt{log.xml} \\
 Every time a command is run that changes the content of the database, this file is replaced with a log of the run.
-The log includes the command name, information about \hash including the command typed and how \hash was compiled, information about the operating system \hash was just run on, timestamps indicating how much time the command took, and the specific \hash changes applied, described in more detail in Section \ref{Running}.
+The log includes the command name, information about \hash including the command typed and how \hash was compiled, information about the operating system \hash was just run on, timestamps indicating how much time the command took, and the specific \hash changes applied, described in more detail in \textbf{\autoref{Running}}.
 \item \texttt{history.xml} \\
 The purpose of this file is to provide full attribution for a database.
 Every \hash command executed that changes the state of the database
@@ -437,13 +437,14 @@ Users then scan for hashes that match.
 Additional commands are provided to support statistical analysis, performance tuning and performance analysis.\\
 
 This section describes \hash commands, along with examples, for performing these tasks.
-For more examples of command usage, please see Section \ref{UseCases}.
-For a \hash quick reference summary, please see Appendix \ref{QuickReference}
+For more examples of command usage, please see \textbf{\autoref{UseCases}}.
+For a \hash quick reference summary, please see \textbf{\autoref{QuickReference}}
 or \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
 
 \subsection{General Usage}
-Some commands display progress which can be suppressed using quiet mode,
-see Table \ref{tab:general}.
+Some options apply generically to multiple commands,
+see Table \ref{tab:general}.\\
+
 \begin{table}[!ht]
 \centering
 \caption{Options for General Usage}
@@ -454,8 +455,25 @@ see Table \ref{tab:general}.
 \hline
 \textbf{\texttt{-q}} & \verb+--quiet+ & Requests quiet mode for commands that print progress status\\
 \hline
+\textbf{\texttt{-f}} & \verb+--flags+ & Flags controlling mode: \texttt{preload cache\_branches least\_memory low\_memory balanced fast fastest}\\
+\hline
 \end{tabular}
 \end{table}
+
+Option \textbf{\texttt{-q}} suppresses progress output for commands that print progress.\\
+
+Option \textbf{\texttt{-f}} allows control of flags that impact run-time performance when opening the B-Trees that store the hashes inside hash databases.
+Mutlple flags may be provided by separating them with colon character ``:''.
+Flags include:
+\begin{itemize}
+\item \texttt{preload} - read the existing file to preload O/S file cache.
+\item \texttt{cache\_branches} - enable permanent cache of all branch nodes touched. Otherwise make branch node available when use count becomes 0, just like leaf nodes.
+\item \texttt{least\_memory}
+\item \texttt{low\_memory}
+\item \texttt{balanced}
+\item \texttt{fast}
+\item \texttt{fastest}
+\end{itemize}
 
 
 \subsection{Creating a Hash Database}
@@ -463,18 +481,18 @@ A hash database must be created before hashes can be added to it.
 The command to create a hash database is shown in Table \ref{tab:createDatabase}.
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Create a Database}
+\caption{Commands Available in \hash Command Line Tool to Create Hash Databases}
 \label{tab:createDatabase}
 \begin{tabular}{|p{2.5 cm}|p{7 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & create [-p $<$hash block size$>$] [-m$<$maximum duplicates$>$ hashdb.hdb & Creates a new hash database with the given configuration parameters.\\
+\textbf{create} & \verb+create [-p <hash block size>]+ \verb+[-m<maximum duplicates>]+ \verb+[--bloom <state>] [--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+hashdb.hdb+ & Creates a new hash database with the given configuration parameters.\\
 \hline
 \end{tabular}
 \end{table}
 
-Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional parameters that can be used to specify database settings.
+Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional parameters that can be used to specify database settings.\\
 
 \begin{table}[!ht]
 \centering
@@ -493,17 +511,17 @@ Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional pa
 
 \begin{table}[!ht]
 \centering
-\caption{Bloom Filter Settings for New Databases}
+\caption{Bloom Filter Settings}
 \label{tab:bloomSettings}
 \begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
 \hline
-\textbf{\texttt{-A}} & \verb+--bloom +\textit{enabled}|\textit{disabled}+ & Enables or disables the Bloom filter.\\
+\textbf{\texttt{-A}} & \verb+--bloom=+\textit{enabled}|\textit{disabled} & Enables or disables the Bloom filter.\\
 \hline
-\textbf{\texttt{-B}} & \verb+--bloom_n <n>+ & Configures Bloom filter to work well for a database of $<$n$>$ hashes.\\
+\textbf{\texttt{-B}} & \verb+--bloom_n=<n>+ & Configures Bloom filter to work well for a database of $<$n$>$ hashes.\\
 \hline
-\textbf{\texttt{-C}} & \verb+--bloom_kM <k:M>+ & Available for advanced or experimental use.  Configures Bloom filter with k hash functions and M bits per hash.\\
+\textbf{\texttt{-C}} & \verb+--bloom_kM=<k:M>+ & Available for advanced or experimental use.  Configures Bloom filter with k hash functions and M bits per hash.\\
 \hline
 \end{tabular}
 \end{table}
@@ -512,7 +530,7 @@ Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional pa
 This setting specifies the hash block size used to generate hashes.
 The hash block size must be greater than or equal to the sector size of 512,
 and must be divisible by 512 in order to be byte aligned, as discussed
-in Section \ref{HashBlocks}.\\
+in \textbf{\autoref{HashBlocks}}.\\
 
 \textbf{Maximum Duplicates}\\
 This setting specifies the maximum number of duplicates of a hash value
@@ -521,8 +539,17 @@ A default value of 0 means unlimited, but this may be unreasonable.
 For example if a block is repeated many times and is thus not interesting,
 limit storing its duplicates using this setting.\\
 
+\textbf{Bloom}\\
+This setting controls whether the Bloom filter will be enabled or disabled. \\
+
+\textbf{Bloom\_n}\\
+This setting controls the size of the Bloom filter by using the number of hashes expected in the database as input. \\
+
+\textbf{Bloom\_kM}\\
+This setting directly controls the number of hash functions and the number of bits per hash to use in the Bloom filter and is only recommended for experimentation.  We recommend using \verb+bloom_n+ instead.\\
+
 \textbf{Example}\\
-To create an (empty) hash database named \textbf{\textit{mock\_video.hdb}}, type the following command:
+To create an (empty) hash database named \textbf{\texttt{mock\_video.hdb}}, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb create mock_video.hdb}
 \end{Verbatim}
@@ -532,9 +559,9 @@ Users can specify either the option and value or the verbose option value for ea
 \verbbf{hashdb create --max\_duplicates=20 mock_video.hdb}
 \verbbf{hashdb create -m 20 mock_video.hdb}
 \end{Verbatim}
-The above two commands produce identical results, creating the database \textit{mock\_video.hdb} that will accept a maximum of 20 hash duplicates.\\
+The above two commands produce identical results, creating the database \texttt{mock\_video.hdb} that will accept a maximum of 20 hash duplicates.\\
 
-\subsection{Importing and Exporting between a DFXML File and a Hash Database}
+\subsection{Importing and Exporting using DFXML}
 Hash databases may be imported from and exported to files in DFXML format.
 Once a database has been created, it may be populated with hash values from a DFXML file.
 Commands to import and export hashes are shown in Table \ref{tab:importExport}.
@@ -546,23 +573,23 @@ Commands to import and export hashes are shown in Table \ref{tab:importExport}.
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{import} & import [-r $<$ repository name $>$] $<$DFXML file.xml$>$ $<$hashdb.hdb$>$& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported\\
+\textbf{import} & \verb+import [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported\\
 \hline
-\textbf{export} & export $<$hashdb.hdb$>$ $<$DFXML file.xml$>$ & Exports hash database to the DFXML file\\
+\textbf{export} & \verb+export <hashdb.hdb> <DFXML file.xml>+ & Exports hash database to the DFXML file\\
 \hline
 \end{tabular}
 \end{table}
-Note that there are other ways to populate a database besides importing from a DFXML file, including using other hash databases (discussed in Section \ref{updateSection}),
-by using the \bulk \hash scanner (discussed in Section \ref{bulkextractorSection}),
-and through the use of the import capability provided by the API (discussed in Section \ref{APISection}).
+Note that there are other ways to populate a database besides importing from a DFXML file, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
+by using the \bulk \hash scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
+and through the use of the import capability provided by the \hdb library API (discussed in \textbf{\autoref{APISection}}).\\
 
 Using the DFXML file created in the previous section, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import -r mock_video_repository mock_video.xml mock_video.hdb}
 \end{Verbatim}
-In the above command the option \textbf{-r} is used along with the repository name \texttt{mock\_video} \textbf{\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. Hash blocks contained in one database often originate from many different sources and the fileme may be the same. For example, if we add two separate but similar databases with partial overlap to a database, this will result in some duplicate hashes from multiple sources with the same filename. The repository name can be used with those duplicates to allow users to track all hashes back to their original sources. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
+In the above command the option \textbf{-r} is used along with the repository name \texttt{mock\_video\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. Hash blocks contained in one database often originate from many different sources and the fileme may be the same. For example, if we add two separate but similar databases with partial overlap to a database, this will result in some duplicate hashes from multiple sources with the same filename. The repository name can be used with those duplicates to allow users to track all hashes back to their original sources. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{import} command in the above example imports the contents of \texttt{mock\_video.xml} into the database \textit{mock\_video.hdb}. \hash prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
+The \textbf{import} command in the above example imports the contents of \texttt{mock\_video.xml} into the database \texttt{mock\_video.hdb}. \hash prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
 
 \begingroup
 \footnotesize
@@ -571,7 +598,8 @@ hashdb changes (insert):
     hashes inserted: 2595
 \end{Verbatim}
 \endgroup
-The database \textit{\textbf{mock\_video.hdb}} now holds 2595 hash values. Navigate into the directory, \textit{mock\_video.hdb}. It will contain a set of database files, the following lists the contents:
+The database \texttt{\textbf{mock\_video.hdb}} now holds 2595 hash values.
+If curious, you may navigate into the directory \texttt{mock\_video.hdb} to observe its set of database files. The following lists the contents:
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
@@ -605,15 +633,15 @@ The file \texttt{log.xml} shows that a set of hash blocks have just been inserte
     </hashdb_changes>
 ...
 \end{lstlisting}
-Users can also run the following command to get information about the contents of the database (and confirm that values were inserted):
+Users will prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb statistics mock_video.hdb}
+\verbbf{hashdb size mock_video.hdb}
 \end{Verbatim}
 
-\subsection{Manipulating Hash Databases}
+\subsection{Database Manipulation}
 Databases may need to be merged together or common hash values may need to be subtracted out in order for them to be more suitable for scanning against.
 Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
-Destination databases are created if they do not yet exist.
+Destination databases are created if they do not exist yet.
 
 \begin{table}[!ht]
 \centering
@@ -623,19 +651,21 @@ Destination databases are created if they do not yet exist.
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{add} & add $<$source db$>$ $<$destination db$>$ & Copies all of the hashes from \textit{source db} to \textit{destination db}\\
+\textbf{add} & \verb+add <source db>+ \verb+<destination db>+ & Copies all of the hashes from \textit{source db} to \textit{destination db}\\
 \hline
-\textbf{add\_multiple} &  add\_multiple $<$source db1$>$ $<$source db2$>$ $<$destination db$>$ & Performs the union of \textit{source db1} and \textit{source db2} and copies all of the hash values from the union into \textit{destination db}\\
+\textbf{add\_multiple} &  \verb+add_multiple <source db1>+ \verb+<source db2> <destination db>+ & Performs the union of \textit{source db1} and \textit{source db2} and copies all of the hash values from the union into \textit{destination db}\\
 \hline
-\textbf{add\_repository} &  add\_repository$<$source db1$>$ $<$destination db2$>$ $<$repository namedb$>$ & Adds \textit{source db1} to \textit{destination db2} but only when the repository name matches\\
+\textbf{add\_repository} & \verb+add_repository <source db1>+ \verb+<destination db2>+ \verb+<repository namedb>+ & Adds \textit{source db1} to \textit{destination db2} but only when the repository name matches\\
 \hline
-\textbf{import} & import [-r $<$ repository name $>$] $<$DFXML file$>$ $<$hashdb$>$& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported\\
+\textbf{intersect} & \verb+intersect <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} where sources match\\
 \hline
-\textbf{intersect} & intersect $<$source db1$>$ $<$source db2$>$ $<$destination db$>$&   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db}\\
+\textbf{intersect\_hash} & \verb+intersect_hash <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} even when source repository name and filename do not match\\
 \hline
-\textbf{subtract} & subtract $<$source db1$>$ $<$source db2$>$ $<$destination db$>$&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db}\\
+\textbf{subtract} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} where sources match\\
 \hline
-\textbf{deduplicate} & deduplicate $<$source db$>$ $<$destination db$>$&   Copies all non-duplicate hash values from \textit{source db} into \textit{destination db}\\
+\textbf{subtract\_hash} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} even when source repository name and filename do not match\\
+\hline
+\textbf{deduplicate} & \verb+deduplicate <source db>+ \verb+<destination db>+ &   Copies all non-duplicate hash values from \textit{source db} into \textit{destination db}\\
 \hline
 \end{tabular}
 \end{table}
@@ -647,78 +677,85 @@ These statistics are shown in Table \ref{tab:changeStatistics}.
 \begin{table}[!ht]
 
 \centering
-\caption{Database Statistics reported on the console and tracked in the file \texttt{log.xml}}
+\caption{Database Changes Reported on the Console and Tracked in the \texttt{log.xml} File}
 \label{tab:changeStatistics}
 \begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
 \textbf{Statistic} & \textbf{Meaning} \\
 \hline
-{hashes\_inserted} &  Number of hashes inserted.\\
+\verb+hashes_inserted+ &  Number of hashes inserted.\\
 \hline
-hashes\_not\_inserted\_ mismatched\_hash\_block\_size & Number of hashes not inserted
+\verb+hashes_not_inserted_+ \verb+mismatched_hash_block_size+ & Number of hashes not inserted
 because the hash block size of the block requested for insert was
 incorrect. For example if the database requires a hash block size of 4096,
 and the file size is 5096 bytes, the last block hash size will be an (invalid) 100 bytes,
 so it will not be inserted. NOTE: this will occur almost every time hash blocks are added to the database since the remaining bytes of every file are not likely to be comprised of the exact hash size. This is not an error.\\
 \hline
-hashes\_not\_inserted\_ invalid\_byte\_alignment &  Number of hashes not inserted because the file offset was not byte aligned.
+\verb+hashes_not_inserted_+ \verb+invalid_byte_alignment+ &  Number of hashes not inserted because the file offset was not byte aligned.
 If the database expects a byte alignment of 512 and the \hash user
 tries to add a hash at byte 80, \hash will detect that 80 does not fall on
-a 512 byte boundary $(80 \% 512 \ne 0)$.\\
+a 512 byte boundary (80 mod 512 $\ne$ 0).\\
 \hline
-hashes\_not\_inserted\_exceeds \_max\_duplicates & Number of hashes not inserted because they exceed the max duplicates value. For example, user sets max duplicates with \texttt{-m 20} and the run attempts to import 30 hashdigests calculated from 30 NULL blocks of input, so we see 20 max duplicates.\\
+\verb+hashes_not_inserted_+ \verb+exceeds_max_duplicates+ & Number of hashes not inserted because they exceed the max duplicates value. For example, user sets max duplicates with \texttt{-m 20} and the run attempts to import 30 hashdigests calculated from 30 NULL blocks of input, so we see 20 max duplicates.\\
 \hline
-hashes\_not\_inserted\_ duplicate\_element& Number of hashes not inserted because they are duplicate elements. The user attempts to import a hash where the hash value, repository name, filename, and its file offset
+\verb+hashes_not_inserted_+ \verb+duplicate_element+ & Number of hashes not inserted because they are duplicate elements. The user attempts to import a hash where the hash value, repository name, filename, and its file offset
 are all the same.\\
 \hline
-hashes\_removed& Number of hashes removed \\
+\verb+hashes_removed+ & Number of hashes removed.\\
 \hline
-hashes\_not\_removed\_ mismatched\_hash\_block\_size& Number of hashes not removed because the hash block size of the block requested for removal did not match the hash block size the database was configured to accept.
+\verb+hashes_not_removed_+ \verb+mismatched_hash_block_size+ & Number of hashes not removed because the hash block size of the block requested for removal did not match the hash block size the database was configured to accept.
 \\
 \hline
-hashes\_not\_removed\_ invalid\_byte\_alignment &  Number of hashes not removed because the file offset was not byte aligned.\\
+\verb+hashes_not_removed_+ \verb+invalid_byte_alignment+ &  Number of hashes not removed because the file offset was not byte aligned.\\
 \hline
-hashes\_not\_removed\_no\_ hash&  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
+\verb+hashes_not_removed_+ \verb+no_hash+ &  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
 \hline
-hashes\_not\_removed\_no\_ element&  Number of hashes not removed because the hashes, specifically identified by 
+\verb+hashes_not_removed_+ \verb+no_element+ &  Number of hashes not removed because the hashes, specifically identified by 
 hash value, repository name, filename, and its file offset do not exist in the database, indicating a possible mistake in database management.\\
+\hline
+\verb+source_metadata_inserted+ & Number of metadata items inserted.\\
+\hline
+\verb+source_metadata_inserted_+ \verb+already_present+ & Number of metadata items not inserted because the specified metadata is already present.\\
 \hline
 \end{tabular}
 \end{table}
 
-\subsection{Scanning Media for Hash Values}
-\hash can be used to determine if a file, directory or disk image has content that matches another file, directory or disk image. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content. To scan media for hash values, run using the \bulk \textit{hashdb} scanner on a media image file and provide a hash database created by \hash as input.
+\subsection{Scan Services}
+\label{ScanServices}
+\hash can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content. To scan media for hash values, run using the \bulk \textit{hashdb} scanner on a media image file and provide a hash database created by \hash as input.
 Scan services are shown in Table \ref{tab:scanServices}. \\
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Query a Database}
+\caption{Commands Available in \hash Command Line Tool for Scanning Hash Databases}
 \label{tab:scanServices}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{scan} & scan $<$path\_or\_socket$>$ $<$DFXML file$>$ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out matches.\\
+\textbf{scan} & \verb+scan <path_or_socket>+ \verb+<DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out matches\\
 \hline
-\textbf{scan\_expanded} & scan $<$hashdb$>$ $<$DFXML file$>$ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out the repository name, filename, and file offset for each hash that matches.\\
+\textbf{scan\_hash} & \verb+scan_hash <path_or_socket>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{expand\_identified} \textbf{\_blocks} & expand\_identified\_blocks $<$hashdb$>$ $<$identified\_blocks.txt$>$ & Prints out the repository name, filename, and file offset of each hash in the \textit{hashdb} for each hash feature in the \texttt{identified\_blocks.txt} input file.\\
+\textbf{scan\_expanded} & \verb+scan <hashdb> <DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out the repository name, filename, and file offset for each hash that matches\\
 \hline
-\textbf{server} &  hashdb.hdb $<$port number$>$ & Starts a scan service at the given port number.\\
+\textbf{scan\_expanded\_} \textbf{hash} & \verb+scan_expanded_hash <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out the repository name, filename, and file offset for each hash that matches\\
+\hline
+\textbf{server} &  \verb+server <hashdb> <port number>+ & Starts a scan service at the given port number\\
 \hline
 \end{tabular}
 \end{table}
 
 First, identify the media that you would like to scan. For this example, we download and use video file \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\ 
 
-Second, identify the existing hash database that will be used to search for hash value matches. We'll use the database \textit{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
+Second, identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
 
 Finally, run \bulk from the command line and send the required parameters to the \textit{hashdb} scanner using the \textbf{-S} option. Run the following command: 
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{bulk_extractor -e hashdb -o outdir -S hashdb_mode=scan \\}
 \textbf{    -S hashdb_scan_path_or_socket=mock_video.hdb mock_video_redacted_image}
 \end{Verbatim}
-This command tells \bulk to enable the \textit{hashdb} scanner and to run it in ``scan'' mode to try to match the values found in the local database \textit{\textbf{mock\_video.hdb}}. Note: other run options using \bulk are discussed further in \ref{bulkextractorSection}.\\
+This command tells \bulk to enable the \textit{hashdb} scanner and to run it in ``scan'' mode to try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}. Note: other run options using \bulk are discussed further in \textbf{\autoref{bulkextractorSection}}.\\
 
 Listing \ref{bulkHashScan} shows the output printed to the command line as a result of the above \bulk \hash scan command. \\
 
@@ -818,26 +855,30 @@ Users may be put off by the quantity of matches incurred by low-entropy data in 
 These commands are provided to manage false positives.
 
 \subsection{Statistics}
-Various metadata statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
+Various statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
 Table \ref{tab:statistics} describes available statistics.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to obtain Metadata Statistics about a Hash Database}
+\caption{Commands Available in \hash Command Line Tool to Obtain Statistics About Hash Databases}
 \label{tab:statistics}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{size} &  size $<$hashdb$>$ & Prints out size information relating to the database.\\
+\textbf{size} & \verb+size <hashdb>+ & Prints out size information relating to the database\\
 \hline
-\textbf{sources} &  source $<$hashdb$>$ & Provides a top-level view of the repository names and filenames in the database. It prints out all repositories and files that have contributed to this database.\\
+\textbf{sources} & \verb+sources <hashdb>+ & Provides a top-level view of the repository names and filenames in the database. It prints out all repositories and files that have contributed to this database\\
 \hline
-\textbf{histogram} & histogram $<$hashdb$>$ &  Prints a hash distribution for the hashes in the \textit{hashdb}.\\
+\textbf{histogram} & \verb+histogram <hashdb>+ &  Prints a hash distribution for the hashes in the \textit{hashdb}\\
 \hline
-\textbf{duplicates} & duplicates $<$hashdb$>$ $<$number$>$ &  Prints out hashes in the database that are sourced the given number of times.\\
+\textbf{duplicates} & \verb+duplicates <hashdb> <number>+ &  Prints out hashes in the database that are sourced the given number of times\\
 \hline
-\textbf{hash\_table} & hash\_table $<$hashdb$>$ &  Prints out a table of hashes in the database, indicating the repository name, filename, and file offset of where each hash was sourced.\\
+\textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<repository name> <filename>+ &  Prints out the hashes and their offsets for the specified source\\
+\hline
+\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+<hashdb>+ \verb+<identified_blocks.txt>+ & Prints out the repository name, filename, and file offset of each hash in the \textit{hashdb} for each hash feature in the \texttt{identified\_blocks.txt} input file\\
+\hline
+\textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline
 \end{tabular}
 \end{table}
@@ -845,16 +886,19 @@ Table \ref{tab:statistics} describes available statistics.
 \subsection{Tuning}
 Tuning commands are provided to improve performance or allow upgrade capability,
 see Table \ref{tab:tuning}.
+For Bloom filter settings, see Table \ref{tab:bloomSettings}.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to obtain Metadata Statistics about a Hash Database}
+\caption{Commands Available in \hash Command Line Tool for Tuning Hash Databases}
 \label{tab:tuning}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{tuning} &  tuning $<$bloom filter settings$>$ & Tunes the Bloom filter for the database.\\
+\textbf{rebuild\_bloom} & \verb+rebuild_bloom[--bloom <state>]+ \verb+[--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+<hashdb.hdb>+ & Rebuilds the Bloom filter using the provided settings, see Table \ref{tab:bloomSettings}\\
+\hline
+\textbf{upgrade} & \verb+upgrade <hashdb.hdb>+ & Upgrades the \hdb v1.0.0 database to be compatible with \hdb v1.1.0\\
 \hline
 \end{tabular}
 \end{table}
@@ -870,9 +914,9 @@ Performance analysis commands for analyzing \hash performance are available, see
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{add\_random} & add\_random -r [$<$repository name$>$] $<$hashdb.hdb$>$ $<$count$>$ & Adds count random hashes to the given database, creating timing data in the \texttt{log.xml} file.\\
+\textbf{add\_random} & \verb+add_random+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count random hashes to the given database, creating timing data in the \texttt{log.xml} file\\
 \hline
-\textbf{scan\_random} & scan\_random $<$hashdb.hdb$>$ $<$hashdb copy.hdb$>$ & Scans the given database, creating timing data in the \texttt{log.xml} file.\\
+\textbf{scan\_random} & \verb+scan_random <hashdb.hdb>+ \verb+<hashdb copy.hdb>+ & Scans the given database, creating timing data in the \texttt{log.xml} file\\
 \hline
 \end{tabular}
 \end{table}
@@ -880,7 +924,7 @@ Performance analysis commands for analyzing \hash performance are available, see
 \subsection{Importing and Scanning Using the \bulk \hash Scanner}
 \label{ImportingAndScanning}
 The \bulk \hash scanner may be used to import hashes and to scan for hashes.
-The syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
+Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 
 \begin{table}[!ht]
 \centering
@@ -890,9 +934,9 @@ The syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{import} & bulk\_extractor -e hashdb -S hashdb\_mode=import -o outdir1 my\_image1 & Import \\
+\textbf{import} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
 \hline
-\textbf{scan} & bulk\_extractor -e hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket=outdir/hashdb.hdb -o outdir2 my\_image & Scan \\
+\textbf{scan} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path_or_socket+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
 \hline
 \end{tabular}
 \end{table}
@@ -925,7 +969,7 @@ followed by the filename of the DFXML file, including its full path.
 \subsubsection{Querying a Remote Hash Database}
 \hash also provides the capability to set up a remote socket to ``scan'' an existing database. Users can set up a database on the socket and then access the ``scan'' command via that socket. To set up the scan service, users need to provide the name of the hash database and the TCP socket that will be available for clients.
 For example, the following command
-starts hashdb as a server service for the hash database at path \textit{my\_hashdb.hdb} at socket endpoint \texttt{tcp://*:14500}:
+starts hashdb as a server service for the hash database at path \texttt{my\_hashdb.hdb} at socket endpoint \texttt{tcp://*:14500}:
  \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb server my_hashdb.hdb tcp://*:14500}
 \end{Verbatim} 
@@ -959,6 +1003,8 @@ The \bulk \textit{hashdb} scanner allows users to query for fragments of previou
     socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.
 \item \texttt{hashdb\_scan\_sector\_size} - Selects the scan sector size.  Scans along sector boundaries.
       Valid only in scan mode. Default value is 512.
+\item \texttt{hashdb\_scan\_max\_features} - The maximum number of feature lines to record or 0 for no limit.
+      Valid only in scan mode. Default value is 0.
 \item \texttt{hashdb\_import\_sector\_size} - Selects the import sector size.  Imports along sector boundaries.
       Valid only in import mode. Default value is 4096.
 \item \texttt{hashdb\_import\_repository\_name} - Selects the repository name to attribute the import to.
@@ -971,12 +1017,12 @@ For example, the following command runs the \bulk \textit{hashdb} scanner in imp
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{bulk_extractor -e hashdb -o outputDir -S hashdb_mode=import my_image}
 \end{Verbatim}
-Note, \bulk will place feature file and other output not relevant to the \hash application in the ``outputDir'' directory. When using the import command, the output directory will contain a newly created hash database called \textit{hashdb.hdb}. That database can then be copied or added to a hash database in another location.
+Note, \bulk will place feature file and other output not relevant to the \hash application in the ``outputDir'' directory. When using the import command, the output directory will contain a newly created hash database called \texttt{hashdb.hdb}. That database can then be copied or added to a hash database in another location.
 
 
 \subsection{Updating Hash Databases}
 \label{updateSection}
-\hash provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hash databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For each of the commands, the databases described in the arguments must be existing databases. For example, the following command will  copy all non-duplicate values from \textit{mock\_video.hdb} into \textit{mock\_video\_dedup.hdb} :
+\hash provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hash databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{mock\_video.hdb} into \texttt{mock\_video\_dedup.hdb} :
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb deduplicate mock_video.hdb mock_video_dedup.hdb}
 \end{Verbatim}
@@ -1016,7 +1062,7 @@ For large databases, it takes a bit of time to look up a hash value to determine
 \hash has a Bloom filter.  Users can enable or disable this Bloom filter and tune it using information about the hashes and hash functions. The optimal configuration for the Bloom filter depends on the size of the dataset. Although several tuning controls are available, we recommend only using ``bloom1\_n $<$n$>$,'' where ``n'' is the expected number of hashes in the dataset. If users want to improve scan speed, they should tune Bloom 1 based on their database size using this option. The default setting for the Bloom filter in \hash is enabled, is tuned for about 45,000,000 hashes, and takes up about 33MB of space. 
 
 \subsection{Exporting Hash Databases}
-Users can export hashes from a hash database to a DFXML file using the ``export'' command. For example, the following command will export the \textit{mock\_video.hdb} database to the file \texttt{demoVideoHashes.xml}:
+Users can export hashes from a hash database to a DFXML file using the ``export'' command. For example, the following command will export the \texttt{mock\_video.hdb} database to the file \texttt{demoVideoHashes.xml}:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
 \end{Verbatim}

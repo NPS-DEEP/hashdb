@@ -96,12 +96,8 @@ Total email features found: 2
 \end{Verbatim}
 \endgroup
 
-After \bulk runs, two output directories are created. Each directory contains a hash database called \textit{hashdb.hdb}. The hash databases each contain cryptographic block hashes produced from the disk images. Next, we create a database that will store the intersection of the two disk images. The following command creates the database \textit{intersection.hdb}:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create intersection.hdb}
-\end{Verbatim}
-
-Next, we populate the database \textit{intersection.hdb} with values that are common between the two databases using the following command:
+After \bulk runs, two output directories are created. Each directory contains a hash database called \textit{hashdb.hdb}. The hash databases each contain cryptographic block hashes produced from the disk images.
+Next we create database \textit{intersection.hdb} with values that are common between the two databases using the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb intersect workOutput/hashdb.hdb favoritesOutput/hashdb.hdb intersection.hdb}
 \end{Verbatim}
