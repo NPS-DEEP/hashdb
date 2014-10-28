@@ -23,11 +23,11 @@
  */
 
 #include "boost/btree/helpers.hpp" // for btree flags bitmask
-#include "globals.hpp" // for btree flags bitmask
+#include "globals.hpp"
 
 /**
  * Hold global variables in this globals namespace.
  */
 bool globals_t::quiet_mode = false;
-globals_t::btree_flags_t globals_t::btree_flags = globals_t::btree_flags_t::none;
+boost::btree::flags::bitmask globals_t::btree_flags = boost::btree::flags::none;
 

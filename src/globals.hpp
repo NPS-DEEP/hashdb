@@ -32,10 +32,9 @@
  */
 class globals_t {
   public:
-  typedef boost::btree::flags::bitmask btree_flags_t;
   static const uint32_t default_explain_identified_blocks_number = 20;
   static bool quiet_mode;
-  static btree_flags_t btree_flags;
+  static boost::btree::flags::bitmask btree_flags;
 };
 
 #endif
