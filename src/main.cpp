@@ -189,19 +189,19 @@ int main(int argc,char **argv) {
         std::vector<std::string> flags = split(std::string(optarg), ':');
         for (std::vector<std::string>::iterator flags_it = flags.begin(); flags_it != flags.end(); ++flags_it) {
           if (*flags_it == "preload") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::preload;
+            globals_t::btree_flags |= boost::btree::flags::preload;
           } else if (*flags_it == "cache_branches") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::cache_branches;
+            globals_t::btree_flags |= boost::btree::flags::cache_branches;
           } else if (*flags_it == "least_memory") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::least_memory;
+            globals_t::btree_flags |= boost::btree::flags::least_memory;
           } else if (*flags_it == "low_memory") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::low_memory;
+            globals_t::btree_flags |= boost::btree::flags::low_memory;
           } else if (*flags_it == "balanced") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::balanced;
+            globals_t::btree_flags |= boost::btree::flags::balanced;
           } else if (*flags_it == "fast") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::fast;
+            globals_t::btree_flags |= boost::btree::flags::fast;
           } else if (*flags_it == "fastest") {
-            globals_t::btree_flags |= boost::btree::flags::bitmask::fastest;
+            globals_t::btree_flags |= boost::btree::flags::fastest;
           } else {
             std::cerr << "Invalid B-Tree flag value '" << *flags_it << "'\n";
             exit(1);
