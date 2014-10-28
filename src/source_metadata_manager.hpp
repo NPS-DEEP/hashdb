@@ -49,8 +49,8 @@ class source_metadata_manager_t {
     }
   };
 
-  typedef typename std::pair<uint64_t, map_value_t> map_element_t;
-  typedef typename boost::btree::btree_map<uint64_t, map_value_t> map_t;
+  typedef std::pair<uint64_t, map_value_t> map_element_t;
+  typedef boost::btree::btree_map<uint64_t, map_value_t> map_t;
 
   // settings
   const std::string hashdb_dir;
