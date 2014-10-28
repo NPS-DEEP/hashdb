@@ -160,7 +160,6 @@ class hashdb_changes_t {
 
     if (has_source_metadata_insert_action) {
       // log any insert source metadata changes to stdout
-//zz confusing      std::cout << "hashdb changes (insert source metadata):\n";
       if (source_metadata_inserted)
        std::cout << "    source metadata inserted: " << source_metadata_inserted << "\n";
       if (source_metadata_not_inserted_already_present)
