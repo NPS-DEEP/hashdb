@@ -47,7 +47,7 @@ class source_metadata_element_t {
   source_metadata_element_t(const std::string& p_repository_name,
                             const std::string& p_filename,
                             uint64_t p_filesize,
-                            const hash_t p_hashdigest) :
+                            const hash_t& p_hashdigest) :
           repository_name(p_repository_name),
           filename(p_filename),
           filesize(p_filesize),
