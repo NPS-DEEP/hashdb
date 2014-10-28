@@ -86,8 +86,8 @@ class json_helper_t {
 
     if (metadata_pair.first == true) {
       // print the metadata
-      std::cout << ",\"file_size\":" << metadata_pair.second.file_size
-                << ",\"file_hash\":\"" << metadata_pair.second.file_hash.hexdigest()
+      std::cout << ",\"filesize\":" << metadata_pair.second.filesize
+                << ",\"hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
                 << "\"";
     }
   }

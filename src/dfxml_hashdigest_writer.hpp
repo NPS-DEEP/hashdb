@@ -115,12 +115,12 @@ class dfxml_hashdigest_writer_t {
 
     if (source_metadata_pair.first == true) {
       // write the file size
-      x.xmlout("filesize", source_metadata_pair.second.file_size);
+      x.xmlout("filesize", source_metadata_pair.second.filesize);
 
       // write the file hashdigest
       std::stringstream ss2;
       ss2 << "type='" << digest_name<hash_t>() << "'";
-      x.xmlout("hashdigest", source_metadata_pair.second.file_hash.hexdigest(), ss2.str(), false);
+      x.xmlout("hashdigest", source_metadata_pair.second.hashdigest.hexdigest(), ss2.str(), false);
     }
 
     // close the fileobject tag

@@ -33,22 +33,22 @@
 // the source_metadata_t UDT
 struct source_metadata_t {
   uint64_t source_lookup_index;
-  uint64_t file_size;
-  hash_t file_hash;
+  uint64_t filesize;
+  hash_t hashdigest;
 
-  source_metadata_t() : source_lookup_index(0), file_size(0), file_hash() {
+  source_metadata_t() : source_lookup_index(0), filesize(0), hashdigest() {
     // zero out the file hash digest
     for (uint32_t i=0; i<hash_t::size(); i++) {
-      file_hash.digest[i] = 0;
+      hashdigest.digest[i] = 0;
     }
   }
 
   source_metadata_t(uint64_t p_source_lookup_index,
-                    uint64_t p_file_size,
-                    hash_t p_hash) :
+                    uint64_t p_filesize,
+                    hash_t p_hashdigest) :
           source_lookup_index(p_source_lookup_index),
-          file_size(p_file_size),
-          file_hash(p_hash) {
+          filesize(p_filesize),
+          hashdigest(p_hashdigest) {
   }
 };
 

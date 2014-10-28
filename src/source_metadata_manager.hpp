@@ -36,15 +36,15 @@ class source_metadata_manager_t {
 
   private:
   struct map_value_t {
-    uint64_t file_size;
-    hash_t file_hash;
-    map_value_t(uint64_t p_file_size, hash_t p_file_hash) :
-                           file_size(p_file_size), file_hash(p_file_hash) {
+    uint64_t filesize;
+    hash_t hashdigest;
+    map_value_t(uint64_t p_filesize, hash_t p_hashdigest) :
+                           filesize(p_filesize), hashdigest(p_hashdigest) {
     }
-    map_value_t() : file_size(0), file_hash() {
+    map_value_t() : filesize(0), hashdigest() {
       // zero out the file hash digest
       for (uint32_t i=0; i<hash_t::size(); i++) {
-        file_hash.digest[i] = 0;
+        hashdigest.digest[i] = 0;
       }
     }
   };
@@ -55,8 +55,6 @@ class source_metadata_manager_t {
   // settings
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
-//  const boost::btree::flags::bitmask btree_flags;
-//  const std::string source_metadata_store_filename;
 
   map_t map;
 
@@ -87,7 +85,7 @@ class source_metadata_manager_t {
     // emplace
     std::pair<map_t::const_iterator, bool> response = map.emplace(
            source_metadata.source_lookup_index,
-           map_value_t(source_metadata.file_size, source_metadata.file_hash));
+           map_value_t(source_metadata.filesize, source_metadata.hashdigest));
 
     // return success of emplace
     return response.second;
@@ -108,7 +106,7 @@ class source_metadata_manager_t {
     } else {
       // compose and return source metadata
       source_metadata_t source_metadata(
-                    it->first, it->second.file_size, it->second.file_hash);
+                    it->first, it->second.filesize, it->second.hashdigest);
       return std::pair<bool, source_metadata_t>(true, source_metadata);
     }
   }

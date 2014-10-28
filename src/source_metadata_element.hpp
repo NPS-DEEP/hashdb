@@ -40,26 +40,26 @@ class source_metadata_element_t {
 
   const std::string repository_name;
   const std::string filename;
-  const uint64_t file_size;
-  const hash_t file_hash;
+  const uint64_t filesize;
+  const hash_t hashdigest;
   
   // fully specified
   source_metadata_element_t(const std::string& p_repository_name,
                             const std::string& p_filename,
-                            uint64_t p_file_size,
-                            const hash_t p_file_hash) :
+                            uint64_t p_filesize,
+                            const hash_t p_hashdigest) :
           repository_name(p_repository_name),
           filename(p_filename),
-          file_size(p_file_size),
-          file_hash(p_file_hash) {
+          filesize(p_filesize),
+          hashdigest(p_hashdigest) {
   }
 
   // empty
   source_metadata_element_t() :
           repository_name(""),
           filename(""),
-          file_size(0),
-          file_hash(0) {
+          filesize(0),
+          hashdigest(0) {
   }
 };
 

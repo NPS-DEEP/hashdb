@@ -190,9 +190,9 @@ class dfxml_hashdigest_reader_t {
     }
 
     // get file size
-    uint64_t file_size;
+    uint64_t filesize;
     try {
-      file_size = boost::lexical_cast<uint64_t>(user_data.fileobject_filesize);
+      filesize = boost::lexical_cast<uint64_t>(user_data.fileobject_filesize);
     } catch(...) {
       std::cerr << "Invalid filesize value: '"
                 << user_data.fileobject_filesize << "', entry ignored.\n";
@@ -204,7 +204,7 @@ class dfxml_hashdigest_reader_t {
     source_metadata_element_t source_metadata_element(
                user_data.fileobject_repository_name,
                user_data.fileobject_filename,
-               file_size,
+               filesize,
                hash_pair.second);
  
     // call the consumer

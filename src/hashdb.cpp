@@ -162,8 +162,8 @@ const char* hashdb_version() {
   template<>
   int hashdb_t__<hash_t>::import_metadata(const std::string& repository_name,
                                           const std::string& filename,
-                                          uint64_t file_size,
-                                          hash_t file_hash) {
+                                          uint64_t filesize,
+                                          hash_t hashdigest) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -175,7 +175,7 @@ const char* hashdb_version() {
 
     // insert the source metadata
     hashdb_manager->insert_source_metadata(source_metadata_element_t(
-                        repository_name, filename, file_size, file_hash),
+                        repository_name, filename, filesize, hashdigest),
                         *hashdb_changes);
 
     MUTEX_UNLOCK(&M);

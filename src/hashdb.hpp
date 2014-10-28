@@ -139,8 +139,8 @@ class hashdb_t__ {
    */
   int import_metadata(const std::string& repository_name,
                       const std::string& filename,
-                      uint64_t file_size,
-                      T file_hash);
+                      uint64_t filesize,
+                      T hashdigest);
 
   /**
    * Open for scanning, return true else false with error string.
