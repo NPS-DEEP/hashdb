@@ -45,7 +45,7 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \section*{One Page Quickstart for Windows Users}
  This page provides a very brief introduction to downloading, installing and running \hash on Windows systems. 
 \begin{enumerate}
-\item Download the windows installer for the latest version of \hash. It can be obtained from \url{http://digitalcorpora.org/downloaads/hashdb}. The file is called \texttt{hashdb-x.y.z-windowsinstaller.exe} where x.y.z is the latest version. 
+\item Download the windows installer for the latest version of \hash. It can be obtained from \url{http://digitalcorpora.org/downloads/hashdb}. The file is named \texttt{hashdb-x.y.z-windowsinstaller.exe} where x.y.z is the latest version. 
 
 \item Run the installer file. This will automatically install \hash on your machine.
 
@@ -54,7 +54,7 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \verbbf{hashdb create sample.hdb}
 \end{Verbatim} 
 
-In the above instructions, \texttt{\textbf{sample.hdb}} is thet empty database that will be created with default database settings.
+In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings.
 
 \item Next, import data into the database. You will need a DFXML file containing sector hash values. If you do not already have one, see \textbf{\Autoref{createDFXML}} for instructions on creating one. To populate the hash database with the hashes from the DFXML file called \texttt{sample.xml}, type the following instructions from the directory where you created the database:
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -481,7 +481,7 @@ A hash database must be created before hashes can be added to it.
 The command to create a hash database is shown in Table \ref{tab:createDatabase}.
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Create Hash Databases}
+\caption{Command for Creating Hash Databases}
 \label{tab:createDatabase}
 \begin{tabular}{|p{2.5 cm}|p{7 cm}|p{4 cm}|}
 \hline \hline
@@ -519,9 +519,9 @@ Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional pa
 \hline
 \textbf{\texttt{-A}} & \verb+--bloom=+\textit{enabled}|\textit{disabled} & Enables or disables the Bloom filter.\\
 \hline
-\textbf{\texttt{-B}} & \verb+--bloom_n=<n>+ & Configures Bloom filter to work well for a database of $<$n$>$ hashes.\\
+\textbf{\texttt{-B}} & \verb+--bloom_n=+\textit{n} & Configures Bloom filter to work well for a database of (n) hashes.\\
 \hline
-\textbf{\texttt{-C}} & \verb+--bloom_kM=<k:M>+ & Available for advanced or experimental use.  Configures Bloom filter with k hash functions and M bits per hash.\\
+\textbf{\texttt{-C}} & \verb+--bloom_kM=+\textit{k}:\textit{M} & Available for advanced or experimental use.  Configures Bloom filter with (k) hash functions and (M) bits per hash.\\
 \hline
 \end{tabular}
 \end{table}
@@ -567,7 +567,7 @@ Once a database has been created, it may be populated with hash values from a DF
 Commands to import and export hashes are shown in Table \ref{tab:importExport}.
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Import and Export between DFXML Files and Hash Databases}
+\caption{Commands for Importing and Exporting between DFXML Files and Hash Databases}
 \label{tab:importExport}
 \begin{tabular}{|p{2.5 cm}|p{7 cm}|p{4 cm}|}
 \hline \hline
@@ -645,7 +645,7 @@ Destination databases are created if they do not exist yet.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Manipulate Hash Databases}
+\caption{Commands to Manipulate Hash Databases}
 \label{tab:databaseManipulation}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
@@ -677,7 +677,7 @@ These statistics are shown in Table \ref{tab:changeStatistics}.
 \begin{table}[!ht]
 
 \centering
-\caption{Database Changes Reported on the Console and Tracked in the \texttt{log.xml} File}
+\caption{Database Changes Resulting from Commands that Manipulate Hash Databases}
 \label{tab:changeStatistics}
 \begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
@@ -727,7 +727,7 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool for Scanning Hash Databases}
+\caption{Commands that Provide Scan Services}
 \label{tab:scanServices}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
@@ -860,7 +860,7 @@ Table \ref{tab:statistics} describes available statistics.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to Obtain Statistics About Hash Databases}
+\caption{Commands that provide Statistics about Hash Databases}
 \label{tab:statistics}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
@@ -890,7 +890,7 @@ For Bloom filter settings, see Table \ref{tab:bloomSettings}.
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool for Tuning Hash Databases}
+\caption{Commands that Tune Hash Databases}
 \label{tab:tuning}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
@@ -908,7 +908,7 @@ Performance analysis commands for analyzing \hash performance are available, see
 
 \begin{table}[!ht]
 \centering
-\caption{Commands Available in \hash Command Line Tool to perform \hash Performance Analysis}
+\caption{Commands that Support \hdb Performance Analysis}
 \label{tab:analysis}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
@@ -925,6 +925,7 @@ Performance analysis commands for analyzing \hash performance are available, see
 \label{ImportingAndScanning}
 The \bulk \hash scanner may be used to import hashes and to scan for hashes.
 Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
+Scanner options are shown in Table \ref{tab:hashdbScannerUsage}.
 
 \begin{table}[!ht]
 \centering
@@ -941,13 +942,43 @@ Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
 \end{tabular}
 \end{table}
 
+\begin{table}[!ht]
+
+\centering
+\caption{\bulk \hdb Scanner Options}
+\label{tab:hashdbScannerUsage}
+%\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\begin{tabular}{|p{5 cm}|p{2.0 cm}|p{6.5 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Default} & \textbf{Specification} \\
+\hline
+\verb+hashdb_mode+ & \verb+none+ & The mode for the scanner, one of \verb+[none|import|scan]+. For ``none'', the scanner is active but performs no action. For ``import'', the scanner imports block hashes. For ``scan'', the scanner scans for matching block hashes.\\
+\hline
+\verb+hashdb_block_size+ &4096 & Block size, in bytes, used to generate hashes.\\
+\hline
+\verb+hashdb_ignore_empty_blocks+ & \verb+YES+ &Selects to ignore empty blocks,  one of \verb+[YES|NO]+.\\
+\hline
+\verb+hashdb_scan_path_or_socket+ & & The file path to a hash database or socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
+\hline
+\verb+hashdb_scan_sector_size+ & 512 &Selects the scan sector size.  Scans along sector boundaries.  Valid only in scan mode.\\
+\hline
+\verb+hashdb_scan_max_features+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
+\hline
+\verb+hashdb_import_sector_size+ & 4096 & Selects the import sector size.  Imports along sector boundaries.  Valid only in import mode.\\
+\hline
+\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
+\hline
+\verb+hashdb_import_max_+ \verb+duplicates+ & 0 &The maximum number of duplicates to import for a given hash value.  Valid only in import mode. Use default of 0 for no limit.\\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Use Cases for \hash}
 \label{UseCases}
 There are many different ways to utilize the functionality provided by the \hash tool. In this section, we highlight some of the most common uses of the system.
 
 \subsection{Querying for Source or Database Information}
- Users can scan a hash database directly using various querying commands. Those commands are outlined in Table \ref{tab:scanServices}.  The ``scan'' command allows users to search for hash blocks in a DFXML file that match hash blocks in a database. This can be used to determine if content from raw media matches fragments of previously encountered data contained in a database. For example, a forensic investigator may have a disk image in evidence. Using that disk image and third party tool such as \textbf{md5deep}, the investigator can generate a DFXML file of sector block hashes. The investigator can then run the ``scan'' command with the DFXML file to see if any content from the disk image matches hash blocks of known fragments of previously encountered data. The ``sources'' and ``statistics,'' commands provide information about the source of the hash blocks and statistics about the database itself.
+ Users can scan a hash database directly using various querying commands. Those commands are outlined in Table \ref{tab:scanServices}.  The ``scan'' command allows users to search for hash blocks in a DFXML file that match hash blocks in a database. This can be used to determine if content from raw media matches fragments of previously encountered data contained in a database. For example, a forensic investigator may have a disk image in evidence. Using that disk image and third party tool such as \textbf{md5deep}, the investigator can generate a DFXML file of sector block hashes. The investigator can then run the ``scan'' command with the DFXML file to see if any content from the disk image matches hash blocks of known fragments of previously encountered data. The ``sources'' and ``statistics,'' commands provide information about the source of the hash blocks and statistics about the database itself.\\
 
 Each hash block stored in the database is stored with three separate pieces of source information. This complete source information is provided for each source record in the hash database, including hash duplicates. The ``expand\_identified\_blocks'' command prints out this information for hashes identified in \texttt{identified\_blocks.txt} feature files. The source information includes:
 \begin{itemize}
@@ -995,23 +1026,7 @@ There is no security in the current protocol. It should only be used on a privat
 \subsection{Scanning or Importing to a Database Using \bulk}
 \label{bulkextractorSection}
 The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner. Options include
-\begin{itemize}
-\item \texttt{hashdb\_mode} - the mode for the scanner. One of [none|import|scan] - ``none'' the scanner is active but performs no action, ``import'' - the scanner imports block hashes, ``scan'' - the scanner scans for matching block hashes
-\item \texttt{hashdb\_block\_size} - Block size, in bytes, used to generate hashes. The default is 4096.
-\item \texttt{hashdb\_ignore\_empty\_blocks} - Selects to ignore empty blocks.  One of [YES|NO].  The default is YES.
-\item \texttt{hashdb\_scan\_path\_or\_socket} - The file path to a hash database or
-    socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.
-\item \texttt{hashdb\_scan\_sector\_size} - Selects the scan sector size.  Scans along sector boundaries.
-      Valid only in scan mode. Default value is 512.
-\item \texttt{hashdb\_scan\_max\_features} - The maximum number of feature lines to record or 0 for no limit.
-      Valid only in scan mode. Default value is 0.
-\item \texttt{hashdb\_import\_sector\_size} - Selects the import sector size.  Imports along sector boundaries.
-      Valid only in import mode. Default value is 4096.
-\item \texttt{hashdb\_import\_repository\_name} - Selects the repository name to attribute the import to.
-      Valid only in import mode. Default value is ``default\_repository''.
-\item \texttt{hashdb\_import\_max\_duplicates} - The maximum number of duplicates to import
-    for a given hash value.  Valid only in import mode. The default is 0 for no limit.
-\end{itemize}
+%zzzzzzz
 
 For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from the disk image \texttt{my\_image} to a hash database:
 \begin{Verbatim}[commandchars=\\\{\}]
