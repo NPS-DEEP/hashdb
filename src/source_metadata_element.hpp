@@ -38,10 +38,10 @@ class source_metadata_element_t {
 
   public:
 
-  const std::string repository_name;
-  const std::string filename;
-  const uint64_t filesize;
-  const hash_t hashdigest;
+  std::string repository_name;
+  std::string filename;
+  uint64_t filesize;
+  hash_t hashdigest;
   
   // fully specified
   source_metadata_element_t(const std::string& p_repository_name,
