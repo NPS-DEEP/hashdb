@@ -34,7 +34,9 @@ uint64_t encode(uint64_t index, uint64_t offset) {
 }
 
 void test_encoding(uint64_t index, uint64_t offset, uint64_t encoding) {
-std::cout << "t.a " << " " << index << " " << offset << " " << encoding << "\n";
+  std::cout << "test_encoding index: " << index
+            << ", offset: " << offset
+            << ", encoding: " << encoding << "\n";
   uint64_t temp_index = source_lookup_encoding::get_source_lookup_index(encoding);
   uint64_t temp_offset = source_lookup_encoding::get_file_offset(encoding);
   uint64_t temp_encoding = source_lookup_encoding::get_source_lookup_encoding(index, offset);
