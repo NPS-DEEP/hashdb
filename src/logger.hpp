@@ -34,6 +34,7 @@
 #include "hash_t_selector.h"
 #include "history_manager.hpp"
 #include <iostream>
+#include <stdexcept>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
