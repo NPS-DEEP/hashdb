@@ -33,22 +33,26 @@
 #include <boost/asio.hpp>
 #include "mutex_lock.hpp" // define MUTEX_LOCK
 
-typedef boost::asio::ip::tcp::socket* socket_ptr_t;
+typedef boost::asio::ip::tcp::socket socket_t;
 
-static __thread bool socket_is_connected = false;
-static __thread socket_ptr_t socket_ptr;
+static pthread_key_t pthread_socket_key;
+static pthread_once_t pthread_socket_key_once = PTHREAD_ONCE_INIT;
 
 class tcp_client_manager_t {
   private:
   boost::asio::io_service io_service;
   boost::asio::ip::tcp::resolver::iterator resolver_iterator;
-  std::vector<socket_ptr_t> sockets;
+  std::vector<socket_t*> sockets;
 #ifdef HAVE_PTHREAD
   pthread_mutex_t M;                  // mutext
 #else
   int M;                              // placeholder
 #endif
 
+  // pthread helper: make the pthread key
+  static void make_socket_key() {
+    (void) pthread_key_create(&pthread_socket_key, NULL);
+  }
   // helper: get the resolver iterator
   static boost::asio::ip::tcp::resolver::iterator get_resolver_iterator(
                                 boost::asio::io_service* io_service,
@@ -87,10 +91,10 @@ class tcp_client_manager_t {
 
   ~tcp_client_manager_t() {
     // close sockets
-    for (std::vector<socket_ptr_t>::const_iterator it = sockets.begin(); it != sockets.end(); ++it) {
-      socket_ptr_t socket = *it;
-      socket->close();
-      delete socket;
+    for (std::vector<socket_t*>::const_iterator it = sockets.begin(); it != sockets.end(); ++it) {
+      socket_t* socket_ptr = *it;
+      socket_ptr->close();
+      delete socket_ptr;
     }
   }
 
@@ -106,12 +110,16 @@ class tcp_client_manager_t {
     }
 
     try {
-
-      // make sure the thread's socket is connected
-      if (!socket_is_connected) {
+      // get the socket
+      socket_t* socket_ptr;
+      (void) pthread_once(&pthread_socket_key_once, make_socket_key);
+      if (pthread_getspecific(pthread_socket_key) == NULL) {
 
         // create the socket for this pthread
         socket_ptr = new boost::asio::ip::tcp::socket(io_service);
+
+        // bind the socket to the pthread socket key
+        pthread_setspecific(pthread_socket_key, socket_ptr);
 
         // connect this socket
         boost::asio::connect(*socket_ptr, resolver_iterator);
@@ -123,9 +131,9 @@ class tcp_client_manager_t {
         MUTEX_LOCK(&M);
         sockets.push_back(socket_ptr);
         MUTEX_UNLOCK(&M);
-
-        // mark thread's socket as connected
-        socket_is_connected = true;
+      } else {
+        // get the existing socket
+        socket_ptr = (socket_t*)pthread_getspecific(pthread_socket_key);
       }
 
       // write the request_count
