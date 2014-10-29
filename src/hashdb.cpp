@@ -214,8 +214,7 @@ const char* hashdb_version() {
 
     if (mode == HASHDB_SCAN_SOCKET) {
       // run scan using tcp_client_manager
-      tcp_client_manager->scan(input, output);
-      return 0;
+      return tcp_client_manager->scan(input, output);
     }
 
     // check mode
