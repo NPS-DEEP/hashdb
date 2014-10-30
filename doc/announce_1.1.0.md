@@ -1,5 +1,5 @@
                      Announcing hashdb 1.1.0
-                        October 23, 2014
+                        October 30, 2014
 
                           RELEASE NOTES
 
@@ -8,8 +8,6 @@ hashdb Version 1.1.0 has been released for Linux, MacOS and Windows.
 Release source code and Windows installer: http://digitalcorpora.org/downloads/bulk_extractor/
 
 GIT repository: https://github.com/simsong/bulk_extractor
-
-#Major improvements
 
 #Bug Fixes
 
@@ -38,9 +36,15 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * Fix `scan_random` command to correctly scan duplicates from fresh copy rather than from the already open database.
 * Flush every progress status line.  Before, progress did not appear until the stdout buffer was full.
 * Non-standard spacing was removed from the `size` command.
+* Fixed the known Windows bug that manifested when attempting to open an indexed B-Tree from two programs in read-only mode.
+The bug resulted in a boost::filesystem::resize_file: Sharing violation: "temp_dir_bi_store_test/source_lookup_store.dat".
+The bug is fixed by not resizing the file unless the file size actually changes.
+A beneficial side-effect of this fix is that the file modification timestamp is not changed unless it is 0, in which case it is changed to 1 because 0 is not allowed.
+* Fixed a previously undetected bug that increased the size of the data file for indexed B-Trees files by one byte each time the B-Tree was opened and not closed gracefully.
+The fix was to fix the logic that determines whether the starting size is zero.
 
-# Known Deficiencies
-* On Windows systems, hashdb cannot open the same database multiple times in read-only mode.
+# Known Bugs
+None.
 
 # Functional Changes
 ### Tracking File Size and File Hash
@@ -134,17 +138,18 @@ which prints the entire hash table for the specified file.
 * Make _BEViewer_ print the whole feature line for `identified_blocks_expanded.txt` similar to how it is printed for `identified_blocks.txt`.
 
 #Potential future changes to hashdb
+* Provide new `export_sql` command for exporting the hash database to a SQLite database to allow full access to database fields during off-line processing.  Possibly add `import_sql` to enable importing after editing.
+* Rewrite how _hashdb_ stores source information inside the database to store source information using SQLite instead of the multiple B-Trees currently being used.  The current implementation will not scale well to further changes to source metadata, while a SQLite implementation will.
 * As a speed performance optimization, presort hashes before adding them.
-* Replace Bloom filter with a trie data structure.  Quote from email 09/20, 07:05:
+* Replace Bloom filter with a trie data structure:
  1. Use a 1-level trie.  For example, a 2^24-ary trie that takes the first 3 bytes of the MD5 as an index to the leaf.  This is essentially an array of pointers.
  2. Leaves are sorted arrays of the next few bytes of the MD5 (let us use 2 bytes as an example)
  3. Search the arrays using a secant search, which is like a binary search but with interpolation to reduce the number of cache line reads.
  
  If storing a billion hashes in this filter, there will be 2 bytes of data stored per hash (2GB), 2^24 64-bit pointers in the trie node (128 MB), and some overhead in the allocation efficiency.  However, you will effectively get 5 bytes of hash matching, where the equivalent bloom filter would require 2^40 bits or 128GB of memory.
-* Allow filename globbing for the `hash table [-q] <hashdb.hdb> <filename>` command.
-* Add a B-Tree tuning hint least\_memory or all hint possibilities settable when the database is created.
+* Allow filename globbing for the `hash table <hashdb.hdb> <repository anme> <filename>` command allowing wildcards for name matching.
 * Possibly add flush at intervals.  Peformance analysis for flush has not been tested.
-* Document how 0.17 was calculated as the number for calculating M from n in the Bloom filter, and document the percent false positive range this provides.
+* Document how 0.17 was calculated as the number for calculating M from n in the Bloom filter, and document the percent false positive range this value provides.
 
 #Potential future changes to bulk_extractor
 * Fix makefile dependency rules in src_win so make does not first require make clean.
