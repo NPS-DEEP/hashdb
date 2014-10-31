@@ -286,25 +286,20 @@ class commands_t {
       }
       hash_t hash = hash_pair.second;
 
-      // skip if hash already seen
-      if (hashes.find(hash) != hashes.end()) {
-        continue;
-      }
+      // add hash to hash set
+      hashes.insert(std::pair<hash_t, std::string>(hash, feature_line.context));
 
-      // skip if hash count > requested max
+      // do not add sources for this hash if count > requested max
       if (hashdb_manager.find_count(hash) > requested_max) {
         continue;
       }
-
-      // the hash is interesting
-      hashes.insert(std::pair<hash_t, std::string>(hash, feature_line.context));
 
       // get the iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
                 hashdb_manager_t::multimap_iterator_t> it_pair =
                                   hashdb_manager.find_native(hash);
 
-      // note the source lookup index for all sources associated with this hash
+      // add the source lookup index for all sources associated with this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
         // get the source lookup index for this entry
@@ -349,7 +344,8 @@ class commands_t {
   // print table of relevant hashes
   static void print_identified_hashes(
                             const hashdb_manager_t& hashdb_manager,
-                            hashes_t& hashes) {
+                            const hashes_t& hashes,
+                            const std::set<uint64_t>& source_lookup_indexes) {
 
     if (hashes.size() == 0) {
       std::cout << "# There are no hashes to report.\n";
@@ -357,20 +353,21 @@ class commands_t {
     }
 
     // iterate through block hashes
-    for (hashes_t::iterator it = hashes.begin(); it != hashes.end(); ++it) {
+    for (hashes_t::const_iterator it = hashes.begin(); it != hashes.end(); ++it) {
 
-      // print this block hash
-      std::cout << "[\"" << it->first << "\"";
+      // prepare block hash line to print
+      std::stringstream ss;
+      ss << "[\"" << it->first << "\"";
 
       // get the context field without the count, specifically, just the flags
       std::string context = it->second;
-      remove_count_field(context);
+//      remove_count_field(context);
 
-      // print the reduced context field
-      std::cout << "," << context;
+      // add the reduced context field
+      ss << "," << context;
 
-      // print the source array open bracket
-      std::cout << ",[";
+      // add the source array open bracket
+      ss << ",[";
 
       // get the multimap iterator for this hash value
       std::pair<hashdb_manager_t::multimap_iterator_t,
@@ -378,7 +375,7 @@ class commands_t {
                                   hashdb_manager.find_native(it->first);
 
       // track when to put in the comma
-      bool is_first_round = true;
+      bool found_identified_source = false;
 
       // print sources associated with this hash value
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
@@ -386,28 +383,39 @@ class commands_t {
         // get the source lookup index and file offset for this entry
         uint64_t source_lookup_encoding = (it_pair.first)->second;
         uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(source_lookup_encoding);
-        uint64_t file_offset = source_lookup_encoding::get_file_offset(source_lookup_encoding);
-
-        // maybe add comma
-        if (is_first_round == true) {
-          // not first round anymore
-          is_first_round = false;
-        } else {
-          // prepend comma
-          std::cout << ",";
+        if (source_lookup_indexes.find(source_lookup_index) == source_lookup_indexes.end()) {
+          // skip sources that are not identified
+          continue;
         }
 
+        // consume identified source
+        if (found_identified_source) {
+          // prepend comma
+          ss << ",";
+        } else {
+          // a printable source has been found
+          found_identified_source = true;
+        }
+
+        // get the file offset
+        uint64_t file_offset = source_lookup_encoding::get_file_offset(source_lookup_encoding);
+
         // add source_id and file_offset entry
-        std::cout << "{\"source_id\":" << source_lookup_index
-                  << ",\"file_offset\":" << file_offset
-                  << "}";
+        ss << "{\"source_id\":" << source_lookup_index
+           << ",\"file_offset\":" << file_offset
+           << "}";
       }
 
       // done printing the source array
-      std::cout << "]";
+      ss << "]";
 
       // done printing this block hash
-      std::cout << "]\n";
+      ss << "]";
+
+      // the block hash is interesting if it has at least one referenced source
+      if (found_identified_source) {
+        std::cout << ss.str() << "\n";
+      }
     }
   }
 
@@ -1508,7 +1516,7 @@ class commands_t {
 
     // print identified hashes
     std::cout << "# hashes\n";
-    print_identified_hashes(hashdb_manager, *hashes);
+    print_identified_hashes(hashdb_manager, *hashes, *source_lookup_indexes);
 
     // print identified sources
     std::cout << "# sources\n";

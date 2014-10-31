@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.1.0, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 1.1.1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,

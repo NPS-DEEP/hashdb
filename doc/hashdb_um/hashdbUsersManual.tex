@@ -377,7 +377,7 @@ Mac users must first install Apple's Xcode development system. Other components 
 \end{Verbatim}
 
 \textbf{Download and Install \hash}\\
-Next, download the latest version of \hash. The software can be downloaded from \url{http://digitalcorpora.org/downloads/hashdb/}. The file to download is \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \hash is 1.0.0.\\
+Next, download the latest version of \hash. The software can be downloaded from \url{http://digitalcorpora.org/downloads/hashdb/}. The file to download is \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \hash is 1.1.1.\\
 
 
 After downloading the file, un-tar it by either right-clicking on the file and choosing ``extract to...' or typing the following at the command line:
@@ -404,7 +404,7 @@ Note: sudo is not required. If you do not wish to use sudo,  build and install \
 
 \subsection{Installing on Windows}
 \label{InstallingOnWindows}
-Windows users should download the Windows Installer for \hash. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.0.0 as of publication of this manual).\\
+Windows users should download the Windows Installer for \hash. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.1.1 as of publication of this manual).\\
 
 You should close all Command windows before running the installation executable. Windows will not be able to find the \hash tools in a Command window if any are open during the installation process. If you do not do this before installation, simply close all Command windows after installation. When you re-open, Windows should be able to find \hash.\\
 
@@ -874,7 +874,7 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+<hashdb>+ \verb+<identified_blocks.txt>+ & Prints out the repository name, filename, and file offset of each hash in the \textit{hashdb} for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline
-\textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
+\textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for sources with hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline
 \end{tabular}
 \end{table}
@@ -902,41 +902,41 @@ Each line of source information describes
 the repository name, filename, file size, and file hash for a given source ID.\\
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_hashes\_and\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file using the \texttt{explain\_identified\_blocks} command}, label=explainHashesAndSources]
-# hashdb-Version: 1.1.0-alpha1
+# hashdb-Version: 1.1.0
 # explain_identified_blocks-command-Version: 1
 # hashes
-["0c5c611edc8dfd34f85c6cbf88702e51",{},[{"source_id":1,"file_offset":10530
-816}]]
-["16d75027533b0a5ab900089a244384a0",{},[{"source_id":1,"file_offset":10502
-144}]]
-["1b803bd6e014d1855e6f8413041c2b07",{},[{"source_id":1,"file_offset":10518
-528}]]
-["1d0abbddf1344ac751d17604bdd9ebe8",{},[{"source_id":1,"file_offset":10498
-048}]]
-["3b6b477d391f73f67c1c01e2141dbb17",{},[{"source_id":1,"file_offset":10485
-760}]]
-["4a93e65fb187d71c2b8b5697f1460e3d",{},[{"source_id":1,"file_offset":10534
-912}]]
-["4cc415709e205ac0ef5b5dcfb77936b6",{},[{"source_id":1,"file_offset":10526
-720}]]
-["7de953ea563c4df1f8369d8dd2cfb4d9",{},[{"source_id":1,"file_offset":10514
-432}]]
-["80a403ea48854676501a02e390a69699",{},[{"source_id":1,"file_offset":10510
-336}]]
-["89a170b6b9a948d21d1d6ee1e7cdc467",{},[{"source_id":1,"file_offset":10489
-856}]]
-["97068927ff7ca0c4d27ac527474065bc",{},[{"source_id":1,"file_offset":10506
-240}]]
-["a667f79e6446222092257af1780f6a9f",{},[{"source_id":1,"file_offset":10539
-008}]]
-["aec94ab99f591f507b3c27424a0b52c5",{},[{"source_id":1,"file_offset":10543
-104}]]
-["c6361fe0eb4f7b13bac6529e1cdd8ea4",{},[{"source_id":1,"file_offset":10547
-200}]]
-["cf49adf3285b983d9f8d60497290bfd2",{},[{"source_id":1,"file_offset":10522
-624}]]
-["f58a09656658c6b41e244b4a6091592c",{},[{"source_id":1,"file_offset":10493
-952}]]
+["0c5c611edc8dfd34f85c6cbf88702e51",{"count":1},[{"source_id":1,"file_offs
+et":10530816}]]
+["16d75027533b0a5ab900089a244384a0",{"count":1},[{"source_id":1,"file_offs
+et":10502144}]]
+["1b803bd6e014d1855e6f8413041c2b07",{"count":1},[{"source_id":1,"file_offs
+et":10518528}]]
+["1d0abbddf1344ac751d17604bdd9ebe8",{"count":1},[{"source_id":1,"file_offs
+et":10498048}]]
+["3b6b477d391f73f67c1c01e2141dbb17",{"count":1},[{"source_id":1,"file_offs
+et":10485760}]]
+["4a93e65fb187d71c2b8b5697f1460e3d",{"count":1},[{"source_id":1,"file_offs
+et":10534912}]]
+["4cc415709e205ac0ef5b5dcfb77936b6",{"count":1},[{"source_id":1,"file_offs
+et":10526720}]]
+["7de953ea563c4df1f8369d8dd2cfb4d9",{"count":1},[{"source_id":1,"file_offs
+et":10514432}]]
+["80a403ea48854676501a02e390a69699",{"count":1},[{"source_id":1,"file_offs
+et":10510336}]]
+["89a170b6b9a948d21d1d6ee1e7cdc467",{"count":1},[{"source_id":1,"file_offs
+et":10489856}]]
+["97068927ff7ca0c4d27ac527474065bc",{"count":1},[{"source_id":1,"file_offs
+et":10506240}]]
+["a667f79e6446222092257af1780f6a9f",{"count":1},[{"source_id":1,"file_offs
+et":10539008}]]
+["aec94ab99f591f507b3c27424a0b52c5",{"count":1},[{"source_id":1,"file_offs
+et":10543104}]]
+["c6361fe0eb4f7b13bac6529e1cdd8ea4",{"count":1},[{"source_id":1,"file_offs
+et":10547200}]]
+["cf49adf3285b983d9f8d60497290bfd2",{"count":1},[{"source_id":1,"file_offs
+et":10522624}]]
+["f58a09656658c6b41e244b4a6091592c",{"count":1},[{"source_id":1,"file_offs
+et":10493952}]]
 # sources
 {"source_id":1,"repository_name":"temp1","filename":"/home/bdallen/demo8/d
 emo_video.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc097
@@ -958,7 +958,7 @@ For Bloom filter settings, see Table \ref{tab:bloomSettings}.
 \hline
 \textbf{rebuild\_bloom} & \verb+rebuild_bloom[--bloom <state>]+ \verb+[--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+<hashdb.hdb>+ & Rebuilds the Bloom filter using the provided settings, see Table \ref{tab:bloomSettings}\\
 \hline
-\textbf{upgrade} & \verb+upgrade <hashdb.hdb>+ & Upgrades the \hdb v1.0.0 database to be compatible with \hdb v1.1.0\\
+\textbf{upgrade} & \verb+upgrade <hashdb.hdb>+ & Upgrades the \hdb v1.0.0 database to be compatible with \hdb v1.1.1\\
 \hline
 \end{tabular}
 \end{table}

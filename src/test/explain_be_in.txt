@@ -1,0 +1,19 @@
+# BANNER FILE NOT PROVIDED (-b option)
+# BULK_EXTRACTOR-Version: 1.5.5-dev ($Rev: 10844 $)
+# Feature-Recorder: identified_blocks
+# Filename: /home/bdallen/demo8/demo_video_redacted_image
+# Feature-File-Version: 1.1
+12452352	f2b533fa7a01166798cbfcef3d8e940d	{"count":3}
+12456448	2d88a905a2dc14d8a562e95dc85188ab	{"count":2}
+12460544	3d43041dfbecf67e24681b968bb2c4d9	{"count":1}
+12464640	f2b533fa7a01166798cbfcef3d8e940d	{"count":3}
+12468736	2d88a905a2dc14d8a562e95dc85188ab	{"count":2}
+12472832	f2b533fa7a01166798cbfcef3d8e940d	{"count":3}
+12485120	ee769fe63d25bfe367085a8ff84722a2	{"count":2}
+12489216	382b284421b41afd1f82ce133c8c3318	{"count":2}
+12493312	4cc415709e205ac0ef5b5dcfb77936b6	{"count":1}
+12497408	0c5c611edc8dfd34f85c6cbf88702e51	{"count":1}
+12501504	4a93e65fb187d71c2b8b5697f1460e3d	{"count":1}
+12505600	a667f79e6446222092257af1780f6a9f	{"count":1}
+12509696	aec94ab99f591f507b3c27424a0b52c5	{"count":1}
+12513792	c6361fe0eb4f7b13bac6529e1cdd8ea4	{"count":1}

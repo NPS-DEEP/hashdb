@@ -1,9 +1,11 @@
-hashdb Version 1.1.0
+hashdb Version 1.1.1
 Usage: hashdb -h | -H | -v | -V | <command>
-  -h, --help     print this message
-  -H, --Help     print detailed help including usage notes and examples
+  -h, --help         print this message
+  -H, --Help         print this message plus usage notes and examples
   -v, -V, --version, --Version    print version number
-  -q, --quiet    quiet mode
+  -q, --quiet        quiet mode
+  -f, --flags=flags  set B-Tree flags, any of: preload:cache_branches:
+                     least_memory:low_memoy:balanced:fast:fastest
 
 hashdb supports the following commands:
 
@@ -152,6 +154,24 @@ Scan services:
                       lookup source
     <hash value>      the hash value to scan for
 
+  scan_expanded <hashdb> <DFXML file>
+    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
+    and prints out matches showing all sources.
+
+    Parameters:
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <DFXML file>      the DFXML file containing hashes to scan for
+
+  scan_expanded_hash <hashdb> <hash value>
+    Scans the <hashdb> for the specified <hash value> and prints out matches
+    showing all sources.
+
+    Parameters:
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <hash value>      the hash value to scan for
+
   server <hashdb> <port number>
     Starts a query server service for <hashdb> at <port number> for
     servicing hashdb queries.
@@ -210,11 +230,10 @@ Statistics:
     <identified_blocks.txt>   the identified blocks feature file generated
                               by bulk_extractor
 
-  explain_identified_blocks [-m <number>] <hashdb>
-                            <identified_blocks.txt> <number>
+  explain_identified_blocks [-m <number>] <hashdb> <identified_blocks.txt>
     Prints source information from the <hashdb> database for hashes in the
-    <identified_blocks.txt> file that are not repeated more than the <number>
-    of times.
+    <identified_blocks.txt> file for sources containing hashes that are not
+    repeated more than a maximum number of times.
 
     Options:
     -m <number>               the maximum number of repeats allowed before
