@@ -35,6 +35,7 @@
 #include <libxml/parser.h>
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include "hash_t_selector.h"
 
@@ -511,7 +512,7 @@ class dfxml_hashdigest_reader_t {
    */
 
   public:
-  static void do_read(
+  static std::pair<bool, std::string> do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
                 HC* hash_consumer,
@@ -563,12 +564,12 @@ class dfxml_hashdigest_reader_t {
 
     if (sax_parser_resource == 0) {
       // good, no failure
-      return;
+      return std::pair<bool, std::string>(true, "");
     } else {
       // something went wrong
-      std::ostringstream ss3;
-      ss3 << "malformed DFXML file '" << dfxml_file << "'";
-      throw std::runtime_error(ss3.str());
+      std::stringstream ss;
+      ss << "malformed DFXML file '" << dfxml_file << "'";
+      return std::pair<bool, std::string>(false, ss.str());
     }
   }
 };

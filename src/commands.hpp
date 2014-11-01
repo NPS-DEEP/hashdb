@@ -500,6 +500,7 @@ class commands_t {
                                 &hashdb_manager, &changes);
 
     // run the dfxml hashdigest reader using the import hash consumer
+    std::pair<bool, std::string> do_read_pair =
     dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t,
                               dfxml_import_source_metadata_consumer_t>::
              do_read(dfxml_file, repository_name,
@@ -508,14 +509,26 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
-    // close logger
-    logger.add_timestamp("end import");
-    logger.add_hashdb_changes(changes);
-    logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
+    if (do_read_pair.first == true) {
+      // good, reader worked
 
-    // also write changes to cout
-    std::cout << changes << "\n";
+      // close logger
+      logger.add_timestamp("end import");
+      logger.add_hashdb_changes(changes);
+      logger.close();
+      history_manager_t::append_log_to_history(hashdb_dir);
+
+      // also write changes to cout
+      std::cout << changes << "\n";
+    } else {
+      // bad, reader failed
+      // close logger
+      logger.add_timestamp("end import, import failed");
+      logger.close();
+      history_manager_t::append_log_to_history(hashdb_dir);
+
+      std::cerr << do_read_pair.second << ".  Import aborted.\n";
+    }
   }
 
   // export
