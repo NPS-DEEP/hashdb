@@ -28,14 +28,12 @@
 #define DFXML_IMPORT_HASH_CONSUMER_HPP
 #include "hashdb_element.hpp"
 #include "hashdb_manager.hpp"
-#include "hashdb_changes.hpp"
 #include "progress_tracker.hpp"
 
 class dfxml_import_hash_consumer_t {
 
   private:
   hashdb_manager_t* hashdb_manager;
-  hashdb_changes_t* hashdb_changes;
   progress_tracker_t* progress_tracker;
 
   // do not allow copy or assignment
@@ -45,10 +43,8 @@ class dfxml_import_hash_consumer_t {
   public:
   dfxml_import_hash_consumer_t(
               hashdb_manager_t* p_hashdb_manager,
-              hashdb_changes_t* p_hashdb_changes,
               progress_tracker_t* p_progress_tracker) :
         hashdb_manager(p_hashdb_manager),
-        hashdb_changes(p_hashdb_changes),
         progress_tracker(p_progress_tracker) {
   }
 
@@ -59,7 +55,7 @@ class dfxml_import_hash_consumer_t {
     progress_tracker->track();
 
     // consume the hashdb_element by importing it
-    hashdb_manager->insert(hashdb_element, *hashdb_changes);
+    hashdb_manager->insert(hashdb_element);
   }
 };
 

@@ -73,7 +73,6 @@ LIBHASHDB_INCS = \
 	hashdb_directory_manager.hpp \
 	hashdb_element.hpp \
 	hashdb.hpp \
-	hashdb_iterator.hpp \
 	hashdb_manager.hpp \
 	hashdb_settings.hpp \
 	hashdb_settings_reader.hpp \

@@ -71,7 +71,6 @@ const char* hashdb_version() {
                    hashdb_dir(""),
                    mode(HASHDB_NONE),
                    hashdb_manager(0),
-                   hashdb_changes(0),
                    logger(0),
                    tcp_client_manager(0),
                    block_size(0),
@@ -108,7 +107,6 @@ const char* hashdb_version() {
 
       // create hashdb_manager
       hashdb_manager = new hashdb_manager_t(hashdb_dir, RW_NEW);
-      hashdb_changes = new hashdb_changes_t;
 
       // open logger
       logger = new logger_t(hashdb_dir, "hashdb library import");
@@ -147,7 +145,7 @@ const char* hashdb_version() {
                                          it->file_offset);
 
       // add hashdb_element_t to hashdb_manager
-      hashdb_manager->insert(hashdb_element, *hashdb_changes);
+      hashdb_manager->insert(hashdb_element);
 
       ++it;
     }
@@ -174,9 +172,17 @@ const char* hashdb_version() {
     MUTEX_LOCK(&M);
 
     // insert the source metadata
-    hashdb_manager->insert_source_metadata(source_metadata_element_t(
-                        repository_name, filename, filesize, hashdigest),
-                        *hashdb_changes);
+    std::pair<bool, uint64_t> source_pair =hashdb_manager->find_source_id(
+                                                  repository_name, filename);
+    if (source_pair.first == true) {
+      // good, add the metadata
+      hashdb_manager->insert_source_metadata(
+                                   source_pair.second, filesize, hashdigest);
+    } else {
+      // require that source be defined before source metadata
+      std::cout << "metadata not added, repository name '" << repository_name
+                << "', filename '" << filename << "' not present.\n";
+    }
 
     MUTEX_UNLOCK(&M);
 
@@ -263,10 +269,9 @@ const char* hashdb_version() {
         return;
       case HASHDB_IMPORT:
         logger->add_timestamp("end import");
-        logger->add_hashdb_changes(*hashdb_changes);
+        logger->add_hashdb_changes(hashdb_manager->changes);
         delete logger;
         delete hashdb_manager;
-        delete hashdb_changes;
 
         // create new history trail
         history_manager_t::append_log_to_history(hashdb_dir);
@@ -289,7 +294,6 @@ const char* hashdb_version() {
                  hashdb_dir(""),
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
-                 hashdb_changes(0),
                  logger(0),
                  tcp_client_manager(0),
                  block_size(0),

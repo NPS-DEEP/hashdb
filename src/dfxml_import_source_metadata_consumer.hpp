@@ -28,14 +28,12 @@
 #define DFXML_IMPORT_SOURCE_METADATA_CONSUMER_HPP
 #include "hashdb_element.hpp"
 #include "hashdb_manager.hpp"
-#include "hashdb_changes.hpp"
 #include "progress_tracker.hpp"
 
 class dfxml_import_source_metadata_consumer_t {
 
   private:
   hashdb_manager_t* hashdb_manager;
-  hashdb_changes_t* hashdb_changes;
 
   // do not allow copy or assignment
   dfxml_import_source_metadata_consumer_t(
@@ -45,18 +43,22 @@ class dfxml_import_source_metadata_consumer_t {
 
   public:
   dfxml_import_source_metadata_consumer_t(
-              hashdb_manager_t* p_hashdb_manager,
-              hashdb_changes_t* p_hashdb_changes) :
-        hashdb_manager(p_hashdb_manager),
-        hashdb_changes(p_hashdb_changes) {
+              hashdb_manager_t* p_hashdb_manager) :
+        hashdb_manager(p_hashdb_manager) {
   }
 
   // to consume, have dfxml_hashdigest_reader call here
   void consume(const source_metadata_element_t& source_metadata_element) {
 
-    // consume the source metadata element by importing it
-    hashdb_manager->insert_source_metadata(source_metadata_element,
-                                           *hashdb_changes);
+    // get existing or create new source ID
+    uint64_t source_id = hashdb_manager->insert_source(
+                                 source_metadata_element.repository_name,
+                                 source_metadata_element.filename);
+
+    // consume the source metadata
+    hashdb_manager->insert_source_metadata(source_id,
+                                           source_metadata_element.filesize,
+                                           source_metadata_element.hashdigest);
   }
 };
 

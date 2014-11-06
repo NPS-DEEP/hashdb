@@ -27,8 +27,8 @@
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "source_lookup_index_manager.hpp"
-#include "hashdb_iterator.hpp"
 #include "hashdb_changes.hpp"
+#include "hashdb_element.hpp"
 #include "bloom_filter_manager.hpp"
 #include "source_lookup_encoding.hpp"
 #include "source_metadata.hpp"
@@ -53,6 +53,7 @@ class hashdb_manager_t {
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
   const hashdb_settings_t settings;
+  hashdb_changes_t changes;
 
   private:
   // multimap
@@ -77,6 +78,7 @@ class hashdb_manager_t {
                 hashdb_dir(p_hashdb_dir),
                 file_mode(p_file_mode),
                 settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
+                changes(),
                 multimap(hashdb_dir + "/hash_store",
                          file_mode_type_to_btree_flags_bitmask(file_mode) |
                          globals_t::btree_flags),
@@ -88,8 +90,40 @@ class hashdb_manager_t {
                 source_metadata_manager(hashdb_dir, file_mode) {
   }
 
+  /**
+   * Return a hashdb_element given a multimap_iterator.
+   */
+  hashdb_element_t hashdb_element(const multimap_iterator_t& it) const {
+    uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(it->second);
+    std::pair<bool, std::pair<std::string, std::string> > source_pair =
+                     source_lookup_index_manager.find(source_lookup_index);
+    if (source_pair.first == false) {
+      assert(0);
+    }
+    return hashdb_element_t(
+                    it->first,
+                    settings.hash_block_size,
+                    source_pair.second.first,
+                    source_pair.second.second,
+                    source_lookup_encoding::get_file_offset(it->second));
+  }
+
+  /**
+   * Return source lookup index given multimap_iterator.
+   */
+  uint64_t source_id(const multimap_iterator_t& it) const {
+    return source_lookup_encoding::get_source_lookup_index(it->second);
+  }
+
+  /**
+   * Return file offset given multimap_iterator.
+   */
+  uint64_t file_offset(const multimap_iterator_t& it) const {
+    return source_lookup_encoding::get_file_offset(it->second);
+  }
+
   // insert
-  void insert(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
+  void insert(const hashdb_element_t& hashdb_element) {
 
     // validate block size
     if (settings.hash_block_size != 0 &&
@@ -148,25 +182,23 @@ class hashdb_manager_t {
     bloom_filter_manager.add_hash_value(hashdb_element.key);
   }
 
-  // insert source metadata
-  void insert_source_metadata(
-                 const source_metadata_element_t& source_metadata_element,
-                 hashdb_changes_t& changes) {
+  // insert source
+  uint64_t insert_source(const std::string& repository_name,
+                     const std::string& filename) {
 
     // acquire existing or new source lookup index
     std::pair<bool, uint64_t> lookup_pair =
-         source_lookup_index_manager.insert(
-                                 source_metadata_element.repository_name,
-                                 source_metadata_element.filename);
-    uint64_t source_lookup_index = lookup_pair.second;
+              source_lookup_index_manager.insert(repository_name, filename);
+    return lookup_pair.second;
+  }
 
-    // create the source metadata element
-    source_metadata_t source_metadata(source_lookup_index,
-                                      source_metadata_element.filesize,
-                                      source_metadata_element.hashdigest);
+  // insert source metadata
+  void insert_source_metadata(uint64_t source_id,
+                              uint64_t filesize,
+                              hash_t hashdigest) {
 
     // insert the metadata into the source metadata store
-    bool status = source_metadata_manager.insert(source_metadata);
+    bool status = source_metadata_manager.insert(source_id, filesize, hashdigest);
 
     // log change
     if (status == true) {
@@ -177,7 +209,7 @@ class hashdb_manager_t {
   }
 
   // remove
-  void remove(const hashdb_element_t& hashdb_element, hashdb_changes_t& changes) {
+  void remove(const hashdb_element_t& hashdb_element) {
 
     // validate block size
     if (settings.hash_block_size != 0 &&
@@ -226,71 +258,25 @@ class hashdb_manager_t {
     return;
   }
 
-  // remove key
-  void remove_key(const hash_t& key, hashdb_changes_t& changes) {
+  // remove hash
+  void remove_hash(const hash_t& hash) {
 
-    // erase elements of key
-    uint32_t count = multimap.erase(key);
+    // erase elements of hash
+    uint32_t count = multimap.erase(hash);
     
     if (count == 0) {
-      // no key
+      // no hash
       ++changes.hashes_not_removed_no_hash;
     } else {
       changes.hashes_removed += count;
     }
   }
-
   /**
-   * Find returning a fancy hashdb_iterator pair where the iterator
-   * dereferences to hashdb_element.
+   * Find returning a multimap iterator pair.
    */
-  std::pair<hashdb_iterator_t, hashdb_iterator_t > find(const hash_t& key) const {
 
-    // get the multimap iterator pair
-    std::pair<multimap_iterator_t, multimap_iterator_t>
-                                        it_pair(multimap.equal_range(key));
-
-    // return the hashdb_iterator pair for this key
-    return std::pair<hashdb_iterator_t, hashdb_iterator_t >(
-               hashdb_iterator_t(&source_lookup_index_manager,
-                                 settings.hash_block_size,
-                                 it_pair.first),
-               hashdb_iterator_t(&source_lookup_index_manager,
-                                 settings.hash_block_size,
-                                 it_pair.second));
-  }
-
-  /**
-   * Find returning a native multimap iterator pair.
-   */
-  std::pair<multimap_iterator_t, multimap_iterator_t > find_native(const hash_t& key) const {
-    return multimap.equal_range(key);
-  }
-
-  /**
-   * Find the source pair of repository name and filenam strings
-   * from the source lookup index.
-   */
-  std::pair<bool, std::pair<std::string, std::string> > find_source_pair(
-                                      uint64_t source_lookup_index) const {
-    return source_lookup_index_manager.find(source_lookup_index);
-  }
-
-  /**
-   * Return true and source lookup index else false and 0.
-   */
-  std::pair<bool, uint64_t> find_source_lookup_index(
-                                     const std::string& repository_name,
-                                     const std::string& filename) const {
-    return source_lookup_index_manager.find(repository_name, filename);
-  }
-
-  /**
-   * Obtain source metadata given the source lookup index.
-   */
-  std::pair<bool, source_metadata_t> find_source_metadata(
-                                     uint64_t source_lookup_index) const {
-    return source_metadata_manager.find(source_lookup_index);
+  std::pair<multimap_iterator_t, multimap_iterator_t > find(const hash_t& hash) const {
+    return multimap.equal_range(hash);
   }
 
   // find_count
@@ -305,27 +291,49 @@ class hashdb_manager_t {
     }
   }
 
+  /**
+   * Return true and source lookup index else false and 0.
+   */
+  std::pair<bool, uint64_t> find_source_id(
+                                     const std::string& repository_name,
+                                     const std::string& filename) const {
+    return source_lookup_index_manager.find(repository_name, filename);
+  }
+
+  /**
+   * Find the source pair of repository name and filenam strings
+   * from the source lookup index.
+   */
+  std::pair<bool, std::pair<std::string, std::string> > find_source(
+                                      uint64_t source_lookup_index) const {
+    return source_lookup_index_manager.find(source_lookup_index);
+  }
+
+  /**
+   * Obtain source metadata given the source lookup index.
+   */
+  std::pair<bool, source_metadata_t> find_source_metadata(
+                                     uint64_t source_lookup_index) const {
+    return source_metadata_manager.find(source_lookup_index);
+  }
+
   // begin
-  hashdb_iterator_t begin() const {
-    return hashdb_iterator_t(&source_lookup_index_manager,
-                             settings.hash_block_size,
-                             multimap.begin());
+  multimap_iterator_t begin() const {
+    return multimap.begin();
   }
 
   // end
-  hashdb_iterator_t end() const {
-    return hashdb_iterator_t(&source_lookup_index_manager,
-                             settings.hash_block_size,
-                             multimap.end());
+  multimap_iterator_t end() const {
+    return multimap.end();
   }
 
   // begin source lookup index iterator
-  source_lookup_index_manager_t::source_lookup_index_iterator_t begin_source_lookup_index() {
+  source_lookup_index_manager_t::source_lookup_index_iterator_t begin_source_lookup_index() const {
     return source_lookup_index_manager.begin();
   }
 
-  // end source metadata
-  source_lookup_index_manager_t::source_lookup_index_iterator_t end_source_lookup_index() {
+  // end source lookup index iterator
+  source_lookup_index_manager_t::source_lookup_index_iterator_t end_source_lookup_index() const {
     return source_lookup_index_manager.end();
   }
 

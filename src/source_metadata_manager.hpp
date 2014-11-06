@@ -75,7 +75,7 @@ class source_metadata_manager_t {
    * Insert and return true but if source_lookup_index is already there,
    * return false.
    */
-  bool insert(const source_metadata_t& source_metadata) {
+  bool insert(uint64_t source_id, uint64_t filesize, hash_t hashdigest) {
 
     // btree must be writable
     if (file_mode == READ_ONLY) {
@@ -84,8 +84,7 @@ class source_metadata_manager_t {
 
     // emplace
     std::pair<map_t::const_iterator, bool> response = map.emplace(
-           source_metadata.source_lookup_index,
-           map_value_t(source_metadata.filesize, source_metadata.hashdigest));
+                             source_id, map_value_t(filesize, hashdigest));
 
     // return success of emplace
     return response.second;

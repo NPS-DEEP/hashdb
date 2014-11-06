@@ -68,7 +68,7 @@ class json_helper_t {
                                   uint64_t source_lookup_index) {
     // get the repository name and filename
     std::pair<bool, std::pair<std::string, std::string> > source_pair =
-                     hashdb_manager.find_source_pair(source_lookup_index);
+                             hashdb_manager.find_source(source_lookup_index);
 
     // get source metadata, if available
     std::pair<bool, source_metadata_t> metadata_pair =

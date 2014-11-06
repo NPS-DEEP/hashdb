@@ -54,13 +54,14 @@ class dfxml_scan_expanded_smc_t{
     for (std::vector<hash_t>::iterator it = hashes->begin(); it != hashes->end(); ++it) {
 
       // find matching range for this key
-      std::pair<hashdb_iterator_t, hashdb_iterator_t> it_pair =
-      hashdb_manager->find(*it);
+      std::pair<hashdb_manager_t::multimap_iterator_t,
+                hashdb_manager_t::multimap_iterator_t> it_pair =
+                                                  hashdb_manager->find(*it);
 
-      // go through each hashdb_element source for this hash
+      // go through each source for this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
-        // print fileobject information header from DFXML
+        // print fileobject information header obtained from the DFXML file
         if (found_match == false) {
           found_match = true;
           std::cout << "# begin-processing {\"filename\":\"" << source_metadata_element.filename << "\"}\n";
@@ -70,16 +71,10 @@ class dfxml_scan_expanded_smc_t{
         std::cout << "[\"" << it->hexdigest() << "\", {";
 
         // get source lookup index
-        std::pair<bool, uint64_t> source_pair =
-               hashdb_manager->find_source_lookup_index(
-                     it_pair.first->repository_name, it_pair.first->filename);
-        if (source_pair.first == false) {
-          // program error
-          assert(0);
-        }
+        uint64_t source_id = hashdb_manager->source_id(it_pair.first);
 
         // print source fields
-        json_helper_t::print_source_fields(*hashdb_manager, source_pair.second);
+        json_helper_t::print_source_fields(*hashdb_manager, source_id);
 
         // close the JSON line
         std::cout << "}\n";
