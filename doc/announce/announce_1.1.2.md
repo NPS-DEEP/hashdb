@@ -13,9 +13,10 @@ GIT repository: https://github.com/simsong/bulk_extractor
 
 * Add the report of database changes to the destination database for the `add_multiple` command.  Database changes should be reported for all commands that change the database.  This was an omission.
 * Database manipulation commands are fixed to additionally copy source metadata.  Previously, source metadata information (the filesize and the file hashdigest) was not copied.  This was an omission.
+* A regression introduced in 1.1.1 was fixed so that command `scan_expanded` does not require the input to have file hashdigest or filesize tags in order to hash.
 
 # Functional Changes
-* Several changes are made to the `scan_expanded` command:
+* Several changes are made to the `scan_expanded` command to improve usability:
 
  * Hashes are scanned immediately as they are parsed from DFXML input rather than saving them up in a vector and hashing the vector when the `</fileobject>` close tab is received.  Because of this, a fileobject's filename must be defined before its block hashes, or else the printed name of the file being processed will be blank.
  * A `-m <max>` option is added so that when the number of sources a hash has exceeds this maximum, the sources associated with the hash are not displayed.
