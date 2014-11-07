@@ -123,17 +123,17 @@ class hashdb_manager_t {
   }
 
   // insert
-  void insert(const hashdb_element_t& hashdb_element) {
+  void insert(const hashdb_element_t& element) {
 
     // validate block size
     if (settings.hash_block_size != 0 &&
-        (hashdb_element.hash_block_size != settings.hash_block_size)) {
+        (element.hash_block_size != settings.hash_block_size)) {
       ++changes.hashes_not_inserted_mismatched_hash_block_size;
       return;
     }
 
     // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
-    if (hashdb_element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
+    if (element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
       ++changes.hashes_not_inserted_invalid_byte_alignment;
       return;
     }
@@ -142,20 +142,20 @@ class hashdb_manager_t {
 
     // acquire existing or new source lookup index
     std::pair<bool, uint64_t> lookup_pair =
-         source_lookup_index_manager.insert(hashdb_element.repository_name,
-                                            hashdb_element.filename);
+         source_lookup_index_manager.insert(element.repository_name,
+                                            element.filename);
     uint64_t source_lookup_index = lookup_pair.second;
 
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
                        source_lookup_index,
-                       hashdb_element.file_offset);
+                       element.file_offset);
 
     // if the key may exist then check against duplicates and max count
-    if (bloom_filter_manager.is_positive(hashdb_element.key)) {
+    if (bloom_filter_manager.is_positive(element.key)) {
       size_t count = 0;
-      multimap_iterator_t it = multimap.lower_bound(hashdb_element.key);
-      while (it != multimap.end() && it->first == hashdb_element.key) {
+      multimap_iterator_t it = multimap.lower_bound(element.key);
+      while (it != multimap.end() && it->first == element.key) {
         if (it->second == encoding) {
           // this exact element already exists
           ++changes.hashes_not_inserted_duplicate_element;
@@ -175,11 +175,11 @@ class hashdb_manager_t {
     }
 
     // add the element since all the checks passed
-    multimap.emplace(hashdb_element.key, encoding);
+    multimap.emplace(element.key, encoding);
     ++changes.hashes_inserted;
 
     // add hash to bloom filter, too, even if already there
-    bloom_filter_manager.add_hash_value(hashdb_element.key);
+    bloom_filter_manager.add_hash_value(element.key);
   }
 
   // insert source
@@ -193,12 +193,13 @@ class hashdb_manager_t {
   }
 
   // insert source metadata
-  void insert_source_metadata(uint64_t source_id,
+  void insert_source_metadata(uint64_t source_lookup_index,
                               uint64_t filesize,
                               hash_t hashdigest) {
 
     // insert the metadata into the source metadata store
-    bool status = source_metadata_manager.insert(source_id, filesize, hashdigest);
+    bool status = source_metadata_manager.insert(
+                                   source_lookup_index, filesize, hashdigest);
 
     // log change
     if (status == true) {
@@ -209,25 +210,25 @@ class hashdb_manager_t {
   }
 
   // remove
-  void remove(const hashdb_element_t& hashdb_element) {
+  void remove(const hashdb_element_t& element) {
 
     // validate block size
     if (settings.hash_block_size != 0 &&
-        (hashdb_element.hash_block_size != settings.hash_block_size)) {
+        (element.hash_block_size != settings.hash_block_size)) {
       ++changes.hashes_not_removed_mismatched_hash_block_size;
       return;
     }
 
     // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
-    if (hashdb_element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
+    if (element.file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
       ++changes.hashes_not_removed_invalid_byte_alignment;
       return;
     }
 
     // find source lookup index
     std::pair<bool, uint64_t> lookup_pair =
-         source_lookup_index_manager.find(hashdb_element.repository_name,
-                                          hashdb_element.filename);
+         source_lookup_index_manager.find(element.repository_name,
+                                          element.filename);
     if (lookup_pair.first == false) {
       ++changes.hashes_not_removed_no_element; // because there was no source
       return;
@@ -238,10 +239,10 @@ class hashdb_manager_t {
     // compose the source lookup encoding
     uint64_t encoding = source_lookup_encoding::get_source_lookup_encoding(
                        source_lookup_index,
-                       hashdb_element.file_offset);
+                       element.file_offset);
 
     // find and remove the distinct identified element
-    multimap_iterator_range_t it = multimap.equal_range(hashdb_element.key);
+    multimap_iterator_range_t it = multimap.equal_range(element.key);
     multimap_iterator_t lower = it.first;
     const multimap_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
