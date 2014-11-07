@@ -156,6 +156,61 @@ class commands_t {
     progress_tracker.done();
   }
 
+  // copy source metadata missing in db2 from db1 to db2
+  static void copy_source_metadata(const hashdb_manager_t& hashdb1,
+                                   hashdb_manager_t& hashdb2) {
+
+    // iterate through source IDs in db2
+    for (source_lookup_index_manager_t::source_lookup_index_iterator_t it =
+                             hashdb2.begin_source_lookup_index();
+                             it != hashdb2.end_source_lookup_index(); ++it) {
+
+      // get the db2 source pair
+      uint64_t source_id2 = it->key;
+
+      // see if db2 already has the source metadata
+      std::pair<bool, source_metadata_t> metadata2_pair =
+                                    hashdb2.find_source_metadata(source_id2);
+      if (metadata2_pair.first == true) {
+        // db2 already has metadata so leave it alone
+        continue;
+      }
+
+      // try to get metadata from db1
+
+      // get the source string pair from db2
+      std::pair<bool, std::pair<std::string, std::string> >
+                       source_string2_pair = hashdb2.find_source(source_id2);
+      if (source_string2_pair.first == false) {
+        assert(0);
+      }
+
+      // get equivalent source ID in db1
+      std::pair<bool, uint64_t> source_id1_pair = hashdb1.find_source_id(
+                                      source_string2_pair.second.first,
+                                      source_string2_pair.second.second);
+
+      if (source_id1_pair.first == false) {
+        // db1 doesn't have the source, so drop it
+        continue;
+      }
+
+      // get metadata from db1
+      uint64_t source_id1 = source_id1_pair.second;
+      std::pair<bool, source_metadata_t> metadata1_pair =
+                                    hashdb1.find_source_metadata(source_id1);
+      if (metadata1_pair.first == false) {
+        // db1 has the source but not the metadata, so drop it
+        continue;
+      }
+
+      // copy the metadata from db1 to db2
+      hashdb2.insert_source_metadata(source_id2,
+                                     metadata1_pair.second.filesize,
+                                     metadata1_pair.second.hashdigest);
+    }
+  }
+
   // generate random scan input that is unlikely to match the hashdb
   static void generate_scan_input(std::vector<hash_t>* scan_input) {
     scan_input->clear();
@@ -578,6 +633,10 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
+
     // close logger
     logger.add_timestamp("end add");
     logger.add_hashdb_changes(hashdb_manager2.changes);
@@ -649,6 +708,11 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
+
     // close logger
     logger.add_timestamp("end add_multiple");
     logger.add_hashdb_changes(hashdb_manager3.changes);
@@ -702,6 +766,10 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
+
     // close logger
     logger.add_timestamp("end add_repository");
     logger.add_hashdb_changes(hashdb_manager2.changes);
@@ -746,6 +814,11 @@ class commands_t {
     } else {
       intersect_optimized(manager2, manager1, manager3, &logger);
     }
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(manager1, manager3);
+    copy_source_metadata(manager2, manager3);
 
     // close logger
     logger.add_timestamp("end intersect");
@@ -792,6 +865,11 @@ class commands_t {
     } else {
       intersect_hash_optimized(manager2, manager1, manager3, &logger);
     }
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(manager1, manager3);
+    copy_source_metadata(manager2, manager3);
 
     // close logger
     logger.add_timestamp("end intersect_hash");
@@ -859,6 +937,11 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
+
     // close logger
     logger.add_timestamp("end subtract");
     logger.add_hashdb_changes(hashdb_manager3.changes);
@@ -915,6 +998,11 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
+
     // close logger
     logger.add_timestamp("end subtract_hash");
     logger.add_hashdb_changes(hashdb_manager3.changes);
@@ -968,6 +1056,10 @@ class commands_t {
 
     // close tracker
     progress_tracker.done();
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
 
     // close logger
     logger.add_timestamp("end deduplicate");
