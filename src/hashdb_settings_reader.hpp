@@ -28,7 +28,7 @@
  * NOTE: libxml2 uses type xmlChar which is unsigned char, which is
  * incompatible with string conversions.
  * All data in settings are and must remain simple ascii text.
- * This stiplulation is easy to change, see dfxml_hashdigest_reader.hpp.
+ * This stipulation is easy to change, see dfxml_hashdigest_reader.hpp.
  */
 
 #ifndef HASHDB_SETTINGS_READER_HPP
