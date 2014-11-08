@@ -41,7 +41,6 @@ const char* hashdb_version();
 
 // required inside hashdb_t__
 class hashdb_manager_t;
-class hashdb_changes_t;
 class logger_t;
 class tcp_client_manager_t;
 
@@ -61,7 +60,6 @@ class hashdb_t__ {
   std::string hashdb_dir;
   hashdb_modes_t mode;
   hashdb_manager_t *hashdb_manager;
-  hashdb_changes_t *hashdb_changes;
   logger_t *logger;
   tcp_client_manager_t *tcp_client_manager;
   uint32_t block_size;
