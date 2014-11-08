@@ -38,11 +38,9 @@ hashdb_LDADD = libhashdb.la
 HASHDB_INCS = \
 	commands.hpp \
 	dfxml_hashdigest_reader.hpp \
-	dfxml_import_hash_consumer.hpp \
-	dfxml_import_source_metadata_consumer.hpp \
-	dfxml_scan_hash_consumer.hpp \
-	dfxml_scan_source_metadata_consumer.hpp \
-	dfxml_scan_expanded_smc.hpp \
+	dfxml_import_consumer.hpp \
+	dfxml_scan_consumer.hpp \
+	dfxml_scan_expanded_consumer.hpp \
 	dfxml_hashdigest_writer.hpp \
 	feature_file_reader.hpp \
 	feature_line.hpp \

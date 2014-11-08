@@ -276,8 +276,15 @@ class hashdb_manager_t {
    * Find returning a multimap iterator pair.
    */
 
-  std::pair<multimap_iterator_t, multimap_iterator_t > find(const hash_t& hash) const {
-    return multimap.equal_range(hash);
+  std::pair<multimap_iterator_t, multimap_iterator_t > find(const hash_t& key) const {
+    // if key not in bloom filter then return empty range
+    if (!bloom_filter_manager.is_positive(key)) {
+      return std::pair<multimap_iterator_t, multimap_iterator_t>(
+                                            multimap.end(), multimap.end());
+    }
+
+    // return range from multimap
+    return multimap.equal_range(key);
   }
 
   // find_count

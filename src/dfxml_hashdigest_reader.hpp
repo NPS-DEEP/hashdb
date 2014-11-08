@@ -21,7 +21,9 @@
  * \file
  * Provides the service of reading hash data from a DFXML file
  * typically created by md5deep or by a hashdb_manager export operation
- * and calling a hash consumer to process the hash data.
+ * and calling a custom DFXML consumer to process the hash data.
+ *
+ * This reader calls T at waypoints as needed by T.
  */
 
 /**
@@ -40,9 +42,7 @@
 #include "hash_t_selector.h"
 
 // a class is used just to keep members private
-// Note that HC is the hash consumer.
-// Note that SC is the source metadata consumer.
-template <class HC, class SC>
+template <class T>
 class dfxml_hashdigest_reader_t {
   private:
 
@@ -58,8 +58,7 @@ class dfxml_hashdigest_reader_t {
 
     // input values provided by do_read()
     const std::string default_repository_name;
-    HC* hash_consumer;
-    SC* source_metadata_consumer;
+    T* dfxml_consumer;
 
     // state variables
     bool under_fileobject;
@@ -84,11 +83,9 @@ class dfxml_hashdigest_reader_t {
     std::string fileobject_hashdigest;
 
     user_data_t(const std::string& p_default_repository_name,
-                                             HC* p_hash_consumer,
-                                             SC* p_source_metadata_consumer) :
+                                             T* p_dfxml_consumer) :
                          default_repository_name(p_default_repository_name),
-                         hash_consumer(p_hash_consumer),
-                         source_metadata_consumer(p_source_metadata_consumer),
+                         dfxml_consumer(p_dfxml_consumer),
                          under_fileobject(false),
                          under_repository_name(false),
                          under_filename(false),
@@ -116,7 +113,7 @@ class dfxml_hashdigest_reader_t {
   // static sax handler helpers
   // ************************************************************
 
-  static void consume_byte_run_hash(user_data_t& user_data) {
+  static void end_byte_run(user_data_t& user_data) {
 
     // pull together byte_run fields for the hashdb element
 
@@ -164,52 +161,16 @@ class dfxml_hashdigest_reader_t {
                file_offset);
 
     // call the hash consumer
-    user_data.hash_consumer->consume(hashdb_element);
+    user_data.dfxml_consumer->end_byte_run(hashdb_element);
   }
 
-  static void consume_source_metadata(user_data_t& user_data) {
-    // do not consume unless all metadata fields are there
-    if (user_data.fileobject_hashdigest_type == "" ||
-        user_data.fileobject_hashdigest == "" ||
-        user_data.fileobject_filesize == "") {
-      return;
-    }
-
-    // validate hashdigest type
-    if (user_data.fileobject_hashdigest_type != digest_name<hash_t>()) {
-      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type for fileobject: "
-                << user_data.fileobject_hashdigest_type << "', entry ignored.\n";
-      return;
-    }
-
-    // validate hash
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(user_data.fileobject_hashdigest);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hashdigest: '"
-                << user_data.fileobject_hashdigest << "', entry ignored.\n";
-      return;
-    }
-
-    // get file size
-    uint64_t filesize;
-    try {
-      filesize = boost::lexical_cast<uint64_t>(user_data.fileobject_filesize);
-    } catch(...) {
-      std::cerr << "Invalid filesize value: '"
-                << user_data.fileobject_filesize << "', entry ignored.\n";
-      return;
-    }
-
-
-    // create the source metadata element
-    source_metadata_element_t source_metadata_element(
-               user_data.fileobject_repository_name,
-               user_data.fileobject_filename,
-               filesize,
-               hash_pair.second);
- 
-    // call the consumer
-    user_data.source_metadata_consumer->consume(source_metadata_element);
+  static void end_fileobject(user_data_t& user_data) {
+    user_data.dfxml_consumer->end_fileobject(
+                                    user_data.fileobject_repository_name,
+                                    user_data.fileobject_filename,
+                                    user_data.fileobject_hashdigest_type,
+                                    user_data.fileobject_hashdigest,
+                                    user_data.fileobject_filesize);
   }
 
   // parse byte_run tag for possible file_offset or len attributes
@@ -373,7 +334,7 @@ class dfxml_hashdigest_reader_t {
 
     // fileobject
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("fileobject"))) {
-      consume_source_metadata(user_data);
+      end_fileobject(user_data);
       user_data.under_fileobject = false;
 
     // repository_name
@@ -382,6 +343,9 @@ class dfxml_hashdigest_reader_t {
 
     // filename
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("filename"))) {
+      // give dfxml consumer a chance do do something
+      user_data.dfxml_consumer->end_fileobject_filename(user_data.fileobject_filename);
+
       user_data.under_filename = false;
 
     // file size
@@ -390,7 +354,7 @@ class dfxml_hashdigest_reader_t {
 
     // byte_run
     } else if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_run"))) {
-      consume_byte_run_hash(user_data);
+      end_byte_run(user_data);
       user_data.under_byte_run = false;
 
     // hashdigest
@@ -515,8 +479,7 @@ class dfxml_hashdigest_reader_t {
   static std::pair<bool, std::string> do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
-                HC* hash_consumer,
-                SC* source_metadata_consumer) {
+                T* dfxml_consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
     xmlSAXHandler sax_handlers = {
@@ -551,8 +514,7 @@ class dfxml_hashdigest_reader_t {
     };
 
     // set up the data structure for the sax handlers to use
-    user_data_t user_data(default_repository_name,
-                          hash_consumer, source_metadata_consumer);
+    user_data_t user_data(default_repository_name, dfxml_consumer);
 
     // perform the sax parse on the file
     int sax_parser_resource = xmlSAXUserParseFile(

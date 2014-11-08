@@ -65,7 +65,8 @@ class json_helper_t {
 
   // print source fields
   static void print_source_fields(const hashdb_manager_t& hashdb_manager,
-                                  uint64_t source_lookup_index) {
+                                  uint64_t source_lookup_index,
+                                  std::ostream& os) {
     // get the repository name and filename
     std::pair<bool, std::pair<std::string, std::string> > source_pair =
                              hashdb_manager.find_source(source_lookup_index);
@@ -75,20 +76,20 @@ class json_helper_t {
                      hashdb_manager.find_source_metadata(source_lookup_index);
 
     // print the source ID
-    std::cout << "\"source_id\":" << source_lookup_index;
+    os << "\"source_id\":" << source_lookup_index;
 
     // print the source
     if (source_pair.first == true) {
-      std::cout << ",\"repository_name\":\"" << source_pair.second.first
-                << "\",\"filename\":\"" << source_pair.second.second
-                << "\"";
+      os << ",\"repository_name\":\"" << source_pair.second.first
+         << "\",\"filename\":\"" << source_pair.second.second
+         << "\"";
     }
 
     if (metadata_pair.first == true) {
       // print the metadata
-      std::cout << ",\"filesize\":" << metadata_pair.second.filesize
-                << ",\"hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
-                << "\"";
+      os << ",\"filesize\":" << metadata_pair.second.filesize
+         << ",\"hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
+         << "\"";
     }
   }
 };

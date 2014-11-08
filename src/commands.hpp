@@ -34,11 +34,9 @@
 #include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
-#include "dfxml_import_hash_consumer.hpp"
-#include "dfxml_import_source_metadata_consumer.hpp"
-#include "dfxml_scan_hash_consumer.hpp"
-#include "dfxml_scan_source_metadata_consumer.hpp"
-#include "dfxml_scan_expanded_smc.hpp"
+#include "dfxml_import_consumer.hpp"
+#include "dfxml_scan_consumer.hpp"
+#include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
@@ -458,7 +456,7 @@ class commands_t {
 
       // print the source
       std::cout << "{";
-      json_helper_t::print_source_fields(hashdb_manager, *it);
+      json_helper_t::print_source_fields(hashdb_manager, *it, std::cout);
       std::cout << "}\n";
     }
   }
@@ -513,20 +511,13 @@ class commands_t {
     // start progress tracker
     progress_tracker_t progress_tracker(0, &logger);
 
-    // create the hash consumer
-    dfxml_import_hash_consumer_t hash_consumer(
-                                &hashdb_manager, &progress_tracker);
-
-    // create the source metadata consumer
-    dfxml_import_source_metadata_consumer_t source_metadata_consumer(
-                                &hashdb_manager);
+    // create the DFXML import consumer
+    dfxml_import_consumer_t import_consumer(&hashdb_manager, &progress_tracker);
 
     // run the dfxml hashdigest reader using the import hash consumer
     std::pair<bool, std::string> do_read_pair =
-    dfxml_hashdigest_reader_t<dfxml_import_hash_consumer_t,
-                              dfxml_import_source_metadata_consumer_t>::
-             do_read(dfxml_file, repository_name,
-                     &hash_consumer, &source_metadata_consumer);
+    dfxml_hashdigest_reader_t<dfxml_import_consumer_t>::
+             do_read(dfxml_file, repository_name, &import_consumer);
 
     // close tracker
     progress_tracker.done();
@@ -1090,24 +1081,13 @@ class commands_t {
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
     hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
 
-    // create space for the source metadata elements even though they will not
-    // be used
-    std::vector<source_metadata_element_t>* scan_source_metadata_input =
-                      new std::vector<source_metadata_element_t>;
+    // create the dfxml scan consumer
+    dfxml_scan_consumer_t scan_consumer(scan_input);
 
-    // create the hash consumer
-    dfxml_scan_hash_consumer_t hash_consumer(scan_input);
-
-    // create the source metadata consumer even though not used
-    dfxml_scan_source_metadata_consumer_t source_metadata_consumer(
-                                                  scan_source_metadata_input);
-
-    // run the dfxml hashdigest reader using the scan consumers
+    // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_hash_consumer_t,
-                              dfxml_scan_source_metadata_consumer_t>::
-                              do_read(dfxml_file, repository_name,
-                              &hash_consumer, &source_metadata_consumer);
+    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
+                        do_read(dfxml_file, repository_name, &scan_consumer);
 
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
@@ -1117,7 +1097,6 @@ class commands_t {
 
     // delete heap allocation
     delete scan_input;
-    delete scan_source_metadata_input;
     delete scan_output;
   }
 
@@ -1128,29 +1107,18 @@ class commands_t {
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // create space on the heap for the scan input vector
-    std::vector<hash_t>* hashes = new std::vector<hash_t>;
-
-    // create the hash consumer
-    dfxml_scan_hash_consumer_t hash_consumer(hashes);
-
-    // create the source metadata consumer
-    dfxml_scan_expanded_smc_t source_metadata_consumer(
-                                           &hashdb_manager, hashes);
+    // create the dfxml scan_expanded consumer
+    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager);
 
     // print file header information
     std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# scan_expanded-command-Version: 1\n";
+              << "# scan_expanded-command-Version: 2\n";
 
     // run the dfxml hashdigest reader using the scan consumers
     std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_hash_consumer_t,
-                              dfxml_scan_expanded_smc_t>::
+    dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
                               do_read(dfxml_file, repository_name,
-                              &hash_consumer, &source_metadata_consumer);
-
-    // delete heap allocation
-    delete hashes;
+                              &scan_expanded_consumer);
   }
 
   // scan hash
@@ -1220,7 +1188,7 @@ class commands_t {
       std::cout << "[\"" << hash_string << "\", {";
 
       // print source fields for this hash
-      json_helper_t::print_source_fields(hashdb_manager, hashdb_manager.source_id(it_pair.first));
+      json_helper_t::print_source_fields(hashdb_manager, hashdb_manager.source_id(it_pair.first), std::cout);
 
       // close the JSON line
       std::cout << "}]\n";
@@ -1309,7 +1277,7 @@ class commands_t {
     // report each entry
     for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
       std::cout << "{";
-      json_helper_t::print_source_fields(hashdb_manager, it->key);
+      json_helper_t::print_source_fields(hashdb_manager, it->key, std::cout);
       std::cout << "}\n";
     }
   }
@@ -1459,7 +1427,7 @@ class commands_t {
 
     // print source information
     std::cout << "{";
-    json_helper_t::print_source_fields(hashdb_manager, source_id);
+    json_helper_t::print_source_fields(hashdb_manager, source_id, std::cout);
     std::cout << "}\n";
 
     // show hashes for the requested source
@@ -1537,7 +1505,7 @@ class commands_t {
         std::cout << feature_line.forensic_path << "\t"
                   << feature_line.feature << "\t"
                   << "{" << context << ",";
-        json_helper_t::print_source_fields(hashdb_manager, source_id);
+        json_helper_t::print_source_fields(hashdb_manager, source_id, std::cout);
         std::cout << "}\n";
       }
     }

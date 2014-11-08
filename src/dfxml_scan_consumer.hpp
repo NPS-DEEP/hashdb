@@ -24,32 +24,46 @@
  * scan input data structure.
  */
 
-#ifndef DFXML_SCAN_SOURCE_METADATA_CONSUMER_HPP
-#define DFXML_SCAN_SOURCE_METADATA_CONSUMER_HPP
-#include "hashdb.hpp"
+#ifndef DFXML_SCAN_CONSUMER_HPP
+#define DFXML_SCAN_CONSUMER_HPP
 #include "hashdb_element.hpp"
 #include "hash_t_selector.h"
 
-class dfxml_scan_source_metadata_consumer_t {
+class dfxml_scan_consumer_t {
 
   private:
-  std::vector<source_metadata_element_t>* scan_input;
+  std::vector<hash_t>* scan_input;
 
   // do not allow copy or assignment
-  dfxml_scan_source_metadata_consumer_t(const dfxml_scan_source_metadata_consumer_t&);
-  dfxml_scan_source_metadata_consumer_t& operator=(const dfxml_scan_source_metadata_consumer_t&);
+  dfxml_scan_consumer_t(const dfxml_scan_consumer_t&);
+  dfxml_scan_consumer_t& operator=(const dfxml_scan_consumer_t&);
 
   public:
-  dfxml_scan_source_metadata_consumer_t(
-              std::vector<source_metadata_element_t>* p_scan_input) :
+  dfxml_scan_consumer_t(
+              std::vector<hash_t>* p_scan_input) :
         scan_input(p_scan_input) {
   }
 
-  // to consume, have dfxml_hashdigest_reader call here
-  void consume(const source_metadata_element_t& source_metadata_element) {
+  // end_fileobject_filename
+  void end_fileobject_filename(const std::string& filename) {
+    // no action for this consumer
+  }
+
+  // end_byte_run
+  void end_byte_run(const hashdb_element_t& hashdb_element) {
 
     // consume the hashdb_element by adding it to scan_input
-    scan_input->push_back(source_metadata_element);
+    scan_input->push_back(hashdb_element.key);
+  }
+
+  // end_fileobject
+  void end_fileobject(const std::string& repository_name,
+                      const std::string& p_filename,
+                      const std::string& hashdigest_type,
+                      const std::string& hashdigest,
+                      const std::string& filesize) {
+
+    // no action for this consumer
   }
 };
 
