@@ -463,17 +463,6 @@ class commands_t {
 
   public:
 
-  // help
-  static void help(const std::string& name) {
-    if (name == "") {
-      usage();
-      exit(0);
-    } else {
-      int status = system(std::string("man " + name).c_str());
-      exit(status);
-    }
-  }
-
   // create
   static void create(const hashdb_settings_t& settings,
                      const std::string& hashdb_dir) {

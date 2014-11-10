@@ -63,7 +63,6 @@
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // options
-static bool has_help = false; // h
 static bool has_hash_block_size = false; // p
 static bool has_max = false;             // m
 static bool has_repository_name = false; // r
@@ -118,7 +117,7 @@ int main(int argc,char **argv) {
 
   // manage error condition of no arguments
   if(argc==1) {
-      commands_t::help("");
+      usage();
       exit(1);
   }
 
@@ -129,6 +128,7 @@ int main(int argc,char **argv) {
     const struct option long_options[] = {
       // basic
       {"help", no_argument, 0, 'h'},
+      {"Help", no_argument, 0, 'H'},
       {"version", no_argument, 0, 'v'},
       {"Version", no_argument, 0, 'V'},
       {"quiet", no_argument, 0, 'q'},
@@ -148,7 +148,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hvVqf:p:m:r:A:B:C:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqf:p:m:r:A:B:C:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -159,7 +159,14 @@ int main(int argc,char **argv) {
     }
     switch (ch) {
       case 'h': {	// help
-        has_help = true;
+        usage();
+        exit(0);
+        break;
+      }
+      case 'H': {	// Help
+        usage();
+        detailed_usage();
+        exit(0);
         break;
       }
       case 'v': {	// version
@@ -295,17 +302,6 @@ int main(int argc,char **argv) {
   argc -= optind;
   argv += optind;
 
-  // manage help from -h
-  if (has_help) {
-    if (argc < 1) {
-      commands_t::help("");
-      exit(0);
-    } else {
-      commands_t::help(argv[0]);
-      exit(0);
-    }
-  }
-
   // get the command
   if (argc < 1) {
     std::cerr << "Error: a command must be provided.\n";
@@ -406,13 +402,7 @@ void manage_bloom_settings(hashdb_settings_t& settings) {
 
 void run_command() {
 
-  if (has_help || command == "help") {
-    if (parameter_count >= 1) {
-      commands_t::help(hashdb_arg1);
-    } else {
-      commands_t::help("");
-    }
-  } else if (command == "create") {
+  if (command == "create") {
     no_r();
     require_parameter_count(1);
     hashdb_settings_t create_settings;
