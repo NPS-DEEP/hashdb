@@ -30,11 +30,14 @@
 #include "hashdb_element.hpp"
 #include "hash_t_selector.h"
 #include "json_helper.hpp"
+#include "boost/crc.hpp"
 
 class dfxml_scan_expanded_consumer_t {
 
   private:
   hashdb_manager_t* hashdb_manager;
+  uint32_t max_sources;
+  std::set<uint32_t> source_list_ids;
   bool found_match = false;
   std::string filename;
 
@@ -43,8 +46,13 @@ class dfxml_scan_expanded_consumer_t {
   dfxml_scan_expanded_consumer_t& operator=(const dfxml_scan_expanded_consumer_t&);
 
   public:
-  dfxml_scan_expanded_consumer_t(hashdb_manager_t* p_hashdb_manager) :
-          hashdb_manager(p_hashdb_manager), found_match(false), filename("") {
+  dfxml_scan_expanded_consumer_t(hashdb_manager_t* p_hashdb_manager,
+                                 uint32_t p_max_sources) :
+          hashdb_manager(p_hashdb_manager),
+          max_sources(p_max_sources),
+          source_list_ids(),
+          found_match(false),
+          filename("") {
   }
 
   // end_fileobject_filename
@@ -66,6 +74,9 @@ class dfxml_scan_expanded_consumer_t {
       return;
     }
 
+    // start a source list ID CRC hash
+    boost::crc_32_type source_list_crc;
+
     // compose the list of sources for this hash
     size_t count = 0;
     std::stringstream ss;
@@ -74,6 +85,9 @@ class dfxml_scan_expanded_consumer_t {
 
       // get source lookup index
       uint64_t source_id = hashdb_manager->source_id(it_pair.first);
+
+      // add source ID to source list ID
+      source_list_crc.process_bytes(&source_id, sizeof(source_id));
 
       // print source fields separated by comma
       if (count++ > 0) {
@@ -84,6 +98,7 @@ class dfxml_scan_expanded_consumer_t {
       ss << "}";
     }
     ss << "]";
+    uint32_t source_list_id = source_list_crc.checksum();
 
     // print filename if first match for this fileobject
     if (found_match == false) {
@@ -94,13 +109,26 @@ class dfxml_scan_expanded_consumer_t {
     }
 
     // print the hash
-    std::cout << "[\"" << hashdb_element.key.hexdigest() << "\", ";
+    std::cout << "[\"" << hashdb_element.key.hexdigest() << "\"";
 
     // print the count
-    std::cout << "{\"count\":" << count << "}";
+    std::cout << ", {\"count\":" << count << "}";
 
-    // print the list of sources for this hash
-    std::cout << ", " << ss.str();
+    // print the source list ID
+    std::cout << ", {\"source_list_id\":" << source_list_id << "}";
+
+    // maybe print the list of sources for this hash
+    if (count == 1) {
+      // always print the source when count=1
+      std::cout << ", " << ss.str();
+    } else {
+      // print the source list the first time, but not again
+      if (source_list_ids.find(source_list_id) == source_list_ids.end()) {
+        // print this source list this first time
+        std::cout << ", " << ss.str();
+        source_list_ids.insert(source_list_id);
+      }
+    }
 
     // close the JSON line
     std::cout << "]" << std::endl;

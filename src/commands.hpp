@@ -1102,13 +1102,15 @@ class commands_t {
 
   // scan expanded
   static void scan_expanded(const std::string& hashdb_dir,
-                            const std::string& dfxml_file) {
+                            const std::string& dfxml_file,
+                            uint32_t scan_expanded_max) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // create the dfxml scan_expanded consumer
-    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager);
+    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager,
+                                                          scan_expanded_max);
 
     // print file header information
     std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
