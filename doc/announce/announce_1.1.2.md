@@ -21,9 +21,8 @@ GIT repository: https://github.com/simsong/bulk_extractor
  * Hashes are scanned immediately as they are parsed from DFXML input rather than saving them up in a vector and hashing the vector when the `</fileobject>` close tab is received.  Because of this, a fileobject's filename must be defined before its block hashes, or else the printed name of the file being processed will be blank.
  * A `-m <max>` option is added so that when the number of sources a hash has exceeds this maximum, the sources associated with the hash are not displayed.
  * All the sources for a hash are displayed on one line instead of printing each source for a hash on a separate line with the hash value displayed at the beginning.
- * A new `source_list_id` field is added to provide the ability to easily distinguish between various source lists.  The `source_list_id` value is calculated by applying a 64-bit hash for each `source_id` associated with the given hash.
- * Maybe: skip printing the source list if the `source_list_id` has been seen before.
-
+ * A new `source_list_id` field is added to provide the ability to easily distinguish between various source lists.  The `source_list_id` value is calculated by applying a 32-bit CRC function for each `source_id` associated with the given hash.  The CRC function is `boost::crc_32_type` from `boost/crc.hpp`.
+ * If a particular source list has more than one entry, it is printed only once.  This is managed by tracking source list IDs with count>1 in a set.
 
 Availability
 ============
@@ -34,4 +33,5 @@ Availability
 Contacts
 ========
 * Developer: mailto:bdallen@nps.edu
-* Bulk Extractor Users Group: http://groups.google.com/group/bulk_extractor-users
+* Bulk Extractor Users Group: http://groups.google.com/group/bulk_extractor-users 
+

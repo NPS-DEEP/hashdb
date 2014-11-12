@@ -88,7 +88,7 @@ class json_helper_t {
     if (metadata_pair.first == true) {
       // print the metadata
       os << ",\"filesize\":" << metadata_pair.second.filesize
-         << ",\"hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
+         << ",\"file_hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
          << "\"";
     }
   }

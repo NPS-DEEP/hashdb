@@ -109,7 +109,7 @@ class dfxml_scan_expanded_consumer_t {
     }
 
     // print the hash
-    std::cout << "[\"" << hashdb_element.key.hexdigest() << "\"";
+    std::cout << "[{\"block_hashdigest\":\"" << hashdb_element.key.hexdigest() << "\"}";
 
     // print the count
     std::cout << ", {\"count\":" << count << "}";
