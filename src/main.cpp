@@ -422,6 +422,14 @@ void run_command() {
       repository_name_string = "repository_" + hashdb_arg1;
     }
     commands_t::import(hashdb_arg1, hashdb_arg2, repository_name_string);
+  } else if (command == "import_nist") {
+    no_p(); no_m(); no_A(); no_B(); no_C();
+    require_parameter_count(2);
+    // compose a repository name if one is not provided
+    if (!has_repository_name) {
+      repository_name_string = "repository_" + hashdb_arg1;
+    }
+    commands_t::import_nist(hashdb_arg1, hashdb_arg2, repository_name_string);
   } else if (command == "export") {
     no_p(); no_m(); no_r(); no_A(); no_B(); no_C();
     require_parameter_count(2);

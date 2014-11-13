@@ -38,6 +38,7 @@
 #include "dfxml_scan_consumer.hpp"
 #include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
+#include "nist_hashdigest_reader.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
@@ -541,6 +542,62 @@ class commands_t {
       history_manager_t::append_log_to_history(hashdb_dir);
 
       std::cerr << do_read_pair.second << ".  Import aborted.\n";
+    }
+  }
+
+  // import_nist
+  static void import_nist(const std::string& hashdb_dir,
+                     const std::string& nist_file,
+                     const std::string& repository_name) {
+
+    // require that nist file exists
+    if (access(nist_file.c_str(), F_OK) != 0) {
+      std::cerr << "NIST import file '" << nist_file
+                << "' does not exist.  Aborting.\n";
+      exit(1);
+    }
+
+    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+
+    logger_t logger(hashdb_dir, "import_nist");
+    logger.add("nist_file", nist_file);
+    logger.add("hashdb_dir", hashdb_dir);
+    logger.add("repository_name", repository_name);
+    logger.add_timestamp("begin import_nist");
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(0, &logger);
+
+    // create the NIST reader
+    nist_hashdigest_reader_t nist_hashdigest_reader(
+                    &hashdb_manager, &progress_tracker, repository_name);
+
+    // read the NIST input
+    std::pair<bool, std::string> import_nist_pair =
+                                nist_hashdigest_reader.read(nist_file);
+
+    // close tracker
+    progress_tracker.done();
+
+    if (import_nist_pair.first == true) {
+      // good, reader worked
+
+      // close logger
+      logger.add_timestamp("end import_nist");
+      logger.add_hashdb_changes(hashdb_manager.changes);
+      logger.close();
+      history_manager_t::append_log_to_history(hashdb_dir);
+
+      // also write changes to cout
+      std::cout << hashdb_manager.changes << "\n";
+    } else {
+      // bad, reader failed
+      // close logger
+      logger.add_timestamp("end import_nist, import failed");
+      logger.close();
+      history_manager_t::append_log_to_history(hashdb_dir);
+
+      std::cerr << import_nist_pair.second << ".  Import from NIST file aborted.\n";
     }
   }
 
