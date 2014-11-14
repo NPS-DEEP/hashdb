@@ -43,29 +43,12 @@ class tab_hashdigest_reader_t {
   progress_tracker_t* progress_tracker;
   const std::string& repository_name;
   const uint32_t sector_size;
+  size_t line_number;
 
   // do not allow these
   tab_hashdigest_reader_t();
   tab_hashdigest_reader_t(const tab_hashdigest_reader_t&);
   tab_hashdigest_reader_t& operator=(const tab_hashdigest_reader_t&);
-
-  std::pair<bool, std::string> read_text(std::string tab_file) {
-
-    // open text file
-    std::ifstream in(tab_file);
-    if (!in.is_open()) {
-      std::stringstream ss;
-      ss << "Cannot open " << tab_file << ": " << strerror(errno);
-      return std::pair<bool, std::string>(false, ss.str());
-    }
-
-    // process lines
-    std::string line;
-    while(getline(in, line)) {
-      import_line(line);
-    }
-    return std::pair<bool, std::string>(true, "");
-  }
 
   void import_line(const std::string& line) {
     // skip comment lines
@@ -77,12 +60,12 @@ class tab_hashdigest_reader_t {
     // find tabs
     size_t tab_index1 = line.find('\t');
     if (tab_index1 == std::string::npos) {
-      std::cerr << "tab not found in line: '" << line << "'\n";
+      std::cerr << "Tab not found on line " << line_number << ": '" << line << "'\n";
       return;
     }
     size_t tab_index2 = line.find('\t', tab_index1 + 1);
     if (tab_index2 == std::string::npos) {
-      std::cerr << "second tab not found in line: '" << line << "'\n";
+      std::cerr << "Second tab not found on line " << line_number << ": '" << line << "'\n";
       return;
     }
 
@@ -95,7 +78,7 @@ class tab_hashdigest_reader_t {
     std::pair<bool, hash_t> block_hashdigest_pair = safe_hash_from_hex(
                                                 block_hashdigest_string);
     if (block_hashdigest_pair.first == false) {
-      std::cerr << "invalid block hashdigest in line: '" << line << "'\n";
+      std::cerr << "Invalid block hashdigest on line " << line_number << ": '" << line << "'\n";
       return;
     }
 
@@ -105,7 +88,7 @@ class tab_hashdigest_reader_t {
       file_offset = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1))
                                                               * sector_size;
     } catch(...) {
-      std::cerr << "Invalid file offset in line: '" << line << "'\n";
+      std::cerr << "Invalid file offset on line " << line_number << ": '" << line << "'\n";
       return;
     }
 
@@ -132,11 +115,28 @@ class tab_hashdigest_reader_t {
               hashdb_manager(p_hashdb_manager),
               progress_tracker(p_progress_tracker),
               repository_name(p_repository_name),
-              sector_size(p_sector_size) {
+              sector_size(p_sector_size),
+              line_number(0) {
   }
 
+  // read tab file
   std::pair<bool, std::string> read(std::string tab_file) {
-    return read_text(tab_file);
+
+    // open text file
+    std::ifstream in(tab_file);
+    if (!in.is_open()) {
+      std::stringstream ss;
+      ss << "Cannot open " << tab_file << ": " << strerror(errno);
+      return std::pair<bool, std::string>(false, ss.str());
+    }
+
+    // process lines
+    std::string line;
+    while(getline(in, line)) {
+      ++line_number;
+      import_line(line);
+    }
+    return std::pair<bool, std::string>(true, "");
   }
 };
 
