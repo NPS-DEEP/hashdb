@@ -57,19 +57,31 @@ class source_metadata_manager_t {
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
 
-  map_t map;
+  map_t* map;
 
   // disallow these
   source_metadata_manager_t(const source_metadata_manager_t&);
   source_metadata_manager_t& operator=(const source_metadata_manager_t&);
 
   public:
-  source_metadata_manager_t (const std::string p_hashdb_dir,
+  source_metadata_manager_t(const std::string p_hashdb_dir,
                            file_mode_type_t p_file_mode_type) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode_type),
-       map(hashdb_dir + "/source_metadata_store",
-           file_mode_type_to_btree_flags_bitmask(file_mode)) {
+       map() {
+    try {
+      map = new map_t(hashdb_dir + "/source_metadata_store",
+             file_mode_type_to_btree_flags_bitmask(file_mode));
+    } catch(std::exception& e) {
+      // something went wrong
+      std::cerr << "Unable to open the source metadata store: "
+                << e.what() << "\nIf this database was created using v1.0.0, please upgrade it using the 'upgrade' command.\n";
+      exit(1);
+    }
+  }
+
+  ~source_metadata_manager_t() {
+    delete map;
   }
 
   /**
@@ -85,7 +97,7 @@ class source_metadata_manager_t {
     }
 
     // emplace
-    std::pair<map_t::const_iterator, bool> response = map.emplace(
+    std::pair<map_t::const_iterator, bool> response = map->emplace(
                              source_id, map_value_t(filesize, hashdigest));
 
     // return success of emplace
@@ -99,9 +111,9 @@ class source_metadata_manager_t {
   std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) const {
 
     // use map iterator to dereference the source metadata
-    map_t::const_iterator it = map.find(source_lookup_index);
+    map_t::const_iterator it = map->find(source_lookup_index);
 
-    if (it == map.end()) {
+    if (it == map->end()) {
       // not there
       return std::pair<bool, source_metadata_t>(false, source_metadata_t());
     } else {
@@ -114,7 +126,7 @@ class source_metadata_manager_t {
 
   // size
   size_t size() const {
-    return map.size();
+    return map->size();
   }
 };
 

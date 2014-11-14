@@ -14,6 +14,7 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * Add the report of database changes to the destination database for the `add_multiple` command.  Database changes should be reported for all commands that change the database.  This was an omission.
 * Database manipulation commands are fixed to additionally copy source metadata.  Previously, source metadata information (the filesize and the file hashdigest) was not copied.  This was an omission.
 * A regression introduced in 1.1.1 was fixed so that command `scan_expanded` does not require the input to have file hashdigest or filesize tags in order to hash.
+* _hashdb_ fails more gracefully and suggests running the `upgrade` command when the source metadata store is missing.
 * _hashdb_ fails more gracefully when attempting to access a corrupted hash database.  A hash database can be corrupted when a  _hashdb_ command that modifies it is aborted.
 
 # Functional Changes
