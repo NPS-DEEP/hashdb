@@ -88,7 +88,7 @@ class tab_hashdigest_reader_t {
       sector_index = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1));
       if (sector_index == 0) {
         // index starts at 1 so 0 is invalid
-        throw;
+        throw std::invalid_argument("sector index 0 is not allowed");
       }
     } catch(...) {
       std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "'\n";
