@@ -83,14 +83,18 @@ class tab_hashdigest_reader_t {
     }
 
     // parse file offset
-    uint64_t file_offset;
+    size_t sector_index;
     try {
-      file_offset = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1))
-                                                              * sector_size;
+      sector_index = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1));
+      if (sector_index == 0) {
+        // index starts at 1 so 0 is invalid
+        throw;
+      }
     } catch(...) {
-      std::cerr << "Invalid file offset on line " << line_number << ": '" << line << "'\n";
+      std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "'\n";
       return;
     }
+    uint64_t file_offset = (sector_index -1) * sector_size;
 
     // create the hashdb element
     hashdb_element_t hashdb_element(

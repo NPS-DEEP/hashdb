@@ -97,7 +97,7 @@ void usage() {
   << "    <hashdb>       the hash database to insert the imported hashes into\n"
   << "    <DFXML file>   the DFXML file to import hashes from\n"
   << "\n"
-  << "  import_tab [-r <repository name> [-s <sector size>] <hashdb> <tab file>\n"
+  << "  import_tab [-r <repository name>] [-s <sector size>] <hashdb> <tab file>\n"
   << "    Import hashes from file <tab file> into hash database <hashdb>.\n"
   << "\n"
   << "    Options:\n"
