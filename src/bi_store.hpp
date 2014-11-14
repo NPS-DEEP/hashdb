@@ -41,6 +41,7 @@
 #endif
 
 
+#include <cassert>
 #include <string>
 //#include "indexed_string_t.hpp"
 #include "file_modes.h"

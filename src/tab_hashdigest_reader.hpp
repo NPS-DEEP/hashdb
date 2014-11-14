@@ -86,16 +86,10 @@ class tab_hashdigest_reader_t {
       return;
     }
 
-    // file hashdigest
-    std::string file_hashdigest_string = line.substr(0, tab_index1);
-    std::pair<bool, hash_t> file_hashdigest_pair = safe_hash_from_hex(
-                                                file_hashdigest_string);
-    if (file_hashdigest_pair.first == false) {
-      std::cerr << "invalid file hashdigest in line: '" << line << "'\n";
-      return;
-    }
+    // parse filename
+    std::string filename = line.substr(0, tab_index1);
 
-    // block hashdigest
+    // parse block hashdigest
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
     std::pair<bool, hash_t> block_hashdigest_pair = safe_hash_from_hex(
@@ -105,7 +99,7 @@ class tab_hashdigest_reader_t {
       return;
     }
 
-    // file offset
+    // parse file offset
     uint64_t file_offset;
     try {
       file_offset = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1))
@@ -120,7 +114,7 @@ class tab_hashdigest_reader_t {
                block_hashdigest_pair.second,             // block hash
                hashdb_manager->settings.hash_block_size, // block size
                repository_name,                          // repository name
-               file_hashdigest_pair.second.hexdigest(),  // filename
+               filename,                                 // filename
                file_offset);                             // file offset
 
     // update progress tracker

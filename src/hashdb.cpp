@@ -53,6 +53,9 @@
 #include "logger.hpp"
 #include "tcp_client_manager.hpp"
 #include "source_metadata_element.hpp"
+#ifndef HAVE_CXX11
+#include <cassert>
+#endif
 
 // this implementation uses pthread lock to protect the hash database
 #include "mutex_lock.hpp"

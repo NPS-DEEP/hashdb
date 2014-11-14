@@ -181,7 +181,10 @@ class commands_t {
       std::pair<bool, std::pair<std::string, std::string> >
                        source_string2_pair = hashdb2.find_source(source_id2);
       if (source_string2_pair.first == false) {
-        assert(0);
+        std::cerr << "Invalid source lookup index value " << source_id2
+                  << " encountered during metadata copy.\nDatabase "
+                  << hashdb2.hashdb_dir << "may be corrupt.  Aborting.\n";
+        exit(1);
       }
 
       // get equivalent source ID in db1

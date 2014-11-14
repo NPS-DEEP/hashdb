@@ -27,6 +27,7 @@
 
 #include "hash_t_selector.h" // to define hash_t
 #include <string>
+#include <cassert>
 #include "boost/btree/index_helpers.hpp"
 #include "boost/btree/btree_index_set.hpp"
 #include "file_modes.h"
@@ -79,6 +80,7 @@ class source_metadata_manager_t {
 
     // btree must be writable
     if (file_mode == READ_ONLY) {
+      // program error
       assert(0);
     }
 

@@ -40,7 +40,6 @@
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
-#include <cassert>
 
 class hashdb_manager_t {
 
@@ -98,7 +97,10 @@ class hashdb_manager_t {
     std::pair<bool, std::pair<std::string, std::string> > source_pair =
                      source_lookup_index_manager.find(source_lookup_index);
     if (source_pair.first == false) {
-      assert(0);
+      std::cerr << "Invalid source lookup index value " << source_lookup_index
+                << " encountered during element lookup.\nDatabase "
+                << hashdb_dir << " may be corrupt.  Aborting.\n";
+      exit(1);
     }
     return hashdb_element_t(
                     it->first,

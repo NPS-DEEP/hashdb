@@ -35,7 +35,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <getopt.h>
 #include "bloom_filter_manager.hpp"

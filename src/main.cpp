@@ -51,7 +51,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <boost/btree/helpers.hpp>
 #include <getopt.h>

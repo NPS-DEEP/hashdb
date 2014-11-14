@@ -34,6 +34,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <errno.h>
+#include <cassert>
 #include "feature_line.hpp"
 
 class feature_file_reader_t {
@@ -106,6 +107,7 @@ class feature_file_reader_t {
 
   feature_line_t read() {
     if (at_end) {
+      // program error
       assert(0);
     }
     feature_line_t temp = feature_line;

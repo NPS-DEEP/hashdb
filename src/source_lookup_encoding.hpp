@@ -31,7 +31,6 @@
 #ifndef SOURCE_LOOKUP_ENCODING_HPP
 #define SOURCE_LOOKUP_ENCODING_HPP
 #include <stdint.h>
-#include <cassert>
 #include <string>
 #include <stdexcept>
 //#include <iostream>

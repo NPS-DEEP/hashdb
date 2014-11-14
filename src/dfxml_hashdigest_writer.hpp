@@ -101,7 +101,9 @@ class dfxml_hashdigest_writer_t {
 
     // error if invalid lookup pair
     if (lookup_pair.first == false) {
-      assert(0);
+      std::cerr << "Invalid source lookup encountered during DFXML export.\n"
+                << "The hash database may be corrupt.  Aborting.\n";
+      exit(1);
     }
 
     // start the fileobject tag

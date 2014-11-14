@@ -33,7 +33,6 @@
 #include "hashdb_settings.hpp"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <cassert>
 #include <string>
 #include <iostream>
 #include <sstream>
