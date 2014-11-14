@@ -46,7 +46,6 @@ HASHDB_INCS = \
 	feature_line.hpp \
 	json_helper.hpp \
 	main.cpp \
-	nist_hashdigest_reader.hpp \
 	progress_tracker.hpp \
 	random_key.hpp \
 	source_lookup_encoding.hpp \
@@ -54,6 +53,7 @@ HASHDB_INCS = \
 	source_metadata.hpp \
 	source_metadata_element.hpp \
 	source_metadata_manager.hpp \
+	tab_hashdigest_reader.hpp \
 	tcp_server_manager.hpp \
 	usage.hpp
 

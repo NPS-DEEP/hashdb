@@ -575,10 +575,11 @@ Users can specify either the option and value or the verbose option value for ea
 \end{Verbatim}
 The above two commands produce identical results, creating the database \texttt{mock\_video.hdb} that will accept a maximum of 20 hash duplicates.\\
 
-\subsection{Importing and Exporting using DFXML}
-Hash databases may be imported from and exported to files in DFXML format.
-Once a database has been created, it may be populated with hash values from a DFXML file.
-Commands to import and export hashes are shown in Table \ref{tab:importExport}.
+\subsection{Importing and Exporting}
+Hash databases may be imported from and exported to files in DFXML format
+and may be imported from text files containing tabbed hash data.
+A hash database must be created first before it may be imported into.
+Commands to import and export hashes are shown in Table \ref{tab:importExport}.\\
 \begin{table}[!ht]
 \centering
 \caption{Commands for Importing and Exporting between DFXML Files and Hash Databases}
@@ -587,15 +588,29 @@ Commands to import and export hashes are shown in Table \ref{tab:importExport}.
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{import} & \verb+import [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported\\
+\textbf{import} & \verb+import [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported.\\
+\hline
+\textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the tab-dileneated file into the hash database. Options allow using a specific repository name and defining an alternate sector size for the set of hashes being imported.\\
 \hline
 \textbf{export} & \verb+export <hashdb.hdb> <DFXML file.xml>+ & Exports hash database to the DFXML file\\
 \hline
 \end{tabular}
 \end{table}
-Note that there are other ways to populate a database besides importing from a DFXML file, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
+Note that there are other ways to populate a database besides these listed here, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
 by using the \bulk \hash scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
 and through the use of the import capability provided by the \hdb library API (discussed in \textbf{\autoref{APISection}}).\\
+
+The tab-delimited import file consists of hash lines separated by carriage returns, where each line consists of a filename followed by a tab followed by the file hash followed by a sector index.  Comment lines are allowed by starting them with the \texttt{\#} character.
+An example tab-delimited file is shown in Listing \ref{importTabFile}.
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example content of a tab-delimited input file}, label=importTabFile]
+# tab file
+0	file1	3b6b477d391f73f67c1c01e2141dbb17
+1	file1	89a170b6b9a948d21d1d6ee1e7cdc467
+2	file1	f58a09656658c6b41e244b4a6091592c
+\end{lstlisting}
+
 
 Using the DFXML file created in the previous section, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]

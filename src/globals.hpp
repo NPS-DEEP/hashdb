@@ -34,6 +34,7 @@ class globals_t {
   public:
   static const uint32_t default_scan_expanded_max = 200;
   static const uint32_t default_explain_identified_blocks_max = 20;
+  static const uint32_t default_import_tab_sector_size = 512;
   static bool quiet_mode;
   static boost::btree::flags::bitmask btree_flags;
 };

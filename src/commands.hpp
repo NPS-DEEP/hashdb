@@ -38,7 +38,7 @@
 #include "dfxml_scan_consumer.hpp"
 #include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
-#include "nist_hashdigest_reader.hpp"
+#include "tab_hashdigest_reader.hpp"
 #include "source_metadata_manager.hpp"
 #include "tcp_server_manager.hpp"
 #include "hashdb.hpp"
@@ -545,45 +545,46 @@ class commands_t {
     }
   }
 
-  // import_nist
-  static void import_nist(const std::string& hashdb_dir,
-                     const std::string& nist_file,
-                     const std::string& repository_name) {
+  // import_tab
+  static void import_tab(const std::string& hashdb_dir,
+                     const std::string& tab_file,
+                     const std::string& repository_name,
+                     uint32_t sector_size) {
 
-    // require that nist file exists
-    if (access(nist_file.c_str(), F_OK) != 0) {
-      std::cerr << "NIST import file '" << nist_file
+    // require that tab file exists
+    if (access(tab_file.c_str(), F_OK) != 0) {
+      std::cerr << "tab import file '" << tab_file
                 << "' does not exist.  Aborting.\n";
       exit(1);
     }
 
     hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
 
-    logger_t logger(hashdb_dir, "import_nist");
-    logger.add("nist_file", nist_file);
+    logger_t logger(hashdb_dir, "import_tab");
+    logger.add("tab_file", tab_file);
     logger.add("hashdb_dir", hashdb_dir);
     logger.add("repository_name", repository_name);
-    logger.add_timestamp("begin import_nist");
+    logger.add_timestamp("begin import_tab");
 
     // start progress tracker
     progress_tracker_t progress_tracker(0, &logger);
 
-    // create the NIST reader
-    nist_hashdigest_reader_t nist_hashdigest_reader(
-                    &hashdb_manager, &progress_tracker, repository_name);
+    // create the tab reader
+    tab_hashdigest_reader_t tab_hashdigest_reader(
+            &hashdb_manager, &progress_tracker, repository_name, sector_size);
 
-    // read the NIST input
-    std::pair<bool, std::string> import_nist_pair =
-                                nist_hashdigest_reader.read(nist_file);
+    // read the tab input
+    std::pair<bool, std::string> import_tab_pair =
+                                tab_hashdigest_reader.read(tab_file);
 
     // close tracker
     progress_tracker.done();
 
-    if (import_nist_pair.first == true) {
+    if (import_tab_pair.first == true) {
       // good, reader worked
 
       // close logger
-      logger.add_timestamp("end import_nist");
+      logger.add_timestamp("end import_tab");
       logger.add_hashdb_changes(hashdb_manager.changes);
       logger.close();
       history_manager_t::append_log_to_history(hashdb_dir);
@@ -593,11 +594,11 @@ class commands_t {
     } else {
       // bad, reader failed
       // close logger
-      logger.add_timestamp("end import_nist, import failed");
+      logger.add_timestamp("end import_tab, import failed");
       logger.close();
       history_manager_t::append_log_to_history(hashdb_dir);
 
-      std::cerr << import_nist_pair.second << ".  Import from NIST file aborted.\n";
+      std::cerr << import_tab_pair.second << ".  Import from tab file aborted.\n";
     }
   }
 
