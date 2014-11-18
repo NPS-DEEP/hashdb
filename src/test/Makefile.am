@@ -19,10 +19,16 @@
 
 # This file assists in building test programs.
 
+python_tests = \
+	new_database.py \
+	import_export.py
+
 EXTRA_DIST = \
 	sample_dfxml4096.xml \
 	sample_dfxml512.xml \
-	vg.supp
+	vg.supp \
+        $(python_tests) \
+        hashdb_helpers.py
 
 check_PROGRAMS = \
 	source_lookup_encoding_test \
@@ -36,7 +42,7 @@ check_PROGRAMS = \
 	libhashdb_test \
 	commands_test
 
-TESTS = $(check_PROGRAMS)
+TESTS = $(check_PROGRAMS) $(python_tests)
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
