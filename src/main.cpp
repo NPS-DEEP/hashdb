@@ -344,6 +344,7 @@ int main(int argc,char **argv) {
 
 void require_parameter_count(size_t count) {
   if (count != parameter_count) {
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
     std::cerr << "Incorrect number of parameters provided in this command.\n";
     std::cerr << "Expected " << count
               << ", but received " << parameter_count << ".\n";
@@ -353,43 +354,50 @@ void require_parameter_count(size_t count) {
 
 void no_p() {
   if (has_hash_block_size) {
-    std::cerr << "Error: the -p hash_block_size option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -p hash_block_size option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_m() {
   if (has_max) {
-    std::cerr << "Error: the -m max option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -m max option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_r() {
   if (has_repository_name) {
-    std::cerr << "Error: the -r repository_name option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -r repository_name option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_s() {
   if (has_sector_size) {
-    std::cerr << "Error: the -s sector_size option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -s sector_size option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_A() {
   if (has_bloom) {
-    std::cerr << "Error: the -A bloom option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -A bloom option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_B() {
   if (has_bloom_n) {
-    std::cerr << "Error: the -B bloom_n option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -B bloom_n option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_C() {
   if (has_bloom_kM) {
-    std::cerr << "Error: the -B bloom_kM option is not allowed for this command.\n";
+    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "The -B bloom_kM option is not allowed for this command.\n";
       exit(1);
     }
 }
