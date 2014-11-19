@@ -65,6 +65,10 @@ src_win/win_tests*
 hashdb*.tar.gz
 space
 
+# python
+__pycache__
+*.pyc
+
 # doc
 *.aux
 *.blg
