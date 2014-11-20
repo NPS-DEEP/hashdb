@@ -42,6 +42,7 @@ class json_formatter_t {
   hashdb_manager_t* hashdb_manager;
   uint32_t max_sources;
   std::set<uint64_t> source_ids;
+  std::set<hash_t> hashes;
 
   // do not allow copy or assignment
   json_formatter_t(const json_formatter_t&);
@@ -135,7 +136,7 @@ class json_formatter_t {
                     << "\"";
         }
 
-        // log that this source ID has been printed
+        // record that this source ID has been printed
         source_ids.insert(source_lookup_index);
       }
 
@@ -152,13 +153,19 @@ class json_formatter_t {
                    uint32_t p_max_sources) :
           hashdb_manager(p_hashdb_manager),
           max_sources(p_max_sources),
-          source_ids() {
+          source_ids(),
+          hashes() {
   }
 
-  // print expanded source information
+  // print expanded source information unless the hash has been printed already
   void print_expanded(
                             std::pair<hashdb_manager_t::multimap_iterator_t,
                             hashdb_manager_t::multimap_iterator_t> it_pair) {
+
+    // skip if hash already processed
+    if (hashes.find(it_pair.first->first) != hashes.end()) {
+      return;
+    }
 
     // print the block hashdigest
     std::cout << "{\"block_hashdigest\":\"" << it_pair.first->first.hexdigest() << "\"";
@@ -183,6 +190,9 @@ class json_formatter_t {
 
     // close line
     std::cout << "}";
+
+    // record that expanded information has been printed for this hash
+    hashes.insert(it_pair.first->first);
   }
 };
 
