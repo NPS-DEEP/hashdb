@@ -58,7 +58,6 @@ TAGS
 core.*
 src/hashdb
 src/.libs
-src/test/source_lookup_encoding_test
 src/test/*_test
 src/test/temp_*
 src_win/win_tests*
@@ -68,6 +67,12 @@ space
 # python
 __pycache__
 *.pyc
+
+# test data copied from .in files
+src/test/explain_be_in.txt
+src/test/explain_dfxml.xml
+src/test/sample_dfxml4096.xml
+src/test/sample_dfxml512.xml
 
 # doc
 *.aux
