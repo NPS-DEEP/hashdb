@@ -162,10 +162,10 @@ class json_formatter_t {
                             std::pair<hashdb_manager_t::multimap_iterator_t,
                             hashdb_manager_t::multimap_iterator_t> it_pair) {
 
-    // skip if hash already processed
-    if (hashes.find(it_pair.first->first) != hashes.end()) {
-      return;
-    }
+//    // skip if hash already processed
+//    if (hashes.find(it_pair.first->first) != hashes.end()) {
+//      return;
+//    }
 
     // print the block hashdigest
     std::cout << "{\"block_hashdigest\":\"" << it_pair.first->first.hexdigest() << "\"";
@@ -177,22 +177,20 @@ class json_formatter_t {
     // print the source list ID
     std::cout << ", \"source_list_id\":" << source_list_id(it_pair);
 
-    // maybe print the list of sources for this hash
-    if (count == 1) {
-      // always print the source when count=1
-      print_source_list(it_pair);
-    } else {
-      // print the source list unless it is too long
-      if (count <= max_sources) {
+    // print the list of sources unless it is too long
+    // or the list for this hash has been printed before
+    if (count <= max_sources) {
+      if (hashes.find(it_pair.first->first) == hashes.end()) {
         print_source_list(it_pair);
+
+        // record that expanded information has been printed for this hash
+        hashes.insert(it_pair.first->first);
       }
     }
 
     // close line
     std::cout << "}";
 
-    // record that expanded information has been printed for this hash
-    hashes.insert(it_pair.first->first);
   }
 };
 
