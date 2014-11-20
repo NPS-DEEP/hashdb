@@ -41,8 +41,8 @@ Export hash database to DFXML file \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{scan <path or socket> <dfxml.xml>} & Scan DFXML file for matching hashes \\
 \texttt{scan\_hash <path or socket> <hash value>} & Scan for hash match \\
-\texttt{scan\_expanded <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matches showing all sources\\
-\texttt{scan\_expanded\_hash <hashdb.hdb> <hash value>} & Scan for hash match showing all sources\\
+\texttt{scan\_expanded [-m <number>] <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matches showing all sources\\
+\texttt{scan\_expanded\_hash [-m <number>] <hashdb.hdb> <hash value>} & Scan for hash match showing all sources\\
 \texttt{server <hashdb.hdb> <port number>} & Start scan service at port\\
 \end{tabular}
 \\
@@ -54,7 +54,7 @@ Export hash database to DFXML file \\
 \texttt{histogram <hashdb.hdb>} & Print hash distribution \\
 \texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
 \texttt{hash\_table <hashdb.hdb> <repository name> <filename>} & Print the hashes associated with this source\\
-\hangindent=2em\texttt{expand\_identified\_blocks <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
+\hangindent=2em\texttt{expand\_identified\_blocks [-m <number>] <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
 \hangindent=2em\texttt{explain\_identified\_blocks [-m <number>] <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Print information about less frequently observed hashes\\
 \end{tabular}
 \\

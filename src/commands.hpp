@@ -47,7 +47,7 @@
 #include "hash_t_selector.h"
 #include "feature_file_reader.hpp"
 #include "feature_line.hpp"
-#include "json_helper.hpp"
+#include "json_formatter.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -323,6 +323,36 @@ class commands_t {
     }
   }
 
+  // print source fields
+  static void print_source_fields(const hashdb_manager_t& hashdb_manager,
+                                  uint64_t source_lookup_index,
+                                  std::ostream& os) {
+    // get the repository name and filename
+    std::pair<bool, std::pair<std::string, std::string> > source_pair =
+                             hashdb_manager.find_source(source_lookup_index);
+
+    // get source metadata, if available
+    std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(source_lookup_index);
+
+    // print the source ID
+    os << "\"source_id\":" << source_lookup_index;
+
+    // print the source
+    if (source_pair.first == true) {
+      os << ",\"repository_name\":\"" << source_pair.second.first
+         << "\",\"filename\":\"" << source_pair.second.second
+         << "\"";
+    }
+
+    if (metadata_pair.first == true) {
+      // print the metadata
+      os << ",\"filesize\":" << metadata_pair.second.filesize
+         << ",\"file_hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
+         << "\"";
+    }
+  }
+
   // ingest table of relevant hashes and table of their sources
   static void identify_hashes_and_sources(
                             const hashdb_manager_t& hashdb_manager,
@@ -460,7 +490,7 @@ class commands_t {
 
       // print the source
       std::cout << "{";
-      json_helper_t::print_source_fields(hashdb_manager, *it, std::cout);
+      print_source_fields(hashdb_manager, *it, std::cout);
       std::cout << "}\n";
     }
   }
@@ -1164,14 +1194,14 @@ class commands_t {
   // scan expanded
   static void scan_expanded(const std::string& hashdb_dir,
                             const std::string& dfxml_file,
-                            uint32_t scan_expanded_max) {
+                            uint32_t requested_max) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // create the dfxml scan_expanded consumer
     dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager,
-                                                          scan_expanded_max);
+                                                          requested_max);
 
     // print file header information
     std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
@@ -1222,7 +1252,8 @@ class commands_t {
 
   // scan expanded hash
   static void scan_expanded_hash(const std::string& hashdb_dir,
-                            const std::string& hash_string) {
+                            const std::string& hash_string,
+                            uint32_t requested_max) {
 
     // validate the hash string
     std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
@@ -1244,18 +1275,10 @@ class commands_t {
       return;
     }
 
-    // go through each hashdb_element source for this hash
-    for (; it_pair.first != it_pair.second; ++it_pair.first) {
-
-      // print the hash
-      std::cout << "[\"" << hash_string << "\", {";
-
-      // print source fields for this hash
-      json_helper_t::print_source_fields(hashdb_manager, hashdb_manager.source_id(it_pair.first), std::cout);
-
-      // close the JSON line
-      std::cout << "}]\n";
-    }
+    // print the expanded hash
+    json_formatter_t json_formatter(&hashdb_manager, requested_max);
+    json_formatter.print_expanded(it_pair);
+    std::cout << "\n";
   }
 
   // server
@@ -1340,7 +1363,7 @@ class commands_t {
     // report each entry
     for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
       std::cout << "{";
-      json_helper_t::print_source_fields(hashdb_manager, it->key, std::cout);
+      print_source_fields(hashdb_manager, it->key, std::cout);
       std::cout << "}\n";
     }
   }
@@ -1490,7 +1513,7 @@ class commands_t {
 
     // print source information
     std::cout << "{";
-    json_helper_t::print_source_fields(hashdb_manager, source_id, std::cout);
+    print_source_fields(hashdb_manager, source_id, std::cout);
     std::cout << "}\n";
 
     // show hashes for the requested source
@@ -1518,7 +1541,8 @@ class commands_t {
 
   // expand identified_blocks.txt
   static void expand_identified_blocks(const std::string& hashdb_dir,
-                            const std::string& identified_blocks_file) {
+                            const std::string& identified_blocks_file,
+                            uint32_t requested_max) {
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1526,8 +1550,11 @@ class commands_t {
     // get the identified_blocks.txt file reader
     feature_file_reader_t reader(identified_blocks_file);
 
+    // get the json formatter
+    json_formatter_t json_formatter(&hashdb_manager, requested_max);
+
     // read identified blocks from input and write out matches
-    // identified_blocks_feature consists of: offset_string, key, count
+    // identified_blocks feature consists of offset_string, key, count and flags
     while (!reader.at_eof()) {
       feature_line_t feature_line = reader.read();
 
@@ -1539,38 +1566,30 @@ class commands_t {
       }
       hash_t hash = hash_pair.second;
 
-      // get the context without the json braces that enclose it
-      size_t len = feature_line.context.size();
-      std::string context;
-      if (feature_line.context.find("{") == 0 &&
-          feature_line.context.rfind("}") == len - 1) {
-        // remove the json braces
-        context = feature_line.context.substr(1, len - 2);
-      } else {
-        // warn and use as is
-        std::cerr << "unexpected syntax in context: '"
-                  << feature_line.context << "'\n";
-        context = feature_line.context;
-      }
-
       // find matching range for this key
       std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
       hashdb_manager.find(hash);
 
-      // go through each hashdb_element source for this hash
-      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+      // write the forensic path
+      std::cout << feature_line.forensic_path << "\t";
 
-        // get source lookup index
-        uint64_t source_id = hashdb_manager.source_id(it_pair.first);
+      // write the hashdigest
+      std::cout << feature_line.feature << "\t";
 
-        // write match to output:
-        // offset tab hashdigest tab { context, source information }
-        std::cout << feature_line.forensic_path << "\t"
-                  << feature_line.feature << "\t"
-                  << "{" << context << ",";
-        json_helper_t::print_source_fields(hashdb_manager, source_id, std::cout);
-        std::cout << "}\n";
-      }
+      // write the opening of the new context
+      std::cout << "[";
+
+      // write the old context
+      std::cout << feature_line.context;
+
+      // write the separator
+      std::cout << ",";
+
+      // write the expanded source
+      json_formatter.print_expanded(it_pair);
+
+      // write the closure of the new context
+      std::cout << "]\n";
     }
   }
 
@@ -1596,7 +1615,8 @@ class commands_t {
 
     // print file header information
     std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# explain_identified_blocks-command-Version: 1\n";
+              << "# explain_identified_blocks-command-Version: 1\n"
+              << "# command_line: " << command_line_t::command_line_string << "\n";
 
     // print identified hashes
     std::cout << "# hashes\n";

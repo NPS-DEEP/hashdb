@@ -511,9 +511,11 @@ void run_command() {
                                         globals_t::default_scan_expanded_max;
     commands_t::scan_expanded(hashdb_arg1, hashdb_arg2, scan_expanded_max);
   } else if (command == "scan_expanded_hash") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
-    commands_t::scan_expanded_hash(hashdb_arg1, hashdb_arg2);
+    uint32_t scan_expanded_hash_max = (has_max) ? optional_max :
+                                        globals_t::default_scan_expanded_max;
+    commands_t::scan_expanded_hash(hashdb_arg1, hashdb_arg2, scan_expanded_hash_max);
   } else if (command == "server") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
@@ -539,9 +541,11 @@ void run_command() {
     require_parameter_count(3);
     commands_t::hash_table(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "expand_identified_blocks") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    uint32_t expand_max = (has_max) ? optional_max :
+                                        globals_t::default_scan_expanded_max;
+    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
-    commands_t::expand_identified_blocks(hashdb_arg1, hashdb_arg2);
+    commands_t::expand_identified_blocks(hashdb_arg1, hashdb_arg2, expand_max);
   } else if (command == "explain_identified_blocks") {
     no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);

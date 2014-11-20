@@ -767,9 +767,9 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \hline
 \textbf{scan\_hash} & \verb+scan_hash <path_or_socket>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{scan\_expanded} & \verb+scan <hashdb> <DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out the repository name, filename, and file offset for each hash that matches\\
+\textbf{scan\_expanded} & \verb+scan_expanded [-m <number>]+ \verb+<hashdb> <DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and unless more than max, prints out the repository name, filename, and file offset for each hash that matches\\
 \hline
-\textbf{scan\_expanded\_} \textbf{hash} & \verb+scan_expanded_hash <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out the repository name, filename, and file offset for each hash that matches\\
+\textbf{scan\_expanded\_} \textbf{hash} & \verb+scan_expanded_hash+ \verb+[-m <number>] <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and unless more than max, prints out the repository name, filename, and file offset for each hash that matches\\
 \hline
 \textbf{server} &  \verb+server <hashdb> <port number>+ & Starts a scan service at the given port number\\
 \hline
@@ -887,7 +887,7 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<repository name> <filename>+ &  Prints out the hashes and their offsets for the specified source\\
 \hline
-\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+<hashdb>+ \verb+<identified_blocks.txt>+ & Prints out the repository name, filename, and file offset of each hash in the \textit{hashdb} for each hash feature in the \texttt{identified\_blocks.txt} input file\\
+\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+<hashdb> [-m <number>]+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, of each hash in the \texttt{identified\_blocks.txt} input file\\
 \hline
 \textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for sources with hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline
@@ -1008,7 +1008,7 @@ Scanner options are shown in Table \ref{tab:hashdbScannerUsage}.
 \label{tab:hashdbScanner}
 \begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
 \hline \hline
-\textbf{Command} & \textbf{Usage} & \textbf{Description} \\
+\textbf{Mode} & \textbf{Example} & \textbf{Description} \\
 \hline
 \textbf{import} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
 \hline
