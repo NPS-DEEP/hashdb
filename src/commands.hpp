@@ -306,6 +306,13 @@ class commands_t {
     }
   }
 
+  // print header information
+  static void print_header(const std::string& command_id) {
+    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
+              << "# " << command_id << "\n"
+              << "# command_line: " << command_line_t::command_line_string << "\n";
+  }
+
   // print the scan output vector
   static void print_scan_output(
               const std::vector<hash_t>& scan_input,
@@ -1183,6 +1190,9 @@ class commands_t {
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
 
+    // print header information
+    print_header("scan-command-Version: 2");
+
     // show the matches
     print_scan_output(*scan_input, *scan_output);
 
@@ -1202,10 +1212,8 @@ class commands_t {
     // create the dfxml scan_expanded consumer
     dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager,
                                                           requested_max);
-
-    // print file header information
-    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# scan_expanded-command-Version: 2\n";
+    // print header information
+    print_header("scan_expanded-command-Version: 2");
 
     // run the dfxml hashdigest reader using the scan consumers
     std::string repository_name = "not used";
@@ -1242,6 +1250,9 @@ class commands_t {
     // perform the scan
     hashdb.scan(*scan_input, *scan_output);
 
+    // print header information
+    print_header("scan_hash-command-Version: 2");
+
     // show the matches
     print_scan_output(*scan_input, *scan_output);
 
@@ -1274,6 +1285,9 @@ class commands_t {
       std::cout << "There are no matches.\n";
       return;
     }
+
+    // print header information
+    print_header("scan_expanded_hash-command-Version: 2");
 
     // print the expanded hash
     json_formatter_t json_formatter(&hashdb_manager, requested_max);
@@ -1331,18 +1345,6 @@ class commands_t {
               << hashdb_manager.filename_lookup_store_size() << "\n"
               << "source metadata store: "
               << hashdb_manager.source_metadata_lookup_store_size() << "\n";
-/* 
-    std::cout << "{\"hash_store\":"
-              << hashdb_manager.map_size() << ", "
-              << "\"source_lookup_store\":"
-              << hashdb_manager.source_lookup_store_size() << ", "
-              << "\"source_repository_name_store\":"
-              << hashdb_manager.repository_name_lookup_store_size() << ", "
-              << "\"source_filename_store\":"
-              << hashdb_manager.filename_lookup_store_size() << ", "
-              << "\"source_metadata_store\":"
-              << hashdb_manager.source_metadata_lookup_store_size() << "}\n";
-*/
   }
 
   // print sources referenced in this database
@@ -1359,6 +1361,9 @@ class commands_t {
       std::cout << "There are no sources in this database.\n";
       return;
     }
+
+    // print header information
+    print_header("sources-command-Version: 2");
 
     // report each entry
     for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
@@ -1378,6 +1383,9 @@ class commands_t {
       std::cout << "The map is empty.\n";
       return;
     }
+
+    // print header information
+    print_header("histogram-command-Version: 2");
 
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
@@ -1463,6 +1471,9 @@ class commands_t {
       exit(1);
     }
 
+    // print header information
+    print_header("duplicates-command-Version: 2");
+
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
     multimap_iterator_t it = hashdb_manager.begin();
 
@@ -1500,7 +1511,7 @@ class commands_t {
 
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // see if source even exists
+    // get source lookup index
     std::pair<bool, uint64_t> lookup_pair =
            hashdb_manager.find_source_id(repository_name, filename);
     if (lookup_pair.first == false) {
@@ -1510,6 +1521,9 @@ class commands_t {
       return;
     }
     uint64_t source_id = lookup_pair.second;
+
+    // print header information
+    print_header("hash_table-command-Version: 2");
 
     // print source information
     std::cout << "{";
@@ -1552,6 +1566,9 @@ class commands_t {
 
     // get the json formatter
     json_formatter_t json_formatter(&hashdb_manager, requested_max);
+
+    // print header information
+    print_header("expand_identified_blocks-command-Version: 2");
 
     // read identified blocks from input and write out matches
     // identified_blocks feature consists of offset_string, key, count and flags
@@ -1613,10 +1630,8 @@ class commands_t {
                                 requested_max, 
                                 *hashes, *source_lookup_indexes);
 
-    // print file header information
-    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# explain_identified_blocks-command-Version: 1\n"
-              << "# command_line: " << command_line_t::command_line_string << "\n";
+    // print header information
+    print_header("explain_identified_blocks-command-Version: 2");
 
     // print identified hashes
     std::cout << "# hashes\n";
