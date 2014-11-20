@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Test the "New Database" command group
+# Test the Import Export command group
 
 import subprocess
 import xml.etree.ElementTree as ET
@@ -23,6 +23,10 @@ def test_import():
 #    print("import_export " + str(changes["hashes_inserted"]))
 
     hashdb_helpers.test_equals(changes["hashes_inserted"], 74)
+
+    # cleanup
+    subprocess.call(["rm", "-rf", db1])
+    print("Test Done.")
 
 if __name__=="__main__":
     test_import()

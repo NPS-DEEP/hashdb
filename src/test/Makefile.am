@@ -24,8 +24,6 @@ python_tests = \
 	import_export.py
 
 EXTRA_DIST = \
-	sample_dfxml4096.xml \
-	sample_dfxml512.xml \
 	vg.supp \
         $(python_tests) \
         hashdb_helpers.py
@@ -42,15 +40,17 @@ check_PROGRAMS = \
 	libhashdb_test \
 	commands_test
 
-TESTS = $(check_PROGRAMS) $(python_tests)
+TESTS = $(check_PROGRAMS)
+if HAVE_PYTHON
+  TESTS += $(python_tests)
+endif
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/btree/include \
 	-isystem${top_srcdir}/src/endian/include \
 	-I${top_srcdir}/src \
-	$(XML_CFLAGS) \
-	-DHASHDB_TEST_DATADIR=\"$(srcdir)/\"
+	$(XML_CFLAGS)
 
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la

@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
-# Test the "New Database" command group
+# Test the New Database command group
 
 #from subprocess import call
 import subprocess
@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 # check that input parameters get into settings.xml
 def test_create():
-    db1 = "temp1.hdb"
+    db1 = "temp_1.hdb"
 
     # create new db
     subprocess.call(["rm", "-rf", db1])
@@ -45,7 +45,7 @@ def test_create():
 
     # cleanup
     subprocess.call(["rm", "-rf", db1])
-    print "Test Done."
+    print("Test Done.")
 
 if __name__=="__main__":
     test_create()

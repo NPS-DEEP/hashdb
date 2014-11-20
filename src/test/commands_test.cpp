@@ -53,9 +53,9 @@ static const std::string temp_dir7("temp_dir7_commands_test.hdb");
 static const std::string temp_dir8("temp_dir8_commands_test.hdb");
 static const char* temp_dfxml_file = "temp_dfxml_out.xml";
 
-static const std::string identified_blocks(HASHDB_TEST_DATADIR "identified_blocks.txt");
-static const std::string sample_dfxml4096(HASHDB_TEST_DATADIR "sample_dfxml4096.xml");
-static const std::string sample_dfxml512(HASHDB_TEST_DATADIR "sample_dfxml512.xml");
+static const std::string identified_blocks("identified_blocks.txt");
+static const std::string sample_dfxml4096("sample_dfxml4096.xml");
+static const std::string sample_dfxml512("sample_dfxml512.xml");
 
 // get size of db
 size_t map_size(const std::string& hashdb_dir) {

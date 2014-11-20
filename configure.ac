@@ -22,7 +22,11 @@ AC_CONFIG_FILES([Makefile
                  src/test/Makefile
                  man/Makefile
                  doc/Makefile
-                 python/Makefile])
+                 python/Makefile
+                 src/test/explain_be_in.txt
+                 src/test/explain_dfxml.xml
+                 src/test/sample_dfxml4096.xml
+                 src/test/sample_dfxml512.xml])
 
 # define CC and CXX as desired for alternate compilers
 # for example "./configure CC=clang CXX=clang++"
@@ -61,6 +65,11 @@ m4_include([m4/slg_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/slg_gcc_all_warnings.m4])
 m4_include([src/dfxml/src/dfxml_configure.m4])
+
+################################################################
+## python 3 for tests
+AM_PATH_PYTHON([3.0],, [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
 
 ################################################################
 ## mcheck support
