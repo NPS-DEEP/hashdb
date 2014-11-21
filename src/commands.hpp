@@ -213,42 +213,6 @@ class commands_t {
     }
   }
 
-  // generate random scan input that is unlikely to match the hashdb
-  static void generate_scan_input(std::vector<hash_t>* scan_input) {
-    scan_input->clear();
-    for (int i=0; i<100000; i++) {
-      scan_input->push_back(random_key());
-    }
-  }
-
-  // generate random scan input that matches the hashdb
-  static void generate_scan_input(hashdb_manager_t* hashdb_manager,
-                      std::vector<hash_t>* scan_input) {
-
-    // the hashdb must not be empty
-    if (hashdb_manager->map_size() == 0) {
-      std::cerr << "Map is empty.  Aborting.\n";
-      exit(1);
-    }
-
-    scan_input->clear();
-    for (int i=0; i<100000; i++) {
-    hash_t temp = random_key();
-
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-//                                     hashdb_manager->find(random_key());
-                                     hashdb_manager->find(temp);
-      if (it_pair.first == hashdb_manager->end()) {
-        // the random hash is greater than anything in hashdb so use first hash
-        scan_input->push_back(hashdb_manager->begin()->first);
-      } else {
-        // good, use the hash that is not less than the random hash
-        scan_input->push_back(it_pair.first->first);
-      }
-//std::cout << "key: " << temp.hexdigest() << ", using " << scan_input->back() << "\n";
-    }
-  }
-
   static void require_compatibility(const hashdb_manager_t& hashdb1,
                                     const hashdb_manager_t& hashdb2) {
 
@@ -1800,10 +1764,12 @@ class commands_t {
     }
   }
 
+  /**
+   * Scans for random hash values that are unlikely to match.
+   * Disable the Bloom filter for B-Tree timing.
+   */
   // functional analysis and testing: scan_random
-  // Performs two scans: first with no matches, then with all matches.
-  static void scan_random(const std::string& hashdb_dir,
-                          const std::string& hashdb_dir_copy) {
+  static void scan_random(const std::string& hashdb_dir) {
 
     // open hashdb_dir to use for obtaining valid hash values
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1830,8 +1796,14 @@ class commands_t {
     // scan sets of random hashes where hash values are unlikely to match
     logger.add_timestamp("begin scan_random with random hash on hashdb");
     for (int i=1; i<=100; i++) {
+
       // generate set of random hashes
-      generate_scan_input(scan_input);
+      scan_input->clear();
+      for (int j=0; j<100000; j++) {
+        scan_input->push_back(random_key());
+      }
+
+      // make timestamp
       std::stringstream ss1;
       ss1 << "generated random hash " << i;
       logger.add_timestamp(ss1.str());
@@ -1846,37 +1818,6 @@ class commands_t {
       // make sure no hashes were found
       if (scan_output->size() > 0) {
         std::cerr << "Unexpected event: match found, count "
-                  << scan_output->size() << ", are the databases different?\n";
-      }
-    }
-
-    // open the hashdb scan service for scanning from the copy
-    hashdb_t__<hash_t> hashdb_copy;
-    std::pair<bool, std::string> open_pair_copy = hashdb_copy.open_scan(hashdb_dir_copy);
-    if (open_pair_copy.first == false) {
-      std::cerr << open_pair_copy.second << "\nAborting.\n";
-      exit(1);
-    }
-
-    // scan copy for sets of random hashes where all hash values match
-    logger.add_timestamp("begin scan_random with random matching hashes on hashdb copy");
-    for (int j=1; j<=100; j++) {
-      // generate set of random hashes that match
-      generate_scan_input(&hashdb_manager, scan_input);
-      std::stringstream ss1;
-      ss1 << "generated random matching hash " << j;
-      logger.add_timestamp(ss1.str());
-
-      // scan set of random hashes that match
-      hashdb_copy.scan(*scan_input, *scan_output);
-      std::stringstream ss2;
-      ss2 << "scanned random matching hash " << j;
-      logger.add_timestamp(ss2.str());
-      std::cout << "scan random matching hash " << j << " of 100\n";
-
-      // make sure every hash was found
-      if (scan_output->size() != scan_input->size()) {
-        std::cerr << "Unexpected event: match not found, count "
                   << scan_output->size() << ", are the databases different?\n";
       }
     }

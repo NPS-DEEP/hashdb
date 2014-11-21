@@ -14,8 +14,6 @@ except ImportError:
 plotsize=(6,3.5)
 totals=[]
 deltas=[]
-scan_random_matching_totals=[]
-scan_random_matching_deltas=[]
 
 
 def crunch_xml():
@@ -32,9 +30,6 @@ def crunch_xml():
             if timestamp.get('name', '').find('scanned random hash')==0:
                 deltas.append(float(timestamp.get('delta', '0')))
                 totals.append(float(timestamp.get('total', '0')))
-            if timestamp.get('name', '').find('scanned random matching hash')==0:
-                scan_random_matching_totals.append(float(timestamp.get('total', '0')))
-                scan_random_matching_deltas.append(float(timestamp.get('delta', '0')))
     else:
         # timestamp for everything else
         for timestamp in root.iter('timestamp'):
@@ -50,7 +45,7 @@ def plot_add_random_total():
     ax = fig.add_axes([0.20, 0.2, 0.70, 0.70])
     ax.set_xlabel("Time in seconds")
     ax.set_ylabel("Hashes added in millions")
-    ax.set_title('Speed of importing hashes')
+    ax.set_title('Time importing hashes')
     ys=[]
     for n in range(0,len(totals)):
         # rescale from units of 100,000 hashes to units of 0.1 million hashes
@@ -79,14 +74,14 @@ def plot_scan_random_total():
     ax = fig.add_axes([0.20, 0.2, 0.70, 0.70])
     ax.set_xlabel("Time in seconds")
     ax.set_ylabel("Hashes scanned in millions")
-    ax.set_title("Speed of scanning hashes, no matches")
+    ax.set_title("Time scanning hashes")
     ys=[]
     for n in range(0,len(totals)):
         # rescale from units of 100,000 hashes to units of 0.1 million hashes
         ys.append(n*.1)
 
     plot.plot(totals, ys)
-    fig.savefig(plotname+"_timestamp_random_total.pdf")
+    fig.savefig(plotname+"_scan_random_total.pdf")
 
 def plot_scan_random_delta():
     fig = plot.figure(figsize=plotsize)
@@ -95,40 +90,12 @@ def plot_scan_random_delta():
     ax.set_ylabel("Time in seconds")
     ax.set_title("Time to scan 100,000 random hashes")
     xes=[]
-    for n in range(0,len(scan_random_matching_deltas)):
+    for n in range(0,len(deltas)):
         # rescale from units of 100,000 hashes to units of 0.1 million hashes
         xes.append(n*.1)
 
     plot.bar(xes, deltas, width=0.08)
-    fig.savefig(plotname+"_timestamp_random_delta.pdf")
-
-def plot_scan_random_matching_total():
-    fig = plot.figure(figsize=plotsize)
-    ax = fig.add_axes([0.20, 0.2, 0.70, 0.70])
-    ax.set_xlabel("Time in seconds")
-    ax.set_ylabel("Hashes scanned in millions")
-    ax.set_title("Speed of scanning hashes, all match")
-    ys=[]
-    for n in range(0,len(scan_random_matching_totals)):
-        # rescale from units of 100,000 hashes to units of 0.1 million hashes
-        ys.append(n*.1)
-
-    plot.plot(scan_random_matching_totals, ys)
-    fig.savefig(plotname+"_timestamp_random_matching_total.pdf")
-
-def plot_scan_random_matching_delta():
-    fig = plot.figure(figsize=plotsize)
-    ax = fig.add_axes([0.20, 0.2, 0.70, 0.70])
-    ax.set_xlabel("Random matching hashes scanned in millions")
-    ax.set_ylabel("Time in seconds")
-    ax.set_title("Time to scan 100,000 random matching hashes")
-    xes=[]
-    for n in range(0,len(scan_random_matching_deltas)):
-        # rescale from units of 100,000 hashes to units of 0.1 million hashes
-        xes.append(n*.1)
-
-    plot.bar(xes, scan_random_matching_deltas, width=0.08)
-    fig.savefig(plotname+"_timestamp_random_matching_delta.pdf")
+    fig.savefig(plotname+"_scan_random_delta.pdf")
 
 # main
 if __name__=="__main__":
@@ -152,8 +119,6 @@ if __name__=="__main__":
         print("graph for scan_random")
         plot_scan_random_total()
         plot_scan_random_delta()
-        plot_scan_random_matching_total()
-        plot_scan_random_matching_delta()
     else:
         sys.exit("Error: malformed log: no command tag: '" + command + "'")
 
