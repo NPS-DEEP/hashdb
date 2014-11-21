@@ -36,6 +36,7 @@ For example input line:
  This tab-delimited syntax is compatible with  Sector Hash Datasets being made available by NIST.
 * Commands that return outupt also include header information about the command including the command typed to generate the output.
 * Regression tests are added for validating output for comands that generate output.
+* For completeness, the database changes displayed during a change operation include changes with count zero.
 
 Availability
 ============

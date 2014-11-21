@@ -130,40 +130,28 @@ class hashdb_changes_t {
 
     if (has_insert_action) {
       // log any insert changes to stdout
-      std::cout << "hashdb changes (insert):\n";
-      if (hashes_inserted)
-       std::cout << "    hashes inserted: " << hashes_inserted << "\n";
-      if (hashes_not_inserted_mismatched_hash_block_size)
-       std::cout << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n";
-      if (hashes_not_inserted_invalid_byte_alignment)
-       std::cout << "    hashes not inserted (invalid byte alignment): " << hashes_not_inserted_invalid_byte_alignment << "\n";
-      if (hashes_not_inserted_exceeds_max_duplicates)
-       std::cout << "    hashes not inserted (exceeds max duplicates): " << hashes_not_inserted_exceeds_max_duplicates << "\n";
-      if (hashes_not_inserted_duplicate_element)
-       std::cout << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n";
+      std::cout << "hashdb changes (insert):\n"
+                << "    hashes inserted: " << hashes_inserted << "\n"
+                << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n"
+                << "    hashes not inserted (invalid byte alignment): " << hashes_not_inserted_invalid_byte_alignment << "\n"
+                << "    hashes not inserted (exceeds max duplicates): " << hashes_not_inserted_exceeds_max_duplicates << "\n"
+                << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n";
     }
 
     if (has_remove_action) {
       // log any remove changes to stdout
-      std::cout << "hashdb changes (remove):\n";
-      if (hashes_removed)
-        std::cout << "    hashes removed: " << hashes_removed << "\n";
-      if (hashes_not_removed_mismatched_hash_block_size)
-        std::cout << "    hashes not removed (mismatched hash block size): " << hashes_not_removed_mismatched_hash_block_size << "\n";
-      if (hashes_not_removed_invalid_byte_alignment)
-        std::cout << "    hashes not removed (invalid byte alignment): " << hashes_not_removed_invalid_byte_alignment << "\n";
-      if (hashes_not_removed_no_hash)
-        std::cout << "    hashes not removed (no hash): " << hashes_not_removed_no_hash << "\n";
-      if (hashes_not_removed_no_element)
-        std::cout << "    hashes not removed (no element): " << hashes_not_removed_no_element << "\n";
+      std::cout << "hashdb changes (remove):\n"
+                << "    hashes removed: " << hashes_removed << "\n"
+                << "    hashes not removed (mismatched hash block size): " << hashes_not_removed_mismatched_hash_block_size << "\n"
+                << "    hashes not removed (invalid byte alignment): " << hashes_not_removed_invalid_byte_alignment << "\n"
+                << "    hashes not removed (no hash): " << hashes_not_removed_no_hash << "\n"
+                << "    hashes not removed (no element): " << hashes_not_removed_no_element << "\n";
     }
 
     if (has_source_metadata_insert_action) {
       // log any insert source metadata changes to stdout
-      if (source_metadata_inserted)
-       std::cout << "    source metadata inserted: " << source_metadata_inserted << "\n";
-      if (source_metadata_not_inserted_already_present)
-       std::cout << "    source metadata not inserted (already present): " << source_metadata_not_inserted_already_present<< "\n";
+      std::cout << "    source metadata inserted: " << source_metadata_inserted << "\n"
+                << "    source metadata not inserted (already present): " << source_metadata_not_inserted_already_present<< "\n";
     }
   }
 };
