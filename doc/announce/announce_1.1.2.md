@@ -17,6 +17,7 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * _hashdb_ fails more gracefully and suggests running the `upgrade` command when the source metadata store is missing.
 * _hashdb_ fails more gracefully when attempting to access a corrupted hash database.  For example a hash database is corrupted when a  _hashdb_ command that modifies it is aborted.
 * Fix regression in the `scan_random` performance analysis command that made it fail to scan the database copy.
+* Simplify the `scan_random` command to not require a database copy.  Python reporting about the copy, now removed, was broken.
 
 # Functional Changes
 * Because output can be so large, the output from commands that print expanded source information has been reduced by not printing information multiple times.  Specifically:
