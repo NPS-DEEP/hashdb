@@ -5,48 +5,42 @@
 #from subprocess import call
 import subprocess
 import xml.etree.ElementTree as ET
+import hashdb_helpers as H
 
 # check that input parameters get into settings.xml
 def test_create():
     db1 = "temp_1.hdb"
 
     # create new db
-    subprocess.call(["rm", "-rf", db1])
-    subprocess.check_call(["hashdb", "create", db1, "-p512", "-m10", "--bloom=disabled", "--bloom_kM=4:14"])
+    H.rmdir(db1)
+    H.hashdb(["create", db1, "-p1024", "-m10", "--bloom=disabled", "--bloom_kM=4:14"])
 
-    # test settings fields
-    tree = ET.parse(db1+"/settings.xml")
-    root = tree.getroot()
-
-    byte_alignment = int(root.find('byte_alignment').text)
-#    print "byte_alignment:",byte_alignment
-    if byte_alignment != 512:
-        raise ValueError("invalid byte_alignment: " + str(byte_alignment))
-
-    hash_block_size = int(root.find('hash_block_size').text)
-    if hash_block_size != 512:
-        raise ValueError("invalid hash_block_size: " + str(hash_block_size))
-
-    maximum_hash_duplicates = int(root.find('maximum_hash_duplicates').text)
-    if maximum_hash_duplicates != 10:
-        raise ValueError("invalid maximum_hash_duplicates: " + str(maximum_hash_duplicates))
-
-    bloom1_used = root.find('bloom1_used').text
-    if bloom1_used != 'disabled':
-        raise ValueError("invalid bloom1_used: " + str(bloom1_used))
-
-    bloom1_k_hash_functions = int(root.find('bloom1_k_hash_functions').text)
-    if bloom1_k_hash_functions != 4:
-        raise ValueError("invalid bloom1_k_hash_functions: " + str(bloom1_k_hash_functions))
-
-    bloom1_M_hash_size = int(root.find('bloom1_M_hash_size').text)
-    if bloom1_M_hash_size != 14:
-        raise ValueError("invalid bloom1_M_hash_size: " + str(bloom1_M_hash_size))
+    settings = H.parse_settings(db1)
+    H.int_equals(settings['settings_version'], 1)
+    H.str_equals(settings['hash_digest_type'], "MD5")
+    H.int_equals(settings['byte_alignment'], 512)
+    H.int_equals(settings['hash_block_size'], 1024)
+    H.int_equals(settings['maximum_hash_duplicates'], 10)
+    H.bool_equals(settings['bloom1_used'], False)
+    H.int_equals(settings['bloom1_k_hash_functions'], 4)
+    H.int_equals(settings['bloom1_M_hash_size'], 14)
 
     # cleanup
-    subprocess.call(["rm", "-rf", db1])
+    H.rmdir(db1)
     print("Test Done.")
+
+def option_p():
+    # only accept 512
+    db1 = "temp_1.hdb"
+    H.hashdb(["create", db1, "-p512"])
+    lines=H.hashdb(["import", db1, "sample_dfxml4096.xml"])
+    changes = H.parse_changes(lines)
+    H.int_equals(changes["hashes_inserted"], 0)
+    lines=H.hashdb(["import", db1, "sample_dfxml512.xml"])
+    changes = H.parse_changes(lines)
+    H.int_equals(changes["hashes_inserted"], 24)
 
 if __name__=="__main__":
     test_create()
+    option_p()
 

@@ -2,11 +2,42 @@
 #
 # hashdb_helpers.py
 # A module for helping with hashdb tests
+import xml.etree.ElementTree as ET
+import subprocess
 from subprocess import Popen, PIPE
 
 # run command array and return lines from it
-def run_command(cmd):
+def hashdb(cmd):
+    cmd.insert(0, "hashdb")
     return Popen(cmd, stdout=PIPE).communicate()[0].decode('utf-8').split("\n")
+
+def rmdir(hashdb_dir):
+    subprocess.call(["rm", "-rf", hashdb_dir])
+
+def mkdir(hashdb_dir):
+    subprocess.call(["hashdb", "create", hashdb_dir])
+
+def parse_settings(hashdb_dir):
+    settings = {}
+    # test settings fields
+    tree = ET.parse(hashdb_dir+"/settings.xml")
+    root = tree.getroot()
+
+    settings['settings_version'] = int(root.find('settings_version').text)
+    settings['hash_digest_type'] = root.find('hash_digest_type').text
+    settings['byte_alignment'] = int(root.find('byte_alignment').text)
+    settings['hash_block_size'] = int(root.find('hash_block_size').text)
+    settings['maximum_hash_duplicates'] = int(root.find('maximum_hash_duplicates').text)
+    temp = root.find('bloom1_used').text
+    if temp == "enabled":
+        settings['bloom1_used'] = True
+    elif temp == "disabled":
+        settings['bloom1_used'] = False
+    else:
+        raise ValueError("invalid state '" + temp + "'")
+    settings['bloom1_k_hash_functions'] = int(root.find('bloom1_k_hash_functions').text)
+    settings['bloom1_M_hash_size'] = int(root.find('bloom1_M_hash_size').text)
+    return settings
 
 # require a specific database size
 def parse_size(lines):
@@ -57,8 +88,15 @@ def parse_changes(lines):
             changes['source_metadata_not_inserted_already_present'] = int(line[52:])
     return changes
 
-# test for int equality
-def test_equals(a,b):
+# require equality
+def str_equals(a,b):
+    if a != b:
+        raise ValueError(a + " not equal to " + b)
+def bool_equals(a,b):
+    if a != b:
+        raise ValueError(bool(a) + " not equal to " + bool(b))
+def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
+
 
