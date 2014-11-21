@@ -1815,13 +1815,6 @@ class commands_t {
       std::cerr << open_pair.second << "\nAborting.\n";
     }
 
-    // open the hashdb scan service for scanning from the copy
-    hashdb_t__<hash_t> hashdb_copy;
-    std::pair<bool, std::string> open_pair_copy = hashdb.open_scan(hashdb_dir_copy);
-    if (open_pair_copy.first == false) {
-      std::cerr << open_pair_copy.second << "\nAborting.\n";
-    }
-
     // create space on the heap for the scan input and output vectors
     std::vector<hash_t>* scan_input = new std::vector<hash_t>;
     hashdb_t__<hash_t>::scan_output_t* scan_output =
@@ -1855,6 +1848,14 @@ class commands_t {
         std::cerr << "Unexpected event: match found, count "
                   << scan_output->size() << ", are the databases different?\n";
       }
+    }
+
+    // open the hashdb scan service for scanning from the copy
+    hashdb_t__<hash_t> hashdb_copy;
+    std::pair<bool, std::string> open_pair_copy = hashdb_copy.open_scan(hashdb_dir_copy);
+    if (open_pair_copy.first == false) {
+      std::cerr << open_pair_copy.second << "\nAborting.\n";
+      exit(1);
     }
 
     // scan copy for sets of random hashes where all hash values match

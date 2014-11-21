@@ -16,6 +16,7 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * A regression introduced in 1.1.1 was fixed so that command `scan_expanded` does not require the input to have file hashdigest or filesize tags in order to hash.
 * _hashdb_ fails more gracefully and suggests running the `upgrade` command when the source metadata store is missing.
 * _hashdb_ fails more gracefully when attempting to access a corrupted hash database.  For example a hash database is corrupted when a  _hashdb_ command that modifies it is aborted.
+* Fix regression in the `scan_random` performance analysis command that made it fail to scan the database copy.
 
 # Functional Changes
 * Because output can be so large, the output from commands that print expanded source information has been reduced by not printing information multiple times.  Specifically:

@@ -93,10 +93,15 @@ const char* hashdb_version() {
                                            uint32_t p_block_size,
                                            uint32_t p_max_duplicates) {
 
-      hashdb_dir = p_hashdb_dir;
-      mode = HASHDB_IMPORT;
-      block_size = p_block_size;
-      max_duplicates = p_max_duplicates;
+    if (mode != HASHDB_NONE) {
+      std::cerr << "invalid mode " << (int)mode << "\n";
+      assert(0);
+      exit(1);
+    }
+    hashdb_dir = p_hashdb_dir;
+    mode = HASHDB_IMPORT;
+    block_size = p_block_size;
+    max_duplicates = p_max_duplicates;
 
     try {
       // create the hashdb directory
@@ -197,6 +202,11 @@ const char* hashdb_version() {
   template<>
   std::pair<bool, std::string> hashdb_t__<hash_t>::open_scan(
                                           const std::string& path_or_socket) {
+    if (mode != HASHDB_NONE) {
+      std::cerr << "invalid mode " << (int)mode << "\n";
+      assert(0);
+      exit(1);
+    }
     hashdb_dir = path_or_socket;
     mode = (path_or_socket.find("tcp://") == 0)
                          ? HASHDB_SCAN_SOCKET : HASHDB_SCAN;
