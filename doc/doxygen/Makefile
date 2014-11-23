@@ -1,6 +1,10 @@
 all:
 	doxygen Doxyfile
 
-clean:
-	rm -rf html
+btree:
+	doxygen Doxyfile_btree
 
+clean:
+	rm -rf html btree
+
+.PHONY: btree

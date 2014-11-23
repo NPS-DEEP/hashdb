@@ -41,6 +41,7 @@ depcomp
 doc/Makefile
 doc/user_manual/Makefile
 doc/doxygen/html
+doc/doxygen/btree
 install-sh
 man/Makefile
 missing
