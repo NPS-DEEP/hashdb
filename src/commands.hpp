@@ -68,7 +68,8 @@
 class commands_t {
   // support expalin_identified_blocks
   typedef std::map<hash_t, std::string> hashes_t;
-  typedef hashdb_manager_t::multimap_iterator_t multimap_iterator_t;
+  typedef hashdb_manager_t::hash_store_key_iterator_t hash_store_key_iterator_t;
+  typedef hashdb_manager_t::hash_store_key_iterator_range_t hash_store_key_iterator_range_t;
 
   private:
   // perform intersection, optimized for speed
@@ -78,18 +79,18 @@ class commands_t {
                                   logger_t* logger) {
 
     // get iterator for smaller db
-    multimap_iterator_t smaller_it = smaller_hashdb.begin();
+    hash_store_key_iterator_t smaller_it = smaller_hashdb.begin_key();
 
     // iterate over smaller db
     progress_tracker_t progress_tracker(smaller_hashdb.map_size() +
                                         larger_hashdb.map_size(), logger);
-    while (smaller_it != smaller_hashdb.end()) {
+    while (smaller_it != smaller_hashdb.end_key()) {
 
       // get hashdb_element from smaller db
       hashdb_element_t smaller_element = smaller_hashdb.hashdb_element(smaller_it);
 
       // get iterator for this hash in the larger db
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
+      hash_store_key_iterator_range_t it_pair =
                                       larger_hashdb.find(smaller_element.key);
 
       // iterate through hash matches in larger db to find exact source matches
@@ -115,12 +116,12 @@ class commands_t {
                                        logger_t* logger) {
 
     // get iterator for smaller db
-    multimap_iterator_t smaller_it = smaller_hashdb.begin();
+    hash_store_key_iterator_t smaller_it = smaller_hashdb.begin_key();
 
     // iterate over smaller db
     progress_tracker_t progress_tracker(smaller_hashdb.map_size() +
                                         larger_hashdb.map_size(), logger);
-    while (smaller_it != smaller_hashdb.end()) {
+    while (smaller_it != smaller_hashdb.end_key()) {
 
       // see if hashdigest is in larger db
       uint32_t larger_count = larger_hashdb.find_count(smaller_it->first);
@@ -138,7 +139,7 @@ class commands_t {
         }
 
         // add hashes from larger
-        std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
+        hash_store_key_iterator_range_t it_pair =
                                       larger_hashdb.find(matching_key);
         while (it_pair.first != it_pair.second) {
           hashdb3.insert(larger_hashdb.hashdb_element(it_pair.first));
@@ -355,8 +356,7 @@ class commands_t {
       }
 
       // get the iterator for this hash value
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-                                                    hashdb_manager.find(hash);
+      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash);
 
       // add the source lookup index for all sources associated with this hash
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
@@ -398,8 +398,7 @@ class commands_t {
       ss << ",[";
 
       // get the multimap iterator for this hash value
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-                                  hashdb_manager.find(it->first);
+      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(it->first);
 
       // track when to put in the comma
       bool found_identified_source = false;
@@ -621,10 +620,10 @@ class commands_t {
     dfxml_hashdigest_writer_t writer(dfxml_file);
 
     // export hash entries from hashdb_manager
-    multimap_iterator_t it = hashdb_manager.begin();
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
-    while (it != hashdb_manager.end()) {
+    while (it != hashdb_manager.end_key()) {
       progress_tracker.track();
       writer.add_hashdb_element(hashdb_manager.hashdb_element(it));
       ++it;
@@ -636,7 +635,7 @@ class commands_t {
     source_lookup_index_manager_t source_lookup_index_manager(
                                                hashdb_dir, READ_ONLY);
     source_lookup_index_manager_t::source_lookup_index_iterator_t it2 =
-                                       source_lookup_index_manager.begin();
+                                     source_lookup_index_manager.begin();
     while (it2 != source_lookup_index_manager.end()) {
       uint64_t source_lookup_index = it2->key;
 
@@ -670,14 +669,14 @@ class commands_t {
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
-    multimap_iterator_t it1 = hashdb_manager1.begin();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add");
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end()) {
+    while (it1 != hashdb_manager1.end_key()) {
       progress_tracker.track();
       hashdb_manager2.insert(hashdb_manager1.hashdb_element(it1));
       ++it1;
@@ -721,10 +720,10 @@ class commands_t {
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
-    multimap_iterator_t it1 = hashdb_manager1.begin();
-    multimap_iterator_t it2 = hashdb_manager2.begin();
-    multimap_iterator_t it1_end = hashdb_manager1.end();
-    multimap_iterator_t it2_end = hashdb_manager2.end();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
+    hash_store_key_iterator_t it2 = hashdb_manager2.begin_key();
+    hash_store_key_iterator_t it1_end = hashdb_manager1.end_key();
+    hash_store_key_iterator_t it2_end = hashdb_manager2.end_key();
 
     logger_t logger(hashdb_dir3, "add_multiple");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -797,14 +796,14 @@ class commands_t {
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
-    multimap_iterator_t it1 = hashdb_manager1.begin();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "add_repository");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add_repository");
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end()) {
+    while (it1 != hashdb_manager1.end_key()) {
       progress_tracker.track();
 
       // add hashdb_element when the repository name matches
@@ -956,7 +955,7 @@ class commands_t {
 
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
-    multimap_iterator_t it1 = hashdb_manager1.begin();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir3, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -964,13 +963,12 @@ class commands_t {
     logger.add_timestamp("begin subtract");
 
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end()) {
+    while (it1 != hashdb_manager1.end_key()) {
       
       // look for exact match in hashdb_manager2
       hashdb_element_t hashdb_element1 = hashdb_manager1.hashdb_element(it1);
       bool exact_match = false;
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-                                          hashdb_manager2.find(it1->first);
+      hash_store_key_iterator_range_t it_pair = hashdb_manager2.find(it1->first);
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
         hashdb_element_t hashdb_element2 = hashdb_manager2.hashdb_element(it_pair.first);
         if (hashdb_element1 == hashdb_element2) {
@@ -1027,7 +1025,7 @@ class commands_t {
 
     require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
-    multimap_iterator_t it1 = hashdb_manager1.begin();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir3, "subtract_hash");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -1035,7 +1033,7 @@ class commands_t {
     logger.add_timestamp("begin subtract_hash");
 
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end()) {
+    while (it1 != hashdb_manager1.end_key()) {
       
       // subtract or copy the hash
       if (hashdb_manager2.find_count(it1->first) > 0) {
@@ -1087,7 +1085,7 @@ class commands_t {
     require_compatibility(hashdb_manager1, hashdb_manager2);
 
     // iterate over hashes.
-    multimap_iterator_t it1 = hashdb_manager1.begin();
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -1095,7 +1093,7 @@ class commands_t {
     logger.add_timestamp("begin deduplicate");
 
     progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end()) {
+    while (it1 != hashdb_manager1.end_key()) {
 
       // for deduplicate, only keep hashes whose count=1
       if (hashdb_manager1.find_count(it1->first) == 1) {
@@ -1241,8 +1239,7 @@ class commands_t {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // find matching range for this key
-    std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-    hashdb_manager.find(hash_pair.second);
+    hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash_pair.second);
 
     // check for no match
     if (it_pair.first == it_pair.second) {
@@ -1340,10 +1337,10 @@ class commands_t {
   // show hashdb hash histogram
   static void histogram(const std::string& hashdb_dir) {
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    multimap_iterator_t it = hashdb_manager.begin();
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
 
     // there is nothing to report if the map is empty
-    if (it == hashdb_manager.end()) {
+    if (it == hashdb_manager.end_key()) {
       std::cout << "The map is empty.\n";
       return;
     }
@@ -1365,7 +1362,7 @@ class commands_t {
                 new std::map<uint32_t, uint64_t>();
     
     // iterate over hashdb and set variables for calculating the histogram
-    while (it != hashdb_manager.end()) {
+    while (it != hashdb_manager.end_key()) {
 
       // update progress tracker
       progress_tracker.track();
@@ -1439,12 +1436,12 @@ class commands_t {
     print_header("duplicates-command-Version: 2");
 
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    multimap_iterator_t it = hashdb_manager.begin();
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
 
     // look through all hashes for entries with this count
     bool any_found = false;
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
-    while (it != hashdb_manager.end()) {
+    while (it != hashdb_manager.end_key()) {
       uint32_t count = hashdb_manager.find_count(it->first);
 
       if (count == duplicates_number) {
@@ -1497,8 +1494,8 @@ class commands_t {
     // show hashes for the requested source
     bool any_found = false;
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
-    multimap_iterator_t it = hashdb_manager.begin();
-    while (it != hashdb_manager.end()) {
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
+    while (it != hashdb_manager.end_key()) {
       if (hashdb_manager.source_id(it) == source_id) {
 
         // show the hash and its offset
@@ -1548,8 +1545,7 @@ class commands_t {
       hash_t hash = hash_pair.second;
 
       // find matching range for this key
-      std::pair<multimap_iterator_t, multimap_iterator_t> it_pair =
-      hashdb_manager.find(hash);
+      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash);
 
       // write the forensic path
       std::cout << feature_line.forensic_path << "\t";
@@ -1649,9 +1645,9 @@ class commands_t {
 
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
-    multimap_iterator_t it = hashdb_manager.begin();
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
     progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
-    while (it != hashdb_manager.end()) {
+    while (it != hashdb_manager.end_key()) {
       // add the hash to the bloom filter
       bloom_filter_manager.add_hash_value(it->first);
       ++it;

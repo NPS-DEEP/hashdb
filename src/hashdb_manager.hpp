@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides services for accessing the multimap, including tracking changes.
+ * Provides services for accessing the hash store, including tracking changes.
  */
 
 #ifndef HASHDB_MANAGER_HPP
@@ -44,10 +44,15 @@
 class hashdb_manager_t {
 
   public:
-  typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
-  typedef multimap_t::const_iterator multimap_iterator_t;
-  typedef std::pair<multimap_iterator_t, multimap_iterator_t>
-                                               multimap_iterator_range_t;
+//  typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
+//  typedef multimap_t::const_iterator multimap_iterator_t;
+//  typedef std::pair<multimap_iterator_t, multimap_iterator_t>
+//                                               multimap_iterator_range_t;
+
+  typedef boost::btree::btree_multimap<hash_t, uint64_t> hash_store_key_t;
+  typedef hash_store_key_t::const_iterator hash_store_key_iterator_t;
+  typedef std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>
+                                           hash_store_key_iterator_range_t;
 
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
@@ -55,8 +60,8 @@ class hashdb_manager_t {
   hashdb_changes_t changes;
 
   private:
-  // multimap
-  multimap_t multimap;
+  // hash_store_key
+  hash_store_key_t hash_store_key;
 
   // bloom filter manager
   bloom_filter_manager_t bloom_filter_manager;
@@ -78,7 +83,7 @@ class hashdb_manager_t {
                 file_mode(p_file_mode),
                 settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
                 changes(),
-                multimap(hashdb_dir + "/hash_store",
+                hash_store_key(hashdb_dir + "/hash_store",
                          file_mode_type_to_btree_flags_bitmask(file_mode) |
                          globals_t::btree_flags),
                 bloom_filter_manager(hashdb_dir, file_mode,
@@ -90,9 +95,9 @@ class hashdb_manager_t {
   }
 
   /**
-   * Return a hashdb_element given a multimap_iterator.
+   * Return a hashdb_element given a hash_store_key_iterator.
    */
-  hashdb_element_t hashdb_element(const multimap_iterator_t& it) const {
+  hashdb_element_t hashdb_element(const hash_store_key_iterator_t& it) const {
     uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(it->second);
     std::pair<bool, std::pair<std::string, std::string> > source_pair =
                      source_lookup_index_manager.find(source_lookup_index);
@@ -111,16 +116,16 @@ class hashdb_manager_t {
   }
 
   /**
-   * Return source lookup index given multimap_iterator.
+   * Return source lookup index given hash_store_key_iterator.
    */
-  uint64_t source_id(const multimap_iterator_t& it) const {
+  uint64_t source_id(const hash_store_key_iterator_t& it) const {
     return source_lookup_encoding::get_source_lookup_index(it->second);
   }
 
   /**
-   * Return file offset given multimap_iterator.
+   * Return file offset given hash_store_key_iterator.
    */
-  uint64_t file_offset(const multimap_iterator_t& it) const {
+  uint64_t file_offset(const hash_store_key_iterator_t& it) const {
     return source_lookup_encoding::get_file_offset(it->second);
   }
 
@@ -156,8 +161,8 @@ class hashdb_manager_t {
     // if the key may exist then check against duplicates and max count
     if (bloom_filter_manager.is_positive(element.key)) {
       size_t count = 0;
-      multimap_iterator_t it = multimap.lower_bound(element.key);
-      while (it != multimap.end() && it->first == element.key) {
+      hash_store_key_iterator_t it = hash_store_key.lower_bound(element.key);
+      while (it != hash_store_key.end() && it->first == element.key) {
         if (it->second == encoding) {
           // this exact element already exists
           ++changes.hashes_not_inserted_duplicate_element;
@@ -177,7 +182,7 @@ class hashdb_manager_t {
     }
 
     // add the element since all the checks passed
-    multimap.emplace(element.key, encoding);
+    hash_store_key.emplace(element.key, encoding);
     ++changes.hashes_inserted;
 
     // add hash to bloom filter, too, even if already there
@@ -244,13 +249,13 @@ class hashdb_manager_t {
                        element.file_offset);
 
     // find and remove the distinct identified element
-    multimap_iterator_range_t it = multimap.equal_range(element.key);
-    multimap_iterator_t lower = it.first;
-    const multimap_iterator_t upper = it.second;
+    hash_store_key_iterator_range_t it = hash_store_key.equal_range(element.key);
+    hash_store_key_iterator_t lower = it.first;
+    const hash_store_key_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
       if (lower->second == encoding) {
         // found it so erase it
-        multimap.erase(lower);
+        hash_store_key.erase(lower);
         ++changes.hashes_removed;
         return;
       }
@@ -265,7 +270,7 @@ class hashdb_manager_t {
   void remove_hash(const hash_t& hash) {
 
     // erase elements of hash
-    uint32_t count = multimap.erase(hash);
+    uint32_t count = hash_store_key.erase(hash);
     
     if (count == 0) {
       // no hash
@@ -275,18 +280,19 @@ class hashdb_manager_t {
     }
   }
   /**
-   * Find returning a multimap iterator pair.
+   * Find returning a hash_store_key iterator pair.
    */
 
-  std::pair<multimap_iterator_t, multimap_iterator_t > find(const hash_t& key) const {
+  std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t >
+            find(const hash_t& key) const {
     // if key not in bloom filter then return empty range
     if (!bloom_filter_manager.is_positive(key)) {
-      return std::pair<multimap_iterator_t, multimap_iterator_t>(
-                                            multimap.end(), multimap.end());
+      return std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>(
+                                 hash_store_key.end(), hash_store_key.end());
     }
 
-    // return range from multimap
-    return multimap.equal_range(key);
+    // return range from hash_store_key
+    return hash_store_key.equal_range(key);
   }
 
   // find_count
@@ -296,8 +302,8 @@ class hashdb_manager_t {
       // key not present in bloom filter
       return 0;
     } else {
-      // return count from multimap
-      return multimap.count(key);
+      // return count from hash_store_key
+      return hash_store_key.count(key);
     }
   }
 
@@ -328,13 +334,13 @@ class hashdb_manager_t {
   }
 
   // begin
-  multimap_iterator_t begin() const {
-    return multimap.begin();
+  hash_store_key_iterator_t begin_key() const {
+    return hash_store_key.begin();
   }
 
   // end
-  multimap_iterator_t end() const {
-    return multimap.end();
+  hash_store_key_iterator_t end_key() const {
+    return hash_store_key.end();
   }
 
   // begin source lookup index iterator
@@ -347,9 +353,9 @@ class hashdb_manager_t {
     return source_lookup_index_manager.end();
   }
 
-  // multimap size
+  // hash_store_key size
   size_t map_size() const {
-    return multimap.size();
+    return hash_store_key.size();
   }
 
   // source lookup store size

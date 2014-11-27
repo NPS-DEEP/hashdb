@@ -50,8 +50,7 @@ class json_formatter_t {
 
   // get source list count
   uint32_t source_list_count(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
 
     size_t count = 0;
     // add each source to count
@@ -63,8 +62,7 @@ class json_formatter_t {
 
   // get source list CRC
   uint32_t source_list_id(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
 
     // start a source list ID CRC hash
     boost::crc_32_type source_list_crc;
@@ -84,8 +82,7 @@ class json_formatter_t {
 
   // print the source list
   void print_source_list(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
 
     bool at_start = true;
 
@@ -159,8 +156,7 @@ class json_formatter_t {
 
   // print expanded source information unless the hash has been printed already
   void print_expanded(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
 
 //    // skip if hash already processed
 //    if (hashes.find(it_pair.first->first) != hashes.end()) {
