@@ -38,7 +38,7 @@ class dfxml_scan_expanded_consumer_t {
   hashdb_manager_t* hashdb_manager;
   json_formatter_t json_formatter;
   std::set<uint32_t> source_list_ids;
-  bool found_match = false;
+    bool found_match;
   std::string filename;
 
   // do not allow copy or assignment
