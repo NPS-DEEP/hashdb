@@ -4,6 +4,7 @@
 
 #from subprocess import call
 import subprocess
+import shutil
 import xml.etree.ElementTree as ET
 import hashdb_helpers as H
 
@@ -12,7 +13,7 @@ def test_create():
     db1 = "temp_1.hdb"
 
     # create new db
-    H.rmdir(db1)
+    shutil.rmtree(db1, True)
     H.hashdb(["create", db1, "-p1024", "-m10", "--bloom=disabled", "--bloom_kM=4:14"])
 
     settings = H.parse_settings(db1)
@@ -26,7 +27,7 @@ def test_create():
     H.int_equals(settings['bloom1_M_hash_size'], 14)
 
     # cleanup
-    H.rmdir(db1)
+    shutil.rmtree(db1)
     print("Test Done.")
 
 def option_p():
