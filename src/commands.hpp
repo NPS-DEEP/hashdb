@@ -348,8 +348,15 @@ class commands_t {
       hash_t hash = hash_pair.second;
 
       // add hash to hash set
-      hashes.insert(std::pair<hash_t, std::string>(hash, feature_line.context));
+      std::pair<std::map<hash_t, std::string>::iterator, bool> insert_pair =
+                         hashes.insert(std::pair<hash_t, std::string>(
+                         hash, feature_line.context));
 
+      // do not re-process hashes that are already in the hash set
+      if (insert_pair.second == false) {
+        continue;
+      }
+  
       // do not add sources for this hash if count > requested max
       if (hashdb_manager.find_count(hash) > requested_max) {
         continue;
@@ -388,7 +395,7 @@ class commands_t {
       std::stringstream ss;
       ss << "[\"" << it->first << "\"";
 
-      // get the context field without the count, specifically, just the flags
+      // get the context field
       std::string context = it->second;
 
       // add the reduced context field
@@ -409,7 +416,7 @@ class commands_t {
         // get the source lookup index and file offset for this entry
         uint64_t source_lookup_index = hashdb_manager.source_id(it_pair.first);
         if (source_lookup_indexes.find(source_lookup_index) == source_lookup_indexes.end()) {
-          // skip sources that are not identified
+          // do not report sources that are not identified
           continue;
         }
 

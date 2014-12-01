@@ -41,8 +41,8 @@ class json_formatter_t {
   private:
   hashdb_manager_t* hashdb_manager;
   uint32_t max_sources;
-  std::set<uint64_t> source_ids;
-  std::set<hash_t> hashes;
+  std::set<uint64_t>* source_ids;
+  std::set<hash_t>* hashes;
 
   // do not allow copy or assignment
   json_formatter_t(const json_formatter_t&);
@@ -108,7 +108,7 @@ class json_formatter_t {
                 << ",\"file_offset\":" << file_offset;
 
       // print full source information the first time
-      if (source_ids.find(source_lookup_index) == source_ids.end()) {
+      if (source_ids->find(source_lookup_index) == source_ids->end()) {
 
         // print the repository name and filename
         std::pair<bool, std::pair<std::string, std::string> > source_pair =
@@ -134,7 +134,7 @@ class json_formatter_t {
         }
 
         // record that this source ID has been printed
-        source_ids.insert(source_lookup_index);
+        source_ids->insert(source_lookup_index);
       }
 
       // print source closure
@@ -154,12 +154,17 @@ class json_formatter_t {
           hashes() {
   }
 
+  ~json_formatter_t() {
+    delete source_ids;
+    delete hashes;
+  }
+
   // print expanded source information unless the hash has been printed already
   void print_expanded(
                  hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
 
 //    // skip if hash already processed
-//    if (hashes.find(it_pair.first->first) != hashes.end()) {
+//    if (hashes->find(it_pair.first->first) != hashes->end()) {
 //      return;
 //    }
 
@@ -176,11 +181,11 @@ class json_formatter_t {
     // print the list of sources unless it is too long
     // or the list for this hash has been printed before
     if (count <= max_sources) {
-      if (hashes.find(it_pair.first->first) == hashes.end()) {
+      if (hashes->find(it_pair.first->first) == hashes->end()) {
         print_source_list(it_pair);
 
         // record that expanded information has been printed for this hash
-        hashes.insert(it_pair.first->first);
+        hashes->insert(it_pair.first->first);
       }
     }
 
