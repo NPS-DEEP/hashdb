@@ -368,6 +368,13 @@ if test x"${HASHDB_BYTE_ALIGNMENT}" = "x"; then
 fi
 AC_DEFINE_UNQUOTED(HASHDB_BYTE_ALIGNMENT, [$HASHDB_BYTE_ALIGNMENT], [the byte alignment size for data])
 
+################################################################
+############## use indexed hash store
+AC_ARG_VAR(USE_INDEXED_HASH_STORE, [Set to yes to use indexed hash store instead of direct tree hash store])
+if test x"${USE_INDEXED_HASH_STORE}" = "xyes"; then
+  AC_DEFINE(USE_INDEXED_HASH_STORE, 1, [define to use indexed hash store instead of direct tree hash store])
+fi
+
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([  PACKAGE_NAME:     $PACKAGE_NAME])
