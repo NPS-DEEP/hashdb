@@ -407,6 +407,12 @@ class commands_t {
       // get the multimap iterator for this hash value
       hash_store_key_iterator_range_t it_pair = hashdb_manager.find(it->first);
 
+      // the user did something wrong if there is no range
+      if (it_pair.first == it_pair.second) {
+        std::cout << "# Invalid hash, incorrect file or database, " << it->first.hexdigest() << "\n";
+        continue;
+      }
+
       // track when to put in the comma
       bool found_identified_source = false;
 
