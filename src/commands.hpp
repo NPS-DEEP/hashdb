@@ -1557,6 +1557,7 @@ class commands_t {
       // the user did something wrong if the range was not found
       if (it_pair.first == it_pair.second) {
         std::cout << "# Invalid hash, incorrect file or database, " << hash.hexdigest() << "\n";
+        continue;
       }
 
       // write the forensic path
