@@ -152,6 +152,8 @@ class json_formatter_t {
           max_sources(p_max_sources),
           source_ids(),
           hashes() {
+    source_ids = new std::set<uint64_t>;
+    hashes = new std::set<hash_t>;
   }
 
   ~json_formatter_t() {
@@ -161,7 +163,7 @@ class json_formatter_t {
 
   // print expanded source information unless the hash has been printed already
   void print_expanded(
-                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
+          const hashdb_manager_t::hash_store_key_iterator_range_t& it_pair) {
 
 //    // skip if hash already processed
 //    if (hashes->find(it_pair.first->first) != hashes->end()) {

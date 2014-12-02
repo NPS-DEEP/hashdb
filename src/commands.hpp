@@ -1554,6 +1554,11 @@ class commands_t {
       // find matching range for this key
       hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash);
 
+      // the user did something wrong if the range was not found
+      if (it_pair.first == it_pair.second) {
+        std::cout << "# Invalid hash, incorrect file or database, " << hash.hexdigest() << "\n";
+      }
+
       // write the forensic path
       std::cout << feature_line.forensic_path << "\t";
 
