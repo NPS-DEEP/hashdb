@@ -36,6 +36,8 @@ For example input line:
  will import block hash `63641...` at file byte offset `0` for file `file1`.
 
  This tab-delimited syntax is compatible with  Sector Hash Datasets being made available by NIST.
+* New hashdb library API interface `open_scan_pthread` is added.  This mode opens hashdb for scanning with a separate scan resource per thread instead of opening for scanning with a lock around one scan resource, as is done with the existing `open_scan` interface.
+This interface is recommended for scan queries that run in a multi-threaded environment.
 * Commands that return outupt also include header information about the command including the command typed to generate the output.
 * Regression tests are added for validating output for comands that generate output.
 * For completeness, the database changes displayed during a change operation include changes with count zero.
