@@ -59,14 +59,14 @@ class hashdb_t__ {
                        HASHDB_SCAN_SOCKET,
                        HASHDB_SCAN_PTHREAD,
                        HASHDB_SCAN_SOCKET_PTHREAD};
-  std::string hashdb_dir;
+  std::string path_or_socket;
   uint32_t block_size;
   uint32_t max_duplicates;
   hashdb_modes_t mode;
   hashdb_manager_t* hashdb_manager;             // import or scan path
   tcp_client_manager_t* tcp_client_manager;     // scan socket
-  std::vector<hashdb_manager_t*> pthread_hashdb_managers;         // pthread
-  std::vector<tcp_client_manager_t*> pthread_tcp_client_managers; // pthread
+//  std::vector<hashdb_manager_t*> pthread_hashdb_managers;         // pthread
+//  std::vector<tcp_client_manager_t*> pthread_tcp_client_managers; // pthread
   logger_t* logger;
 
 #ifdef HAVE_PTHREAD
@@ -74,9 +74,6 @@ class hashdb_t__ {
 #else
   mutable int M;              // placeholder
 #endif
-
-  static void make_pthread_hashdb_manager_key();
-  static void make_pthread_tcp_client_manager_key();
 
   public:
   // data structure for one import element
