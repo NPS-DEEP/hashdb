@@ -28,6 +28,11 @@ The similar hashdb `import` command does not have this deficiency.
  * The source list associated with a given hash value is printed only once.
  * A `-m <max>` option is added so that when the number of sources a hash has exceeds this maximum, the sources associated with the hash are not displayed. 
 * A new `source_list_id` field is added for commands that print source information to provide the ability to distinguish between various source lists.  The `source_list_id` value is calculated by applying a 32-bit CRC function for each `source_id` associated with the given hash.  The CRC function is `boost::crc_32_type` from `boost/crc.hpp`.
+* The `hash_table` command is changed to look up sources by source index rather than by the repository name, filename text pair.
+This change was made because:
+ * It is much easier to enter the index value rather than the text.
+ * On Windows systems, not all text can be typed, rendering the command useless.
+ * The required source index value is readily available in the `source_id` fields of some commands, in particular the `sources` command.
 * Several changes are made to the `scan_expanded` command to improve usability:
  * Hashes are scanned immediately as they are parsed from DFXML input rather than saving them up in a vector and hashing the vector when the `</fileobject>` close tab is received.  Because of this, a fileobject's filename must be defined before its block hashes, or else the printed name of the file being processed will be blank.
  * All the sources for a hash are displayed on one line instead of printing each source for a hash on a separate line with the hash value displayed at the beginning.

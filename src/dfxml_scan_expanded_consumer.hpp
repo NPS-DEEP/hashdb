@@ -65,7 +65,7 @@ class dfxml_scan_expanded_consumer_t {
   void end_byte_run(const hashdb_element_t& hashdb_element) {
 
     // find matching range for this hash
-    hashdb_manager_t::hash_store_key_iterator_range_t it_pair =
+    hash_store_key_iterator_range_t it_pair =
                                      hashdb_manager->find(hashdb_element.key);
 
     // no action if no match

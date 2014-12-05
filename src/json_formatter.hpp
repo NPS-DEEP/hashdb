@@ -50,7 +50,7 @@ class json_formatter_t {
 
   // get source list count
   uint32_t source_list_count(
-                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     size_t count = 0;
     // add each source to count
@@ -62,7 +62,7 @@ class json_formatter_t {
 
   // get source list CRC
   uint32_t source_list_id(
-                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     // start a source list ID CRC hash
     boost::crc_32_type source_list_crc;
@@ -82,7 +82,7 @@ class json_formatter_t {
 
   // print the source list
   void print_source_list(
-                 hashdb_manager_t::hash_store_key_iterator_range_t it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     bool at_start = true;
 
@@ -163,7 +163,7 @@ class json_formatter_t {
 
   // print expanded source information unless the hash has been printed already
   void print_expanded(
-          const hashdb_manager_t::hash_store_key_iterator_range_t& it_pair) {
+          const hash_store_key_iterator_range_t& it_pair) {
 
 //    // skip if hash already processed
 //    if (hashes->find(it_pair.first->first) != hashes->end()) {
@@ -171,7 +171,7 @@ class json_formatter_t {
 //    }
 
     // print the block hashdigest
-    std::cout << "{\"block_hashdigest\":\"" << it_pair.first->first.hexdigest() << "\"";
+    std::cout << "{\"block_hashdigest\":\"" << key(it_pair.first).hexdigest() << "\"";
 
     // print the count
     size_t count = source_list_count(it_pair);
@@ -183,11 +183,11 @@ class json_formatter_t {
     // print the list of sources unless it is too long
     // or the list for this hash has been printed before
     if (count <= max_sources) {
-      if (hashes->find(it_pair.first->first) == hashes->end()) {
+      if (hashes->find(key(it_pair.first)) == hashes->end()) {
         print_source_list(it_pair);
 
         // record that expanded information has been printed for this hash
-        hashes->insert(it_pair.first->first);
+        hashes->insert(key(it_pair.first));
       }
     }
 

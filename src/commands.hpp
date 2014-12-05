@@ -68,8 +68,6 @@
 class commands_t {
   // support expalin_identified_blocks
   typedef std::map<hash_t, std::string> hashes_t;
-  typedef hashdb_manager_t::hash_store_key_iterator_t hash_store_key_iterator_t;
-  typedef hashdb_manager_t::hash_store_key_iterator_range_t hash_store_key_iterator_range_t;
 
   private:
   // perform intersection, optimized for speed
@@ -124,11 +122,11 @@ class commands_t {
     while (smaller_it != smaller_hashdb.end_key()) {
 
       // see if hashdigest is in larger db
-      uint32_t larger_count = larger_hashdb.find_count(smaller_it->first);
+      uint32_t larger_count = larger_hashdb.find_count(key(smaller_it));
 
       if (larger_count > 0) {
         // there is a match in larger db
-        hash_t matching_key = smaller_it->first;
+        hash_t matching_key = key(smaller_it);
 
         // add hashes from smaller
         uint32_t smaller_count = smaller_hashdb.find_count(matching_key);
@@ -748,7 +746,7 @@ class commands_t {
     progress_tracker_t progress_tracker(hashdb_manager1.map_size() +
                                         hashdb_manager2.map_size(), &logger);
     while ((it1 != it1_end) && (it2 != it2_end)) {
-      if (it1->first.hexdigest() <= it2->first.hexdigest()) {
+      if (key(it1).hexdigest() <= key(it2).hexdigest()) {
         hashdb_manager3.insert(hashdb_manager1.hashdb_element(it1));
         ++it1;
       } else {
@@ -981,7 +979,7 @@ class commands_t {
       // look for exact match in hashdb_manager2
       hashdb_element_t hashdb_element1 = hashdb_manager1.hashdb_element(it1);
       bool exact_match = false;
-      hash_store_key_iterator_range_t it_pair = hashdb_manager2.find(it1->first);
+      hash_store_key_iterator_range_t it_pair = hashdb_manager2.find(key(it1));
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
         hashdb_element_t hashdb_element2 = hashdb_manager2.hashdb_element(it_pair.first);
         if (hashdb_element1 == hashdb_element2) {
@@ -1049,7 +1047,7 @@ class commands_t {
     while (it1 != hashdb_manager1.end_key()) {
       
       // subtract or copy the hash
-      if (hashdb_manager2.find_count(it1->first) > 0) {
+      if (hashdb_manager2.find_count(key(it1)) > 0) {
         // hashdb2 has the hash so drop the hash
       } else {
         // hashdb2 does not have the hash so copy it to hashdb3
@@ -1109,7 +1107,7 @@ class commands_t {
     while (it1 != hashdb_manager1.end_key()) {
 
       // for deduplicate, only keep hashes whose count=1
-      if (hashdb_manager1.find_count(it1->first) == 1) {
+      if (hashdb_manager1.find_count(key(it1)) == 1) {
         // good, use it
         hashdb_manager2.insert(hashdb_manager1.hashdb_element(it1));
       }
@@ -1381,7 +1379,7 @@ class commands_t {
       progress_tracker.track();
 
       // get count for this hash
-      uint32_t count = hashdb_manager.find_count(it->first);
+      uint32_t count = hashdb_manager.find_count(key(it));
 
       // update totals
       total_hashes += count;
@@ -1455,12 +1453,12 @@ class commands_t {
     bool any_found = false;
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
     while (it != hashdb_manager.end_key()) {
-      uint32_t count = hashdb_manager.find_count(it->first);
+      uint32_t count = hashdb_manager.find_count(key(it));
 
       if (count == duplicates_number) {
         any_found = true;
         // this is the same format as that used in print_scan_output
-        std::cout << "[\"" << it->first.hexdigest() << "\",{\"count\":" << count << "}]\n";
+        std::cout << "[\"" << key(it).hexdigest() << "\",{\"count\":" << count << "}]\n";
       }
 
       // now move forward by count
@@ -1480,21 +1478,27 @@ class commands_t {
 
   // hash_table
   static void hash_table(const std::string& hashdb_dir,
-                         const std::string& repository_name,
-                         const std::string& filename) {
+                         const std::string& source_id_string) {
+
+    // convert count string to number
+    uint64_t source_id;
+    try {
+      source_id = boost::lexical_cast<uint64_t>(source_id_string);
+    } catch(...) {
+      std::cerr << "Invalid source_id: '" << source_id_string << "'\n";
+      exit(1);
+    }
 
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // get source lookup index
-    std::pair<bool, uint64_t> lookup_pair =
-           hashdb_manager.find_source_id(repository_name, filename);
-    if (lookup_pair.first == false) {
-      // the database does not have the requested source
-      std::cout << "Nothing for this source was found.\n"
-                << "Are the repository name and filename correct?\n";
-      return;
+    // check that the source ID exists
+    std::pair<bool, std::pair<std::string, std::string> >
+                source_string2_pair = hashdb_manager.find_source(source_id);
+    if (source_string2_pair.first == false) {
+      std::cerr << "The database does not contain source lookup index value " << source_id
+                << ".  Aborting.\n";
+      exit(1);
     }
-    uint64_t source_id = lookup_pair.second;
 
     // print header information
     print_header("hash_table-command-Version: 2");
@@ -1506,13 +1510,29 @@ class commands_t {
 
     // show hashes for the requested source
     bool any_found = false;
+#ifdef USE_INDEXED_HASH_STORE
+    // see that any matches exist
+    hash_store_value_iterator_t it = hashdb_manager.begin_value();
+    if (it != hashdb_manager.end_value()) {
+      any_found = true;
+    }
+
+    // print the matches
+    while (it != hashdb_manager.end_value()) {
+      // show the hash and its offset
+      std::cout << "[\"" << key(it).hexdigest() << "\",{\"file_offset\":"
+                << hashdb_manager.file_offset(it) << "}]\n";
+      ++it;
+    }
+#else
+    // start progress tracker and iterate through keys in O(n) search
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
     hash_store_key_iterator_t it = hashdb_manager.begin_key();
     while (it != hashdb_manager.end_key()) {
       if (hashdb_manager.source_id(it) == source_id) {
 
         // show the hash and its offset
-        std::cout << "[\"" << it->first.hexdigest() << "\",{\"file_offset\":"
+        std::cout << "[\"" << key(it).hexdigest() << "\",{\"file_offset\":"
                   << hashdb_manager.file_offset(it) << "}]\n";
         any_found = true;
       }
@@ -1520,6 +1540,7 @@ class commands_t {
       progress_tracker.track();
     }
     progress_tracker.done();
+#endif
 
     // there may be nothing to report
     if (!any_found) {
@@ -1668,7 +1689,7 @@ class commands_t {
     progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
     while (it != hashdb_manager.end_key()) {
       // add the hash to the bloom filter
-      bloom_filter_manager.add_hash_value(it->first);
+      bloom_filter_manager.add_hash_value(key(it));
       ++it;
       progress_tracker.track();
     }

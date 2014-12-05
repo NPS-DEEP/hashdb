@@ -40,19 +40,57 @@
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
+#ifdef USE_INDEXED_HASH_STORE
+  #include "indexed_hash_store_type.hpp"
+#endif
+
+// multiset by key
+#ifdef USE_INDEXED_HASH_STORE
+typedef boost::btree::btree_index_multiset<indexed_hash_store_t> hash_store_key_t;
+#else
+typedef boost::btree::btree_multimap<hash_t, uint64_t> hash_store_key_t;
+#endif
+typedef hash_store_key_t::const_iterator hash_store_key_iterator_t;
+typedef std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>
+                                           hash_store_key_iterator_range_t;
+
+#ifdef USE_INDEXED_HASH_STORE
+// multiset by value
+typedef typename boost::btree::btree_index_multiset<indexed_hash_store_t, default_traits, typename indexed_hash_store_t::value_ordering> hash_store_value_t;
+typedef hash_store_value_t::const_iterator hash_store_value_iterator_t;
+typedef std::pair<hash_store_value_iterator_t, hash_store_value_iterator_t>
+                                           hash_store_value_iterator_range_t;
+#endif
+
+// fetch key and value from key_iterator regardless of internal type
+#ifdef USE_INDEXED_HASH_STORE
+inline hash_t key(const hash_store_key_iterator_t it) {
+  return it->key;
+}
+inline uint64_t value(const hash_store_key_iterator_t it) {
+  return it->value;
+}
+
+// key and value as seen by the value iterator
+inline hash_t key(const hash_store_value_iterator_t it) {
+  return it->key;
+}
+inline uint64_t value(const hash_store_value_iterator_t it) {
+  return it->value;
+}
+
+#else
+inline hash_t key(const hash_store_key_iterator_t it) {
+  return it->first;
+}
+inline uint64_t value(const hash_store_key_iterator_t it) {
+  return it->second;
+}
+#endif
 
 class hashdb_manager_t {
 
   public:
-//  typedef boost::btree::btree_multimap<hash_t, uint64_t> multimap_t;
-//  typedef multimap_t::const_iterator multimap_iterator_t;
-//  typedef std::pair<multimap_iterator_t, multimap_iterator_t>
-//                                               multimap_iterator_range_t;
-
-  typedef boost::btree::btree_multimap<hash_t, uint64_t> hash_store_key_t;
-  typedef hash_store_key_t::const_iterator hash_store_key_iterator_t;
-  typedef std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>
-                                           hash_store_key_iterator_range_t;
 
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
@@ -62,6 +100,9 @@ class hashdb_manager_t {
   private:
   // hash_store_key
   hash_store_key_t hash_store_key;
+#ifdef USE_INDEXED_HASH_STORE
+  hash_store_value_t hash_store_value;
+#endif
 
   // bloom filter manager
   bloom_filter_manager_t bloom_filter_manager;
@@ -83,9 +124,22 @@ class hashdb_manager_t {
                 file_mode(p_file_mode),
                 settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
                 changes(),
+#ifdef USE_INDEXED_HASH_STORE
+                hash_store_key(
+                         std::string(hashdb_dir + "/hash_store.idx1"),
+                         std::string(hashdb_dir + "/hash_store.dat"),
+                         file_mode_type_to_btree_flags_bitmask(file_mode) |
+                                                globals_t::btree_flags),
+                hash_store_value(
+                         std::string(hashdb_dir + "/hash_store.idx2"),
+                         hash_store_key.file(),
+                         file_mode_type_to_btree_flags_bitmask(file_mode) |
+                                                globals_t::btree_flags),
+#else
                 hash_store_key(hashdb_dir + "/hash_store",
                          file_mode_type_to_btree_flags_bitmask(file_mode) |
                          globals_t::btree_flags),
+#endif
                 bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
@@ -98,7 +152,7 @@ class hashdb_manager_t {
    * Return a hashdb_element given a hash_store_key_iterator.
    */
   hashdb_element_t hashdb_element(const hash_store_key_iterator_t& it) const {
-    uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(it->second);
+    uint64_t source_lookup_index = source_lookup_encoding::get_source_lookup_index(value(it));
     std::pair<bool, std::pair<std::string, std::string> > source_pair =
                      source_lookup_index_manager.find(source_lookup_index);
     if (source_pair.first == false) {
@@ -108,26 +162,42 @@ class hashdb_manager_t {
       exit(1);
     }
     return hashdb_element_t(
-                    it->first,
+                    key(it),
                     settings.hash_block_size,
                     source_pair.second.first,
                     source_pair.second.second,
-                    source_lookup_encoding::get_file_offset(it->second));
+                    source_lookup_encoding::get_file_offset(value(it)));
   }
 
   /**
    * Return source lookup index given hash_store_key_iterator.
    */
   uint64_t source_id(const hash_store_key_iterator_t& it) const {
-    return source_lookup_encoding::get_source_lookup_index(it->second);
+    return source_lookup_encoding::get_source_lookup_index(value(it));
   }
 
   /**
    * Return file offset given hash_store_key_iterator.
    */
   uint64_t file_offset(const hash_store_key_iterator_t& it) const {
-    return source_lookup_encoding::get_file_offset(it->second);
+    return source_lookup_encoding::get_file_offset(value(it));
   }
+
+#ifdef USE_INDEXED_HASH_STORE
+  /**
+   * Return source lookup index given hash_store_value_iterator.
+   */
+  uint64_t source_id(const hash_store_value_iterator_t& it) const {
+    return source_lookup_encoding::get_source_lookup_index(value(it));
+  }
+
+  /**
+   * Return file offset given hash_store_value_iterator.
+   */
+  uint64_t file_offset(const hash_store_value_iterator_t& it) const {
+    return source_lookup_encoding::get_file_offset(value(it));
+  }
+#endif
 
   // insert
   void insert(const hashdb_element_t& element) {
@@ -162,8 +232,8 @@ class hashdb_manager_t {
     if (bloom_filter_manager.is_positive(element.key)) {
       size_t count = 0;
       hash_store_key_iterator_t it = hash_store_key.lower_bound(element.key);
-      while (it != hash_store_key.end() && it->first == element.key) {
-        if (it->second == encoding) {
+      while (it != hash_store_key.end() && key(it) == element.key) {
+        if (value(it) == encoding) {
           // this exact element already exists
           ++changes.hashes_not_inserted_duplicate_element;
           return;
@@ -182,7 +252,14 @@ class hashdb_manager_t {
     }
 
     // add the element since all the checks passed
+#ifdef USE_INDEXED_HASH_STORE
+    typename hash_store_key_t::file_position pos;
+    pos = hash_store_key.push_back(indexed_hash_store_t(element.key, encoding));
+    hash_store_key.insert_file_position(pos);
+    hash_store_value.insert_file_position(pos);
+#else
     hash_store_key.emplace(element.key, encoding);
+#endif
     ++changes.hashes_inserted;
 
     // add hash to bloom filter, too, even if already there
@@ -253,7 +330,7 @@ class hashdb_manager_t {
     hash_store_key_iterator_t lower = it.first;
     const hash_store_key_iterator_t upper = it.second;
     for (; lower != upper; ++lower) {
-      if (lower->second == encoding) {
+      if (value(lower) == encoding) {
         // found it so erase it
         hash_store_key.erase(lower);
         ++changes.hashes_removed;
@@ -270,7 +347,17 @@ class hashdb_manager_t {
   void remove_hash(const hash_t& hash) {
 
     // erase elements of hash
+#ifdef USE_INDEXED_HASH_STORE
+    // hashdb does not use it but tests do.
+    uint32_t count = hash_store_key.count(hash);
+    hash_store_key_iterator_range_t it_range =
+                                  hash_store_key.equal_range(hash);
+    hash_store_key_iterator_t it = hash_store_key.erase(
+                                  it_range.first, it_range.second);
+    // zz what about hash_store_value.
+#else
     uint32_t count = hash_store_key.erase(hash);
+#endif
     
     if (count == 0) {
       // no hash
@@ -279,15 +366,15 @@ class hashdb_manager_t {
       changes.hashes_removed += count;
     }
   }
+
   /**
    * Find returning a hash_store_key iterator pair.
    */
 
-  std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t >
-            find(const hash_t& key) const {
+  hash_store_key_iterator_range_t find(const hash_t& key) const {
     // if key not in bloom filter then return empty range
     if (!bloom_filter_manager.is_positive(key)) {
-      return std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>(
+      return hash_store_key_iterator_range_t(
                                  hash_store_key.end(), hash_store_key.end());
     }
 
@@ -342,6 +429,18 @@ class hashdb_manager_t {
   hash_store_key_iterator_t end_key() const {
     return hash_store_key.end();
   }
+
+#ifdef USE_INDEXED_HASH_STORE
+  // begin keyed by value
+  hash_store_value_iterator_t begin_value() const {
+    return hash_store_value.begin();
+  }
+
+  // end keyed by value
+  hash_store_value_iterator_t end_value() const {
+    return hash_store_value.end();
+  }
+#endif
 
   // begin source lookup index iterator
   source_lookup_index_manager_t::source_lookup_index_iterator_t begin_source_lookup_index() const {
