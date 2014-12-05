@@ -395,18 +395,21 @@ class hashdb_manager_t {
   }
 
 #ifdef USE_INDEXED_HASH_STORE
-  /**
-   * Find returning a hash_store_value iterator pair.
-   */
-  hash_store_value_iterator_range_t find(uint64_t value) const {
+  // find hash_store_value iterator pair from source_id
+  hash_store_value_iterator_range_t find_by_source_id(
+                                      uint64_t source_lookup_index) const {
     // return range from hash_store_value
-    return hash_store_value.equal_range(value);
+    return hash_store_value.equal_range(
+                       source_lookup_encoding::get_source_lookup_encoding(
+                       source_lookup_index,0));
   }
 
-  // find_count
-  uint32_t find_count(uint64_t value) const {
+  // find hash count from source_id
+  uint32_t find_count_by_source_id(uint64_t source_lookup_index) const {
     // return count from hash_store_value
-    return hash_store_value.count(value);
+    return hash_store_value.count(
+                      source_lookup_encoding::get_source_lookup_encoding(
+                      source_lookup_index,0));
   }
 #endif
 

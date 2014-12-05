@@ -1512,8 +1512,8 @@ class commands_t {
     bool any_found = false;
 #ifdef USE_INDEXED_HASH_STORE
     // get the matching source ID range
-    hash_store_value_iterator_range_t it_range = hashdb_manager.find(
-             source_lookup_encoding::get_source_lookup_encoding(source_id,0));
+    hash_store_value_iterator_range_t it_range =
+                                 hashdb_manager.find_by_source_id(source_id);
 
     // note if anything is found
     if (it_range.first != it_range.second) {
