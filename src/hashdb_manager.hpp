@@ -394,6 +394,22 @@ class hashdb_manager_t {
     }
   }
 
+#ifdef USE_INDEXED_HASH_STORE
+  /**
+   * Find returning a hash_store_value iterator pair.
+   */
+  hash_store_value_iterator_range_t find(uint64_t value) const {
+    // return range from hash_store_value
+    return hash_store_value.equal_range(value);
+  }
+
+  // find_count
+  uint32_t find_count(uint64_t value) const {
+    // return count from hash_store_value
+    return hash_store_value.count(value);
+  }
+#endif
+
   /**
    * Return true and source lookup index else false and 0.
    */

@@ -1511,18 +1511,20 @@ class commands_t {
     // show hashes for the requested source
     bool any_found = false;
 #ifdef USE_INDEXED_HASH_STORE
-    // see that any matches exist
-    hash_store_value_iterator_t it = hashdb_manager.begin_value();
-    if (it != hashdb_manager.end_value()) {
+    // get the matching source ID range
+    hash_store_value_iterator_range_t it_range = hashdb_manager.find(
+             source_lookup_encoding::get_source_lookup_encoding(source_id,0));
+
+    // note if anything is found
+    if (it_range.first != it_range.second) {
       any_found = true;
     }
 
-    // print the matches
-    while (it != hashdb_manager.end_value()) {
+    while (it_range.first != it_range.second) {
       // show the hash and its offset
-      std::cout << "[\"" << key(it).hexdigest() << "\",{\"file_offset\":"
-                << hashdb_manager.file_offset(it) << "}]\n";
-      ++it;
+      std::cout << "[\"" << key(it_range.first).hexdigest() << "\",{\"file_offset\":"
+                << hashdb_manager.file_offset(it_range.first) << "}]\n";
+      ++it_range.first;
     }
 #else
     // start progress tracker and iterate through keys in O(n) search
