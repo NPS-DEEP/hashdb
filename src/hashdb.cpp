@@ -194,18 +194,12 @@ const char* hashdb_version() {
     // lock while importing
     MUTEX_LOCK(&M);
 
-    // insert the source metadata
-    std::pair<bool, uint64_t> source_pair =hashdb_manager->find_source_id(
+    // acquire existing or new source lookup index
+    uint64_t source_id = hashdb_manager->insert_source(
                                                   repository_name, filename);
-    if (source_pair.first == true) {
-      // good, add the metadata
-      hashdb_manager->insert_source_metadata(
-                                   source_pair.second, filesize, hashdigest);
-    } else {
-      // require that source be defined before source metadata
-      std::cout << "metadata not added, repository name '" << repository_name
-                << "', filename '" << filename << "' not present.\n";
-    }
+ 
+    // add the metadata associated with this source
+    hashdb_manager->insert_source_metadata(source_id, filesize, hashdigest);
 
     MUTEX_UNLOCK(&M);
 
