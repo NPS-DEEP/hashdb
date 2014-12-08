@@ -239,13 +239,12 @@ Statistics:
     <number>       the requested number of duplicate hashes
 
   hash_table <hashdb> <source_id>
-    Print the hashes and offsets from the given <hashdb> database for the
-    <source_id> source index requested.
+    Print hash information from the given <hashdb> database for hashes
+    associated with the <source_id> source index.
 
     Parameters:
-    <hashdb>              the hash database to print duplicate hashes for
-    <repository name>     the repository name to match
-    <filename >           the filename to match
+    <hashdb>              the hash database to print hashes from
+    <source_id>           the source index of the hashes to print
 
   expand_identified_blocks [-m <number> <hashdb> <identified blocks file>
     Print source information for each hash in <identified blocks file> by

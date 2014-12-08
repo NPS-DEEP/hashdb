@@ -1,5 +1,5 @@
                      Announcing hashdb 1.1.2
-                        31, 2014
+                        December 8, 2014
 
                           RELEASE NOTES
 
@@ -16,14 +16,13 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * A regression introduced in 1.1.1 was fixed so that command `scan_expanded` does not require the input to have file hashdigest or filesize tags in order to hash.
 * _hashdb_ fails more gracefully and suggests running the `upgrade` command when the source metadata store is missing.
 * _hashdb_ fails more gracefully when attempting to access a corrupted hash database.  For example a hash database is corrupted when a  _hashdb_ command that modifies it is aborted.
-* Fix regression in the `scan_random` performance analysis command that made it fail to scan the database copy.
 * Simplify the `scan_random` command to not require a database copy.  Python reporting about the copy, now removed, was broken.
 * Fix hashdb API interface `import_metadata` to add metadata to a source even if hashes have not been added to the source yet.
 This deficiency can result in missing source metadata.
 The similar hashdb `import` command does not have this deficiency.
 
 # Functional Changes
-* Because output can be so large, the output from commands that print expanded source information has been reduced by not printing information multiple times.  Specifically:
+* Reduce the amount of output produced by commands that print expanded source information multiple times.  Specifically:
  * Source information for a given source ID is printed only once.
  * The source list associated with a given hash value is printed only once.
  * A `-m <max>` option is added so that when the number of sources a hash has exceeds this maximum, the sources associated with the hash are not displayed. 
@@ -43,12 +42,16 @@ For example input line:
 
  will import block hash `63641...` at file byte offset `0` for file `file1`.
 
- This tab-delimited syntax is compatible with  Sector Hash Datasets being made available by NIST.
-* New hashdb library API interface `open_scan_pthread` is added.  This mode opens hashdb for scanning with a separate scan resource per thread instead of opening for scanning with a lock around one scan resource, as is done with the existing `open_scan` interface.
-This interface is recommended for scan queries that run in a multi-threaded environment.
+ This tab-delimited syntax is compatible with  Sector Hash Datasets being made available by NIST, <http://www.nsrl.nist.gov/ftp/MD5B512/> .
 * Commands that return outupt also include header information about the command including the command typed to generate the output.
-* Regression tests are added for validating output for comands that generate output.
+<!--- Regression tests are added for validating output for comands that generate output.-->
 * For completeness, the database changes displayed during a change operation include changes with count zero.
+* New hashdb library API interface `open_scan_pthread` is added.  This mode opens hashdb for scanning with a separate scan resource per thread instead of opening for scanning with a lock around one scan resource, as is done with the existing `open_scan` interface.
+
+ The goal was to improve performance in a multithreaded environment, but there is no gain with our current B-Tree back-end.  We do not encourage use of this option.  We will examine alternatives to improve multithreaded performance.
+* An alternate key-based B-Tree hash store lookup configuration option is available. It is enabled via configure switch `./configure USE_INDEXED_HASH_STORE=yes`. Databases built using this configuration of hashdb are not compatible with databases built using the standard configuration of hashdb.
+
+ This configuration was created in order to examine the performance of using a key-based B-Tree hash store in a multi-threaded context.  There was no appreciable change in performance using this configuration.  Using a key-based B-Tree does, however, allow the `hash_table` command to work faster since it returns hashes keyed by source ID rather than searching for hashes across the entire store iteratively.
 
 Availability
 ============
@@ -59,4 +62,4 @@ Availability
 Contacts
 ========
 * Developer: mailto:bdallen@nps.edu
-* Bulk Extractor Users Group: http://groups.google.com/group/bulk_extractor-users 
+* Bulk Extractor Users Group: http://groups.google.com/group/bulk_extractor-users
