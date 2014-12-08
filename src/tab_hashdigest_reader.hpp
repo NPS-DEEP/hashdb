@@ -127,7 +127,7 @@ class tab_hashdigest_reader_t {
   std::pair<bool, std::string> read(std::string tab_file) {
 
     // open text file
-    std::ifstream in(tab_file);
+    std::ifstream in(tab_file.c_str());
     if (!in.is_open()) {
       std::stringstream ss;
       ss << "Cannot open " << tab_file << ": " << strerror(errno);

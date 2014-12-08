@@ -440,12 +440,12 @@ const char* hashdb_version() {
   template<>
   hashdb_t__<hash_t>::hashdb_t__(const hashdb_t__<hash_t>& other) :
                  path_or_socket(""),
-                 mode(HASHDB_NONE),
-                 hashdb_manager(0),
-                 logger(0),
-                 tcp_client_manager(0),
                  block_size(0),
                  max_duplicates(0),
+                 mode(HASHDB_NONE),
+                 hashdb_manager(0),
+                 tcp_client_manager(0),
+                 logger(0),
                  M() {
     assert(0);
     exit(1);
