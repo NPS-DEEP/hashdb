@@ -20,6 +20,18 @@
 /**
  * \file
  * Provides the main entry for the hashdb_manager tool.
+ * \brief Block Hash Database (hashdb)
+ * \mainpage Block Hash Database (hashdb) Tool and Library
+ * \section intro_sec Introduction
+ * __hashdb__ is a tool for finding previously identified blocks of data
+ * in media such as disk images. hashdb provides the following:
+ * - The hashdb tool used to create hash databases, import block hashes,
+ *   provide lookup services, and otherwise manage block hash databases.
+ * - The hashdb library that allows other programs to create hash databases
+ *   or scan for block hashes. The hashdb scanner in bulk_extractor uses
+ *   libhashdb to search for previously identified blocks of data.
+ *
+ * Please see the hashdb home page at <https://github.com/simsong/hashdb/wiki>.
  */
 
 #include <config.h>
