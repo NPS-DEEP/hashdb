@@ -38,7 +38,7 @@ class dfxml_scan_expanded_consumer_t {
   hashdb_manager_t* hashdb_manager;
   json_formatter_t json_formatter;
   std::set<uint32_t> source_list_ids;
-  bool found_match = false;
+    bool found_match;
   std::string filename;
 
   // do not allow copy or assignment
@@ -65,8 +65,7 @@ class dfxml_scan_expanded_consumer_t {
   void end_byte_run(const hashdb_element_t& hashdb_element) {
 
     // find matching range for this hash
-    std::pair<hashdb_manager_t::multimap_iterator_t,
-              hashdb_manager_t::multimap_iterator_t> it_pair =
+    hash_store_key_iterator_range_t it_pair =
                                      hashdb_manager->find(hashdb_element.key);
 
     // no action if no match

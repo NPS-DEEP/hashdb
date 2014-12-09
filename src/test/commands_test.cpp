@@ -218,8 +218,8 @@ void test_statistics() {
   commands_t::duplicates(temp_dir1, "2");
 
   // hash_table
-  commands_t::hash_table(temp_dir1, "repository1", sample_dfxml4096);
-  commands_t::hash_table(temp_dir1, "invalid_repository", sample_dfxml4096);
+  commands_t::hash_table(temp_dir1, "1");
+// invalid  commands_t::hash_table(temp_dir1, "2");
 }
 
 // tuning

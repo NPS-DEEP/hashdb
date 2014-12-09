@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Holds state about hashes inserted or removed.
+ * Holds state about changes applied to the hash database.
  * The hashdb_manager updates this information while performing actions,
  * then reports it using the logger.
  */

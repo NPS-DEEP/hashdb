@@ -4,6 +4,7 @@
 
 import subprocess
 import xml.etree.ElementTree as ET
+import shutil
 import hashdb_helpers as H
 
 db1 = "temp_1.hdb"
@@ -12,8 +13,8 @@ db1 = "temp_1.hdb"
 def test_import():
 
     # create new db
-    H.rmdir(db1)
-    H.mkdir(db1)
+    shutil.rmtree(db1, True)
+    H.create(db1)
 
     # import block size 4096
     lines=H.hashdb(["import", db1, "sample_dfxml4096.xml"])
@@ -23,7 +24,7 @@ def test_import():
     H.int_equals(changes["hashes_inserted"], 74)
 
     # cleanup
-    H.rmdir(db1)
+    shutil.rmtree(db1)
     print("Test Done.")
 
 if __name__=="__main__":

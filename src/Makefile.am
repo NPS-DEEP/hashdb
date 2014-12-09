@@ -77,6 +77,7 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
+	indexed_hash_store_type.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
 	tcp_client_manager.hpp

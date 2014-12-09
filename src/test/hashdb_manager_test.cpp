@@ -77,7 +77,7 @@ void rw_new_tests() {
   BOOST_TEST_EQ(manager.map_size(), 0);
 
   // check initial iterator
-  BOOST_TEST_EQ((manager.begin() == manager.end()), true);
+  BOOST_TEST_EQ((manager.begin_key() == manager.end_key()), true);
 
   // ************************************************************
   // insert, remove, and hashdb_changes variables
@@ -199,7 +199,7 @@ void rw_new_tests() {
   element = hashdb_element_t(k1, 4096, "rep1", "file1", 0);
   manager.insert(element);
   BOOST_TEST_EQ(manager.map_size(), 1);
-  hashdb_manager_t::multimap_iterator_t it(manager.begin());
+  hash_store_key_iterator_t it(manager.begin_key());
   element = manager.hashdb_element(it);
   BOOST_TEST_EQ(element.key, k1);
   BOOST_TEST_EQ(element.hash_block_size, 4096);
@@ -207,7 +207,7 @@ void rw_new_tests() {
   BOOST_TEST_EQ(element.filename, "file1");
   BOOST_TEST_EQ(element.file_offset, 0);
   ++it;
-  BOOST_TEST_EQ((it == manager.end()), true);
+  BOOST_TEST_EQ((it == manager.end_key()), true);
 
   // setup with two elements under one key and one element under another key
   element = hashdb_element_t(k1, 4096, "second_rep1", "file1", 0);
@@ -218,15 +218,15 @@ void rw_new_tests() {
   BOOST_TEST_EQ(manager.find_count(k1), 2);
   BOOST_TEST_EQ(manager.map_size(), 3);
 
-  hashdb_manager_t::multimap_iterator_t it2(manager.begin());
+  hash_store_key_iterator_t it2(manager.begin_key());
   ++it2;
   it2++;
   ++it2;
 
-  BOOST_TEST_EQ((it2 == manager.end()), true);
+  BOOST_TEST_EQ((it2 == manager.end_key()), true);
 
   // check iterator pair from find
-  std::pair<hashdb_manager_t::multimap_iterator_t, hashdb_manager_t::multimap_iterator_t> it_pair;
+  hash_store_key_iterator_range_t it_pair;
   it_pair = manager.find(k1);
   ++it_pair.first;
   ++it_pair.first;

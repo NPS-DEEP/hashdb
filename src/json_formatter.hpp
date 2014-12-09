@@ -41,8 +41,8 @@ class json_formatter_t {
   private:
   hashdb_manager_t* hashdb_manager;
   uint32_t max_sources;
-  std::set<uint64_t> source_ids;
-  std::set<hash_t> hashes;
+  std::set<uint64_t>* source_ids;
+  std::set<hash_t>* hashes;
 
   // do not allow copy or assignment
   json_formatter_t(const json_formatter_t&);
@@ -50,8 +50,7 @@ class json_formatter_t {
 
   // get source list count
   uint32_t source_list_count(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     size_t count = 0;
     // add each source to count
@@ -63,8 +62,7 @@ class json_formatter_t {
 
   // get source list CRC
   uint32_t source_list_id(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     // start a source list ID CRC hash
     boost::crc_32_type source_list_crc;
@@ -84,8 +82,7 @@ class json_formatter_t {
 
   // print the source list
   void print_source_list(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+                 hash_store_key_iterator_range_t it_pair) {
 
     bool at_start = true;
 
@@ -111,7 +108,7 @@ class json_formatter_t {
                 << ",\"file_offset\":" << file_offset;
 
       // print full source information the first time
-      if (source_ids.find(source_lookup_index) == source_ids.end()) {
+      if (source_ids->find(source_lookup_index) == source_ids->end()) {
 
         // print the repository name and filename
         std::pair<bool, std::pair<std::string, std::string> > source_pair =
@@ -137,7 +134,7 @@ class json_formatter_t {
         }
 
         // record that this source ID has been printed
-        source_ids.insert(source_lookup_index);
+        source_ids->insert(source_lookup_index);
       }
 
       // print source closure
@@ -155,20 +152,26 @@ class json_formatter_t {
           max_sources(p_max_sources),
           source_ids(),
           hashes() {
+    source_ids = new std::set<uint64_t>;
+    hashes = new std::set<hash_t>;
+  }
+
+  ~json_formatter_t() {
+    delete source_ids;
+    delete hashes;
   }
 
   // print expanded source information unless the hash has been printed already
   void print_expanded(
-                            std::pair<hashdb_manager_t::multimap_iterator_t,
-                            hashdb_manager_t::multimap_iterator_t> it_pair) {
+          const hash_store_key_iterator_range_t& it_pair) {
 
 //    // skip if hash already processed
-//    if (hashes.find(it_pair.first->first) != hashes.end()) {
+//    if (hashes->find(it_pair.first->first) != hashes->end()) {
 //      return;
 //    }
 
     // print the block hashdigest
-    std::cout << "{\"block_hashdigest\":\"" << it_pair.first->first.hexdigest() << "\"";
+    std::cout << "{\"block_hashdigest\":\"" << key(it_pair.first).hexdigest() << "\"";
 
     // print the count
     size_t count = source_list_count(it_pair);
@@ -180,11 +183,11 @@ class json_formatter_t {
     // print the list of sources unless it is too long
     // or the list for this hash has been printed before
     if (count <= max_sources) {
-      if (hashes.find(it_pair.first->first) == hashes.end()) {
+      if (hashes->find(key(it_pair.first)) == hashes->end()) {
         print_source_list(it_pair);
 
         // record that expanded information has been printed for this hash
-        hashes.insert(it_pair.first->first);
+        hashes->insert(key(it_pair.first));
       }
     }
 

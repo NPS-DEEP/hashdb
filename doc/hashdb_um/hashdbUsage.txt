@@ -1,5 +1,7 @@
-hashdb Version 1.1.1
-Usage: hashdb -h | -H | -v | -V | <command>
+hashdb Version 1.1.2
+Usage: hashdb [-h|-H|--help|--Help] [-v|-V|--version] [-q|--quiet]
+              [-f|--flags=<flags>] <command> [<args>]
+
   -h, --help         print this message
   -H, --Help         print this message plus usage notes and examples
   -v, -V, --version, --Version    print version number
@@ -18,7 +20,7 @@ New database:
       <hash block size>, in bytes, of hashes(default 4096)
       expected <hash block size>, in bytes, or 0 for no restriction
       (default 4096)
-    -m, --max_duplicates=<maximum>
+    -m, --max=<maximum>
       <maximum> number of hash duplicates allowed, or 0 for no limit
       (default 0)
     --bloom <state>
@@ -45,6 +47,21 @@ Import/Export:
     <hashdb>       the hash database to insert the imported hashes into
     <DFXML file>   the DFXML file to import hashes from
 
+  import_tab [-r <repository name>] [-s <sector size>] <hashdb> <tab file>
+    Import hashes from file <tab file> into hash database <hashdb>.
+
+    Options:
+    -r, --repository=<repository name>
+      The repository name to use for the set of hashes being imported.
+      (default is "repository_" followed by the <NIST file> path).
+    -s, --sector_size=<sector size>
+      The sector size associated with the hashes being imported.
+      (default 512)
+
+    Parameters:
+    <hashdb>       the hash database to insert the imported hashes into
+    <NIST file>   the NIST file to import hashes from
+
   export <hashdb> <DFXML file>
     Export hashes from the <hashdb> to a <DFXML file>.
 
@@ -54,7 +71,7 @@ Import/Export:
 
 Database manipulation:
   add <source hashdb> <destination hashdb>
-    Copies hashes from the <source hashdb> to the <destination hashdb>.
+    Copy hashes from the <source hashdb> to the <destination hashdb>.
 
     Parameters:
     <source hashdb>       the source hash database to copy hashes from
@@ -70,8 +87,8 @@ Database manipulation:
     <destination hashdb>  the destination hash database to copy hashes into
 
   add_repository <source hashdb> <destination hashdb> <repository name>
-    Copies hashes from the <source hashdb> to the <destination hashdb>
-    when the <repository name> matches
+    Copy hashes from the <source hashdb> to the <destination hashdb>
+    when the <repository name> matches.
 
     Parameters:
     <source hashdb>       the source hash database to copy hashes from
@@ -79,7 +96,7 @@ Database manipulation:
     <repository name>     the repository name to match when adding hashes
 
   intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copies hashes that are common to both <source hashdb 1> and
+    Copy hashes that are common to both <source hashdb 1> and
     <source hashdb 2> into <destination hashdb>.  Hashes and their sources
     must match.
 
@@ -90,7 +107,7 @@ Database manipulation:
                           intersection of exact matches into
 
   intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copies hashes that are common to both <source hashdb 1> and
+    Copy hashes that are common to both <source hashdb 1> and
     <source hashdb 2> into <destination hashdb>.  Hashes match when hash
     values match, even if their associated source repository name and
     filename do not match.
@@ -137,35 +154,46 @@ Database manipulation:
                           hashes appear only once
 
 Scan services:
-  scan <hashdb> <DFXML file>
-    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
-    and prints out matches.
+  scan <path_or_socket> <DFXML file>
+    Scan the <path_or_socket> for hashes that match hashes in the
+    <DFXML file> and print out matches.
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the
                       lookup source
     <DFXML file>      the DFXML file containing hashes to scan for
 
-  scan_hash <hashdb> <hash value>
-    Scans the <hashdb> for the specified <hash value> and prints out matches.
+  scan_hash <path_or_socket> <hash value>
+    Scan the <path_or_socket> for the specified <hash value> and print
+    out matches.
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the
                       lookup source
     <hash value>      the hash value to scan for
 
-  scan_expanded <hashdb> <DFXML file>
-    Scans the <hashdb> for hashes that match hashes in the <DFXML file>
-    and prints out matches showing all sources.
+  scan_expanded [-m <number>] <hashdb> <DFXML file>
+    Scan the <hashdb> for hashes that match hashes in the <DFXML file>
+    and print out matches showing all sources.  Source information is
+    suppressed if the number of sources exceeds the requested maximum.
+
+    Options:
+    -m <number>       <maximum> number of sources a hash can have before
+                      suppressing printing them (default 200).
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the
                       lookup source
     <DFXML file>      the DFXML file containing hashes to scan for
 
-  scan_expanded_hash <hashdb> <hash value>
-    Scans the <hashdb> for the specified <hash value> and prints out matches
-    showing all sources.
+  scan_expanded_hash [-m <number>] <hashdb> <hash value>
+    Scan the <hashdb> for the specified <hash value> and print out matches
+    showing all sources.  Source information is suppressed if the number
+    of sources exceeds the requested maximum.
+
+    Options:
+    -m <number>       <maximum> number of sources a hash can have before
+                      suppressing printing them (default 200).
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the
@@ -173,8 +201,8 @@ Scan services:
     <hash value>      the hash value to scan for
 
   server <hashdb> <port number>
-    Starts a query server service for <hashdb> at <port number> for
-    servicing hashdb queries.
+    Start a query server service for <hashdb> at <port number> for servicing
+    hashdb queries.
 
     Parameters:
     <hashdb>       the hash database that the server service will use
@@ -183,46 +211,49 @@ Scan services:
 
 Statistics:
   size <hashdb>
-    Prints out size information for the given <hashdb> database.
+    Print out size information for the given <hashdb> database.
 
     Parameters:
     <hashdb>       the hash database to print size information for
 
   sources <hashdb>
-    Prints out the repository name and filename of where each hash in
-    the <hashdb> came from.
+    Print source information indicating where the hashes in the <hashdb>
+    came from.
 
     Parameters:
     <hashdb>       the hash database to print all the repository name,
                    filename source information for
 
   histogram <hashdb>
-    Prints out the histogram of hashes for the given <hashdb> database.
+    Print the histogram of hashes for the given <hashdb> database.
 
     Parameters:
     <hashdb>       the hash database to print the histogram of hashes for
 
   duplicates <hashdb> <number>
-    Prints out the hashes in the given <hashdb> database that are sourced
-    the given <number> of times.
+    Print the hashes in the given <hashdb> database that are sourced the
+    given <number> of times.
 
     Parameters:
     <hashdb>       the hash database to print duplicate hashes about
     <number>       the requested number of duplicate hashes
 
-  hash_table <hashdb> <repository name> <filename>
-    Prints out the hashes and offsets from the given <hashdb> database
-    for the <repository name> and <filename> source requested.
+  hash_table <hashdb> <source_id>
+    Print hash information from the given <hashdb> database for hashes
+    associated with the <source_id> source index.
 
     Parameters:
-    <hashdb>              the hash database to print duplicate hashes for
-    <repository name>     the repository name to match
-    <filename >           the filename to match
+    <hashdb>              the hash database to print hashes from
+    <source_id>           the source index of the hashes to print
 
-  expand_identified_blocks <hashdb> <identified blocks file>
-    Prints out source information for each hash in <identified blocks file>
-    by referencing source information in <hashdb>.  Source information
-    includes repository name, filename, and file offset.
+  expand_identified_blocks [-m <number> <hashdb> <identified blocks file>
+    Print source information for each hash in <identified blocks file> by
+    referencing source information in <hashdb>.  Source information is
+    suppressed if the number of sources exceeds the requested maximum.
+
+    Options:
+    -m <number>       <maximum> number of sources a hash can have before
+                      suppressing printing them (default 200).
 
     Parameters:
     <hashdb>                  the hash database to use as the lookup source
@@ -231,12 +262,12 @@ Statistics:
                               by bulk_extractor
 
   explain_identified_blocks [-m <number>] <hashdb> <identified_blocks.txt>
-    Prints source information from the <hashdb> database for hashes in the
+    Print source information from the <hashdb> database for hashes in the
     <identified_blocks.txt> file for sources containing hashes that are not
     repeated more than a maximum number of times.
 
     Options:
-    -m <number>               the maximum number of repeats allowed before
+    -m <number>               <maximum> number of repeats allowed before
                               a hash is dropped (default 20).
 
     Parameters:
@@ -247,7 +278,7 @@ Statistics:
 
 Tuning:
   rebuild_bloom [options] <hashdb>
-    Rebuilds the bloom filters in the <hashdb> hash database.
+    Rebuild the bloom filter in the <hashdb> hash database.
 
     Options:
     --bloom <state>
@@ -263,7 +294,7 @@ Tuning:
                    rebuilt
 
   upgrade <hashdb>
-    Make hashdb v1.0.0 compatible with hashdb v1.1.0.
+    Make <hashdb> created by v1.0.0 compatible with hashdb v1.1.0+.
 
     Parameters:
     <hashdb>       the hash database to upgrade
@@ -271,7 +302,7 @@ Tuning:
 Performance analysis:
   add_random [-r <repository name>] <hashdb> <count>
     Add <count> randomly generated hashes into hash database <hashdb>.
-    Writes performance data in the database's log.xml file.
+    Write performance data in the database's log.xml file.
 
     Options:
     -r, --repository=<repository name>
@@ -282,13 +313,12 @@ Performance analysis:
     <hashdb>       the hash database to add randomly generated hashes into
     <count>        the number of randomly generated hashes to add
 
-  scan_random <hashdb> <hashdb copy>
-    Scan for random hashes in the <hashdb> and <hashdb copy> databases.
-    Writes performance data in the database's log.xml file.
+  scan_random <hashdb>
+    Scan for random hashes in the <hashdb> database.  Writes performance
+    in the database's log.xml file.
 
     Parameters:
     <hashdb>       the hash database to scan
-    <hashdb copy>  a copy of the hash database to scan
 
 bulk_extractor hashdb scanner:
   bulk_extractor -e hashdb -S hashdb_mode=import -o outdir1 my_image1
@@ -387,8 +417,8 @@ sourced 20 times:
     hashdb duplicates my_hashdb.hdb 20
 
 This example prints out the table of hashes along with source information
-for hashes in my_hashdb.hdb:
-    hashdb hash_table my_hashdb.hdb
+for hashes associated with source index 1 in my_hashdb.hdb:
+    hashdb hash_table my_hashdb.hdb 1
 
 This example uses bulk_extractor to scan for hash values in media image
 my_image that match hashes in hash database my_hashdb.hdb, creating output in

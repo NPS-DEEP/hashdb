@@ -22,7 +22,6 @@
  * Test the libhashdb interfaces.
  */
 
-#include "directory_helper.hpp"
 #include <config.h>
 #include <iostream>
 #include <iomanip>
@@ -35,11 +34,6 @@
 #include "directory_helper.hpp"
 #include "../hash_t_selector.h"
 #include "source_metadata.hpp"
-
-// map types:
-// MAP_BTREE, MAP_FLAT_SORTED_VECTOR, MAP_RED_BLACK_TREE, MAP_UNORDERED_HASH
-// file modes:
-// READ_ONLY, RW_NEW, RW_MODIFY
 
 static const char temp_dir[] = "temp_dir_libhashdb_test.hdb";
 

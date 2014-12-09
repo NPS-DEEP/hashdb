@@ -538,8 +538,8 @@ void run_command() {
     commands_t::duplicates(hashdb_arg1, hashdb_arg2);
   } else if (command == "hash_table") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
-    require_parameter_count(3);
-    commands_t::hash_table(hashdb_arg1, hashdb_arg2, hashdb_arg3);
+    require_parameter_count(2);
+    commands_t::hash_table(hashdb_arg1, hashdb_arg2);
   } else if (command == "expand_identified_blocks") {
     uint32_t expand_max = (has_max) ? optional_max :
                                         globals_t::default_scan_expanded_max;
