@@ -19,8 +19,7 @@
 
 /**
  * \file
- * Provides a lmdb_hash_store iterator which dereferences into
- * key and value fields.
+ * Provides a lmdb_hash_store iterator which dereferences into pair type.
  */
 
 #ifndef LMDB_HASH_STORE_ITERATOR_HPP
@@ -29,43 +28,137 @@
 #include "hashdb_element.hpp"
 #include "hash_t_selector.h"
 #include "liblmdb/lmdb.h"
-
-//// macros for use with LMDB
-//#define E(expr) CHECK((rc = (expr)) == MDB_SUCCESS, #expr)
-//#define RES(err, expr) ((rc = expr) == (err) || (CHECK(!rc, #expr), 0))
-//#define CHECK(test, msg) ((test) ? (void)0 : ((void)fprintf(stderr, \
-//	"%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
-
-// key and data types for hash_store
-// zz may pass as template instead using T_K, T_D
-typedef hash_t key_t;
-typedef uint64_t data_t;
-typedef std::pair<key_t, data_t> pair_t;
+#include "liblmdb/lmdb.h"
+#include "lmdb_resources.h"
 
 class lmdb_hash_store_iterator_t {
   private:
-  MDB_txn* txn;        // transaction handle pointer
-  MDB_dbi dbi;         // database handle integer
-  MDB_val key;         // generic structure for passing data
-  MDB_val data;        // generic structure for passing data
-  MDB_cursor* cursor;  // cursor handle
-  pair_t cached_pair;
+  pthread_resources_t* resources;
+  hash_t hash;
+  uint64_t value;
+  MDB_cursor* cursor;  // cursor just for this iterator
   bool at_end;
 
-  public:
-  lmdb_hash_store_iterator_t(
-                  MDB_txn* txn,
-                  MDB_dbi dbi,
-                  MDB_val key,
-                  MDB_val data,
-                  MDB_cursor_op get_op // cursor GET operation
-                  ) : txn(0), dbi(), key(), data(), cursor(0), cached_pair(), at_end(false) {
+  pair_t* dereference() {
+    MDB_val key;
+    MDB_val data;
+    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_CURRENT);
+    if (rc == MDB_NOTFOUND) {
+      // program error
+      assert(0);
+    } else if (rc != 0) {
+      // possible invalid parameter
+      assert(0);
+    }
 
-    // create a cursor object
-    E(mdb_cursor_open(txn, dbi, &cursor));
+    return mdb_to_pair(key, data);
+  }
+
+  void increment() {
+    if (at_end) {
+      assert(0);
+    }
+    int rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT);
+    if (rc == MDB_NOTFOUND) {
+      at_end = true;
+    } else if (rc != 0) {
+      // program error
+      assert(0);
+    }
+  }
+
+  public:
+  // set to key, data pair
+  lmdb_hash_store_iterator_t(
+                  pthread_resources_t* p_resources,
+                  hash_t p_hash,
+                  uint64_t p_value):
+                        resources(p_resources),
+                        hash(p_hash),
+                        value(p_value),
+                        cursor(),
+                        at_end(false) {
+
+    // create a cursor object just for this iterator
+    int rc = mdb_cursor_open(resources->txn, resources->dbi, &cursor);
+    if (rc != 0) {
+      assert(0);
+    }
+
+    // set the cursor to this key, data position
+    MDB_val key;
+    MDB_val data;
+    pair_to_mdb(hash, value, key, data);
+    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_BOTH);
+    if (rc == MDB_NOTFOUND) {
+      at_end = true;
+    } else if (rc != 0) {
+      // program error
+      assert(0);
+    }
+  }
+
+  // set to lower bound or upper bound for key
+  lmdb_hash_store_iterator_t(
+                  pthread_resources_t* p_resources,
+                  hash_t p_hash,
+                  bool is_lower_bound) :
+                        resources(p_resources),
+                        hash(p_hash),
+                        value(0),
+                        cursor(),
+                        at_end(false) {
+
+    // set the cursor to this key
+    MDB_val key;
+    MDB_val data;
+    uint64_t value = 0;
+    pair_to_mdb(hash, value, key, data);
+
+    // create a cursor object just for this iterator
+    int rc = mdb_cursor_open(resources->txn, resources->dbi, &cursor);
+    if (rc != 0) {
+      assert(0);
+    }
 
     // set the cursor
-    int rc = mdb_cursor_get(cursor, &key, &data, get_op);
+    int rc;
+    if (is_lower_bound) {
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_MULTIPLE);
+    } else {
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT_NODUP);
+    }
+    if (rc == MDB_NOTFOUND) {
+      at_end = true;
+    } else if (rc != 0) {
+      // program error
+      assert(0);
+    }
+  }
+
+  // set to begin or end
+  lmdb_hash_store_iterator_t(
+                  pthread_resources_t* p_resources,
+                  bool is_begin) :
+                        resources(p_resources),
+                        hash(0),
+                        value(0),
+                        cursor(),
+                        at_end(true) {
+
+    // create a cursor object just for this iterator
+    int rc = mdb_cursor_open(resources->txn, resources->dbi, &cursor);
+    if (rc != 0) {
+      assert(0);
+    }
+
+    // set the cursor
+    int rc;
+    if (is_begin) {
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_FIRST);
+    } else {
+      rc = MDB_NOTFOUND;
+    }
     if (rc == MDB_NOTFOUND) {
       at_end = true;
     } else if (rc != 0) {
@@ -75,79 +168,45 @@ class lmdb_hash_store_iterator_t {
   }
 
   // this useless default constructor is required by std::pair
-  lmdb_hash_store_iterator_t() : txn(0), dbi(), key(), data(), cursor(0), cached_pair(), at_end(false) {
+  lmdb_hash_store_iterator_t() : resources(), hash(), value(0), cursor(0), at_end(false) {
   }
 
   // override the copy constructor and the assignment operator to quiet the
   // compiler about using a pointer data member
   lmdb_hash_store_iterator_t(const lmdb_hash_store_iterator_t& other) :
-               txn(other.txn),
-               dbi(other.dbi),
-               key(),  // do not forward key
-               data(), // do not forward data
+               resources(other.resources),
+               hash(other.hash),
+               value(other.value),
                cursor(other.cursor),
-               cached_pair(), // do not forward cached pair
                at_end(other.at_end) {
   }
   lmdb_hash_store_iterator_t& operator=(const lmdb_hash_store_iterator_t& other) {
-    txn = other.txn;
-    dbi = other.dbi;
-    // do not forward key
-    // do not forward data
+    resources = other.resources;
+    hash = other.hash;
+    value = other.value;
     cursor = other.cursor;
-    // do not forward cached pair
     at_end = other.at_end;
     return *this;
   }
 
   // the Forward Iterator concept consits of ++, *, ->, ==, !=
   lmdb_hash_store_iterator_t& operator++() {
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT);
-    if (rc == MDB_NOTFOUND) {
-      at_end = true;
-    } else if (rc != 0) {
-      // program error
-      assert(0);
-    }
+    increment();
     return *this;
   }
 
   lmdb_hash_store_iterator_t operator++(int) {  // c++11 delete would be better.
     lmdb_hash_store_iterator_t temp(*this);
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT);
-    if (rc == MDB_NOTFOUND) {
-      at_end = true;
-    } else if (rc != 0) {
-      // program error
-      assert(0);
-    }
+    increment();
     return temp;
   }
 
   std::pair<key_t, data_t>& operator*() {
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_CURRENT);
-    if (rc == MDB_NOTFOUND) {
-      // program error
-      assert(0);
-    } else if (rc != 0) {
-      // possible invalid parameter
-      assert(0);
-    }
-    pair = pair_to_hash_store(key, data);
-    return pair;
+    return dereference();
   }
 
-  hashdb_element_t* operator->() {
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_CURRENT);
-    if (rc == MDB_NOTFOUND) {
-      // program error
-      assert(0);
-    } else if (rc != 0) {
-      // possible invalid parameter
-      assert(0);
-    }
-    pair = pair_to_hash_store(key, data);
-    return &pair;
+  pair_t* operator->() {
+    return dereference();
   }
 
   bool operator==(const hashdb_iterator_t& other) const {
