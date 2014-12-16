@@ -1510,23 +1510,6 @@ class commands_t {
 
     // show hashes for the requested source
     bool any_found = false;
-#ifdef USE_INDEXED_HASH_STORE
-    // get the matching source ID range
-    hash_store_value_iterator_range_t it_range =
-                                 hashdb_manager.find_by_source_id(source_id);
-
-    // note if anything is found
-    if (it_range.first != it_range.second) {
-      any_found = true;
-    }
-
-    while (it_range.first != it_range.second) {
-      // show the hash and its offset
-      std::cout << "[\"" << key(it_range.first).hexdigest() << "\",{\"file_offset\":"
-                << hashdb_manager.file_offset(it_range.first) << "}]\n";
-      ++it_range.first;
-    }
-#else
     // start progress tracker and iterate through keys in O(n) search
     progress_tracker_t progress_tracker(hashdb_manager.map_size());
     hash_store_key_iterator_t it = hashdb_manager.begin_key();
@@ -1542,7 +1525,6 @@ class commands_t {
       progress_tracker.track();
     }
     progress_tracker.done();
-#endif
 
     // there may be nothing to report
     if (!any_found) {

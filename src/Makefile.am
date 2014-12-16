@@ -31,6 +31,7 @@ libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/btree/include \
 	-isystem${top_srcdir}/src/endian/include \
+	-isystem${top_srcdir}/src/lmdb/libraries/liblmdb \
 	$(XML_CFLAGS)
 
 hashdb_LDADD = libhashdb.la
@@ -77,7 +78,8 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	indexed_hash_store_type.hpp \
+	lmdb_resources.h \
+	lmdb_hash_store_maanger.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
 	tcp_client_manager.hpp
@@ -115,6 +117,12 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
 
+MDC_INCS = \
+	lmdb/libraries/liblmdb/lmdb.h \
+	lmdb/libraries/liblmdb/mdb.c \
+	lmdb/libraries/liblmdb/midl.h \
+	lmdb/libraries/liblmdb/midl.c
+
 BLOOM_INCS = \
 	misc/bloom.c \
 	misc/bloom.h \
@@ -133,6 +141,7 @@ hashdb_SOURCES = \
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
+	$(MDC_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS)
 
 include_HEADERS = hashdb.hpp

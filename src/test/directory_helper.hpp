@@ -63,10 +63,10 @@ void make_dir_if_not_there(const std::string& temp_dir) {
 void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/bloom_filter_1").c_str());
   remove((hashdb_dir + "/bloom_filter_2").c_str());
-#ifdef USE_INDEXED_HASH_STORE
-  remove((hashdb_dir + "/hash_store.dat").c_str());
-  remove((hashdb_dir + "/hash_store.idx1").c_str());
-  remove((hashdb_dir + "/hash_store.idx2").c_str());
+#ifdef USE_LMDB_HASH_STORE
+  remove((hashdb_dir + "/hash_store/data.mdb").c_str());
+  remove((hashdb_dir + "/hash_store/lock.mdb").c_str());
+  rmdir((hashdb_dir + "/hash_store").c_str());
 #else
   remove((hashdb_dir + "/hash_store").c_str());
 #endif

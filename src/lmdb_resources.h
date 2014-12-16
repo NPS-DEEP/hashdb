@@ -24,7 +24,7 @@
 
 #ifndef LMDB_RESOURCES_H
 #define LMDB_RESOURCES_H
-#include "lmdb/lmdb.h"
+#include "lmdb.h"
 #include "hash_t_selector.h"
 
 // pair type
@@ -34,15 +34,22 @@ typedef std::pair<hash_t, uint64_t> pair_t;
 struct pthread_resources_t {
   MDB_txn* txn;
   MDB_dbi dbi;
-  MDB_cursor* cursor;
-}
 
-inline void pair_to_mdb(const hash_t& hash, uint64_t value,
+  // thread-local scratchpad for cursor, key, and data
+  MDB_cursor* cursor;
+  MDB_val key;
+  MDB_val data;
+
+  pthread_resources_t() :txn(0), dbi(0), cursor(0), key(), data() {
+  }
+};
+
+inline void pair_to_mdb(const hash_t& hash, const uint64_t& value,
                         MDB_val& key, MDB_val& data) {
   key.mv_size = sizeof(hash_t);
-  key.mv_data = &hash;
-  value.mv_size = sizeof(uint64_t);
-  value.mv_data = &data;
+  key.mv_data = const_cast<void*>(static_cast<const void*>(&hash)); // zz note const_cast
+  data.mv_size = sizeof(uint64_t);
+  data.mv_data = const_cast<void*>(static_cast<const void*>(&value)); //zz
 }
 
 /*
@@ -55,12 +62,11 @@ inline void mdb_to_pair(const MDB_val& key, const MDB_val& data,
 }
 */
 
-inline pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data,
-                        hash_t& hash, uint64_t& value) {
+inline pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data) {
   if (key.mv_size != sizeof(hash_t)) assert(0);
   if (data.mv_size != sizeof(uint64_t)) assert(0);
-  return pair_t(static_cast<hash_t>(*key.mv_data),
-                static_cast<uint64_t>(*data.mv_data));
+  return pair_t(*static_cast<hash_t*>(key.mv_data),
+                *static_cast<uint64_t*>(data.mv_data));
 }
 
 #endif

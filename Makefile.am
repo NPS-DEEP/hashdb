@@ -99,6 +99,7 @@ pull:
 	(cd src/dfxml;git checkout master; git pull)
 	(cd src/btree;git checkout master; git pull)
 	(cd src/endian;git checkout master; git pull; git checkout 05ac935)
+	(cd src/lmdb;git checkout master; git pull)
 
 clean-local:
 	rm -rf $(distdir).tar.gz
