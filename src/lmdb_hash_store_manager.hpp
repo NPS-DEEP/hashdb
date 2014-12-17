@@ -21,6 +21,9 @@
  * \file
  * Makes minimal map-like interfaces out of LMDB.
  * Is threadsafe by managing transaction-specifc threads.
+ *
+ * Each thread runs with an active open transaction and cursor
+ * which are closed by the main thread on delete.
  */
 
 #ifndef LMDB_HASH_STORE_MANAGER_HPP
@@ -90,7 +93,11 @@ class lmdb_hash_store_manager_t {
       }
 
       // create the database handle integer
-      rc = mdb_dbi_open(pthread_resources->txn, NULL, 0, &pthread_resources->dbi);
+      unsigned int dbi_flags = MDB_DUPSORT | MDB_DUPFIXED;
+      if (file_mode != READ_ONLY) {
+        dbi_flags |= MDB_CREATE;
+      }
+      rc = mdb_dbi_open(pthread_resources->txn, NULL, dbi_flags, &pthread_resources->dbi);
       if (rc == MDB_NOTFOUND) {
         assert(0);
       } else if (rc == MDB_DBS_FULL) {
@@ -112,6 +119,7 @@ class lmdb_hash_store_manager_t {
 
       // save pointer for destructor
       MUTEX_LOCK(&M);
+std::cout << "lhsm.get_pthread_resources created " << pthread_resources << "\n";
       pthread_resource_set.insert(pthread_resources);
       MUTEX_UNLOCK(&M);
 
@@ -126,7 +134,8 @@ class lmdb_hash_store_manager_t {
 
 
   // helper
-  void commit_and_close_resources(pthread_resources_t* resources) {
+  void commit_and_close_resources(pthread_resources_t* resources) const {
+std::cout << "commit_and_close_resources released " << resources << "\n";
     // free cursor
     mdb_cursor_close(resources->cursor);
 
@@ -140,12 +149,30 @@ class lmdb_hash_store_manager_t {
       assert(0);
     }
 
-    // remove txn from set
+    // remove resources from pthread resources key
+    pthread_setspecific(pthread_resources_key, NULL);
+
+    // remove resources from resource set
     MUTEX_LOCK(&M);
     pthread_resource_set.erase(resources);
     MUTEX_UNLOCK(&M);
   }
 
+  void commit_and_close_all_resources() const {
+    // on this main thread, close resources that were opened for each thread
+    while (true) {
+      std::set<pthread_resources_t*>::iterator it =
+                pthread_resource_set.begin();
+      if (it == pthread_resource_set.end()) {
+        break;
+      }
+
+      // close selected resource
+      pthread_resources_t* resources = *it;
+      commit_and_close_resources(resources);
+    }
+  }
+  
   // helper
   // NOTE: A transaction must not be open for this thread when calling this.
   void increase_map_size() {
@@ -180,7 +207,10 @@ class lmdb_hash_store_manager_t {
     // put
     int rc = mdb_put(resources->txn, resources->dbi,
                      &resources->key, &resources->data, MDB_NODUPDATA);
-    if (rc == MDB_KEYEXIST) {
+std::cout << "lhsm.emplace.rc: " << rc << "\n";
+    if (rc == 0) {
+      return;
+    } else if (rc == MDB_KEYEXIST) {
       std::cerr << "lmdb commit failure keyexist " << rc << "\n";
       assert(0);
     } else if (rc == MDB_MAP_FULL) {
@@ -214,11 +244,6 @@ class lmdb_hash_store_manager_t {
 
     const std::string hash_store_dir = hashdb_dir + "/hash_store";
 
-    if (env != NULL) {
-      // program error, already opened
-      assert(0);
-    }
-
     // *env
     int rc = mdb_env_create(&env);
     if (rc != 0) {
@@ -233,12 +258,12 @@ class lmdb_hash_store_manager_t {
       assert(0);
     }
 
-    // open the DB
-    unsigned int flags;
+    // set environment flags and establish hash_store directory
+    unsigned int env_flags;
     switch(file_mode) {
       case READ_ONLY:
 std::cout << "opening hash store RO " << hash_store_dir << "\n";
-        flags = MDB_FIXEDMAP | MDB_RDONLY | MDB_DUPSORT;
+        env_flags = MDB_FIXEDMAP | MDB_RDONLY;
         break;
       case RW_NEW:
 std::cout << "opening hash store RW_NEW " << hash_store_dir << "\n";
@@ -262,15 +287,16 @@ std::cout << "opening hash store RW_NEW " << hash_store_dir << "\n";
           exit(1);
         }
 #endif
-        flags = MDB_FIXEDMAP | MDB_DUPSORT;
+        env_flags = MDB_FIXEDMAP;
         break;
       case RW_MODIFY:
 std::cout << "opening hash store RW_MODIFY " << hash_store_dir << "\n";
-        flags = MDB_FIXEDMAP | MDB_DUPSORT;
+        env_flags = MDB_FIXEDMAP;
     }
 
 std::cout << "opening " << hash_store_dir << "\n";
-    rc = mdb_env_open(env, hash_store_dir.c_str(), flags, 0664);
+    // open the MDB environment
+    rc = mdb_env_open(env, hash_store_dir.c_str(), env_flags, 0664);
     if (rc != 0) {
       // fail
       std::cerr << "Error opening database: " << rc << ".  Aborting.\n";
@@ -279,29 +305,7 @@ std::cout << "opening " << hash_store_dir << "\n";
   }
 
   ~lmdb_hash_store_manager_t() {
-    // on this main thread, close resources that were opened for each thread
-    while (true) {
-      std::set<pthread_resources_t*>::iterator it =
-                pthread_resource_set.begin();
-      if (it == pthread_resource_set.end()) {
-        break;
-      }
-
-      pthread_resources_t* resources = *it;
-
-      // free cursor
-      mdb_cursor_close(resources->cursor);
-
-      // do not close dbi handle
-
-      // commit and close active transaction
-      int rc = mdb_txn_commit(resources->txn);
-      if (rc != 0) {
-        // no disk, no memory, etc
-        std::cerr << "lmdb closure failure txn_commit " << rc << "\n";
-        assert(0);
-      }
-    }
+    commit_and_close_all_resources();
   }
   
   // emplace
@@ -342,15 +346,19 @@ std::cout << "opening " << hash_store_dir << "\n";
     // set the cursor to this key
     int rc = mdb_cursor_get(resources->cursor,
                             &resources->key, NULL,
-                            MDB_GET_MULTIPLE);
-    if (rc == MDB_NOTFOUND) {
+                            MDB_SET_RANGE);
+    if (rc == 0) {
+      // great, db has key
+    } else if (rc == MDB_NOTFOUND) {
+      // fine, db does not have key
       return 0;
     } else if (rc != 0) {
       // program error
+      std::cerr << "rc " << rc << "\n";
       assert(0);
     }
 
-    // get the count
+    // get the key count
     size_t key_count;
     rc = mdb_cursor_count(resources->cursor, &key_count);
     if (rc != 0) {
@@ -364,7 +372,7 @@ std::cout << "opening " << hash_store_dir << "\n";
     if (rc == 0) {
       return key_count;
     } else if (rc == MDB_NOTFOUND) {
-      assert(0);
+      return 0;
     } else {
       assert(0);
     }
@@ -404,7 +412,7 @@ std::cout << "opening " << hash_store_dir << "\n";
     // set the cursor to this key
     int rc = mdb_cursor_get(resources->cursor,
                             &resources->key, &resources->data,
-                            MDB_GET_MULTIPLE);
+                            MDB_SET_RANGE);
     if (rc == MDB_NOTFOUND) {
       return 0;
     } else if (rc != 0) {
@@ -442,12 +450,18 @@ std::cout << "opening " << hash_store_dir << "\n";
 
   size_t size() const {
 
+    // commit and close all active resources
+    commit_and_close_all_resources();
+
+    // now obtain statistics
     MDB_stat stat;
     int rc = mdb_env_stat(env, &stat);
     if (rc != 0) {
       // program error
       assert(0);
     }
+std::cout << "lhsm.ms_entries " << stat.ms_entries << "\n";
+std::cout << "lhsm.ms_psize " << stat.ms_psize << "\n";
     return stat.ms_entries;
   }
 };

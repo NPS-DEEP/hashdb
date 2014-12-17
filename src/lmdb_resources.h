@@ -63,8 +63,15 @@ inline void mdb_to_pair(const MDB_val& key, const MDB_val& data,
 */
 
 inline pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data) {
-  if (key.mv_size != sizeof(hash_t)) assert(0);
-  if (data.mv_size != sizeof(uint64_t)) assert(0);
+  if (key.mv_size != sizeof(hash_t)) {
+    std::cout << "key " << key.mv_size << " not " << sizeof(hash_t) << "\n";
+    assert(0);
+  }
+  if (data.mv_size != sizeof(uint64_t)) {
+    std::cout << "data " << data.mv_size << " not " << sizeof(uint64_t) << "\n";
+    assert(0);
+  }
+
   return pair_t(*static_cast<hash_t*>(key.mv_data),
                 *static_cast<uint64_t*>(data.mv_data));
 }
