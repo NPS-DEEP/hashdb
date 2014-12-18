@@ -78,8 +78,10 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	lmdb_resources.h \
+	lmdb_hash_store_iterator.hpp
 	lmdb_hash_store_maanger.hpp \
+	lmdb_pthread_resources.hpp \
+	lmdb_resources.h \
 	logger.hpp \
 	mutex_lock.hpp \
 	tcp_client_manager.hpp

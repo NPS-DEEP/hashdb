@@ -77,7 +77,9 @@ void rw_new_tests() {
   BOOST_TEST_EQ(manager.map_size(), 0);
 
   // check initial iterator
+std::cerr << "hashdb_manager_test.rw_new_tests_it.a\n";
   BOOST_TEST_EQ((manager.begin_key() == manager.end_key()), true);
+std::cerr << "hashdb_manager_test.rw_new_tests_it.b\n";
 
   // ************************************************************
   // insert, remove, and hashdb_changes variables
@@ -161,6 +163,7 @@ void rw_new_tests() {
   // remove_hash successfully
   manager.remove_hash(k1);
   BOOST_TEST_EQ(manager.changes.hashes_removed, 6);
+  BOOST_TEST_EQ(manager.map_size(), 0); //zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
   // add two of same hash then remove_hash successfully
   element = hashdb_element_t(k2, 4096, "rep1", "file1", 0);
@@ -199,7 +202,10 @@ void rw_new_tests() {
   element = hashdb_element_t(k1, 4096, "rep1", "file1", 0);
   manager.insert(element);
   BOOST_TEST_EQ(manager.map_size(), 1);
+std::cerr << "hashdb_manager_test.rw_new_tests_it.c\n";
   hash_store_key_iterator_t it(manager.begin_key());
+std::cerr << "hashdb_manager_test.rw_new_tests_it.d " << &it << "\n";
+  element = manager.hashdb_element(it);
   element = manager.hashdb_element(it);
   BOOST_TEST_EQ(element.key, k1);
   BOOST_TEST_EQ(element.hash_block_size, 4096);
@@ -218,7 +224,9 @@ void rw_new_tests() {
   BOOST_TEST_EQ(manager.find_count(k1), 2);
   BOOST_TEST_EQ(manager.map_size(), 3);
 
+std::cerr << "hashdb_manager_test.rw_new_tests_it.e\n";
   hash_store_key_iterator_t it2(manager.begin_key());
+std::cerr << "hashdb_manager_test.rw_new_tests_it.f " << &it << "\n";
   ++it2;
   it2++;
   ++it2;
@@ -226,7 +234,9 @@ void rw_new_tests() {
   BOOST_TEST_EQ((it2 == manager.end_key()), true);
 
   // check iterator pair from find
+std::cerr << "hashdb_manager_test.rw_new_tests_it.g\n";
   hash_store_key_iterator_range_t it_pair;
+std::cerr << "hashdb_manager_test.rw_new_tests_it.h " << &it_pair.first << ", " << &it_pair.second << "\n";
   it_pair = manager.find(k1);
   ++it_pair.first;
   ++it_pair.first;
@@ -236,18 +246,22 @@ void rw_new_tests() {
   ++it_pair.first;
   BOOST_TEST_EQ((it_pair.first == it_pair.second), true);
 
+std::cerr << "hashdb_manager_test.insert.u\n";
   // ************************************************************
   // install lots of data
   // ************************************************************
   // populate with 1,000,000 entries
   hash_t key;
   BOOST_TEST_EQ(manager.map_size(), 3);
-  for (uint64_t n=0; n< 1000000; ++n) {
+//  int count = 1000000;
+  int count = 1000;
+  for (uint64_t n=0; n< count; ++n) {
     to_key(n+1000000, key);
     element = hashdb_element_t(key, 4096, "rep1", "file1", 0);
     manager.insert(element);
   }
   BOOST_TEST_EQ(manager.map_size(), 1000003);
+std::cerr << "hashdb_manager_test.insert.v\n";
 }
 
 void ro_tests() {
@@ -262,9 +276,13 @@ int cpp_main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
 
+std::cerr << "hashdb_manager_test.main.a\n";
   write_settings();
+std::cerr << "hashdb_manager_test.main.b\n";
   rw_new_tests();
+std::cerr << "hashdb_manager_test.main.c\n";
   ro_tests();
+std::cerr << "hashdb_manager_test.main.d\n";
 
   // done
   int status = boost::report_errors();

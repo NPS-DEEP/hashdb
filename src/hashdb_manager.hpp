@@ -178,13 +178,30 @@ class hashdb_manager_t {
 
     // if the key may exist then check against duplicates and max count
     if (bloom_filter_manager.is_positive(element.key)) {
+#ifdef USE_LMDB_HASH_STORE
+
+      // disregard if key, value exists
+      if (hash_store_key.find(element.key, encoding)) {
+        // this exact element already exists
+        ++changes.hashes_not_inserted_duplicate_element;
+        return;
+      }
+
+      // disregard if above max duplicates
+      if (settings.maximum_hash_duplicates > 0) {
+        size_t count = hash_store_key.count(element.key);
+        if (count >= settings.maximum_hash_duplicates) {
+          // at maximum for this hash
+          ++changes.hashes_not_inserted_exceeds_max_duplicates;
+          return;
+        }
+      }
+
+#else
       size_t count = 0;
       hash_store_key_iterator_t it = hash_store_key.lower_bound(element.key);
-std::cout << "hashdb_manager.insert.a key(it): " << key(it).hexdigest() << " value(it): " << value(it) << ", encoding " << encoding << "\n";
       while (it != hash_store_key.end() && key(it) == element.key) {
-std::cout << "hashdb_manager.insert.b key(it): " << key(it).hexdigest() << " value(it): " << value(it) << ", encoding " << encoding << "\n";
         if (value(it) == encoding) {
-std::cout << "hashdb_manager.insert.c\n";
           // this exact element already exists
           ++changes.hashes_not_inserted_duplicate_element;
           return;
@@ -192,7 +209,6 @@ std::cout << "hashdb_manager.insert.c\n";
         ++count;
         ++it;
       }
-std::cout << "hashdb_manager.insert.d\n";
 
       // do not exceed max count allowed
       if (settings.maximum_hash_duplicates > 0 &&
@@ -201,6 +217,7 @@ std::cout << "hashdb_manager.insert.d\n";
         ++changes.hashes_not_inserted_exceeds_max_duplicates;
         return;
       }
+#endif
     }
 
     // add the element since all the checks passed
