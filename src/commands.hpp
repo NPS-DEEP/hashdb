@@ -1670,16 +1670,18 @@ class commands_t {
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
     hash_store_key_iterator_t it = hashdb_manager.begin_key();
-    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
-    while (it != hashdb_manager.end_key()) {
-      // add the hash to the bloom filter
-      bloom_filter_manager.add_hash_value(key(it));
-      ++it;
-      progress_tracker.track();
-    }
+    if (settings.bloom1_is_used) {
+      progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
+      while (it != hashdb_manager.end_key()) {
+        // add the hash to the bloom filter
+        bloom_filter_manager.add_hash_value(key(it));
+        ++it;
+        progress_tracker.track();
+      }
 
-    // close tracker
-    progress_tracker.done();
+      // close tracker
+      progress_tracker.done();
+    }
 
     // close logger
     logger.add_timestamp("end rebuild_bloom");
@@ -1837,8 +1839,10 @@ class commands_t {
 
       // make sure no hashes were found
       if (scan_output->size() > 0) {
-        std::cerr << "Unexpected event: match found, count "
-                  << scan_output->size() << ", are the databases different?\n";
+        uint32_t hash_index = scan_output->at(0).first;
+        std::cerr << "Unexpected event: " << scan_output->size()
+                  << " matches found in set, example hash: "
+                  << scan_input->at(hash_index).hexdigest() << "\n";
       }
     }
 
