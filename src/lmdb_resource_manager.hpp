@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Manage pthread resources safely by managing transaction-specifc threads.
+ * Manage LMDB resources separately by thread.
  */
 
-#ifndef LMDB_PTHREAD_RESOURCES
-#define LMDB_PTHREAD_RESOURCES
+#ifndef LMDB_RESOURCE_MANAGER_HPP
+#define LMDB_RESOURCE_MANAGER_HPP
 #include "lmdb.h"
 #include "lmdb_resources.h"
 #ifdef HAVE_PTHREAD
@@ -31,25 +31,54 @@
 #endif
 #include "mutex_lock.hpp" // for managing pthread resources
 
-static pthread_key_t pthread_resources_key;
-static pthread_once_t pthread_resources_key_once = PTHREAD_ONCE_INIT;
-static std::set<pthread_resources_t*> pthread_resource_set;
-#ifdef HAVE_PTHREAD
-static pthread_mutex_t M;                  // mutext
-#else
-static int M;                              // placeholder
-#endif
-static void make_pthread_resources_key() {
-  (void) pthread_key_create(&pthread_resources_key, NULL);
-}
+class lmdb_resource_manager_t {
+  private:
 
-class lmdb_pthread_resources {
+  mutable pthread_key_t pthread_resources_key;
+  mutable std::set<pthread_resources_t*> pthread_resource_set;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
+
+  const file_mode_type_t file_mode;
+  MDB_env* env;
+
+  void commit_and_close_txn(const pthread_resources_t* resources) const {
+    // free cursor
+    mdb_cursor_close(resources->cursor);
+
+    // do not close dbi handle
+
+    // commit and close active transaction
+    int rc = mdb_txn_commit(resources->txn);
+    if (rc != 0) {
+      // no disk, no memory, etc
+      std::cerr << "lmdb commit failure txn_commit " << rc << "\n";
+      assert(0);
+    }
+  }
+
   public:
+  lmdb_resource_manager_t(file_mode_type_t p_file_mode, MDB_env* p_env) :
+                        file_mode(p_file_mode), env(p_env) {
+    MUTEX_INIT(&M);
+
+    // create the pthread key for this resource
+    int status = pthread_key_create(&pthread_resources_key, NULL);
+    if (status != 0) {
+      std::cerr << "pthread failure\n";
+      assert(0);
+    }
+  }
+
+  ~lmdb_resource_manager_t() {
+    commit_and_close_all_resources();
+  }
 
   // get resources, possibly creating them
-  static pthread_resources_t* get_pthread_resources(
-                                file_mode_type_t file_mode, MDB_env* env) {
-    (void)pthread_once(&pthread_resources_key_once, make_pthread_resources_key);
+  pthread_resources_t* get_pthread_resources() const {
     pthread_resources_t* pthread_resources;
     if (pthread_getspecific(pthread_resources_key) == NULL) {
       pthread_resources = new pthread_resources_t;
@@ -104,10 +133,15 @@ class lmdb_pthread_resources {
       pthread_setspecific(pthread_resources_key, pthread_resources);
 
       // save pointer for destructor
+std::cout << "lrm.lock.a\n";
       MUTEX_LOCK(&M);
-std::cout << "lhsm.get_pthread_resources created " << pthread_resources << "\n";
+std::cout << "lrm.lock.aa\n";
+#ifdef DEBUG
+      std::cout << "get_pthread_resources: " << pthread_resources << "\n";
+#endif
       pthread_resource_set.insert(pthread_resources);
       MUTEX_UNLOCK(&M);
+std::cout << "lrm.unlock.a\n";
 
     } else {
       // get the stored thread-specific resources
@@ -118,58 +152,58 @@ std::cout << "lhsm.get_pthread_resources created " << pthread_resources << "\n";
     return pthread_resources;
   }
 
-/*
-  // get existing resources
-  static pthread_resources_t* get_existing_pthread_resources() {
-    // get the stored thread-specific resources
-    pthread_resources_t* pthread_resources = static_cast<pthread_resources_t*>(
-                                 pthread_getspecific(pthread_resources_key));
-    if (pthread_resources == NULL) {
-      assert(0);
-    }
-    return pthread_resources;
-  }
-*/
-
   // close resources for this thread
-  static void commit_and_close_resources(pthread_resources_t* resources) {
-std::cout << "commit_and_close_resources releasing " << resources << "\n";
-    // free cursor
-    mdb_cursor_close(resources->cursor);
+  void commit_and_close_thread_resources() const {
 
-    // do not close dbi handle
-
-    // commit and close active transaction
-    int rc = mdb_txn_commit(resources->txn);
-    if (rc != 0) {
-      // no disk, no memory, etc
-      std::cerr << "lmdb commit failure txn_commit " << rc << "\n";
-      assert(0);
+    // get the stored thread-specific resources
+    pthread_resources_t* resources = static_cast<pthread_resources_t*>(
+                                 pthread_getspecific(pthread_resources_key));
+#ifdef DEBUG
+    std::cout << "commit_and_close_thread_resources: " << resources << "\n";
+#endif
+    if (resources == NULL) {
+      // resources not opened, no action
+      return;
     }
+
+    commit_and_close_txn(resources);
 
     // remove resources from pthread resources key
     pthread_setspecific(pthread_resources_key, NULL);
 
     // remove resources from resource set
+std::cout << "lrm.lock.b\n";
     MUTEX_LOCK(&M);
     pthread_resource_set.erase(resources);
     MUTEX_UNLOCK(&M);
+std::cout << "lrm.unlock.b\n";
   }
 
   // close resources for all threads
-  static void commit_and_close_all_resources() {
-    // on this main thread, close resources that were opened for each thread
-    while (true) {
-      std::set<pthread_resources_t*>::iterator it =
-                pthread_resource_set.begin();
-      if (it == pthread_resource_set.end()) {
-        break;
-      }
+  void commit_and_close_all_resources() const {
+    // close resources that were opened for each thread,
+    // preserving integrity of pthread_resource_set
+std::cout << "lrm.lock.c\n";
+    MUTEX_LOCK(&M);
+    for (std::set<pthread_resources_t*>::iterator it =
+               pthread_resource_set.begin();
+               it != pthread_resource_set.end();
+               ++it) {
 
       // close selected resource
       pthread_resources_t* resources = *it;
-      commit_and_close_resources(resources);
+#ifdef DEBUG
+    std::cout << "commit_and_close_all_resources, resource: " << resources << "\n";
+#endif
+      commit_and_close_txn(resources);
+
+      // remove resources from pthread resources key
+      pthread_setspecific(pthread_resources_key, NULL);
     }
+
+    pthread_resource_set.clear();
+    MUTEX_UNLOCK(&M);
+std::cout << "lrm.unlock.c\n";
   }
 };
 
