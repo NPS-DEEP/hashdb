@@ -26,9 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "hashdb_directory_manager.hpp"
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
@@ -61,14 +59,12 @@ void run_test() {
   settings = hashdb_settings_store_t::read_settings(temp_dir);
 
   // check persistence of the changed parameter
-  BOOST_TEST_EQ(settings.hash_block_size, 512);
+  TEST_EQ(settings.hash_block_size, 512);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   run_test();
 
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

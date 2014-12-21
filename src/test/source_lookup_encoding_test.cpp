@@ -25,9 +25,10 @@
 #include <config.h>
 #include "source_lookup_encoding.hpp"
 #include <iostream>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+//#include <boost/detail/lightweight_main.hpp>
+//#include <boost/detail/lightweight_test.hpp>
+//#include "boost_fix.hpp"
+#include "unit_test.h"
 
 uint64_t encode(uint64_t index, uint64_t offset) {
   return index<<34 | offset;
@@ -40,12 +41,12 @@ void test_encoding(uint64_t index, uint64_t offset, uint64_t encoding) {
   uint64_t temp_index = source_lookup_encoding::get_source_lookup_index(encoding);
   uint64_t temp_offset = source_lookup_encoding::get_file_offset(encoding);
   uint64_t temp_encoding = source_lookup_encoding::get_source_lookup_encoding(index, offset);
-  BOOST_TEST_EQ(index, temp_index);
-  BOOST_TEST_EQ(offset, temp_offset);
-  BOOST_TEST_EQ(encoding, temp_encoding);
+  TEST_EQ(index, temp_index);
+  TEST_EQ(offset, temp_offset);
+  TEST_EQ(encoding, temp_encoding);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
   // make all std::cout diagnostics be in hex
   std::cout << std::hex;
@@ -64,11 +65,10 @@ int cpp_main(int argc, char* argv[]) {
   test_encoding(max_index, max_offset, max_index<<34 | max_offset/HASHDB_BYTE_ALIGNMENT);
 
   // source lookup index too large
-  BOOST_TEST_THROWS(test_encoding(max_index+1, max_offset, (max_index+1)<<34 | (max_offset/HASHDB_BYTE_ALIGNMENT)), std::runtime_error);
-  BOOST_TEST_THROWS(test_encoding(max_index, max_offset+1, (max_index<<34) | ((max_offset/HASHDB_BYTE_ALIGNMENT)+max_offset)), std::runtime_error);
+  TEST_THROWS(test_encoding(max_index+1, max_offset, (max_index+1)<<34 | (max_offset/HASHDB_BYTE_ALIGNMENT)), std::runtime_error);
+  TEST_THROWS(test_encoding(max_index, max_offset+1, (max_index<<34) | ((max_offset/HASHDB_BYTE_ALIGNMENT)+max_offset)), std::runtime_error);
 
   // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

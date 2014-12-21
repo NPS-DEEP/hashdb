@@ -26,9 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "directory_helper.hpp"
 #include "source_lookup_index_manager.hpp"
 #include "file_modes.h"
@@ -45,86 +43,85 @@ void run_test() {
   std::pair<bool, uint64_t> pair_bool_64;
 
   // check that the empty iterator is functional
-  BOOST_TEST_EQ(manager.begin() == manager.end(), true);
+  bool temp = (manager.begin() == manager.end());
+  TEST_EQ(temp, true);
 
   // add first source
   pair_bool_64 = manager.insert("rep_a", "file_a");
-  BOOST_TEST_EQ(pair_bool_64.first, true);
-  BOOST_TEST_EQ(pair_bool_64.second, 1);
+  TEST_EQ(pair_bool_64.first, true);
+  TEST_EQ(pair_bool_64.second, 1);
 
   // attempt to add a duplicate
   pair_bool_64 = manager.insert("rep_a", "file_a");
-  BOOST_TEST_EQ(pair_bool_64.first, false);
-  BOOST_TEST_EQ(pair_bool_64.second, 1);  // existing index
+  TEST_EQ(pair_bool_64.first, false);
+  TEST_EQ(pair_bool_64.second, 1);  // existing index
 
   // add
   pair_bool_64 = manager.insert("rep_a", "file_b");
-  BOOST_TEST_EQ(pair_bool_64.first, true);
-  BOOST_TEST_EQ(pair_bool_64.second, 2);
+  TEST_EQ(pair_bool_64.first, true);
+  TEST_EQ(pair_bool_64.second, 2);
 
   // add
   pair_bool_64 = manager.insert("rep_b", "file_a");
-  BOOST_TEST_EQ(pair_bool_64.first, true);
-  BOOST_TEST_EQ(pair_bool_64.second, 3);
+  TEST_EQ(pair_bool_64.first, true);
+  TEST_EQ(pair_bool_64.second, 3);
 
   // add
   pair_bool_64 = manager.insert("rep_b", "file_b");
-  BOOST_TEST_EQ(pair_bool_64.first, true);
-  BOOST_TEST_EQ(pair_bool_64.second, 4);
+  TEST_EQ(pair_bool_64.first, true);
+  TEST_EQ(pair_bool_64.second, 4);
 
   // add
   pair_bool_64 = manager.insert("rep_b", "file_b");
-  BOOST_TEST_EQ(pair_bool_64.first, false);
-  BOOST_TEST_EQ(pair_bool_64.second, 4);
+  TEST_EQ(pair_bool_64.first, false);
+  TEST_EQ(pair_bool_64.second, 4);
 
   // find index
   pair_bool_64 = manager.find("rep_a", "file_b");
-  BOOST_TEST_EQ(pair_bool_64.first, true);
-  BOOST_TEST_EQ(pair_bool_64.second, 2);
+  TEST_EQ(pair_bool_64.first, true);
+  TEST_EQ(pair_bool_64.second, 2);
 
   // find index
   pair_bool_64 = manager.find("rep_a", "file_c");
-  BOOST_TEST_EQ(pair_bool_64.first, false);
-  BOOST_TEST_EQ(pair_bool_64.second, 0);
+  TEST_EQ(pair_bool_64.first, false);
+  TEST_EQ(pair_bool_64.second, 0);
 
   // find index
   pair_bool_64 = manager.find("rep_c", "file_a");
-  BOOST_TEST_EQ(pair_bool_64.first, false);
-  BOOST_TEST_EQ(pair_bool_64.second, 0);
+  TEST_EQ(pair_bool_64.first, false);
+  TEST_EQ(pair_bool_64.second, 0);
 
   // find from index
   std::pair<bool, std::pair<std::string, std::string> > pair_string;
   pair_string = manager.find(1);
-  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
-  BOOST_TEST_EQ(pair_string.second.second, "file_a");
+  TEST_EQ(pair_string.second.first, "rep_a");
+  TEST_EQ(pair_string.second.second, "file_a");
 
   // find from index
   pair_string = manager.find(2);
-  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
-  BOOST_TEST_EQ(pair_string.second.second, "file_b");
+  TEST_EQ(pair_string.second.first, "rep_a");
+  TEST_EQ(pair_string.second.second, "file_b");
 
   // find from index
   pair_string = manager.find(3);
-  BOOST_TEST_EQ(pair_string.second.first, "rep_b");
-  BOOST_TEST_EQ(pair_string.second.second, "file_a");
+  TEST_EQ(pair_string.second.first, "rep_b");
+  TEST_EQ(pair_string.second.second, "file_a");
 
   // check the iterator with values available
   source_lookup_index_manager_t::source_lookup_index_iterator_t it = manager.begin();
   pair_string = manager.find(it->key);
-  BOOST_TEST_EQ(pair_string.second.first, "rep_a");
-  BOOST_TEST_EQ(pair_string.second.second, "file_a");
+  TEST_EQ(pair_string.second.first, "rep_a");
+  TEST_EQ(pair_string.second.second, "file_a");
   ++it; ++it; ++it; ++it;
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
   rm_hashdb_dir(temp_dir);
   make_dir_if_not_there(temp_dir);
 
   run_test();
 
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

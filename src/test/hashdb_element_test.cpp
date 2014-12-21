@@ -24,9 +24,7 @@
 
 #include <config.h>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "hashdb_element.hpp"
 
 void run_test() {
@@ -35,11 +33,8 @@ void run_test() {
   BOOST_TEST_EQ(element.hash_block_size, 0);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   run_test();
-
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

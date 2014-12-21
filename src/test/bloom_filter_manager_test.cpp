@@ -26,9 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "bloom_filter_manager.hpp"
@@ -49,9 +47,9 @@ void run_rw_test1() {
   to_key(101, key);
 
   // enabled
-  BOOST_TEST_EQ(manager.is_positive(key), false);
+  TEST_EQ(manager.is_positive(key), false);
   manager.add_hash_value(key);
-  BOOST_TEST_EQ(manager.is_positive(key), true);
+  TEST_EQ(manager.is_positive(key), true);
 }
 
 void run_rw_test2() {
@@ -65,20 +63,17 @@ void run_rw_test2() {
   to_key(101, key);
 
   // manager is disabled
-  BOOST_TEST_EQ(manager.is_positive(key), true);
+  TEST_EQ(manager.is_positive(key), true);
   manager.add_hash_value(key);
-  BOOST_TEST_EQ(manager.is_positive(key), true);
+  TEST_EQ(manager.is_positive(key), true);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
   // validate that the is_positive function returns true when added
   run_rw_test1();
   // validate that the is_positive function returns true when disabled
   run_rw_test2();
-
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

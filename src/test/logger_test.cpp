@@ -26,9 +26,7 @@
 
 #include <config.h>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "directory_helper.hpp"
 #include "logger.hpp"
 #include "hashdb_changes.hpp"
@@ -56,16 +54,14 @@ void run_test() {
 
   // check that logger is not usable once closed
   logger.close();
-  BOOST_TEST_THROWS(logger.add_timestamp("already closed"), std::runtime_error);
-  BOOST_TEST_THROWS(logger.close(), std::runtime_error);
+  TEST_THROWS(logger.add_timestamp("already closed"), std::runtime_error);
+  TEST_THROWS(logger.close(), std::runtime_error);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
   run_test();
 
-  // done
-  std::cout << "Logger test completed, inspect log.xml if desired.\n";
   return 0;
 }
 

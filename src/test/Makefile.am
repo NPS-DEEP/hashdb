@@ -86,53 +86,53 @@ run_tests_valgrind:
 # ############################################################
 source_lookup_encoding_test_SOURCES = \
 	../source_lookup_encoding.hpp \
-	boost_fix.hpp \
+	unit_test.h \
 	source_lookup_encoding_test.cpp
 
 bloom_filter_manager_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	to_key_helper.hpp \
 	bloom_filter_manager_test.cpp
 
 settings_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	settings_test.cpp
 
 bi_store_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	bi_store_test.cpp
 
 logger_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	logger_test.cpp
 
 hashdb_element_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	hashdb_element_test.cpp
 
 source_lookup_index_manager_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	source_lookup_index_manager_test.cpp
 
 hashdb_manager_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	to_key_helper.hpp \
 	hashdb_manager_test.cpp
 
 libhashdb_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	to_key_helper.hpp \
 	libhashdb_test.cpp
 	
 commands_test_SOURCES = \
-	boost_fix.hpp \
+	unit_test.h \
 	directory_helper.hpp \
 	commands_test.cpp
 

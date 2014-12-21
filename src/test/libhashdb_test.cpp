@@ -26,9 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "hashdb.hpp"
 #include "to_key_helper.hpp"
 #include "directory_helper.hpp"
@@ -56,29 +54,29 @@ void do_import() {
   // create new database
   hashdb_t hashdb;
   std::pair<bool, std::string> import_pair = hashdb.open_import(temp_dir, 4096, 20);
-  BOOST_TEST_EQ(import_pair.first, true);
+  TEST_EQ(import_pair.first, true);
 
   // import some elements
   int status;
   status = hashdb.import(import_input);
-  BOOST_TEST_EQ(status, 0);
+  TEST_EQ(status, 0);
 
   // import metadata
   hash_t k2;
   to_key(1, k2);
   status = hashdb.import_metadata("rep1", "file1", 10000, k2);
-  BOOST_TEST_EQ(status, 0);
+  TEST_EQ(status, 0);
   status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
-  BOOST_TEST_EQ(status, 0);
+  TEST_EQ(status, 0);
   status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
-  BOOST_TEST_EQ(status, 0);
+  TEST_EQ(status, 0);
 
   // invalid mode to scan when importing
   hashdb_t::scan_input_t scan_input;
   hashdb_t::scan_output_t scan_output;
   std::cout << "may emit scan mode error here.\n";
   status = hashdb.scan(scan_input, scan_output);
-  BOOST_TEST_NE(status, 0);
+  TEST_NE(status, 0);
 }
 
 void do_scan() {
@@ -92,7 +90,7 @@ void do_scan() {
   // open to scan
   hashdb_t hashdb;
   std::pair<bool, std::string> open_pair = hashdb.open_scan(temp_dir);
-  BOOST_TEST_EQ(open_pair.first, true);
+  TEST_EQ(open_pair.first, true);
 
   hashdb_t::scan_input_t input;
   hashdb_t::scan_output_t output;
@@ -103,19 +101,17 @@ void do_scan() {
 
   // perform scan
   hashdb.scan(input, output);
-  BOOST_TEST_EQ(output.size(), 2);
-  BOOST_TEST_EQ(output[0].first, 0);
-  BOOST_TEST_EQ(output[0].second, 2);
-  BOOST_TEST_EQ(output[1].first, 1);
-  BOOST_TEST_EQ(output[0].second, 2);
+  TEST_EQ(output.size(), 2);
+  TEST_EQ(output[0].first, 0);
+  TEST_EQ(output[0].second, 2);
+  TEST_EQ(output[1].first, 1);
+  TEST_EQ(output[0].second, 2);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   do_import();
   do_scan();
 
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 

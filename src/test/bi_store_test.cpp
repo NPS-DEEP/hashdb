@@ -26,9 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
-#include <boost/detail/lightweight_main.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include "boost_fix.hpp"
+#include "unit_test.h"
 #include "directory_helper.hpp"
 #include "bi_data_types.hpp"
 #include "bi_store.hpp"
@@ -55,21 +53,18 @@ void run_test() {
 
   std::pair<uint64_t, uint64_t> value_pair;
   store1.get_value(1, value_pair);
-  BOOST_TEST_EQ(value_pair.first, 2);
+  TEST_EQ(value_pair.first, 2);
   store2.get_value(1, value_pair);
-  BOOST_TEST_EQ(value_pair.first, 2);
+  TEST_EQ(value_pair.first, 2);
 }
 
-int cpp_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
   rm_hashdb_dir(temp_dir);
   make_dir_if_not_there(temp_dir);
 
   run_setup();
   run_test();
-
-  // done
-  int status = boost::report_errors();
-  return status;
+  return 0;
 }
 
