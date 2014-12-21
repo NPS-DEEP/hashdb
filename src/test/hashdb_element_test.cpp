@@ -30,7 +30,7 @@
 void run_test() {
 
   hashdb_element_t element;
-  BOOST_TEST_EQ(element.hash_block_size, 0);
+  TEST_EQ(element.hash_block_size, 0);
 }
 
 int main(int argc, char* argv[]) {
