@@ -62,7 +62,11 @@ class lmdb_resource_manager_t {
 
   public:
   lmdb_resource_manager_t(file_mode_type_t p_file_mode, MDB_env* p_env) :
-                        file_mode(p_file_mode), env(p_env) {
+                        pthread_resources_key(),
+                        pthread_resource_set(),
+                        M(),
+                        file_mode(p_file_mode),
+                        env(p_env) {
     MUTEX_INIT(&M);
 
     // create the pthread key for this resource
@@ -76,6 +80,12 @@ class lmdb_resource_manager_t {
   ~lmdb_resource_manager_t() {
     commit_and_close_all_resources();
   }
+
+#ifdef HAVE_CXX11
+  // fix compiler warnings for compatible compilers
+  lmdb_resource_manager_t(const lmdb_resource_manager_t& other) = delete;
+  lmdb_resource_manager_t& operator=(const lmdb_resource_manager_t& other) = delete;
+#endif
 
   // get resources, possibly creating them
   pthread_resources_t* get_pthread_resources() const {

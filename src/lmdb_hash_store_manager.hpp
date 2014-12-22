@@ -167,6 +167,9 @@ std::cout << "emplace MDB_TXN_FULL on resources " << resources << "\n";
       case RW_MODIFY:
 //        env_flags = MDB_FIXEDMAP;
         env_flags = 0;
+        break;
+      default:
+        assert(0);
     }
 
     // open the MDB environment
