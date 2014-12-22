@@ -78,9 +78,9 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	lmdb_hash_store_iterator.hpp
-	lmdb_hash_store_maanger.hpp \
-	lmdb_pthread_resources.hpp \
+	lmdb_hash_store_iterator.hpp \
+	lmdb_hash_store_manager.hpp \
+	lmdb_resource_manager.hpp \
 	lmdb_resources.h \
 	logger.hpp \
 	mutex_lock.hpp \
@@ -119,7 +119,7 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
 
-MDC_INCS = \
+LMDB_INCS = \
 	lmdb/libraries/liblmdb/lmdb.h \
 	lmdb/libraries/liblmdb/mdb.c \
 	lmdb/libraries/liblmdb/midl.h \
@@ -143,7 +143,7 @@ hashdb_SOURCES = \
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \
 	$(BTREE_INCS) $(ENDIAN_INCS) \
-	$(MDC_INCS) \
+	$(LMDB_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS)
 
 include_HEADERS = hashdb.hpp

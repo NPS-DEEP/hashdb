@@ -75,9 +75,7 @@ void rw_new_tests() {
   TEST_EQ(manager.map_size(), 0);
 
   // check initial iterator
-std::cerr << "hashdb_manager_test.rw_new_tests_it.a\n";
   TEST_EQ((manager.begin_key() == manager.end_key()), true);
-std::cerr << "hashdb_manager_test.rw_new_tests_it.b\n";
 
   // ************************************************************
   // insert, remove, and hashdb_changes variables
@@ -200,9 +198,7 @@ std::cerr << "hashdb_manager_test.rw_new_tests_it.b\n";
   element = hashdb_element_t(k1, 4096, "rep1", "file1", 0);
   manager.insert(element);
   TEST_EQ(manager.map_size(), 1);
-std::cerr << "hashdb_manager_test.rw_new_tests_it.c\n";
   hash_store_key_iterator_t it(manager.begin_key());
-std::cerr << "hashdb_manager_test.rw_new_tests_it.d " << &it << "\n";
   element = manager.hashdb_element(it);
   element = manager.hashdb_element(it);
   TEST_EQ(element.key, k1);
@@ -222,9 +218,7 @@ std::cerr << "hashdb_manager_test.rw_new_tests_it.d " << &it << "\n";
   TEST_EQ(manager.find_count(k1), 2);
   TEST_EQ(manager.map_size(), 3);
 
-std::cerr << "hashdb_manager_test.rw_new_tests_it.e\n";
   hash_store_key_iterator_t it2(manager.begin_key());
-std::cerr << "hashdb_manager_test.rw_new_tests_it.f " << &it << "\n";
   ++it2;
   it2++;
   ++it2;
@@ -232,9 +226,7 @@ std::cerr << "hashdb_manager_test.rw_new_tests_it.f " << &it << "\n";
   TEST_EQ((it2 == manager.end_key()), true);
 
   // check iterator pair from find
-std::cerr << "hashdb_manager_test.rw_new_tests_it.g\n";
   hash_store_key_iterator_range_t it_pair;
-std::cerr << "hashdb_manager_test.rw_new_tests_it.h " << &it_pair.first << ", " << &it_pair.second << "\n";
   it_pair = manager.find(k1);
   ++it_pair.first;
   ++it_pair.first;
@@ -244,22 +236,19 @@ std::cerr << "hashdb_manager_test.rw_new_tests_it.h " << &it_pair.first << ", " 
   ++it_pair.first;
   TEST_EQ((it_pair.first == it_pair.second), true);
 
-std::cerr << "hashdb_manager_test.insert.u\n";
   // ************************************************************
   // install lots of data
   // ************************************************************
   // populate with 1,000,000 entries
   hash_t key;
   TEST_EQ(manager.map_size(), 3);
-//  int count = 1000000;
-  uint count = 1000;
+  uint count = 1000000;
   for (uint64_t n=0; n< count; ++n) {
     to_key(n+1000000, key);
     element = hashdb_element_t(key, 4096, "rep1", "file1", 0);
     manager.insert(element);
   }
   TEST_EQ(manager.map_size(), 1000003);
-std::cerr << "hashdb_manager_test.insert.v\n";
 }
 
 void ro_tests() {
@@ -274,13 +263,9 @@ int main(int argc, char* argv[]) {
 
   make_dir_if_not_there(temp_dir);
 
-std::cerr << "hashdb_manager_test.main.a\n";
   write_settings();
-std::cerr << "hashdb_manager_test.main.b\n";
   rw_new_tests();
-std::cerr << "hashdb_manager_test.main.c\n";
   ro_tests();
-std::cerr << "hashdb_manager_test.main.d\n";
 
   return 0;
 }

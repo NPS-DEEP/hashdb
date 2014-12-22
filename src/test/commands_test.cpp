@@ -106,9 +106,9 @@ void test_database_manipulation() {
   // add_multiple
   std::cout << "add_multiple\n";
   commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir4);
-  TEST_EQ(map_size(temp_dir3), 2*74);
+  TEST_EQ(map_size(temp_dir4), 2*74);
   commands_t::add_multiple(temp_dir1, temp_dir2, temp_dir4);
-  TEST_EQ(map_size(temp_dir3), 2*74);
+  TEST_EQ(map_size(temp_dir4), 2*74);
   rm_hashdb_dir(temp_dir4);
 
   // add_repository

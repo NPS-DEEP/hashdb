@@ -128,9 +128,8 @@ class lmdb_hash_store_iterator_t {
     int rc;
 
     if (is_lower_bound) {
-
       // first record with key
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_BOTH_RANGE);
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_SET);
       if (rc == 0) {
         pair = mdb_to_pair(key, data);
       } else if (rc == MDB_NOTFOUND) {
@@ -141,30 +140,27 @@ class lmdb_hash_store_iterator_t {
         assert(0);
       }
     } else {
-
-      // first record after key
-      // make sure a record with key exists
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_BOTH_RANGE);
+      // first record with key
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_SET);
       if (rc == 0) {
-        // good, key exists, move past it
-        rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT_NODUP);
-        if (rc == 0) {
-          pair = mdb_to_pair(key, data);
-        } else if (rc == MDB_NOTFOUND) {
-          // no key
-          at_end = true;
-          return;
-        } else {
-          // program error
-          std::cerr << "rc: " << rc << ", lb: " << is_lower_bound << "\n";
-          assert(0);
-        }
+        // has key
       } else if (rc == MDB_NOTFOUND) {
-        // no key
         at_end = true;
-        return;
       } else {
         // program error
+        std::cerr << "rc: " << rc << ", lb: " << is_lower_bound << "\n";
+        assert(0);
+      }
+
+      // now move to first record after key
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT_NODUP);
+      if (rc == 0) {
+        pair = mdb_to_pair(key, data);
+      } else if (rc == MDB_NOTFOUND) {
+        at_end = true;
+      } else {
+        // program error
+        std::cerr << "rc: " << rc << ", lb: " << is_lower_bound << "\n";
         assert(0);
       }
     }
@@ -239,14 +235,14 @@ class lmdb_hash_store_iterator_t {
   }
 
   bool operator==(const lmdb_hash_store_iterator_t& other) const {
-    if (at_end == other.at_end) return true;
+    if (at_end && other.at_end) return true;
     if (at_end || other.at_end) return false;
     return (pair.first == other.pair.first &&
             pair.second == other.pair.second);
   }
 
   bool operator!=(const lmdb_hash_store_iterator_t& other) const {
-    if (at_end == other.at_end) return false;
+    if (at_end && other.at_end) return false;
     if (at_end || other.at_end) return true;
     return (!(pair.first == other.pair.first) ||
             pair.second != other.pair.second);

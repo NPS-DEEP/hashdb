@@ -30,7 +30,7 @@
 #define LMDB_HASH_STORE_MANAGER_HPP
 
 // enable debug
-#define DEBUG 1
+// #define DEBUG 1
 
 #include "source_lookup_encoding.hpp"
 #include "hashdb_element.hpp"
