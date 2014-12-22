@@ -143,15 +143,12 @@ class lmdb_resource_manager_t {
       pthread_setspecific(pthread_resources_key, pthread_resources);
 
       // save pointer for destructor
-std::cout << "lrm.lock.a\n";
       MUTEX_LOCK(&M);
-std::cout << "lrm.lock.aa\n";
 #ifdef DEBUG
       std::cout << "get_pthread_resources: " << pthread_resources << "\n";
 #endif
       pthread_resource_set.insert(pthread_resources);
       MUTEX_UNLOCK(&M);
-std::cout << "lrm.unlock.a\n";
 
     } else {
       // get the stored thread-specific resources
@@ -182,18 +179,15 @@ std::cout << "lrm.unlock.a\n";
     pthread_setspecific(pthread_resources_key, NULL);
 
     // remove resources from resource set
-std::cout << "lrm.lock.b\n";
     MUTEX_LOCK(&M);
     pthread_resource_set.erase(resources);
     MUTEX_UNLOCK(&M);
-std::cout << "lrm.unlock.b\n";
   }
 
   // close resources for all threads
   void commit_and_close_all_resources() const {
     // close resources that were opened for each thread,
     // preserving integrity of pthread_resource_set
-std::cout << "lrm.lock.c\n";
     MUTEX_LOCK(&M);
     for (std::set<pthread_resources_t*>::iterator it =
                pthread_resource_set.begin();
@@ -213,7 +207,6 @@ std::cout << "lrm.lock.c\n";
 
     pthread_resource_set.clear();
     MUTEX_UNLOCK(&M);
-std::cout << "lrm.unlock.c\n";
   }
 };
 

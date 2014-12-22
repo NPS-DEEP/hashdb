@@ -100,7 +100,6 @@ class lmdb_hash_store_manager_t {
 #ifdef DEBUG
       std::cout << "emplace MDB_TXN_FULL on resources " << resources << "\n";
 #endif
-std::cout << "emplace MDB_TXN_FULL on resources " << resources << "\n";
 
       // commit and close active transaction
       lmdb_resource_manager.commit_and_close_thread_resources();
