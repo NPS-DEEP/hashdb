@@ -281,7 +281,9 @@ const char* hashdb_version() {
         // perform all scans in one locked operation.
         // There is basically no cost for grouping since this iterates db access.
         // There is gain if this is a large sorted request.
+#ifndef USE_LMDB_HASH_STORE
         MUTEX_LOCK(&M);
+#endif
 
         // scan each input in turn
         uint32_t input_size = (uint32_t)input.size();
@@ -292,7 +294,9 @@ const char* hashdb_version() {
           }
         }
 
+#ifndef USE_LMDB_HASH_STORE
         MUTEX_UNLOCK(&M);
+#endif
 
         // good, done
         return 0;
