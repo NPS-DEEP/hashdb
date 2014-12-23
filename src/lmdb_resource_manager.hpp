@@ -182,6 +182,9 @@ class lmdb_resource_manager_t {
     MUTEX_LOCK(&M);
     pthread_resource_set.erase(resources);
     MUTEX_UNLOCK(&M);
+
+    // remove resources
+    delete resources;
   }
 
   // close resources for all threads
