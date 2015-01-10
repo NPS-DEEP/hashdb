@@ -286,7 +286,8 @@ The above command specifies to export hashes and their source information from h
 Each \hash database is contained in a directory called \textit{$<$databasename$>$.hdb} and contains a number of files. These files are:
 \begin{verbatim}
 Bloom_filter_1
-hash_store
+lmdb_hash_store/data.mdb
+lmdb_hash_store/lock.mdb
 history.xml
 log.xml
 settings.xml
@@ -633,7 +634,7 @@ If curious, you may navigate into the directory \texttt{mock\_video.hdb} to obse
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
  4097 Mar  9 21:52 Bloom_filter_1
-90112 Mar  9 21:56 hash_store
+<DIR> Mar  9 21:56 lmdb_hash_store
  3788 Mar  9 21:52 history.xml
  3573 Mar  9 21:56 log.xml
  3105 Mar  9 21:52 settings.xml

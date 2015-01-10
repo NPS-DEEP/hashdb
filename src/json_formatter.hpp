@@ -161,6 +161,28 @@ class json_formatter_t {
     delete hashes;
   }
 
+  // helper to get valid json output, taken from
+  // http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
+  std::string escapeJsonString(const std::string& input) {
+    std::ostringstream ss;
+    for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
+    //C++98/03:
+    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+      switch (*iter) {
+        case '\\': ss << "\\\\"; break;
+        case '"': ss << "\\\""; break;
+        case '/': ss << "\\/"; break;
+        case '\b': ss << "\\b"; break;
+        case '\f': ss << "\\f"; break;
+        case '\n': ss << "\\n"; break;
+        case '\r': ss << "\\r"; break;
+        case '\t': ss << "\\t"; break;
+        default: ss << *iter; break;
+      }
+    }
+    return ss.str();
+  }
+
   // print expanded source information unless the hash has been printed already
   void print_expanded(
           const hash_store_key_iterator_range_t& it_pair) {

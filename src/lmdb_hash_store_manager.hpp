@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Makes minimal map-like interfaces out of LMDB.
+ * Makes minimal map-like interfaces for accessing LMDB.
  * Is threadsafe by managing transaction-specifc threads.
  *
  * Each thread runs with an active open transaction and cursor
@@ -37,7 +37,7 @@
 #include "hash_t_selector.h"
 #include "lmdb.h"
 #include "lmdb_resources.h"
-#include "lmdb_resource_manager.hpp"
+#include "lmdb_resources_manager.hpp"
 #include "lmdb_hash_store_iterator.hpp"
 
 class lmdb_hash_store_manager_t {
@@ -45,7 +45,7 @@ class lmdb_hash_store_manager_t {
   std::string hashdb_dir;
   file_mode_type_t file_mode;
   MDB_env* env;        // environment pointer
-  lmdb_resource_manager_t lmdb_resource_manager;
+  mutable lmdb_resources_manager_t resources_manager;
 
   // *env
   static MDB_env* make_env() {
@@ -56,60 +56,7 @@ class lmdb_hash_store_manager_t {
       assert(0);
     }
 
-    // mapsize is a limit to protect the OS environment, see
-    // http://comments.gmane.org/gmane.network.openldap.technical/11699
-    rc = mdb_env_set_mapsize(new_env, 0x001000000000);
-    if (rc != 0) {
-      // bad failure
-      assert(0);
-    }
-
     return new_env;
-  }
-
-  // emplace but protecting against infinite invocation recursion
-  void emplace(const hash_t& hash, uint64_t encoding, int recursion_count) {
-    if (recursion_count>2) {
-      std::cerr << "emplace recursion failure.\n";
-      assert(0);
-    }
-    // get resources for the pthread
-    pthread_resources_t* resources =
-              lmdb_resource_manager.get_pthread_resources();
-
-    // set values into the key and data
-    pair_to_mdb(hash, encoding, resources->key, resources->data);
-
-    // put
-    int rc = mdb_put(resources->txn, resources->dbi,
-                     &resources->key, &resources->data, MDB_NODUPDATA);
-    if (rc == 0) {
-      return;
-    } else if (rc == MDB_KEYEXIST) {
-      std::cerr << "emplace failure keyexist " << rc << "\n";
-      assert(0);
-    } else if (rc == MDB_MAP_FULL) {
-      // NOTE: mapsize is a limit to protect the OS environment,
-      // see http://comments.gmane.org/gmane.network.openldap.technical/11699
-      std::cerr << "emplace MDB_MAP_FULL on resources " << resources << "\n"
-                << "error: hashdb hardcoded max lmdb map size reached.\n";
-      exit(1);
-
-    } else if (rc == MDB_TXN_FULL) {
-      // NOTE: http://www.openldap.org/lists/openldap-technical/201410/msg00092.html
-#ifdef DEBUG
-      std::cout << "emplace MDB_TXN_FULL on resources " << resources << "\n";
-#endif
-
-      // commit and close active transaction
-      lmdb_resource_manager.commit_and_close_thread_resources();
-
-      // try again with empty transaction history
-      emplace(hash, encoding, ++recursion_count);
-    } else {
-      std::cerr << "emplace failure, unexpected error " << rc << "\n";
-      assert(0);
-    }
   }
 
   // do not allow these
@@ -123,7 +70,7 @@ class lmdb_hash_store_manager_t {
                    hashdb_dir(p_hashdb_dir),
                    file_mode(p_file_mode),
                    env(make_env()),
-                   lmdb_resource_manager(file_mode, env) {
+                   resources_manager(file_mode, env) {
 
     const std::string hash_store_dir = hashdb_dir + "/lmdb_hash_store";
 
@@ -136,7 +83,6 @@ class lmdb_hash_store_manager_t {
               
     switch(file_mode) {
       case READ_ONLY:
-//        env_flags = MDB_FIXEDMAP | MDB_RDONLY;
         env_flags = MDB_RDONLY;
         break;
       case RW_NEW:
@@ -160,12 +106,10 @@ class lmdb_hash_store_manager_t {
           exit(1);
         }
 #endif
-//        env_flags = MDB_FIXEDMAP;
-        env_flags = 0;
+        env_flags = MDB_NOMETASYNC | MDB_NOSYNC;
         break;
       case RW_MODIFY:
-//        env_flags = MDB_FIXEDMAP;
-        env_flags = 0;
+        env_flags = MDB_NOMETASYNC | MDB_NOSYNC;
         break;
       default:
         assert(0);
@@ -175,87 +119,115 @@ class lmdb_hash_store_manager_t {
     int rc = mdb_env_open(env, hash_store_dir.c_str(), env_flags, 0664);
     if (rc != 0) {
       // fail
-      std::cerr << "Error opening database: " << rc << ".  Aborting.\n";
+      std::cerr << "Error opening database: " << rc << ": " <<  mdb_strerror(rc)
+                << "\nAborting.\n";
       exit(1);
     }
   }
 
   // emplace
   void emplace(const hash_t& hash, uint64_t encoding) {
-    // call emplace with recursion check
-    emplace(hash, encoding, 0);
+
+    // open resources
+    lmdb_resources_t* resources = resources_manager.open_rw_resources();
+ 
+    // set values into the key and data
+    pair_to_mdb(hash, encoding, resources->key, resources->data);
+
+    // emplace
+    int rc = mdb_put(resources->txn, resources->dbi,
+                     &resources->key, &resources->data, MDB_NODUPDATA);
+    if (rc != 0) {
+      std::cerr << "LMDB emplace error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+
+    // close resources
+    resources_manager.close_rw_resources();
   }
 
   // erase hash, encoding pair
   bool erase(const hash_t& hash, uint64_t encoding) {
 
-    // get resources for the pthread
-    pthread_resources_t* resources =
-              lmdb_resource_manager.get_pthread_resources();
-
+    // open resources
+    lmdb_resources_t* resources = resources_manager.open_rw_resources();
+ 
+    // set values into the key and data
     pair_to_mdb(hash, encoding, resources->key, resources->data);
 
-    int rc = mdb_del(resources->txn, resources->dbi, 
+    // erase
+    int rc = mdb_del(resources->txn, resources->dbi,
                      &resources->key, &resources->data);
-
+    bool status;
     if (rc == 0) {
-      return true;
+      status = true;
     } else if (rc == MDB_NOTFOUND) {
-      return false;
+      status = false;
     } else {
+      std::cerr << "LMDB erase error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
+
+    // close resources
+    resources_manager.close_rw_resources();
+
+    return status;
   }
 
   // erase hash, return count erased
   size_t erase(const hash_t& hash) {
 
-    // get resources for the pthread
-    pthread_resources_t* resources =
-              lmdb_resource_manager.get_pthread_resources();
+    // open resources
+    lmdb_resources_t* resources = resources_manager.open_rw_resources();
 
+    // set values into the key and data
     uint64_t encoding = 0;
     pair_to_mdb(hash, encoding, resources->key, resources->data);
 
     // set the cursor to this key
-    int rc = mdb_cursor_get(resources->cursor,
-                            &resources->key, NULL,
-                            MDB_SET_RANGE);
-    if (rc == 0) {
-      // great, db has key
-    } else if (rc == MDB_NOTFOUND) {
-      // fine, db does not have key
-      return 0;
-    } else if (rc != 0) {
-      // program error
-      std::cerr << "rc " << rc << "\n";
-      assert(0);
-    }
+    int rc = mdb_cursor_get(resources->cursor, &resources->key,
+                            NULL, MDB_SET_RANGE);
 
-    // get the key count
     size_t key_count;
-    rc = mdb_cursor_count(resources->cursor, &key_count);
-    if (rc != 0) {
-      // program error
-      assert(0);
-    }
-
-    rc = mdb_del(resources->txn, resources->dbi, 
-                 &resources->key, NULL);
-
     if (rc == 0) {
-      return key_count;
+
+      // DB has key so look up the key count
+      rc = mdb_cursor_count(resources->cursor, &key_count);
+      if (rc != 0) {
+        std::cerr << "LMDB erase count error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+
     } else if (rc == MDB_NOTFOUND) {
-      return 0;
+      // DB does not have key
+      key_count = 0;
+
     } else {
+      std::cerr << "LMDB erase cursor get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
+
+    if (key_count > 0) {
+
+      // delete if there
+      rc = mdb_del(resources->txn, resources->dbi, 
+                   &resources->key, NULL);
+      if (rc != 0) {
+        std::cerr << "LMDB erase delete error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+    }
+
+    // close resources
+    resources_manager.close_rw_resources();
+
+    return key_count;
   }
 
   // lower_bound
   lmdb_hash_store_iterator_t lower_bound(const hash_t& hash) const {
 
-    return lmdb_hash_store_iterator_t(lmdb_resource_manager, hash, true);
+    return lmdb_hash_store_iterator_t(&resources_manager, hash, true);
   }
 
   // equal_range
@@ -263,16 +235,15 @@ class lmdb_hash_store_manager_t {
                              equal_range(const hash_t& hash) const {
 
     return std::pair<lmdb_hash_store_iterator_t, lmdb_hash_store_iterator_t>(
-             lmdb_hash_store_iterator_t(lmdb_resource_manager, hash, true),
-             lmdb_hash_store_iterator_t(lmdb_resource_manager, hash, false));
+             lmdb_hash_store_iterator_t(&resources_manager, hash, true),
+             lmdb_hash_store_iterator_t(&resources_manager, hash, false));
   }
 
   // find specific hash, value pair
   bool find(const hash_t& hash, uint64_t value) const {
 
-    // get resources for the pthread
-    pthread_resources_t* resources =
-              lmdb_resource_manager.get_pthread_resources();
+    // get resources
+    lmdb_resources_t* resources = resources_manager.open_resources();
 
     // set key and data
     pair_to_mdb(hash, value, resources->key, resources->data);
@@ -281,22 +252,27 @@ class lmdb_hash_store_manager_t {
     int rc = mdb_cursor_get(resources->cursor,
                             &resources->key, &resources->data,
                             MDB_GET_BOTH);
+    bool has_pair;
     if (rc == 0) {
-      return true;
+      has_pair = true;
     } else if (rc == MDB_NOTFOUND) {
-      return false;
+      has_pair = false;
     } else {
       // program error
       assert(0);
     }
+
+    // close resources
+    resources_manager.close_resources();
+
+    return has_pair;
   }
 
   // count of entries with this hash value
   size_t count(const hash_t& hash) const {
 
-    // get resources for the pthread
-    pthread_resources_t* resources =
-              lmdb_resource_manager.get_pthread_resources();
+    // open resources
+    lmdb_resources_t* resources = resources_manager.open_resources();
 
     // set key and data
     uint64_t value = 0;
@@ -306,43 +282,43 @@ class lmdb_hash_store_manager_t {
     int rc = mdb_cursor_get(resources->cursor,
                             &resources->key, &resources->data,
                             MDB_SET_KEY);
-    if (rc == MDB_NOTFOUND) {
-      return 0;
-    } else if (rc != 0) {
-      // program error
+    size_t key_count = 0;
+    if (rc == 0) {
+      rc = mdb_cursor_count(resources->cursor, &key_count);
+      if (rc != 0) {
+        std::cerr << "LMDB count error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+    } else if (rc == MDB_NOTFOUND) {
+      // fine, key count is zero
+    } else {
+      std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    // get the count
-    size_t key_count;
-    rc = mdb_cursor_count(resources->cursor, &key_count);
-    if (rc != 0) {
-      // program error
-      assert(0);
-    }
+    // close resources
+    resources_manager.close_resources();
+
     return key_count;
   }
 
   // begin
   lmdb_hash_store_iterator_t begin() const {
 
-    return lmdb_hash_store_iterator_t(lmdb_resource_manager, true);
+    return lmdb_hash_store_iterator_t(&resources_manager, true);
   }
 
   // end
   lmdb_hash_store_iterator_t end() const {
 
-    return lmdb_hash_store_iterator_t(lmdb_resource_manager, false);
+    return lmdb_hash_store_iterator_t(&resources_manager, false);
   }
 
   // size number of entries in DB
   size_t size() const {
-    // not threadsafe
+    // not locked
 
-    // commit and close all active resources
-    lmdb_resource_manager.commit_and_close_all_resources();
-
-    // now obtain statistics
+    // obtain statistics
     MDB_stat stat;
     int rc = mdb_env_stat(env, &stat);
     if (rc != 0) {
@@ -350,7 +326,8 @@ class lmdb_hash_store_manager_t {
       assert(0);
     }
 #ifdef DEBUG
-    std::cout << "lmdb_hash_store_manager ms_entries size: " << stat.ms_entries << "\n";
+    std::cout << "lmdb_hash_store_manager ms_entries size: " << stat.ms_entries
+              << "\n";
 #endif
     return stat.ms_entries;
   }

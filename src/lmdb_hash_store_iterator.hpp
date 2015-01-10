@@ -20,9 +20,8 @@
 /**
  * \file
  * Provides a lmdb_hash_store iterator which dereferences into pair type.
+ * Internally, position is tracked by hash_pair_t
  */
-
-// Beware use of the class-specific allocated cursor resource
 
 #ifndef LMDB_HASH_STORE_ITERATOR_HPP
 #define LMDB_HASH_STORE_ITERATOR_HPP
@@ -31,76 +30,68 @@
 #include "hash_t_selector.h"
 #include "lmdb.h"
 #include "lmdb_resources.h"
-#include "lmdb_resource_manager.hpp"
+#include "lmdb_resources_manager.hpp"
 
 class lmdb_hash_store_iterator_t {
   private:
-  const lmdb_resource_manager_t* lmdb_resource_manager;
-  pair_t pair;
+  lmdb_resources_manager_t* resources_manager;
+  hash_pair_t pair;
   bool at_end;
-
-  MDB_cursor* open_cursor() {
-    // get the stored thread-specific resources
-    pthread_resources_t* resources = lmdb_resource_manager->get_pthread_resources();
-
-    MDB_cursor* cursor;
-    int rc = mdb_cursor_open(resources->txn, resources->dbi, &cursor);
-    if (rc != 0) {
-      assert(0);
-    }
-    return cursor;
-  }
 
   void increment() {
     if (at_end) {
       std::cerr << "lmdb_hash_store_iterator: increment requested when at end\n";
       assert(0);
     }
-    MDB_val key;
-    MDB_val data;
-    pair_to_mdb(pair.first, pair.second, key, data);
+
+    // get resources
+    lmdb_resources_t* resources = resources_manager->open_resources();
+
+    pair_to_mdb(pair.first, pair.second, resources->key, resources->data);
 
     // set cursor onto current key, data pair
-    MDB_cursor* cursor = open_cursor();
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_BOTH);
+    int rc = mdb_cursor_get(resources->cursor,
+                            &resources->key, &resources->data, MDB_GET_BOTH);
     if (rc != 0) {
       // invalid usage
       assert(0);
     }
 
     // set cursor to next key, data pair
-    rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT);
+    rc = mdb_cursor_get(resources->cursor,
+                        &resources->key, &resources->data, MDB_NEXT);
     if (rc == 0) {
-      pair = mdb_to_pair(key, data);
+      pair = mdb_to_pair(resources->key, resources->data);
     } else if (rc == MDB_NOTFOUND) {
       at_end = true;
-      pair = pair_t();
+      pair = hash_pair_t();
     } else if (rc != 0) {
       // program error
       assert(0);
     }
 
-    // close cursor
-    mdb_cursor_close(cursor);
+    // close resources
+    resources_manager->close_resources();
   }
 
   public:
   // set to key, data pair
   lmdb_hash_store_iterator_t(
-                      const lmdb_resource_manager_t& p_lmdb_resource_manager,
+                      lmdb_resources_manager_t* p_resources_manager,
                       hash_t p_hash, uint64_t p_value):
-               lmdb_resource_manager(&p_lmdb_resource_manager),
+               resources_manager(p_resources_manager),
                pair(),
                at_end(false) {
 
+    // get resources
+    lmdb_resources_t* resources = resources_manager->open_resources();
+
     // set the cursor to this key, data position
-    MDB_val key;
-    MDB_val data;
-    pair_to_mdb(p_hash, p_value, key, data);
-    MDB_cursor* cursor = open_cursor();
-    int rc = mdb_cursor_get(cursor, &key, &data, MDB_GET_BOTH);
+    pair_to_mdb(p_hash, p_value, resources->key, resources->data);
+    int rc = mdb_cursor_get(resources->cursor,
+                            &resources->key, &resources->data, MDB_GET_BOTH);
     if (rc == 0) {
-      pair = mdb_to_pair(key, data);
+      pair = mdb_to_pair(resources->key, resources->data);
     } else if (rc == MDB_NOTFOUND) {
       at_end = true;
     } else {
@@ -108,30 +99,31 @@ class lmdb_hash_store_iterator_t {
       assert(0);
     }
 
-    // close cursor
-    mdb_cursor_close(cursor);
+    // close resources
+    resources_manager->close_resources();
   }
 
   // set to lower bound or upper bound for key
   lmdb_hash_store_iterator_t(
-                      const lmdb_resource_manager_t& p_lmdb_resource_manager,
+                      lmdb_resources_manager_t* p_resources_manager,
                       hash_t p_hash, bool is_lower_bound) :
-               lmdb_resource_manager(&p_lmdb_resource_manager),
+               resources_manager(p_resources_manager),
                pair(),
                at_end(false) {
 
+    // get resources
+    lmdb_resources_t* resources = resources_manager->open_resources();
+
     // set the cursor to this key position
-    MDB_val key;
-    MDB_val data;
-    pair_to_mdb(p_hash, 0, key, data);
-    MDB_cursor* cursor = open_cursor();
+    pair_to_mdb(p_hash, 0, resources->key, resources->data);
     int rc;
 
     if (is_lower_bound) {
       // first record with key
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_SET);
+      rc = mdb_cursor_get(resources->cursor,
+                          &resources->key, &resources->data, MDB_SET);
       if (rc == 0) {
-        pair = mdb_to_pair(key, data);
+        pair = mdb_to_pair(resources->key, resources->data);
       } else if (rc == MDB_NOTFOUND) {
         at_end = true;
       } else {
@@ -141,7 +133,8 @@ class lmdb_hash_store_iterator_t {
       }
     } else {
       // first record with key
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_SET);
+      rc = mdb_cursor_get(resources->cursor,
+                          &resources->key, &resources->data, MDB_SET);
       if (rc == 0) {
         // has key
       } else if (rc == MDB_NOTFOUND) {
@@ -153,9 +146,10 @@ class lmdb_hash_store_iterator_t {
       }
 
       // now move to first record after key
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT_NODUP);
+      rc = mdb_cursor_get(resources->cursor,
+                          &resources->key, &resources->data, MDB_NEXT_NODUP);
       if (rc == 0) {
-        pair = mdb_to_pair(key, data);
+        pair = mdb_to_pair(resources->key, resources->data);
       } else if (rc == MDB_NOTFOUND) {
         at_end = true;
       } else {
@@ -165,27 +159,27 @@ class lmdb_hash_store_iterator_t {
       }
     }
 
-    // close cursor
-    mdb_cursor_close(cursor);
+    // close resources
+    resources_manager->close_resources();
   }
 
   // set to begin or end of DB
   lmdb_hash_store_iterator_t(
-                      const lmdb_resource_manager_t& p_lmdb_resource_manager,
+                      lmdb_resources_manager_t* p_resources_manager,
                       bool is_begin) :
-               lmdb_resource_manager(&p_lmdb_resource_manager),
+               resources_manager(p_resources_manager),
                pair(),
                at_end(true) {
 
     // set the cursor
     if (is_begin) {
-      MDB_val key;
-      MDB_val data;
+      // get resources
+      lmdb_resources_t* resources = resources_manager->open_resources();
       int rc;
-      MDB_cursor* cursor = open_cursor();
-      rc = mdb_cursor_get(cursor, &key, &data, MDB_FIRST);
+      rc = mdb_cursor_get(resources->cursor,
+                          &resources->key, &resources->data, MDB_FIRST);
       if (rc == 0) {
-        pair = mdb_to_pair(key, data);
+        pair = mdb_to_pair(resources->key, resources->data);
         at_end = false;
       } else if (rc == MDB_NOTFOUND) {
         at_end = true;
@@ -195,8 +189,8 @@ class lmdb_hash_store_iterator_t {
         assert(0);
       }
 
-      // close cursor
-      mdb_cursor_close(cursor);
+      // close resources
+      resources_manager->close_resources();
 
     } else {
       at_end = true;
@@ -204,7 +198,7 @@ class lmdb_hash_store_iterator_t {
   }
 
   // this useless default constructor is required by std::pair
-  lmdb_hash_store_iterator_t() : lmdb_resource_manager(0),
+  lmdb_hash_store_iterator_t() : resources_manager(0),
                                  pair(), at_end(true) {
   }
 
@@ -220,14 +214,14 @@ class lmdb_hash_store_iterator_t {
     return temp;
   }
 
-  const pair_t& operator*() const {
+  const hash_pair_t& operator*() const {
     if (at_end) {
       assert(0);
     }
     return pair;
   }
 
-  const pair_t* operator->() const {
+  const hash_pair_t* operator->() const {
     if (at_end) {
       assert(0);
     }

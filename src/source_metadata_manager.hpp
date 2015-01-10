@@ -33,6 +33,12 @@
 #include "file_modes.h"
 #include "source_metadata.hpp"
 
+// a lock is required to protect btree
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 class source_metadata_manager_t {
 
   private:
@@ -59,6 +65,12 @@ class source_metadata_manager_t {
 
   map_t* map;
 
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
+
   // disallow these
   source_metadata_manager_t(const source_metadata_manager_t&);
   source_metadata_manager_t& operator=(const source_metadata_manager_t&);
@@ -68,7 +80,11 @@ class source_metadata_manager_t {
                            file_mode_type_t p_file_mode_type) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode_type),
-       map() {
+       map(),
+       M() {
+
+    MUTEX_INIT(&M);
+
     try {
       map = new map_t(hashdb_dir + "/source_metadata_store",
              file_mode_type_to_btree_flags_bitmask(file_mode));
@@ -90,6 +106,8 @@ class source_metadata_manager_t {
    */
   bool insert(uint64_t source_id, uint64_t filesize, hash_t hashdigest) {
 
+    MUTEX_LOCK(&M);
+
     // btree must be writable
     if (file_mode == READ_ONLY) {
       // program error
@@ -101,6 +119,7 @@ class source_metadata_manager_t {
                              source_id, map_value_t(filesize, hashdigest));
 
     // return success of emplace
+    MUTEX_UNLOCK(&M);
     return response.second;
   }
 
@@ -110,16 +129,20 @@ class source_metadata_manager_t {
    */
   std::pair<bool, source_metadata_t> find(uint64_t source_lookup_index) const {
 
+    MUTEX_LOCK(&M);
+
     // use map iterator to dereference the source metadata
     map_t::const_iterator it = map->find(source_lookup_index);
 
     if (it == map->end()) {
       // not there
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, source_metadata_t>(false, source_metadata_t());
     } else {
       // compose and return source metadata
       source_metadata_t source_metadata(
                     it->first, it->second.filesize, it->second.hashdigest);
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, source_metadata_t>(true, source_metadata);
     }
   }

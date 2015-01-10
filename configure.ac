@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.1.2, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 1.2.0-beta1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
@@ -367,13 +367,6 @@ if test x"${HASHDB_BYTE_ALIGNMENT}" = "x"; then
   HASHDB_BYTE_ALIGNMENT="512"
 fi
 AC_DEFINE_UNQUOTED(HASHDB_BYTE_ALIGNMENT, [$HASHDB_BYTE_ALIGNMENT], [the byte alignment size for data])
-
-################################################################
-############## use LMDB hash store
-AC_ARG_VAR(USE_LMDB_HASH_STORE, [Set to yes to use LMDB hash store instead of direct tree hash store])
-if test x"${USE_LMDB_HASH_STORE}" = "xyes"; then
-  AC_DEFINE(USE_LMDB_HASH_STORE, 1, [define to use LMDB hash store instead of direct tree hash store])
-fi
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

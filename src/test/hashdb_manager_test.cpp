@@ -237,26 +237,26 @@ void rw_new_tests() {
   TEST_EQ((it_pair.first == it_pair.second), true);
 
   // ************************************************************
-  // install lots of data
+  // install some data
   // ************************************************************
-  // populate with 1,000,000 entries
+  // populate with 100,000 entries
   hash_t key;
   TEST_EQ(manager.map_size(), 3);
-  uint count = 1000000;
+  uint count = 100000;
   for (uint64_t n=0; n< count; ++n) {
-    to_key(n+1000000, key);
+    to_key(n+100000, key);
     element = hashdb_element_t(key, 4096, "rep1", "file1", 0);
     manager.insert(element);
   }
-  TEST_EQ(manager.map_size(), 1000003);
+  TEST_EQ(manager.map_size(), 100003);
 }
 
 void ro_tests() {
   // validate that two managers can open the same database read_only
   hashdb_manager_t manager1(temp_dir, READ_ONLY);
-  TEST_EQ(manager1.map_size(), 1000003);
+  TEST_EQ(manager1.map_size(), 100003);
   hashdb_manager_t manager2(temp_dir, READ_ONLY);
-  TEST_EQ(manager2.map_size(), 1000003);
+  TEST_EQ(manager2.map_size(), 100003);
 }
 
 int main(int argc, char* argv[]) {
@@ -264,7 +264,9 @@ int main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
 
   write_settings();
+  std::cout << "rw_new_tests ...\n";
   rw_new_tests();
+  std::cout << "ro_tests ...\n";
   ro_tests();
 
   return 0;

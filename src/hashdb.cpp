@@ -57,23 +57,6 @@
 #include <cassert>
 #endif
 
-// this implementation uses pthread lock to protect the hash database
-#include "mutex_lock.hpp"
-
-// static resources for supporting PTHREAD mode
-static pthread_key_t pthread_hashdb_manager_key;
-static pthread_key_t pthread_tcp_client_manager_key;
-static pthread_once_t pthread_hashdb_manager_key_once = PTHREAD_ONCE_INIT;
-static pthread_once_t pthread_tcp_client_manager_key_once = PTHREAD_ONCE_INIT;
-static std::vector<hashdb_manager_t*> pthread_hashdb_managers;
-static std::vector<tcp_client_manager_t*> pthread_tcp_client_managers;
-static void make_pthread_hashdb_manager_key() {
-  (void) pthread_key_create(&pthread_hashdb_manager_key, NULL);
-}
-static void make_pthread_tcp_client_manager_key() {
-  (void) pthread_key_create(&pthread_tcp_client_manager_key, NULL);
-}
-
 /**
  * version of the hashdb library
  */
@@ -91,14 +74,7 @@ const char* hashdb_version() {
                    mode(HASHDB_NONE),
                    hashdb_manager(0),
                    tcp_client_manager(0),
-//                   pthread_hashdb_managers(),
-//                   pthread_tcp_client_managers(),
-                   logger(0),
-                   M() {
-
-#ifdef HAVE_PTHREAD
-    pthread_mutex_init(&M,NULL);
-#endif
+                   logger(0) {
   }
 
   // open for importing, return true else false with error string.
@@ -154,11 +130,7 @@ const char* hashdb_version() {
     // import each input in turn
     std::vector<import_element_t>::const_iterator it = input.begin();
 
-    // perform all imports in one locked operation.
-    // There is basically no cost for grouping since this iterates db access.
-    // There is gain if this is a large sorted request.
-    MUTEX_LOCK(&M);
-
+    // import all elements
     while (it != input.end()) {
       // convert input to hashdb_element_t
       hashdb_element_t hashdb_element(it->hash,
@@ -172,8 +144,6 @@ const char* hashdb_version() {
 
       ++it;
     }
-
-    MUTEX_UNLOCK(&M);
 
     // good, done
     return 0;
@@ -191,17 +161,12 @@ const char* hashdb_version() {
       return -1;
     }
 
-    // lock while importing
-    MUTEX_LOCK(&M);
-
     // acquire existing or new source lookup index
     uint64_t source_id = hashdb_manager->insert_source(
                                                   repository_name, filename);
  
     // add the metadata associated with this source
     hashdb_manager->insert_source_metadata(source_id, filesize, hashdigest);
-
-    MUTEX_UNLOCK(&M);
 
     // good, done
     return 0;
@@ -239,26 +204,6 @@ const char* hashdb_version() {
     return std::pair<bool, std::string>(true, "");
   }
 
-  // Open for scanning with a separate scan resource per thread.
-  template<>
-  std::pair<bool, std::string> hashdb_t__<hash_t>::open_scan_pthread(
-                                         const std::string& p_path_or_socket) {
-    path_or_socket = p_path_or_socket;
-    if (mode != HASHDB_NONE) {
-      std::cerr << "invalid mode " << (int)mode << "\n";
-      assert(0);
-      exit(1);
-    }
-
-    // perform setup based on selection
-    if (path_or_socket.find("tcp://") == 0) {
-      mode = HASHDB_SCAN_SOCKET_PTHREAD;
-    } else {
-      mode = HASHDB_SCAN_PTHREAD;
-    }
-    return std::pair<bool, std::string>(true, "");
-  }
-
   // scan
   template<>
   int hashdb_t__<hash_t>::scan(const scan_input_t& input,
@@ -279,11 +224,6 @@ const char* hashdb_version() {
         }
 
         // perform all scans in one locked operation.
-        // There is basically no cost for grouping since this iterates db access.
-        // There is gain if this is a large sorted request.
-#ifndef USE_LMDB_HASH_STORE
-        MUTEX_LOCK(&M);
-#endif
 
         // scan each input in turn
         uint32_t input_size = (uint32_t)input.size();
@@ -294,10 +234,6 @@ const char* hashdb_version() {
           }
         }
 
-#ifndef USE_LMDB_HASH_STORE
-        MUTEX_UNLOCK(&M);
-#endif
-
         // good, done
         return 0;
       }
@@ -305,88 +241,6 @@ const char* hashdb_version() {
       case HASHDB_SCAN_SOCKET: {
         // run scan using tcp_client_manager
         return tcp_client_manager->scan(input, output);
-      }
-
-      case HASHDB_SCAN_PTHREAD: {
-
-        hashdb_manager_t* pthread_hashdb_manager;
-
-        // get thread-specific pthread_hashdb_manager, possibly creating it
-        (void) pthread_once(&pthread_hashdb_manager_key_once,
-                            make_pthread_hashdb_manager_key);
-        if (pthread_getspecific(pthread_hashdb_manager_key) == NULL) {
-
-          // create hashdb_manager for scanning
-          try {
-            pthread_hashdb_manager =
-                             new hashdb_manager_t(path_or_socket, READ_ONLY);
-          } catch (std::runtime_error& e) {
-            std::cerr << e.what() << "\n";
-            return -1;
-          }
-
-          // bind the manager to this pthread key
-          pthread_setspecific(pthread_hashdb_manager_key,
-                              pthread_hashdb_manager);
-
-          // save pointer for destructor
-          MUTEX_LOCK(&M);
-          pthread_hashdb_managers.push_back(pthread_hashdb_manager);
-          MUTEX_UNLOCK(&M);
-        } else {
-          pthread_hashdb_manager =(hashdb_manager_t*)pthread_getspecific(
-                                                 pthread_hashdb_manager_key);
-        }
-
-        // run scan using the thread-specific hashdb_manager, unlocked
-
-        // scan each input in turn
-        uint32_t input_size_pthread = (uint32_t)input.size();
-        for (uint32_t i_pthread=0; i_pthread<input_size_pthread; i_pthread++) {
-          uint32_t count_pthread = pthread_hashdb_manager->find_count(
-                                                           input[i_pthread]);
-          if (count_pthread > 0) {
-            output.push_back(std::pair<uint32_t, uint32_t>(i_pthread, count_pthread));
-          }
-        }
-
-        // good, done
-        return 0;
-      }
-
-      case HASHDB_SCAN_SOCKET_PTHREAD: {
-        tcp_client_manager_t* pthread_tcp_client_manager;
-
-        // get thread-specific pthread_tcp_client_manager, possibly creating it
-        (void) pthread_once(&pthread_tcp_client_manager_key_once,
-                            make_pthread_tcp_client_manager_key);
-        if (pthread_getspecific(pthread_tcp_client_manager_key) == NULL) {
-
-          // create tcp_client_manager for scanning
-          try {
-            pthread_tcp_client_manager =
-                                   new tcp_client_manager_t(path_or_socket);
-          } catch (std::runtime_error& e) {
-            std::cerr << e.what() << "\n";
-            return -1;
-          }
-
-          // bind the manager to this pthread key
-          pthread_setspecific(pthread_tcp_client_manager_key,
-                              pthread_tcp_client_manager);
-
-          // save pointer for destructor
-          MUTEX_LOCK(&M);
-          pthread_tcp_client_managers.push_back(pthread_tcp_client_manager);
-          MUTEX_UNLOCK(&M);
-        } else {
-          pthread_tcp_client_manager =
-                                 (tcp_client_manager_t*)pthread_getspecific(
-                                            pthread_tcp_client_manager_key);
-        }
-
-        // run scan using pthread_tcp_client_manager
-        return pthread_tcp_client_manager->scan(input, output);
       }
 
       default: {
@@ -418,20 +272,6 @@ const char* hashdb_version() {
       case HASHDB_SCAN_SOCKET:
         delete tcp_client_manager;
         return;
-      case HASHDB_SCAN_PTHREAD:
-        for (std::vector<hashdb_manager_t*>::const_iterator it =
-             pthread_hashdb_managers.begin();
-             it != pthread_hashdb_managers.end(); ++it) {
-          delete *it;
-        }
-        return;
-      case HASHDB_SCAN_SOCKET_PTHREAD:
-        for (std::vector<tcp_client_manager_t*>::const_iterator tcp_it =
-             pthread_tcp_client_managers.begin();
-             tcp_it != pthread_tcp_client_managers.end(); ++tcp_it) {
-          delete *tcp_it;
-        }
-        return;
       default:
         // program error
         assert(0);
@@ -449,8 +289,7 @@ const char* hashdb_version() {
                  mode(HASHDB_NONE),
                  hashdb_manager(0),
                  tcp_client_manager(0),
-                 logger(0),
-                 M() {
+                 logger(0) {
     assert(0);
     exit(1);
   }

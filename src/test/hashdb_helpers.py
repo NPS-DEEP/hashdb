@@ -8,11 +8,11 @@ from subprocess import Popen, PIPE
 
 # run command array and return lines from it
 def hashdb(cmd):
-    cmd.insert(0, "hashdb")
+    cmd.insert(0, "../hashdb")
     return Popen(cmd, stdout=PIPE).communicate()[0].decode('utf-8').split("\n")
 
 def create(hashdb_dir):
-    subprocess.call(["hashdb", "create", hashdb_dir])
+    subprocess.call(["../hashdb", "create", hashdb_dir])
 
 def parse_settings(hashdb_dir):
     settings = {}

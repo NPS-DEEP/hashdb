@@ -25,8 +25,8 @@ def test_import():
 
     # cleanup
     shutil.rmtree(db1)
-    print("Test Done.")
 
 if __name__=="__main__":
     test_import()
+    print("Test Done.")
 

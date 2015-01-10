@@ -1,4 +1,4 @@
-hashdb Version 1.1.2
+hashdb Version 1.2.0
 Usage: hashdb [-h|-H|--help|--Help] [-v|-V|--version] [-q|--quiet]
               [-f|--flags=<flags>] <command> [<args>]
 
@@ -144,8 +144,8 @@ Database manipulation:
                           hashes into
 
   deduplicate <source hashdb> <destination hashdb>
-    Copy hashes in <source hashdb> into <destination hashdb> except
-    for hashes defined multiple times.
+    Copy the hashes that appear only once 
+    from  <source hashdb> to <destination hashdb>.
 
     Parameters:
     <source hashdb>       the hash database to copy hashes from when source

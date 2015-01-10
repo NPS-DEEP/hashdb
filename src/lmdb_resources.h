@@ -28,41 +28,35 @@
 #include "hash_t_selector.h"
 
 // pair type
-typedef std::pair<hash_t, uint64_t> pair_t;
+typedef std::pair<hash_t, uint64_t> hash_pair_t;
 
 // resources for supporting thread-specific transaction objects
-struct pthread_resources_t {
+struct lmdb_resources_t {
   MDB_txn* txn;
   MDB_dbi dbi;
 
-  // thread-local scratchpad for cursor, key, and data
+  // resource-local scratchpad for cursor, key, and data
   MDB_cursor* cursor;
   MDB_val key;
   MDB_val data;
 
-  pthread_resources_t() :txn(0), dbi(0), cursor(0), key(), data() {
+  lmdb_resources_t() :txn(0), dbi(0), cursor(0), key(), data() {
+    key.mv_size = sizeof(hash_t);
+    data.mv_size = sizeof(uint64_t);
   }
 };
 
 inline void pair_to_mdb(const hash_t& hash, const uint64_t& value,
                         MDB_val& key, MDB_val& data) {
+
+  // output points to input so input isn't as safe as is implied.
   key.mv_size = sizeof(hash_t);
-  key.mv_data = const_cast<void*>(static_cast<const void*>(&hash)); // zz note const_cast
+  key.mv_data = const_cast<void*>(static_cast<const void*>(&hash));
   data.mv_size = sizeof(uint64_t);
-  data.mv_data = const_cast<void*>(static_cast<const void*>(&value)); //zz
+  data.mv_data = const_cast<void*>(static_cast<const void*>(&value));
 }
 
-/*
-inline void mdb_to_pair(const MDB_val& key, const MDB_val& data,
-                        hash_t& hash, uint64_t& value) {
-  if (key.mv_size != sizeof(hash_t)) assert(0);
-  hash = static_cast<hash_t>(*key.mv_data);
-  if (data.mv_size != sizeof(uint64_t)) assert(0);
-  value = static_cast<uint64_t>(*data.mv_data);
-}
-*/
-
-inline pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data) {
+inline hash_pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data) {
   if (key.mv_size != sizeof(hash_t)) {
     std::cout << "key " << key.mv_size << " not " << sizeof(hash_t) << "\n";
     assert(0);
@@ -72,8 +66,8 @@ inline pair_t mdb_to_pair(const MDB_val& key, const MDB_val& data) {
     assert(0);
   }
 
-  return pair_t(*static_cast<hash_t*>(key.mv_data),
-                *static_cast<uint64_t*>(data.mv_data));
+  return hash_pair_t(*static_cast<hash_t*>(key.mv_data),
+                     *static_cast<uint64_t*>(data.mv_data));
 }
 
 #endif

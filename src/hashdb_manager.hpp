@@ -40,19 +40,12 @@
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
-#ifdef USE_LMDB_HASH_STORE
-  #include "lmdb_resources.h"
-  #include "lmdb_hash_store_manager.hpp"
-#endif
+#include "lmdb_resources.h"
+#include "lmdb_hash_store_manager.hpp"
 
-// LMDB indexed by key
-#ifdef USE_LMDB_HASH_STORE
-typedef lmdb_hash_store_manager_t hash_store_key_t;
+// hash store and hash iterator
+typedef lmdb_hash_store_manager_t hash_store_t;
 typedef lmdb_hash_store_iterator_t hash_store_key_iterator_t;
-#else
-typedef boost::btree::btree_multimap<hash_t, uint64_t> hash_store_key_t;
-typedef hash_store_key_t::const_iterator hash_store_key_iterator_t;
-#endif
 typedef std::pair<hash_store_key_iterator_t, hash_store_key_iterator_t>
                                            hash_store_key_iterator_range_t;
 
@@ -75,7 +68,7 @@ class hashdb_manager_t {
 
   private:
   // hash_store_key
-  hash_store_key_t hash_store_key;
+  hash_store_t hash_store_key;
 
   // bloom filter manager
   bloom_filter_manager_t bloom_filter_manager;
@@ -97,13 +90,7 @@ class hashdb_manager_t {
                 file_mode(p_file_mode),
                 settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
                 changes(),
-#ifdef USE_LMDB_HASH_STORE
                 hash_store_key(hashdb_dir, file_mode),
-#else
-                hash_store_key(hashdb_dir + "/hash_store",
-                         file_mode_type_to_btree_flags_bitmask(file_mode) |
-                         globals_t::btree_flags),
-#endif
                 bloom_filter_manager(hashdb_dir, file_mode,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
@@ -178,7 +165,6 @@ class hashdb_manager_t {
 
     // if the key may exist then check against duplicates and max count
     if (bloom_filter_manager.is_positive(element.key)) {
-#ifdef USE_LMDB_HASH_STORE
 
       // disregard if key, value exists
       if (hash_store_key.find(element.key, encoding)) {
@@ -196,28 +182,6 @@ class hashdb_manager_t {
           return;
         }
       }
-
-#else
-      size_t count = 0;
-      hash_store_key_iterator_t it = hash_store_key.lower_bound(element.key);
-      while (it != hash_store_key.end() && key(it) == element.key) {
-        if (value(it) == encoding) {
-          // this exact element already exists
-          ++changes.hashes_not_inserted_duplicate_element;
-          return;
-        }
-        ++count;
-        ++it;
-      }
-
-      // do not exceed max count allowed
-      if (settings.maximum_hash_duplicates > 0 &&
-                               count >= settings.maximum_hash_duplicates) {
-        // at maximum for this hash
-        ++changes.hashes_not_inserted_exceeds_max_duplicates;
-        return;
-      }
-#endif
     }
 
     // add the element since all the checks passed
@@ -288,26 +252,11 @@ class hashdb_manager_t {
                        element.file_offset);
 
     // find and remove the distinct identified element
-#ifdef USE_LMDB_HASH_STORE
     bool did_erase = hash_store_key.erase(element.key, encoding);
     if (did_erase) {
       ++changes.hashes_removed;
       return;
     }
-
-#else
-    hash_store_key_iterator_range_t it = hash_store_key.equal_range(element.key);
-    hash_store_key_iterator_t lower = it.first;
-    const hash_store_key_iterator_t upper = it.second;
-    for (; lower != upper; ++lower) {
-      if (value(lower) == encoding) {
-        // found it so erase it
-        hash_store_key.erase(lower);
-        ++changes.hashes_removed;
-        return;
-      }
-    }
-#endif
 
     // the key with the source lookup encoding was not found
     ++changes.hashes_not_removed_no_element;

@@ -32,6 +32,12 @@
 #include "bi_store.hpp"
 #include <string>
 
+// a lock is required to protect btree
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 /**
  * Provides interfaces for managing source lookup storage.
  * Source lookup storage is implemented using three bidirectional maps:
@@ -58,6 +64,11 @@ class source_lookup_index_manager_t {
   source_lookup_store_t          source_lookup_store;
   repository_name_lookup_store_t repository_name_lookup_store;
   filename_lookup_store_t        filename_lookup_store;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
 
   // helper
   std::string to_string(const boost::string_view& sv) const {
@@ -85,7 +96,9 @@ class source_lookup_index_manager_t {
        repository_name_lookup_store(
             hashdb_dir + "/source_repository_name_store", file_mode_type),
        filename_lookup_store(
-            hashdb_dir + "/source_filename_store", file_mode_type) {
+            hashdb_dir + "/source_filename_store", file_mode_type),
+            M() {
+    MUTEX_INIT(&M);
   }
 
   /**
@@ -94,6 +107,8 @@ class source_lookup_index_manager_t {
    */
   std::pair<bool, uint64_t> insert(const std::string& repository_name,
                                    const std::string& filename) {
+
+    MUTEX_LOCK(&M);
 
     // get or make repository name index from repository name
     boost::string_view repository_name_sv(repository_name);
@@ -126,9 +141,11 @@ class source_lookup_index_manager_t {
     if (status3 == false) {
       // insert the new element
       source_lookup_index = source_lookup_store.insert_value(index_pair);
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(true, source_lookup_index);
     } else {
       // just offer the index from the existing element
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, source_lookup_index);
     }
   }
@@ -146,6 +163,7 @@ class source_lookup_index_manager_t {
     bool status1 = repository_name_lookup_store.get_key(
                                 repository_name_sv, repository_name_index);
     if (status1 == false) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, 0);
     }
 
@@ -154,6 +172,7 @@ class source_lookup_index_manager_t {
     uint64_t filename_index;
     bool status2 = filename_lookup_store.get_key(filename_sv, filename_index);
     if (status2 == false) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, 0);
     }
 
@@ -162,9 +181,11 @@ class source_lookup_index_manager_t {
     uint64_t source_lookup_index;
     bool status3 = source_lookup_store.get_key(index_pair, source_lookup_index);
     if (status3 == false) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, 0);
     }
 
+    MUTEX_UNLOCK(&M);
     return std::pair<bool, uint64_t>(true, source_lookup_index);
   }
 
@@ -177,11 +198,14 @@ class source_lookup_index_manager_t {
 
     typedef std::pair<std::string, std::string> string_pair_t;
 
+    MUTEX_LOCK(&M);
+
     // get the lookup pair from the index
     std::pair<uint64_t, uint64_t> lookup_pair;
     bool status1 = source_lookup_store.get_value(
                                      source_lookup_index, lookup_pair);
     if (status1 == false) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
@@ -190,6 +214,7 @@ class source_lookup_index_manager_t {
     bool status2 = repository_name_lookup_store.get_value(
                                     lookup_pair.first, repository_name_sv);
     if (status2 != true) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
@@ -198,11 +223,13 @@ class source_lookup_index_manager_t {
     bool status3 = filename_lookup_store.get_value(
                                     lookup_pair.second, filename_sv);
     if (status3 != true) {
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, string_pair_t>(false, string_pair_t("",""));
     }
 
     std::pair<std::string, std::string> string_pair(to_string(repository_name_sv),
                                                to_string(filename_sv));
+    MUTEX_UNLOCK(&M);
     return std::pair<bool, string_pair_t>(true, string_pair);
   }
 
@@ -225,27 +252,6 @@ class source_lookup_index_manager_t {
   }
   size_t filename_lookup_store_size() const {
     return filename_lookup_store.size();
-  }
-
-  /**
-   * Report status to consumer.
-   */
-  void report_status(std::ostream& os) const {
-    os << "source lookup store status: ";
-    os << "source lookup store size count=" << source_lookup_store.size();
-    os << "repository name lookup store size count=" << repository_name_lookup_store.size();
-    os << "filename lookup store size count=" << filename_lookup_store.size();
-//total bytes is sum of files    os << ", bytes=" << size;
-    os << "\n";
-  }
-
-  void report_status(dfxml_writer& x) const {
-    x.push("source_lookup_store_status");
-    x.xmlout("source_lookup_store_element_count", source_lookup_store.size());
-    x.xmlout("repository_name_lookup_store_element_count", repository_name_lookup_store.size());
-    x.xmlout("filename_lookup_store_element_count", filename_lookup_store.size());
-//total bytes is sum of files    x.xmlout("bytes", size);
-    x.pop();
   }
 };
 

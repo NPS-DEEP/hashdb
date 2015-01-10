@@ -28,7 +28,6 @@ def test_create():
 
     # cleanup
     shutil.rmtree(db1)
-    print("Test Done.")
 
 def option_p():
     # only accept 512
@@ -44,4 +43,5 @@ def option_p():
 if __name__=="__main__":
     test_create()
     option_p()
+    print("Test Done.")
 

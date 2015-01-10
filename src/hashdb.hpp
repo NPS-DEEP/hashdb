@@ -29,10 +29,6 @@
 #include <vector>
 #include <stdint.h>
 
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-
 /**
  * Version of the hashdb library.
  */
@@ -56,24 +52,14 @@ class hashdb_t__ {
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
                        HASHDB_SCAN,
-                       HASHDB_SCAN_SOCKET,
-                       HASHDB_SCAN_PTHREAD,
-                       HASHDB_SCAN_SOCKET_PTHREAD};
+                       HASHDB_SCAN_SOCKET};
   std::string path_or_socket;
   uint32_t block_size;
   uint32_t max_duplicates;
   hashdb_modes_t mode;
   hashdb_manager_t* hashdb_manager;             // import or scan path
   tcp_client_manager_t* tcp_client_manager;     // scan socket
-//  std::vector<hashdb_manager_t*> pthread_hashdb_managers;         // pthread
-//  std::vector<tcp_client_manager_t*> pthread_tcp_client_managers; // pthread
   logger_t* logger;
-
-#ifdef HAVE_PTHREAD
-  mutable pthread_mutex_t M;  // mutext protecting database access
-#else
-  mutable int M;              // placeholder
-#endif
 
   public:
   // data structure for one import element
@@ -149,13 +135,6 @@ class hashdb_t__ {
    * Return true else false with error string.
    */
   std::pair<bool, std::string> open_scan(const std::string& p_path_or_socket);
-
-  /**
-   * Open for scanning with a separate scan resource per thread.
-   * Return true else false with error string.
-   */
-  std::pair<bool, std::string> open_scan_pthread(
-                                         const std::string& p_path_or_socket);
 
   /**
    * Scan.

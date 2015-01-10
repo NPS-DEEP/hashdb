@@ -23,9 +23,7 @@ bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 
 hashdb_LDFLAGS = -static
-#libhashdb_la_LDFLAGS = -static -avoid-version
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
-#libhashdb_la_LDFLAGS = -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
@@ -80,7 +78,7 @@ LIBHASHDB_INCS = \
 	history_manager.hpp \
 	lmdb_hash_store_iterator.hpp \
 	lmdb_hash_store_manager.hpp \
-	lmdb_resource_manager.hpp \
+	lmdb_resources_manager.hpp \
 	lmdb_resources.h \
 	logger.hpp \
 	mutex_lock.hpp \

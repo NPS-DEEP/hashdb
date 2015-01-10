@@ -13,7 +13,16 @@ GIT repository: https://github.com/simsong/bulk_extractor
 * Performance of the `rebuild_bloom` command is improved when the filter is being disabled.
 
 # Functional Changes
-* TBD
+* Replace hash store B-Tree database with LMDB database,
+see http://symas.com/mdb/doc/index.html.
+Note:
+ * Performance is faster than the previous B-Tree implementation.
+ * LMDB requires about 50 bytes per hash instead of about 35 bytes per hash.
+ * LMDB is memory-mapped.
+ * LMDB read operations are performed concurrently without a lock.
+ * Source lookup and metadata lookup databases still use B-Tree.
+
+* The hashdb library API interface `open_scan_pthread` added in v1.1.2 was removed.  It provided locked threaded B-Tree access but it did not improve performance.  LMDB does not use locks for reading.  hashdb locks LMDB write accesses.
 
 Availability
 ============
