@@ -117,8 +117,10 @@ class json_formatter_t {
           assert(0);
         }
         if (source_pair.first == true) {
-          std::cout << ",\"repository_name\":\"" << source_pair.second.first
-                    << "\",\"filename\":\"" << source_pair.second.second
+          std::cout << ",\"repository_name\":\""
+                    << escape_json(source_pair.second.first)
+                    << "\",\"filename\":\""
+                    << escape_json(source_pair.second.second)
                     << "\"";
         }
 
@@ -163,7 +165,7 @@ class json_formatter_t {
 
   // helper to get valid json output, taken from
   // http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
-  std::string escapeJsonString(const std::string& input) {
+  static std::string escape_json(const std::string& input) {
     std::ostringstream ss;
     for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
     //C++98/03:

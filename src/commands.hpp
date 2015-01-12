@@ -310,8 +310,10 @@ class commands_t {
 
     // print the source
     if (source_pair.first == true) {
-      os << ",\"repository_name\":\"" << source_pair.second.first
-         << "\",\"filename\":\"" << source_pair.second.second
+      os << ",\"repository_name\":\""
+         << json_formatter_t::escape_json(source_pair.second.first)
+         << "\",\"filename\":\""
+         << json_formatter_t::escape_json(source_pair.second.second)
          << "\"";
     }
 
