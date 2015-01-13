@@ -242,7 +242,7 @@ void rw_new_tests() {
   // populate with 100,000 entries
   hash_t key;
   TEST_EQ(manager.map_size(), 3);
-  uint count = 100000;
+  size_t count = 100000;
   for (uint64_t n=0; n< count; ++n) {
     to_key(n+100000, key);
     element = hashdb_element_t(key, 4096, "rep1", "file1", 0);
