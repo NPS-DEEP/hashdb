@@ -1,7 +1,6 @@
 # NSIS script for creating the Windows hashdb installer file.
 #
 # Installs the following:
-#   32-bit configuration of hashdb tools
 #   64-bit configuration of hashdb tools
 #   pdf documents
 #   path
@@ -56,10 +55,8 @@ ${If} $0 != "admin" ;Require admin rights on NT4+
 ${EndIf}
 !macroend
 
-function InstallOnce
-	# don't install twice
-	ifFileExists "$INSTDIR\uninstall.exe" AlreadyThere
-
+#Section "hashdb"
+Section "${APPNAME}"
         # establish out path
         setOutPath "$INSTDIR"
 
@@ -87,55 +84,24 @@ function InstallOnce
 	# link the uninstaller to the start menu
 	createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall ${APPNAME}.lnk" "$INSTDIR\uninstall.exe"
 
-        # install PDF docs
+	# install hashdb
+        file "hashdb.exe"
+
+        # install PDF doc
         setOutPath "$INSTDIR\pdf"
         file "hashdbUsersManual.pdf"
 
-        # 
+        # install shortcut to PDF doc
 	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk" "$INSTDIR\pdf\hashdbUsersManual.pdf"
-
-	AlreadyThere:
-functionEnd
-
-# deselected by default
-Section "32-bit configuration" SEC0000
-
-	# install content common to both
-	call InstallOnce
-
-	# install hashdb files into the 32-bit configuration
-	setOutPath "$INSTDIR\32-bit"
-	file "/oname=hashdb.exe" "hashdb32.exe"
 sectionEnd
 
-Section "64-bit configuration" SEC0001
-
-	# install content common to both
-	call InstallOnce
-
-	# install hashdb files into the 64-bit configuration
-	setOutPath "$INSTDIR\64-bit"
-	file "/oname=hashdb.exe" "hashdb64.exe"
-sectionEnd
-
-Section "Add to path" SEC0002
+Section "Add to path"
 	setOutPath "$INSTDIR"
-        # note that path includes 32-bit and 64-bit, whether or not they
-        # were both installed
-        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\32-bit"
-        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR\64-bit"
+        # add hashdb to system PATH
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR"
 sectionEnd
 
 function .onInit
-        #Determine the bitness of the OS and enable the correct section
-        ${If} ${RunningX64}
-            SectionSetFlags ${SEC0000}  0
-            SectionSetFlags ${SEC0001}  ${SF_SELECTED}
-        ${Else}
-            SectionSetFlags ${SEC0001}  0
-            SectionSetFlags ${SEC0000}  ${SF_SELECTED}
-        ${EndIf}
-
         # require admin
 	setShellVarContext all
 	!insertmacro VerifyUserIsAdmin
@@ -175,28 +141,21 @@ FunctionEnd
 
 section "uninstall"
 	# manage uninstalling these because they may be open
-	StrCpy $0 "$INSTDIR\32-bit\hashdb.exe"
-	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\64-bit\hashdb.exe"
+	StrCpy $0 "$INSTDIR\hashdb.exe"
 	Call un.FailableDelete
 	StrCpy $0 "$INSTDIR\pdf\hashdbUsersManual.pdf"
 	Call un.FailableDelete
 
-	# uninstall files and links
-	delete "$INSTDIR\32-bit\*"
-	delete "$INSTDIR\64-bit\*"
-	delete "$INSTDIR\pdf\*"
+#	# uninstall files and links
+#	delete "$INSTDIR\32-bit\*"
+#	delete "$INSTDIR\64-bit\*"
+#	delete "$INSTDIR\pdf\*"
 
 	# uninstall dir
-	rmdir "$INSTDIR\32-bit"
-	rmdir "$INSTDIR\64-bit"
 	rmdir "$INSTDIR\pdf"
 
 	# uninstall Start Menu launcher shortcuts
 	delete "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk"
-	delete "$SMPROGRAMS\${APPNAME}\hashdb Scanner Demo.lnk"
-	delete "$SMPROGRAMS\${APPNAME}\hashdb Create Database Demo.lnk"
-	delete "$SMPROGRAMS\${APPNAME}\hashdb Similarity Demo.lnk"
 	delete "$SMPROGRAMS\${APPNAME}\uninstall ${APPNAME}.lnk"
 	rmDir "$SMPROGRAMS\${APPNAME}"
 
@@ -211,7 +170,6 @@ section "uninstall"
 
         # remove associated search paths from the PATH environment variable
         # were both installed
-        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\32-bit"
-        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR\64-bit"
+        ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR"
 sectionEnd
 

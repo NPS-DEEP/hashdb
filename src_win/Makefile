@@ -3,14 +3,13 @@
 
 # NOTE 2: This Makefile is invoked from the parent directory, but as part
 #         of building the installer it invokes 'make distclean' in the
-#         parent directory and makes two new subdirectories:
-#             win32/   - 32-bit windows
+#         parent directory and makes new subdirectory:
 #             win64/   - 64-bit windows
 
 # NOTE 3: This makefile is not automatically generated.  If it were,
 #         then 'make distclean' would wipe it.
 
-# NOTE: To build just win32, win64, or windist, you may use hashdb/Makefile.
+# NOTE: To build just win64 or windist, you may use hashdb/Makefile.
 
 HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
 
@@ -27,16 +26,6 @@ PDFDOCS = hashdbUsersManual.pdf
 #
 $(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
 	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
-	if [ ! -r ../win32/Makefile ]; then \
-	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
-	   if [ ! -d ../win32 ]; then mkdir ../win32 ; fi; \
-	   if [ ! -r ../win32/Makefile ]; then (cd ../win32;mingw32-configure); fi; \
-	fi
-	echo '**** running make in win32/ to create win32 .exe files ****'; \
-	(cd ../win32;$(MAKE))
-	cp ../win32/src/hashdb.exe hashdb32.exe
-	@echo 
-	@echo
 	if [ ! -r ../win64/Makefile ]; then \
 	   if [ -r ../Makefile ]; then (cd ..;make distclean); fi ; \
 	   if [ ! -d ../win64 ]; then mkdir ../win64 ; fi; \
@@ -44,7 +33,7 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
 	fi
 	echo '**** running make in win64/ to create win64 .exe files ****'; \
 	(cd ../win64;$(MAKE))
-	cp ../win64/src/hashdb.exe hashdb64.exe
+	cp ../win64/src/hashdb.exe hashdb.exe
 	@echo
 	@echo
 	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
@@ -53,13 +42,10 @@ $(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
 	ls -lt *exe
 
 win_tests: $(UNVERSIONED_INSTALLER)
-	(cd ../win32/src/test;$(MAKE))
 	(cd ../win64/src/test;$(MAKE))
 	rm -rf win_tests
 	mkdir win_tests
-	mkdir win_tests/win32
 	mkdir win_tests/win64
-	cp ../win32/src/test/*.exe win_tests/win32
 	cp ../win64/src/test/*.exe win_tests/win64
 	cp run_tests.bat win_tests
 	cp ../src/test/identified_blocks.txt win_tests
@@ -67,7 +53,7 @@ win_tests: $(UNVERSIONED_INSTALLER)
 	zip -r9 win_tests-$(HASHDBVERSION).zip win_tests
 
 $(SRC_WIN)clean:
-	/bin/rm -rf ../win32 ../win64 *.exe
+	/bin/rm -rf ../win64 *.exe
 	/bin/rm -rf $(PDFDOCS)
 
 $(SRC_WIN)distclean:
@@ -75,11 +61,9 @@ $(SRC_WIN)distclean:
 	$(MAKE) clean
 
 $(SRC_WIN)install:
-	(cd ../win32/src;$(MAKE) install)
 	(cd ../win64/src;$(MAKE) install)
 
 $(SRC_WIN)uninstall:
-	(cd ../win32/src;$(MAKE) uninstall)
 	(cd ../win64/src;$(MAKE) uninstall)
 
 ################################################################

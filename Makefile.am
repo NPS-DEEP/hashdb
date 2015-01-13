@@ -32,24 +32,10 @@ exels:
 execlean:
 	/bin/rm -f */*exe
 
-.PHONY: win32
-win32: win32/hashdb32.exe
-
 .PHONY: win64
-win64: win64/hashdb64.exe
+win64: win64/hashdb.exe
 
-win32/hashdb32.exe:
-	@echo '****************************************************'
-	@echo '*** making win32 with mingw32-configure and make ***'
-	@echo '****************************************************'
-	if [ -r Makefile ]; then $(MAKE) distclean ; fi
-	if [ ! -d win32  ]; then mkdir win32 ; fi
-	if [ ! -r win32/Makefile ]; then (cd win32;mingw32-configure) ; fi
-	(cd win32;$(MAKE))
-	(cp win32/src/hashdb.exe win32/hashdb32.exe)
-	ls -l win32/*.exe
-
-win64/hashdb64.exe:
+win64/hashdb.exe:
 	@echo '****************************************************'
 	@echo '*** making win64 with mingw32-configure and make ***'
 	@echo '****************************************************'
@@ -57,17 +43,16 @@ win64/hashdb64.exe:
 	if [ ! -d win64  ]; then mkdir win64 ; fi
 	if [ ! -r win64/Makefile ]; then (cd win64;mingw64-configure) ; fi
 	(cd win64;$(MAKE))
-	(cp win64/src/hashdb.exe win64/hashdb64.exe)
+	(cp win64/src/hashdb.exe win64/hashdb.exe)
 	ls -l win64/*.exe
 
-# windist makes win32 and win64 .exe files and puts them in a zip file
+# windist makes the win64 .exe file and puts it in a zip file
 # NOTE: this is no longer preferable since we have a hashdb windows installer
 #       in src_win
-windist: win32 win64
+windist: win64
 	rm -rf $(distdir).zip
 	mkdir $(distdir)
 	@echo
-	cp win32/hashdb32.exe $(distdir)
 	cp win64/hashdb64.exe $(distdir)
 	@echo ====================================
 	@echo 
@@ -105,5 +90,5 @@ clean-local:
 	rm -rf $(distdir).tar.gz
 	rm -rf $(distdir).zip
 
-.PHONY: exels execlean win32 win64 windist pull
+.PHONY: exels execlean win64 windist pull
 
