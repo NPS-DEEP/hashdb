@@ -102,6 +102,15 @@ Section "Add to path"
 sectionEnd
 
 function .onInit
+        # only win64 is supported
+        ${If} ${RunningX64}
+            # good
+        ${Else}
+	    MessageBox MB_ICONSTOP \
+		"Error: ${APPNAME} is not supported on 32-bit Windows systems.  Please use Win-64."
+	    Abort
+        ${EndIf}
+
         # require admin
 	setShellVarContext all
 	!insertmacro VerifyUserIsAdmin
