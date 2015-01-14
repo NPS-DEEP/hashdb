@@ -1,3 +1,6 @@
+# Taken from bulk_extractor/m4/slg_mingw_support.m4 but with UNICODE
+# flags removed because LMDB must not have UNICODE defined.
+
 ################################################################
 ## See if we are running on mingw
 # http://osdir.com/ml/gnu.mingw.devel/2003-09/msg00040.html
@@ -20,7 +23,7 @@ case $host in
 
   *mingw*)   
      LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"  
-     CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
+     CPPFLAGS="-D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static "
      CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
