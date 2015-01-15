@@ -115,6 +115,7 @@ class lmdb_hash_store_manager_t {
         env_flags = MDB_NOMETASYNC | MDB_NOSYNC | MDB_WRITEMAP;
         break;
       default:
+        env_flags = 0; // satisfy mingw32-g++ compiler
         assert(0);
     }
 
@@ -262,6 +263,7 @@ class lmdb_hash_store_manager_t {
       has_pair = false;
     } else {
       // program error
+      has_pair = false; // satisfy mingw32-g++ compiler
       assert(0);
     }
 
