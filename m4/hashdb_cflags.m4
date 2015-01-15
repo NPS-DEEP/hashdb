@@ -12,6 +12,11 @@
 # causes configure to crash on gcc-4.2.1: -Wsign-compare-Winline 
 # causes warnings with unistd.h:  -Wnested-externs 
 # Just causes too much annoyance: -Wmissing-format-attribute 
+#
+################################################################
+# bda - Changed to set HASHDB_CFLAGS instead of CFLAGS
+#       and HASHDB_CXXFLAGS instead of CXXFLAGS
+#       to allow visibility to foo_CFLAGS
 
 # First, see if we are using CLANG
 using_clang=no
@@ -27,35 +32,36 @@ fi
 
 
 # Check GCC
-C_WARNINGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
+C_FLAGS_TO_TEST="-MD -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes \
     -Wshadow -Wwrite-strings -Wcast-align -Waggregate-return \
     -Wbad-function-cast -Wcast-qual -Wundef -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wc++-compat -Wmissing-noreturn "
 
 if test x"${mingw}" != "xyes" ; then
   # add the warnings we do not want to do on mingw
-  C_WARNINGS_TO_TEST="$C_WARNINGS_TO_TEST -Wall -Wstrict-prototypes"
+  C_FLAGS_TO_TEST="$C_FLAGS_TO_TEST -Wall -Wstrict-prototypes"
 fi
 
 if test $using_clang == "no" ; then
   # -Wstrict-null-sentinel is not supported under clang
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST -Wstrict-null-sentinel"
+  CXX_FLAGS_TO_TEST="$CXX_FLAGS_TO_TEST -Wstrict-null-sentinel"
 fi
 
 
 
-echo "C Warnings to test: $C_WARNINGS_TO_TEST"
+echo "C flags to test: $C_FLAGS_TO_TEST"
 
-for option in $C_WARNINGS_TO_TEST
+for option in $C_FLAGS_TO_TEST
 do
   SAVE_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $option"
   AC_MSG_CHECKING([whether gcc understands $option])
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CFLAGS="$SAVE_CFLAGS"])
+      [has_option=yes; HASHDB_CFLAGS="$HASHDB_CFLAGS $option"],
+      [has_option=no])
   AC_MSG_RESULT($has_option)
   unset has_option
+  CFLAGS="$SAVE_CFLAGS"
   unset SAVE_CFLAGS
   if test $option = "-Wmissing-format-attribute" ; then
     AC_DEFINE(HAVE_MISSING_FORMAT_ATTRIBUTE_WARNING,1,
@@ -74,7 +80,7 @@ unset option
 # -Wmissing-format-attribute  --- Just too annoying
 AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS([string])
-CXX_WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
+CXX_FLAGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
     -Wshadow -Wwrite-strings -Wcast-align  \
     -Wredundant-decls -Wdisabled-optimization \
     -Wfloat-equal -Wmultichar -Wmissing-noreturn \
@@ -83,24 +89,27 @@ CXX_WARNINGS_TO_TEST="-Wall -MD -D_FORTIFY_SOURCE=2 -Wpointer-arith \
 
 if test x"${mingw}" != "xyes" ; then
   # add the warnings we don't want to do on mingw
-  CXX_WARNINGS_TO_TEST="$CXX_WARNINGS_TO_TEST  -Weffc++"
+  CXX_FLAGS_TO_TEST="$CXX_FLAGS_TO_TEST  -Weffc++"
 fi
 
-echo "C++ Warnings to test: $CXX_WARNINGS_TO_TEST"
+echo "C++ flags to test: $CXX_FLAGS_TO_TEST"
 
-for option in $CXX_WARNINGS_TO_TEST
+for option in $CXX_FLAGS_TO_TEST
 do
   SAVE_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $option"
   AC_MSG_CHECKING([whether g++ understands $option])
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [has_option=yes],
-      [has_option=no; CXXFLAGS="$SAVE_CXXFLAGS"])
+      [has_option=yes; HASHDB_CXXFLAGS="$HASHDB_CXXFLAGS $option"],
+      [has_option=no])
   AC_MSG_RESULT($has_option)
   unset has_option
+  CXXFLAGS="$SAVE_CXXFLAGS"
   unset SAVE_CXXFLAGS
 done
 unset option
 AC_LANG_POP()    
 
+AC_SUBST(HASHDB_CFLAGS)
+AC_SUBST(HASHDB_CXXFLAGS)
 

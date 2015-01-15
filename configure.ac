@@ -63,7 +63,7 @@ fi
 ## Includes
 m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
-m4_include([m4/slg_gcc_all_warnings.m4])
+m4_include([m4/hashdb_cflags.m4])
 m4_include([src/dfxml/src/dfxml_configure.m4])
 
 ################################################################
@@ -379,15 +379,10 @@ AC_MSG_NOTICE([  CFLAGS:           $CFLAGS])
 AC_MSG_NOTICE([  CXXFLAGS:         $CXXFLAGS])
 AC_MSG_NOTICE([  LIBS:             $LIBS])
 AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
+AC_MSG_NOTICE([  HASHDB_CFLAGS:    $HASHDB_CFLAGS])
+AC_MSG_NOTICE([  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS])
 
 AC_OUTPUT
-
-## Finally, record the values of CFLAGS, CPPFLAGS, and CXXFLAGS for DFXML
-echo "#define CPPFLAGS \"$CPPFLAGS\"" >> config.h
-echo "#define CFLAGS   \"$CFLAGS\""   >> config.h
-echo "#define CXXFLAGS \"$CXXFLAGS\"" >> config.h
-echo "#define LIBS     \"$LIBS\""     >> config.h
-echo "#define LDFLAGS  \"$LDFLAGS\""  >> config.h
 
 ## for hashdb git version, see dfxml_configure.m4
 if test x"$GIT_COMMIT" != "x" ; then

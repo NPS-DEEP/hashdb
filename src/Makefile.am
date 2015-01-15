@@ -21,6 +21,19 @@
 
 bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
+libhashdb_la_LIBADD = liblmdb.la
+noinst_LTLIBRARIES = liblmdb.la
+liblmdb_la_SOURCES = \
+	lmdb/libraries/liblmdb/lmdb.h \
+	lmdb/libraries/liblmdb/mdb.c \
+	lmdb/libraries/liblmdb/midl.h \
+	lmdb/libraries/liblmdb/midl.c
+
+# these CFLAGS are adapted from liblmdb/Makefile
+liblmdb_la_CFLAGS = \
+	-pthread -O3 -g \
+	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized
+liblmdb_la_LDFLAGS = -static -PIC
 
 hashdb_LDFLAGS = -static
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
@@ -29,8 +42,10 @@ libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-isystem${top_srcdir}/src/btree/include \
 	-isystem${top_srcdir}/src/endian/include \
-	-isystem${top_srcdir}/src/lmdb/libraries/liblmdb \
+	-I${top_srcdir}/src/lmdb/libraries/liblmdb \
 	$(XML_CFLAGS)
+AM_CFLAGS = $(HASHDB_CFLAGS)
+AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 hashdb_LDADD = libhashdb.la
 
@@ -116,12 +131,6 @@ ENDIAN_INCS = \
 	endian/include/boost/endian/detail/disable_warnings_pop.hpp \
 	endian/include/boost/endian/detail/intrinsic.hpp \
 	endian/include/boost/endian/conversion.hpp
-
-LMDB_INCS = \
-	lmdb/libraries/liblmdb/lmdb.h \
-	lmdb/libraries/liblmdb/mdb.c \
-	lmdb/libraries/liblmdb/midl.h \
-	lmdb/libraries/liblmdb/midl.c
 
 BLOOM_INCS = \
 	misc/bloom.c \

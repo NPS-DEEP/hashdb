@@ -53,6 +53,9 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
+AM_CFLAGS = $(HASHDB_CFLAGS)
+AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
+
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la
 bi_store_test_LDADD = ../libhashdb.la
