@@ -21,7 +21,7 @@
  * \file
  * Manage LMDB resources in an optimized way.
  * Usage: open, use, then close resources.
- *   - for RO: keeps resources active for the thread.
+ *   - for RO: keeps resources active for the thread, close all when done.
  *   - for RW: open, use, then close protected by lock, and can grow DB.
  */
 
@@ -114,42 +114,7 @@ class lmdb_resources_manager_t {
 #endif
 
   ~lmdb_resources_manager_t() {
-    if (file_mode == READ_ONLY) {
-      // close resources that were opened for each thread
-      MUTEX_LOCK(&M);
-      for (std::set<lmdb_resources_t*>::iterator it =
-                 pthread_resource_set.begin();
-                 it != pthread_resource_set.end();
-                 ++it) {
-
-        // close selected resource
-        lmdb_resources_t* resources = *it;
-#ifdef DEBUG
-        std::cout << "commit_and_close_all_resources, resource: " << resources
-                  << "\n";
-#endif
-
-        // free cursor
-        mdb_cursor_close(resources->cursor);
-
-        // do not close dbi handle, why not close it?
-
-        // free transaction
-        mdb_txn_abort(resources->txn);
-
-        // remove resources from pthread resources key
-        pthread_setspecific(pthread_resources_key, NULL);
-
-        // remove resources
-        delete resources;
-      }
-
-      pthread_resource_set.clear();
-      MUTEX_UNLOCK(&M);
-
-    } else {
-      // resources are not left open in RW mode
-    }
+    close_all_ro_resources();
   }
 
   /**
@@ -272,6 +237,46 @@ class lmdb_resources_manager_t {
 
     return pthread_resources;
   }
+
+  void close_all_ro_resources() {
+    if (file_mode == READ_ONLY) {
+      // close resources that were opened for each thread
+      MUTEX_LOCK(&M);
+      for (std::set<lmdb_resources_t*>::iterator it =
+                 pthread_resource_set.begin();
+                 it != pthread_resource_set.end();
+                 ++it) {
+
+        // close selected resource
+        lmdb_resources_t* resources = *it;
+#ifdef DEBUG
+        std::cout << "commit_and_close_all_resources, resource: " << resources
+                  << "\n";
+#endif
+
+        // free cursor
+        mdb_cursor_close(resources->cursor);
+
+        // do not close dbi handle, why not close it?
+
+        // free transaction
+        mdb_txn_abort(resources->txn);
+
+        // remove resources from pthread resources key
+        pthread_setspecific(pthread_resources_key, NULL);
+
+        // remove resources
+        delete resources;
+      }
+
+      pthread_resource_set.clear();
+      MUTEX_UNLOCK(&M);
+
+    } else {
+      // resources are not left open in RW mode
+    }
+  }
+
 
   /**
    * convenience method

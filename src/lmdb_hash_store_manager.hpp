@@ -129,6 +129,15 @@ class lmdb_hash_store_manager_t {
     }
   }
 
+  // close env
+  ~lmdb_hash_store_manager_t() {
+    // close any RO resources that may be open
+    resources_manager.close_all_ro_resources();
+
+    // close the MDB environment
+    mdb_env_close(env);
+  }
+
   // emplace
   void emplace(const hash_t& hash, uint64_t encoding) {
 
@@ -169,6 +178,7 @@ class lmdb_hash_store_manager_t {
       status = false;
     } else {
       std::cerr << "LMDB erase error: " << mdb_strerror(rc) << "\n";
+      status = false;
       assert(0);
     }
 
