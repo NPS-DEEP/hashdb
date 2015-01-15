@@ -160,6 +160,7 @@ class source_lookup_index_manager_t {
     // get repository name index from repository name
     boost::string_view repository_name_sv(repository_name);
     uint64_t repository_name_index;
+    MUTEX_LOCK(&M);
     bool status1 = repository_name_lookup_store.get_key(
                                 repository_name_sv, repository_name_index);
     if (status1 == false) {
