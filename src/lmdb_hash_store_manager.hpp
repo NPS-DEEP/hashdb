@@ -106,10 +106,13 @@ class lmdb_hash_store_manager_t {
           exit(1);
         }
 #endif
-        env_flags = MDB_NOMETASYNC | MDB_NOSYNC;
+        env_flags = MDB_NOMETASYNC | MDB_NOSYNC | MDB_WRITEMAP;
         break;
       case RW_MODIFY:
-        env_flags = MDB_NOMETASYNC | MDB_NOSYNC;
+        // NOTE: These flags improve performance significantly so use them.
+        // No sync means no requisite disk action after every transaction.
+        // writemap suppresses checking but improves Windows performance.
+        env_flags = MDB_NOMETASYNC | MDB_NOSYNC | MDB_WRITEMAP;
         break;
       default:
         assert(0);
