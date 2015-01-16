@@ -298,7 +298,7 @@ void usage() {
   << "    <hashdb>              the hash database to print hashes from\n"
   << "    <source_id>           the source index of the hashes to print\n"
   << "\n"
-  << "  expand_identified_blocks [-m <number> <hashdb> <identified blocks file>\n"
+  << "  expand_identified_blocks [-m <number>] <hashdb> <identified blocks file>\n"
   << "    Print source information for each hash in <identified blocks file> by\n"
   << "    referencing source information in <hashdb>.  Source information is\n"
   << "    suppressed if the number of sources exceeds the requested maximum.\n"
