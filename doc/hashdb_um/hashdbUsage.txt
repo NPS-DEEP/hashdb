@@ -246,7 +246,7 @@ Statistics:
     <hashdb>              the hash database to print hashes from
     <source_id>           the source index of the hashes to print
 
-  expand_identified_blocks [-m <number> <hashdb> <identified blocks file>
+  expand_identified_blocks [-m <number>] <hashdb> <identified blocks file>
     Print source information for each hash in <identified blocks file> by
     referencing source information in <hashdb>.  Source information is
     suppressed if the number of sources exceeds the requested maximum.
