@@ -182,6 +182,7 @@ class lmdb_name_store_t {
       assert(0);
     }
 
+    delete cstr;
     context.close();
     return std::pair<bool, uint64_t>(is_there, source_lookup_index);
   }

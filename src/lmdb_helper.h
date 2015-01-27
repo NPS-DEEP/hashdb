@@ -180,6 +180,32 @@ class lmdb_helper {
     val.mv_size = sizeof(hash_t);
     val.mv_data = const_cast<void*>(static_cast<const void*>(&hash));
   }
+
+  // provide an allocated copy of data that goes away upon loss of scope
+  class char_copy_t {
+    private:
+    const size_t size;
+    const char* data;
+    // copy sized data
+    char_copy_t(size_t p_size, const char*p_data) :
+                         size(p_size), data(new char[p_size]) {
+      std::memcpy(data, p_data);
+    }
+    // copy
+    char_copy_t(const char_copy_t& other): size(other.size), data(0) {
+      std::memcpy(data, other.data);
+    }
+    // equals
+    char_copy_t& operator=(const char_copy_t& other) {
+      delete data;
+      data = new char[other.size];
+      std::memcpy(data, other.data);
+    }
+
+    ~char_copy_t() {
+      delete char_copy_t;
+    }
+  }
 };
 
 #endif
