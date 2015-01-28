@@ -57,12 +57,12 @@ class lmdb_hash_store_t {
   lmdb_hash_store_t& operator=(const lmdb_hash_store_t&);
 
   public:
-  struct hash_encoding_status_t {
+  struct iteration_fields_t {
     hash_t hash;
     uint64_t encoding;
-    bool status;
-    hash_encoding_status_t(hash_t p_hash, uint64_t p_encoding, bool p_status) :
-                   hash(p_hash), encoding(p_encoding), status(p_status) {
+    bool is_valid;
+    iteration_fields_t(hash_t p_hash, uint64_t p_encoding, bool p_is_valid) :
+                hash(p_hash), encoding(p_encoding), is_valid(p_is_valid) {
     }
   };
 
@@ -89,8 +89,8 @@ class lmdb_hash_store_t {
     mdb_env_close(env);
   }
 
-  // emplace or fail
-  void emplace(const hash_t& hash, uint64_t encoding) {
+  // insert or fail
+  void insert(const hash_t& hash, uint64_t encoding) {
 
     MUTEX_LOCK(&M);
 
@@ -107,11 +107,11 @@ class lmdb_hash_store_t {
     // set encoding pointer
     point_to_uint64_t(encoding, context.value);
 
-    // emplace
+    // insert
     int rc = mdb_put(resources->txn, resources->dbi,
                      &resources->key, &resources->data, MDB_NODUPDATA);
     if (rc != 0) {
-      std::cerr << "LMDB emplace error: " << mdb_strerror(rc) << "\n";
+      std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
@@ -207,8 +207,8 @@ class lmdb_hash_store_t {
     return key_count;
   }
  
-  // find specific hash, value pair
-  bool find(const hash_t& hash, uint64_t value) const {
+  // find specific hash, encoding pair
+  bool find(const hash_t& hash, uint64_t encoding) const {
 
     // get context
     lmdb_context_t context(env, false, true);
@@ -278,13 +278,13 @@ class lmdb_hash_store_t {
     return key_count;
   }
  
-  hash_encoding_status_t find_first() const {
+  iteration_fields_t find_first() const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    hash_encoding_status_t result;
+    iteration_fields_t result;
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_FIRST);
     bool has_first;
@@ -292,7 +292,6 @@ class lmdb_hash_store_t {
       has_first = true;
     } else if (rc == MDB_NOTFOUND) {
       has_first = false;
-      at_end = true;
     } else {
       // program error
       has_first = false;
@@ -300,8 +299,8 @@ class lmdb_hash_store_t {
       assert(0);
     }
 
-    hash_encoding_status_t result(get_hash_t(context.key),
-                                  get_uint64_t(context.data, has_first);
+    iteration_fields_t result(get_hash_t(context.key),
+                      lmdb_helper::get_uint64_t(context.data, has_first);
     // close context
     context.close();
 
@@ -311,7 +310,7 @@ class lmdb_hash_store_t {
   /**
    * Find entry just after this one.
    */
-  hash_encoding_status_t find_next(const hash_t& hash, uint64_t value) const {
+  iteration_fields_t find_next(const hash_t& hash, uint64_t encoding) const {
 
     // get context
     lmdb_context_t context(env, false, true);
@@ -340,7 +339,6 @@ class lmdb_hash_store_t {
       has_next = true;
     } else if (rc == MDB_NOTFOUND) {
       has_next = false;
-      at_end = true;
     } else {
       // program error
       has_next = false;
@@ -348,8 +346,8 @@ class lmdb_hash_store_t {
       assert(0);
     }
 
-    hash_encoding_status_t result(get_hash_t(context.key),
-                                  get_uint64_t(context.data, has_next);
+    iteration_fields_t result(get_hash_t(context.key),
+                      lmdb_helper::get_uint64_t(context.data, has_next);
     // close context
     context.close();
 

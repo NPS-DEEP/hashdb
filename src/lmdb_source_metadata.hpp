@@ -38,6 +38,16 @@ class lmdb_source_metadata_t {
   std::string filesize;
   std::string hashdigest;
 
+  bool copy(const std::string& from, std::string& to) {
+    if (to != "" && from != to) {
+      std::cerr << "copy error, from " << from << " to " << to << "\n";
+      assert(0);
+    }
+    bool changes = from != to;
+    to = from;
+    return changes;
+  }
+
   public:
   // instantiate class from ordered null-delimited record
   lmdb_source_metadata_t(const MDB_val& val) :
@@ -59,9 +69,9 @@ class lmdb_source_metadata_t {
     }
   }
 
-//  lmdb_source_metadata_t() : repository_name(""), filename(""),
-//                             filesize(""), hashdigest("") {
-//  }
+  lmdb_source_metadata_t() : repository_name(), filename(),
+                             filesize(), hashdigest() {
+  }
 
 /* same as compiler-generated ==?
   bool operator==(const lmdb_source_metadata_t& other) const {
@@ -97,42 +107,30 @@ class lmdb_source_metadata_t {
     return char_copy;
   }
 
-  // add, false if values are already there
-  bool add_repository_name_filename(const std::string& p_repository_name,
-                                    const std::string& p_filename) {
-    // match
-    if (repository_name != "" || filename != "") {
-      // something there so they better match
-      if (repository_name != p_repository_name || filename != p_filename) {
-        assert(0);
-      }
-      return false;
-    } else {
-
-      // set new values
-      repository_name = p_repository_name;
-      filename = p_filename;
-      return true;
-    }
+  // add, true if added, false if same, fatal if different
+  bool add(const lmdb_source_metadata_t& other) {
+    bool changed = change(other.repository_name, repository_name);
+    changed |= change(other.filename, filename);
+    changed |= change(other.filesize, filesize);
+    changed |= change(other.hashdigest, hashdigest);
+    return changed;
   }
 
-  // add, false if values are already there
+  // add, true if added, false if same, fatal if different
+  bool add_repository_name_filename(const std::string& p_repository_name,
+                                    const std::string& p_filename) {
+    bool changed = change(p_repository_name, repository_name);
+    changed |= change(p_filename, filename);
+    return changed;
+  }
+
+
+  // add, true if added, false if same, fatal if different
   bool add_filesize_hashdigest(const std::string& p_filesize,
                                const std::string& p_hashdigest) {
-    // match
-    if (filesize != "" || hashdigest != "") {
-      // something there so they better match
-      if (filesize != p_filesize || hashdigest != p_hashdigest) {
-        assert(0);
-      }
-      return false;
-    } else {
-
-      // set new values
-      filesize = p_filesize;
-      hashdigest = p_hashdigest;
-      return true;
-    }
+    bool changed = change(p_filesize_name, filesize_name);
+    changed |= change(p_hashdigest, hashdigest);
+    return changed;
   }
 };
 

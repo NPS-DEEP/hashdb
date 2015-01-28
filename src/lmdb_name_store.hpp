@@ -150,7 +150,7 @@ class lmdb_name_store_t {
    * Find index, return true and index else false and zero.
    */
   std::pair<bool, uint64_t> find(const std::string& repository_name,
-                                 const std::string& filename) {
+                                 const std::string& filename) const {
 
     // get context
     lmdb_context_t context(env, false, false);
