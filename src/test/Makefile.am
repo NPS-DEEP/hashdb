@@ -28,15 +28,25 @@ EXTRA_DIST = \
         $(python_tests) \
         hashdb_helpers.py
 
+noinst_LTLIBRARIES = liblmdb.la
+
+liblmdb_la_SOURCES = \
+	../lmdb/libraries/liblmdb/lmdb.h \
+	../lmdb/libraries/liblmdb/mdb.c \
+	../lmdb/libraries/liblmdb/midl.h \
+	../lmdb/libraries/liblmdb/midl.c
+
+# these CFLAGS are adapted from liblmdb/Makefile
+liblmdb_la_CFLAGS = \
+	-pthread -O3 -g \
+	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized
+liblmdb_la_LDFLAGS = -static -PIC
+
 check_PROGRAMS = \
-	source_lookup_encoding_test \
+	db_test \
 	bloom_filter_manager_test \
 	settings_test \
-	bi_store_test \
 	logger_test \
-	hashdb_element_test \
-	source_lookup_index_manager_test \
-	hashdb_manager_test \
 	libhashdb_test \
 	commands_test
 
@@ -56,23 +66,14 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
+db_test_LDADD = liblmdb.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la
-bi_store_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
-hashdb_element_test_LDADD = ../libhashdb.la
-source_lookup_index_manager_test_LDADD = ../libhashdb.la
-hashdb_manager_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
 commands_test_LDADD = ../libhashdb.la
 
 AM_LDFLAGS = -static
-
-run_tests:
-	for test in $(bin_PROGRAMS); do \
-	  echo Begin $$test ... ; \
-	  ./$$test; \
-	done
 
 clean-local:
 	rm -rf temp_dir* temp_dfxml_out.xml
@@ -87,10 +88,17 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-source_lookup_encoding_test_SOURCES = \
-	../source_lookup_encoding.hpp \
+db_test_SOURCES = \
+	../lmdb_context.hpp \
+	../lmdb_hash_it_data.hpp \
+	../lmdb_hash_store.hpp \
+	../lmdb_helper.h \
+	../lmdb_name_store.hpp \
+	../lmdb_source_data.hpp \
+	../lmdb_source_it_data.hpp \
+	../lmdb_source_store.hpp \
 	unit_test.h \
-	source_lookup_encoding_test.cpp
+	db_test.cpp
 
 bloom_filter_manager_test_SOURCES = \
 	unit_test.h \
@@ -103,30 +111,10 @@ settings_test_SOURCES = \
 	directory_helper.hpp \
 	settings_test.cpp
 
-bi_store_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	bi_store_test.cpp
-
 logger_test_SOURCES = \
 	unit_test.h \
 	directory_helper.hpp \
 	logger_test.cpp
-
-hashdb_element_test_SOURCES = \
-	unit_test.h \
-	hashdb_element_test.cpp
-
-source_lookup_index_manager_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	source_lookup_index_manager_test.cpp
-
-hashdb_manager_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	to_key_helper.hpp \
-	hashdb_manager_test.cpp
 
 libhashdb_test_SOURCES = \
 	unit_test.h \
@@ -139,5 +127,5 @@ commands_test_SOURCES = \
 	directory_helper.hpp \
 	commands_test.cpp
 
-.PHONY: run_tests run_tests_valgrind
+.PHONY: run_tests_valgrind
 

@@ -30,7 +30,7 @@
 
 // fail if not equal
 #define TEST_EQ( LHS, RHS )                                                  \
-  if (!(LHS == RHS)) {                                                          \
+  if (!(LHS == RHS)) {                                                       \
     std::cerr << "ERROR: " << __FILE__ << " line " << __LINE__               \
               << ": value " << LHS << " != " << RHS << "\n";                 \
     exit(1);                                                                 \

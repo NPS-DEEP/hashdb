@@ -29,6 +29,9 @@
 #ifndef LMDB_NAME_STORE_HPP
 #define LMDB_NAME_STORE_HPP
 #include <string>
+#include "lmdb.h"
+#include "lmdb_helper.h"
+#include "lmdb_context.hpp"
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -43,7 +46,7 @@ class lmdb_name_store_t {
 
   private:
   const std::string hashdb_dir;
-  const file_mode_type_t file_mode_type;
+  const file_mode_type_t file_mode;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -58,10 +61,10 @@ class lmdb_name_store_t {
 
   public:
   lmdb_name_store_t (const std::string p_hashdb_dir,
-                     file_mode_type_t p_file_mode_type) :
+                     file_mode_type_t p_file_mode) :
 
        hashdb_dir(p_hashdb_dir),
-       file_mode_type(p_file_mode_type),
+       file_mode(p_file_mode),
        env(0),
        M() {
 
@@ -79,7 +82,7 @@ class lmdb_name_store_t {
     const std::string store_dir = hashdb_dir + "/lmdb_name_store";
 
     // open the DB environment
-    env = open_env(store_dir, file_mode);
+    env = lmdb_helper::open_env(store_dir, file_mode);
   }
 
   ~lmdb_name_store_t() {
@@ -104,32 +107,31 @@ class lmdb_name_store_t {
     lmdb_context_t context(env, true, false);
     context.open();
 
-    // build the cstr to be inserted
-    size_t l1 = repository_name.length();
-    size_t l2 = filename.length();
-    char* cstr = new char[l1 + 1 + l2]; // space for strings separated by \0
-    std::strcpy(cstr, repository_name.c_str()); // copy first plus \0
-    std::memcpy(cstr+l1+1, filename.c_str(), l2);
+    // encode the key
+    std::string key_encoding = lmdb_helper::string_pair_to_encoding(
+                    repository_name, filename);
 
-    // set up key
-    context.key.mv_size = l1 + 1 + l2;
-    context.key.mv_data = cstr;
+    lmdb_helper::point_to_string(key_encoding, context.key);
 
     // see if key is already there
-    bool is_new = false;
-    uint64_t source_lookup_index;
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
+    bool is_new = false;
+    uint64_t source_lookup_index;
     if (rc == 0) {
       // great, get the existing index
-      source_lookup_index = lmdb_helper::get_uint64_t(context.data);
+      source_lookup_index = lmdb_helper::encoding_to_uint64(context.data);
     } else if (rc == MDB_NOTFOUND) {
       // fine, add new entry
       is_new = true;
       source_lookup_index = size() + 1;
-      context.data.mv_size = sizeof(uint64_t);
-      context.data.mv_data = static_cast<const void*>(&source_lookup_index);
-      rc = mdb_put(context.txn, context.dbi, context.key, context.data);
+      std::string data_encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+      lmdb_helper::point_to_string(data_encoding, context.data);
+//uint64_t z = lmdb_helper::encoding_to_uint64(context.data);
+//std::cout << "lns sli " << source_lookup_index << "\n";
+//std::cout << "lns sli z " << z << "\n";
+      rc = mdb_put(context.txn, context.dbi, &context.key, &context.data,
+                                                         MDB_NOOVERWRITE);
       if (rc != 0) {
         std::cerr << "name insert failure: " << mdb_strerror(rc) << "\n";
         assert(0);
@@ -139,7 +141,6 @@ class lmdb_name_store_t {
       assert(0);
     }
 
-    delete cstr;
     context.close();
     MUTEX_UNLOCK(&M);
 
@@ -156,25 +157,22 @@ class lmdb_name_store_t {
     lmdb_context_t context(env, false, false);
     context.open();
 
-    // build the cstr key
-    size_t l1 = repository_name.length();
-    size_t l2 = filename.length();
-    char* cstr = new char[l1 + 1 + l2]; // space for strings separated by \0
-    std::strcpy(cstr, repository_name.c_str()); // copy first plus \0
-    std::memcpy(cstr+l1+1, filename.c_str(), l2);
+    // encode the key
+    std::string encoding = lmdb_helper::string_pair_to_encoding(
+                    repository_name, filename);
 
-    // set up key
-    context.key.mv_size = l1 + 1 + l2;
-    context.key.mv_data = cstr;
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // see if key is there
-    bool is_there = false;
-    uint64_t source_lookup_index = 0;
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
+
+    bool is_there = false;
+    uint64_t source_lookup_index = 0;
     if (rc == 0) {
       // great, get the existing index
-      source_lookup_index = lmdb_helper::get_uint64_t(context.data);
+      source_lookup_index = lmdb_helper::encoding_to_uint64(context.data);
+      is_there = true;
     } else if (rc == MDB_NOTFOUND) {
       // no action
     } else {
@@ -182,7 +180,6 @@ class lmdb_name_store_t {
       assert(0);
     }
 
-    delete cstr;
     context.close();
     return std::pair<bool, uint64_t>(is_there, source_lookup_index);
   }

@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides source metadata lookup using LMDB.
+ * Provides source lookup using LMDB.
  *
  * Locks are required around contexts that can write to preserve
  * integrity, in particular to allow grow.
@@ -30,6 +30,8 @@
 #ifndef LMDB_SOURCE_METADATA_STORE_HPP
 #define LMDB_SOURCE_METADATA_STORE_HPP
 #include "file_modes.h"
+#include "lmdb_source_data.hpp"
+#include "lmdb_source_it_data.hpp"
 #include <string>
 #include "lmdb.h"
 
@@ -42,7 +44,7 @@
 // enable debug
 // #define DEBUG 1
 
-class lmdb_source_metadata_store_t {
+class lmdb_source_store_t {
 
   private:
   const std::string hashdb_dir;
@@ -56,11 +58,38 @@ class lmdb_source_metadata_store_t {
 #endif
 
   // disallow these
-  lmdb_source_metadata_store_t(const lmdb_source_metadata_store_t&);
-  lmdb_source_metadata_store_t& operator=(const lmdb_source_metadata_store_t&);
+  lmdb_source_store_t(const lmdb_source_store_t&);
+  lmdb_source_store_t& operator=(const lmdb_source_store_t&);
 
+  public:
+  lmdb_source_store_t (const std::string p_hashdb_dir,
+                     file_mode_type_t p_file_mode_type) :
+
+       hashdb_dir(p_hashdb_dir),
+       file_mode(p_file_mode_type),
+       env(),
+       M() {
+
+    MUTEX_INIT(&M);
+
+    // the DB stage directory
+    const std::string store_dir = hashdb_dir + "/lmdb_source_store";
+
+    // open the DB environment
+    env = lmdb_helper::open_env(store_dir, file_mode);
+  }
+
+  ~lmdb_source_store_t() {
+
+    // close the MDB environment
+    mdb_env_close(env);
+  }
+
+  /**
+   * Return true if record is new or record changes.
+   */
   bool add(uint64_t source_lookup_index,
-              const lmdb_source_metatata_t& new_source_metadata) {
+              const lmdb_source_data_t& new_source_data) {
 
     MUTEX_LOCK(&M);
 
@@ -71,25 +100,27 @@ class lmdb_source_metadata_store_t {
     lmdb_context_t context(env, true, false);
     context.open();
 
-    // set source lookup index pointer
-    point_to_uint64_t(source_lookup_index, context.key);
+    // set key
+    std::string encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+    lmdb_helper::point_to_string(encoding, context.key);
 
-    // read any existing metadata
-    int rc = mdb_cursor_get(context.cursor, &context.key. &context.data,
+    // read any existing data
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
+    bool added = false;
     if (rc == 0) {
-      lmdb_source_metadata_t existing_metadata(context.data);
-      bool added_more = existing_metadata.add(new_source_metadata
-                                              repository_name, filename);
-      if (added_more) {
+      lmdb_source_data_t existing_data =
+                      lmdb_helper::encoding_to_lmdb_source_data(context.data);
+      added = existing_data.add(new_source_data);
+      if (added) {
         // replace the record with the fuller one
         // delete the existing record
         rc = mdb_cursor_del(context.cursor, 0);
         if (rc == 0) {
           // good, put in the fuller record
-          int rc = mdb_put(context.txn, context.dbi,
-                           &context.key, &context.data, MDB_NODUPDATA);
+          rc = mdb_put(context.txn, context.dbi,
+                       &context.key, &context.data, MDB_NODUPDATA);
           if (rc != 0) {
             std::cerr << "put error: " << mdb_strerror(rc) << "\n";
             assert(0);
@@ -103,8 +134,14 @@ class lmdb_source_metadata_store_t {
       }
     } else if (rc == MDB_NOTFOUND) {
       // the key and value are new
-      int rc = mdb_put(context.txn, context.dbi,
-                       &context.key, &context.data, MDB_NODUPDATA);
+      added = true;
+
+      // set data
+      std::string data_encoding = lmdb_helper::lmdb_source_data_to_encoding(
+                                               new_source_data);
+      lmdb_helper::point_to_string(data_encoding, context.data);
+      rc = mdb_put(context.txn, context.dbi,
+                   &context.key, &context.data, MDB_NODUPDATA);
       if (rc != 0) {
         std::cerr << "put new error: " << mdb_strerror(rc) << "\n";
         assert(0);
@@ -113,54 +150,20 @@ class lmdb_source_metadata_store_t {
       std::cerr << "get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
+    context.close();
     MUTEX_UNLOCK(&M);
+    return added;
   }
 
-  public:
-  struct iteration_fields_t {
-    uint64_t source_lookup_index;
-    lmdb_source_metadata_t source_metadata;
-    bool is_valid;
-    iteration_fields_t(uint64_t p_source_lookup_index,
-                       lmdb_source_metadata_t p_source_metadata,
-                       bool p_is_valid) :
-              source_lookup_index(p_source_lookup_index), 
-              source_metadata(p_source_metadata),
-              is_valid(p_is_valid) {
-    }
-  };
-
-  lmdb_source_metadata_store_t (const std::string p_hashdb_dir,
-                     file_mode_type_t p_file_mode_type) :
-
-       hashdb_dir(p_hashdb_dir),
-       file_mode(p_file_mode_type),
-       env(),
-       M() {
-
-    MUTEX_INIT(&M);
-
-    // the DB stage directory
-    const std::string store_dir = hashdb_dir + "/lmdb_source_metadata_store";
-
-    // open the DB environment
-    env = open_env(store_dir, file_mode);
-  }
-
-  ~lmdb_source_metadata_store_t() {
-
-    // close the MDB environment
-    mdb_env_close(env);
-  }
-
+/*
   // add repository name and filename
   bool add_repository_name_filename(uint64_t source_lookup_index,
               const std::string& repository_name,
               const std::string& filename) {
 
-    lmdb_source_metadata_t new_source_metadata;
-    new_source_metadata.add_repository_name_filename(repository_name, filename);
-    return add(new_source_metadata);
+    lmdb_source_data_t new_source_data;
+    new_source_data.add_repository_name_filename(repository_name, filename);
+    return add(new_source_data);
   }
 
   // add filesize and file hashdigest
@@ -168,64 +171,71 @@ class lmdb_source_metadata_store_t {
               const std::string& filesize,
               const std::string& hashdigest) {
 
-    lmdb_source_metadata_t new_source_metadata;
-    new_source_metadata.add_fielsize_hashdigest(repository_name, filename);
-    return add(new_source_metadata);
+    lmdb_source_data_t new_source_data;
+    new_source_data.add_fielsize_hashdigest(repository_name, filename);
+    return add(new_source_data);
   }
+*/
 
-  lmdb_source_metadata_t find(uint64_t source_lookup_index) const {
+  lmdb_source_data_t find(uint64_t source_lookup_index) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    // set source lookup index pointer
-    point_to_uint64_t(source_lookup_index, context.key);
+    // set key
+    std::string encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+    lmdb_helper::point_to_string(encoding, context.key);
 
-    // read any existing metadata
-    int rc = mdb_cursor_get(context.cursor, &context.key. &context.data,
+    // read any existing data
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    lmdb_source_metadata_t existing_metadata;
+    lmdb_source_data_t source_data;
     if (rc == 0) {
-      // read the metadata
-      source_metadata = lmdb_source_metadata_t(context.data);
+      // read the data
+      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
     } else {
       // error if key does not exist
-      std::cerr << "no key\n";
+      std::cerr << "find: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
     // close context
     context.close();
 
-    return source_metadata;
+    return source_data;
   }
  
-  iteration_fields_t find_first() const {
+  lmdb_source_it_data_t find_first() const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    iteration_fields_t result;
+    // read first data if it exists
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_FIRST);
-    bool has_first;
+
+    uint64_t source_lookup_index = 0;
+    lmdb_source_data_t source_data;
+    bool has_first = false;
     if (rc == 0) {
       has_first = true;
+
+      // read the key and data
+      source_lookup_index = lmdb_helper::encoding_to_uint64(context.key);
+      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
     } else if (rc == MDB_NOTFOUND) {
-      has_first = false;
+      // no data yet
     } else {
       // program error
       has_first = false;
-      std::cerr << "rc: " << rc << ", begin: " << is_begin << "\n";
+      std::cerr << "find_first: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    iteration_fields_t result(lmdb_helper::get_uint64_t(context.key),
-            lmdb_source_metadata_store_t::lmdb_source_metadata_t(context.data),
-            has_first);
+    lmdb_source_it_data_t result(source_lookup_index, source_data, has_first);
 
     // close context
     context.close();
@@ -236,42 +246,45 @@ class lmdb_source_metadata_store_t {
   /**
    * Find entry just after this one.
    */
-  iteration_fields_t find_next(uint64_t source_lookup_index) const {
+  lmdb_source_it_data_t find_next(uint64_t source_lookup_index) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    // set encoding pointer
-    point_to_uint64_t(encoding, context.key);
+    // set key
+    std::string encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // set the cursor to this key, which must exist
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET);
     if (rc != 0) {
       // invalid usage
+      std::cerr << "find_next: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
     // set cursor to next key, data pair
-    rc = mdb_cursor_get(resources->cursor,
-                        &resources->key, &resources->data, MDB_NEXT);
+    rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_NEXT);
 
     bool has_next;
+    lmdb_source_data_t source_data;
     if (rc == 0) {
       has_next = true;
+      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
     } else if (rc == MDB_NOTFOUND) {
       has_next = false;
     } else {
       // program error
       has_next = false;
-      std::cerr << "rc: " << rc << ", begin: " << is_begin << "\n";
+      std::cerr << "has_next: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    iteration_fields_t result(lmdb_helper::get_uint64_t(context.key),
-            lmdb_source_metadata_store_t::lmdb_source_metadata_t(context.data),
-            has_first);
+    lmdb_source_it_data_t result(lmdb_helper::encoding_to_uint64(context.key),
+                                 source_data, has_next);
 
     // close context
     context.close();

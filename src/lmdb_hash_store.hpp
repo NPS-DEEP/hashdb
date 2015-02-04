@@ -19,7 +19,8 @@
 
 /**
  * \file
- * Provides hash to encoding lookup using LMDB.
+ * Provides hash to encoding lookup using LMDB
+ * where encoding contains source_lookup_index and file_offset.
  *
  * Locks are required around contexts that can write to preserve
  * integrity, in particular to allow grow.
@@ -28,6 +29,10 @@
 #ifndef LMDB_HASH_STORE_HPP
 #define LMDB_HASH_STORE_HPP
 #include "file_modes.h"
+#include "lmdb.h"
+#include "lmdb_helper.h"
+#include "lmdb_context.hpp"
+#include "lmdb_hash_it_data.hpp"
 #include <string>
 
 // no concurrent writes
@@ -57,15 +62,6 @@ class lmdb_hash_store_t {
   lmdb_hash_store_t& operator=(const lmdb_hash_store_t&);
 
   public:
-  struct iteration_fields_t {
-    hash_t hash;
-    uint64_t encoding;
-    bool is_valid;
-    iteration_fields_t(hash_t p_hash, uint64_t p_encoding, bool p_is_valid) :
-                hash(p_hash), encoding(p_encoding), is_valid(p_is_valid) {
-    }
-  };
-
   lmdb_hash_store_t (const std::string p_hashdb_dir,
                      file_mode_type_t p_file_mode_type) :
 
@@ -80,7 +76,7 @@ class lmdb_hash_store_t {
     const std::string store_dir = hashdb_dir + "/lmdb_hash_store";
 
     // open the DB environment
-    env = open_env(store_dir, file_mode);
+    env = lmdb_helper::open_env(store_dir, file_mode);
   }
 
   ~lmdb_hash_store_t() {
@@ -90,7 +86,9 @@ class lmdb_hash_store_t {
   }
 
   // insert or fail
-  void insert(const hash_t& hash, uint64_t encoding) {
+  void insert(const std::string &binary_hash,
+              uint64_t source_lookup_index,
+              uint64_t file_offset) {
 
     MUTEX_LOCK(&M);
 
@@ -101,15 +99,17 @@ class lmdb_hash_store_t {
     lmdb_context_t context(env, true, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
 
-    // set encoding pointer
-    point_to_uint64_t(encoding, context.value);
+    // set data
+    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
+                                          source_lookup_index, file_offset);
+    lmdb_helper::point_to_string(encoding, context.data);
 
     // insert
-    int rc = mdb_put(resources->txn, resources->dbi,
-                     &resources->key, &resources->data, MDB_NODUPDATA);
+    int rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
     if (rc != 0) {
       std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
       assert(0);
@@ -120,7 +120,8 @@ class lmdb_hash_store_t {
   }
 
   // erase hash, encoding pair
-  bool erase(const hash_t& hash, uint64_t encoding) {
+  bool erase(const std::string& binary_hash,
+             uint64_t source_lookup_index, uint64_t file_offset) {
 
     MUTEX_LOCK(&M);
 
@@ -128,11 +129,13 @@ class lmdb_hash_store_t {
     lmdb_context_t context(env, true, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
 
-    // set encoding pointer
-    point_to_uint64_t(encoding, context.value);
+    // set data
+    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
+                                          source_lookup_index, file_offset);
+    lmdb_helper::point_to_string(encoding, context.data);
 
     // erase
     int rc = mdb_del(context.txn, context.dbi, &context.key, &context.data);
@@ -155,7 +158,7 @@ class lmdb_hash_store_t {
   }
 
   // erase hash, return count erased
-  size_t erase(const hash_t& hash) {
+  size_t erase(const std::string& binary_hash) {
 
     MUTEX_LOCK(&M);
 
@@ -163,8 +166,8 @@ class lmdb_hash_store_t {
     lmdb_context_t context(env, true, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key,
@@ -191,7 +194,7 @@ class lmdb_hash_store_t {
 
     if (key_count > 0) {
 
-      // delete if there
+      // delete
       rc = mdb_del(context.txn, context.dbi, 
                    &context.key, NULL);
       if (rc != 0) {
@@ -208,17 +211,20 @@ class lmdb_hash_store_t {
   }
  
   // find specific hash, encoding pair
-  bool find(const hash_t& hash, uint64_t encoding) const {
+  bool find(const std::string& binary_hash,
+            uint64_t source_lookup_index, uint64_t file_offset) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
 
-    // set encoding pointer
-    point_to_uint64_t(encoding, context.value);
+    // set data
+    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
+                                          source_lookup_index, file_offset);
+    lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair
     int rc = mdb_cursor_get(context.cursor,
@@ -232,6 +238,7 @@ class lmdb_hash_store_t {
     } else {
       // program error
       has_pair = false; // satisfy mingw32-g++ compiler
+      std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
@@ -242,18 +249,14 @@ class lmdb_hash_store_t {
   }
 
   // count of entries with this hash value
-  size_t count(const hash_t& hash) const {
+  size_t find_count(const std::string& binary_hash) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
-
-    // set encoding pointer
-    uint64_t encoding;
-    point_to_uint64_t(encoding, context.value);
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -278,61 +281,104 @@ class lmdb_hash_store_t {
     return key_count;
   }
  
-  iteration_fields_t find_first() const {
+  // first entry with this hash value
+  lmdb_hash_it_data_t find_first(const std::string& binary_hash) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    iteration_fields_t result;
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
+
+    // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_FIRST);
-    bool has_first;
+                            MDB_SET_KEY);
+    bool is_found;
     if (rc == 0) {
-      has_first = true;
+      is_found = true;
     } else if (rc == MDB_NOTFOUND) {
-      has_first = false;
+      is_found = false;
     } else {
-      // program error
-      has_first = false;
-      std::cerr << "rc: " << rc << ", begin: " << is_begin << "\n";
+      std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    iteration_fields_t result(get_hash_t(context.key),
-                      lmdb_helper::get_uint64_t(context.data, has_first);
+    // prepare hash_it_data
+    std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+
     // close context
     context.close();
 
-    return result;
+    return lmdb_hash_it_data_t(binary_hash,
+                               uint64_pair.first, uint64_pair.second,
+                               is_found);
+  }
+ 
+  lmdb_hash_it_data_t find_begin() const {
+
+    // get context
+    lmdb_context_t context(env, false, true);
+    context.open();
+
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_FIRST);
+    bool is_begin;
+    if (rc == 0) {
+      is_begin = true;
+    } else if (rc == MDB_NOTFOUND) {
+      is_begin = false;
+    } else {
+      // program error
+      is_begin = false;
+      std::cerr << "LMDB find_begin error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+
+    // prepare hash_it_data
+    std::string binary_hash = lmdb_helper::get_string(context.key);
+    std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+
+    // close context
+    context.close();
+
+    return lmdb_hash_it_data_t(binary_hash,
+                               uint64_pair.first, uint64_pair.second,
+                               is_begin);
   }
 
   /**
    * Find entry just after this one.
    */
-  iteration_fields_t find_next(const hash_t& hash, uint64_t encoding) const {
+  lmdb_hash_it_data_t find_next(const lmdb_hash_it_data_t& hash_it_data) const {
 
     // get context
     lmdb_context_t context(env, false, true);
     context.open();
 
-    // set hash pointer
-    point_to_hash(hash, context.key);
+    // set key
+    lmdb_helper::point_to_string(hash_it_data.binary_hash, context.key);
 
-    // set encoding pointer
-    point_to_uint64_t(encoding, context.value);
+    // set data
+    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
+                                         hash_it_data.source_lookup_index,
+                                         hash_it_data.file_offset);
+    lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair which must exist
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_GET_BOTH);
     if (rc != 0) {
       // invalid usage
+      std::cerr << "LMDB find_next error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
     // set cursor to next key, data pair
-    rc = mdb_cursor_get(resources->cursor,
-                        &resources->key, &resources->data, MDB_NEXT);
+    rc = mdb_cursor_get(context.cursor,
+                        &context.key, &context.data, MDB_NEXT);
 
     bool has_next;
     if (rc == 0) {
@@ -342,16 +388,21 @@ class lmdb_hash_store_t {
     } else {
       // program error
       has_next = false;
-      std::cerr << "rc: " << rc << ", begin: " << is_begin << "\n";
+      std::cerr << "LMDB has_next error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    iteration_fields_t result(get_hash_t(context.key),
-                      lmdb_helper::get_uint64_t(context.data, has_next);
+    // prepare hash_it_data
+    std::string binary_hash = lmdb_helper::get_string(context.key);
+    std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+
     // close context
     context.close();
 
-    return result;
+    return lmdb_hash_it_data_t(binary_hash,
+                               uint64_pair.first, uint64_pair.second,
+                               has_next);
   }
 
   // size

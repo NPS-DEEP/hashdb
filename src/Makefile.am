@@ -91,10 +91,12 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	lmdb_hash_store_iterator.hpp \
-	lmdb_hash_store_manager.hpp \
-	lmdb_resources_manager.hpp \
-	lmdb_resources.h \
+	lmdb_context.hpp \
+	lmdb_hash_store.hpp \
+	lmdb_helper.h \
+	lmdb_name_store.hpp \
+	lmdb_source_data.hpp \
+	lmdb_source_store.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
 	tcp_client_manager.hpp

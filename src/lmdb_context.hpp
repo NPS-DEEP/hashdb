@@ -30,28 +30,29 @@
 
 class lmdb_context_t {
   private:
+  MDB_env* env;
   unsigned int txn_flags; // example MDB_RDONLY
   unsigned int dbi_flags; // example MDB_DUPSORT
+  int state;
+  public:
   MDB_txn* txn;
   MDB_dbi dbi;
   MDB_cursor* cursor;
   MDB_val key;
   MDB_val data;
-  bool state;
 
-  public:
-  lmdb_context_t(MDB_env* env, bool is_writable, bool is_duplicates) :
-           txn_flags(0), dbi_flags(0),
-           txn(0), dbi(0), cursor(0), key(), data(), state(0) {
+  lmdb_context_t(MDB_env* p_env, bool is_writable, bool is_duplicates) :
+           env(p_env), txn_flags(0), dbi_flags(0),
+           state(0), txn(0), dbi(0), cursor(0), key(), data() {
 
     // set flags based on bool inputs
     if (is_writable) {
-      dbi_flags |= MDB_CREATE;
+      dbi_flags |= MDB_CREATE;  // DBI
     } else {
-      txn_flags |= MDB_RDONLY;
+      txn_flags |= MDB_RDONLY;  // TXN
     }
     if (is_duplicates) {
-      txn_flags |= MDB_DUPSORT;
+      dbi_flags |= MDB_DUPSORT; // DBI
     }
   }
 
@@ -95,7 +96,7 @@ class lmdb_context_t {
     // do not close dbi handle, why not close it?
 
     // free txn object
-    if (txn_flags & READ_ONLY == 0) {
+    if ((txn_flags & READ_ONLY) == 0) {
       // RW
       mdb_txn_commit(txn);
     } else {

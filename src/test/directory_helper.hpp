@@ -62,25 +62,20 @@ void make_dir_if_not_there(const std::string& temp_dir) {
 
 void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/bloom_filter_1").c_str());
-  remove((hashdb_dir + "/bloom_filter_2").c_str());
   remove((hashdb_dir + "/lmdb_hash_store/data.mdb").c_str());
   remove((hashdb_dir + "/lmdb_hash_store/lock.mdb").c_str());
   rmdir((hashdb_dir + "/lmdb_hash_store").c_str());
+  remove((hashdb_dir + "/lmdb_name_store/data.mdb").c_str());
+  remove((hashdb_dir + "/lmdb_name_store/lock.mdb").c_str());
+  rmdir((hashdb_dir + "/lmdb_name_store").c_str());
+  remove((hashdb_dir + "/lmdb_source_store/data.mdb").c_str());
+  remove((hashdb_dir + "/lmdb_source_store/lock.mdb").c_str());
+  rmdir((hashdb_dir + "/lmdb_source_store").c_str());
   remove((hashdb_dir + "/history.xml").c_str());
   remove((hashdb_dir + "/_old_history.xml").c_str());
   remove((hashdb_dir + "/log.xml").c_str());
   remove((hashdb_dir + "/settings.xml").c_str());
   remove((hashdb_dir + "/_old_settings.xml").c_str());
-  remove((hashdb_dir + "/source_filename_store.dat").c_str());
-  remove((hashdb_dir + "/source_filename_store.idx1").c_str());
-  remove((hashdb_dir + "/source_filename_store.idx2").c_str());
-  remove((hashdb_dir + "/source_lookup_store.dat").c_str());
-  remove((hashdb_dir + "/source_lookup_store.idx1").c_str());
-  remove((hashdb_dir + "/source_lookup_store.idx2").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.dat").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.idx1").c_str());
-  remove((hashdb_dir + "/source_repository_name_store.idx2").c_str());
-  remove((hashdb_dir + "/source_metadata_store").c_str());
   remove((hashdb_dir + "/temp_dfxml_output").c_str());
 
   if (access(hashdb_dir.c_str(), F_OK) == 0) {
