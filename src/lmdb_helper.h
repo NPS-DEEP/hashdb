@@ -144,6 +144,32 @@ class lmdb_helper {
     return target + size;
   }
 
+  class private_string_reader {
+    const char* ptr;
+    size_t max;
+    public:
+    private_string_reader(const char* p_ptr, size_t p_max) :
+                 ptr(p_ptr), max(p_max) {
+    }
+    std::string get() {
+      const char* p2 = (char*)memchr(ptr, 0, max);
+      std::string s(ptr, (p2==NULL ? max : p2 - ptr));
+      if (p2 == NULL) {
+        max = 0;
+      } else {
+        size_t count = p2 - ptr + 1;
+        max -= count;
+        ptr += count;
+      }
+      return s;
+    }
+    ~private_string_reader() {
+      if (max != 0) {
+        std::cout << "Data error: unread data.\n";
+        //assert(0);
+      }
+    }
+  };
 
   public:
   static MDB_env* open_env(const std::string& store_dir,
@@ -329,37 +355,25 @@ class lmdb_helper {
     std::memcpy(chars, data.repository_name.c_str(), l1);
     size_t start = l1;
     chars[start++] = 0;
-    std::memcpy(chars, data.filename.c_str(), l2);
+    std::memcpy(chars+start, data.filename.c_str(), l2);
     start += l2;
     chars[start++] = 0;
-    std::memcpy(chars, data.filesize.c_str(), l3);
+    std::memcpy(chars+start, data.filesize.c_str(), l3);
     start += l3;
     chars[start++] = 0;
-    std::memcpy(chars, data.hashdigest.c_str(), l4);
+    std::memcpy(chars+start, data.hashdigest.c_str(), l4);
 
     // return the encoding
     return std::string(chars, l1+1+l2+1+l3+1+l4);
   }
 
   static lmdb_source_data_t encoding_to_lmdb_source_data(const MDB_val& val) {
+    private_string_reader reader(static_cast<char*>(val.mv_data), val.mv_size);
     lmdb_source_data_t data;
-    size_t start = 0;
-    size_t more = val.mv_size;
-    size_t l;
-    data.repository_name = std::string(static_cast<char*>(val.mv_data), 0, more);
-    l = data.repository_name.size();
-    start += l; more -= l; if (more > 0) {++start; --more;}
-    l = data.filename.size();
-    start += l; more -= l; if (more > 0) {++start; --more;}
-    l = data.filesize.size();
-    start += l; more -= l; if (more > 0) {++start; --more;}
-    l = data.hashdigest.size();
-    start += l; more -= l; if (more > 0) {++start; --more;}
-    if (more != 0) {
-      // corrupted record
-      assert(0);
-    }
-
+    data.repository_name = reader.get();
+    data.filename = reader.get();
+    data.filesize = reader.get();
+    data.hashdigest = reader.get();
     return data;
   }
 

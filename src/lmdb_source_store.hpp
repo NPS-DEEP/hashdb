@@ -101,8 +101,8 @@ class lmdb_source_store_t {
     context.open();
 
     // set key
-    std::string encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
-    lmdb_helper::point_to_string(encoding, context.key);
+    std::string key_encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+    lmdb_helper::point_to_string(key_encoding, context.key);
 
     // read any existing data
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -110,15 +110,22 @@ class lmdb_source_store_t {
 
     bool added = false;
     if (rc == 0) {
-      lmdb_source_data_t existing_data =
+
+      // get existing source data
+      lmdb_source_data_t source_data =
                       lmdb_helper::encoding_to_lmdb_source_data(context.data);
-      added = existing_data.add(new_source_data);
+
+      // add in new source data
+      added = source_data.add(new_source_data);
       if (added) {
         // replace the record with the fuller one
         // delete the existing record
         rc = mdb_cursor_del(context.cursor, 0);
         if (rc == 0) {
-          // good, put in the fuller record
+          // more so put in the fuller record
+          std::string data_encoding =
+                      lmdb_helper::lmdb_source_data_to_encoding(source_data);
+          lmdb_helper::point_to_string(data_encoding, context.data);
           rc = mdb_put(context.txn, context.dbi,
                        &context.key, &context.data, MDB_NODUPDATA);
           if (rc != 0) {
