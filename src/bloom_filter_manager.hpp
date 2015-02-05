@@ -124,13 +124,14 @@ class bloom_filter_manager_t {
                bloom1_M_hash_size, bloom1_k_hash_functions);
   }
 
-  void add_hash_value(const std::string& key) {
-//std::cerr << "bloom_filter add_hash_value.a " << key << " " << filename << std::endl;
+  void add_hash_value(const std::string& binary_hash) {
+//std::cerr << "bloom_filter add_hash_value.a " << binary_hash << " " << filename << std::endl;
     if (bloom1_is_used) {
-      if (key.size() < 16) {
+      if (binary_hash.size() < 16) {
+        // compatibility TBD
         assert(0);
       }
-      bloom1.add(key.c_str());
+      bloom1.add(reinterpret_cast<const uint8_t*>(binary_hash.c_str()));
     }
 //std::cerr << "bloom_filter add_hash_value.b" << std::endl;
   }
@@ -138,13 +139,14 @@ class bloom_filter_manager_t {
   /**
    * True if found or if filter is disabled.
    */
-  bool is_positive(const std::string& key) const {
-//std::cerr << "bloom_filter is_positive.a " << key << " " << bloom.query(key.digest) << " " << filename << std::endl;
+  bool is_positive(const std::string& binary_hash) const {
+//std::cerr << "bloom_filter is_positive.a " << binary_hash << " " << bloom.query(lmdb::binary_hash_to_hex(binary_hash)) << " " << filename << std::endl;
     if (bloom1_is_used) {
-      if (key.size() < 16) {
+      if (binary_hash.size() < 16) {
+        // compatibility TBD
         assert(0);
       }
-      if (!bloom1.query(key.c_str()) {
+      if (!bloom1.query(reinterpret_cast<const uint8_t*>(binary_hash.c_str()))) {
         // not in bloom1
 //std::cerr << "bloom_filter is_positive.b" << std::endl;
         return false;

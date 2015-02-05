@@ -28,13 +28,25 @@ EXTRA_DIST = \
         $(python_tests) \
         hashdb_helpers.py
 
-noinst_LTLIBRARIES = liblmdb.la
+noinst_LTLIBRARIES = liblmdb.la libbloom.la libdfxml.la
 
 liblmdb_la_SOURCES = \
 	../lmdb/libraries/liblmdb/lmdb.h \
 	../lmdb/libraries/liblmdb/mdb.c \
 	../lmdb/libraries/liblmdb/midl.h \
 	../lmdb/libraries/liblmdb/midl.c
+
+libbloom_la_SOURCES = \
+	../misc/bloom.c \
+	../misc/bloom.h \
+	../misc/file_mapper.cpp \
+	../misc/file_mapper.hpp
+
+libdfxml_la_SOURCES = \
+	../dfxml/src/hash_t.h \
+	../dfxml/src/dfxml_writer.cpp \
+	../dfxml/src/dfxml_writer.h \
+	../dfxml/src/cppmutex.h
 
 # these CFLAGS are adapted from liblmdb/Makefile
 liblmdb_la_CFLAGS = \
@@ -68,7 +80,7 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 db_test_LDADD = liblmdb.la
-db_managers_test_LDADD = liblmdb.la
+db_managers_test_LDADD = liblmdb.la libbloom.la libdfxml.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la

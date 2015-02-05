@@ -294,26 +294,23 @@ class lmdb_hash_store_t {
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
-    bool is_found;
+    lmdb_hash_it_data_t it_data;
     if (rc == 0) {
-      is_found = true;
+      std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+      it_data = lmdb_hash_it_data_t(
+                   binary_hash, uint64_pair.first, uint64_pair.second, true);
     } else if (rc == MDB_NOTFOUND) {
-      is_found = false;
+      // use default it_data
     } else {
       std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    // prepare hash_it_data
-    std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
-
     // close context
     context.close();
 
-    return lmdb_hash_it_data_t(binary_hash,
-                               uint64_pair.first, uint64_pair.second,
-                               is_found);
+    return it_data;
   }
  
   lmdb_hash_it_data_t find_begin() const {
@@ -324,29 +321,27 @@ class lmdb_hash_store_t {
 
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_FIRST);
-    bool is_begin;
+    lmdb_hash_it_data_t it_data;
     if (rc == 0) {
-      is_begin = true;
+
+      // prepare hash_it_data
+      std::string binary_hash = lmdb_helper::get_string(context.key);
+      std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+      it_data = lmdb_hash_it_data_t(
+                   binary_hash, uint64_pair.first, uint64_pair.second, true);
     } else if (rc == MDB_NOTFOUND) {
-      is_begin = false;
+      // use default it_data
     } else {
       // program error
-      is_begin = false;
       std::cerr << "LMDB find_begin error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    // prepare hash_it_data
-    std::string binary_hash = lmdb_helper::get_string(context.key);
-    std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
-
     // close context
     context.close();
 
-    return lmdb_hash_it_data_t(binary_hash,
-                               uint64_pair.first, uint64_pair.second,
-                               is_begin);
+    return it_data;
   }
 
   /**
@@ -380,29 +375,27 @@ class lmdb_hash_store_t {
     rc = mdb_cursor_get(context.cursor,
                         &context.key, &context.data, MDB_NEXT);
 
-    bool has_next;
+    lmdb_hash_it_data_t it_data;
     if (rc == 0) {
-      has_next = true;
+
+      // prepare hash_it_data
+      std::string binary_hash = lmdb_helper::get_string(context.key);
+      std::pair<uint64_t, uint64_t> uint64_pair =
+                          lmdb_helper::encoding_to_uint64_pair(context.data);
+      it_data = lmdb_hash_it_data_t(
+                   binary_hash, uint64_pair.first, uint64_pair.second, true);
     } else if (rc == MDB_NOTFOUND) {
-      has_next = false;
+      // use default it_data
     } else {
       // program error
-      has_next = false;
       std::cerr << "LMDB has_next error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
 
-    // prepare hash_it_data
-    std::string binary_hash = lmdb_helper::get_string(context.key);
-    std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
-
     // close context
     context.close();
 
-    return lmdb_hash_it_data_t(binary_hash,
-                               uint64_pair.first, uint64_pair.second,
-                               has_next);
+    return it_data;
   }
 
   // size

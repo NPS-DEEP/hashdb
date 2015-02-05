@@ -35,7 +35,6 @@
 #include "lmdb_source_store.hpp"
 #include "lmdb_source_data.hpp"
 #include "lmdb_source_it_data.hpp"
-#include "lmdb_reader_it_data.hpp"
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
 
@@ -85,11 +84,15 @@ class lmdb_reader_manager_t {
   }
 
   lmdb_hash_it_data_t find_next(const lmdb_hash_it_data_t& hash_it_data) const {
-    return hash_store.find_next(lmdb_hash_it_data_t& hash_it_data);
+    return hash_store.find_next(hash_it_data);
   }
 
   lmdb_source_data_t find_source(uint64_t source_lookup_index) const {
-    return source_store.find_source(source_lookup_index);
+    return source_store.find(source_lookup_index);
+  }
+
+  size_t size() const {
+    return hash_store.size();
   }
 };
 

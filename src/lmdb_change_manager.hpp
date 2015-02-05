@@ -39,6 +39,7 @@
 #include "lmdb_source_it_data.hpp"
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
+#include "hashdb_settings_store.hpp"
 
 class lmdb_change_manager_t {
 
@@ -117,7 +118,7 @@ class lmdb_change_manager_t {
     ++changes.hashes_inserted;
 
     // add source data in case it isn't there yet
-    add(source_lookup_index, source_data);
+    source_store.add(source_lookup_index, source_data);
 
     // add hash to bloom filter, too, even if already there
     bloom_filter_manager.add_hash_value(binary_hash);
@@ -185,6 +186,10 @@ class lmdb_change_manager_t {
 
     // add the source data
     source_store.add(pair.second, source_data);
+  }
+
+  size_t size() const {
+    return hash_store.size();
   }
 
 /*
