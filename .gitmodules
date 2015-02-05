@@ -1,12 +1,6 @@
 [submodule "src/dfxml"]
 	path = src/dfxml
 	url = https://github.com/simsong/dfxml.git
-[submodule "src/btree"]
-	path = src/btree
-	url = https://github.com/simsong/btree
-[submodule "src/endian"]
-	path = src/endian
-	url = https://github.com/Beman/endian
 [submodule "src/lmdb"]
 	path = src/lmdb
 	url = git://git.openldap.org/openldap.git
