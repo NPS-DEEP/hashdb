@@ -37,7 +37,6 @@
 #include <iostream>
 #include <sstream>
 #include <errno.h>
-#include "hash_t_selector.h"
 
 class bloom_filter_manager_t {
   public:
@@ -77,7 +76,7 @@ class bloom_filter_manager_t {
         break;
       case RW_NEW:
         success = bloom.create(filename.c_str(),
-                     sizeof(hash_t) * 8,
+                     16 * 8,  // expected size of binary hash
                      M_hash_size,
                      k_hash_functions,
                      "no message");
@@ -125,10 +124,13 @@ class bloom_filter_manager_t {
                bloom1_M_hash_size, bloom1_k_hash_functions);
   }
 
-  void add_hash_value(const hash_t& key) {
+  void add_hash_value(const std::string& key) {
 //std::cerr << "bloom_filter add_hash_value.a " << key << " " << filename << std::endl;
     if (bloom1_is_used) {
-      bloom1.add(key.digest);
+      if (key.size() < 16) {
+        assert(0);
+      }
+      bloom1.add(key.c_str());
     }
 //std::cerr << "bloom_filter add_hash_value.b" << std::endl;
   }
@@ -136,12 +138,17 @@ class bloom_filter_manager_t {
   /**
    * True if found or if filter is disabled.
    */
-  bool is_positive(const hash_t& key) const {
+  bool is_positive(const std::string& key) const {
 //std::cerr << "bloom_filter is_positive.a " << key << " " << bloom.query(key.digest) << " " << filename << std::endl;
-    if (bloom1_is_used && !bloom1.query(key.digest)) {
-      // not in bloom1
+    if (bloom1_is_used) {
+      if (key.size() < 16) {
+        assert(0);
+      }
+      if (!bloom1.query(key.c_str()) {
+        // not in bloom1
 //std::cerr << "bloom_filter is_positive.b" << std::endl;
-      return false;
+        return false;
+      }
     }
 
     // At this point, either it is present in both or filter is not used.

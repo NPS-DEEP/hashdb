@@ -44,6 +44,7 @@ liblmdb_la_LDFLAGS = -static -PIC
 
 check_PROGRAMS = \
 	db_test \
+	db_managers_test \
 	bloom_filter_manager_test \
 	settings_test \
 	logger_test \
@@ -67,6 +68,7 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 db_test_LDADD = liblmdb.la
+db_managers_test_LDADD = liblmdb.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
@@ -99,6 +101,15 @@ db_test_SOURCES = \
 	../lmdb_source_store.hpp \
 	unit_test.h \
 	db_test.cpp
+
+db_managers_test_SOURCES = \
+	../lmdb_change_manager.hpp \
+	../lmdb_read_manager.hpp \
+	../lmdb_hash_it_data.hpp \
+	../hashdb_directory_manager.hpp \
+	directory_helper.hpp \
+	unit_test.h \
+	db_managers_test.cpp
 
 bloom_filter_manager_test_SOURCES = \
 	unit_test.h \

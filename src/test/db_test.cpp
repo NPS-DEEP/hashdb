@@ -187,6 +187,7 @@ void rw_modify_source_store() {
   // open db
   lmdb_source_store_t source_store(temp_dir, RW_MODIFY);
 
+  // checks while size is zero
   lmdb_source_data_t data;
   lmdb_source_it_data_t it_data;
   TEST_EQ(source_store.size(), 0);
@@ -194,6 +195,16 @@ void rw_modify_source_store() {
   it_data = source_store.find_first();
   TEST_EQ(it_data.is_valid, false);
 
+  // check encoding and decoding
+  lmdb_source_data_t data0("r2", "fn3", "fsz4", "hash5");
+  TEST_EQ(source_store.add(0, data0), true);
+  lmdb_source_data_t data0b = source_store.find(0);
+  TEST_EQ(data0b.repository_name, "r2");
+  TEST_EQ(data0b.filename, "fn3");
+  TEST_EQ(data0b.filesize, "fsz4");
+  TEST_EQ(data0b.hashdigest, "hash5");
+
+  // check add
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
   data.repository_name = "rn";
@@ -202,14 +213,14 @@ void rw_modify_source_store() {
   data.filename = "fn";
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
-  data.filesize = "200";
+  data.filesize = "20";
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
-  data.hashdigest= "zzz";
+  data.hashdigest= "yy";
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
 
-  TEST_EQ(source_store.size(), 1);
+  TEST_EQ(source_store.size(), 2);
 
   data.repository_name = "repository_name";
   data.filename = "filename";
@@ -217,9 +228,13 @@ void rw_modify_source_store() {
   data.hashdigest= "some hash digest";
   TEST_EQ(source_store.add(2, data), true);
 
+  data = source_store.find(1);
+  TEST_EQ(data.repository_name, "rn");
   it_data = source_store.find_first();
-  TEST_EQ(it_data.source_data.repository_name, "rn");
+  TEST_EQ(it_data.source_data.repository_name, "r2");
   TEST_EQ(it_data.is_valid, true);
+  it_data = source_store.find_next(it_data.source_lookup_index);
+  TEST_EQ(it_data.source_data.repository_name, "rn");
   it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.source_data.repository_name, "repository_name");
   TEST_EQ(it_data.is_valid, true);
@@ -234,6 +249,9 @@ void read_only_source_store() {
   lmdb_source_data_t data;
   lmdb_source_it_data_t it_data;
   it_data = source_store.find_first();
+  TEST_EQ(it_data.source_data.repository_name, "r2");
+  TEST_EQ(it_data.is_valid, true);
+  it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.source_data.repository_name, "rn");
   TEST_EQ(it_data.is_valid, true);
   it_data = source_store.find_next(it_data.source_lookup_index);

@@ -39,36 +39,36 @@ class hashdb_changes_t {
 
   public:
   uint32_t hashes_inserted;
-  uint32_t hashes_not_inserted_mismatched_hash_block_size;
+//  uint32_t hashes_not_inserted_mismatched_hash_block_size;
   uint32_t hashes_not_inserted_invalid_byte_alignment;
   uint32_t hashes_not_inserted_exceeds_max_duplicates;
   uint32_t hashes_not_inserted_duplicate_element;
 
   uint32_t hashes_removed;
-  uint32_t hashes_not_removed_mismatched_hash_block_size;
+//  uint32_t hashes_not_removed_mismatched_hash_block_size;
   uint32_t hashes_not_removed_invalid_byte_alignment;
   uint32_t hashes_not_removed_no_hash;
   uint32_t hashes_not_removed_no_element;
 
-  uint32_t source_metadata_inserted;
-  uint32_t source_metadata_not_inserted_already_present;
+  uint32_t source_data_inserted;
+  uint32_t source_data_not_inserted_already_present;
 
   hashdb_changes_t() :
 
                      hashes_inserted(0),
-                     hashes_not_inserted_mismatched_hash_block_size(0),
+//                     hashes_not_inserted_mismatched_hash_block_size(0),
                      hashes_not_inserted_invalid_byte_alignment(0),
                      hashes_not_inserted_exceeds_max_duplicates(0),
                      hashes_not_inserted_duplicate_element(0),
 
                      hashes_removed(0),
-                     hashes_not_removed_mismatched_hash_block_size(0),
+//                     hashes_not_removed_mismatched_hash_block_size(0),
                      hashes_not_removed_invalid_byte_alignment(0),
                      hashes_not_removed_no_hash(0),
                      hashes_not_removed_no_element(0),
 
-                     source_metadata_inserted(0),
-                     source_metadata_not_inserted_already_present(0) {
+                     source_data_inserted(0),
+                     source_data_not_inserted_already_present(0) {
   }
 
   void report_changes(dfxml_writer& x) const {
@@ -78,8 +78,8 @@ class hashdb_changes_t {
 
     if (hashes_inserted)
       x.xmlout("hashes_inserted", hashes_inserted);
-    if (hashes_not_inserted_mismatched_hash_block_size)
-      x.xmlout("hashes_not_inserted_mismatched_hash_block_size", hashes_not_inserted_mismatched_hash_block_size);
+//    if (hashes_not_inserted_mismatched_hash_block_size)
+//      x.xmlout("hashes_not_inserted_mismatched_hash_block_size", hashes_not_inserted_mismatched_hash_block_size);
     if (hashes_not_inserted_invalid_byte_alignment)
       x.xmlout("hashes_not_inserted_invalid_byte_alignment", hashes_not_inserted_invalid_byte_alignment);
     if (hashes_not_inserted_exceeds_max_duplicates)
@@ -90,8 +90,8 @@ class hashdb_changes_t {
     // log any remove changes to x
     if (hashes_removed)
       x.xmlout("hashes_removed", hashes_removed);
-    if (hashes_not_removed_mismatched_hash_block_size)
-      x.xmlout("hashes_not_removed_mismatched_hash_block_size", hashes_not_removed_mismatched_hash_block_size);
+//    if (hashes_not_removed_mismatched_hash_block_size)
+//      x.xmlout("hashes_not_removed_mismatched_hash_block_size", hashes_not_removed_mismatched_hash_block_size);
     if (hashes_not_removed_invalid_byte_alignment)
       x.xmlout("hashes_not_removed_invalid_byte_alignment", hashes_not_removed_invalid_byte_alignment);
     if (hashes_not_removed_no_hash)
@@ -99,32 +99,32 @@ class hashdb_changes_t {
     if (hashes_not_removed_no_element)
       x.xmlout("hashes_not_removed_no_element", hashes_not_removed_no_element);
 
-    // log any source metadata changes to x
-    if (source_metadata_inserted)
-      x.xmlout("source_metadata_inserted", source_metadata_inserted);
-    if (source_metadata_not_inserted_already_present)
-      x.xmlout("source_metadata_not_inserted_already_present", source_metadata_not_inserted_already_present);
+    // log any source data changes to x
+    if (source_data_inserted)
+      x.xmlout("source_data_inserted", source_data_inserted);
+    if (source_data_not_inserted_already_present)
+      x.xmlout("source_data_not_inserted_already_present", source_data_not_inserted_already_present);
 
     x.pop();
   }
 
   void report_changes(std::ostream& os) const {
     bool has_insert_action = (hashes_inserted ||
-                              hashes_not_inserted_mismatched_hash_block_size ||
+//                              hashes_not_inserted_mismatched_hash_block_size ||
                               hashes_not_inserted_invalid_byte_alignment ||
                               hashes_not_inserted_exceeds_max_duplicates ||
                               hashes_not_inserted_duplicate_element);
 
     bool has_remove_action = (hashes_removed ||
-                              hashes_not_removed_mismatched_hash_block_size ||
+//                              hashes_not_removed_mismatched_hash_block_size ||
                               hashes_not_removed_invalid_byte_alignment ||
                               hashes_not_removed_no_hash ||
                               hashes_not_removed_no_element); 
 
-    bool has_source_metadata_insert_action = (source_metadata_inserted ||
-                              source_metadata_not_inserted_already_present);
+    bool has_source_data_insert_action = (source_data_inserted ||
+                              source_data_not_inserted_already_present);
 
-    if (!has_insert_action && !has_remove_action && !has_source_metadata_insert_action) {
+    if (!has_insert_action && !has_remove_action && !has_source_data_insert_action) {
       std::cout << "No hashdb changes.\n";
     }
 
@@ -132,7 +132,7 @@ class hashdb_changes_t {
       // log any insert changes to stdout
       std::cout << "hashdb changes (insert):\n"
                 << "    hashes inserted: " << hashes_inserted << "\n"
-                << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n"
+//                << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n"
                 << "    hashes not inserted (invalid byte alignment): " << hashes_not_inserted_invalid_byte_alignment << "\n"
                 << "    hashes not inserted (exceeds max duplicates): " << hashes_not_inserted_exceeds_max_duplicates << "\n"
                 << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n";
@@ -142,16 +142,16 @@ class hashdb_changes_t {
       // log any remove changes to stdout
       std::cout << "hashdb changes (remove):\n"
                 << "    hashes removed: " << hashes_removed << "\n"
-                << "    hashes not removed (mismatched hash block size): " << hashes_not_removed_mismatched_hash_block_size << "\n"
+//                << "    hashes not removed (mismatched hash block size): " << hashes_not_removed_mismatched_hash_block_size << "\n"
                 << "    hashes not removed (invalid byte alignment): " << hashes_not_removed_invalid_byte_alignment << "\n"
                 << "    hashes not removed (no hash): " << hashes_not_removed_no_hash << "\n"
                 << "    hashes not removed (no element): " << hashes_not_removed_no_element << "\n";
     }
 
-    if (has_source_metadata_insert_action) {
-      // log any insert source metadata changes to stdout
-      std::cout << "    source metadata inserted: " << source_metadata_inserted << "\n"
-                << "    source metadata not inserted (already present): " << source_metadata_not_inserted_already_present<< "\n";
+    if (has_source_data_insert_action) {
+      // log any insert source data changes to stdout
+      std::cout << "    source data inserted: " << source_data_inserted << "\n"
+                << "    source data not inserted (already present): " << source_data_not_inserted_already_present<< "\n";
     }
   }
 };

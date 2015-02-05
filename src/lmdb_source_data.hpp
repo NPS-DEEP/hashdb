@@ -32,19 +32,18 @@
 
 class lmdb_source_data_t {
   private:
-  // copy and return true if changed, fail on attempt to change existing value
+  // return false if empty or same, return true if change empty
+  // fail if attempt to change non-empty destination
   bool copy(const std::string& from, std::string& to) {
-    if (to != "" && from != to) {
+    if (from == "" || from == to) {
+      return false;
+    }
+    if (to != "") {
       std::cerr << "copy error, from " << from << " to " << to << "\n";
       assert(0);
     }
-    if (from == to) {
-      // no change
-      return false;
-    } else {
-      to = from;
-      return true;
-    }
+    to = from;
+    return true;
   }
 
   public:
@@ -55,6 +54,14 @@ class lmdb_source_data_t {
 
   lmdb_source_data_t() : repository_name(), filename(),
                              filesize(), hashdigest() {
+  }
+
+  lmdb_source_data_t(const std::string& p_repository_name,
+                     const std::string& p_filename,
+                     const std::string& p_filesize,
+                     const std::string& p_hashdigest):
+               repository_name(p_repository_name), filename(p_filename),
+               filesize(p_filesize), hashdigest(p_hashdigest) {
   }
 
   bool operator==(const lmdb_source_data_t& other) const {
