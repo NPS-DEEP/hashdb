@@ -27,14 +27,16 @@
 
 #include <string>
 #include <sstream>
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
+#include "lmdb_helper.h"
 
 class lmdb_source_data_t {
   private:
-  // return false if empty or same, return true if change empty
-  // fail if attempt to change non-empty destination
+  // copy string
   bool copy(const std::string& from, std::string& to) {
+    // return false if empty or same, return true if change empty
+    // fail if attempt to change non-empty destination
     if (from == "" || from == to) {
       return false;
     }
@@ -45,30 +47,42 @@ class lmdb_source_data_t {
     to = from;
     return true;
   }
+  // copy uint64
+  bool copy(uint64_t from, uint64_t to) {
+    if (from == 0 || from == to) {
+      return false;
+    }
+    if (to != 0) {
+      std::cerr << "copy error, from " << from << " to " << to << "\n";
+      assert(0);
+    }
+    to = from;
+    return true;
+  }
 
   public:
   std::string repository_name;
   std::string filename;
-  std::string filesize;
-  std::string hashdigest;
+  uint64_t filesize;
+  std::string binary_hash;
 
   lmdb_source_data_t() : repository_name(), filename(),
-                             filesize(), hashdigest() {
+                             filesize(), binary_hash() {
   }
 
   lmdb_source_data_t(const std::string& p_repository_name,
                      const std::string& p_filename,
-                     const std::string& p_filesize,
-                     const std::string& p_hashdigest):
+                     uint64_t p_filesize,
+                     const std::string& p_binary_hash):
                repository_name(p_repository_name), filename(p_filename),
-               filesize(p_filesize), hashdigest(p_hashdigest) {
+               filesize(p_filesize), binary_hash(p_binary_hash) {
   }
 
   bool operator==(const lmdb_source_data_t& other) const {
     return (repository_name == other.repository_name
             && filename == other.filename
             && filesize == other.filesize
-            && hashdigest == other.hashdigest);
+            && binary_hash == other.binary_hash);
   }
 
   // add, true if added, false if same, fatal if different
@@ -76,7 +90,7 @@ class lmdb_source_data_t {
     bool changed = copy(other.repository_name, repository_name);
     changed |= copy(other.filename, filename);
     changed |= copy(other.filesize, filesize);
-    changed |= copy(other.hashdigest, hashdigest);
+    changed |= copy(other.binary_hash, binary_hash);
     return changed;
   }
 };
@@ -86,7 +100,7 @@ inline std::ostream& operator<<(std::ostream& os,
   os << "{\"lmdb_source_data\":{\"repository_name\":\"" << data.repository_name
      << "\",\"filename\":" << data.filename
      << "\",\"filesize\":" << data.filesize
-     << "\",\"hashdigest\":" << data.hashdigest
+     << "\",\"hashdigest\":" << lmdb_helper::binary_hash_to_hex(data.binary_hash)
      << "}";
   return os;
 }

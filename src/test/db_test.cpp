@@ -196,13 +196,13 @@ void rw_modify_source_store() {
   TEST_EQ(it_data.is_valid, false);
 
   // check encoding and decoding
-  lmdb_source_data_t data0("r2", "fn3", "fsz4", "hash5");
+  lmdb_source_data_t data0("r2", "fn3", 100, "hash5");
   TEST_EQ(source_store.add(0, data0), true);
   lmdb_source_data_t data0b = source_store.find(0);
   TEST_EQ(data0b.repository_name, "r2");
   TEST_EQ(data0b.filename, "fn3");
-  TEST_EQ(data0b.filesize, "fsz4");
-  TEST_EQ(data0b.hashdigest, "hash5");
+  TEST_EQ(data0b.filesize, 4);
+  TEST_EQ(data0b.binary_hash, "hash5");
 
   // check add
   TEST_EQ(source_store.add(1, data), true);
@@ -213,10 +213,10 @@ void rw_modify_source_store() {
   data.filename = "fn";
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
-  data.filesize = "20";
+  data.filesize = 20;
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
-  data.hashdigest= "yy";
+  data.binary_hash = "yy";
   TEST_EQ(source_store.add(1, data), true);
   TEST_EQ(source_store.add(1, data), false);
 
@@ -224,8 +224,8 @@ void rw_modify_source_store() {
 
   data.repository_name = "repository_name";
   data.filename = "filename";
-  data.filesize = "some file size";
-  data.hashdigest= "some hash digest";
+  data.filesize = 30;
+  data.binary_hash = "some hash digest";
   TEST_EQ(source_store.add(2, data), true);
 
   data = source_store.find(1);

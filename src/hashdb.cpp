@@ -37,22 +37,24 @@
   #include <winsock2.h>
 #endif
 #include "hashdb.hpp"
-#include <hash_t_selector.h>
 #include <string>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 #include <climits>
 #include "file_modes.h"
 #include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
-#include "hashdb_manager.hpp"
-#include "hashdb_element.hpp"
 #include "hashdb_changes.hpp"
 #include "history_manager.hpp"
+#include "lmdb_hash_store.hpp"
+#include "lmdb_name_store.hpp"
+#include "lmdb_source_store.hpp"
+#include "lmdb_source_data.hpp"
+#include "lmdb_change_manager.hpp"
+#include "lmdb_reader_manager.hpp"
+#include "bloom_filter_manager.hpp"
 #include "logger.hpp"
-#include "tcp_client_manager.hpp"
-#include "source_metadata_element.hpp"
 #ifndef HAVE_CXX11
 #include <cassert>
 #endif
@@ -66,20 +68,18 @@ const char* hashdb_version() {
 }
 
   // constructor
-  template<>
-  hashdb_t__<hash_t>::hashdb_t__() :
+  hashdb_t::hashdb_t() :
                    path_or_socket(""),
                    block_size(0),
                    max_duplicates(0),
                    mode(HASHDB_NONE),
-                   hashdb_manager(0),
-                   tcp_client_manager(0),
+                   change_manager(),
+                   reader_manager(),
                    logger(0) {
   }
 
   // open for importing, return true else false with error string.
-  template<>
-  std::pair<bool, std::string> hashdb_t__<hash_t>::open_import(
+  std::pair<bool, std::string> hashdb_t::open_import(
                                              const std::string& p_hashdb_dir,
                                              uint32_t p_block_size,
                                              uint32_t p_max_duplicates) {
@@ -104,8 +104,19 @@ const char* hashdb_version() {
       settings.maximum_hash_duplicates = max_duplicates;
       hashdb_settings_store_t::write_settings(path_or_socket, settings);
 
-      // create hashdb_manager
-      hashdb_manager = new hashdb_manager_t(path_or_socket, RW_NEW);
+      // create the new stores
+      lmdb_hash_store_t(path_or_socket, RW_NEW);
+      lmdb_name_store_t(path_or_socket, RW_NEW);
+      lmdb_source_store_t(path_or_socket, RW_NEW);
+
+      // create Bloom
+      bloom_filter_manager_t(path_or_socket, RW_NEW,
+                             settings.bloom1_is_used,
+                             settings.bloom1_M_hash_size,
+                             settings.bloom1_k_hash_functions);
+
+      // open for writing
+      change_manager = new lmdb_change_manager_t(path_or_socket);
 
       // open logger
       logger = new logger_t(path_or_socket, "hashdb library import");
@@ -119,8 +130,7 @@ const char* hashdb_version() {
   }
 
   // import
-  template<>
-  int hashdb_t__<hash_t>::import(const import_input_t& input) {
+  int hashdb_t::import(const import_input_t& input) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
@@ -132,15 +142,12 @@ const char* hashdb_version() {
 
     // import all elements
     while (it != input.end()) {
-      // convert input to hashdb_element_t
-      hashdb_element_t hashdb_element(it->hash,
-                                         block_size,
-                                         it->repository_name,
-                                         it->filename,
-                                         it->file_offset);
 
-      // add hashdb_element_t to hashdb_manager
-      hashdb_manager->insert(hashdb_element);
+      // set source data record
+      lmdb_source_data_t source_data(it->repository_name, it->filename, 0, "");
+
+      // insert the source data
+      change_manager->insert(it->binary_hash, source_data, it->file_offset);
 
       ++it;
     }
@@ -150,31 +157,29 @@ const char* hashdb_version() {
   }
 
   // import metadata
-  template<>
-  int hashdb_t__<hash_t>::import_metadata(const std::string& repository_name,
+  int hashdb_t::import_metadata(const std::string& repository_name,
                                           const std::string& filename,
                                           uint64_t filesize,
-                                          const hash_t& hashdigest) {
+                                          const std::string& binary_hash) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
       return -1;
     }
 
-    // acquire existing or new source lookup index
-    uint64_t source_id = hashdb_manager->insert_source(
-                                                  repository_name, filename);
- 
-    // add the metadata associated with this source
-    hashdb_manager->insert_source_metadata(source_id, filesize, hashdigest);
+    // set source data record
+    lmdb_source_data_t source_data(repository_name, filename,
+                                   filesize, binary_hash);
+
+    // add the change
+    change_manager->add_source_data(source_data);
 
     // good, done
     return 0;
   }
 
   // Open for scanning with a lock around one scan resource.
-  template<>
-  std::pair<bool, std::string> hashdb_t__<hash_t>::open_scan(
+  std::pair<bool, std::string> hashdb_t::open_scan(
                                          const std::string& p_path_or_socket) {
     path_or_socket = p_path_or_socket;
     if (mode != HASHDB_NONE) {
@@ -187,16 +192,13 @@ const char* hashdb_version() {
     if (path_or_socket.find("tcp://") == 0) {
       mode = HASHDB_SCAN_SOCKET;
       // open TCP socket service for scanning
-      try {
-        tcp_client_manager = new tcp_client_manager_t(path_or_socket);
-      } catch (std::runtime_error& e) {
-        return std::pair<bool, std::string>(false, e.what());
-      }
+      std::cerr << "TCP scan currently not implemented\n";
+      return std::pair<bool, std::string>(false, "TCP scan currently not implemented");
     } else {
       mode = HASHDB_SCAN;
-      // open hashdb_manager for scanning
+      // open reader manager for scanning
       try {
-        hashdb_manager = new hashdb_manager_t(path_or_socket, READ_ONLY);
+        reader_manager = new lmdb_reader_manager_t(path_or_socket);
       } catch (std::runtime_error& e) {
         return std::pair<bool, std::string>(false, e.what());
       }
@@ -205,16 +207,14 @@ const char* hashdb_version() {
   }
 
   // scan
-  template<>
-  int hashdb_t__<hash_t>::scan(const scan_input_t& input,
-                               scan_output_t& output) const {
+  int hashdb_t::scan(const scan_input_t& input, scan_output_t& output) const {
 
     // clear any old output
     output.clear();
            
     switch(mode) {
       case HASHDB_SCAN: {
-        // run scan using hashdb_manager
+        // run scan
 
         // since we optimize by limiting the return index size to uint32_t,
         // we must reject vector size > uint32_t
@@ -223,12 +223,10 @@ const char* hashdb_version() {
           return -1;
         }
 
-        // perform all scans in one locked operation.
-
         // scan each input in turn
         uint32_t input_size = (uint32_t)input.size();
         for (uint32_t i=0; i<input_size; i++) {
-          uint32_t count = hashdb_manager->find_count(input[i]);
+          uint32_t count = reader_manager->find_count(input[i]);
           if (count > 0) {
             output.push_back(std::pair<uint32_t, uint32_t>(i, count));
           }
@@ -239,8 +237,7 @@ const char* hashdb_version() {
       }
 
       case HASHDB_SCAN_SOCKET: {
-        // run scan using tcp_client_manager
-        return tcp_client_manager->scan(input, output);
+        std::cerr << "TCP scan currently not implemented\n";
       }
 
       default: {
@@ -251,26 +248,25 @@ const char* hashdb_version() {
   }
 
   // destructor
-  template<>
-  hashdb_t__<hash_t>::~hashdb_t__() {
+  hashdb_t::~hashdb_t() {
     switch(mode) {
       case HASHDB_NONE:
         return;
       case HASHDB_IMPORT:
         logger->add_timestamp("end import");
-        logger->add_hashdb_changes(hashdb_manager->changes);
+        logger->add_hashdb_changes(change_manager->changes);
         delete logger;
-        delete hashdb_manager;
+        delete change_manager;
 
         // create new history trail
         history_manager_t::append_log_to_history(path_or_socket);
         return;
 
       case HASHDB_SCAN:
-        delete hashdb_manager;
+        delete reader_manager;
         return;
       case HASHDB_SCAN_SOCKET:
-        delete tcp_client_manager;
+        std::cerr << "TCP scan currently not implemented\n";
         return;
       default:
         // program error
@@ -281,21 +277,19 @@ const char* hashdb_version() {
 // mac doesn't seem to be up to c++11 yet
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
-  template<>
-  hashdb_t__<hash_t>::hashdb_t__(const hashdb_t__<hash_t>& other) :
+  hashdb_t::hashdb_t__(const hashdb_t& other) :
                  path_or_socket(""),
                  block_size(0),
                  max_duplicates(0),
                  mode(HASHDB_NONE),
-                 hashdb_manager(0),
-                 tcp_client_manager(0),
+                 change_manager(0),
+                 reader_manager(0),
                  logger(0) {
     assert(0);
     exit(1);
   }
   // if c++11 fail at compile time else fail at runtime upon invocation
-  template<>
-  hashdb_t__<hash_t>& hashdb_t__<hash_t>::operator=(const hashdb_t__<hash_t>& other) {
+  hashdb_t& hashdb_t::operator=(const hashdb_t& other) {
     assert(0);
     exit(1);
   }

@@ -26,53 +26,45 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
+#include "lmdb_helper.h"
 #include "unit_test.h"
-#include "to_key_helper.hpp"
 #include "directory_helper.hpp"
 #include "bloom_filter_manager.hpp"
-#include "../hash_t_selector.h"
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir_bloom_filter_manager_test";
 static const char temp[] = "temp_dir_bloom_filter_manager_test/bloom_filter_1";
+static const std::string binary_hash = lmdb_helper::hex_to_binary_hash("00112233445566778899aabbccddeeff");
 
 void run_rw_test1() {
-
-  hash_t key;
-
-  remove(temp);
-
-  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, true, 28, 2);
-
-  to_key(101, key);
-
-  // enabled
-  TEST_EQ(manager.is_positive(key), false);
-  manager.add_hash_value(key);
-  TEST_EQ(manager.is_positive(key), true);
-}
-
-void run_rw_test2() {
-
-  hash_t key;
 
   remove(temp);
 
   bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, false, 28, 2);
 
-  to_key(101, key);
-
   // manager is disabled
-  TEST_EQ(manager.is_positive(key), true);
-  manager.add_hash_value(key);
-  TEST_EQ(manager.is_positive(key), true);
+  TEST_EQ(manager.is_positive(binary_hash), true);
+  manager.add_hash_value(binary_hash);
+  TEST_EQ(manager.is_positive(binary_hash), true);
+}
+
+void run_rw_test2() {
+
+  remove(temp);
+
+  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, true, 28, 2);
+
+  // enabled
+  TEST_EQ(manager.is_positive(binary_hash), false);
+  manager.add_hash_value(binary_hash);
+  TEST_EQ(manager.is_positive(binary_hash), true);
 }
 
 int main(int argc, char* argv[]) {
   make_dir_if_not_there(temp_dir);
-  // validate that the is_positive function returns true when added
-  run_rw_test1();
   // validate that the is_positive function returns true when disabled
+  run_rw_test1();
+  // validate that the is_positive function returns true when added
   run_rw_test2();
   return 0;
 }

@@ -25,7 +25,8 @@
 #ifndef GLOBALS_HPP
 #define GLOBALS_HPP
 
-#include "boost/btree/helpers.hpp" // for btree flags bitmask
+#include <cstdint>
+#include <string>
 
 /**
  * Hold global variables in this globals namespace.
@@ -35,8 +36,9 @@ class globals_t {
   static const uint32_t default_scan_expanded_max = 200;
   static const uint32_t default_explain_identified_blocks_max = 20;
   static const uint32_t default_import_tab_sector_size = 512;
+  static const uint32_t default_byte_alignment = 512;
   static bool quiet_mode;
-  static boost::btree::flags::bitmask btree_flags;
+  static std::string command_line_string;
 };
 
 #endif

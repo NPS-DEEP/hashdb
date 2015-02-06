@@ -31,6 +31,7 @@
 #define LMDB_SOURCE_METADATA_STORE_HPP
 #include "file_modes.h"
 #include "lmdb_source_data.hpp"
+#include "lmdb_source_data_encoding.hpp"
 #include "lmdb_source_it_data.hpp"
 #include <string>
 #include "lmdb.h"
@@ -113,7 +114,8 @@ class lmdb_source_store_t {
 
       // get existing source data
       lmdb_source_data_t source_data =
-                      lmdb_helper::encoding_to_lmdb_source_data(context.data);
+                      lmdb_source_data_encoding::encoding_to_lmdb_source_data(
+                                                               context.data);
 
       // add in new source data
       added = source_data.add(new_source_data);
@@ -124,7 +126,8 @@ class lmdb_source_store_t {
         if (rc == 0) {
           // more so put in the fuller record
           std::string data_encoding =
-                      lmdb_helper::lmdb_source_data_to_encoding(source_data);
+               lmdb_source_data_encoding::lmdb_source_data_to_encoding(
+                                                                source_data);
           lmdb_helper::point_to_string(data_encoding, context.data);
           rc = mdb_put(context.txn, context.dbi,
                        &context.key, &context.data, MDB_NODUPDATA);
@@ -144,8 +147,9 @@ class lmdb_source_store_t {
       added = true;
 
       // set data
-      std::string data_encoding = lmdb_helper::lmdb_source_data_to_encoding(
-                                               new_source_data);
+      std::string data_encoding =
+               lmdb_source_data_encoding::lmdb_source_data_to_encoding(
+                                                            new_source_data);
       lmdb_helper::point_to_string(data_encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
@@ -201,7 +205,8 @@ class lmdb_source_store_t {
     lmdb_source_data_t source_data;
     if (rc == 0) {
       // read the data
-      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
+      source_data = lmdb_source_data_encoding::encoding_to_lmdb_source_data(
+                                                               context.data);
     } else {
       // error if key does not exist
       std::cerr << "find: " << mdb_strerror(rc) << "\n";
@@ -232,7 +237,8 @@ class lmdb_source_store_t {
 
       // read the key and data
       source_lookup_index = lmdb_helper::encoding_to_uint64(context.key);
-      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
+      source_data = lmdb_source_data_encoding::encoding_to_lmdb_source_data(
+                                                               context.data);
     } else if (rc == MDB_NOTFOUND) {
       // no data yet
     } else {
@@ -280,7 +286,8 @@ class lmdb_source_store_t {
     lmdb_source_data_t source_data;
     if (rc == 0) {
       has_next = true;
-      source_data = lmdb_helper::encoding_to_lmdb_source_data(context.data);
+      source_data = lmdb_source_data_encoding::encoding_to_lmdb_source_data(
+                                                               context.data);
     } else if (rc == MDB_NOTFOUND) {
       has_next = false;
     } else {

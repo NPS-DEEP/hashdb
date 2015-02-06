@@ -28,10 +28,9 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include "command_line.hpp"
+#include "globals.hpp"
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
-#include "hash_t_selector.h"
 #include "history_manager.hpp"
 #include <iostream>
 #include <stdexcept>
@@ -75,7 +74,7 @@ class logger_t {
     std::stringstream ss;
     ss << "name='" << name << "'";
     x.push("command", ss.str());
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_line_t::command_line_string);
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", globals_t::command_line_string);
   }
 
   ~logger_t() {

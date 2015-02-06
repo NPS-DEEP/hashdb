@@ -26,10 +26,9 @@
 #define    HASHDB_SETTINGS_HPP
 
 #include "dfxml/src/dfxml_writer.h"
-#include "hash_t_selector.h"
 #include <string>
 #include <sstream>
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
 
 inline bool string_to_bloom_state(std::string state_string, bool& state) {
@@ -47,7 +46,6 @@ inline std::string bloom_state_to_string(bool state) {
 struct hashdb_settings_t {
 
   uint32_t settings_version;
-  std::string hash_digest_type;
   uint32_t byte_alignment;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
@@ -60,7 +58,6 @@ struct hashdb_settings_t {
 
   hashdb_settings_t() :
         settings_version(1),
-        hash_digest_type(digest_name<hash_t>()),
         byte_alignment(HASHDB_BYTE_ALIGNMENT),
         hash_block_size(4096),
         maximum_hash_duplicates(0),
@@ -72,7 +69,6 @@ struct hashdb_settings_t {
   void report_settings(std::ostream& os) const {
     os << "hashdb settings:\n";
     os << "settings version: " << settings_version << "\n";
-    os << "hash digest type: " << hash_digest_type << "\n";
     os << "byte alignment: " << byte_alignment << "\n";
     os << "hash block size: " << hash_block_size << "\n";
     os << "maximum hash duplicates: " << maximum_hash_duplicates << "\n";
@@ -83,7 +79,6 @@ struct hashdb_settings_t {
 
   void report_settings(dfxml_writer& x) const {
     x.xmlout("settings_version", settings_version);
-    x.xmlout("hash_digest_type", hash_digest_type);
     x.xmlout("byte_alignment", byte_alignment);
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);

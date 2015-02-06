@@ -28,89 +28,66 @@
 #include <cstdio>
 #include "unit_test.h"
 #include "hashdb.hpp"
-#include "to_key_helper.hpp"
 #include "directory_helper.hpp"
-#include "../hash_t_selector.h"
-#include "source_metadata.hpp"
+#include "lmdb_helper.h" // for hex_to_binary_hash
 
-static const char temp_dir[] = "temp_dir_libhashdb_test.hdb";
+static const std::string hashdb_dir = "temp_dir_libhashdb_test.hdb";
+static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
+static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
+static const std::string binary_ff(lmdb_helper::hex_to_binary_hash("ff"));
+static const std::string binary_big(lmdb_helper::hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
 
-typedef hashdb_t__<hash_t> hashdb_t;
-
-void do_import() {
+void do_test() {
   // clean up from any previous run
-  rm_hashdb_dir(temp_dir);
+  rm_hashdb_dir(hashdb_dir);
 
-  // valid hashdigest values
-  hash_t k1;
-  to_key(0, k1);
+  // open reader and writer
+  hashdb_t hashdb1;
+  hashdb_t hashdb2;
 
   // input for import
   hashdb_t::import_input_t import_input;
-  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 0));
-  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 4096));
-  import_input.push_back(hashdb_t::import_element_t(k1, "rep1", "file1", 4097)); // invalid
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 0));
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4096));
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4097)); // invalid
 
-  // create new database
-  hashdb_t hashdb;
-  std::pair<bool, std::string> import_pair = hashdb.open_import(temp_dir, 4096, 20);
+  // open hashdb1 for import
+  std::pair<bool, std::string> import_pair = hashdb1.open_import(hashdb_dir, 4096, 20);
   TEST_EQ(import_pair.first, true);
 
   // import some elements
   int status;
-  status = hashdb.import(import_input);
+  status = hashdb1.import(import_input);
   TEST_EQ(status, 0);
 
   // import metadata
-  hash_t k2;
-  to_key(1, k2);
-  status = hashdb.import_metadata("rep1", "file1", 10000, k2);
+  status = hashdb1.import_metadata("rep1", "file1", 10000, binary_big);
   TEST_EQ(status, 0);
-  status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
+  status = hashdb1.import_metadata("zrep1", "file1", 10000, binary_big);
   TEST_EQ(status, 0);
-  status = hashdb.import_metadata("zrep1", "file1", 10000, k2);
+  status = hashdb1.import_metadata("zrep1", "file1", 10000, binary_big);
   TEST_EQ(status, 0);
 
-  // invalid mode to scan when importing
-  hashdb_t::scan_input_t scan_input;
-  hashdb_t::scan_output_t scan_output;
-  std::cout << "may emit scan mode error here.\n";
-  status = hashdb.scan(scan_input, scan_output);
-  TEST_NE(status, 0);
-}
-
-void do_scan() {
-
-  // valid hashdigest values
-  hash_t k1;
-  hash_t k2;
-  to_key(0, k1);
-  to_key(0, k2);
-
-  // open to scan
-  hashdb_t hashdb;
-  std::pair<bool, std::string> open_pair = hashdb.open_scan(temp_dir);
-  TEST_EQ(open_pair.first, true);
-
-  hashdb_t::scan_input_t input;
-  hashdb_t::scan_output_t output;
+  // open hashdb2 for scan
+  std::pair<bool, std::string> scan_pair = hashdb2.open_scan(hashdb_dir);
+  TEST_EQ(scan_pair.first, true);
 
   // populate input
-  input.push_back(k1);
-  input.push_back(k2);
+  hashdb_t::scan_input_t scan_input;
+  scan_input.push_back(binary_aa);
+  scan_input.push_back(binary_bb);
+  scan_input.push_back(binary_big);
 
   // perform scan
-  hashdb.scan(input, output);
-  TEST_EQ(output.size(), 2);
-  TEST_EQ(output[0].first, 0);
-  TEST_EQ(output[0].second, 2);
-  TEST_EQ(output[1].first, 1);
-  TEST_EQ(output[0].second, 2);
+  hashdb_t::scan_output_t scan_output;
+  status = hashdb2.scan(scan_input, scan_output);
+  TEST_EQ(status, 0);
+  TEST_EQ(scan_output.size(), 1);
+  TEST_EQ(scan_output[0].second, 2);
 }
 
 int main(int argc, char* argv[]) {
-  do_import();
-  do_scan();
+  do_test();
 
   return 0;
 }

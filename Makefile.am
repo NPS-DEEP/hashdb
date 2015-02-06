@@ -3,8 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 SRC_WIN = src_win
 include src_win/Makefile
 
-#zz SUBDIRS = src src/test man doc python
-SUBDIRS = src/test man doc python
+SUBDIRS = src src/test man doc python
 
 SRC_WIN_DIST = \
 	src_win/build_installer.nsi \

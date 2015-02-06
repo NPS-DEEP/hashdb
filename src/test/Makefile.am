@@ -51,7 +51,8 @@ libdfxml_la_SOURCES = \
 # these CFLAGS are adapted from liblmdb/Makefile
 liblmdb_la_CFLAGS = \
 	-pthread -O3 -g \
-	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized
+	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
+	-wno-format-extra-args
 liblmdb_la_LDFLAGS = -static -PIC
 
 check_PROGRAMS = \
@@ -81,8 +82,8 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 db_test_LDADD = liblmdb.la
 db_managers_test_LDADD = liblmdb.la libbloom.la libdfxml.la
-bloom_filter_manager_test_LDADD = ../libhashdb.la
-settings_test_LDADD = ../libhashdb.la
+bloom_filter_manager_test_LDADD = libbloom.la
+settings_test_LDADD = libdfxml.la
 logger_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
 commands_test_LDADD = ../libhashdb.la
@@ -109,6 +110,7 @@ db_test_SOURCES = \
 	../lmdb_helper.h \
 	../lmdb_name_store.hpp \
 	../lmdb_source_data.hpp \
+	../lmdb_source_data_encoding.hpp \
 	../lmdb_source_it_data.hpp \
 	../lmdb_source_store.hpp \
 	unit_test.h \

@@ -31,9 +31,10 @@
 #include "sys/stat.h"
 #include "file_modes.h"
 #include "lmdb.h"
-#include "lmdb_source_data.hpp"
 #include <cstdint>
+#include <cstring>
 #include <sstream>
+#include <unistd.h>
 
 class lmdb_helper {
   private:
@@ -143,33 +144,6 @@ class lmdb_helper {
     target[size-1] &= 0x7F;
     return target + size;
   }
-
-  class private_string_reader {
-    const char* ptr;
-    size_t max;
-    public:
-    private_string_reader(const char* p_ptr, size_t p_max) :
-                 ptr(p_ptr), max(p_max) {
-    }
-    std::string get() {
-      const char* p2 = (char*)memchr(ptr, 0, max);
-      std::string s(ptr, (p2==NULL ? max : p2 - ptr));
-      if (p2 == NULL) {
-        max = 0;
-      } else {
-        size_t count = p2 - ptr + 1;
-        max -= count;
-        ptr += count;
-      }
-      return s;
-    }
-    ~private_string_reader() {
-      if (max != 0) {
-        std::cout << "Data error: unread data.\n";
-        //assert(0);
-      }
-    }
-  };
 
   public:
   static MDB_env* open_env(const std::string& store_dir,
@@ -342,39 +316,6 @@ class lmdb_helper {
     std::memcpy(cstr+l1+1, s2.c_str(), l2);
     std::string encoding(cstr, l3);
     return std::string(cstr, l3);
-  }
-
-  static std::string lmdb_source_data_to_encoding(const lmdb_source_data_t data) {
-    size_t l1 = data.repository_name.size();
-    size_t l2 = data.filename.size();
-    size_t l3 = data.filesize.size();
-    size_t l4 = data.hashdigest.size();
-    
-    // fill ordered null-delimited record from fields
-    char chars[l1+1+l2+1+l3+1+l4];
-    std::memcpy(chars, data.repository_name.c_str(), l1);
-    size_t start = l1;
-    chars[start++] = 0;
-    std::memcpy(chars+start, data.filename.c_str(), l2);
-    start += l2;
-    chars[start++] = 0;
-    std::memcpy(chars+start, data.filesize.c_str(), l3);
-    start += l3;
-    chars[start++] = 0;
-    std::memcpy(chars+start, data.hashdigest.c_str(), l4);
-
-    // return the encoding
-    return std::string(chars, l1+1+l2+1+l3+1+l4);
-  }
-
-  static lmdb_source_data_t encoding_to_lmdb_source_data(const MDB_val& val) {
-    private_string_reader reader(static_cast<char*>(val.mv_data), val.mv_size);
-    lmdb_source_data_t data;
-    data.repository_name = reader.get();
-    data.filename = reader.get();
-    data.filesize = reader.get();
-    data.hashdigest = reader.get();
-    return data;
   }
 
   static void point_to_string(const std::string& str, MDB_val& val) {

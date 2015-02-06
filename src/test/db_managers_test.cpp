@@ -30,6 +30,7 @@
 #include "lmdb_change_manager.hpp"
 #include "lmdb_reader_manager.hpp"
 #include "lmdb_hash_it_data.hpp"
+#include "lmdb_helper.h"
 #include "directory_helper.hpp"
 #include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
@@ -46,10 +47,10 @@ static const std::string binary_cc(lmdb_helper::hex_to_binary_hash("cc"));
 static const std::string binary_ff(lmdb_helper::hex_to_binary_hash("ff"));
 //static const std::string binary_big(lmdb_helper::hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
 
-static const lmdb_source_data_t source_data1("r2", "fn3", "fsz4", "hash5");
-static const lmdb_source_data_t source_data2("rn", "fn", "20", "yy");
-static const lmdb_source_data_t source_data3("rn3", "fn3", "", "");
-static const lmdb_source_data_t source_data3b("rn3", "fn3", "sz3", "h3");
+static const lmdb_source_data_t source_data1("r2", "fn3", 4, "hash5");
+static const lmdb_source_data_t source_data2("rn", "fn", 20, "yy");
+static const lmdb_source_data_t source_data3("rn3", "fn3", 0, "");
+static const lmdb_source_data_t source_data3b("rn3", "fn3", 3, "h3");
  
  
 void create_db() {

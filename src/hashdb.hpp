@@ -27,7 +27,7 @@
 
 #include <string>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * Version of the hashdb library.
@@ -35,10 +35,10 @@
 extern "C"
 const char* hashdb_version();
 
-// required inside hashdb_t__
-class hashdb_manager_t;
+// required inside hashdb_t
+class lmdb_change_manager_t;
+class lmdb_reader_manager_t;
 class logger_t;
-class tcp_client_manager_t;
 
 /**
  * The hashdb library.
@@ -46,8 +46,7 @@ class tcp_client_manager_t;
  * Note: libhashdb must be compiled to support the same hash type
  * as the hash type provided in the template.
  */
-template<typename T>
-class hashdb_t__ {
+class hashdb_t {
   private:
   enum hashdb_modes_t {HASHDB_NONE,
                        HASHDB_IMPORT,
@@ -57,28 +56,28 @@ class hashdb_t__ {
   uint32_t block_size;
   uint32_t max_duplicates;
   hashdb_modes_t mode;
-  hashdb_manager_t* hashdb_manager;             // import or scan path
-  tcp_client_manager_t* tcp_client_manager;     // scan socket
+  lmdb_change_manager_t* change_manager;
+  lmdb_reader_manager_t* reader_manager;
   logger_t* logger;
 
   public:
   // data structure for one import element
   struct import_element_t {
-    T hash;
+    std::string binary_hash;
     std::string repository_name;
     std::string filename;
     uint64_t file_offset;
-    import_element_t(const T p_hash,
+    import_element_t(const std::string p_binary_hash,
                      const std::string p_repository_name,
                      const std::string p_filename,
                      uint64_t p_file_offset) :
-                            hash(p_hash),
+                            binary_hash(p_binary_hash),
                             repository_name(p_repository_name),
                             filename(p_filename),
                             file_offset(p_file_offset) {
     }
     import_element_t() :
-                            hash(),
+                            binary_hash(),
                             repository_name(),
                             filename(),
                             file_offset(0) {
@@ -94,7 +93,7 @@ class hashdb_t__ {
   /**
    * The scan input is an array of hash values to be scanned for.
    */
-  typedef std::vector<T> scan_input_t;
+  typedef std::vector<std::string> scan_input_t;
 
   /**
    * The scan output is an array of pairs of uint32_t index values that
@@ -108,7 +107,7 @@ class hashdb_t__ {
   /**
    * Constructor
    */
-  hashdb_t__();
+  hashdb_t();
 
   /**
    * Open for importing, return true else false with error string.
@@ -128,10 +127,10 @@ class hashdb_t__ {
   int import_metadata(const std::string& repository_name,
                       const std::string& filename,
                       uint64_t filesize,
-                      const T& hashdigest);
+                      const std::string& binary_hash);
 
   /**
-   * Open for scanning with a lock around one scan resource.
+   * Open for scanning.
    * Return true else false with error string.
    */
   std::pair<bool, std::string> open_scan(const std::string& p_path_or_socket);
@@ -143,20 +142,20 @@ class hashdb_t__ {
            scan_output_t& scan_output) const;
 
 #ifdef HAVE_CXX11
-  hashdb_t__(const hashdb_t__& other) = delete;
+  hashdb_t(const hashdb_t& other) = delete;
 #else
   // don't use this.
-  hashdb_t__(const hashdb_t__& other) __attribute__ ((noreturn));
+  hashdb_t(const hashdb_t& other) __attribute__ ((noreturn));
 #endif
 
 #ifdef HAVE_CXX11
-  hashdb_t__& operator=(const hashdb_t__& other) = delete;
+  hashdb_t& operator=(const hashdb_t& other) = delete;
 #else
   // don't use this.
-  hashdb_t__& operator=(const hashdb_t__& other) __attribute__ ((noreturn));
+  hashdb_t& operator=(const hashdb_t& other) __attribute__ ((noreturn));
 #endif
 
-  ~hashdb_t__();
+  ~hashdb_t();
 };
 
 #endif

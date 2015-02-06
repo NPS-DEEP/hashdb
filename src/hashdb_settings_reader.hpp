@@ -66,7 +66,6 @@ class hashdb_settings_reader_t {
   enum node_type_t {NO_NODE,
                     // hashdb
                     SETTINGS_VERSION,
-                    HASH_DIGEST_TYPE,
                     BYTE_ALIGNMENT,
                     HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
@@ -112,7 +111,6 @@ class hashdb_settings_reader_t {
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("settings_version"))) return SETTINGS_VERSION;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_digest_type"))) return HASH_DIGEST_TYPE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_alignment"))) return BYTE_ALIGNMENT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
@@ -193,8 +191,6 @@ class hashdb_settings_reader_t {
 
     if (user_data.active_node == SETTINGS_VERSION) {
       xmlChar_to_number(characters, len, user_data.settings->settings_version);
-    } else if (user_data.active_node == HASH_DIGEST_TYPE) {
-      xmlChar_to_string(characters, len, user_data.settings->hash_digest_type);
     } else if (user_data.active_node == BYTE_ALIGNMENT) {
       xmlChar_to_number(characters, len, user_data.settings->byte_alignment);
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {

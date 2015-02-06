@@ -1,7 +1,7 @@
 #!/bin/sh
 # Hopefully you checked out with git clone --recursive git@github.com:simsong/hashdb.git
 
-for sub in dfxml btree endian
+for sub in dfxml lmdb
 do
   if [ ! -r src/$sub/.git ] ;
   then

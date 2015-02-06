@@ -27,10 +27,8 @@
 
 //#include <stdint.h>
 #include <cassert>
-//#include <string.h> // for memcmp
 #include <string>
 #include <iostream>
-#include <boost/btree/btree_map.hpp>
 
 enum file_mode_type_t {READ_ONLY,
                        RW_NEW,
@@ -51,19 +49,6 @@ inline bool string_to_file_mode_type(const std::string& name, file_mode_type_t& 
   if (name == "rw_modify") { type = RW_MODIFY; return true; }
   type = READ_ONLY;
   return false;
-}
-
-inline boost::btree::flags::bitmask file_mode_type_to_btree_flags_bitmask(
-                       const file_mode_type_t& type) {
-  if (type == READ_ONLY) {
-    return boost::btree::flags::read_only;
-  } else if (type == RW_NEW) {
-    return boost::btree::flags::truncate;
-  } else if (type == RW_MODIFY) {
-    return boost::btree::flags::read_write;
-  } else {
-    assert(0); std::exit(1);
-  }
 }
 
 inline std::ostream& operator<<(std::ostream& os, const file_mode_type_t& t) {

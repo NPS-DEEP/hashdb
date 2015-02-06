@@ -128,8 +128,10 @@ class bloom_filter_manager_t {
 //std::cerr << "bloom_filter add_hash_value.a " << binary_hash << " " << filename << std::endl;
     if (bloom1_is_used) {
       if (binary_hash.size() < 16) {
-        // compatibility TBD
-        assert(0);
+        // extend with zeros
+        const std::string extended = binary_hash+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        bloom1.add(reinterpret_cast<const uint8_t*>(extended.c_str()));
+        return;
       }
       bloom1.add(reinterpret_cast<const uint8_t*>(binary_hash.c_str()));
     }
@@ -143,14 +145,11 @@ class bloom_filter_manager_t {
 //std::cerr << "bloom_filter is_positive.a " << binary_hash << " " << bloom.query(lmdb::binary_hash_to_hex(binary_hash)) << " " << filename << std::endl;
     if (bloom1_is_used) {
       if (binary_hash.size() < 16) {
-        // compatibility TBD
-        assert(0);
+        // extend with zeros
+        const std::string extended = binary_hash+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        return (bloom1.query(reinterpret_cast<const uint8_t*>(extended.c_str())));
       }
-      if (!bloom1.query(reinterpret_cast<const uint8_t*>(binary_hash.c_str()))) {
-        // not in bloom1
-//std::cerr << "bloom_filter is_positive.b" << std::endl;
-        return false;
-      }
+      return (bloom1.query(reinterpret_cast<const uint8_t*>(binary_hash.c_str())));
     }
 
     // At this point, either it is present in both or filter is not used.
