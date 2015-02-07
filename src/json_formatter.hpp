@@ -34,7 +34,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <boost/crc.hpp>
+#include <crc32.h>
 
 class json_formatter_t {
 
@@ -61,23 +61,20 @@ class json_formatter_t {
   }
 
   // get source list CRC
-  uint32_t source_list_id(
-                 hash_store_key_iterator_range_t it_pair) {
+  uint32_t source_list_id(lmdb_hash_store_t* hash_store, const std::string binary_hash) {
 
     // start a source list ID CRC hash
-    boost::crc_32_type source_list_crc;
+    uint32_t crc = 0;
 
     // add each source ID to the CRC hash
-    for (; it_pair.first != it_pair.second; ++it_pair.first) {
-
-      // get source lookup index
-      uint64_t source_id = hashdb_manager->source_id(it_pair.first);
+    lmdb_hash_it_data_t hash_it_data = hash_store->find_first(binary_hash);
+    while (hash_it_data.is_valid == true) {
 
       // add source ID to source list ID
-      source_list_crc.process_bytes(&source_id, sizeof(source_id));
+      crc = crc32(crc, static_cast<void*>(&hash_it_data.source_lookup_index, sizeof(hash_it_data.source_lookup_index)));
     }
 
-    return source_list_crc.checksum();
+    return crc;
   }
 
   // print the source list
@@ -186,23 +183,20 @@ class json_formatter_t {
   }
 
   // print expanded source information unless the hash has been printed already
-  void print_expanded(
-          const hash_store_key_iterator_range_t& it_pair) {
-
-//    // skip if hash already processed
-//    if (hashes->find(it_pair.first->first) != hashes->end()) {
-//      return;
-//    }
+  void print_expanded(lmdb_hash_store_t* hash_store,
+                      lmdb_source_store_t* source_store,
+                      const std::string& binary_hash) {
 
     // print the block hashdigest
-    std::cout << "{\"block_hashdigest\":\"" << key(it_pair.first).hexdigest() << "\"";
+    std::cout << "{\"block_hashdigest\":\""
+              << binary_hash_to_hex(binary_hash) << "\"";
 
     // print the count
-    size_t count = source_list_count(it_pair);
+    size_t count = hash_store->find_count(binary_hash);
     std::cout << ", \"count\":" << count;
 
     // print the source list ID
-    std::cout << ", \"source_list_id\":" << source_list_id(it_pair);
+    std::cout << ", \"source_list_id\":" << source_list_id(hash_store, binary_hash);
 
     // print the list of sources unless it is too long
     // or the list for this hash has been printed before

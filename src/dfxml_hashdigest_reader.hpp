@@ -38,8 +38,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
-#include <boost/lexical_cast.hpp>
-#include "hash_t_selector.h"
 
 // a class is used just to keep members private
 template <class T>
@@ -128,7 +126,7 @@ class dfxml_hashdigest_reader_t {
     // get file_offset
     uint64_t file_offset;
     try {
-      file_offset = boost::lexical_cast<uint64_t>(user_data.byte_run_file_offset);
+      file_offset = atol(user_data.byte_run_file_offset);
     } catch(...) {
       std::cerr << "Invalid file_offset value: '"
                 << user_data.byte_run_file_offset << "', entry ignored.\n";
@@ -138,7 +136,7 @@ class dfxml_hashdigest_reader_t {
     // get hash_block_size
       uint32_t hash_block_size;
     try {
-      hash_block_size = boost::lexical_cast<uint64_t>(user_data.byte_run_len);
+      hash_block_size = atol(user_data.byte_run_len);
     } catch(...) {
       std::cerr << "Invalid byte_run value: '"
                 << user_data.byte_run_len << "', entry ignored.\n";

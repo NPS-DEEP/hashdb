@@ -25,14 +25,14 @@
 
 #ifndef DFXML_IMPORT_CONSUMER_HPP
 #define DFXML_IMPORT_CONSUMER_HPP
-#include "hashdb_element.hpp"
-#include "hashdb_manager.hpp"
+#include "lmdb_source_data_t.hpp"
+#include "change_manager.hpp"
 #include "progress_tracker.hpp"
 
 class dfxml_import_consumer_t {
 
   private:
-  hashdb_manager_t* hashdb_manager;
+  change_manager_t* change_manager;
   progress_tracker_t* progress_tracker;
 
   // do not allow copy or assignment
@@ -41,9 +41,9 @@ class dfxml_import_consumer_t {
 
   public:
   dfxml_import_consumer_t(
-              hashdb_manager_t* p_hashdb_manager,
+              change_manager_t* p_change_manager,
               progress_tracker_t* p_progress_tracker) :
-        hashdb_manager(p_hashdb_manager),
+        change_manager(p_change_manager),
         progress_tracker(p_progress_tracker) {
   }
 
@@ -53,13 +53,15 @@ class dfxml_import_consumer_t {
   }
 
   // end_byte_run
-  void end_byte_run(const hashdb_element_t& hashdb_element) {
+  void end_byte_run(const std::string& binary_hash,
+                    uint64_t file_offset,
+                    const lmdb_source_data_t& source_data) {
 
     // update progress tracker
     progress_tracker->track();
 
-    // consume the hashdb_element by importing it
-    hashdb_manager->insert(hashdb_element);
+    // consume the element by importing it
+    change_manager->insert(binary_hash, file_offset, source_data);
   }
 
   // end_fileobject
@@ -75,37 +77,15 @@ class dfxml_import_consumer_t {
       return;
     }
 
-    // validate hashdigest type
-    if (hashdigest_type != digest_name<hash_t>()) {
-      std::cerr << "Waring: Wrong hashdigest type for fileobject: "
-                << hashdigest_type << "'.\n";
-    }
-
-    // validate hash
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hashdigest);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hashdigest: '"
-                << hashdigest << "', entry ignored.\n";
-      return;
-    }
-
-    // get file size
-    uint64_t size;
-    try {
-      size = boost::lexical_cast<uint64_t>(filesize);
-    } catch(...) {
-      std::cerr << "Invalid filesize value: '"
-                << filesize << "', entry ignored.\n";
-      return;
-    }
-
-    // get existing or create new source ID
-    uint64_t source_id = hashdb_manager->insert_source(
-                                 repository_name,
-                                 filename);
+    // create source data record
+    lmdb_source_data_t source_data;
+    source_data.repository_name = repository_name;
+    source_data.filename = filename;
+    source_data.filesize = filesize;
+    source_data.hashdigest = hashdigest;
 
     // insert the source metadata
-    hashdb_manager->insert_source_metadata(source_id, size, hash_pair.second);
+    change_manager->insert_source_data(source_data);
   }
 };
 

@@ -51,7 +51,6 @@
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "usage.hpp"
-#include "command_line.hpp"
 #include "commands.hpp"
 #include "globals.hpp"
 
@@ -63,8 +62,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <boost/lexical_cast.hpp>
-#include <boost/btree/helpers.hpp>
 #include <getopt.h>
 
 #ifdef HAVE_MCHECK
@@ -74,6 +71,7 @@
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // options
+static bool has_byte_alignment = false;  // a
 static bool has_hash_block_size = false; // p
 static bool has_max = false;             // m
 static bool has_repository_name = false; // r
@@ -86,6 +84,7 @@ static bool has_bloom_kM = false;              // C
 static size_t parameter_count = 0;
 
 // option values
+static uint32_t optional_byte_alignment = 0;
 static uint32_t optional_hash_block_size = 0;
 static uint32_t optional_max = 0;
 static std::string repository_name_string = "";
@@ -122,7 +121,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 // main
 // ************************************************************
 int main(int argc,char **argv) {
-  command_line_t::command_line_string = dfxml_writer::make_command_line(argc, argv);
+  globals_t::command_line_string = dfxml_writer::make_command_line(argc, argv);
 
 #ifdef HAVE_MCHECK
   mtrace();
@@ -145,9 +144,9 @@ int main(int argc,char **argv) {
       {"version", no_argument, 0, 'v'},
       {"Version", no_argument, 0, 'V'},
       {"quiet", no_argument, 0, 'q'},
-      {"flags", required_argument, 0, 'f'},
 
       // options
+      {"byte_alignment", required_argument, 0, 'a'},
       {"hash_block_size", required_argument, 0, 'p'},
       {"max", required_argument, 0, 'm'},
       {"repository", required_argument, 0, 'r'},
@@ -162,7 +161,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqf:p:m:r:s:A:B:C:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqa:p:m:r:s:A:B:C:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -199,54 +198,21 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'f': {	// btree flags
-        std::vector<std::string> flags = split(std::string(optarg), ':');
-        for (std::vector<std::string>::iterator flags_it = flags.begin(); flags_it != flags.end(); ++flags_it) {
-          if (*flags_it == "preload") {
-            globals_t::btree_flags |= boost::btree::flags::preload;
-          } else if (*flags_it == "cache_branches") {
-            globals_t::btree_flags |= boost::btree::flags::cache_branches;
-          } else if (*flags_it == "least_memory") {
-            globals_t::btree_flags |= boost::btree::flags::least_memory;
-          } else if (*flags_it == "low_memory") {
-            globals_t::btree_flags |= boost::btree::flags::low_memory;
-          } else if (*flags_it == "balanced") {
-            globals_t::btree_flags |= boost::btree::flags::balanced;
-          } else if (*flags_it == "fast") {
-            globals_t::btree_flags |= boost::btree::flags::fast;
-          } else if (*flags_it == "fastest") {
-            globals_t::btree_flags |= boost::btree::flags::fastest;
-          } else {
-            std::cerr << "Invalid B-Tree flag value '" << *flags_it << "'\n";
-            exit(1);
-          }
-        }
+      case 'a': {	// byte alignment
+        has_byte_alignment = true;
+        optional_byte_alignment = atoi(optarg);
         break;
       }
 
       case 'p': {	// hash block size
         has_hash_block_size = true;
-        try {
-          optional_hash_block_size = boost::lexical_cast<uint32_t>(optarg);
-        } catch (...) {
-          std::cerr << "Invalid value for hash_block_size: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-
-        // make sure hash block size is valid
-        if (optional_hash_block_size % HASHDB_BYTE_ALIGNMENT != 0) {
-          std::cerr << "Invalid value for hash block size: "
-                    << optional_hash_block_size
-                    << ".  Value must be > 0 and divisible by "
-                    << HASHDB_BYTE_ALIGNMENT << ".\n" << see_usage << "\n";
-          exit(1);
-        }
+        optional_hash_block_size = atoi(optarg);
         break;
       }
       case 'm': {	// maximum
         has_max = true;
         try {
-          optional_max = boost::lexical_cast<uint32_t>(optarg);
+          optional_max = atoi(optarg);
         } catch (...) {
           std::cerr << "Invalid value for max: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -265,7 +231,7 @@ int main(int argc,char **argv) {
       case 's': {	// repository name
         has_sector_size = true;
         try {
-          optional_sector_size = boost::lexical_cast<uint32_t>(optarg);
+          optional_sector_size = atoi(optarg);
         } catch (...) {
           std::cerr << "Invalid value for sector size: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -286,7 +252,7 @@ int main(int argc,char **argv) {
       case 'B': {	// bloom_n <n> expected total number of hashes
         has_bloom_n = true;
         try {
-          uint64_t n = boost::lexical_cast<uint64_t>(optarg);
+          uint64_t n = atol(optarg);
           bloom_k_hash_functions = 3;
           bloom_M_hash_size = bloom_filter_manager_t::approximate_n_to_M(n);
         } catch (...) {
@@ -301,8 +267,8 @@ int main(int argc,char **argv) {
 
         if (params.size() == 2) {
           try {
-            bloom_k_hash_functions = boost::lexical_cast<uint32_t>(params[0]);
-            bloom_M_hash_size = boost::lexical_cast<uint32_t>(params[1]);
+            bloom_k_hash_functions = atoi(params[0]);
+            bloom_M_hash_size = atoi(params[1]);
             break;
           } catch (...) {
             // let fall through to failure
@@ -317,6 +283,20 @@ int main(int argc,char **argv) {
       default:
 //        std::cerr << "unexpected command character " << ch << "\n";
         exit(1);
+    }
+  }
+
+  // check that input is compatible
+  if (has_hash_block_size = true)
+    uint32_t temp_byte_alignment = (has_byte_alignment) ? optional_byte_alignment : globals_t::byte_alignment;
+
+    // make sure hash block size is valid
+    if (optional_hash_block_size % temp_byte_alignment != 0) {
+      std::cerr << "Invalid value for hash block size: "
+                << optional_hash_block_size
+                << ".  Value must be > 0 and divisible by "
+                << temp_byte_alignment << ".\n" << see_usage << "\n";
+      exit(1);
     }
   }
 
@@ -356,7 +336,7 @@ int main(int argc,char **argv) {
 
 void require_parameter_count(size_t count) {
   if (count != parameter_count) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "Incorrect number of parameters provided in this command.\n";
     std::cerr << "Expected " << count
               << ", but received " << parameter_count << ".\n";
@@ -366,49 +346,49 @@ void require_parameter_count(size_t count) {
 
 void no_p() {
   if (has_hash_block_size) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -p hash_block_size option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_m() {
   if (has_max) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -m max option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_r() {
   if (has_repository_name) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -r repository_name option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_s() {
   if (has_sector_size) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -s sector_size option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_A() {
   if (has_bloom) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -A bloom option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_B() {
   if (has_bloom_n) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -B bloom_n option is not allowed for this command.\n";
       exit(1);
     }
 }
 void no_C() {
   if (has_bloom_kM) {
-    std::cerr << "Error in command '" << command_line_t::command_line_string << "'\n";
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
     std::cerr << "The -B bloom_kM option is not allowed for this command.\n";
       exit(1);
     }

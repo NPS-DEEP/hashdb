@@ -27,18 +27,19 @@
 #ifndef DFXML_SCAN_EXPANDED_CONSUMER_HPP
 #define DFXML_SCAN_EXPANDED_CONSUMER_HPP
 #include "hashdb.hpp"
-#include "hashdb_element.hpp"
-#include "hash_t_selector.h"
+#include "lmdb_hash_store.hpp"
+#include "lmdb_source_store.hpp"
 #include "json_formatter.hpp"
-#include "boost/crc.hpp"
 
 class dfxml_scan_expanded_consumer_t {
 
   private:
-  hashdb_manager_t* hashdb_manager;
+
+  lmdb_hash_store_t* hash_store;
+  lmdb_source_store_t* source_store;
   json_formatter_t json_formatter;
   std::set<uint32_t> source_list_ids;
-    bool found_match;
+  bool found_match;
   std::string filename;
 
   // do not allow copy or assignment
@@ -46,10 +47,12 @@ class dfxml_scan_expanded_consumer_t {
   dfxml_scan_expanded_consumer_t& operator=(const dfxml_scan_expanded_consumer_t&);
 
   public:
-  dfxml_scan_expanded_consumer_t(hashdb_manager_t* p_hashdb_manager,
+  dfxml_scan_expanded_consumer_t(hash_store_t* p_hash_store,
+                                 source_store_t* p_soure_store,
                                  uint32_t max_sources) :
-          hashdb_manager(p_hashdb_manager),
-          json_formatter(hashdb_manager, max_sources),
+          hash_store(p_hash_store),
+          source_store(p_source_store),
+          json_formatter(hash_store, source_store, max_sources),
           source_list_ids(),
           found_match(false),
           filename("") {
@@ -62,14 +65,13 @@ class dfxml_scan_expanded_consumer_t {
   }
 
   // end_byte_run
-  void end_byte_run(const hashdb_element_t& hashdb_element) {
+  void end_byte_run(const std::string& binary_hash) {
 
     // find matching range for this hash
-    hash_store_key_iterator_range_t it_pair =
-                                     hashdb_manager->find(hashdb_element.key);
+    lmdb_hash_it_data_t hash_it_data = hash_store.find_first(binary_hash);
 
     // no action if no match
-    if (it_pair.first == it_pair.second) {
+    if (hash_it_data.is_vlid == false) {
       return;
     }
 
@@ -82,7 +84,7 @@ class dfxml_scan_expanded_consumer_t {
     }
 
     // print the expanded hash
-    json_formatter.print_expanded(it_pair);
+    json_formatter.print_expanded(hash_store, source_store, hash_it_data);
     std::cout << std::endl;
   }
 

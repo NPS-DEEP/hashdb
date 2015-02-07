@@ -48,7 +48,7 @@ class lmdb_source_data_t {
     return true;
   }
   // copy uint64
-  bool copy(uint64_t from, uint64_t to) {
+  bool copy(uint64_t from, uint64_t& to) {
     if (from == 0 || from == to) {
       return false;
     }
@@ -98,10 +98,10 @@ class lmdb_source_data_t {
 inline std::ostream& operator<<(std::ostream& os,
                         const class lmdb_source_data_t& data) {
   os << "{\"lmdb_source_data\":{\"repository_name\":\"" << data.repository_name
-     << "\",\"filename\":" << data.filename
+     << "\",\"filename\":\"" << data.filename
      << "\",\"filesize\":" << data.filesize
-     << "\",\"hashdigest\":" << lmdb_helper::binary_hash_to_hex(data.binary_hash)
-     << "}";
+     << ",\"hashdigest\":\"" << lmdb_helper::binary_hash_to_hex(data.binary_hash)
+     << "\"}}";
   return os;
 }
 

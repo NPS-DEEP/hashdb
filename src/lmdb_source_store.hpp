@@ -166,28 +166,6 @@ class lmdb_source_store_t {
     return added;
   }
 
-/*
-  // add repository name and filename
-  bool add_repository_name_filename(uint64_t source_lookup_index,
-              const std::string& repository_name,
-              const std::string& filename) {
-
-    lmdb_source_data_t new_source_data;
-    new_source_data.add_repository_name_filename(repository_name, filename);
-    return add(new_source_data);
-  }
-
-  // add filesize and file hashdigest
-  bool add_filesize_hashdigest(uint64_t source_lookup_index,
-              const std::string& filesize,
-              const std::string& hashdigest) {
-
-    lmdb_source_data_t new_source_data;
-    new_source_data.add_fielsize_hashdigest(repository_name, filename);
-    return add(new_source_data);
-  }
-*/
-
   lmdb_source_data_t find(uint64_t source_lookup_index) const {
 
     // get context

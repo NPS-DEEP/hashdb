@@ -24,15 +24,13 @@
 
 #ifndef DFXML_HASHDIGEST_WRITER_HPP
 #define DFXML_HASHDIGEST_WRITER_HPP
-#include "hash_t_selector.h"
 #include "dfxml/src/dfxml_writer.h"
-#include "command_line.hpp"
+#include "globals.hpp"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
-#include <boost/lexical_cast.hpp>
 
 /**
  * Provides the service of exporting the hashdb in DFXML format.
@@ -55,7 +53,7 @@ class dfxml_hashdigest_writer_t {
     x.push("dfxml");
 
     // add creator information
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_line_t::command_line_string);
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", globals_t::command_line_string);
   }
 
   ~dfxml_hashdigest_writer_t() {
@@ -65,65 +63,45 @@ class dfxml_hashdigest_writer_t {
   }
 
   // add a hashdb element
-  void add_hashdb_element(const hashdb_element_t& element) {
+  void add_hashdb_element(const std::string& binary_hash,
+                          uint64_t file_offset,
+                          lmdb_source_data_t source_data,
+                          uint64_t hash_block_size) {
 
     // start the fileobject tag
     x.push("fileobject");
 
     // write the repository name tag
-    x.xmlout("repository_name", element.repository_name);
+    x.xmlout("repository_name", source_data.repository_name);
 
     // write the filename tag
-    x.xmlout("filename", element.filename);
+    x.xmlout("filename", source_data.filename);
+
+    // if available, write filesize
+    if (source_data.filesize != "") {
+      x.xmlout("filesize", source_data.filesize);
+    }
+
+    // if available, write file hashdigest
+    if (source_data.hashdigest != "") {
+      std::stringstream ss2;
+      ss2 << "type='MD5'";
+      x.xmlout("hashdigest", source_data.hashdigest, ss2.str(), false);
+    }
 
     // start the byte_run tag with its file_offset attribute
     std::stringstream ss;
-    ss << "file_offset='" << element.file_offset
-       << "' len='" << element.hash_block_size << "'";
+    ss << "file_offset='" << file_offset
+       << "' len='" << hash_block_size << "'";
     x.push("byte_run", ss.str());
 
     // write the hashdigest
     std::stringstream ss2;
-    ss2 << "type='" << digest_name<hash_t>() << "'";
-    x.xmlout("hashdigest", element.key.hexdigest(), ss2.str(), false);
+    ss2 << "type='MD5'";
+    x.xmlout("hashdigest", lmdb_helper.binary_hash_to_hex(source_data.binary_hash), ss2.str(), false);
 
     // close the byte_run tag
     x.pop();
-
-    // close the fileobject tag
-    x.pop();
-  }
-
-  // add a source metadata record
-  void add_source_metadata(
-            const std::pair<bool, std::pair<std::string, std::string> >& lookup_pair,
-            const std::pair<bool, source_metadata_t>& source_metadata_pair) {
-
-    // error if invalid lookup pair
-    if (lookup_pair.first == false) {
-      std::cerr << "Invalid source lookup encountered during DFXML export.\n"
-                << "The hash database may be corrupt.  Aborting.\n";
-      exit(1);
-    }
-
-    // start the fileobject tag
-    x.push("fileobject");
-
-    // write the repository name tag
-    x.xmlout("repository_name", lookup_pair.second.first);
-
-    // write the filename tag
-    x.xmlout("filename", lookup_pair.second.second);
-
-    if (source_metadata_pair.first == true) {
-      // write the file size
-      x.xmlout("filesize", source_metadata_pair.second.filesize);
-
-      // write the file hashdigest
-      std::stringstream ss2;
-      ss2 << "type='" << digest_name<hash_t>() << "'";
-      x.xmlout("hashdigest", source_metadata_pair.second.hashdigest.hexdigest(), ss2.str(), false);
-    }
 
     // close the fileobject tag
     x.pop();

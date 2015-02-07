@@ -34,8 +34,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
-#include <boost/lexical_cast.hpp>
 #include "hash_t_selector.h"
+#include "change_manager.hpp"
+#include "lmdb_source_data.hpp"
 
 class tab_hashdigest_reader_t {
   private:
@@ -81,11 +82,12 @@ class tab_hashdigest_reader_t {
       std::cerr << "Invalid block hashdigest on line " << line_number << ": '" << line << "'\n";
       return;
     }
+    std::string binary_hash = std::string(pair.second, block_hashdigest_string.size()/2);
 
     // parse file offset
     size_t sector_index;
     try {
-      sector_index = boost::lexical_cast<uint64_t>(line.substr(tab_index2+1));
+      sector_index = atol(line.substr(tab_index2+1));
       if (sector_index == 0) {
         // index starts at 1 so 0 is invalid
         throw std::invalid_argument("sector index 0 is not allowed");
@@ -95,28 +97,27 @@ class tab_hashdigest_reader_t {
       return;
     }
     uint64_t file_offset = (sector_index -1) * sector_size;
+    stringstream ss;
+    ss << file_offset;
 
-    // create the hashdb element
-    hashdb_element_t hashdb_element(
-               block_hashdigest_pair.second,             // block hash
-               hashdb_manager->settings.hash_block_size, // block size
-               repository_name,                          // repository name
-               filename,                                 // filename
-               file_offset);                             // file offset
+    // create the source data
+    lmdb_source_data_t source_data;
+    source_data.repository_name = repository_name;
+    source_data.filename = filename;
 
     // update progress tracker
     progress_tracker->track();
 
-    // import
-    hashdb_manager->insert(hashdb_element);
+    // insert the entry
+    change_manager.insert(hash_string, file_offset, source_data);
   }
  
   public:
-  tab_hashdigest_reader_t(hashdb_manager_t* p_hashdb_manager,
+  tab_hashdigest_reader_t(change_manager_t* p_change_manager,
                            progress_tracker_t* p_progress_tracker,
                            const std::string& p_repository_name,
                            uint32_t p_sector_size) :
-              hashdb_manager(p_hashdb_manager),
+              change_manager(p_change_manager),
               progress_tracker(p_progress_tracker),
               repository_name(p_repository_name),
               sector_size(p_sector_size),

@@ -35,11 +35,9 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <boost/lexical_cast.hpp>
 #include <getopt.h>
 #include "bloom_filter_manager.hpp"
 #include "hashdb_settings.hpp"
-#include "hash_t_selector.h"
 #include "globals.hpp"
 
 void usage() {
