@@ -198,7 +198,6 @@ class hashdb_settings_reader_t {
       }
 
     } else if (user_data.active_node == BLOOM1_K_HASH_FUNCTIONS) {
-      user_data.settings->maximum_hash_duplicates = xmlChar_to_number(characters, len);
       user_data.settings->bloom1_k_hash_functions =
                                       xmlChar_to_number(characters, len);
 
