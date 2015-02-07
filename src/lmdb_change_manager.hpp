@@ -81,8 +81,8 @@ class lmdb_change_manager_t {
               lmdb_source_data_t source_data,
               uint64_t file_offset) {
 
-    // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
-    if (file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
+    // validate the byte alignment
+    if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_inserted_invalid_byte_alignment;
       return;
     }
@@ -129,8 +129,8 @@ class lmdb_change_manager_t {
               lmdb_source_data_t source_data,
               uint64_t file_offset) {
 
-    // validate the byte alignment, see configure.ac for HASHDB_BYTE_ALIGNMENT
-    if (file_offset % HASHDB_BYTE_ALIGNMENT != 0) {
+    // validate the byte alignment
+    if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_removed_invalid_byte_alignment;
       return;
     }

@@ -24,6 +24,10 @@ Note:
 
 * The hashdb library API interface `open_scan_pthread` added in v1.1.2 was removed.  It provided locked threaded B-Tree access but it did not improve performance.  LMDB does not use locks for reading.  hashdb locks LMDB write accesses.
 
+* Replace boost::crc with lightweight crc32 from http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/libkern/crc32.c.
+
+* Replace Boost string to number conversion with the standard `atoi` and `atol` functions.  Now, invalid values will return 0 instead of failing.
+
 Availability
 ============
 * Release source code: http://digitalcorpora.org/downloads/hashdb/

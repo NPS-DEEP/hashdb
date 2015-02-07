@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.2.0-beta1, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 1.2.0-beta2, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
@@ -201,20 +201,7 @@ AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
     [AC_MSG_ERROR([Could not find libxml2 library required to build the hashdb scanner])])
 
 ################################################################
-## support required by boost
-AX_BOOST_BASE([1.53],
-  [AX_BOOST_SYSTEM
-  AX_BOOST_FILESYSTEM
-  AX_BOOST_IOSTREAMS
-  AX_BOOST_THREAD
-  LIBS="$BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_IOSTREAMS_LIB $BOOST_THREAD_LIB $LIBS"],
-  [AC_MSG_ERROR([Boost 1.53 or newer is required to build hashdb])])
-
-# boost_thread may require librt, so to help out, try to add librt
-AC_CHECK_LIB([rt],[clock_gettime],,[AC_MSG_WARN([librt is not available])])
-
-################################################################
-## OpenSSL Support is required for hash_t and bloom
+## OpenSSL Support is required for bloom
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
 AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
@@ -337,36 +324,6 @@ else
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
-
-################################################################
-############## A hash type is required, default MD5
-AC_ARG_VAR(HASH_TYPE, [Set hash type to one of md5, sha1, sha256, sha512, straight16, straight64, default md5])
-if test x"${HASH_TYPE}" = "x"; then
-  HASH_TYPE="md5"
-fi
-if test x"${HASH_TYPE}" = "xmd5"; then
-  AC_DEFINE(USE_HASH_TYPE_MD5, 1, [define to compile for md5 type])
-elif test x"${HASH_TYPE}" = "xsha1"; then
-  AC_DEFINE(USE_HASH_TYPE_SHA1, 1, [define to compile for sha1 type])
-elif test x"${HASH_TYPE}" = "xsha256"; then
-  AC_DEFINE(USE_HASH_TYPE_SHA256, 1, [define to compile for sha256 type])
-elif test x"${HASH_TYPE}" = "xsha512"; then
-  AC_DEFINE(USE_HASH_TYPE_SHA512, 1, [define to compile for sha512 type])
-elif test x"${HASH_TYPE}" = "xstraight16"; then
-  AC_DEFINE(USE_HASH_TYPE_STRAIGHT16, 1, [define to compile for straight16 type])
-elif test x"${HASH_TYPE}" = "xstraight64"; then
-  AC_DEFINE(USE_HASH_TYPE_STRAIGHT64, 1, [define to compile for straight64 type])
-else
-  AC_MSG_ERROR([The HASH_TYPE value $HASH_TYPE provided is invalid])
-fi
-
-################################################################
-############## byte alignment required for the data
-AC_ARG_VAR(HASHDB_BYTE_ALIGNMENT, [Set the byte alignment size for data, default 512])
-if test x"${HASHDB_BYTE_ALIGNMENT}" = "x"; then
-  HASHDB_BYTE_ALIGNMENT="512"
-fi
-AC_DEFINE_UNQUOTED(HASHDB_BYTE_ALIGNMENT, [$HASHDB_BYTE_ALIGNMENT], [the byte alignment size for data])
 
 AC_MSG_NOTICE([*************************************])
 AC_MSG_NOTICE([*************************************])

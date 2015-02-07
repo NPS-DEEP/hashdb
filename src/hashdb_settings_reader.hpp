@@ -42,7 +42,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <boost/lexical_cast.hpp>
+#include <cstdlib>
 
 /**
  * \file
@@ -121,20 +121,10 @@ class hashdb_settings_reader_t {
   }
 
   // convert string to number or fail with exit
-  template <class T>
-  static void xmlChar_to_number(const xmlChar* c, int len, T& number) {
+  static uint32_t xmlChar_to_number(const xmlChar* c, int len) {
     std::string number_string;
     xmlChar_to_string(c, len, number_string);
-    try {
-      number = boost::lexical_cast<T>(number_string);
-      return;
-    } catch(...) {
-      // abort
-      std::ostringstream s;
-      s << "Invalid number when reading settings: '"
-        << number_string << "'";
-      throw std::runtime_error(s.str());
-    }
+    return std::atoi(number_string.c_str());
   }
 
   __attribute__((noreturn)) static void exit_invalid_state(std::string message) {
@@ -190,13 +180,13 @@ class hashdb_settings_reader_t {
     bool is_valid;
 
     if (user_data.active_node == SETTINGS_VERSION) {
-      xmlChar_to_number(characters, len, user_data.settings->settings_version);
+      user_data.settings->settings_version = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == BYTE_ALIGNMENT) {
-      xmlChar_to_number(characters, len, user_data.settings->byte_alignment);
+      user_data.settings->byte_alignment = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {
-      xmlChar_to_number(characters, len, user_data.settings->hash_block_size);
+      user_data.settings->hash_block_size = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
-      xmlChar_to_number(characters, len, user_data.settings->maximum_hash_duplicates);
+      user_data.settings->maximum_hash_duplicates = xmlChar_to_number(characters, len);
 
     } else if (user_data.active_node == BLOOM1_USED) {
       std::string bloom1_state_string;
@@ -208,14 +198,13 @@ class hashdb_settings_reader_t {
       }
 
     } else if (user_data.active_node == BLOOM1_K_HASH_FUNCTIONS) {
-      uint32_t k;
-      xmlChar_to_number(characters, len, k);
-      user_data.settings->bloom1_k_hash_functions = k;
+      user_data.settings->maximum_hash_duplicates = xmlChar_to_number(characters, len);
+      user_data.settings->bloom1_k_hash_functions =
+                                      xmlChar_to_number(characters, len);
 
     } else if (user_data.active_node == BLOOM1_M_HASH_SIZE) {
-      uint32_t M;
-      xmlChar_to_number(characters, len, M);
-      user_data.settings->bloom1_M_hash_size = M;
+      user_data.settings->bloom1_M_hash_size =
+                                      xmlChar_to_number(characters, len);
     }
   }
 

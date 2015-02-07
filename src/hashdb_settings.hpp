@@ -26,6 +26,7 @@
 #define    HASHDB_SETTINGS_HPP
 
 #include "dfxml/src/dfxml_writer.h"
+#include "globals.hpp"
 #include <string>
 #include <sstream>
 #include <cstdint>
@@ -58,7 +59,7 @@ struct hashdb_settings_t {
 
   hashdb_settings_t() :
         settings_version(1),
-        byte_alignment(HASHDB_BYTE_ALIGNMENT),
+        byte_alignment(globals_t::default_byte_alignment),
         hash_block_size(4096),
         maximum_hash_duplicates(0),
         bloom1_is_used(true),
