@@ -27,7 +27,6 @@
 #include <iomanip>
 #include <cstdio>
 #include "unit_test.h"
-#include "hashdb_directory_manager.hpp"
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
@@ -48,13 +47,13 @@ void run_test() {
   settings.hash_block_size = 512;
 
   // write settings
-  hashdb_directory_manager_t::create_new_hashdb_dir(temp_dir);
+  make_dir_if_not_there(temp_dir);
   hashdb_settings_store_t::write_settings(temp_dir, settings);
 
   // read, delete, write, read settings
   settings = hashdb_settings_store_t::read_settings(temp_dir);
   rm_hashdb_dir(temp_dir);
-  hashdb_directory_manager_t::create_new_hashdb_dir(temp_dir);
+  make_dir_if_not_there(temp_dir);
   hashdb_settings_store_t::write_settings(temp_dir, settings);
   settings = hashdb_settings_store_t::read_settings(temp_dir);
 

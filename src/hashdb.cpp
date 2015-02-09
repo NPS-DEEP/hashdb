@@ -95,25 +95,13 @@ const char* hashdb_version() {
     max_duplicates = p_max_duplicates;
 
     try {
-      // create the hashdb directory at the path
-      hashdb_directory_manager_t::create_new_hashdb_dir(path_or_socket);
-
-      // create and write settings at the hashdb directory path
+      // create settings
       hashdb_settings_t settings;
       settings.hash_block_size = block_size;
       settings.maximum_hash_duplicates = max_duplicates;
-      hashdb_settings_store_t::write_settings(path_or_socket, settings);
 
-      // create the new stores
-      lmdb_hash_store_t(path_or_socket, RW_NEW);
-      lmdb_name_store_t(path_or_socket, RW_NEW);
-      lmdb_source_store_t(path_or_socket, RW_NEW);
-
-      // create Bloom
-      bloom_filter_manager_t(path_or_socket, RW_NEW,
-                             settings.bloom1_is_used,
-                             settings.bloom1_M_hash_size,
-                             settings.bloom1_k_hash_functions);
+      // create the databases
+      lmdb_manager_helper::create(hashdb_dir, settings);
 
       // open for writing
       change_manager = new lmdb_change_manager_t(path_or_socket);

@@ -27,10 +27,12 @@
 #include <iomanip>
 #include <cstdio>
 #include "unit_test.h"
+#include "lmdb_manager_helper.hpp"
 #include "lmdb_change_manager.hpp"
 #include "lmdb_reader_manager.hpp"
 #include "lmdb_hash_it_data.hpp"
 #include "lmdb_helper.h"
+#include "lmdb_manager_helper.hpp"
 #include "directory_helper.hpp"
 #include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
@@ -57,22 +59,13 @@ void create_db() {
   // create the hashdb directory
   hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
 
-  // write specific settings
+  // use specific settings
   hashdb_settings_t settings;
   settings.maximum_hash_duplicates = 2;
   settings.bloom1_is_used = false;
-  hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
-  // create the new stores
-  lmdb_hash_store_t(hashdb_dir, RW_NEW);
-  lmdb_name_store_t(hashdb_dir, RW_NEW);
-  lmdb_source_store_t(hashdb_dir, RW_NEW);
-
-  // create Bloom
-  bloom_filter_manager_t(hashdb_dir, RW_NEW,
-                         settings.bloom1_is_used,
-                         settings.bloom1_M_hash_size,
-                         settings.bloom1_k_hash_functions);
+  // create the DB
+  lmdb_manager_helper::create(hashdb_dir, settings);
 }
 
 void test_change() {

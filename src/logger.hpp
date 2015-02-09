@@ -102,6 +102,9 @@ class logger_t {
     // mark this logger as closed
     x.flush();
     closed = true;
+
+    // append log to history
+    history_manager_t::append_log_to_history(hashdb_dir);
   }
 
   /**

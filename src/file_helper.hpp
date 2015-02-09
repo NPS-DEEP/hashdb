@@ -22,8 +22,8 @@
  * Manage creating the hashdb directory
  */
 
-#ifndef HASHDB_DIRECTORY_MANAGER_HPP
-#define HASHDB_DIRECTORY_MANAGER_HPP
+#ifndef FILE_HELPER_HPP
+#define FILE_HELPER_HPP
 
 // this process of getting WIN32 defined was inspired
 // from i686-w64-mingw32/sys-root/mingw/include/windows.h.
@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include <string>
 
-class hashdb_directory_manager_t {
+class file_helper {
   public:
 
   static void create_new_hashdb_dir(const std::string& hashdb_dir) {
@@ -72,6 +72,13 @@ class hashdb_directory_manager_t {
   static bool is_hashdb_dir(const std::string& hashdb_dir) {
     std::string settings_filename = hashdb_dir + "/settings.xml";
     return (access(settings_filename.c_str(), F_OK) == 0);
+  }
+
+  static bool require_file(const std::string& filename) {
+    if (access(hashdb_dir.c_str(), F_OK) == 0) {
+      std::cerr << "Error: File '" << hashdb_dir << "' does not exist.  Cannot continue.\n";
+      exit(1);
+    }
   }
 };
 
