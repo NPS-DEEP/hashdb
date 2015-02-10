@@ -24,11 +24,12 @@
 
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-#include "command_line.hpp"
+#include "globals.hpp"
+#include "commands_helper.hpp"
+#include "file_helper.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
-#include "hashdb_directory_manager.hpp"
 #include "history_manager.hpp"
 #include "lmdb_hash_store.hpp"
 #include "lmdb_hash_it_data.hpp"
@@ -40,6 +41,7 @@
 #include "bloom_filter_manager.hpp"
 #include "lmdb_change_manager.hpp"
 #include "lmdb_reader_manager.hpp"
+#include "lmdb_manager_helper.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_consumer.hpp"
@@ -55,6 +57,7 @@
 #include "feature_line.hpp"
 #include "json_formatter.hpp"
 
+
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
@@ -66,346 +69,12 @@
 #include <boost/filesystem.hpp> // for scan_random command
 
 /**
- * Provides the commands that hashdb_manager can execute.
+ * Defines the static commands that hashdb_manager can execute.
  * This totally static class is a class rather than an namespace
  * so it can have private members.
  */
 
 class commands_t {
-// no vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// no vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// no vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-  // support expalin_identified_blocks
-  typedef std::map<hash_t, std::string> hashes_t;
-
-  private:
-
-  // copy source metadata missing in db2 from db1 to db2
-  static void copy_source_metadata(const hashdb_manager_t& hashdb1,
-                                   hashdb_manager_t& hashdb2) {
-
-    // iterate through source IDs in db2
-    for (source_lookup_index_manager_t::source_lookup_index_iterator_t it =
-                             hashdb2.begin_source_lookup_index();
-                             it != hashdb2.end_source_lookup_index(); ++it) {
-
-      // get the db2 source pair
-      uint64_t source_id2 = it->key;
-
-      // see if db2 already has the source metadata
-      std::pair<bool, source_metadata_t> metadata2_pair =
-                                    hashdb2.find_source_metadata(source_id2);
-      if (metadata2_pair.first == true) {
-        // db2 already has metadata so leave it alone
-        continue;
-      }
-
-      // try to get metadata from db1
-
-      // get the source string pair from db2
-      std::pair<bool, std::pair<std::string, std::string> >
-                       source_string2_pair = hashdb2.find_source(source_id2);
-      if (source_string2_pair.first == false) {
-        std::cerr << "Invalid source lookup index value " << source_id2
-                  << " encountered during metadata copy.\nDatabase "
-                  << hashdb2.hashdb_dir << "may be corrupt.  Aborting.\n";
-        exit(1);
-      }
-
-      // get equivalent source ID in db1
-      std::pair<bool, uint64_t> source_id1_pair = hashdb1.find_source_id(
-                                      source_string2_pair.second.first,
-                                      source_string2_pair.second.second);
-
-      if (source_id1_pair.first == false) {
-        // db1 doesn't have the source, so drop it
-        continue;
-      }
-
-      // get metadata from db1
-      uint64_t source_id1 = source_id1_pair.second;
-      std::pair<bool, source_metadata_t> metadata1_pair =
-                                    hashdb1.find_source_metadata(source_id1);
-      if (metadata1_pair.first == false) {
-        // db1 has the source but not the metadata, so drop it
-        continue;
-      }
-
-      // copy the metadata from db1 to db2
-      hashdb2.insert_source_metadata(source_id2,
-                                     metadata1_pair.second.filesize,
-                                     metadata1_pair.second.hashdigest);
-    }
-  }
-
-  static void require_compatibility(const hashdb_manager_t& hashdb1,
-                                    const hashdb_manager_t& hashdb2) {
-
-    // databases should not be the same one
-    if (hashdb1.hashdb_dir == hashdb2.hashdb_dir) {
-      std::cerr << "Error: the databases must not be the same one:\n'"
-                << hashdb1.hashdb_dir << "', '"
-                << hashdb2.hashdb_dir << "'\n"
-                << "Aborting.\n";
-      exit(1);
-    }
-
-    // hash block size must match
-    if (hashdb1.settings.hash_block_size != hashdb2.settings.hash_block_size) {
-      std::cerr << "Error: the databases have unequal hash block sizes.\n"
-                << hashdb1.hashdb_dir
-                << " hash block size: " << hashdb1.settings.hash_block_size
-                << "\n" << hashdb2.hashdb_dir
-                << " hash block size: " << hashdb2.settings.hash_block_size
-                << "\n"
-                << "Aborting.\n";
-      exit(1);
-    }
-  }
-
-  static void require_compatibility(const hashdb_manager_t& hashdb1,
-                                    const hashdb_manager_t& hashdb2,
-                                    const hashdb_manager_t& hashdb3) {
-
-    // databases should not be the same one
-    if (hashdb1.hashdb_dir == hashdb2.hashdb_dir
-     || hashdb2.hashdb_dir == hashdb3.hashdb_dir
-     || hashdb1.hashdb_dir == hashdb3.hashdb_dir) {
-      std::cerr << "Error: the databases must not be the same one:\n'"
-                << hashdb1.hashdb_dir << "', '"
-                << hashdb2.hashdb_dir << "', '"
-                << hashdb3.hashdb_dir << "'\n"
-                << "Aborting.\n";
-      exit(1);
-    }
-
-    // hash block size must match
-    if (hashdb1.settings.hash_block_size != hashdb2.settings.hash_block_size
-     || hashdb1.settings.hash_block_size != hashdb3.settings.hash_block_size) {
-      std::cerr << "Error: the databases have unequal hash block sizes.\n"
-                << hashdb1.hashdb_dir
-                << " hash block size: " << hashdb1.settings.hash_block_size
-                << "\n" << hashdb2.hashdb_dir
-                << " hash block size: " << hashdb2.settings.hash_block_size
-                << "\n" << hashdb3.hashdb_dir
-                << " hash block size: " << hashdb3.settings.hash_block_size
-                << "\n"
-                << "Aborting.\n";
-      exit(1);
-    }
-  }
-
-  // print header information
-  static void print_header(const std::string& command_id) {
-    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# " << command_id << "\n"
-              << "# command_line: " << command_line_t::command_line_string << "\n";
-  }
-
-  // print the scan output vector
-  static void print_scan_output(
-              const std::vector<std::string>& scan_input,
-              const hashdb_t::scan_output_t& scan_output) {
-
-    // check that there are matches
-    if (scan_output.size() == 0) {
-      std::cout << "There are no matches.\n";
-      return;
-    }
-
-    // print matches
-    for (hashdb_t::scan_output_t::const_iterator it=scan_output.begin(); it != scan_output.end(); ++it) {
-      std::cout << "[\""
-                << lmdb_helper::binary_hash_to_hex(scan_input[it->first])
-                << "\",{\"count\":" << it->second << "}]\n";
-    }
-  }
-
-  // print source fields
-  static void print_source_fields(const hashdb_manager_t& hashdb_manager,
-                                  uint64_t source_lookup_index,
-                                  std::ostream& os) {
-    // get the repository name and filename
-    std::pair<bool, std::pair<std::string, std::string> > source_pair =
-                             hashdb_manager.find_source(source_lookup_index);
-
-    // get source metadata, if available
-    std::pair<bool, source_metadata_t> metadata_pair =
-                     hashdb_manager.find_source_metadata(source_lookup_index);
-
-    // print the source ID
-    os << "\"source_id\":" << source_lookup_index;
-
-    // print the source
-    if (source_pair.first == true) {
-      os << ",\"repository_name\":\""
-         << json_formatter_t::escape_json(source_pair.second.first)
-         << "\",\"filename\":\""
-         << json_formatter_t::escape_json(source_pair.second.second)
-         << "\"";
-    }
-
-    if (metadata_pair.first == true) {
-      // print the metadata
-      os << ",\"filesize\":" << metadata_pair.second.filesize
-         << ",\"file_hashdigest\":\"" << metadata_pair.second.hashdigest.hexdigest()
-         << "\"";
-    }
-  }
-
-  // ingest table of relevant hashes and table of their sources
-  static void identify_hashes_and_sources(
-                            const lmdb_hash_store_t& hash_store,
-                            const lmdb_source_store_t& source_store,
-                            const std::string& identified_blocks_file,
-                            uint32_t requested_max,
-                            hashes_t& hashes,
-                            std::set<uint64_t>& source_lookup_indexes) {
-
-    // get the identified_blocks.txt file reader
-    feature_file_reader_t reader(identified_blocks_file);
-    while (!reader.at_eof()) {
-
-      feature_line_t feature_line = reader.read();
-
-      // get the binary hash from the hex hash
-      std::string binary_hash == lmdb_helper::hex_to_binary_hash(feature_line.feature);
-
-      // add hash to hash set
-      std::pair<std::map<std::string, std::string>::iterator, bool> insert_pair =
-                         hashes.insert(std::pair<std::string, std::string>(
-                         binary_hash, feature_line.context));
-
-      // do not re-process hashes that are already in the hash set
-      if (insert_pair.second == false) {
-        continue;
-      }
-  
-      // do not add sources for this hash if count > requested max
-      if (hashdb_manager.find_count(binary_hash) > requested_max) {
-        continue;
-      }
-
-      // loop over entries containing this hash value
-      lmdb_hash_it_data_t hash_it_data = hash_store.find_begin(binary_hash);
-
-      while (hash_it_data.is_valid) {
-
-        // add the source lookup index to the source lookup index set
-        source_lookup_indexes.insert(hash_it_data.sorce_lookup_index);
-
-        hash_store.find_next();
-      }
-    }
-  }
-
-  // print table of relavent hashes
-  static void print_identified_hashes(
-                            const hashdb_manager_t& hashdb_manager,
-                            const hashes_t& hashes,
-                            const std::set<uint64_t>& source_lookup_indexes) {
-
-    if (hashes.size() == 0) {
-      std::cout << "# There are no hashes to report.\n";
-      return;
-    }
-
-    // iterate through block hashes
-    for (hashes_t::const_iterator it = hashes.begin(); it != hashes.end(); ++it) {
-
-      // prepare block hash line to print
-      std::stringstream ss;
-      ss << "[\"" << lmdb_helper::binary_hash_to_hex(it->first) << "\"";
-
-      // get the context field
-      std::string context = it->second;
-
-      // add the reduced context field
-      ss << "," << context;
-
-      // add the source array open bracket
-      ss << ",[";
-
-/*zz TBD
-      // get the multimap iterator for this hash value
-      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(it->first);
-
-      // the user did something wrong if there is no range
-      if (it_pair.first == it_pair.second) {
-        std::cout << "# Invalid hash, incorrect file or database, " << it->first.hexdigest() << "\n";
-        continue;
-      }
-
-      // track when to put in the comma
-      bool found_identified_source = false;
-
-      // print sources associated with this hash value
-      for (; it_pair.first != it_pair.second; ++it_pair.first) {
-
-        // get the source lookup index and file offset for this entry
-        uint64_t source_lookup_index = hashdb_manager.source_id(it_pair.first);
-        if (source_lookup_indexes.find(source_lookup_index) == source_lookup_indexes.end()) {
-          // do not report sources that are not identified
-          continue;
-        }
-
-        // consume identified source
-        if (found_identified_source) {
-          // prepend comma
-          ss << ",";
-        } else {
-          // a printable source has been found
-          found_identified_source = true;
-        }
-
-        // get the file offset
-        uint64_t file_offset = hashdb_manager.file_offset(it_pair.first);
-
-        // add source_id and file_offset entry
-        ss << "{\"source_id\":" << source_lookup_index
-           << ",\"file_offset\":" << file_offset
-           << "}";
-      }
-
-      // done printing the source array
-      ss << "]";
-
-      // done printing this block hash
-      ss << "]";
-
-      // the block hash is interesting if it has at least one referenced source
-      if (found_identified_source) {
-        std::cout << ss.str() << "\n";
-      }
-    }
-*/
-  }
-
-  // print table of relevant sources
-  static void print_identified_sources(
-                            const hashdb_manager_t& hashdb_manager,
-                            std::set<uint64_t>& source_lookup_indexes) {
-
-    if (source_lookup_indexes.size() == 0) {
-      std::cout << "# There are no sources to report.\n";
-      return;
-    }
-
-    // iterate through sources
-    for (std::set<uint64_t>::iterator it = source_lookup_indexes.begin();
-                                   it!=source_lookup_indexes.end(); ++it) {
-
-      // print the source
-      std::cout << "{";
-      print_source_fields(hashdb_manager, *it, std::cout);
-      std::cout << "}\n";
-    }
-  }
-
-// no ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// no ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// no ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
   public:
 
   // create
@@ -413,24 +82,13 @@ class commands_t {
                      const std::string& hashdb_dir) {
 
     // create the hashdb directory
-    hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
-
-    // write the settings
-    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
-
-    // create the new stores
-    lmdb_hash_store_t(hashdb_dir, RW_NEW);
-    lmdb_name_store_t(hashdb_dir, RW_NEW);
-    lmdb_source_store_t(hashdb_dir, RW_NEW);
+    lmdb_manager_helper::create(hashdb_dir, settings);
 
     // log the creation event
     logger_t logger(hashdb_dir, "create");
     logger.add("hashdb_dir", hashdb_dir);
-
-    // close logger
     logger.add_hashdb_settings(settings);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "Database created.\n";
   }
@@ -441,18 +99,14 @@ class commands_t {
                      const std::string& repository_name) {
 
     // require that dfxml_file exists
-    if (access(dfxml_file.c_str(), F_OK) != 0) {
-      std::cerr << "DFXML File '" << dfxml_file
-                << "' does not exist.  Aborting.\n";
-      exit(1);
-    }
+    file_helper::require_dfxml_file(dfxml_file);
 
-    // open change manager
-    change_manager_t change_manager(hashdb_dir);
+    // open hashdb change manager
+    hashdb_change_manager_t change_manager(hashdb_dir);
 
     logger_t logger(hashdb_dir, "import");
-    logger.add("dfxml_file", dfxml_file);
     logger.add("hashdb_dir", hashdb_dir);
+    logger.add("dfxml_file", dfxml_file);
     logger.add("repository_name", repository_name);
     logger.add_timestamp("begin import");
 
@@ -470,24 +124,17 @@ class commands_t {
     // close tracker
     progress_tracker.done();
 
+    // close logger
+    logger.add_timestamp("end import");
+    logger.add_hashdb_changes(hashdb_manager.changes);
+    logger.close();
+
     if (do_read_pair.first == true) {
-      // good, reader worked
-
-      // close logger
-      logger.add_timestamp("end import");
-      logger.add_hashdb_changes(hashdb_manager.changes);
-      logger.close();
-      history_manager_t::append_log_to_history(hashdb_dir);
-
-      // also write changes to cout
+      // good, reader worked, also write changes to cout
       std::cout << hashdb_manager.changes << "\n";
     } else {
       // bad, reader failed
       // close logger
-      logger.add_timestamp("end import, import failed");
-      logger.close();
-      history_manager_t::append_log_to_history(hashdb_dir);
-
       std::cerr << do_read_pair.second << ".  Import aborted.\n";
     }
   }
@@ -499,13 +146,10 @@ class commands_t {
                      uint32_t sector_size) {
 
     // require that tab file exists
-    if (access(tab_file.c_str(), F_OK) != 0) {
-      std::cerr << "tab import file '" << tab_file
-                << "' does not exist.  Aborting.\n";
-      exit(1);
-    }
+    file_helper::require_tab_file(dfxml_file);
 
-    change_manager_t change_manager(hashdb_dir);
+    // open hashdb change manager
+    hashdb_change_manager_t change_manager(hashdb_dir);
 
     logger_t logger(hashdb_dir, "import_tab");
     logger.add("tab_file", tab_file);
@@ -534,7 +178,6 @@ class commands_t {
       logger.add_timestamp("end import_tab");
       logger.add_hashdb_changes(hashdb_manager.changes);
       logger.close();
-      history_manager_t::append_log_to_history(hashdb_dir);
 
       // also write changes to cout
       std::cout << hashdb_manager.changes << "\n";
@@ -543,7 +186,6 @@ class commands_t {
       // close logger
       logger.add_timestamp("end import_tab, import failed");
       logger.close();
-      history_manager_t::append_log_to_history(hashdb_dir);
 
       std::cerr << import_tab_pair.second << ".  Import from tab file aborted.\n";
     }
@@ -552,6 +194,7 @@ class commands_t {
   // export
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
+/*
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // lets require that dfxml_file does not exist yet
@@ -563,107 +206,114 @@ class commands_t {
     // open the dfxml_file
     dfxml_hashdigest_writer_t writer(dfxml_file);
 
-    // open data resources
-    lmdb_hash_store_t hash_store(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
+    // export hash entries from hashdb_manager
+    hash_store_key_iterator_t it = hashdb_manager.begin_key();
+    progress_tracker_t progress_tracker(hashdb_manager.map_size());
 
-    // start progress tracker
-    progress_tracker_t progress_tracker(hash_store.size());
-
-    // start iterating
-    lmdb_hash_it_data_t hash_it_data = hash_store.find_begin();
-    while(hash_it_data.is_valid) {
+    while (it != hashdb_manager.end_key()) {
       progress_tracker.track();
-
-      // get source data
-      lmdb_source_data_t source_data = source_store.find(
-                                hash_it_data.source_lookup_index)
-      writer.add_hashdb_element(hash_it_data.binary_hash, 
-                                hash_it_data.file_offset,
-                                source_data);
-
-      // next
-      hash_store.find_next(hash_it_data);
+      writer.add_hashdb_element(hashdb_manager.hashdb_element(it));
+      ++it;
     }
     progress_tracker.done();
+
+    // export source lookup information from source_lookup_index_manager
+    // and source_metadata_manager
+    source_lookup_index_manager_t source_lookup_index_manager(
+                                               hashdb_dir, READ_ONLY);
+    source_lookup_index_manager_t::source_lookup_index_iterator_t it2 =
+                                     source_lookup_index_manager.begin();
+    while (it2 != source_lookup_index_manager.end()) {
+      uint64_t source_lookup_index = it2->key;
+
+      // get the repository name and filename, if available
+      std::pair<bool, std::pair<std::string, std::string> > source_pair =
+                     hashdb_manager.find_source(source_lookup_index);
+
+      // get source metadata, if available
+      std::pair<bool, source_metadata_t> metadata_pair =
+                     hashdb_manager.find_source_metadata(source_lookup_index);
+
+      // write out the source and its metadata
+      writer.add_source_metadata(source_pair, metadata_pair);
+      ++it2;
+    }
+*/
   }
 
   // add A to B
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
+/*
 
-    // open hashdb_dir1 for reading
-    lmdb_hash_store_t hash_store(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir2)) {
       create(hashdb_manager1.settings, hashdb_dir2);
     }
 
-    // open hashdb_dir2 for writing
-    change_manager_t chang_manager(hashdb_dir2);
+    // open hashdb_manager2 for writing
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
+
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add");
-
-    // start progress tracker
-    progress_tracker_t progress_tracker(hash_store.size());
-
-    // start iterating
-    lmdb_hash_it_data_t hash_it_data = hash_store.find_begin();
-    while(hash_it_data.is_valid) {
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end_key()) {
       progress_tracker.track();
-
-      // get source data
-      lmdb_source_data_t source_data = source_store.find(
-                                hash_it_data.source_lookup_index);
-
-      // add
-      change_manager.add_hashdb_element(hash_it_data.binary_hash, 
-                                hash_it_data.file_offset,
-                                source_data);
-
-      // next
-      hash_store.find_next(hash_it_data);
+      hashdb_manager2.insert(hashdb_manager1.hashdb_element(it1));
+      ++it1;
     }
 
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
+
     // close logger
     logger.add_timestamp("end add");
     logger.add_hashdb_changes(hashdb_manager2.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
     std::cout << hashdb_manager2.changes << "\n";
+*/
   }
 
   // add_multiple A and B to C
   static void add_multiple(const std::string& hashdb_dir1,
                            const std::string& hashdb_dir2,
                            const std::string& hashdb_dir3) {
+/*
 
-    // open hashdb_dir1 and hashdb_dir2 for reading
-    lmdb_hash_store_t hash_store1(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store1(hashdb_dir, READ_ONLY);
-    lmdb_hash_store_t hash_store2(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store2(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
 
     // if hashdb3 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir3)) {
       create(hashdb_manager1.settings, hashdb_dir3);
     }
 
-    // open hashdb_dir3 for writing
-    change_manager_t chang_manager(hashdb_dir3);
+    // open hashdb3 for writing
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
+    hash_store_key_iterator_t it2 = hashdb_manager2.begin_key();
+    hash_store_key_iterator_t it1_end = hashdb_manager1.end_key();
+    hash_store_key_iterator_t it2_end = hashdb_manager2.end_key();
 
     logger_t logger(hashdb_dir3, "add_multiple");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -671,59 +321,44 @@ class commands_t {
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin add_multiple");
 
-    // start iterating
-    lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_begin();
-    lmdb_hash_it_data_t hash_it_data2 = hash_store2.find_begin();
-
-    // start progress tracker
+    // while elements are in both, insert ordered by key, prefering it1 first
     progress_tracker_t progress_tracker(hashdb_manager1.map_size() +
                                         hashdb_manager2.map_size(), &logger);
-
-    while (hash_it_data1.is_valid && hash_it_data2.is_valid) {
-      if (hash_it_data1.binary_hash <= hash_it_data2.binary_hash) {
-        lmdb_source_data_t source_data1 = source_store1.find(
-                                         hash_it_data1.source_lookup_index);
-        change_manager.add_hash_element(
-                                hash_it_data1.file_offset,
-                                source_data1);
-        hash_it_data1 = hash_store1.find_next(hash_it_data1);
+    while ((it1 != it1_end) && (it2 != it2_end)) {
+      if (key(it1).hexdigest() <= key(it2).hexdigest()) {
+        hashdb_manager3.insert(hashdb_manager1.hashdb_element(it1));
+        ++it1;
       } else {
-        lmdb_source_data_t source_data2 = source_store2.find(
-                                         hash_it_data2.source_lookup_index);
-        change_manager.add_hash_element(
-                                hash_it_data2.file_offset,
-                                source_data2);
-        hash_it_data2 = hash_store2.find_next(hash_it_data2);
+        hashdb_manager3.insert(hashdb_manager2.hashdb_element(it2));
+        ++it2;
       }
       progress_tracker.track();
     }
 
     // hashdb1 or hashdb2 has become depleted so insert remaining elements
-    while (hash_it_data1.is_valid) {
-        lmdb_source_data_t source_data1b = source_store1.find(
-                                         hash_it_data1.source_lookup_index);
-        change_manager.add_hash_element(
-                                hash_it_data1.file_offset,
-                                source_data1b);
-        hash_it_data1 = hash_store1.find_next(hash_it_data1);
+    while (it1 != it1_end) {
+      hashdb_manager3.insert(hashdb_manager1.hashdb_element(it1));
+      ++it1;
+      progress_tracker.track();
     }
-    while (hash_it_data2.is_valid) {
-        lmdb_source_data_t source_data2b = source_store2.find(
-                                         hash_it_data2.source_lookup_index);
-        change_manager.add_hash_element(
-                                hash_it_data2.file_offset,
-                                source_data2b);
-        hash_it_data2 = hash_store2.find_next(hash_it_data2);
+    while (it2 != it2_end) {
+      hashdb_manager3.insert(hashdb_manager2.hashdb_element(it2));
+      ++it2;
+      progress_tracker.track();
     }
 
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
+
     // close logger
     logger.add_timestamp("end add_multiple");
-    logger.add_hashdb_changes(change_manager.changes);
+    logger.add_hashdb_changes(hashdb_manager3.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -731,88 +366,85 @@ class commands_t {
 
     // also write changes to cout
     std::cout << hashdb_manager3.changes << "\n";
+*/
   }
 
   // add A to B when repository matches
   static void add_repository(const std::string& hashdb_dir1,
                              const std::string& hashdb_dir2,
                              const std::string& repository_name) {
+/*
 
-    // open hashdb_dir1 for reading
-    lmdb_hash_store_t hash_store(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir2)) {
       create(hashdb_manager1.settings, hashdb_dir2);
     }
 
-    // open hashdb_dir2 for writing
-    change_manager_t chang_manager(hashdb_dir2);
+    // open hashdb_manager2 for writing
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
+
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "add_repository");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add_repository");
-
-    // start progress tracker
-    progress_tracker_t progress_tracker(hash_store.size());
-
-    // start iterating
-    lmdb_hash_it_data_t hash_it_data = hash_store.find_begin();
-    while(hash_it_data.is_valid) {
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end_key()) {
       progress_tracker.track();
 
-      // get source data
-      lmdb_source_data_t source_data = source_store.find(
-                                hash_it_data.source_lookup_index);
-
-      // conditionally add
-      if(repository_name == source_data.repository_name) {
-        change_manager.add_hashdb_element(hash_it_data.binary_hash, 
-                                hash_it_data.file_offset,
-                                source_data);
+      // add hashdb_element when the repository name matches
+      hashdb_element_t element = hashdb_manager1.hashdb_element(it1);
+      if (element.repository_name == repository_name) {
+        hashdb_manager2.insert(element);
       }
 
-      // next
-      hash_store.find_next(hash_it_data);
+      ++it1;
     }
 
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
+
     // close logger
     logger.add_timestamp("end add_repository");
     logger.add_hashdb_changes(hashdb_manager2.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
     std::cout << hashdb_manager2.changes << "\n";
+*/
   }
 
   // intersect
   static void intersect(const std::string& hashdb_dir1,
                         const std::string& hashdb_dir2,
                         const std::string& hashdb_dir3) {
+/*
 
-    // open hashdb_dir1 and hashdb_dir2 for reading
-    lmdb_hash_store_t hash_store1(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store1(hashdb_dir, READ_ONLY);
-    lmdb_hash_store_t hash_store2(hashdb_dir, READ_ONLY);
-    lmdb_name_store_t name_store2(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store2(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
 
     // if hashdb3 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
-      create(hashdb_manager1.settings, hashdb_dir3);
+    if (!file_helper::is_hashdb_dir(hashdb_dir3)) {
+      create(manager1.settings, hashdb_dir3);
     }
+    // open hashdb3 for writing
+    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
 
-    // open hashdb_dir3 for writing
-    change_manager_t chang_manager(hashdb_dir3);
+    // resources
+    require_compatibility(manager1, manager2, manager3);
 
     logger_t logger(hashdb_dir3, "intersect");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -820,50 +452,22 @@ class commands_t {
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin intersect");
 
-    // start iterating over 1
-    lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_begin();
-    while(hash_it_data1.is_valid) {
-      progress_tracker.track();
-
-      // get source 1
-      lmdb_source_data_t source_data1 = source_store1.find(
-                                hash_it_data1.source_lookup_index);
-
-      // get name 2
-      std::pair<bool, uint64_t> pair = name_store2.find(
-                                source_data1.repository_name,
-                                source_data1.filename);
-
-      if (pair.first) {
-        // see if exact match
-        lmdb_hash_it_data_t hash_it_data2 = hash_store2.find(
-                                hash_it_data1.binary_hash,
-                                pair.second,  // source lookup index
-                                hash_it_data1.file_offset);
-
-        if (hash_it_data2.is_valid) {
-          // there is an exact match so add
-          change_manager.insert(hash_it_data1.binary_hash,
-                                hash_it_data1.file_offset,
-                                source_data1);
-        }
-      }
-
-      // next
-      lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_next();
+    // optimize processing based on smaller db
+    if (manager1.map_size() <= manager2.map_size()) {
+      intersect_optimized(manager1, manager2, manager3, &logger);
+    } else {
+      intersect_optimized(manager2, manager1, manager3, &logger);
     }
 
-    // add any missing source fields
-    logger.add_timestamp("add source fields 1");
-    change_manager.add_source_data(source_store1);
-    logger.add_timestamp("add source fields 2");
-    change_manager.add_source_data(source_store2);
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(manager1, manager3);
+    copy_source_metadata(manager2, manager3);
 
     // close logger
     logger.add_timestamp("end intersect");
-    logger.add_hashdb_changes(change_manager.changes);
+    logger.add_hashdb_changes(manager3.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -871,27 +475,28 @@ class commands_t {
 
     // also write changes to cout
     std::cout << manager3.changes << "\n";
+*/
   }
 
   // intersect_hash
   static void intersect_hash(const std::string& hashdb_dir1,
                              const std::string& hashdb_dir2,
                              const std::string& hashdb_dir3) {
+/*
 
-    // open hashdb_dir1 and hashdb_dir2 for reading
-    lmdb_hash_store_t hash_store1(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store1(hashdb_dir, READ_ONLY);
-    lmdb_hash_store_t hash_store2(hashdb_dir, READ_ONLY);
-    lmdb_name_store_t name_store2(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store2(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    const hashdb_manager_t manager1(hashdb_dir1, READ_ONLY);
+    const hashdb_manager_t manager2(hashdb_dir2, READ_ONLY);
 
     // if hashdb3 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
-      create(hashdb_manager1.settings, hashdb_dir3);
+    if (!file_helper::is_hashdb_dir(hashdb_dir3)) {
+      create(manager1.settings, hashdb_dir3);
     }
+    // open hashdb3 for writing
+    hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
 
-    // open hashdb_dir3 for writing
-    change_manager_t chang_manager(hashdb_dir3);
+    // resources
+    require_compatibility(manager1, manager2, manager3);
 
     logger_t logger(hashdb_dir3, "intersect_hash");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -899,26 +504,22 @@ class commands_t {
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin intersect_hash");
 
-    // start iterating over 1
-    lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_begin();
-    while(hash_it_data1.is_valid) {
-      progress_tracker.track();
-
-      lmdb_hash_it_data_t hash_it_data2 =
-                        hash_store2.find_first(hash_it_data1.binary_hash);
-      if (hash_it_data2.is_valid) {
-
-        // match so add all hash entries from both
-        hash_it_data1 = add_hashes(hash_store1, source_store1, hash_it_data1.binary_hash);
-        hash_it_data2 = add_hashes(hash_store2, source_store2, hash_it_data2.binary_hash);
-      }
+    // optimize processing based on smaller db
+    if (manager1.map_size() <= manager2.map_size()) {
+      intersect_hash_optimized(manager1, manager2, manager3, &logger);
+    } else {
+      intersect_hash_optimized(manager2, manager1, manager3, &logger);
     }
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(manager1, manager3);
+    copy_source_metadata(manager2, manager3);
 
     // close logger
     logger.add_timestamp("end intersect_hash");
     logger.add_hashdb_changes(manager3.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
@@ -926,205 +527,205 @@ class commands_t {
 
     // also write changes to cout
     std::cout << manager3.changes << "\n";
+*/
   }
 
   // subtract: hashdb1 - hashdb 2 -> hashdb3 for exact match
   static void subtract(const std::string& hashdb_dir1,
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
+/*
 
-
-    // open hashdb_dir1 and hashdb_dir2 for reading
-    lmdb_hash_store_t hash_store1(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store1(hashdb_dir, READ_ONLY);
-    lmdb_hash_store_t hash_store2(hashdb_dir, READ_ONLY);
-    lmdb_name_store_t name_store2(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store2(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
 
     // if hashdb3 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir3)) {
       create(hashdb_manager1.settings, hashdb_dir3);
     }
+    // open hashdb3 for writing
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
 
-    // open hashdb_dir3 for writing
-    change_manager_t chang_manager(hashdb_dir3);
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir3, "subtract");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin subtract");
 
-    // start iterating over 1
-    lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_begin();
-    while(hash_it_data1.is_valid) {
-      progress_tracker.track();
-
-      // get source 1
-      lmdb_source_data_t source_data1 = source_store1.find(
-                                hash_it_data1.source_lookup_index);
-
-      // get name 2
-      std::pair<bool, uint64_t> pair = name_store2.find(
-                                source_data1.repository_name,
-                                source_data1.filename);
-
-      if (pair.first) {
-        // see if exact match
-        lmdb_hash_it_data_t hash_it_data2 = hash_store2.find(
-                                hash_it_data1.binary_hash,
-                                pair.second,  // source lookup index
-                                hash_it_data1.file_offset);
-
-        if (!hash_it_data2.is_valid) {
-          // there is no exact match so add
-          change_manager.insert(hash_it_data1.binary_hash,
-                                hash_it_data1.file_offset,
-                                source_data1);
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end_key()) {
+      
+      // look for exact match in hashdb_manager2
+      hashdb_element_t hashdb_element1 = hashdb_manager1.hashdb_element(it1);
+      bool exact_match = false;
+      hash_store_key_iterator_range_t it_pair = hashdb_manager2.find(key(it1));
+      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+        hashdb_element_t hashdb_element2 = hashdb_manager2.hashdb_element(it_pair.first);
+        if (hashdb_element1 == hashdb_element2) {
+          exact_match = true;
+          break;
         }
       }
 
-      // next
-      lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_next();
+      // maybe add the hashdb_element to hashdb_manager3
+      if (!exact_match) {
+        hashdb_manager3.insert(hashdb_element1);
+      }
+      ++it1;
+      progress_tracker.track();
     }
+
+    // close tracker
+    progress_tracker.done();
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
 
     // close logger
     logger.add_timestamp("end subtract");
-    logger.add_hashdb_changes(change_manager.changes);
+    logger.add_hashdb_changes(hashdb_manager3.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
     history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
     // also write changes to cout
-    std::cout << manager3.changes << "\n";
+    std::cout << hashdb_manager3.changes << "\n";
+*/
   }
 
   // subtract_hash: hashdb1 - hashdb 2 -> hashdb3
   static void subtract_hash(const std::string& hashdb_dir1,
                             const std::string& hashdb_dir2,
                             const std::string& hashdb_dir3) {
+/*
 
-    // open hashdb_dir1 and hashdb_dir2 for reading
-    lmdb_hash_store_t hash_store1(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store1(hashdb_dir, READ_ONLY);
-    lmdb_hash_store_t hash_store2(hashdb_dir, READ_ONLY);
-    lmdb_name_store_t name_store2(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store2(hashdb_dir, READ_ONLY);
+    // open hashdb_manager1 and hashdb_manager2 for reading
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, READ_ONLY);
 
     // if hashdb3 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir3)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir3)) {
       create(hashdb_manager1.settings, hashdb_dir3);
     }
+    // open hashdb3 for writing
+    hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
 
-    // open hashdb_dir3 for writing
-    change_manager_t chang_manager(hashdb_dir3);
+    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir3, "subtract_hash");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
-    logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin subtract_hash");
 
-    // start iterating over 1
-    lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_begin();
-    while(hash_it_data1.is_valid) {
-      progress_tracker.track();
-
-      // look for hash match in hash store 2
-      lmdb_hash_it_data_t hash_it_data2 = hash_store2.find_first(hash_it_data1.binary_hash);
-
-      // copy hash 1 if not in 2
-      if (!hash_it_data2.is_valid) {
-        lmdb_source_data_t source_data1 = source_store1.find(hash_it_data1.source_lookup_index);
-        change_manager.insert(hash_it_data1.binary_hash, hash_it_data1.file_offset, source_data1);
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end_key()) {
+      
+      // subtract or copy the hash
+      if (hashdb_manager2.find_count(key(it1)) > 0) {
+        // hashdb2 has the hash so drop the hash
+      } else {
+        // hashdb2 does not have the hash so copy it to hashdb3
+        hashdb_manager3.insert(hashdb_manager1.hashdb_element(it1));
       }
-
-      // next
-      lmdb_hash_it_data_t hash_it_data1 = hash_store1.find_next();
+      ++it1;
+      progress_tracker.track();
     }
+
+    // close tracker
+    progress_tracker.done();
+
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager3);
+    copy_source_metadata(hashdb_manager2, hashdb_manager3);
 
     // close logger
     logger.add_timestamp("end subtract_hash");
-    logger.add_hashdb_changes(manager3.changes);
+    logger.add_hashdb_changes(hashdb_manager3.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir3);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir3);
     history_manager_t::merge_history_to_history(hashdb_dir2, hashdb_dir3);
 
     // also write changes to cout
-    std::cout << manager3.changes << "\n";
+    std::cout << hashdb_manager3.changes << "\n";
+*/
   }
 
   // deduplicate
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
+/*
 
-    // open hashdb_dir1 for reading
-    lmdb_hash_store_t hash_store(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
+    // open resources for hashdb1
+    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    if (!hashdb_directory_manager_t::is_hashdb_dir(hashdb_dir2)) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir2)) {
       create(hashdb_manager1.settings, hashdb_dir2);
     }
 
-    // open hashdb_dir2 for writing
-    change_manager_t chang_manager(hashdb_dir2);
+    // open resources for hashdb2
+    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
+    require_compatibility(hashdb_manager1, hashdb_manager2);
+
+    // iterate over hashes.
+    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
     logger_t logger(hashdb_dir2, "deduplicate");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin deduplicate");
 
-    // start progress tracker
-    progress_tracker_t progress_tracker(hash_store.size());
+    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
+    while (it1 != hashdb_manager1.end_key()) {
 
-    // start deduplicate
-    lmdb_hash_it_data_t hash_it_data = hash_store.find_begin();
-    while(hash_it_data.is_valid) {
+      // for deduplicate, only keep hashes whose count=1
+      if (hashdb_manager1.find_count(key(it1)) == 1) {
+        // good, use it
+        hashdb_manager2.insert(hashdb_manager1.hashdb_element(it1));
+      }
+
+      ++it1;
       progress_tracker.track();
-
-      // keep if count is 1
-      hash_store.find_count(hash_it_data.binary_hash);
-      if (count == 1) {
-
-        // get source data
-        lmdb_source_data_t source_data = source_store.find(
-                                hash_it_data.source_lookup_index);
-
-        // add
-        change_manager.add_hashdb_element(hash_it_data.binary_hash, 
-                                hash_it_data.file_offset,
-                                source_data);
-
-      // next
-      hash_store.find_next(hash_it_data);
     }
 
     // close tracker
     progress_tracker.done();
 
+    // copy relevant source metadata
+    logger.add_timestamp("begin copy metadata");
+    copy_source_metadata(hashdb_manager1, hashdb_manager2);
+
     // close logger
     logger.add_timestamp("end deduplicate");
     logger.add_hashdb_changes(hashdb_manager2.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir2);
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
     std::cout << hashdb_manager2.changes << "\n";
+
+*/
   }
 
   // scan
   static void scan(const std::string& path_or_socket,
                    const std::string& dfxml_file) {
+/*
 
     // open the hashdb scan service
     hashdb_t__<hash_t> hashdb;
@@ -1157,20 +758,21 @@ class commands_t {
     // delete heap allocation
     delete scan_input;
     delete scan_output;
+*/
   }
 
   // scan expanded
   static void scan_expanded(const std::string& hashdb_dir,
                             const std::string& dfxml_file,
                             uint32_t requested_max) {
+/*
 
-    // open hash store
-    lmdb_hash_store_t hash_store(hashdb_dir, READ_ONLY);
-    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
+    // open hashdb
+    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // create the dfxml scan_expanded consumer
-    dfxml_scan_expanded_consumer_t scan_expanded_consumer(
-                                  &hash_store, &source_store, requested_max);
+    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager,
+                                                          requested_max);
     // print header information
     print_header("scan_expanded-command-Version: 2");
 
@@ -1179,11 +781,13 @@ class commands_t {
     dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
                               do_read(dfxml_file, repository_name,
                               &scan_expanded_consumer);
+*/
   }
 
   // scan hash
   static void scan_hash(const std::string& path_or_socket,
                    const std::string& hash_string) {
+/*
 
     // validate the hash string
     std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
@@ -1218,14 +822,15 @@ class commands_t {
     // delete heap allocation
     delete scan_input;
     delete scan_output;
+*/
   }
 
   // scan expanded hash
   static void scan_expanded_hash(const std::string& hashdb_dir,
                             const std::string& hash_string,
                             uint32_t requested_max) {
+/*
 
-/* zz TBD
     // validate the hash string
     std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
     if (hash_pair.first == false) {
@@ -1258,7 +863,6 @@ class commands_t {
   // server
   static void server(const std::string& hashdb_dir,
                      const std::string& port_number_string) {
-std::cerr << "server not implemented\n";
 /*
 
     uint16_t port_number;
@@ -1274,17 +878,11 @@ std::cerr << "server not implemented\n";
     tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
 //    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
 */
-/*
-    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
-    std::cout << "The hashdb service server is running.  Press Return to quit.\n";
-    std::string buffer;
-    getline(std::cin, buffer);
-    std::cout << "Done.\n";
-*/
   }
 
   // show hashdb size values
   static void size(const std::string& hashdb_dir) {
+/*
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
@@ -1308,10 +906,12 @@ std::cerr << "server not implemented\n";
               << hashdb_manager.filename_lookup_store_size() << "\n"
               << "source metadata store: "
               << hashdb_manager.source_metadata_lookup_store_size() << "\n";
+*/
   }
 
   // print sources referenced in this database
   static void sources(const std::string& hashdb_dir) {
+/*
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1334,10 +934,12 @@ std::cerr << "server not implemented\n";
       print_source_fields(hashdb_manager, it->key, std::cout);
       std::cout << "}\n";
     }
+*/
   }
 
   // show hashdb hash histogram
   static void histogram(const std::string& hashdb_dir) {
+/*
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
     hash_store_key_iterator_t it = hashdb_manager.begin_key();
 
@@ -1419,11 +1021,13 @@ std::cerr << "server not implemented\n";
                                  hash_histogram_it2->second << "}\n";
     }
     delete hash_histogram;
+*/
   }
 
   // show hashdb duplicates for a given duplicates count
   static void duplicates(const std::string& hashdb_dir,
                          const std::string& duplicates_string) {
+/*
 
     // convert duplicates string to number
     uint32_t duplicates_number;
@@ -1465,11 +1069,13 @@ std::cerr << "server not implemented\n";
       std::cout << "No hashes were found with this count.\n";
       return;
     }
+*/
   }
 
   // hash_table
   static void hash_table(const std::string& hashdb_dir,
                          const std::string& source_id_string) {
+/*
 
     // convert count string to number
     uint64_t source_id;
@@ -1521,12 +1127,14 @@ std::cerr << "server not implemented\n";
     if (!any_found) {
       std::cout << "There are no hashes in the database from this source.\n";
     }
+*/
   }
 
   // expand identified_blocks.txt
   static void expand_identified_blocks(const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max) {
+/*
 
     // open hashdb
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1583,6 +1191,7 @@ std::cerr << "server not implemented\n";
       // write the closure of the new context
       std::cout << "]\n";
     }
+*/
   }
 
   // explain identified_blocks.txt
@@ -1590,40 +1199,18 @@ std::cerr << "server not implemented\n";
                             const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max) {
+/*
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // create a hash set for tracking hashes that will be used
-    hashes_t* hashes = new hashes_t;
-
-    // create a source lookup index set for tracking source lookup indexes
-    std::set<uint64_t>* source_lookup_indexes = new std::set<uint64_t>;
-
-    // ingest table of relevant hashes and table of relevant sources
-    identify_hashes_and_sources(hashdb_manager, identified_blocks_file,
-                                requested_max, 
-                                *hashes, *source_lookup_indexes);
-
-    // print header information
-    print_header("explain_identified_blocks-command-Version: 2");
-
-    // print identified hashes
-    std::cout << "# hashes\n";
-    print_identified_hashes(hashdb_manager, *hashes, *source_lookup_indexes);
-
-    // print identified sources
-    std::cout << "# sources\n";
-    print_identified_sources(hashdb_manager, *source_lookup_indexes);
-
-    // clean up
-    delete hashes;
-    delete source_lookup_indexes;
+    commands_explain::explain_identified_blocks(hashdb_dir,
+                                                identified_blocks_file,
+                                                requested_max);
+*/
   }
 
   // rebuild bloom
   static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,
                             const std::string& hashdb_dir) {
+/*
 
     // read existing settings
     hashdb_settings_t settings;
@@ -1661,29 +1248,28 @@ std::cerr << "server not implemented\n";
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
     hash_store_key_iterator_t it = hashdb_manager.begin_key();
-    if (settings.bloom1_is_used) {
-      progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
-      while (it != hashdb_manager.end_key()) {
-        // add the hash to the bloom filter
-        bloom_filter_manager.add_hash_value(key(it));
-        ++it;
-        progress_tracker.track();
-      }
-
-      // close tracker
-      progress_tracker.done();
+    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
+    while (it != hashdb_manager.end_key()) {
+      // add the hash to the bloom filter
+      bloom_filter_manager.add_hash_value(key(it));
+      ++it;
+      progress_tracker.track();
     }
+
+    // close tracker
+    progress_tracker.done();
 
     // close logger
     logger.add_timestamp("end rebuild_bloom");
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "rebuild_bloom complete.\n";
+*/
   }
 
   // upgrade hashdb
   static void upgrade(const std::string& hashdb_dir) {
+/*
 
     // start logger
     logger_t logger(hashdb_dir, "upgrade");
@@ -1695,15 +1281,16 @@ std::cerr << "server not implemented\n";
     // close logger
     logger.add_timestamp("end upgrade");
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     std::cout << "Upgrade complete.\n";
+*/
   }
 
   // functional analysis and testing: add_random
   static void add_random(const std::string& hashdb_dir,
                          const std::string& count_string,
                          const std::string& repository_name) {
+/*
 
     // initialize random seed
     srand (time(NULL));
@@ -1761,7 +1348,6 @@ std::cerr << "server not implemented\n";
     logger.add_timestamp("end add_random");
     logger.add_hashdb_changes(hashdb_manager.changes);
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
 
     // also write changes to cout
     std::cout << hashdb_manager.changes << "\n";
@@ -1775,6 +1361,7 @@ std::cerr << "server not implemented\n";
         break;
       }
     }
+*/
   }
 
   /**
@@ -1783,6 +1370,7 @@ std::cerr << "server not implemented\n";
    */
   // functional analysis and testing: scan_random
   static void scan_random(const std::string& hashdb_dir) {
+/*
 
     // open hashdb_dir to use for obtaining valid hash values
     hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
@@ -1830,17 +1418,15 @@ std::cerr << "server not implemented\n";
 
       // make sure no hashes were found
       if (scan_output->size() > 0) {
-        uint32_t hash_index = scan_output->at(0).first;
-        std::cerr << "Unexpected event: " << scan_output->size()
-                  << " matches found in set, example hash: "
-                  << scan_input->at(hash_index).hexdigest() << "\n";
+        std::cerr << "Unexpected event: match found, count "
+                  << scan_output->size() << ", are the databases different?\n";
       }
     }
 
     // close logger
     logger.add_timestamp("end scan_random");
     logger.close();
-    history_manager_t::append_log_to_history(hashdb_dir);
+*/
   }
 };
 

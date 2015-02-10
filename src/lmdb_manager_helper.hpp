@@ -22,13 +22,13 @@
  * Defines the static commands that hashdb_manager can execute.
  */
 
-#ifndef LMDB_MANAGER_HELPER
-#define LMDB_MANAGER_HELPER
+#ifndef LMDB_MANAGER_HELPER_HPP
+#define LMDB_MANAGER_HELPER_HPP
 #include <unistd.h>
 #include "file_modes.h"
+#include "file_helper.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
-#include "hashdb_directory_manager.hpp"
 #include "lmdb_hash_store.hpp"
 #include "lmdb_name_store.hpp"
 #include "lmdb_source_store.hpp"
@@ -53,7 +53,8 @@ class lmdb_manager_helper {
                      const hashdb_settings_t& settings) {
 
     // create the hashdb directory
-    hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
+    file_helper::require_no_dir(hashdb_dir);
+    file_helper::create_new_dir(hashdb_dir);
 
     // write the settings
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);

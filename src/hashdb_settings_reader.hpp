@@ -37,6 +37,7 @@
   #include "io.h"
 #endif
 #include <libxml/parser.h>
+#include <unistd.h>
 #include "hashdb_settings.hpp"
 #include <stdexcept>
 #include <iostream>

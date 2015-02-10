@@ -28,6 +28,7 @@
 #include "hashdb_settings.hpp"
 #include "dfxml/src/dfxml_writer.h"
 #include "hashdb_settings_reader.hpp"
+#include <unistd.h>
 #include <string>
 #include <sstream>
 #include <cstdint>

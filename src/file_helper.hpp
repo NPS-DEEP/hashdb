@@ -45,40 +45,64 @@
 class file_helper {
   public:
 
-  static void create_new_hashdb_dir(const std::string& hashdb_dir) {
-
-    // hashdb_dir must not exist yet
-    if (access(hashdb_dir.c_str(), F_OK) == 0) {
-      std::cerr << "Error: Path '" << hashdb_dir << "' is not empty.  Cannot continue.\n";
+  static void require_hashdb_dir(const std::string& hashdb_dir) {
+    std::string settings_filename = hashdb_dir + "/settings.xml";
+    if (access(settings_filename.c_str(), F_OK) != 0) {
+      std::cerr << "Error: Directory '" << hashdb_dir << "' is not a valid hashdb database.  Cannot continue.\n";
       exit(1);
     }
+  }
 
-    // create hashdb_dir
+  static void require_dfxml_file(const std::string& filename) {
+    if (access(filename.c_str(), F_OK) != 0) {
+      std::cerr << "Error: DFXML file '" << filename << "' does not exist.  Cannot continue.\n";
+      exit(1);
+    }
+  }
+
+  static void require_tab_file(const std::string& filename) {
+    if (access(filename.c_str(), F_OK) != 0) {
+      std::cerr << "Error: Tab-delimited file '" << filename << "' does not exist.  Cannot continue.\n";
+      exit(1);
+    }
+  }
+
+  static void require_no_dir(const std::string& dirname) {
+    if (access(dirname.c_str(), F_OK) == 0) {
+      std::cerr << "Error: Path '" << dirname << "' already exists.  Cannot continue.\n";
+      exit(1);
+    }
+  }
+
+  static void require_no_file(const std::string& filename) {
+    if (access(filename.c_str(), F_OK) == 0) {
+      std::cerr << "Error: File '" << filename << "' already exists.  Cannot continue.\n";
+      exit(1);
+    }
+  }
+
+  static void create_new_dir(const std::string& new_dir) {
+
+    // new_dir must not exist yet
+    require_no_dir(new_dir);
+
+    // create new_dir
+    int status;
 #ifdef WIN32
-    if(mkdir(hashdb_dir.c_str())){
-      std::cerr << "Error: Could not make new hashdb directory '"
-                << hashdb_dir << "'.\nCannot continue.\n";
-      exit(1);
-    }
+    status = mkdir(new_dir.c_str());
 #else
-    if(mkdir(hashdb_dir.c_str(),0777)){
-      std::cerr << "Error: Could not make new hashdb directory '"
-                << hashdb_dir << "'.\nCannot continue.\n";
+    status = mkdir(new_dir.c_str(),0777);
+#endif
+    if (status != 0) {
+      std::cerr << "Error: Could not create new directory '"
+                << new_dir << "'.\nCannot continue.\n";
       exit(1);
     }
-#endif
   }
 
   static bool is_hashdb_dir(const std::string& hashdb_dir) {
     std::string settings_filename = hashdb_dir + "/settings.xml";
     return (access(settings_filename.c_str(), F_OK) == 0);
-  }
-
-  static bool require_file(const std::string& filename) {
-    if (access(hashdb_dir.c_str(), F_OK) == 0) {
-      std::cerr << "Error: File '" << hashdb_dir << "' does not exist.  Cannot continue.\n";
-      exit(1);
-    }
   }
 };
 

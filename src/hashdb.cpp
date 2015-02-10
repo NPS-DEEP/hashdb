@@ -42,17 +42,17 @@
 #include <cstdint>
 #include <climits>
 #include "file_modes.h"
-#include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
 #include "hashdb_changes.hpp"
 #include "history_manager.hpp"
-#include "lmdb_hash_store.hpp"
-#include "lmdb_name_store.hpp"
-#include "lmdb_source_store.hpp"
+//#include "lmdb_hash_store.hpp"
+//#include "lmdb_name_store.hpp"
+//#include "lmdb_source_store.hpp"
 #include "lmdb_source_data.hpp"
 #include "lmdb_change_manager.hpp"
 #include "lmdb_reader_manager.hpp"
+#include "lmdb_manager_helper.hpp"
 #include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #ifndef HAVE_CXX11
@@ -101,7 +101,7 @@ const char* hashdb_version() {
       settings.maximum_hash_duplicates = max_duplicates;
 
       // create the databases
-      lmdb_manager_helper::create(hashdb_dir, settings);
+      lmdb_manager_helper::create(path_or_socket, settings);
 
       // open for writing
       change_manager = new lmdb_change_manager_t(path_or_socket);
