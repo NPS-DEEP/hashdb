@@ -24,8 +24,8 @@
 
 #ifndef JSON_FORMATTER_HPP
 #define JSON_FORMATTER_HPP
-#include "hashdb_manager.hpp"
-#include "source_metadata.hpp"
+#include "lmdb_ro_manager.hpp"
+#include "lmdb_source_data.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -39,26 +39,14 @@
 class json_formatter_t {
 
   private:
-  hashdb_manager_t* hashdb_manager;
+  lmdb_ro_manager_t* ro_manager;
   uint32_t max_sources;
   std::set<uint64_t>* source_ids;
-  std::set<hash_t>* hashes;
+  std::set<std::string>* hashes;
 
   // do not allow copy or assignment
   json_formatter_t(const json_formatter_t&);
   json_formatter_t& operator=(const json_formatter_t&);
-
-  // get source list count
-  uint32_t source_list_count(
-                 hash_store_key_iterator_range_t it_pair) {
-
-    size_t count = 0;
-    // add each source to count
-    for (; it_pair.first != it_pair.second; ++it_pair.first) {
-      ++count;
-    }
-    return count;
-  }
 
   // get source list CRC
   uint32_t source_list_id(lmdb_hash_store_t* hash_store, const std::string binary_hash) {

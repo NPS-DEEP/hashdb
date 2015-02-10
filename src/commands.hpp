@@ -48,7 +48,7 @@
 #include "dfxml_scan_consumer.hpp"
 //zz #include "dfxml_scan_expanded_consumer.hpp"
 //zz #include "dfxml_hashdigest_writer.hpp"
-//zz #include "tab_hashdigest_reader.hpp"
+#include "tab_hashdigest_reader.hpp"
 #include "hashdb.hpp"
 #include "random_binary_hash.hpp"
 #include "progress_tracker.hpp"
@@ -100,7 +100,7 @@ class commands_t {
     // require that dfxml_file exists
     file_helper::require_dfxml_file(dfxml_file);
 
-    // open hashdb change manager
+    // open hashdb RW manager
     lmdb_rw_manager_t rw_manager(hashdb_dir);
 
     logger_t logger(hashdb_dir, "import");
@@ -147,13 +147,12 @@ class commands_t {
                      const std::string& tab_file,
                      const std::string& repository_name,
                      uint32_t sector_size) {
-/*
 
     // require that tab file exists
-    file_helper::require_tab_file(dfxml_file);
+    file_helper::require_tab_file(tab_file);
 
-    // open hashdb change manager
-    hashdb_change_manager_t change_manager(hashdb_dir);
+    // open hashdb RW manager
+    lmdb_rw_manager_t rw_manager(hashdb_dir);
 
     logger_t logger(hashdb_dir, "import_tab");
     logger.add("tab_file", tab_file);
@@ -166,7 +165,7 @@ class commands_t {
 
     // create the tab reader
     tab_hashdigest_reader_t tab_hashdigest_reader(
-            &change_manager, &progress_tracker, repository_name, sector_size);
+            &rw_manager, &progress_tracker, repository_name, sector_size);
 
     // read the tab input
     std::pair<bool, std::string> import_tab_pair =
@@ -180,11 +179,11 @@ class commands_t {
 
       // close logger
       logger.add_timestamp("end import_tab");
-      logger.add_hashdb_changes(hashdb_manager.changes);
+      logger.add_hashdb_changes(rw_manager.changes);
       logger.close();
 
       // also write changes to cout
-      std::cout << hashdb_manager.changes << "\n";
+      std::cout << rw_manager.changes << "\n";
     } else {
       // bad, reader failed
       // close logger
@@ -193,7 +192,6 @@ class commands_t {
 
       std::cerr << import_tab_pair.second << ".  Import from tab file aborted.\n";
     }
-*/
   }
 
   // export

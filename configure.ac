@@ -26,7 +26,8 @@ AC_CONFIG_FILES([Makefile
                  src/test/explain_be_in.txt
                  src/test/explain_dfxml.xml
                  src/test/sample_dfxml4096.xml
-                 src/test/sample_dfxml512.xml])
+                 src/test/sample_dfxml512.xml
+                 src/test/sample_nsrl.tab])
 
 # define CC and CXX as desired for alternate compilers
 # for example "./configure CC=clang CXX=clang++"

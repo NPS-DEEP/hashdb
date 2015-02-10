@@ -34,13 +34,12 @@
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
-#include "hash_t_selector.h"
-#include "change_manager.hpp"
+#include "lmdb_rw_manager.hpp"
 #include "lmdb_source_data.hpp"
 
 class tab_hashdigest_reader_t {
   private:
-  hashdb_manager_t* hashdb_manager;
+  lmdb_rw_manager_t* rw_manager;
   progress_tracker_t* progress_tracker;
   const std::string& repository_name;
   const uint32_t sector_size;
@@ -76,48 +75,39 @@ class tab_hashdigest_reader_t {
     // parse block hashdigest
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
-    std::pair<bool, hash_t> block_hashdigest_pair = safe_hash_from_hex(
-                                                block_hashdigest_string);
-    if (block_hashdigest_pair.first == false) {
-      std::cerr << "Invalid block hashdigest on line " << line_number << ": '" << line << "'\n";
-      return;
-    }
-    std::string binary_hash = std::string(pair.second, block_hashdigest_string.size()/2);
 
     // parse file offset
     size_t sector_index;
-    try {
-      sector_index = atol(line.substr(tab_index2+1));
-      if (sector_index == 0) {
-        // index starts at 1 so 0 is invalid
-        throw std::invalid_argument("sector index 0 is not allowed");
-      }
-    } catch(...) {
+    sector_index = std::atol(line.substr(tab_index2+1).c_str());
+    if (sector_index == 0) {
+      // index starts at 1 so 0 is invalid
       std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "'\n";
       return;
     }
-    uint64_t file_offset = (sector_index -1) * sector_size;
-    stringstream ss;
-    ss << file_offset;
 
-    // create the source data
-    lmdb_source_data_t source_data;
-    source_data.repository_name = repository_name;
-    source_data.filename = filename;
+    // get binary hash
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(
+                                                block_hashdigest_string);
+
+    // get source data
+    lmdb_source_data_t source_data(repository_name, filename, 0, "");
+
+    // get file offset
+    uint64_t file_offset = (sector_index -1) * sector_size;
 
     // update progress tracker
     progress_tracker->track();
 
     // insert the entry
-    change_manager.insert(hash_string, file_offset, source_data);
+    rw_manager->insert(binary_hash, source_data, file_offset);
   }
  
   public:
-  tab_hashdigest_reader_t(change_manager_t* p_change_manager,
+  tab_hashdigest_reader_t(lmdb_rw_manager_t* p_rw_manager,
                            progress_tracker_t* p_progress_tracker,
                            const std::string& p_repository_name,
                            uint32_t p_sector_size) :
-              change_manager(p_change_manager),
+              rw_manager(p_rw_manager),
               progress_tracker(p_progress_tracker),
               repository_name(p_repository_name),
               sector_size(p_sector_size),
