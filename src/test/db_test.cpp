@@ -35,7 +35,6 @@
 #include "lmdb_source_it_data.hpp"
 #include "lmdb_helper.h"
 #include "directory_helper.hpp"
-#include "hashdb_directory_manager.hpp"
 #include "file_modes.h"
 
 // file modes:

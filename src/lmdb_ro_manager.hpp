@@ -22,8 +22,8 @@
  * Provides DB reader services.
  */
 
-#ifndef LMDB_READER_MANAGER_HPP
-#define LMDB_READER_MANAGER_HPP
+#ifndef LMDB_RO_MANAGER_HPP
+#define LMDB_RO_MANAGER_HPP
 #include "hashdb_settings.hpp"
 #include "globals.hpp"
 #include <vector>
@@ -38,7 +38,7 @@
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
 
-class lmdb_reader_manager_t {
+class lmdb_ro_manager_t {
 
   private:
   const std::string hashdb_dir;
@@ -52,11 +52,11 @@ class lmdb_reader_manager_t {
   lmdb_source_store_t source_store;
 
   // do not allow copy or assignment
-  lmdb_reader_manager_t(const lmdb_reader_manager_t&);
-  lmdb_reader_manager_t& operator=(const lmdb_reader_manager_t&);
+  lmdb_ro_manager_t(const lmdb_ro_manager_t&);
+  lmdb_ro_manager_t& operator=(const lmdb_ro_manager_t&);
 
   public:
-  lmdb_reader_manager_t(const std::string& p_hashdb_dir) :
+  lmdb_ro_manager_t(const std::string& p_hashdb_dir) :
 
           hashdb_dir(p_hashdb_dir),
           settings(hashdb_settings_store_t::read_settings(hashdb_dir)),

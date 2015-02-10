@@ -35,8 +35,9 @@ class globals_t {
   public:
   static const uint32_t default_scan_expanded_max = 200;
   static const uint32_t default_explain_identified_blocks_max = 20;
-  static const uint32_t default_import_tab_sector_size = 512;
+  static const uint32_t default_hash_block_size = 4096;
   static const uint32_t default_byte_alignment = 512;
+  static const uint32_t default_import_tab_sector_size = 512;
   static bool quiet_mode;
   static std::string command_line_string;
 };

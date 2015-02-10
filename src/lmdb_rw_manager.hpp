@@ -22,8 +22,8 @@
  * Provides services for modifying the DB, including tracking changes.
  */
 
-#ifndef LMDB_CHANGE_MANAGER_HPP
-#define LMDB_CHANGE_MANAGER_HPP
+#ifndef LMDB_RW_MANAGER_HPP
+#define LMDB_RW_MANAGER_HPP
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "globals.hpp"
@@ -41,12 +41,12 @@
 #include "bloom_filter_manager.hpp"
 #include "hashdb_settings_store.hpp"
 
-class lmdb_change_manager_t {
+class lmdb_rw_manager_t {
 
   private:
   const std::string hashdb_dir;
-  const hashdb_settings_t settings;
   public:
+  const hashdb_settings_t settings;
   hashdb_changes_t changes;
   private:
 
@@ -59,11 +59,11 @@ class lmdb_change_manager_t {
   lmdb_source_store_t source_store;
 
   // do not allow copy or assignment
-  lmdb_change_manager_t(const lmdb_change_manager_t&);
-  lmdb_change_manager_t& operator=(const lmdb_change_manager_t&);
+  lmdb_rw_manager_t(const lmdb_rw_manager_t&);
+  lmdb_rw_manager_t& operator=(const lmdb_rw_manager_t&);
 
   public:
-  lmdb_change_manager_t(const std::string& p_hashdb_dir) :
+  lmdb_rw_manager_t(const std::string& p_hashdb_dir) :
 
           hashdb_dir(p_hashdb_dir),
           settings(hashdb_settings_store_t::read_settings(hashdb_dir)),

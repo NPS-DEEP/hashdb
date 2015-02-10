@@ -50,9 +50,9 @@
 //#include "lmdb_name_store.hpp"
 //#include "lmdb_source_store.hpp"
 #include "lmdb_source_data.hpp"
-#include "lmdb_change_manager.hpp"
-#include "lmdb_reader_manager.hpp"
-#include "lmdb_manager_helper.hpp"
+#include "lmdb_rw_manager.hpp"
+#include "lmdb_ro_manager.hpp"
+#include "lmdb_rw_new.hpp"
 #include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #ifndef HAVE_CXX11
@@ -73,8 +73,8 @@ const char* hashdb_version() {
                    block_size(0),
                    max_duplicates(0),
                    mode(HASHDB_NONE),
-                   change_manager(),
-                   reader_manager(),
+                   rw_manager(),
+                   ro_manager(),
                    logger(0) {
   }
 
@@ -101,10 +101,10 @@ const char* hashdb_version() {
       settings.maximum_hash_duplicates = max_duplicates;
 
       // create the databases
-      lmdb_manager_helper::create(path_or_socket, settings);
+      lmdb_rw_new::create(path_or_socket, settings);
 
       // open for writing
-      change_manager = new lmdb_change_manager_t(path_or_socket);
+      rw_manager = new lmdb_rw_manager_t(path_or_socket);
 
       // open logger
       logger = new logger_t(path_or_socket, "hashdb library import");
@@ -135,7 +135,7 @@ const char* hashdb_version() {
       lmdb_source_data_t source_data(it->repository_name, it->filename, 0, "");
 
       // insert the source data
-      change_manager->insert(it->binary_hash, source_data, it->file_offset);
+      rw_manager->insert(it->binary_hash, source_data, it->file_offset);
 
       ++it;
     }
@@ -160,7 +160,7 @@ const char* hashdb_version() {
                                    filesize, binary_hash);
 
     // add the change
-    change_manager->add_source_data(source_data);
+    rw_manager->add_source_data(source_data);
 
     // good, done
     return 0;
@@ -186,7 +186,7 @@ const char* hashdb_version() {
       mode = HASHDB_SCAN;
       // open reader manager for scanning
       try {
-        reader_manager = new lmdb_reader_manager_t(path_or_socket);
+        ro_manager = new lmdb_ro_manager_t(path_or_socket);
       } catch (std::runtime_error& e) {
         return std::pair<bool, std::string>(false, e.what());
       }
@@ -214,7 +214,7 @@ const char* hashdb_version() {
         // scan each input in turn
         uint32_t input_size = (uint32_t)input.size();
         for (uint32_t i=0; i<input_size; i++) {
-          uint32_t count = reader_manager->find_count(input[i]);
+          uint32_t count = ro_manager->find_count(input[i]);
           if (count > 0) {
             output.push_back(std::pair<uint32_t, uint32_t>(i, count));
           }
@@ -242,16 +242,16 @@ const char* hashdb_version() {
         return;
       case HASHDB_IMPORT:
         logger->add_timestamp("end import");
-        logger->add_hashdb_changes(change_manager->changes);
+        logger->add_hashdb_changes(rw_manager->changes);
         delete logger;
-        delete change_manager;
+        delete rw_manager;
 
         // create new history trail
         history_manager_t::append_log_to_history(path_or_socket);
         return;
 
       case HASHDB_SCAN:
-        delete reader_manager;
+        delete ro_manager;
         return;
       case HASHDB_SCAN_SOCKET:
         std::cerr << "TCP scan currently not implemented\n";
@@ -270,8 +270,8 @@ const char* hashdb_version() {
                  block_size(0),
                  max_duplicates(0),
                  mode(HASHDB_NONE),
-                 change_manager(0),
-                 reader_manager(0),
+                 rw_manager(0),
+                 ro_manager(0),
                  logger(0) {
     assert(0);
     exit(1);

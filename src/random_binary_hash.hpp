@@ -20,6 +20,7 @@
 #ifndef RANDOM_BINARY_HASH_HPP
 #define RANDOM_BINARY_HASH_HPP
 #include <time.h> // for random number generator
+#include <string> 
 
 /**
  * Provides a randomly generated hash.
@@ -37,7 +38,7 @@ std::string random_binary_hash() {
       }
     }
   };
-  return std::string(chars, 16);
+  return std::string(hash_buffer_t().hash, sizeof(hash_buffer_t));
 }
 
 #endif

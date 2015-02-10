@@ -36,8 +36,8 @@ extern "C"
 const char* hashdb_version();
 
 // required inside hashdb_t
-class lmdb_change_manager_t;
-class lmdb_reader_manager_t;
+class lmdb_rw_manager_t;
+class lmdb_ro_manager_t;
 class logger_t;
 
 /**
@@ -56,8 +56,8 @@ class hashdb_t {
   uint32_t block_size;
   uint32_t max_duplicates;
   hashdb_modes_t mode;
-  lmdb_change_manager_t* change_manager;
-  lmdb_reader_manager_t* reader_manager;
+  lmdb_rw_manager_t* rw_manager;
+  lmdb_ro_manager_t* ro_manager;
   logger_t* logger;
 
   public:

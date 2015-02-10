@@ -200,19 +200,19 @@ int main(int argc,char **argv) {
 
       case 'a': {	// byte alignment
         has_byte_alignment = true;
-        optional_byte_alignment = atoi(optarg);
+        optional_byte_alignment = std::atoi(optarg);
         break;
       }
 
       case 'p': {	// hash block size
         has_hash_block_size = true;
-        optional_hash_block_size = atoi(optarg);
+        optional_hash_block_size = std::atoi(optarg);
         break;
       }
       case 'm': {	// maximum
         has_max = true;
         try {
-          optional_max = atoi(optarg);
+          optional_max = std::atoi(optarg);
         } catch (...) {
           std::cerr << "Invalid value for max: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -231,7 +231,7 @@ int main(int argc,char **argv) {
       case 's': {	// repository name
         has_sector_size = true;
         try {
-          optional_sector_size = atoi(optarg);
+          optional_sector_size = std::atoi(optarg);
         } catch (...) {
           std::cerr << "Invalid value for sector size: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
@@ -252,7 +252,7 @@ int main(int argc,char **argv) {
       case 'B': {	// bloom_n <n> expected total number of hashes
         has_bloom_n = true;
         try {
-          uint64_t n = atol(optarg);
+          uint64_t n = std::atol(optarg);
           bloom_k_hash_functions = 3;
           bloom_M_hash_size = bloom_filter_manager_t::approximate_n_to_M(n);
         } catch (...) {
@@ -267,8 +267,8 @@ int main(int argc,char **argv) {
 
         if (params.size() == 2) {
           try {
-            bloom_k_hash_functions = atoi(params[0]);
-            bloom_M_hash_size = atoi(params[1]);
+            bloom_k_hash_functions = std::atoi(params[0].c_str());
+            bloom_M_hash_size = std::atoi(params[1].c_str());
             break;
           } catch (...) {
             // let fall through to failure
@@ -287,17 +287,17 @@ int main(int argc,char **argv) {
   }
 
   // check that input is compatible
-  if (has_hash_block_size = true)
-    uint32_t temp_byte_alignment = (has_byte_alignment) ? optional_byte_alignment : globals_t::byte_alignment;
+  uint32_t temp_hash_block_size = (has_hash_block_size) ? optional_hash_block_size : globals_t::default_hash_block_size;
+  uint32_t temp_byte_alignment = (has_byte_alignment) ? optional_byte_alignment : globals_t::default_byte_alignment;
 
-    // make sure hash block size is valid
-    if (optional_hash_block_size % temp_byte_alignment != 0) {
-      std::cerr << "Invalid value for hash block size: "
-                << optional_hash_block_size
-                << ".  Value must be > 0 and divisible by "
-                << temp_byte_alignment << ".\n" << see_usage << "\n";
-      exit(1);
-    }
+  // make sure hash block size is valid
+  if (temp_hash_block_size % temp_byte_alignment != 0) {
+    std::cerr << "Incompatible values for hash block size: "
+              << temp_hash_block_size
+              << " and byte alignment: " << temp_byte_alignment
+              << ".  hash block size must be divisible by byte alignment.\n"
+              << see_usage << "\n";
+    exit(1);
   }
 
   // ************************************************************

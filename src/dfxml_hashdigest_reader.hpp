@@ -56,6 +56,8 @@ class dfxml_hashdigest_reader_t {
 
     // input values provided by do_read()
     const std::string default_repository_name;
+    const uint64_t hash_block_size;     // 0 means allow any
+    const std::string hashdigest_type;
     T* dfxml_consumer;
 
     // state variables
@@ -81,8 +83,12 @@ class dfxml_hashdigest_reader_t {
     std::string fileobject_hashdigest;
 
     user_data_t(const std::string& p_default_repository_name,
-                                             T* p_dfxml_consumer) :
+                uint64_t p_hash_block_size,
+                const std::string& p_hashdigest_type,
+                T* p_dfxml_consumer) :
                          default_repository_name(p_default_repository_name),
+                         hash_block_size(p_hash_block_size),
+                         hashdigest_type(p_hashdigest_type),
                          dfxml_consumer(p_dfxml_consumer),
                          under_fileobject(false),
                          under_repository_name(false),
@@ -115,60 +121,66 @@ class dfxml_hashdigest_reader_t {
 
     // pull together byte_run fields for the hashdb element
 
-    // validate hash
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(user_data.byte_run_hashdigest);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hashdigest: '"
-                << user_data.byte_run_hashdigest << "', entry ignored.\n";
-      return;
-    }
-
-    // get file_offset
-    uint64_t file_offset;
-    try {
-      file_offset = atol(user_data.byte_run_file_offset);
-    } catch(...) {
-      std::cerr << "Invalid file_offset value: '"
-                << user_data.byte_run_file_offset << "', entry ignored.\n";
-      return;
-    }
-
-    // get hash_block_size
-      uint32_t hash_block_size;
-    try {
-      hash_block_size = atol(user_data.byte_run_len);
-    } catch(...) {
-      std::cerr << "Invalid byte_run value: '"
-                << user_data.byte_run_len << "', entry ignored.\n";
-      return;
-    }
-
-    // validate hashdigest type
-    if (user_data.byte_run_hashdigest_type != digest_name<hash_t>()) {
-      std::cerr << "dfxml_hashdigest_reader: Wrong hashdigest type for byte_run: "
-                << user_data.byte_run_hashdigest_type << "', entry ignored.\n";
-      return;
-    }
+    // hashdigest
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(
+                                   user_data.byte_run_hashdigest);
  
-    // create the hashdb element
-    hashdb_element_t hashdb_element(
-               hash_pair.second,
-               hash_block_size,
-               user_data.fileobject_repository_name,
-               user_data.fileobject_filename,
-               file_offset);
+    // file_offset
+    uint64_t file_offset;
+    file_offset = std::atol(user_data.byte_run_file_offset.c_str());
+
+    // hash_block_size
+    uint32_t hash_block_size = std::atol(user_data.byte_run_len.c_str());
+    if (user_data.hash_block_size != 0 &&
+        hash_block_size != user_data.hash_block_size) {
+      // wrong hash block size so skip it
+      return;
+    }
+
+    // hashdigest type
+    if (user_data.byte_run_hashdigest_type != "MD5") {
+      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for byte_run: "
+                << user_data.byte_run_hashdigest_type << "'.\n";
+      return;
+    }
+
+    // create the source data
+    lmdb_source_data_t source_data(user_data.fileobject_repository_name,
+                                   user_data.fileobject_filename, 0, "");
 
     // call the hash consumer
-    user_data.dfxml_consumer->end_byte_run(hashdb_element);
+    user_data.dfxml_consumer->end_byte_run(binary_hash, file_offset, source_data);
   }
 
   static void end_fileobject(user_data_t& user_data) {
-    user_data.dfxml_consumer->end_fileobject(
-                                    user_data.fileobject_repository_name,
-                                    user_data.fileobject_filename,
-                                    user_data.fileobject_hashdigest_type,
-                                    user_data.fileobject_hashdigest,
-                                    user_data.fileobject_filesize);
+    if (user_data.fileobject_repository_name == "" ||
+        user_data.fileobject_filename == "") {
+      // insufficiently defined
+      return;
+    }
+
+    // hashdigest type
+    if (user_data.fileobject_hashdigest_type != "MD5") {
+      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for fileobject: "
+                << user_data.fileobject_hashdigest_type << "'.\n";
+      return;
+    }
+
+    // file hashdigest
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(
+                                   user_data.fileobject_hashdigest);
+
+    // file size
+    uint64_t filesize = std::atol(user_data.fileobject_filesize.c_str());
+
+    // put source_data together
+    lmdb_source_data_t source_data(user_data.fileobject_repository_name,
+                                   user_data.fileobject_filename,
+                                   filesize,
+                                   binary_hash);
+
+    // consume source_data
+    user_data.dfxml_consumer->end_fileobject(source_data);
   }
 
   // parse byte_run tag for possible file_offset or len attributes
@@ -477,6 +489,8 @@ class dfxml_hashdigest_reader_t {
   static std::pair<bool, std::string> do_read(
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
+                const uint64_t hash_block_size,     // 0 means allow any
+                const std::string& hashdigest_type,
                 T* dfxml_consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
@@ -512,7 +526,10 @@ class dfxml_hashdigest_reader_t {
     };
 
     // set up the data structure for the sax handlers to use
-    user_data_t user_data(default_repository_name, dfxml_consumer);
+    user_data_t user_data(default_repository_name,
+                          hash_block_size,
+                          hashdigest_type,
+                          dfxml_consumer);
 
     // perform the sax parse on the file
     int sax_parser_resource = xmlSAXUserParseFile(

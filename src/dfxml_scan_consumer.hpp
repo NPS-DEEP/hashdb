@@ -26,13 +26,13 @@
 
 #ifndef DFXML_SCAN_CONSUMER_HPP
 #define DFXML_SCAN_CONSUMER_HPP
-#include "hashdb_element.hpp"
-#include "hash_t_selector.h"
+#include <string>
+#include "lmdb_source_data.hpp"
 
 class dfxml_scan_consumer_t {
 
   private:
-  std::vector<hash_t>* scan_input;
+  std::vector<std::string>* scan_input;
 
   // do not allow copy or assignment
   dfxml_scan_consumer_t(const dfxml_scan_consumer_t&);
@@ -40,7 +40,7 @@ class dfxml_scan_consumer_t {
 
   public:
   dfxml_scan_consumer_t(
-              std::vector<hash_t>* p_scan_input) :
+              std::vector<std::string>* p_scan_input) :
         scan_input(p_scan_input) {
   }
 
@@ -50,18 +50,16 @@ class dfxml_scan_consumer_t {
   }
 
   // end_byte_run
-  void end_byte_run(const hashdb_element_t& hashdb_element) {
+  void end_byte_run(const std::string& binary_hash,
+                    uint64_t file_offset,
+                    const lmdb_source_data_t& source_data) {
 
     // consume the hashdb_element by adding it to scan_input
-    scan_input->push_back(hashdb_element.key);
+    scan_input->push_back(binary_hash);
   }
 
   // end_fileobject
-  void end_fileobject(const std::string& repository_name,
-                      const std::string& p_filename,
-                      const std::string& hashdigest_type,
-                      const std::string& hashdigest,
-                      const std::string& filesize) {
+  void end_fileobject(const lmdb_source_data_t& source_data) {
 
     // no action for this consumer
   }

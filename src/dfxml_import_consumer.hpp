@@ -25,14 +25,14 @@
 
 #ifndef DFXML_IMPORT_CONSUMER_HPP
 #define DFXML_IMPORT_CONSUMER_HPP
-#include "lmdb_source_data_t.hpp"
-#include "change_manager.hpp"
+#include "lmdb_source_data.hpp"
+#include "lmdb_rw_manager.hpp"
 #include "progress_tracker.hpp"
 
 class dfxml_import_consumer_t {
 
   private:
-  change_manager_t* change_manager;
+  lmdb_rw_manager_t* rw_manager;
   progress_tracker_t* progress_tracker;
 
   // do not allow copy or assignment
@@ -41,9 +41,9 @@ class dfxml_import_consumer_t {
 
   public:
   dfxml_import_consumer_t(
-              change_manager_t* p_change_manager,
+              lmdb_rw_manager_t* p_rw_manager,
               progress_tracker_t* p_progress_tracker) :
-        change_manager(p_change_manager),
+        rw_manager(p_rw_manager),
         progress_tracker(p_progress_tracker) {
   }
 
@@ -61,31 +61,14 @@ class dfxml_import_consumer_t {
     progress_tracker->track();
 
     // consume the element by importing it
-    change_manager->insert(binary_hash, file_offset, source_data);
+    rw_manager->insert(binary_hash, source_data, file_offset);
   }
 
   // end_fileobject
-  void end_fileobject(const std::string& repository_name,
-                      const std::string& filename,
-                      const std::string& hashdigest_type,
-                      const std::string& hashdigest,
-                      const std::string& filesize) {
-
-    // do not consume unless all metadata fields are there
-    if (repository_name == "" || filename == "" ||
-        hashdigest_type == "" || hashdigest == "" || filesize == "") {
-      return;
-    }
-
-    // create source data record
-    lmdb_source_data_t source_data;
-    source_data.repository_name = repository_name;
-    source_data.filename = filename;
-    source_data.filesize = filesize;
-    source_data.hashdigest = hashdigest;
+  void end_fileobject(const lmdb_source_data_t source_data) {
 
     // insert the source metadata
-    change_manager->insert_source_data(source_data);
+    rw_manager->add_source_data(source_data);
   }
 };
 

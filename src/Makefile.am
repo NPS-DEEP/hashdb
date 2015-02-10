@@ -83,13 +83,14 @@ LIBHASHDB_INCS = \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	lmdb_change_manager.hpp \
+	lmdb_rw_manager.hpp \
+	lmdb_rw_new.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_it_data.hpp \
 	lmdb_hash_store.hpp \
 	lmdb_helper.h \
 	lmdb_name_store.hpp \
-	lmdb_reader_manager.hpp \
+	lmdb_ro_manager.hpp \
 	lmdb_source_data.hpp \
 	lmdb_source_it_data.hpp \
 	lmdb_source_store.hpp \

@@ -22,8 +22,8 @@
  * Defines the static commands that hashdb_manager can execute.
  */
 
-#ifndef LMDB_MANAGER_HELPER_HPP
-#define LMDB_MANAGER_HELPER_HPP
+#ifndef LMDB_RW_NEW_HPP
+#define LMDB_RW_NEW_HPP
 #include <unistd.h>
 #include "file_modes.h"
 #include "file_helper.hpp"
@@ -44,7 +44,7 @@
  * so it can have private members.
  */
 
-class lmdb_manager_helper {
+class lmdb_rw_new {
 
   public:
 

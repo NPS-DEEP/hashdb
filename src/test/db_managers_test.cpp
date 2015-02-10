@@ -27,14 +27,12 @@
 #include <iomanip>
 #include <cstdio>
 #include "unit_test.h"
-#include "lmdb_manager_helper.hpp"
-#include "lmdb_change_manager.hpp"
-#include "lmdb_reader_manager.hpp"
+#include "lmdb_rw_new.hpp"
+#include "lmdb_rw_manager.hpp"
+#include "lmdb_ro_manager.hpp"
 #include "lmdb_hash_it_data.hpp"
 #include "lmdb_helper.h"
-#include "lmdb_manager_helper.hpp"
 #include "directory_helper.hpp"
-#include "hashdb_directory_manager.hpp"
 #include "hashdb_settings.hpp"
 //#include "file_modes.h"
 
@@ -56,8 +54,6 @@ static const lmdb_source_data_t source_data3b("rn3", "fn3", 3, "h3");
  
  
 void create_db() {
-  // create the hashdb directory
-  hashdb_directory_manager_t::create_new_hashdb_dir(hashdb_dir);
 
   // use specific settings
   hashdb_settings_t settings;
@@ -65,12 +61,12 @@ void create_db() {
   settings.bloom1_is_used = false;
 
   // create the DB
-  lmdb_manager_helper::create(hashdb_dir, settings);
+  lmdb_rw_new::create(hashdb_dir, settings);
 }
 
 void test_change() {
   // insert
-  lmdb_change_manager_t manager(hashdb_dir);
+  lmdb_rw_manager_t manager(hashdb_dir);
   manager.insert(binary_aa, source_data1, 4096*1);
   TEST_EQ(manager.changes.hashes_inserted, 1);
   manager.insert(binary_aa, source_data1, 4095);
@@ -120,7 +116,7 @@ void test_change() {
 
 void test_reader() {
   // read
-  lmdb_reader_manager_t manager(hashdb_dir);
+  lmdb_ro_manager_t manager(hashdb_dir);
   TEST_EQ(manager.size(), 3);
   TEST_EQ(manager.find_count(binary_aa), 2);
   TEST_EQ(manager.find_count(binary_bb), 0);

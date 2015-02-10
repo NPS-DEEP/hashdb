@@ -39,23 +39,22 @@
 #include "lmdb_source_it_data.hpp"
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
-#include "lmdb_change_manager.hpp"
-#include "lmdb_reader_manager.hpp"
-#include "lmdb_manager_helper.hpp"
+#include "lmdb_rw_manager.hpp"
+#include "lmdb_ro_manager.hpp"
+#include "lmdb_rw_new.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
-#include "dfxml_scan_expanded_consumer.hpp"
-#include "dfxml_hashdigest_writer.hpp"
-#include "tab_hashdigest_reader.hpp"
-#include "tcp_server_manager.hpp"
+//zz #include "dfxml_scan_expanded_consumer.hpp"
+//zz #include "dfxml_hashdigest_writer.hpp"
+//zz #include "tab_hashdigest_reader.hpp"
 #include "hashdb.hpp"
-#include "random_key.hpp"
+#include "random_binary_hash.hpp"
 #include "progress_tracker.hpp"
 #include "feature_file_reader.hpp"
 #include "feature_line.hpp"
-#include "json_formatter.hpp"
+//zz #include "json_formatter.hpp"
 
 
 // Standard includes
@@ -66,7 +65,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <boost/filesystem.hpp> // for scan_random command
+//zz #include <boost/filesystem.hpp> // for scan_random command
 
 /**
  * Defines the static commands that hashdb_manager can execute.
@@ -82,7 +81,7 @@ class commands_t {
                      const std::string& hashdb_dir) {
 
     // create the hashdb directory
-    lmdb_manager_helper::create(hashdb_dir, settings);
+    lmdb_rw_new::create(hashdb_dir, settings);
 
     // log the creation event
     logger_t logger(hashdb_dir, "create");
@@ -102,7 +101,7 @@ class commands_t {
     file_helper::require_dfxml_file(dfxml_file);
 
     // open hashdb change manager
-    hashdb_change_manager_t change_manager(hashdb_dir);
+    lmdb_rw_manager_t rw_manager(hashdb_dir);
 
     logger_t logger(hashdb_dir, "import");
     logger.add("hashdb_dir", hashdb_dir);
@@ -114,24 +113,28 @@ class commands_t {
     progress_tracker_t progress_tracker(0, &logger);
 
     // create the DFXML import consumer
-    dfxml_import_consumer_t import_consumer(&change_manager, &progress_tracker);
+    dfxml_import_consumer_t import_consumer(&rw_manager, &progress_tracker);
 
     // run the dfxml hashdigest reader using the import hash consumer
     std::pair<bool, std::string> do_read_pair =
     dfxml_hashdigest_reader_t<dfxml_import_consumer_t>::
-             do_read(dfxml_file, repository_name, &import_consumer);
+             do_read(dfxml_file,
+                     repository_name,
+                     rw_manager.settings.hash_block_size,
+                     "MD5",
+                     &import_consumer);
 
     // close tracker
     progress_tracker.done();
 
     // close logger
     logger.add_timestamp("end import");
-    logger.add_hashdb_changes(hashdb_manager.changes);
+    logger.add_hashdb_changes(rw_manager.changes);
     logger.close();
 
     if (do_read_pair.first == true) {
       // good, reader worked, also write changes to cout
-      std::cout << hashdb_manager.changes << "\n";
+      std::cout << rw_manager.changes << "\n";
     } else {
       // bad, reader failed
       // close logger
@@ -144,6 +147,7 @@ class commands_t {
                      const std::string& tab_file,
                      const std::string& repository_name,
                      uint32_t sector_size) {
+/*
 
     // require that tab file exists
     file_helper::require_tab_file(dfxml_file);
@@ -189,6 +193,7 @@ class commands_t {
 
       std::cerr << import_tab_pair.second << ".  Import from tab file aborted.\n";
     }
+*/
   }
 
   // export
