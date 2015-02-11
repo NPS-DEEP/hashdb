@@ -25,7 +25,6 @@
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 #include "globals.hpp"
-#include "commands_helper.hpp"
 #include "file_helper.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
@@ -47,7 +46,7 @@
 #include "dfxml_import_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
 //zz #include "dfxml_scan_expanded_consumer.hpp"
-//zz #include "dfxml_hashdigest_writer.hpp"
+#include "dfxml_hashdigest_writer.hpp"
 #include "tab_hashdigest_reader.hpp"
 #include "hashdb.hpp"
 #include "random_binary_hash.hpp"
@@ -74,11 +73,57 @@
  */
 
 class commands_t {
+  private:
+  static void create_if_new(const std::string& hashdb_dir,
+                            const hashdb_settings_t& settings) {
+    if (!file_helper::is_hashdb_dir(hashdb_dir)) {
+      create(hashdb_dir, settings);
+    }
+  }
+
+  static void require_different(const std::string hashdb_dir1,
+                                const std::string hashdb_dir2) {
+
+    // databases should not be the same one
+    if (hashdb_dir1 == hashdb_dir2) {
+      std::cerr << "Error: the databases must not be the same one:\n'"
+                << hashdb_dir1 << "', '"
+                << hashdb_dir2 << "'\n"
+                << "Aborting.\n";
+      exit(1);
+    }
+  }
+
+  static void require_different(const std::string hashdb_dir1,
+                                const std::string hashdb_dir2,
+                                const std::string hashdb_dir3) {
+
+    // databases should not be the same one
+    if (hashdb_dir1 == hashdb_dir2
+     || hashdb_dir2 == hashdb_dir3
+     || hashdb_dir3 == hashdb_dir1) {
+      std::cerr << "Error: the databases must not be the same one:\n'"
+                << hashdb_dir1 << "', '"
+                << hashdb_dir2 << "', '"
+                << hashdb_dir3 << "'\n"
+                << "Aborting.\n";
+      exit(1);
+    }
+  }
+
+  // print header information
+  static void print_header(const std::string& command_id) {
+    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
+              << "# " << command_id << "\n"
+              << "# command_line: " << globals_t::command_line_string << "\n";
+  }
+
+
   public:
 
   // create
-  static void create(const hashdb_settings_t& settings,
-                     const std::string& hashdb_dir) {
+  static void create(const std::string& hashdb_dir,
+                     const hashdb_settings_t& settings) {
 
     // create the hashdb directory
     lmdb_rw_new::create(hashdb_dir, settings);
@@ -197,101 +242,81 @@ class commands_t {
   // export
   static void do_export(const std::string& hashdb_dir,
                         const std::string& dfxml_file) {
-/*
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
     // lets require that dfxml_file does not exist yet
-    if (access(dfxml_file.c_str(), F_OK) == 0) {
-      std::cerr << "File '" << dfxml_file << "' already exists.  Aborting.\n";
-      exit(1);
-    }
+    file_helper::require_no_file(dfxml_file);
 
-    // open the dfxml_file
-    dfxml_hashdigest_writer_t writer(dfxml_file);
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
-    // export hash entries from hashdb_manager
-    hash_store_key_iterator_t it = hashdb_manager.begin_key();
-    progress_tracker_t progress_tracker(hashdb_manager.map_size());
+    // open the dfxml writer
+    dfxml_hashdigest_writer_t writer(dfxml_file,
+                                     ro_manager.settings.hash_block_size,
+                                     "MD5");
 
-    while (it != hashdb_manager.end_key()) {
+    // start the progress tracker
+    progress_tracker_t progress_tracker(ro_manager.size());
+
+    // export the hash entries
+    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
+    while (hash_it_data.is_valid) {
       progress_tracker.track();
-      writer.add_hashdb_element(hashdb_manager.hashdb_element(it));
-      ++it;
+      lmdb_source_data_t source_data = ro_manager.find_source(
+                                          hash_it_data.source_lookup_index);
+      writer.add_hashdb_element(hash_it_data.binary_hash,
+                                source_data,
+                                hash_it_data.file_offset);
+      hash_it_data = ro_manager.find_next(hash_it_data);
     }
     progress_tracker.done();
-
-    // export source lookup information from source_lookup_index_manager
-    // and source_metadata_manager
-    source_lookup_index_manager_t source_lookup_index_manager(
-                                               hashdb_dir, READ_ONLY);
-    source_lookup_index_manager_t::source_lookup_index_iterator_t it2 =
-                                     source_lookup_index_manager.begin();
-    while (it2 != source_lookup_index_manager.end()) {
-      uint64_t source_lookup_index = it2->key;
-
-      // get the repository name and filename, if available
-      std::pair<bool, std::pair<std::string, std::string> > source_pair =
-                     hashdb_manager.find_source(source_lookup_index);
-
-      // get source metadata, if available
-      std::pair<bool, source_metadata_t> metadata_pair =
-                     hashdb_manager.find_source_metadata(source_lookup_index);
-
-      // write out the source and its metadata
-      writer.add_source_metadata(source_pair, metadata_pair);
-      ++it2;
-    }
-*/
   }
 
   // add A to B
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
-/*
+    require_different(hashdb_dir1, hashdb_dir2);
 
-    // open hashdb_manager1 for reading
-    hashdb_manager_t hashdb_manager1(hashdb_dir1, READ_ONLY);
+    // open ro_manager1 for reading
+    lmdb_ro_manager_t ro_manager1(hashdb_dir1);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    if (!file_helper::is_hashdb_dir(hashdb_dir2)) {
-      create(hashdb_manager1.settings, hashdb_dir2);
-    }
+    create_if_new(hashdb_dir2, ro_manager1.settings);
 
-    // open hashdb_manager2 for writing
-    hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
-    require_compatibility(hashdb_manager1, hashdb_manager2);
-
-    hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
+    // open rw_manager2 for writing
+    lmdb_rw_manager_t rw_manager2(hashdb_dir2);
 
     logger_t logger(hashdb_dir2, "add");
     logger.add("hashdb_dir1", hashdb_dir1);
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add_timestamp("begin add");
-    progress_tracker_t progress_tracker(hashdb_manager1.map_size(), &logger);
-    while (it1 != hashdb_manager1.end_key()) {
+    progress_tracker_t progress_tracker(ro_manager1.size(), &logger);
+
+    // start copying
+    lmdb_hash_it_data_t hash_it_data = ro_manager1.find_begin();
+    while (hash_it_data.is_valid) {
       progress_tracker.track();
-      hashdb_manager2.insert(hashdb_manager1.hashdb_element(it1));
-      ++it1;
+      lmdb_source_data_t source_data = ro_manager1.find_source(
+                                          hash_it_data.source_lookup_index);
+      rw_manager2.insert(hash_it_data.binary_hash,
+                         source_data,
+                         hash_it_data.file_offset);
+      hash_it_data = ro_manager1.find_next(hash_it_data);
     }
+    progress_tracker.done();
 
     // close tracker
     progress_tracker.done();
 
-    // copy relevant source metadata
-    logger.add_timestamp("begin copy metadata");
-    copy_source_metadata(hashdb_manager1, hashdb_manager2);
-
     // close logger
     logger.add_timestamp("end add");
-    logger.add_hashdb_changes(hashdb_manager2.changes);
+    logger.add_hashdb_changes(rw_manager2.changes);
     logger.close();
 
     // merge history
     history_manager_t::merge_history_to_history(hashdb_dir1, hashdb_dir2);
 
     // also write changes to cout
-    std::cout << hashdb_manager2.changes << "\n";
-*/
+    std::cout << rw_manager2.changes << "\n";
   }
 
   // add_multiple A and B to C
@@ -311,7 +336,7 @@ class commands_t {
 
     // open hashdb3 for writing
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
-    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+    require_different(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
     hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
     hash_store_key_iterator_t it2 = hashdb_manager2.begin_key();
@@ -388,7 +413,7 @@ class commands_t {
 
     // open hashdb_manager2 for writing
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
-    require_compatibility(hashdb_manager1, hashdb_manager2);
+    require_different(hashdb_manager1, hashdb_manager2);
 
     hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
@@ -447,7 +472,7 @@ class commands_t {
     hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
 
     // resources
-    require_compatibility(manager1, manager2, manager3);
+    require_different(manager1, manager2, manager3);
 
     logger_t logger(hashdb_dir3, "intersect");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -499,7 +524,7 @@ class commands_t {
     hashdb_manager_t manager3(hashdb_dir3, RW_MODIFY);
 
     // resources
-    require_compatibility(manager1, manager2, manager3);
+    require_different(manager1, manager2, manager3);
 
     logger_t logger(hashdb_dir3, "intersect_hash");
     logger.add("hashdb_dir1", hashdb_dir1);
@@ -550,7 +575,7 @@ class commands_t {
     // open hashdb3 for writing
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
 
-    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+    require_different(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
     hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
@@ -621,7 +646,7 @@ class commands_t {
     // open hashdb3 for writing
     hashdb_manager_t hashdb_manager3(hashdb_dir3, RW_MODIFY);
 
-    require_compatibility(hashdb_manager1, hashdb_manager2, hashdb_manager3);
+    require_different(hashdb_manager1, hashdb_manager2, hashdb_manager3);
 
     hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();
 
@@ -681,7 +706,7 @@ class commands_t {
 
     // open resources for hashdb2
     hashdb_manager_t hashdb_manager2(hashdb_dir2, RW_MODIFY);
-    require_compatibility(hashdb_manager1, hashdb_manager2);
+    require_different(hashdb_manager1, hashdb_manager2);
 
     // iterate over hashes.
     hash_store_key_iterator_t it1 = hashdb_manager1.begin_key();

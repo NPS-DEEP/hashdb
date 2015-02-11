@@ -69,7 +69,7 @@ class lmdb_rw_new {
                            settings.bloom1_is_used,
                            settings.bloom1_M_hash_size,
                            settings.bloom1_k_hash_functions);
-   }
+  }
 };
 
 #endif

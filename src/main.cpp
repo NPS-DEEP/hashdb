@@ -433,7 +433,7 @@ void run_command() {
       create_settings.maximum_hash_duplicates = optional_max;
     }
     manage_bloom_settings(create_settings);
-    commands_t::create(create_settings, hashdb_arg1);
+    commands_t::create(hashdb_arg1, create_settings);
   } else if (command == "import") {
     no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
