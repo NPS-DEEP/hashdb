@@ -137,6 +137,8 @@ void test_reader() {
   lmdb_source_data_t source_data;
   source_data = manager.find_source(hash_it.source_lookup_index);
   TEST_EQ(source_data.repository_name, "r2");
+  TEST_EQ(manager.find_exact(binary_aa, source_data1, 4096*1), true)
+  TEST_EQ(manager.find_exact(binary_aa, source_data1, 4096*0), false)
   hash_it = manager.find_next(hash_it);
   TEST_EQ(hash_it.is_valid, false);
   TEST_EQ(hash_it.binary_hash, "");

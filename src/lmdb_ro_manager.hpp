@@ -35,6 +35,7 @@
 #include "lmdb_source_store.hpp"
 #include "lmdb_source_data.hpp"
 #include "lmdb_source_it_data.hpp"
+#include "lmdb_name_store.hpp"
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
 
@@ -52,6 +53,7 @@ class lmdb_ro_manager_t {
   // DB stores
   lmdb_hash_store_t hash_store;
   lmdb_source_store_t source_store;
+  lmdb_name_store_t name_store;
 
   // do not allow copy or assignment
   lmdb_ro_manager_t(const lmdb_ro_manager_t&);
@@ -67,7 +69,8 @@ class lmdb_ro_manager_t {
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions),
           hash_store(hashdb_dir, READ_ONLY),
-          source_store(hashdb_dir, READ_ONLY) {
+          source_store(hashdb_dir, READ_ONLY),
+          name_store(hashdb_dir, READ_ONLY) {
   }
 
   size_t find_count(const std::string& binary_hash) const {
@@ -75,6 +78,24 @@ class lmdb_ro_manager_t {
       return 0;
     }
     return hash_store.find_count(binary_hash);
+  }
+
+  bool find_exact(const std::string& binary_hash,
+                  const lmdb_source_data_t& source_data,
+                  uint64_t file_offset) const {
+    if (!bloom_filter_manager.is_positive(binary_hash)) {
+      return false;
+    }
+
+    // get source lookup index from repository name and filename fields
+    std::pair<bool, uint64_t> pair = name_store.find(
+                        source_data.repository_name, source_data.filename);
+    if (pair.first == false) {
+      return false;
+    }
+
+    // check hash store for exact match
+    return hash_store.find(binary_hash, pair.second, file_offset);
   }
 
   lmdb_hash_it_data_t find_first(const std::string& binary_hash) const {

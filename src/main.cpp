@@ -468,6 +468,7 @@ void run_command() {
   } else if (command == "add_repository") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
+    commands_t::add_repository(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "intersect") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
@@ -484,6 +485,10 @@ void run_command() {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::subtract_hash(hashdb_arg1, hashdb_arg2, hashdb_arg3);
+  } else if (command == "subtract_repository") {
+    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    require_parameter_count(3);
+    commands_t::subtract_repository(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "deduplicate") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);

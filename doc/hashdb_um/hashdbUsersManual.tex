@@ -325,7 +325,7 @@ This file also contains internal \hash configuration and versioning information 
 
 \subsection{Using the Hash Databases}
 \label{usingSection}
-\hash provides the capability for users to scan the database for matching hash blocks locally or remotely via a socket. Users can also query for hash source information and information about the hash database itself. \hash provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes to the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hash API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hash tool. 
+\hash provides the capability for users to scan the database for matching hash blocks. Users can also query for hash source information and information about the hash database itself. \hash provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes to the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hash API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hash tool. 
 
 \subsection{\bulk}
 \bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
@@ -764,15 +764,13 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{scan} & \verb+scan <path_or_socket>+ \verb+<DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out matches\\
+\textbf{scan} & \verb+scan <path>+ \verb+<DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and prints out matches\\
 \hline
-\textbf{scan\_hash} & \verb+scan_hash <path_or_socket>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
+\textbf{scan\_hash} & \verb+scan_hash <path>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
 \textbf{scan\_expanded} & \verb+scan_expanded [-m <number>]+ \verb+<hashdb> <DFXML file>+ & Scans the hashdb for hashes that match hashes in the DFXML file and unless more than max, prints out the repository name, filename, and file offset for each hash that matches\\
 \hline
 \textbf{scan\_expanded\_} \textbf{hash} & \verb+scan_expanded_hash+ \verb+[-m <number>] <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and unless more than max, prints out the repository name, filename, and file offset for each hash that matches\\
-\hline
-\textbf{server} &  \verb+server <hashdb> <port number>+ & Starts a scan service at the given port number\\
 \hline
 \end{tabular}
 \end{table}
@@ -1034,7 +1032,7 @@ Scanner options are shown in Table \ref{tab:hashdbScannerUsage}.
 \hline
 \verb+hashdb_ignore_empty_blocks+ & \verb+YES+ &Selects to ignore empty blocks,  one of \verb+[YES|NO]+.\\
 \hline
-\verb+hashdb_scan_path_or_socket+ & & The file path to a hash database or socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
+\verb+hashdb_scan_path_or_socket+ & & The file path to a hash database or socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.  Currently, socket server mode is unavailable.\\
 \hline
 \verb+hashdb_scan_sector_size+ & 512 &Selects the scan sector size.  Scans along sector boundaries.  Valid only in scan mode.\\
 \hline
@@ -1074,26 +1072,29 @@ followed by the filename of the DFXML file, including its full path.
 \end{itemize}
 
 \subsubsection{Querying a Remote Hash Database}
-\hash also provides the capability to set up a remote socket to ``scan'' an existing database. Users can set up a database on the socket and then access the ``scan'' command via that socket. To set up the scan service, users need to provide the name of the hash database and the TCP socket that will be available for clients.
-For example, the following command
-starts hashdb as a server service for the hash database at path \texttt{my\_hashdb.hdb} at socket endpoint \texttt{tcp://*:14500}:
- \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb server my_hashdb.hdb tcp://*:14500}
-\end{Verbatim} 
+In the future, separate \hdb Server and Cleint tools may be provided so that clients may scan a remote hash database.  This capability is currently unavailable and has been removed from \hdb and the \bulk \hdb scanner.
 
-This example searches
-the \hash server service available at socket tcp://localhost:14500 for hashes that match those in the DFXML file \texttt{my\_dfxml.xml}:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb scan tcp://localhost:14500 my\_dfxml.xml}
-\end{Verbatim} 
 
-The only socket service \hash provides is for scanning. The \hash ``scan'' command, the \hash library API constructor for scanning and the \bulk \textit{hashdb} scanner in scan mode all accept a path or a socket and are the only place where sockets are used.\\
-
-A note of caution, when a socket server service is opened, its associated hash databased is opened. Do not make changes to a database when it is opened as a socket server service. Although this will not corrupt the hash database, it is likely to cause the server service to perform incorrectly.\\
-
-It is likely that the TCP port number you choose to use will need to be enabled by your firewall on the Server side.\\
-
-There is no security in the current protocol. It should only be used on a private network.
+% \hash also provides the capability to set up a remote socket to ``scan'' an existing database. Users can set up a database on the socket and then access the ``scan'' command via that socket. To set up the scan service, users need to provide the name of the hash database and the TCP socket that will be available for clients.
+%For example, the following command
+%starts hashdb as a server service for the hash database at path \texttt{my\_hashdb.hdb} at socket endpoint \texttt{tcp://*:14500}:
+% \begin{Verbatim}[commandchars=\\\{\}]
+%\verbbf{hashdb server my_hashdb.hdb tcp://*:14500}
+%\end{Verbatim} 
+%
+%This example searches
+%the \hash server service available at socket tcp://localhost:14500 for hashes that match those in the DFXML file \texttt{my\_dfxml.xml}:
+%\begin{Verbatim}[commandchars=\\\{\}]
+%\verbbf{hashdb scan tcp://localhost:14500 my\_dfxml.xml}
+%\end{Verbatim} 
+%
+%The only socket service \hash provides is for scanning. The \hash ``scan'' command, the \hash library API constructor for scanning and the \bulk \textit{hashdb} scanner in scan mode all accept a path or a socket and are the only place where sockets are used.\\
+%
+%A note of caution, when a socket server service is opened, its associated hash databased is opened. Do not make changes to a database when it is opened as a socket server service. Although this will not corrupt the hash database, it is likely to cause the server service to perform incorrectly.\\
+%
+%It is likely that the TCP port number you choose to use will need to be enabled by your firewall on the Server side.\\
+%
+%There is no security in the current protocol. It should only be used on a private network.
 
 \subsection{Writing Software that works with \hash}
 \label{APISection}

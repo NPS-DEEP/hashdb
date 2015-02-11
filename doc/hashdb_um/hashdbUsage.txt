@@ -143,6 +143,15 @@ Database manipulation:
     <destination hashdb>  the hash database to add the difference of the
                           hashes into
 
+  subtract_repository <source hashdb> <destination hashdb> <repository name>
+    Copy hashes from the <source hashdb> to the <destination hashdb>
+    when the <repository name> does not match.
+
+    Parameters:
+    <source hashdb>       the source hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+    <repository name>     the repository name to exclude when adding hashes
+
   deduplicate <source hashdb> <destination hashdb>
     Copy the hashes that appear only once 
     from  <source hashdb> to <destination hashdb>.
@@ -154,8 +163,8 @@ Database manipulation:
                           hashes appear only once
 
 Scan services:
-  scan <path_or_socket> <DFXML file>
-    Scan the <path_or_socket> for hashes that match hashes in the
+  scan <hashdb> <DFXML file>
+    Scan hash database <hashdb> for hashes that match hashes in the
     <DFXML file> and print out matches.
 
     Parameters:
@@ -163,8 +172,8 @@ Scan services:
                       lookup source
     <DFXML file>      the DFXML file containing hashes to scan for
 
-  scan_hash <path_or_socket> <hash value>
-    Scan the <path_or_socket> for the specified <hash value> and print
+  scan_hash <hashdb> <hash value>
+    Scan hash database <hashdb> for the specified <hash value> and print
     out matches.
 
     Parameters:
@@ -425,12 +434,6 @@ my_image that match hashes in hash database my_hashdb.hdb, creating output in
 feature file my_scan/identified_blocks.txt:
     bulk_extractor -e hashdb -S hashdb_mode=scan
     -S hashdb_scan_path_or_socket=my_hashdb.hdb -o my_scan my_image
-
-This example uses bulk_extractor to scan for hash values in the media image
-available at socket tcp://localhost:14500, creating output in feature
-file my_scan/identified_blocks.txt:
-    bulk_extractor -e hashdb -S hashdb_mode=scan
-    -S hashdb_scan_path_or_socket=tcp://localhost:14500 -o my_scan my_image
 
 This example uses bulk_extractor to import hash values from media image
 my_image into hash database my_scan/hashdb.hdb:
