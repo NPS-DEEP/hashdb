@@ -42,7 +42,9 @@ class lmdb_ro_manager_t {
 
   private:
   const std::string hashdb_dir;
+  public:
   const hashdb_settings_t settings;
+  private:
 
   // bloom filter manager
   bloom_filter_manager_t bloom_filter_manager;

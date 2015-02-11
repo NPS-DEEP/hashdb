@@ -39,14 +39,20 @@ class dfxml_hashdigest_writer_t {
 
   private:
   const std::string dfxml_file;
+  const uint64_t hash_block_size;
+  std::string hashdigest_type_attribute;
   dfxml_writer x;
 
   public:
   /**
    * Open a DFXML file for writing.
    */
-  dfxml_hashdigest_writer_t (const std::string& p_dfxml_file) 
-                  : dfxml_file(p_dfxml_file),
+  dfxml_hashdigest_writer_t (const std::string& p_dfxml_file,
+                             uint64_t p_hash_block_size,
+                             const std::string& p_hashdigest_type) :
+                    dfxml_file(p_dfxml_file),
+                    hash_block_size(p_hash_block_size),
+                    hashdigest_type_attribute("type='"+p_hashdigest_type+"'"),
                     x(dfxml_file, false) {
 
     // start with dfxml tag
@@ -64,9 +70,8 @@ class dfxml_hashdigest_writer_t {
 
   // add a hashdb element
   void add_hashdb_element(const std::string& binary_hash,
-                          uint64_t file_offset,
                           lmdb_source_data_t source_data,
-                          uint64_t hash_block_size) {
+                          uint64_t file_offset) {
 
     // start the fileobject tag
     x.push("fileobject");
@@ -78,15 +83,15 @@ class dfxml_hashdigest_writer_t {
     x.xmlout("filename", source_data.filename);
 
     // if available, write filesize
-    if (source_data.filesize != "") {
+    if (source_data.filesize != 0) {
       x.xmlout("filesize", source_data.filesize);
     }
 
     // if available, write file hashdigest
-    if (source_data.hashdigest != "") {
-      std::stringstream ss2;
-      ss2 << "type='MD5'";
-      x.xmlout("hashdigest", source_data.hashdigest, ss2.str(), false);
+    if (source_data.binary_hash != "") {
+      std::string file_hashdigest =
+                   lmdb_helper::binary_hash_to_hex(source_data.binary_hash);
+      x.xmlout("hashdigest", file_hashdigest, hashdigest_type_attribute, false);
     }
 
     // start the byte_run tag with its file_offset attribute
@@ -95,10 +100,10 @@ class dfxml_hashdigest_writer_t {
        << "' len='" << hash_block_size << "'";
     x.push("byte_run", ss.str());
 
-    // write the hashdigest
-    std::stringstream ss2;
-    ss2 << "type='MD5'";
-    x.xmlout("hashdigest", lmdb_helper.binary_hash_to_hex(source_data.binary_hash), ss2.str(), false);
+    // write the block hashdigest
+    std::string block_hashdigest =
+                   lmdb_helper::binary_hash_to_hex(binary_hash);
+    x.xmlout("hashdigest", block_hashdigest, hashdigest_type_attribute, false);
 
     // close the byte_run tag
     x.pop();
