@@ -40,7 +40,6 @@ class dfxml_hashdigest_writer_t {
   private:
   const std::string dfxml_file;
   const uint64_t hash_block_size;
-  std::string hashdigest_type_attribute;
   dfxml_writer x;
 
   public:
@@ -48,11 +47,9 @@ class dfxml_hashdigest_writer_t {
    * Open a DFXML file for writing.
    */
   dfxml_hashdigest_writer_t (const std::string& p_dfxml_file,
-                             uint64_t p_hash_block_size,
-                             const std::string& p_hashdigest_type) :
+                             uint64_t p_hash_block_size) :
                     dfxml_file(p_dfxml_file),
                     hash_block_size(p_hash_block_size),
-                    hashdigest_type_attribute("type='"+p_hashdigest_type+"'"),
                     x(dfxml_file, false) {
 
     // start with dfxml tag
@@ -91,7 +88,7 @@ class dfxml_hashdigest_writer_t {
     if (source_data.binary_hash != "") {
       std::string file_hashdigest =
                    lmdb_helper::binary_hash_to_hex(source_data.binary_hash);
-      x.xmlout("hashdigest", file_hashdigest, hashdigest_type_attribute, false);
+      x.xmlout("hashdigest", file_hashdigest, "type='MD5'", false);
     }
 
     // start the byte_run tag with its file_offset attribute
@@ -103,7 +100,7 @@ class dfxml_hashdigest_writer_t {
     // write the block hashdigest
     std::string block_hashdigest =
                    lmdb_helper::binary_hash_to_hex(binary_hash);
-    x.xmlout("hashdigest", block_hashdigest, hashdigest_type_attribute, false);
+    x.xmlout("hashdigest", block_hashdigest, "type='MD5'", false);
 
     // close the byte_run tag
     x.pop();

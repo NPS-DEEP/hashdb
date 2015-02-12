@@ -26,27 +26,34 @@
 
 #ifndef DFXML_SCAN_CONSUMER_HPP
 #define DFXML_SCAN_CONSUMER_HPP
-#include <string>
-#include "lmdb_source_data.hpp"
+#include "hashdb.hpp"
+#include "lmdb_helper.h"
+#include "lmdb_hash_store.hpp"
+#include "lmdb_source_store.hpp"
 
 class dfxml_scan_consumer_t {
 
   private:
-  std::vector<std::string>* scan_input;
+
+  const lmdb_ro_manager_t* ro_manager;
+  bool found_match;
+  std::string filename;
 
   // do not allow copy or assignment
   dfxml_scan_consumer_t(const dfxml_scan_consumer_t&);
   dfxml_scan_consumer_t& operator=(const dfxml_scan_consumer_t&);
 
   public:
-  dfxml_scan_consumer_t(
-              std::vector<std::string>* p_scan_input) :
-        scan_input(p_scan_input) {
+  dfxml_scan_consumer_t(const lmdb_ro_manager_t* p_ro_manager) :
+          ro_manager(p_ro_manager),
+          found_match(false),
+          filename("") {
   }
 
   // end_fileobject_filename
-  void end_fileobject_filename(const std::string& filename) {
-    // no action for this consumer
+  void end_fileobject_filename(std::string p_filename) {
+    // capture the new filename
+    filename = p_filename;
   }
 
   // end_byte_run
@@ -54,14 +61,39 @@ class dfxml_scan_consumer_t {
                     uint64_t file_offset,
                     const lmdb_source_data_t& source_data) {
 
-    // consume the hashdb_element by adding it to scan_input
-    scan_input->push_back(binary_hash);
+    // find count for this hash
+    size_t count = ro_manager->find_count(binary_hash);
+
+    // no action if no match
+    if (count == 0) {
+      return;
+    }
+
+    // print filename if first match for this fileobject
+    if (found_match == false) {
+      found_match = true;
+      std::cout << "# begin-processing {\"filename\":\""
+                << filename << "\"}"
+                << std::endl;
+    }
+
+    // print the hash
+    std::cout << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
+              << "\",{\"count\":" << count << "}]" << std::endl;
   }
 
   // end_fileobject
   void end_fileobject(const lmdb_source_data_t& source_data) {
 
-    // no action for this consumer
+    // if matches were found then print closure
+    if (found_match == true) {
+      // add closure marking and flush
+      std::cout << "# end-processing {\"filename\":\""
+                << source_data.filename << "\"}"
+                << std::endl;
+
+      found_match = false;
+    }
   }
 };
 

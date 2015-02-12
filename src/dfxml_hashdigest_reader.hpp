@@ -57,7 +57,6 @@ class dfxml_hashdigest_reader_t {
     // input values provided by do_read()
     const std::string default_repository_name;
     const uint64_t hash_block_size;     // 0 means allow any
-    const std::string hashdigest_type;
     T* dfxml_consumer;
 
     // state variables
@@ -84,11 +83,9 @@ class dfxml_hashdigest_reader_t {
 
     user_data_t(const std::string& p_default_repository_name,
                 uint64_t p_hash_block_size,
-                const std::string& p_hashdigest_type,
                 T* p_dfxml_consumer) :
                          default_repository_name(p_default_repository_name),
                          hash_block_size(p_hash_block_size),
-                         hashdigest_type(p_hashdigest_type),
                          dfxml_consumer(p_dfxml_consumer),
                          under_fileobject(false),
                          under_repository_name(false),
@@ -490,7 +487,6 @@ class dfxml_hashdigest_reader_t {
                 const std::string& dfxml_file,
                 const std::string& default_repository_name,
                 const uint64_t hash_block_size,     // 0 means allow any
-                const std::string& hashdigest_type,
                 T* dfxml_consumer) {
 
     // set up the sax callback data structure with context-relavent handlers
@@ -528,7 +524,6 @@ class dfxml_hashdigest_reader_t {
     // set up the data structure for the sax handlers to use
     user_data_t user_data(default_repository_name,
                           hash_block_size,
-                          hashdigest_type,
                           dfxml_consumer);
 
     // perform the sax parse on the file

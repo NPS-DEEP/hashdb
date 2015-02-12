@@ -71,8 +71,6 @@ endif
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/btree/include \
-	-isystem${top_srcdir}/src/endian/include \
 	-isystem${top_srcdir}/src/lmdb/libraries/liblmdb \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)

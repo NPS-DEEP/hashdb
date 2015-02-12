@@ -176,7 +176,6 @@ class commands_t {
              do_read(dfxml_file,
                      repository_name,
                      rw_manager.settings.hash_block_size,
-                     "MD5",
                      &import_consumer);
 
     // close tracker
@@ -261,8 +260,7 @@ class commands_t {
 
     // open the dfxml writer
     dfxml_hashdigest_writer_t writer(dfxml_file,
-                                     ro_manager.settings.hash_block_size,
-                                     "MD5");
+                                     ro_manager.settings.hash_block_size);
 
     // start the progress tracker
     progress_tracker_t progress_tracker(ro_manager.size());
@@ -778,40 +776,23 @@ class commands_t {
   // scan
   static void scan(const std::string& hashdb_dir,
                    const std::string& dfxml_file) {
-/*
 
-    // open the hashdb scan service
-    hashdb_t__<hash_t> hashdb;
-    std::pair<bool, std::string> open_pair = hashdb.open_scan(hashdb_dir);
-    if (open_pair.first == false) {
-      std::cerr << open_pair.second << "\nAborting.\n";
-    }
-
-    // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
     // create the dfxml scan consumer
-    dfxml_scan_consumer_t scan_consumer(scan_input);
-
-    // run the dfxml hashdigest reader using the scan consumer
-    std::string repository_name = "not used";
-    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
-                        do_read(dfxml_file, repository_name, &scan_consumer);
-
-    // perform the scan
-    hashdb.scan(*scan_input, *scan_output);
+    dfxml_scan_consumer_t scan_consumer(&ro_manager);
 
     // print header information
     print_header("scan-command-Version: 2");
 
-    // show the matches
-    print_scan_output(*scan_input, *scan_output);
-
-    // delete heap allocation
-    delete scan_input;
-    delete scan_output;
-*/
+    // run the dfxml hashdigest reader using the scan consumer
+    std::string repository_name = "not used";
+    dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
+                        do_read(dfxml_file,
+                                repository_name,
+                                ro_manager.settings.hash_block_size,
+                                &scan_consumer);
   }
 
   // scan expanded
