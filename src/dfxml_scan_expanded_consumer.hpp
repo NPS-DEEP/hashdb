@@ -26,19 +26,17 @@
 
 #ifndef DFXML_SCAN_EXPANDED_CONSUMER_HPP
 #define DFXML_SCAN_EXPANDED_CONSUMER_HPP
-#include "hashdb.hpp"
-#include "lmdb_hash_store.hpp"
-#include "lmdb_source_store.hpp"
-#include "json_formatter.hpp"
+#include "lmdb_helper.h"
+#include "lmdb_ro_manager.hpp"
+#include "lmdb_source_data.hpp"
+#include "expand_manager.hpp"
 
 class dfxml_scan_expanded_consumer_t {
 
   private:
 
-  lmdb_hash_store_t* hash_store;
-  lmdb_source_store_t* source_store;
-  json_formatter_t json_formatter;
-  std::set<uint32_t> source_list_ids;
+  const lmdb_ro_manager_t* ro_manager;
+  expand_manager_t expand_manager;
   bool found_match;
   std::string filename;
 
@@ -47,15 +45,13 @@ class dfxml_scan_expanded_consumer_t {
   dfxml_scan_expanded_consumer_t& operator=(const dfxml_scan_expanded_consumer_t&);
 
   public:
-  dfxml_scan_expanded_consumer_t(hash_store_t* p_hash_store,
-                                 source_store_t* p_soure_store,
+  dfxml_scan_expanded_consumer_t(const lmdb_ro_manager_t* p_ro_manager,
                                  uint32_t max_sources) :
-          hash_store(p_hash_store),
-          source_store(p_source_store),
-          json_formatter(hash_store, source_store, max_sources),
-          source_list_ids(),
+          ro_manager(p_ro_manager),
+          expand_manager(ro_manager, max_sources),
           found_match(false),
           filename("") {
+    expand_manager.print_header();
   }
 
   // end_fileobject_filename
@@ -65,13 +61,13 @@ class dfxml_scan_expanded_consumer_t {
   }
 
   // end_byte_run
-  void end_byte_run(const std::string& binary_hash) {
+  void end_byte_run(const std::string& binary_hash,
+                    uint64_t file_offset,
+                    const lmdb_source_data_t& source_data) {
 
-    // find matching range for this hash
-    lmdb_hash_it_data_t hash_it_data = hash_store.find_first(binary_hash);
-
-    // no action if no match
-    if (hash_it_data.is_vlid == false) {
+    // look for match
+    size_t count = ro_manager->find_count(binary_hash);
+    if (count == 0) {
       return;
     }
 
@@ -84,22 +80,17 @@ class dfxml_scan_expanded_consumer_t {
     }
 
     // print the expanded hash
-    json_formatter.print_expanded(hash_store, source_store, hash_it_data);
-    std::cout << std::endl;
+    expand_manager.expand(binary_hash);
   }
 
   // end_fileobject
-  void end_fileobject(const std::string& repository_name,
-                      const std::string& p_filename,
-                      const std::string& hashdigest_type,
-                      const std::string& hashdigest,
-                      const std::string& filesize) {
+  void end_fileobject(const lmdb_source_data_t& source_data) {
 
     // if matches were found then print closure
     if (found_match == true) {
       // add closure marking and flush
       std::cout << "# end-processing {\"filename\":\""
-                << p_filename << "\"}"
+                << source_data.filename << "\"}"
                 << std::endl;
 
       found_match = false;

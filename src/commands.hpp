@@ -41,11 +41,12 @@
 #include "lmdb_rw_manager.hpp"
 #include "lmdb_ro_manager.hpp"
 #include "lmdb_rw_new.hpp"
+#include "expand_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
-//zz #include "dfxml_scan_expanded_consumer.hpp"
+#include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "tab_hashdigest_reader.hpp"
 #include "hashdb.hpp"
@@ -53,8 +54,6 @@
 #include "progress_tracker.hpp"
 #include "feature_file_reader.hpp"
 #include "feature_line.hpp"
-//zz #include "json_formatter.hpp"
-
 
 // Standard includes
 #include <cstdlib>
@@ -798,100 +797,62 @@ class commands_t {
   // scan expanded
   static void scan_expanded(const std::string& hashdb_dir,
                             const std::string& dfxml_file,
-                            uint32_t requested_max) {
-/*
+                            uint32_t max_sources) {
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
-    // create the dfxml scan_expanded consumer
-    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&hashdb_manager,
-                                                          requested_max);
-    // print header information
-    print_header("scan_expanded-command-Version: 2");
+    // create the dfxml scan consumer
+    dfxml_scan_expanded_consumer_t scan_expanded_consumer(&ro_manager, max_sources);
 
-    // run the dfxml hashdigest reader using the scan consumers
+    // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
     dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
-                              do_read(dfxml_file, repository_name,
-                              &scan_expanded_consumer);
-*/
+                        do_read(dfxml_file,
+                                repository_name,
+                                ro_manager.settings.hash_block_size,
+                                &scan_expanded_consumer);
   }
 
   // scan hash
   static void scan_hash(const std::string& hashdb_dir,
                    const std::string& hash_string) {
-/*
 
-    // validate the hash string
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
-      exit(1);
-    }
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
-    // open the hashdb scan service
-    hashdb_t__<hash_t> hashdb;
-    std::pair<bool, std::string> open_pair = hashdb.open_scan(hashdb_dir);
-    if (open_pair.first == false) {
-      std::cerr << open_pair.second << "\nAborting.\n";
-    }
+    // get the binary hash
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(hash_string);
 
-    // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_output_t* scan_output = new hashdb_t__<hash_t>::scan_output_t();
+    // scan
+    size_t count = ro_manager.find_count(binary_hash);
 
-    // put the hash into the scan hash input for scanning
-    scan_input->push_back(hash_pair.second);
-
-    // perform the scan
-    hashdb.scan(*scan_input, *scan_output);
-
-    // print header information
-    print_header("scan_hash-command-Version: 2");
-
-    // show the matches
-    print_scan_output(*scan_input, *scan_output);
-
-    // delete heap allocation
-    delete scan_input;
-    delete scan_output;
-*/
+    // print the hash
+    std::cout << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
+              << "\",{\"count\":" << count << "}]" << std::endl;
   }
 
   // scan expanded hash
   static void scan_expanded_hash(const std::string& hashdb_dir,
                             const std::string& hash_string,
-                            uint32_t requested_max) {
-/*
+                            uint32_t max_sources) {
 
-    // validate the hash string
-    std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(hash_string);
-    if (hash_pair.first == false) {
-      std::cerr << "Invalid hash value '" << hash_string << "'.  Aborting.\n";
-      exit(1);
-    }
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // find matching range for this key
-    hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash_pair.second);
+    // get the binary hash
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(hash_string);
 
     // check for no match
-    if (it_pair.first == it_pair.second) {
+    if (ro_manager.find_count(binary_hash) == 0) {
       std::cout << "There are no matches.\n";
       return;
     }
 
-    // print header information
-    print_header("scan_expanded_hash-command-Version: 2");
-
-    // print the expanded hash
-    json_formatter_t json_formatter(&hashdb_manager, requested_max);
-    json_formatter.print_expanded(it_pair);
-    std::cout << "\n";
-*/
+    // open the expand manager
+    expand_manager_t expand_manager(&ro_manager, max_sources);
+    expand_manager.print_header();
+    expand_manager.expand(binary_hash);
   }
 
   // server

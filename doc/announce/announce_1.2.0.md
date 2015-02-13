@@ -28,6 +28,7 @@ Note:
 
 * Replace Boost string to number conversion with the standard `atoi` and `atol` functions.  Now, invalid values will return 0 instead of failing.
 
+* Renamed `scan-expanded-command-Version: 2` to `expand-hash-Version: 2`.
 Availability
 ============
 * Release source code: http://digitalcorpora.org/downloads/hashdb/

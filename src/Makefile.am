@@ -70,7 +70,6 @@ HASHDB_INCS = \
 
 LIBHASHDB_INCS = \
 	bloom_filter_manager.hpp \
-	crc32.c \
 	crc32.h \
 	file_modes.h \
 	globals.cpp \

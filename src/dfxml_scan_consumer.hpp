@@ -26,10 +26,9 @@
 
 #ifndef DFXML_SCAN_CONSUMER_HPP
 #define DFXML_SCAN_CONSUMER_HPP
-#include "hashdb.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_hash_store.hpp"
-#include "lmdb_source_store.hpp"
+#include "lmdb_source_data.hpp"
 
 class dfxml_scan_consumer_t {
 
