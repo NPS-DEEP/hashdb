@@ -128,6 +128,25 @@ class commands_t {
                       hash_it_data.file_offset);
   }
 
+  // print information about a source
+  static void print_source(const lmdb_source_it_data_t& source) {
+    std::cout << "{\"source_id\":" << source.source_lookup_index
+              << ",\"repository_name\":\""
+              << lmdb_helper::escape_json(source.source_data.repository_name)
+              << "\",\"filename\":\""
+              << lmdb_helper::escape_json(source.source_data.filename)
+              << "\"";
+    if (source.source_data.filesize != 0) {
+      std::cout << ",\"filesize\":" << source.source_data.filesize;
+    }
+    if (source.source_data.binary_hash != "") {
+      std::cout << ",\"file_hashdigest\":\""
+                << lmdb_helper::binary_hash_to_hex(source.source_data.binary_hash)
+                << "\"";
+    }
+    std::cout << "}\n";
+  }
+
   public:
 
   // create
@@ -857,59 +876,30 @@ class commands_t {
 
   // show hashdb size values
   static void size(const std::string& hashdb_dir) {
-/*
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
 
-    // there is nothing to report if the database is empty
-    if (hashdb_manager.map_size() == 0
-     && hashdb_manager.source_lookup_store_size() == 0
-     && hashdb_manager.repository_name_lookup_store_size() == 0
-     && hashdb_manager.filename_lookup_store_size() == 0) {
-      std::cout << "The hash database is empty.\n";
-      return;
-    }
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
-    // print size values
-    std::cout << "hash store: "
-              << hashdb_manager.map_size() << "\n"
-              << "source lookup store: "
-              << hashdb_manager.source_lookup_store_size() << "\n"
-              << "source repository name store: "
-              << hashdb_manager.repository_name_lookup_store_size() << "\n"
-              << "source filename store: "
-              << hashdb_manager.filename_lookup_store_size() << "\n"
-              << "source metadata store: "
-              << hashdb_manager.source_metadata_lookup_store_size() << "\n";
-*/
+    std::cout << "hash store size: " << ro_manager.size() << "\n"
+              << "source store size: " << ro_manager.source_store_size()
+              << "\n";
   }
 
   // print sources referenced in this database
   static void sources(const std::string& hashdb_dir) {
-/*
+    // open source store DB
+    lmdb_source_store_t source_store(hashdb_dir, READ_ONLY);
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // get the source lookup index iterator
-    source_lookup_index_manager_t::source_lookup_index_iterator_t it = hashdb_manager.begin_source_lookup_index();
-
-    // see if the source lookup index map is empty
-    if (it == hashdb_manager.end_source_lookup_index()) {
+    // read source entries
+    lmdb_source_it_data_t source_it_data = source_store.find_first();
+    if (source_it_data.is_valid == false) {
       std::cout << "There are no sources in this database.\n";
       return;
     }
-
-    // print header information
-    print_header("sources-command-Version: 2");
-
-    // report each entry
-    for (; it != hashdb_manager.end_source_lookup_index(); ++it) {
-      std::cout << "{";
-      print_source_fields(hashdb_manager, it->key, std::cout);
-      std::cout << "}\n";
+    while (source_it_data.is_valid) {
+      print_source(source_it_data);
+      source_it_data = source_store.find_next(source_it_data.source_lookup_index);
     }
-*/
   }
 
   // show hashdb hash histogram
