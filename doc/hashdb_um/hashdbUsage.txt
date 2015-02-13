@@ -209,15 +209,6 @@ Scan services:
                       lookup source
     <hash value>      the hash value to scan for
 
-  server <hashdb> <port number>
-    Start a query server service for <hashdb> at <port number> for servicing
-    hashdb queries.
-
-    Parameters:
-    <hashdb>       the hash database that the server service will use
-    <port number>  the TCP port to make available for clients, for
-                   example '14500'
-
 Statistics:
   size <hashdb>
     Print out size information for the given <hashdb> database.
@@ -391,15 +382,6 @@ that appear only once in my_hashdb1.hdb into new database my_hashdb2.hdb:
 This example rebuilds the Bloom filters for hash database my_hashdb.hdb to
 optimize it to work well with 50,000,000 different hash values:
     hashdb rebuild_bloom --bloom_n 50000000 my_hashdb.hdb
-
-This example starts hashdb as a server service for the hash database at
-path my_hashdb.hdb at port number "14500":
-    hashdb server my_hashdb.hdb 14500
-
-This example searches the hashdb server service available at socket
-tcp://localhost:14500 for hashes that match those in DFXML file my_dfxml.xml
-and directs output to stdout:
-    hashdb scan tcp://localhost:14500 my_dfxml.xml
 
 This example searches my_hashdb.hdb for hashes that match those in DFXML file
 my_dfxml.xml and directs output to stdout:

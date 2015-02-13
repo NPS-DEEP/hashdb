@@ -855,26 +855,6 @@ class commands_t {
     expand_manager.expand(binary_hash);
   }
 
-  // server
-  static void server(const std::string& hashdb_dir,
-                     const std::string& port_number_string) {
-/*
-
-    uint16_t port_number;
-    try {
-      port_number = boost::lexical_cast<uint16_t>(port_number_string);
-    } catch(...) {
-      std::cerr << "Invalid port: '" << port_number_string << "'\n";
-      exit(1);
-    }
-
-    // start the server
-    std::cout << "Starting the hashdb server scan service.  Press Ctrl-C to quit.\n";
-    tcp_server_manager_t tcp_server_manager(hashdb_dir, port_number);
-//    std::cout << "The hashdb service server is running.  Press Ctrl-C to quit.\n";
-*/
-  }
-
   // show hashdb size values
   static void size(const std::string& hashdb_dir) {
 /*

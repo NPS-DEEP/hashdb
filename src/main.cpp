@@ -513,10 +513,6 @@ void run_command() {
     uint32_t scan_expanded_hash_max = (has_max) ? optional_max :
                                         globals_t::default_scan_expanded_max;
     commands_t::scan_expanded_hash(hashdb_arg1, hashdb_arg2, scan_expanded_hash_max);
-  } else if (command == "server") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
-    require_parameter_count(2);
-    commands_t::server(hashdb_arg1, hashdb_arg2);
   } else if (command == "size") {
     no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(1);
