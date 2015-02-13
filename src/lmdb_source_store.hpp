@@ -166,6 +166,9 @@ class lmdb_source_store_t {
     return added;
   }
 
+  /**
+   * Find or fail.
+   */
   lmdb_source_data_t find(uint64_t source_lookup_index) const {
 
     // get context
@@ -186,7 +189,7 @@ class lmdb_source_store_t {
       source_data = lmdb_source_data_encoding::encoding_to_lmdb_source_data(
                                                                context.data);
     } else {
-      // error if key does not exist
+      // program error
       std::cerr << "find: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
@@ -226,12 +229,10 @@ class lmdb_source_store_t {
       assert(0);
     }
 
-    lmdb_source_it_data_t result(source_lookup_index, source_data, has_first);
-
     // close context
     context.close();
 
-    return result;
+    return lmdb_source_it_data_t(source_lookup_index, source_data, has_first);
   }
 
   /**
@@ -275,15 +276,44 @@ class lmdb_source_store_t {
       assert(0);
     }
 
-    lmdb_source_it_data_t result(lmdb_helper::encoding_to_uint64(context.key),
-                                 source_data, has_next);
+    // close context
+    context.close();
+
+    return lmdb_source_it_data_t(lmdb_helper::encoding_to_uint64(context.key),
+                                 source_data,
+                                 has_next);
+  }
+
+  bool has(uint64_t source_lookup_index) const {
+
+    // get context
+    lmdb_context_t context(env, false, true);
+    context.open();
+
+    // set key
+    std::string encoding = lmdb_helper::uint64_to_encoding(source_lookup_index);
+    lmdb_helper::point_to_string(encoding, context.key);
+
+    // read any existing data
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_SET_KEY);
+
+    bool has_index = false;
+    if (rc == 0) {
+      has_index = true;
+    } else if (rc == MDB_NOTFOUND) {
+      // no action
+    } else {
+      std::cerr << "has: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
 
     // close context
     context.close();
 
-    return result;
+    return has_index;
   }
-
+ 
   // size
   size_t size() const {
     return lmdb_helper::size(env);

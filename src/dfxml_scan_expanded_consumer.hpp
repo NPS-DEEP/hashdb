@@ -51,7 +51,6 @@ class dfxml_scan_expanded_consumer_t {
           expand_manager(ro_manager, max_sources),
           found_match(false),
           filename("") {
-    expand_manager.print_header();
   }
 
   // end_fileobject_filename
@@ -80,7 +79,7 @@ class dfxml_scan_expanded_consumer_t {
     }
 
     // print the expanded hash
-    expand_manager.expand(binary_hash);
+    expand_manager.expand_hash(binary_hash);
   }
 
   // end_fileobject

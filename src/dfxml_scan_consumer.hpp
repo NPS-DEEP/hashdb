@@ -26,6 +26,7 @@
 
 #ifndef DFXML_SCAN_CONSUMER_HPP
 #define DFXML_SCAN_CONSUMER_HPP
+#include "print_helper.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_hash_store.hpp"
 #include "lmdb_source_data.hpp"
@@ -77,8 +78,7 @@ class dfxml_scan_consumer_t {
     }
 
     // print the hash
-    std::cout << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
-              << "\",{\"count\":" << count << "}]" << std::endl;
+    print_helper::print_hash(binary_hash, count);
   }
 
   // end_fileobject

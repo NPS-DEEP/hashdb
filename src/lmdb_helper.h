@@ -35,6 +35,7 @@
 #include <cstring>
 #include <sstream>
 #include <unistd.h>
+#include <iomanip>
 
 class lmdb_helper {
   private:
@@ -327,7 +328,9 @@ class lmdb_helper {
     return std::string(static_cast<char*>(val.mv_data), val.mv_size);
   }
 
-  // return empty if not even or if any invalid input
+  /**
+   * Return empty if hexdigest length not even or any invalid digits.
+   */
   static std::string hex_to_binary_hash(const std::string& hex_string) {
 
     size_t size = hex_string.size();
@@ -371,7 +374,7 @@ class lmdb_helper {
     size_t size = binary_hash.size();
     const uint8_t* ptr = reinterpret_cast<const uint8_t*>(binary_hash.c_str());
     std::stringstream ss;
-    ss << std::hex;
+    ss << std::hex << std::setw(2) << std::setfill('0');
     for (int i=0; i<size; i++) {
       ss << (uint32_t)ptr[i]; // uint8_t fails with << operator
     }

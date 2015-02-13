@@ -191,50 +191,6 @@ class lmdb_rw_manager_t {
   size_t size() const {
     return hash_store.size();
   }
-
-/*
-  // append any additional source information to existng data
-  void add_source_data(const lmdb_source_store_t& other_source_store) {
-
-    // iterate through other source store
-    lmdb_source_it_data_t other_source_it_data = other_source_store.find_first();
-
-    while (other_source_it_data.is_valid) {
-      // find index
-      std::pair<bool, uint64_t> pair = name_store.find(
-                                other_source_it_data.repository_name,
-                                other_source_it_data.filename);
-      if (pair.first) {
-        // add other, can log if desired
-        source_store.add(pair.second, other_source_it_data.source_data);
-      }
-
-      // next
-      other_source_it_data = other_source_store.find_next();
-    }
-  }
-
-  // add hashes, return iterator just past hash provided
-  lmdb_hash_it_data_t add_hashes(const lmdb_hash_store_t& from_hash_store,
-                                 const lmdb_source_store_t& from_source_store,
-                                 lmdb_hash_it_data_t from_hash_it_data) {
-//    if (from_hash_it_data.is_valid = false) {
-//      // misuse
-//      assert(0);
-//    }
-
-    while (from_hash_it_data.is_valid) {
-      // get the source data to use
-      lmdb_source_data_t source_data = from_source_store.find(
-                                    from_hash_it_data.source_lookup_index);
-
-      // insert the record
-      insert(binary_hash, from_hash_it_data.file_offset, source_data);
-    }
-
-    return from_hash_it_data;
-  }
-*/
 };
 
 #endif

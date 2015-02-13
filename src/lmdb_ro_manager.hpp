@@ -114,6 +114,10 @@ class lmdb_ro_manager_t {
     return source_store.find(source_lookup_index);
   }
 
+  bool has_source(uint64_t source_lookup_index) const {
+    return source_store.has(source_lookup_index);
+  }
+
   size_t size() const {
     return hash_store.size();
   }

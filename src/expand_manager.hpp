@@ -27,10 +27,11 @@
 
 #ifndef EXPAND_MANAGER_HPP
 #define EXPAND_MANAGER_HPP
-#include "globals.hpp"
+#include "print_helper.hpp"
 #include "lmdb_ro_manager.hpp"
 #include "lmdb_hash_it_data.hpp"
 #include "lmdb_source_data.hpp"
+#include "feature_line.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -140,10 +141,7 @@ class expand_manager_t {
     source_list_ids = new std::set<uint64_t>;
 
     // print header
-    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# expand-hash-Version: 2\n"
-              << "# command_line: " << globals_t::command_line_string << "\n";
-
+    print_helper::print_header("expand-hash-Version: 2");
   }
 
   ~expand_manager_t() {
@@ -151,12 +149,8 @@ class expand_manager_t {
     delete source_list_ids;
   }
 
-  // print header
-  static void print_header() {
-  }
-
   // print expanded hash
-  void expand(const std::string& binary_hash) {
+  void expand_hash(const std::string& binary_hash) {
 
     // print the block hashdigest
     std::cout << "{\"block_hashdigest\":\""
@@ -182,6 +176,52 @@ class expand_manager_t {
 
     // close line
     std::cout << "}" << std::endl;
+  }
+
+  // print expanded feature line
+  void expand_feature_line(const feature_line_t& feature_line) {
+
+    // get the binary hash
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(feature_line.feature);
+
+    // make sure the hash is in the DB
+    size_t count = ro_manager->find_count(binary_hash);
+    if (count == 0) {
+      std::cout << "# Invalid hash, incorrect file or database, " << feature_line.feature << "\n";
+      return;
+    }
+
+    // write the forensic path
+    std::cout << feature_line.forensic_path << "\t";
+
+    // write the hashdigest
+    std::cout << feature_line.feature << "\t";
+
+    // write the opening of the new context
+    std::cout << "[";
+
+    // write the old context
+    std::cout << feature_line.context;
+
+    // write the separator
+    std::cout << ",";
+
+    // calculate the source list ID
+    uint64_t source_list_id = calculate_source_list_id(binary_hash);
+
+    // print the source list ID
+    std::cout << "{\"source_list_id\":" << source_list_id;
+
+    // print the list of sources the first time unless it is too long
+    if (count <= max_sources) {
+      if (source_list_ids->find(source_list_id) == source_list_ids->end()) {
+        source_list_ids->insert(source_list_id);
+        print_source_list(binary_hash);
+      }
+    }
+
+    // write the closure of the new context
+    std::cout << "}]" << std::endl;
   }
 };
 

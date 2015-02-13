@@ -110,13 +110,6 @@ class commands_t {
     }
   }
 
-  // print header information
-  static void print_header(const std::string& command_id) {
-    std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-              << "# " << command_id << "\n"
-              << "# command_line: " << globals_t::command_line_string << "\n";
-  }
-
   // helper for hash copy
   static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
                         const lmdb_ro_manager_t& ro_manager,
@@ -126,25 +119,6 @@ class commands_t {
     rw_manager.insert(hash_it_data.binary_hash,
                       source_data,
                       hash_it_data.file_offset);
-  }
-
-  // print information about a source
-  static void print_source(const lmdb_source_it_data_t& source) {
-    std::cout << "{\"source_id\":" << source.source_lookup_index
-              << ",\"repository_name\":\""
-              << lmdb_helper::escape_json(source.source_data.repository_name)
-              << "\",\"filename\":\""
-              << lmdb_helper::escape_json(source.source_data.filename)
-              << "\"";
-    if (source.source_data.filesize != 0) {
-      std::cout << ",\"filesize\":" << source.source_data.filesize;
-    }
-    if (source.source_data.binary_hash != "") {
-      std::cout << ",\"file_hashdigest\":\""
-                << lmdb_helper::binary_hash_to_hex(source.source_data.binary_hash)
-                << "\"";
-    }
-    std::cout << "}\n";
   }
 
   public:
@@ -802,7 +776,7 @@ class commands_t {
     dfxml_scan_consumer_t scan_consumer(&ro_manager);
 
     // print header information
-    print_header("scan-command-Version: 2");
+    print_helper::print_header("scan-command-Version: 2");
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
@@ -823,6 +797,9 @@ class commands_t {
 
     // create the dfxml scan consumer
     dfxml_scan_expanded_consumer_t scan_expanded_consumer(&ro_manager, max_sources);
+
+    // print header information
+    print_helper::print_header("scan_expanded-command-Version: 2");
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
@@ -868,10 +845,12 @@ class commands_t {
       return;
     }
 
+    // print header information
+    print_helper::print_header("scan_expanded_hash-command-Version: 2");
+
     // open the expand manager
     expand_manager_t expand_manager(&ro_manager, max_sources);
-    expand_manager.print_header();
-    expand_manager.expand(binary_hash);
+    expand_manager.expand_hash(binary_hash);
   }
 
   // show hashdb size values
@@ -897,28 +876,29 @@ class commands_t {
       return;
     }
     while (source_it_data.is_valid) {
-      print_source(source_it_data);
+      print_helper::print_source_fields(source_it_data);
+      std::cout << "\n";
       source_it_data = source_store.find_next(source_it_data.source_lookup_index);
     }
   }
 
   // show hashdb hash histogram
   static void histogram(const std::string& hashdb_dir) {
-/*
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    hash_store_key_iterator_t it = hashdb_manager.begin_key();
+
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
     // there is nothing to report if the map is empty
-    if (it == hashdb_manager.end_key()) {
+    if (ro_manager.size() == 0) {
       std::cout << "The map is empty.\n";
       return;
     }
 
     // print header information
-    print_header("histogram-command-Version: 2");
+    print_helper::print_header("histogram-command-Version: 2");
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_manager.map_size());
+    progress_tracker_t progress_tracker(ro_manager.size());
 
     // total number of hashes in the database
     uint64_t total_hashes = 0;
@@ -931,13 +911,11 @@ class commands_t {
                 new std::map<uint32_t, uint64_t>();
     
     // iterate over hashdb and set variables for calculating the histogram
-    while (it != hashdb_manager.end_key()) {
+    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
+    while (hash_it_data.is_valid) {
 
-      // update progress tracker
-      progress_tracker.track();
-
-      // get count for this hash
-      uint32_t count = hashdb_manager.find_count(key(it));
+      // get count for hash
+      const size_t count = ro_manager.find_count(hash_it_data.binary_hash);
 
       // update totals
       total_hashes += count;
@@ -965,7 +943,10 @@ class commands_t {
 
       // now move forward by count
       for (uint32_t i=0; i<count; i++) {
-        ++it;
+        hash_it_data = ro_manager.find_next(hash_it_data);
+
+        // update progress tracker
+        progress_tracker.track();
       }
     }
 
@@ -986,44 +967,51 @@ class commands_t {
                                  hash_histogram_it2->second << "}\n";
     }
     delete hash_histogram;
-*/
+
   }
 
   // show hashdb duplicates for a given duplicates count
   static void duplicates(const std::string& hashdb_dir,
                          const std::string& duplicates_string) {
-/*
 
     // convert duplicates string to number
-    uint32_t duplicates_number;
-    try {
-      duplicates_number = boost::lexical_cast<uint32_t>(duplicates_string);
-    } catch(...) {
-      std::cerr << "Invalid number of duplicates: '" << duplicates_string << "'\n";
-      exit(1);
+    uint32_t duplicates_number = atoi(duplicates_string.c_str());
+
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
+
+    // there is nothing to report if the map is empty
+    if (ro_manager.size() == 0) {
+      std::cout << "The map is empty.\n";
+      return;
     }
 
     // print header information
-    print_header("duplicates-command-Version: 2");
+    print_helper::print_header("duplicates-command-Version: 2");
 
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-    hash_store_key_iterator_t it = hashdb_manager.begin_key();
+    // start progress tracker
+    progress_tracker_t progress_tracker(ro_manager.size());
 
     // look through all hashes for entries with this count
     bool any_found = false;
-    progress_tracker_t progress_tracker(hashdb_manager.map_size());
-    while (it != hashdb_manager.end_key()) {
-      uint32_t count = hashdb_manager.find_count(key(it));
+    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
+    while (hash_it_data.is_valid) {
+
+      // get count for hash
+      const size_t count = ro_manager.find_count(hash_it_data.binary_hash);
 
       if (count == duplicates_number) {
         any_found = true;
-        // this is the same format as that used in print_scan_output
-        std::cout << "[\"" << key(it).hexdigest() << "\",{\"count\":" << count << "}]\n";
+
+        // print the hash
+        print_helper::print_hash(hash_it_data.binary_hash, count);
       }
 
       // now move forward by count
-      for (uint32_t i=0; i<count; ++i) {
-        ++it;
+      for (uint32_t i=0; i<count; i++) {
+        hash_it_data = ro_manager.find_next(hash_it_data);
+
+        // update progress tracker
         progress_tracker.track();
       }
     }
@@ -1034,129 +1022,95 @@ class commands_t {
       std::cout << "No hashes were found with this count.\n";
       return;
     }
-*/
   }
 
   // hash_table
   static void hash_table(const std::string& hashdb_dir,
                          const std::string& source_id_string) {
-/*
 
-    // convert count string to number
-    uint64_t source_id;
-    try {
-      source_id = boost::lexical_cast<uint64_t>(source_id_string);
-    } catch(...) {
-      std::cerr << "Invalid source_id: '" << source_id_string << "'\n";
-      exit(1);
+    // convert source ID to number
+    uint64_t source_id = atol(source_id_string.c_str());
+
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
+
+    // there is nothing to report if the map is empty
+    if (ro_manager.size() == 0) {
+      std::cout << "The map is empty.\n";
+      return;
     }
 
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // check that the source ID exists
-    std::pair<bool, std::pair<std::string, std::string> >
-                source_string2_pair = hashdb_manager.find_source(source_id);
-    if (source_string2_pair.first == false) {
-      std::cerr << "The database does not contain source lookup index value " << source_id
-                << ".  Aborting.\n";
-      exit(1);
+    // also the source ID must exist
+    if (!ro_manager.has_source(source_id)) {
+      std::cout << "The requested source ID is not in the database.\n";
+      return;
     }
 
     // print header information
-    print_header("hash_table-command-Version: 2");
+    print_helper::print_header("hash-table-command-Version: 2");
 
-    // print source information
-    std::cout << "{";
-    print_source_fields(hashdb_manager, source_id, std::cout);
-    std::cout << "}\n";
+    // for completeness, print source information for this source
+    lmdb_source_data_t source_data = ro_manager.find_source(source_id);
+    print_helper::print_source_fields(lmdb_source_it_data_t(source_id, source_data, true));
+    std::cout << "\n";
 
-    // show hashes for the requested source
+    // start progress tracker
+    progress_tracker_t progress_tracker(ro_manager.size());
+
+    // look through all hashes for entries with this source ID
     bool any_found = false;
-    // start progress tracker and iterate through keys in O(n) search
-    progress_tracker_t progress_tracker(hashdb_manager.map_size());
-    hash_store_key_iterator_t it = hashdb_manager.begin_key();
-    while (it != hashdb_manager.end_key()) {
-      if (hashdb_manager.source_id(it) == source_id) {
+    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
+    while (hash_it_data.is_valid) {
 
-        // show the hash and its offset
-        std::cout << "[\"" << key(it).hexdigest() << "\",{\"file_offset\":"
-                  << hashdb_manager.file_offset(it) << "}]\n";
+      if (hash_it_data.source_lookup_index == source_id) {
         any_found = true;
+        size_t count = ro_manager.find_count(hash_it_data.binary_hash);
+        print_helper::print_hash(hash_it_data.binary_hash, count);
       }
-      ++it;
+
+      hash_it_data = ro_manager.find_next(hash_it_data);
+
+      // update progress tracker
       progress_tracker.track();
     }
     progress_tracker.done();
 
-    // there may be nothing to report
+    // say so if nothing was found
     if (!any_found) {
-      std::cout << "There are no hashes in the database from this source.\n";
+      std::cout << "No hashes were found with this source ID.\n";
+      return;
     }
-*/
   }
 
   // expand identified_blocks.txt
   static void expand_identified_blocks(const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max) {
-/*
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
+
+    // there is nothing to report if the map is empty
+    if (ro_manager.size() == 0) {
+      std::cout << "The map is empty.\n";
+      return;
+    }
+
+    // print header information
+    print_helper::print_header("expand_identified_blocks-command-Version: 2");
 
     // get the identified_blocks.txt file reader
     feature_file_reader_t reader(identified_blocks_file);
 
-    // get the json formatter
-    json_formatter_t json_formatter(&hashdb_manager, requested_max);
-
-    // print header information
-    print_header("expand_identified_blocks-command-Version: 2");
+    // get the source expand manager
+    expand_manager_t expand_manager(&ro_manager, requested_max);
 
     // read identified blocks from input and write out matches
     // identified_blocks feature consists of offset_string, key, count and flags
     while (!reader.at_eof()) {
       feature_line_t feature_line = reader.read();
-
-      // get the hash from the hash string
-      std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(feature_line.feature);
-      if (hash_pair.first == false) {
-        // bad hash value
-        continue;
-      }
-      hash_t hash = hash_pair.second;
-
-      // find matching range for this key
-      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash);
-
-      // the user did something wrong if the range was not found
-      if (it_pair.first == it_pair.second) {
-        std::cout << "# Invalid hash, incorrect file or database, " << hash.hexdigest() << "\n";
-        continue;
-      }
-
-      // write the forensic path
-      std::cout << feature_line.forensic_path << "\t";
-
-      // write the hashdigest
-      std::cout << feature_line.feature << "\t";
-
-      // write the opening of the new context
-      std::cout << "[";
-
-      // write the old context
-      std::cout << feature_line.context;
-
-      // write the separator
-      std::cout << ",";
-
-      // write the expanded source
-      json_formatter.print_expanded(it_pair);
-
-      // write the closure of the new context
-      std::cout << "]\n";
+      expand_manager.expand_feature_line(feature_line);
     }
-*/
   }
 
   // explain identified_blocks.txt
