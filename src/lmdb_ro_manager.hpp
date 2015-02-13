@@ -117,6 +117,18 @@ class lmdb_ro_manager_t {
   size_t size() const {
     return hash_store.size();
   }
+  size_t source_store_size() const {
+    // this is a good spot for checking for corrupt source/name store
+    if (source_store.size() != name_store.size()) {
+      std::cerr << "DB size error: source: " << source_store.size()
+                << " , name: " << name_store.size();
+      assert(0);
+    }
+    return source_store.size();
+  }
+  size_t name_store_size() const {
+    return name_store.size();
+  }
 };
 
 #endif
