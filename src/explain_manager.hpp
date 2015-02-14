@@ -22,11 +22,8 @@
  * Defines the static commands that hashdb_manager can execute.
  */
 
-#ifndef COMMANDS_EXPLAIN_HPP
-#define COMMANDS_EXPLAIN_HPP
-
-#include "globals.hpp"
-#include "json_formatter.hpp"
+#ifndef EXPLAIN_MANAGER_HPP
+#define EXPLAIN_MANAGER_HPP
 
 // Standard includes
 #include <cstdlib>
@@ -38,74 +35,69 @@
 #include <vector>
 
 /**
- * Provides the commands that hashdb_manager can execute.
- * This totally static class is a class rather than an namespace
- * so it can have private members.
+ * Gather hash and source data and print explanation.
  */
 
-class commands_explain {
+class explain_manager_t {
   private:
-  // support expalin_identified_blocks
-  typedef std::map<hash_t, std::string> hashes_t;
+  const lmdb_ro_manager_t* ro_manager;
+  const uint32_t requested_max;
+  std::map<std::string, std::string>* hashes;   // hash, feature line context
+  std::set<uint64_t>* source_lookup_indexes;    // source ID
 
+  // do not allow copy or assignment
+  explain_manager_t(const explain_manager_t&);
+  explain_manager_t& operator=(const explain_manager_t&);
 
-  // ingest table of relevant hashes and table of their sources
-  static void identify_hashes_and_sources(
-                            const hashdb_manager_t& hashdb_manager,
-                            const std::string& identified_blocks_file,
-                            uint32_t requested_max,
-                            hashes_t& hashes,
-                            std::set<uint64_t>& source_lookup_indexes) {
+  public:
+  explain_manager_t(lmdb_ro_manager_t* p_ro_manager, uint32_t p_requested_max) :
+                         ro_manager(p_ro_manager),
+                         requested_max(p_requested_max),
+                         hashes(),
+                         source_lookup_indexes() {
+    hashes = new std::map<std::string, std::string>;
+    source_lookup_indexes = new std::map<uint64_t>;
+  }
 
-    // get the identified_blocks.txt file reader
-    feature_file_reader_t reader(identified_blocks_file);
-    while (!reader.at_eof()) {
+  ~explain_manager_t() {
+    delete hashes;
+    delete source_lookup_indexes;
+  }
 
-      feature_line_t feature_line = reader.read();
+  // ingest hash from feature line
+  void ingest_hash(feature_line_t feature_line) {
 
-      // validate the hash string
-      std::pair<bool, hash_t> hash_pair = safe_hash_from_hex(feature_line.feature);
-      if (hash_pair.first == false) {
-        // bad hash value
-        continue;
-      }
-      hash_t hash = hash_pair.second;
+    // get the binary hash
+    std::string binary_hash = lmdb_helper::hex_to_binary_hash(feature_line.feature);
 
-      // add hash to hash set
-      std::pair<std::map<hash_t, std::string>::iterator, bool> insert_pair =
-                         hashes.insert(std::pair<hash_t, std::string>(
-                         hash, feature_line.context));
+    // add hash to hash set if not already there
+    std::pair<std::map<std::string, std::string>::iterator, bool> insert_pair =
+                         hashes.insert(std::pair<std::string, std::string>(
+                         binary_hash, feature_line.context));
 
-      // do not re-process hashes that are already in the hash set
-      if (insert_pair.second == false) {
-        continue;
-      }
+    // do not re-process this hash if it is already in the hash set
+    if (insert_pair.second == false) {
+      return;
+    }
   
-      // do not add sources for this hash if count > requested max
-      if (hashdb_manager.find_count(hash) > requested_max) {
-        continue;
-      }
+    // do not add sources for this hash if count > requested max
+    if (ro_manager->find_count(binary_hash) > requested_max) {
+      return;
+    }
 
-      // get the iterator for this hash value
-      hash_store_key_iterator_range_t it_pair = hashdb_manager.find(hash);
+    // add each source relating to this hash
+    lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
+    while (hash_it_data.binary_hash == binary_hash) {
 
-      // add the source lookup index for all sources associated with this hash
-      for (; it_pair.first != it_pair.second; ++it_pair.first) {
+      // add the source lookup index to the source lookup index set
+      source_lookup_indexes.insert(source_lookup_index);
 
-        // get the source lookup index for this entry
-        uint64_t source_lookup_index = hashdb_manager.source_id(it_pair.first);
-
-        // add the source lookup index to the source lookup index set
-        source_lookup_indexes.insert(source_lookup_index);
-      }
+      hash_it_data = ro_manager->find_next(hash_it_data);
     }
   }
 
   // print table of relevant hashes
-  static void print_identified_hashes(
-                            const hashdb_manager_t& hashdb_manager,
-                            const hashes_t& hashes,
-                            const std::set<uint64_t>& source_lookup_indexes) {
+  static void print_identified_hashes() {
 
     if (hashes.size() == 0) {
       std::cout << "# There are no hashes to report.\n";
@@ -140,7 +132,7 @@ class commands_explain {
       // track when to put in the comma
       bool found_identified_source = false;
 
-      // print sources associated with this hash value
+      // print the identified sources associated with this hash value
       for (; it_pair.first != it_pair.second; ++it_pair.first) {
 
         // get the source lookup index and file offset for this entry

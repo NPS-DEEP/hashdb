@@ -1129,7 +1129,6 @@ class commands_t {
   // rebuild bloom
   static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,
                             const std::string& hashdb_dir) {
-/*
 
     // read existing settings
     hashdb_settings_t settings;
@@ -1161,17 +1160,18 @@ class commands_t {
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions);
 
-    // open hashdb
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(ro_manager.size());
 
     // add hashes to the bloom filter
     logger.add_timestamp("begin rebuild_bloom");
-    hash_store_key_iterator_t it = hashdb_manager.begin_key();
-    progress_tracker_t progress_tracker(hashdb_manager.map_size(), &logger);
-    while (it != hashdb_manager.end_key()) {
-      // add the hash to the bloom filter
-      bloom_filter_manager.add_hash_value(key(it));
-      ++it;
+    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
+    while (hash_it_data.is_valid) {
+      bloom_filter_manager.add_hash_value(hash_it_data.binary_hash);
+      hash_it_data = ro_manager.find_next(hash_it_data);
       progress_tracker.track();
     }
 
@@ -1183,7 +1183,6 @@ class commands_t {
     logger.close();
 
     std::cout << "rebuild_bloom complete.\n";
-*/
   }
 
   // upgrade hashdb
