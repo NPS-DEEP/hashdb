@@ -142,7 +142,7 @@ class lmdb_hash_store_t {
     bool status;
     if (rc == 0) {
       status = true;
-    } else if (rc == MDB_NOTFOUND) {
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       status = false;
     } else {
       std::cerr << "LMDB erase error: " << mdb_strerror(rc) << "\n";
@@ -183,7 +183,7 @@ class lmdb_hash_store_t {
         assert(0);
       }
 
-    } else if (rc == MDB_NOTFOUND) {
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // DB does not have key
       key_count = 0;
 
@@ -230,11 +230,11 @@ class lmdb_hash_store_t {
     int rc = mdb_cursor_get(context.cursor,
                             &context.key, &context.data,
                             MDB_GET_BOTH);
-    bool has_pair;
+    bool has_pair = false;
     if (rc == 0) {
       has_pair = true;
-    } else if (rc == MDB_NOTFOUND) {
-      has_pair = false;
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+      // not found
     } else {
       // program error
       has_pair = false; // satisfy mingw32-g++ compiler
@@ -268,7 +268,7 @@ class lmdb_hash_store_t {
         std::cerr << "LMDB count error: " << mdb_strerror(rc) << "\n";
         assert(0);
       }
-    } else if (rc == MDB_NOTFOUND) {
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // fine, key count is zero
     } else {
       std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
@@ -300,7 +300,7 @@ class lmdb_hash_store_t {
                           lmdb_helper::encoding_to_uint64_pair(context.data);
       it_data = lmdb_hash_it_data_t(
                    binary_hash, uint64_pair.first, uint64_pair.second, true);
-    } else if (rc == MDB_NOTFOUND) {
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // use default it_data
     } else {
       std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
@@ -330,7 +330,7 @@ class lmdb_hash_store_t {
                           lmdb_helper::encoding_to_uint64_pair(context.data);
       it_data = lmdb_hash_it_data_t(
                    binary_hash, uint64_pair.first, uint64_pair.second, true);
-    } else if (rc == MDB_NOTFOUND) {
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // use default it_data
     } else {
       // program error
@@ -384,8 +384,8 @@ class lmdb_hash_store_t {
                           lmdb_helper::encoding_to_uint64_pair(context.data);
       it_data = lmdb_hash_it_data_t(
                    binary_hash, uint64_pair.first, uint64_pair.second, true);
-    } else if (rc == MDB_NOTFOUND) {
-      // use default it_data
+    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+      // use default it_data for end
     } else {
       // program error
       std::cerr << "LMDB has_next error: " << mdb_strerror(rc) << "\n";

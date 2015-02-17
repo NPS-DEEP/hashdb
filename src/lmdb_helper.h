@@ -336,7 +336,8 @@ class lmdb_helper {
     size_t size = hex_string.size();
     // size must be even
     if (size%2 != 0) {
-      std::cerr << "input not even aligned\n";
+      std::cerr << "hex input not aligned on even boundary in '"
+                << hex_string << "'\n";
       return "";
     }
 
@@ -353,7 +354,8 @@ class lmdb_helper {
       else if(c0>='a' && c0<='f') d0 = c0-'a'+10;
       else if(c0>='A' && c0<='F') d0 = c0-'A'+10;
       else {
-        std::cout << "unexpected hex character\n";
+        std::cout << "unexpected hex character in '"
+                << hex_string << "'\n";
         return "";
       }
  
@@ -361,7 +363,8 @@ class lmdb_helper {
       else if(c1>='a' && c1<='f') d1 = c1-'a'+10;
       else if(c1>='A' && c1<='F') d1 = c1-'A'+10;
       else {
-        std::cout << "unexpected hex character\n";
+        std::cout << "unexpected hex character in '"
+                << hex_string << "'\n";
         return "";
       }
 

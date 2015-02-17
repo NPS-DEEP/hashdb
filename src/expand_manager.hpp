@@ -152,6 +152,11 @@ class expand_manager_t {
   // print expanded hash
   void expand_hash(const std::string& binary_hash) {
 
+    // skip invalid hash
+    if (binary_hash == "") {
+      return;
+    }
+
     // print the block hashdigest
     std::cout << "{\"block_hashdigest\":\""
               << lmdb_helper::binary_hash_to_hex(binary_hash) << "\"";

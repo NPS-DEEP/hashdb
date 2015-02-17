@@ -42,6 +42,7 @@
 #include "lmdb_ro_manager.hpp"
 #include "lmdb_rw_new.hpp"
 #include "expand_manager.hpp"
+#include "explain_manager.hpp"
 #include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_consumer.hpp"
@@ -1118,12 +1119,39 @@ class commands_t {
                             const std::string& hashdb_dir,
                             const std::string& identified_blocks_file,
                             uint32_t requested_max) {
-/*
 
-    commands_explain::explain_identified_blocks(hashdb_dir,
-                                                identified_blocks_file,
-                                                requested_max);
-*/
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
+
+    // there is nothing to report if the map is empty
+    if (ro_manager.size() == 0) {
+      std::cout << "The map is empty.\n";
+      return;
+    }
+
+    // print header information
+    print_helper::print_header("explain_identified_blocks-command-Version: 2");
+
+    // open the identified_blocks.txt file reader
+    feature_file_reader_t reader(identified_blocks_file);
+
+    // open the source explain manager
+    explain_manager_t explain_manager(&ro_manager, requested_max);
+
+    // ingest identified blocks from input
+    // identified_blocks feature consists of offset_string, key, count and flags
+    while (!reader.at_eof()) {
+      feature_line_t feature_line = reader.read();
+      explain_manager.ingest_hash(feature_line);
+    }
+
+    // print identified hashes
+    std::cout << "# hashes\n";
+    explain_manager.print_identified_hashes();
+
+    // print identified sources
+    std::cout << "# sources\n";
+    explain_manager.print_identified_sources();
   }
 
   // rebuild bloom
