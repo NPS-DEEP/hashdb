@@ -958,7 +958,7 @@ emo_video.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc097
 \end{lstlisting}
 
 \subsection{Tuning}
-Tuning commands are provided to improve performance or allow upgrade capability,
+Tuning commands are provided to improve performance,
 see Table \ref{tab:tuning}.
 For Bloom filter settings, see Table \ref{tab:bloomSettings}.
 
@@ -971,8 +971,6 @@ For Bloom filter settings, see Table \ref{tab:bloomSettings}.
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
 \textbf{rebuild\_bloom} & \verb+rebuild_bloom[--bloom <state>]+ \verb+[--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+<hashdb.hdb>+ & Rebuilds the Bloom filter using the provided settings, see Table \ref{tab:bloomSettings}\\
-\hline
-\textbf{upgrade} & \verb+upgrade <hashdb.hdb>+ & Upgrades the \hdb v1.0.0 database to be compatible with \hdb v1.1.1\\
 \hline
 \end{tabular}
 \end{table}

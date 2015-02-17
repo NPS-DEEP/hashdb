@@ -1213,25 +1213,6 @@ class commands_t {
     std::cout << "rebuild_bloom complete.\n";
   }
 
-  // upgrade hashdb
-  static void upgrade(const std::string& hashdb_dir) {
-/*
-
-    // start logger
-    logger_t logger(hashdb_dir, "upgrade");
-    logger.add("hashdb_dir", hashdb_dir);
-
-    // open resources
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
-
-    // close logger
-    logger.add_timestamp("end upgrade");
-    logger.close();
-
-    std::cout << "Upgrade complete.\n";
-*/
-  }
-
   // functional analysis and testing: add_random
   static void add_random(const std::string& hashdb_dir,
                          const std::string& count_string,
