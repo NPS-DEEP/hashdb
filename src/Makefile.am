@@ -64,7 +64,6 @@ HASHDB_INCS = \
 	json_formatter.hpp \
 	main.cpp \
 	progress_tracker.hpp \
-	random_binary_hash.hpp \
 	tab_hashdigest_reader.hpp \
 	usage.hpp
 

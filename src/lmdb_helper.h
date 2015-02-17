@@ -384,6 +384,21 @@ class lmdb_helper {
     return ss.str();
   }
 
+  // return 16 bytes of random hash
+  static std::string random_binary_hash() {
+    // random hash buffer
+    union hash_buffer_t {
+      char hash[16];
+      uint32_t words[4];
+      hash_buffer_t() {
+        for (size_t i=0; i<4; i++) {
+          words[i]=rand();
+        }
+      }
+    };
+    return std::string(hash_buffer_t().hash, sizeof(hash_buffer_t));
+  }
+
   // helper to get valid json output, taken from
   // http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
   static std::string escape_json(const std::string& input) {

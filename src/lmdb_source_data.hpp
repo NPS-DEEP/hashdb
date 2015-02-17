@@ -41,7 +41,7 @@ class lmdb_source_data_t {
       return false;
     }
     if (to != "") {
-      std::cerr << "copy error, from " << from << " to " << to << "\n";
+      std::cerr << "copy error, attempt to change " << from << " to " << to << "\n";
       assert(0);
     }
     to = from;
@@ -53,7 +53,7 @@ class lmdb_source_data_t {
       return false;
     }
     if (to != 0) {
-      std::cerr << "copy error, from " << from << " to " << to << "\n";
+      std::cerr << "copy error, attempt to change " << from << " to " << to << "\n";
       assert(0);
     }
     to = from;

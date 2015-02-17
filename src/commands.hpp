@@ -51,7 +51,6 @@
 #include "dfxml_hashdigest_writer.hpp"
 #include "tab_hashdigest_reader.hpp"
 #include "hashdb.hpp"
-#include "random_binary_hash.hpp"
 #include "progress_tracker.hpp"
 #include "feature_file_reader.hpp"
 #include "feature_line.hpp"
@@ -1217,22 +1216,16 @@ class commands_t {
   static void add_random(const std::string& hashdb_dir,
                          const std::string& count_string,
                          const std::string& repository_name) {
-/*
 
     // initialize random seed
     srand (time(NULL));
 
     // convert count string to number
-    uint64_t count;
-    try {
-      count = boost::lexical_cast<uint64_t>(count_string);
-    } catch(...) {
-      std::cerr << "Invalid count: '" << count_string << "'\n";
-      exit(1);
-    }
+    uint64_t count = atol(count_string.c_str());
 
     // open resources
-    hashdb_manager_t hashdb_manager(hashdb_dir, RW_MODIFY);
+    // open DB
+    lmdb_rw_manager_t rw_manager(hashdb_dir);
 
     // start logger
     logger_t logger(hashdb_dir, "add_random");
@@ -1245,7 +1238,10 @@ class commands_t {
     progress_tracker_t progress_tracker(count, &logger);
 
     // get hash block size
-    size_t hash_block_size = hashdb_manager.settings.hash_block_size;
+    size_t hash_block_size = rw_manager.settings.hash_block_size;
+
+    // set source data for the insert
+    lmdb_source_data_t source_data(repository_name, "add_random", 0, "");
 
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
@@ -1253,19 +1249,13 @@ class commands_t {
       // update progress tracker
       progress_tracker.track();
 
-      // generate filename
-      std::stringstream ss;
-      ss << "file" << (i>>26);
-
       // generate file offset or 0 if hash_block_size is 0
-      uint64_t file_offset = (i%(1<<26)) * hash_block_size;
+      uint64_t file_offset = i * hash_block_size;
 
       // add element
-      hashdb_manager.insert(hashdb_element_t(random_key(),
-                                             hash_block_size,
-                                             repository_name,
-                                             ss.str(), // filename
-                                             file_offset));
+      rw_manager.insert(lmdb_helper::random_binary_hash(),
+                        source_data,
+                        file_offset);
     }
 
     // close tracker
@@ -1273,46 +1263,27 @@ class commands_t {
 
     // close logger
     logger.add_timestamp("end add_random");
-    logger.add_hashdb_changes(hashdb_manager.changes);
+    logger.add_hashdb_changes(rw_manager.changes);
     logger.close();
 
     // also write changes to cout
-    std::cout << hashdb_manager.changes << "\n";
+    std::cout << rw_manager.changes << "\n";
 
     // give user a chance to check memory usage before leaving
-    while (true) {
-      std::cout << "Done.  Check Memory usage, if desired, then type 'q' to end: ";
-      std::string response_string;
-      std::getline(std::cin, response_string);
-      if (response_string == "q" || response_string == "Q") {
-        break;
-      }
-    }
-*/
+    std::cout << "Done, check Memory usage, if desired, then press Enter.";
+    std::string response_string;
+    std::getline(std::cin, response_string);
   }
 
   /**
-   * Scans for random hash values that are unlikely to match.
+   * Scan for random hash values that are unlikely to match.
    * Disable the Bloom filter for B-Tree timing.
    */
   // functional analysis and testing: scan_random
   static void scan_random(const std::string& hashdb_dir) {
-/*
 
-    // open hashdb_dir to use for obtaining valid hash values
-    hashdb_manager_t hashdb_manager(hashdb_dir, READ_ONLY);
-
-    // open the hashdb scan service for scanning with random hash
-    hashdb_t__<hash_t> hashdb;
-    std::pair<bool, std::string> open_pair = hashdb.open_scan(hashdb_dir);
-    if (open_pair.first == false) {
-      std::cerr << open_pair.second << "\nAborting.\n";
-    }
-
-    // create space on the heap for the scan input and output vectors
-    std::vector<hash_t>* scan_input = new std::vector<hash_t>;
-    hashdb_t__<hash_t>::scan_output_t* scan_output =
-                             new hashdb_t__<hash_t>::scan_output_t();
+    // open DB
+    lmdb_ro_manager_t ro_manager(hashdb_dir);
 
     // initialize random seed
     srand (time(NULL));
@@ -1325,35 +1296,26 @@ class commands_t {
     logger.add_timestamp("begin scan_random with random hash on hashdb");
     for (int i=1; i<=100; i++) {
 
-      // generate set of random hashes
-      scan_input->clear();
       for (int j=0; j<100000; j++) {
-        scan_input->push_back(random_key());
+        std::string binary_hash = lmdb_helper::random_binary_hash();
+        size_t count = ro_manager.find_count(binary_hash);
+        if (count > 0) {
+          std::cout << "Match found, hash '"
+                    << lmdb_helper::binary_hash_to_hex(binary_hash)
+                    << "', count: " << count << "\n";
+        }
       }
 
-      // make timestamp
-      std::stringstream ss1;
-      ss1 << "generated random hash " << i;
-      logger.add_timestamp(ss1.str());
-
-      // scan set of random hashes
-      hashdb.scan(*scan_input, *scan_output);
-      std::stringstream ss2;
-      ss2 << "scanned random hash " << i;
-      logger.add_timestamp(ss2.str());
+      // log timestamp
+      std::stringstream ss;
+      ss << "scanned random hash " << i;
+      logger.add_timestamp(ss.str());
       std::cout << "scan random hash " << i << " of 100\n";
-
-      // make sure no hashes were found
-      if (scan_output->size() > 0) {
-        std::cerr << "Unexpected event: match found, count "
-                  << scan_output->size() << ", are the databases different?\n";
-      }
     }
 
     // close logger
     logger.add_timestamp("end scan_random");
     logger.close();
-*/
   }
 };
 

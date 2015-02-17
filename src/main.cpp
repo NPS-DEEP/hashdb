@@ -552,10 +552,6 @@ void run_command() {
     hashdb_settings_t rebuild_settings;
     manage_bloom_settings(rebuild_settings);
     commands_t::rebuild_bloom(rebuild_settings, hashdb_arg1);
-  } else if (command == "upgrade") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
-    require_parameter_count(1);
-    commands_t::upgrade(hashdb_arg1);
   } else if (command == "add_random") {
     no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
