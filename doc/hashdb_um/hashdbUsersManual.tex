@@ -470,26 +470,10 @@ see Table \ref{tab:general}.\\
 \hline
 \textbf{\texttt{-q}} & \verb+--quiet+ & Requests quiet mode for commands that print progress status\\
 \hline
-\textbf{\texttt{-f}} & \verb+--flags+ & Flags controlling mode: \texttt{preload cache\_branches least\_memory low\_memory balanced fast fastest}\\
-\hline
 \end{tabular}
 \end{table}
 
 Option \textbf{\texttt{-q}} suppresses progress output for commands that print progress.\\
-
-Option \textbf{\texttt{-f}} allows control of flags that impact run-time performance when opening the B-Trees that store the hashes inside hash databases.
-Mutlple flags may be provided by separating them with colon character ``:''.
-Flags include:
-\begin{itemize}
-\item \texttt{preload} - read the existing file to preload O/S file cache.
-\item \texttt{cache\_branches} - enable permanent cache of all branch nodes touched. Otherwise make branch node available when use count becomes 0, just like leaf nodes.
-\item \texttt{least\_memory}
-\item \texttt{low\_memory}
-\item \texttt{balanced}
-\item \texttt{fast}
-\item \texttt{fastest}
-\end{itemize}
-
 
 \subsection{Creating a Hash Database}
 A hash database must be created before hashes can be added to it.
@@ -502,7 +486,7 @@ The command to create a hash database is shown in Table \ref{tab:createDatabase}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-p <hash block size>]+ \verb+[-m<maximum duplicates>]+ \verb+[--bloom <state>] [--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+hashdb.hdb+ & Creates a new hash database with the given configuration parameters.\\
+\textbf{create} & \verb+create [-p <hash block size>]+ \verb+[-m<maximum duplicates>]+ \verb+[-a <byte alignment>]+ \verb+[-t <hash truncation>]+ \verb+[--bloom <state>] [--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+hashdb.hdb+ & Creates a new hash database with the given configuration parameters.\\
 \hline
 \end{tabular}
 \end{table}
@@ -520,6 +504,10 @@ Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional pa
 \textbf{\texttt{-p}} & \verb+--hash_block_size=+\textit{hash\_block\_size} & Specifies the block size (hash\_block\_size) in bytes used to generate the hashes that will be stored in the database. Default is 4096 bytes.  \\
 \hline
 \textbf{\texttt{-m}} & \verb+--max_duplicates=+\textit{maximum} & Specifies the maximum number of hash duplicates allowed. 0 value indicates there is no limit. Default is 0.\\
+\hline
+\textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{alginment} & Specifies the minimum byte alignment granularity.  This optimization parameter allows the database to be slightly smaller.  Default is 512 bytes.\\
+\hline
+\textbf{\texttt{-t}} & \verb+--hash_truncation=+\textit{truncation} & Truncates the hash stored to this length, in bytes.  This optimization parameter allows the database to be smaller.  Default is 0 for no truncation.\\
 \hline
 \end{tabular}
 \end{table}
@@ -553,6 +541,12 @@ that \hash may put into the database.
 A default value of 0 means unlimited, but this may be unreasonable.
 For example if a block is repeated many times and is thus not interesting,
 limit storing its duplicates using this setting.\\
+
+\textbf{Byte Alignment}\\
+This setting specifies the byte alignment granularity.  All file offsets must be divisible by the byte alignment.  Use 1 for no granularity.  Using 512 instead of 1 saves about a byte per hash record in the database.\\
+
+\textbf{Hash Truncation}\\
+This setting truncates the hash stored to this length, in bytes.  By using hash truncation, hash records can be shorter than the typical length of 16 bytes for MD5 hashes.  Beware that truncating hash values increase the probability of hash collisions.  Occasional hash collisions may be acceptable.  Values as low as 6 bytes may be acceptable.\\
 
 \textbf{Bloom}\\
 This setting controls whether the Bloom filter will be enabled or disabled. \\
@@ -696,6 +690,8 @@ Destination databases are created if they do not exist yet.
 \hline
 \textbf{subtract\_hash} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} even when source repository name and filename do not match\\
 \hline
+\textbf{subtract \_repository} & \verb+subtract_repository+ \verb+<source db1>+ \verb+<destination db2>+ \verb+<repository namedb>+ & Adds \textit{source db1} to \textit{destination db2} unless the repository name matches\\
+\hline
 \textbf{deduplicate} & \verb+deduplicate <source db>+ \verb+<destination db>+ &   Copies all non-duplicate hash values from \textit{source db} into \textit{destination db}\\
 \hline
 \end{tabular}
@@ -716,12 +712,6 @@ These statistics are shown in Table \ref{tab:changeStatistics}.
 \hline
 \verb+hashes_inserted+ &  Number of hashes inserted.\\
 \hline
-\verb+hashes_not_inserted_+ \verb+mismatched_hash_block_size+ & Number of hashes not inserted
-because the hash block size of the block requested for insert was
-incorrect. For example if the database requires a hash block size of 4096,
-and the file size is 5096 bytes, the last block hash size will be an (invalid) 100 bytes,
-so it will not be inserted. NOTE: this will occur almost every time hash blocks are added to the database since the remaining bytes of every file are not likely to be comprised of the exact hash size. This is not an error.\\
-\hline
 \verb+hashes_not_inserted_+ \verb+invalid_byte_alignment+ &  Number of hashes not inserted because the file offset was not byte aligned.
 If the database expects a byte alignment of 512 and the \hash user
 tries to add a hash at byte 80, \hash will detect that 80 does not fall on
@@ -734,19 +724,12 @@ are all the same.\\
 \hline
 \verb+hashes_removed+ & Number of hashes removed.\\
 \hline
-\verb+hashes_not_removed_+ \verb+mismatched_hash_block_size+ & Number of hashes not removed because the hash block size of the block requested for removal did not match the hash block size the database was configured to accept.
-\\
-\hline
 \verb+hashes_not_removed_+ \verb+invalid_byte_alignment+ &  Number of hashes not removed because the file offset was not byte aligned.\\
 \hline
 \verb+hashes_not_removed_+ \verb+no_hash+ &  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
 \hline
 \verb+hashes_not_removed_+ \verb+no_element+ &  Number of hashes not removed because the hashes, specifically identified by 
 hash value, repository name, filename, and its file offset do not exist in the database, indicating a possible mistake in database management.\\
-\hline
-\verb+source_metadata_inserted+ & Number of metadata items inserted.\\
-\hline
-\verb+source_metadata_inserted_+ \verb+already_present+ & Number of metadata items not inserted because the specified metadata is already present.\\
 \hline
 \end{tabular}
 \end{table}
@@ -886,7 +869,7 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<source_id>+ &  Prints out the hashes and their offsets for the specified source index\\
 \hline
-\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+<hashdb> [-m <number>]+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, of each hash in the \texttt{identified\_blocks.txt} input file\\
+\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, of each hash in the \texttt{identified\_blocks.txt} input file\\
 \hline
 \textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for sources with hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline

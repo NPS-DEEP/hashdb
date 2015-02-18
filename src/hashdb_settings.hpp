@@ -48,6 +48,7 @@ struct hashdb_settings_t {
 
   uint32_t settings_version;
   uint32_t byte_alignment;
+  uint32_t hash_truncation;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
   // bloom 1 and 2
@@ -58,8 +59,9 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        settings_version(1),
+        settings_version(2),
         byte_alignment(globals_t::default_byte_alignment),
+        hash_truncation(globals_t::default_hash_truncation),
         hash_block_size(4096),
         maximum_hash_duplicates(0),
         bloom1_is_used(true),
@@ -71,6 +73,7 @@ struct hashdb_settings_t {
     os << "hashdb settings:\n";
     os << "settings version: " << settings_version << "\n";
     os << "byte alignment: " << byte_alignment << "\n";
+    os << "hash truncation: " << hash_truncation << "\n";
     os << "hash block size: " << hash_block_size << "\n";
     os << "maximum hash duplicates: " << maximum_hash_duplicates << "\n";
     os << "bloom 1 used: " << bloom_state_to_string(bloom1_is_used) << "\n";
@@ -81,6 +84,7 @@ struct hashdb_settings_t {
   void report_settings(dfxml_writer& x) const {
     x.xmlout("settings_version", settings_version);
     x.xmlout("byte_alignment", byte_alignment);
+    x.xmlout("hash_truncation", hash_truncation);
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
 

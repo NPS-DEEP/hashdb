@@ -68,7 +68,9 @@ class lmdb_ro_manager_t {
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions),
-          hash_store(hashdb_dir, READ_ONLY),
+          hash_store(hashdb_dir, READ_ONLY,
+                     settings.byte_alignment,
+                     settings.hash_truncation),
           source_store(hashdb_dir, READ_ONLY),
           name_store(hashdb_dir, READ_ONLY) {
   }

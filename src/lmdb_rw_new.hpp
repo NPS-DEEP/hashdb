@@ -60,7 +60,9 @@ class lmdb_rw_new {
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
     // create the new stores
-    lmdb_hash_store_t(hashdb_dir, RW_NEW);
+    lmdb_hash_store_t(hashdb_dir, RW_NEW,
+                      settings.byte_alignment,
+                      settings.hash_truncation);
     lmdb_name_store_t(hashdb_dir, RW_NEW);
     lmdb_source_store_t(hashdb_dir, RW_NEW);
 

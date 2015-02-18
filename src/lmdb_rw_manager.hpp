@@ -72,7 +72,9 @@ class lmdb_rw_manager_t {
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions),
-          hash_store(hashdb_dir, RW_MODIFY),
+          hash_store(hashdb_dir, RW_MODIFY,
+                     settings.byte_alignment,
+                     settings.hash_truncation),
           name_store(hashdb_dir, RW_MODIFY),
           source_store(hashdb_dir, RW_MODIFY) {
   }

@@ -21,8 +21,8 @@ def parse_settings(hashdb_dir):
     root = tree.getroot()
 
     settings['settings_version'] = int(root.find('settings_version').text)
-    settings['hash_digest_type'] = root.find('hash_digest_type').text
     settings['byte_alignment'] = int(root.find('byte_alignment').text)
+    settings['hash_truncation'] = int(root.find('hash_truncation').text)
     settings['hash_block_size'] = int(root.find('hash_block_size').text)
     settings['maximum_hash_duplicates'] = int(root.find('maximum_hash_duplicates').text)
     temp = root.find('bloom1_used').text

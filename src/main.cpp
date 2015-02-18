@@ -72,6 +72,7 @@ static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // options
 static bool has_byte_alignment = false;  // a
+static bool has_hash_truncation = false; // t
 static bool has_hash_block_size = false; // p
 static bool has_max = false;             // m
 static bool has_repository_name = false; // r
@@ -85,6 +86,7 @@ static size_t parameter_count = 0;
 
 // option values
 static uint32_t optional_byte_alignment = 0;
+static uint32_t optional_hash_truncation = 0;
 static uint32_t optional_hash_block_size = 0;
 static uint32_t optional_max = 0;
 static std::string repository_name_string = "";
@@ -147,6 +149,7 @@ int main(int argc,char **argv) {
 
       // options
       {"byte_alignment", required_argument, 0, 'a'},
+      {"hash_truncation", required_argument, 0, 't'},
       {"hash_block_size", required_argument, 0, 'p'},
       {"max", required_argument, 0, 'm'},
       {"repository", required_argument, 0, 'r'},
@@ -161,7 +164,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:p:m:r:s:A:B:C:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqa:t:p:m:r:s:A:B:C:", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -204,6 +207,12 @@ int main(int argc,char **argv) {
         break;
       }
 
+      case 't': {	// hash truncation
+        has_hash_truncation = true;
+        optional_hash_truncation = std::atoi(optarg);
+        break;
+      }
+
       case 'p': {	// hash block size
         has_hash_block_size = true;
         optional_hash_block_size = std::atoi(optarg);
@@ -228,7 +237,7 @@ int main(int argc,char **argv) {
       }
 
       // sector size option
-      case 's': {	// repository name
+      case 's': {	// sector size
         has_sector_size = true;
         try {
           optional_sector_size = std::atoi(optarg);
@@ -344,6 +353,20 @@ void require_parameter_count(size_t count) {
   }
 }
 
+void no_a() {
+  if (has_byte_alignment) {
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
+    std::cerr << "The -a byte_alignment option is not allowed for this command.\n";
+      exit(1);
+    }
+}
+void no_t() {
+  if (has_hash_truncation) {
+    std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
+    std::cerr << "The -t hash_truncation option is not allowed for this command.\n";
+      exit(1);
+    }
+}
 void no_p() {
   if (has_hash_block_size) {
     std::cerr << "Error in command '" << globals_t::command_line_string << "'\n";
@@ -425,17 +448,23 @@ void run_command() {
   if (command == "create") {
     no_r(); no_s();
     require_parameter_count(1);
-    hashdb_settings_t create_settings;
+    hashdb_settings_t new_settings;
+    if (has_byte_alignment) {
+      new_settings.byte_alignment = optional_byte_alignment;
+    }
+    if (has_hash_truncation) {
+      new_settings.hash_truncation= optional_hash_truncation;
+    }
     if (has_hash_block_size) {
-      create_settings.hash_block_size = optional_hash_block_size;
+      new_settings.hash_block_size = optional_hash_block_size;
     }
     if (has_max) {
-      create_settings.maximum_hash_duplicates = optional_max;
+      new_settings.maximum_hash_duplicates = optional_max;
     }
-    manage_bloom_settings(create_settings);
-    commands_t::create(hashdb_arg1, create_settings);
+    manage_bloom_settings(new_settings);
+    commands_t::create(hashdb_arg1, new_settings);
   } else if (command == "import") {
-    no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     // compose a repository name if one is not provided
     if (!has_repository_name) {
@@ -443,7 +472,7 @@ void run_command() {
     }
     commands_t::import(hashdb_arg1, hashdb_arg2, repository_name_string);
   } else if (command == "import_tab") {
-    no_p(); no_m(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     // compose a repository name if one is not provided
     if (!has_repository_name) {
@@ -454,106 +483,106 @@ void run_command() {
     commands_t::import_tab(hashdb_arg1, hashdb_arg2, repository_name_string,
                                                      import_tab_sector_size);
   } else if (command == "export") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::do_export(hashdb_arg1, hashdb_arg2);
   } else if (command == "add") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::add(hashdb_arg1, hashdb_arg2);
   } else if (command == "add_multiple") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::add_multiple(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "add_repository") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::add_repository(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "intersect") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::intersect(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "intersect_hash") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::intersect_hash(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "subtract") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::subtract(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "subtract_hash") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::subtract_hash(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "subtract_repository") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(3);
     commands_t::subtract_repository(hashdb_arg1, hashdb_arg2, hashdb_arg3);
   } else if (command == "deduplicate") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::deduplicate(hashdb_arg1, hashdb_arg2);
   } else if (command == "scan") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::scan(hashdb_arg1, hashdb_arg2);
   } else if (command == "scan_hash") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::scan_hash(hashdb_arg1, hashdb_arg2);
   } else if (command == "scan_expanded") {
-    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     uint32_t scan_expanded_max = (has_max) ? optional_max :
                                         globals_t::default_scan_expanded_max;
     commands_t::scan_expanded(hashdb_arg1, hashdb_arg2, scan_expanded_max);
   } else if (command == "scan_expanded_hash") {
-    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     uint32_t scan_expanded_hash_max = (has_max) ? optional_max :
                                         globals_t::default_scan_expanded_max;
     commands_t::scan_expanded_hash(hashdb_arg1, hashdb_arg2, scan_expanded_hash_max);
   } else if (command == "size") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(1);
     commands_t::size(hashdb_arg1);
   } else if (command == "sources") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(1);
     commands_t::sources(hashdb_arg1);
   } else if (command == "histogram") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(1);
     commands_t::histogram(hashdb_arg1);
   } else if (command == "duplicates") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::duplicates(hashdb_arg1, hashdb_arg2);
   } else if (command == "hash_table") {
-    no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::hash_table(hashdb_arg1, hashdb_arg2);
   } else if (command == "expand_identified_blocks") {
     uint32_t expand_max = (has_max) ? optional_max :
                                         globals_t::default_scan_expanded_max;
-    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::expand_identified_blocks(hashdb_arg1, hashdb_arg2, expand_max);
   } else if (command == "explain_identified_blocks") {
-    no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     uint32_t identified_blocks_max = (has_max) ? optional_max :
                             globals_t::default_explain_identified_blocks_max;
     commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2,
                                                       identified_blocks_max);
   } else if (command == "rebuild_bloom") {
-    no_p(); no_m(); no_r(); no_s();
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s();
     require_parameter_count(1);
     hashdb_settings_t rebuild_settings;
     manage_bloom_settings(rebuild_settings);
     commands_t::rebuild_bloom(rebuild_settings, hashdb_arg1);
   } else if (command == "add_random") {
-    no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     // compose a repository name if one is not provided
     if (!has_repository_name) {
@@ -561,7 +590,7 @@ void run_command() {
     }
     commands_t::add_random(hashdb_arg1, hashdb_arg2, repository_name_string);
   } else if (command == "scan_random") {
-    no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
+    no_a(); no_t(); no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(1);
     commands_t::scan_random(hashdb_arg1);
   } else {

@@ -49,6 +49,8 @@ class lmdb_hash_store_t {
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
+  const size_t byte_alignment;
+  const size_t hash_truncation;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -63,10 +65,14 @@ class lmdb_hash_store_t {
 
   public:
   lmdb_hash_store_t (const std::string p_hashdb_dir,
-                     file_mode_type_t p_file_mode_type) :
+                     file_mode_type_t p_file_mode_type,
+                     uint32_t p_byte_alignment,
+                     uint32_t p_hash_truncation) :
 
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode_type),
+       byte_alignment(p_byte_alignment),
+       hash_truncation(p_hash_truncation),
        env(),
        M() {
 
@@ -102,9 +108,14 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set data
     std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                                          source_lookup_index, file_offset);
+                           source_lookup_index, file_offset/byte_alignment);
     lmdb_helper::point_to_string(encoding, context.data);
 
     // insert
@@ -132,9 +143,14 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set data
     std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                                          source_lookup_index, file_offset);
+                           source_lookup_index, file_offset/byte_alignment);
     lmdb_helper::point_to_string(encoding, context.data);
 
     // erase
@@ -168,6 +184,11 @@ class lmdb_hash_store_t {
 
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
+
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key,
@@ -221,9 +242,14 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set data
     std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                                          source_lookup_index, file_offset);
+                           source_lookup_index, file_offset/byte_alignment);
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair
@@ -258,6 +284,11 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
@@ -291,6 +322,11 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
@@ -298,8 +334,10 @@ class lmdb_hash_store_t {
     if (rc == 0) {
       std::pair<uint64_t, uint64_t> uint64_pair =
                           lmdb_helper::encoding_to_uint64_pair(context.data);
-      it_data = lmdb_hash_it_data_t(
-                   binary_hash, uint64_pair.first, uint64_pair.second, true);
+      it_data = lmdb_hash_it_data_t(binary_hash,
+                                    uint64_pair.first,
+                                    uint64_pair.second*byte_alignment,
+                                    true);
     } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // use default it_data
     } else {
@@ -328,8 +366,11 @@ class lmdb_hash_store_t {
       std::string binary_hash = lmdb_helper::get_string(context.key);
       std::pair<uint64_t, uint64_t> uint64_pair =
                           lmdb_helper::encoding_to_uint64_pair(context.data);
-      it_data = lmdb_hash_it_data_t(
-                   binary_hash, uint64_pair.first, uint64_pair.second, true);
+
+      it_data = lmdb_hash_it_data_t(binary_hash,
+                                    uint64_pair.first,
+                                    uint64_pair.second*byte_alignment,
+                                    true);
     } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // use default it_data
     } else {
@@ -356,10 +397,15 @@ class lmdb_hash_store_t {
     // set key
     lmdb_helper::point_to_string(hash_it_data.binary_hash, context.key);
 
+    // truncate key if truncation is used and binary_hash is longer
+    if (hash_truncation != 0 && context.key.mv_size > hash_truncation) {
+      context.key.mv_size = hash_truncation;
+    }
+
     // set data
     std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                                         hash_it_data.source_lookup_index,
-                                         hash_it_data.file_offset);
+                                     hash_it_data.source_lookup_index,
+                                     hash_it_data.file_offset/byte_alignment);
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair which must exist
@@ -382,8 +428,10 @@ class lmdb_hash_store_t {
       std::string binary_hash = lmdb_helper::get_string(context.key);
       std::pair<uint64_t, uint64_t> uint64_pair =
                           lmdb_helper::encoding_to_uint64_pair(context.data);
-      it_data = lmdb_hash_it_data_t(
-                   binary_hash, uint64_pair.first, uint64_pair.second, true);
+      it_data = lmdb_hash_it_data_t(binary_hash,
+                                    uint64_pair.first,
+                                    uint64_pair.second*byte_alignment,
+                                    true);
     } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
       // use default it_data for end
     } else {

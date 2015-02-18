@@ -59,7 +59,7 @@ class hashdb_settings_store_t {
     }
 
     // validate that the settings version is compatible with hashdb
-    uint32_t hashdb_settings_version = 1;
+    uint32_t hashdb_settings_version = 2;
     if (settings.settings_version != hashdb_settings_version) {
       std::cerr << "Database version error in settings version.\n"
                 << "The datatabase at '" << hashdb_dir << "' uses settings version " << settings.settings_version

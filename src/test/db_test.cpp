@@ -53,58 +53,58 @@ void rw_new() {
   make_dir_if_not_there(temp_dir);
 
   // create each db
-  lmdb_hash_store_t hash_store(temp_dir, RW_NEW);
+  lmdb_hash_store_t hash_store(temp_dir, RW_NEW, 512, 0);
   lmdb_name_store_t name_store(temp_dir, RW_NEW);
   lmdb_source_store_t source_store(temp_dir, RW_NEW);
 }
 
 void rw_modify_hash_store() {
   // open db
-  lmdb_hash_store_t hash_store(temp_dir, RW_MODIFY);
+  lmdb_hash_store_t hash_store(temp_dir, RW_MODIFY, 512, 0);
 
   // exercise hash store interfaces
   lmdb_hash_it_data_t hash_it_data;
-  hash_store.insert(binary_aa, 1, 2);
-  hash_store.insert(binary_aa, 3, 4);
-  hash_store.insert(binary_aa, 5, 6);
-  hash_store.insert(binary_aa, 7, 8);
-  hash_store.insert(binary_bb, 1, 2);
-  hash_store.insert(binary_bb, 3, 4);
-  hash_store.insert(binary_bb, 5, 6);
-  hash_store.insert(binary_bb, 7, 8);
-  hash_store.insert(binary_cc, 1, 2);
-  hash_store.insert(binary_big, 1, 2);
-  hash_store.insert(binary_big, 1, 42);
+  hash_store.insert(binary_aa, 1, 2*4096);
+  hash_store.insert(binary_aa, 3, 4*4096);
+  hash_store.insert(binary_aa, 5, 6*4096);
+  hash_store.insert(binary_aa, 7, 8*4096);
+  hash_store.insert(binary_bb, 1, 2*4096);
+  hash_store.insert(binary_bb, 3, 4*4096);
+  hash_store.insert(binary_bb, 5, 6*4096);
+  hash_store.insert(binary_bb, 7, 8*4096);
+  hash_store.insert(binary_cc, 1, 2*4096);
+  hash_store.insert(binary_big, 1, 2*4096);
+  hash_store.insert(binary_big, 1, 42*4096);
 
   TEST_EQ(hash_store.size(), 11);
-  TEST_EQ(hash_store.find(binary_aa, 1, 2), true);
-  TEST_EQ(hash_store.find(binary_aa, 9, 2), false);
-  TEST_EQ(hash_store.find(binary_aa, 1, 9), false);
-  TEST_EQ(hash_store.find(binary_cc, 1, 2), true);
+  TEST_EQ(hash_store.find(binary_aa, 1, 2*4096), true);
+  TEST_EQ(hash_store.find(binary_aa, 9, 2*4096), false);
+  TEST_EQ(hash_store.find(binary_aa, 1, 9*4096), false);
+  TEST_EQ(hash_store.find(binary_cc, 1, 2*4096), true);
   TEST_EQ(hash_store.find_count(binary_aa), 4);
   TEST_EQ(hash_store.find_count(binary_cc), 1);
 
   hash_it_data = hash_store.find_first(binary_aa);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2*4096, true));
   hash_store.find_begin();
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 3, 4, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 3, 4*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 5, 6, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 5, 6*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 7, 8, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 7, 8*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_bb, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_bb, 1, 2*4096, true));
 
 
   hash_it_data = hash_store.find_first(binary_cc);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_cc, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_cc, 1, 2*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
   TEST_EQ(hash_it_data.is_valid, false);
 
-  TEST_EQ(hash_store.erase(binary_aa, 3, 4), true);
-  TEST_EQ(hash_store.erase(binary_aa, 3, 4), false);
+  TEST_EQ(hash_store.erase(binary_aa, 3, 4*4096), true);
+  TEST_EQ(hash_store.erase(binary_aa, 3, 4*4096), false);
   TEST_EQ(hash_store.size(), 10);
 
   TEST_EQ(hash_store.erase(binary_big), 2);
@@ -113,26 +113,26 @@ void rw_modify_hash_store() {
 
 void read_only_hash_store() {
   // open db
-  lmdb_hash_store_t hash_store(temp_dir, READ_ONLY);
+  lmdb_hash_store_t hash_store(temp_dir, READ_ONLY, 512, 0);
 
   TEST_EQ(hash_store.size(), 8);
-  TEST_EQ(hash_store.find(binary_aa, 1, 2), true);
-  TEST_EQ(hash_store.find(binary_aa, 9, 2), false);
-  TEST_EQ(hash_store.find(binary_aa, 1, 9), false);
-  TEST_EQ(hash_store.find(binary_cc, 1, 2), true);
+  TEST_EQ(hash_store.find(binary_aa, 1, 2*4096), true);
+  TEST_EQ(hash_store.find(binary_aa, 9, 2*4096), false);
+  TEST_EQ(hash_store.find(binary_aa, 1, 9*4096), false);
+  TEST_EQ(hash_store.find(binary_cc, 1, 2*4096), true);
   TEST_EQ(hash_store.find_count(binary_aa), 3);
   TEST_EQ(hash_store.find_count(binary_cc), 1);
 
   lmdb_hash_it_data_t hash_it_data;
   hash_it_data = hash_store.find_first(binary_aa);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2*4096, true));
   TEST_EQ(hash_store.find_begin(), hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 1, 2*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 5, 6, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_aa, 5, 6*4096, true));
   hash_it_data = hash_store.find_next(hash_it_data);
   hash_it_data = hash_store.find_next(hash_it_data);
-  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_bb, 1, 2, true));
+  TEST_EQ(hash_it_data, lmdb_hash_it_data_t(binary_bb, 1, 2*4096, true));
 }
 
 void rw_modify_name_store() {

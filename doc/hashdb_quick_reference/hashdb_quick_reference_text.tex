@@ -2,13 +2,13 @@
 \begin{footnotesize}
 \textbf{General Usage} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em \texttt{hashdb <command> <options> <args>} & \hangindent=2em Run hashdb command, \texttt{-q} for quiet mode, \texttt{-f <flags>} to control B-Tree flags \\
+\texttt{hashdb <command> <options> <args>} & Run hashdb command, \texttt{-q} for quiet mode \\
 \end{tabular}
 \\
 \\
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em \texttt{create [-p <hash block size>] [-m <maximum duplicates>] [<bloom settings>] <hashdb.hdb>} &
+\hangindent=2em \texttt{create [-p <hash block size>] [-m <maximum duplicates>] [-a <byte alignment>] [-t <hash truncation>] [<bloom settings>] <hashdb.hdb>} &
 Create a new hash database \\
 \end{tabular}
 \\

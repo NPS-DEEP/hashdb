@@ -68,6 +68,7 @@ class hashdb_settings_reader_t {
                     // hashdb
                     SETTINGS_VERSION,
                     BYTE_ALIGNMENT,
+                    HASH_TRUNCATION,
                     HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
                     BLOOM1_USED,
@@ -113,6 +114,7 @@ class hashdb_settings_reader_t {
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("settings_version"))) return SETTINGS_VERSION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("byte_alignment"))) return BYTE_ALIGNMENT;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_truncation"))) return HASH_TRUNCATION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
@@ -184,6 +186,8 @@ class hashdb_settings_reader_t {
       user_data.settings->settings_version = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == BYTE_ALIGNMENT) {
       user_data.settings->byte_alignment = xmlChar_to_number(characters, len);
+    } else if (user_data.active_node == HASH_TRUNCATION) {
+      user_data.settings->hash_truncation = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {
       user_data.settings->hash_block_size = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {

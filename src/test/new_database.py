@@ -17,9 +17,9 @@ def test_create():
     H.hashdb(["create", db1, "-p1024", "-m10", "--bloom=disabled", "--bloom_kM=4:14"])
 
     settings = H.parse_settings(db1)
-    H.int_equals(settings['settings_version'], 1)
-    H.str_equals(settings['hash_digest_type'], "MD5")
+    H.int_equals(settings['settings_version'], 2)
     H.int_equals(settings['byte_alignment'], 512)
+    H.int_equals(settings['hash_truncation'], 0)
     H.int_equals(settings['hash_block_size'], 1024)
     H.int_equals(settings['maximum_hash_duplicates'], 10)
     H.bool_equals(settings['bloom1_used'], False)

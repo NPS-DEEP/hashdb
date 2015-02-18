@@ -54,8 +54,6 @@ void usage() {
   << "  -H, --Help         print this message plus usage notes and examples\n"
   << "  -v, -V, --version, --Version    print version number\n"
   << "  -q, --quiet        quiet mode\n"
-  << "  -f, --flags=flags  set B-Tree flags, any of: preload:cache_branches:\n"
-  << "                     least_memory:low_memoy:balanced:fast:fastest\n"
   << "\n"
   << "hashdb supports the following commands:\n"
   << "\n"

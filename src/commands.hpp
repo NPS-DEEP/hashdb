@@ -80,7 +80,7 @@ class commands_t {
     }
   }
 
-  static void require_different(const std::string hashdb_dir1,
+  static void require_compatible(const std::string hashdb_dir1,
                                 const std::string hashdb_dir2) {
 
     // databases should not be the same one
@@ -91,24 +91,35 @@ class commands_t {
                 << "Aborting.\n";
       exit(1);
     }
-  }
 
-  static void require_different(const std::string hashdb_dir1,
-                                const std::string hashdb_dir2,
-                                const std::string hashdb_dir3) {
-
-    // databases should not be the same one
-    if (hashdb_dir1 == hashdb_dir2
-     || hashdb_dir2 == hashdb_dir3
-     || hashdb_dir3 == hashdb_dir1) {
-      std::cerr << "Error: the databases must not be the same one:\n'"
-                << hashdb_dir1 << "', '"
-                << hashdb_dir2 << "', '"
-                << hashdb_dir3 << "'\n"
-                << "Aborting.\n";
-      exit(1);
+    // if both databases exist, some settings must match
+    if (file_helper::is_hashdb_dir(hashdb_dir1) &&
+        file_helper::is_hashdb_dir(hashdb_dir2)) {
+      hashdb_settings_t settings1 = hashdb_settings_store_t::read_settings(hashdb_dir1);
+      hashdb_settings_t settings2 = hashdb_settings_store_t::read_settings(hashdb_dir2);
+      if (settings1.hash_truncation != settings2.hash_truncation) {
+        std::cerr << "Error: database hash truncation values differ:\n"
+                  << hashdb_dir1 << ": " << settings1.hash_truncation << "\n"
+                  << hashdb_dir2 << ": " << settings2.hash_truncation << "\n"
+                  << "Aborting.\n";
+        exit(1);
+      }
+      if (settings1.hash_block_size != settings2.hash_block_size) {
+        std::cerr << "Error: database hash block size values differ:\n"
+                  << hashdb_dir1 << ": " << settings1.hash_block_size << "\n"
+                  << hashdb_dir2 << ": " << settings2.hash_block_size << "\n"
+                  << "Aborting.\n";
+        exit(1);
+      }
     }
   }
+
+  static void require_compatible(const std::string hashdb_dir1,
+                                const std::string hashdb_dir2,
+                                const std::string hashdb_dir3) {
+    require_compatible(hashdb_dir1, hashdb_dir2);
+    require_compatible(hashdb_dir1, hashdb_dir3);
+  };
 
   // helper for hash copy
   static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
@@ -274,7 +285,7 @@ class commands_t {
   // add A to B
   static void add(const std::string& hashdb_dir1,
                    const std::string& hashdb_dir2) {
-    require_different(hashdb_dir1, hashdb_dir2);
+    require_compatible(hashdb_dir1, hashdb_dir2);
 
     // open ro_manager1 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -320,7 +331,7 @@ class commands_t {
                            const std::string& hashdb_dir2,
                            const std::string& hashdb_dir3) {
 
-    require_different(hashdb_dir1, hashdb_dir2, hashdb_dir3);
+    require_compatible(hashdb_dir1, hashdb_dir2, hashdb_dir3);
 
     // open 1 and 2 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -386,7 +397,7 @@ class commands_t {
                              const std::string& hashdb_dir2,
                              const std::string& repository_name) {
 
-    require_different(hashdb_dir1, hashdb_dir2);
+    require_compatible(hashdb_dir1, hashdb_dir2);
 
     // open ro_manager1 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -438,7 +449,7 @@ class commands_t {
                         const std::string& hashdb_dir2,
                         const std::string& hashdb_dir3) {
 
-    require_different(hashdb_dir1, hashdb_dir2, hashdb_dir3);
+    require_compatible(hashdb_dir1, hashdb_dir2, hashdb_dir3);
 
     // open 1 and 2 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -495,7 +506,7 @@ class commands_t {
                              const std::string& hashdb_dir2,
                              const std::string& hashdb_dir3) {
 
-    require_different(hashdb_dir1, hashdb_dir2, hashdb_dir3);
+    require_compatible(hashdb_dir1, hashdb_dir2, hashdb_dir3);
 
     // open 1 and 2 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -563,7 +574,7 @@ class commands_t {
                        const std::string& hashdb_dir2,
                        const std::string& hashdb_dir3) {
 
-    require_different(hashdb_dir1, hashdb_dir2, hashdb_dir3);
+    require_compatible(hashdb_dir1, hashdb_dir2, hashdb_dir3);
 
     // open 1 and 2 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -620,7 +631,7 @@ class commands_t {
                             const std::string& hashdb_dir2,
                             const std::string& hashdb_dir3) {
 
-    require_different(hashdb_dir1, hashdb_dir2, hashdb_dir3);
+    require_compatible(hashdb_dir1, hashdb_dir2, hashdb_dir3);
 
     // open 1 and 2 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -672,7 +683,7 @@ class commands_t {
                                   const std::string& hashdb_dir2,
                                   const std::string& repository_name) {
 
-    require_different(hashdb_dir1, hashdb_dir2);
+    require_compatible(hashdb_dir1, hashdb_dir2);
 
     // open ro_manager1 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -722,7 +733,7 @@ class commands_t {
   // deduplicate
   static void deduplicate(const std::string& hashdb_dir1,
                           const std::string& hashdb_dir2) {
-    require_different(hashdb_dir1, hashdb_dir2);
+    require_compatible(hashdb_dir1, hashdb_dir2);
 
     // open ro_manager1 for reading
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
@@ -1277,7 +1288,7 @@ class commands_t {
 
   /**
    * Scan for random hash values that are unlikely to match.
-   * Disable the Bloom filter for B-Tree timing.
+   * Disable the Bloom filter to force DB lookups.
    */
   // functional analysis and testing: scan_random
   static void scan_random(const std::string& hashdb_dir) {
