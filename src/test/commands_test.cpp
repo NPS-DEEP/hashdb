@@ -28,11 +28,8 @@
 #include <cstdio>
 #include "unit_test.h"
 #include "directory_helper.hpp"
-#include "../hash_t_selector.h"
 #include "commands.hpp"
-#include "hashdb_manager.hpp"
 #include "file_modes.h"
-#include "to_key_helper.hpp"
 
 // for progress tracker
 bool quiet_mode;
@@ -55,6 +52,7 @@ static const std::string identified_blocks("identified_blocks.txt");
 static const std::string sample_dfxml4096("sample_dfxml4096.xml");
 static const std::string sample_dfxml512("sample_dfxml512.xml");
 
+/*
 // get size of db
 size_t map_size(const std::string& hashdb_dir) {
   hashdb_manager_t manager(hashdb_dir, READ_ONLY);
@@ -345,8 +343,10 @@ void test_block_size_0() {
   // with hash_block_size=0, total should be every hash, including remainder
   TEST_EQ(map_size(temp_dir1), 75);
 }
+*/
 
 int main(int argc, char* argv[]) {
+/*
   std::cout << "test new database\n";
   std::cout << "  test default block size 4096\n";
   test_block_size_4096();
@@ -368,6 +368,7 @@ int main(int argc, char* argv[]) {
   test_performance_analysis();
   std::cout << "test multiple repository names\n";
   test_multiple_repository_names();
+*/
   return 0;
 }
 

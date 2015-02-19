@@ -189,10 +189,16 @@ class expand_manager_t {
     // get the binary hash
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(feature_line.feature);
 
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cout << "Error: Invalid hash: '" << feature_line.feature << "'\n";
+      return;
+    }
+
     // make sure the hash is in the DB
     size_t count = ro_manager->find_count(binary_hash);
     if (count == 0) {
-      std::cout << "# Invalid hash, incorrect file or database, " << feature_line.feature << "\n";
+      std::cout << "Error: Invalid hash, incorrect feature file or hash database, '" << feature_line.feature << "'\n";
       return;
     }
 

@@ -40,7 +40,7 @@ void run_rw_test1() {
 
   remove(temp);
 
-  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, false, 28, 2);
+  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, 0, false, 28, 2);
 
   // manager is disabled
   TEST_EQ(manager.is_positive(binary_hash), true);
@@ -52,7 +52,7 @@ void run_rw_test2() {
 
   remove(temp);
 
-  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, true, 28, 2);
+  bloom_filter_manager_t manager(std::string(temp_dir), RW_NEW, 0, true, 28, 2);
 
   // enabled
   TEST_EQ(manager.is_positive(binary_hash), false);

@@ -158,7 +158,7 @@ class lmdb_hash_store_t {
     bool status;
     if (rc == 0) {
       status = true;
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       status = false;
     } else {
       std::cerr << "LMDB erase error: " << mdb_strerror(rc) << "\n";
@@ -204,7 +204,7 @@ class lmdb_hash_store_t {
         assert(0);
       }
 
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // DB does not have key
       key_count = 0;
 
@@ -259,7 +259,7 @@ class lmdb_hash_store_t {
     bool has_pair = false;
     if (rc == 0) {
       has_pair = true;
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // not found
     } else {
       // program error
@@ -299,7 +299,7 @@ class lmdb_hash_store_t {
         std::cerr << "LMDB count error: " << mdb_strerror(rc) << "\n";
         assert(0);
       }
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // fine, key count is zero
     } else {
       std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
@@ -338,7 +338,7 @@ class lmdb_hash_store_t {
                                     uint64_pair.first,
                                     uint64_pair.second*byte_alignment,
                                     true);
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // use default it_data
     } else {
       std::cerr << "LMDB get error: " << mdb_strerror(rc) << "\n";
@@ -371,7 +371,7 @@ class lmdb_hash_store_t {
                                     uint64_pair.first,
                                     uint64_pair.second*byte_alignment,
                                     true);
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // use default it_data
     } else {
       // program error
@@ -432,7 +432,7 @@ class lmdb_hash_store_t {
                                     uint64_pair.first,
                                     uint64_pair.second*byte_alignment,
                                     true);
-    } else if (rc == MDB_NOTFOUND || context.key.mv_size == 0) {
+    } else if (rc == MDB_NOTFOUND) {
       // use default it_data for end
     } else {
       // program error

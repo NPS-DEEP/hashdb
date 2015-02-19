@@ -61,7 +61,6 @@ HASHDB_INCS = \
 	dfxml_hashdigest_writer.hpp \
 	feature_file_reader.hpp \
 	feature_line.hpp \
-	json_formatter.hpp \
 	main.cpp \
 	progress_tracker.hpp \
 	tab_hashdigest_reader.hpp \

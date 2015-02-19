@@ -24,6 +24,8 @@
  * Note that Bloom filters may have false postives,
  * Bloom filters have no false negatives,
  * and Bloom filters are faster to check than databases.
+ *
+ * To have consistent hashes, all hashes are forced to 16 bytes, zero-extended.
  */
 
 #ifndef BLOOM_FILTER_MANAGER_HPP
@@ -42,6 +44,7 @@ class bloom_filter_manager_t {
   public:
   const std::string filename1;
   const file_mode_type_t file_mode;
+  const uint32_t hash_truncation;
   const bool bloom1_is_used;
   const uint32_t bloom1_M_hash_size; // number of bloom function bits, e.g. 28
   const uint32_t bloom1_k_hash_functions; // number of hash functions, e.g. 2
@@ -109,12 +112,13 @@ class bloom_filter_manager_t {
   public:
   bloom_filter_manager_t (const std::string& p_hashdb_dir,
                           file_mode_type_t p_file_mode,
+                          uint32_t p_hash_truncation,
                           bool p_bloom1_is_used,
                           uint32_t p_bloom1_M_hash_size,
                           uint32_t p_bloom1_k_hash_functions) :
           filename1(p_hashdb_dir + "/bloom_filter_1"),
           file_mode(p_file_mode),
-
+          hash_truncation(p_hash_truncation),
           bloom1_is_used(p_bloom1_is_used),
           bloom1_M_hash_size(p_bloom1_M_hash_size),
           bloom1_k_hash_functions(p_bloom1_k_hash_functions),
@@ -124,32 +128,43 @@ class bloom_filter_manager_t {
                bloom1_M_hash_size, bloom1_k_hash_functions);
   }
 
-  void add_hash_value(const std::string& binary_hash) {
-//std::cerr << "bloom_filter add_hash_value.a " << binary_hash << " " << filename << std::endl;
-    if (bloom1_is_used) {
-      if (binary_hash.size() < 16) {
-        // extend with zeros
-        const std::string extended = binary_hash+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-        bloom1.add(reinterpret_cast<const uint8_t*>(extended.c_str()));
-        return;
-      }
-      bloom1.add(reinterpret_cast<const uint8_t*>(binary_hash.c_str()));
+  // a bloom hash is 16 bytes long with unused bytes zeroed out
+  std::string to_bloom_hash(const std::string& binary_hash) const {
+    size_t count = binary_hash.size();
+
+    // force hash count to 16 for Bloom
+    if (count > 16) {
+      count = 16;
     }
-//std::cerr << "bloom_filter add_hash_value.b" << std::endl;
+
+    // truncate hash values if truncating
+    if (hash_truncation != 0 && count > hash_truncation) {
+      count = hash_truncation;
+    }
+
+    // zero-extend short hashes
+    uint8_t extended[16];
+    memset(extended, 0, 16);
+    memcpy(extended, binary_hash.c_str(), count);
+    return std::string((char*)extended, 16);
+  }
+
+  void add_hash_value(const std::string& binary_hash) {
+    if (bloom1_is_used) {
+      std::string bloom_hash = to_bloom_hash(binary_hash);
+//std::cout << "add_hash_value " << lmdb_helper::binary_hash_to_hex(bloom_hash) << "\n";
+      bloom1.add(reinterpret_cast<const uint8_t*>(bloom_hash.c_str()));
+    }
   }
 
   /**
    * True if found or if filter is disabled.
    */
   bool is_positive(const std::string& binary_hash) const {
-//std::cerr << "bloom_filter is_positive.a " << binary_hash << " " << bloom.query(lmdb::binary_hash_to_hex(binary_hash)) << " " << filename << std::endl;
     if (bloom1_is_used) {
-      if (binary_hash.size() < 16) {
-        // extend with zeros
-        const std::string extended = binary_hash+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-        return (bloom1.query(reinterpret_cast<const uint8_t*>(extended.c_str())));
-      }
-      return (bloom1.query(reinterpret_cast<const uint8_t*>(binary_hash.c_str())));
+      std::string bloom_hash = to_bloom_hash(binary_hash);
+//std::cout << "is_positive " << lmdb_helper::binary_hash_to_hex(bloom_hash) << "\n";
+      return (bloom1.query(reinterpret_cast<const uint8_t*>(bloom_hash.c_str())));
     }
 
     // At this point, either it is present in both or filter is not used.

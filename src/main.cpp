@@ -220,12 +220,7 @@ int main(int argc,char **argv) {
       }
       case 'm': {	// maximum
         has_max = true;
-        try {
-          optional_max = std::atoi(optarg);
-        } catch (...) {
-          std::cerr << "Invalid value for max: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
+        optional_max = std::atoi(optarg);
         break;
       }
 
@@ -239,12 +234,7 @@ int main(int argc,char **argv) {
       // sector size option
       case 's': {	// sector size
         has_sector_size = true;
-        try {
-          optional_sector_size = std::atoi(optarg);
-        } catch (...) {
-          std::cerr << "Invalid value for sector size: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
+        optional_sector_size = std::atoi(optarg);
         break;
       }
 
@@ -260,14 +250,9 @@ int main(int argc,char **argv) {
       }
       case 'B': {	// bloom_n <n> expected total number of hashes
         has_bloom_n = true;
-        try {
-          uint64_t n = std::atol(optarg);
-          bloom_k_hash_functions = 3;
-          bloom_M_hash_size = bloom_filter_manager_t::approximate_n_to_M(n);
-        } catch (...) {
-          std::cerr << "Invalid value for bloom filter, expected total number of hashes: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
+        uint64_t n = std::atol(optarg);
+        bloom_k_hash_functions = 3;
+        bloom_M_hash_size = bloom_filter_manager_t::approximate_n_to_M(n);
         break;
       }
       case 'C': {	// bloom_kM <k:M> k hash functions and M hash size
@@ -275,17 +260,13 @@ int main(int argc,char **argv) {
         std::vector<std::string> params = split(std::string(optarg), ':');
 
         if (params.size() == 2) {
-          try {
-            bloom_k_hash_functions = std::atoi(params[0].c_str());
-            bloom_M_hash_size = std::atoi(params[1].c_str());
-            break;
-          } catch (...) {
-            // let fall through to failure
-          }
+          bloom_k_hash_functions = std::atoi(params[0].c_str());
+          bloom_M_hash_size = std::atoi(params[1].c_str());
+        } else {
+          // bad input
+          std::cerr << "Invalid value for bloom filter 1 k:M: '" << optarg << "'.  " << see_usage << "\n";
+          exit(1);
         }
-        // bad input
-        std::cerr << "Invalid value for bloom filter 1 k:M: '" << optarg << "'.  " << see_usage << "\n";
-        exit(1);
         break;
       }
 

@@ -67,7 +67,9 @@ class lmdb_rw_new {
     lmdb_source_store_t(hashdb_dir, RW_NEW);
 
     // create Bloom
-    bloom_filter_manager_t(hashdb_dir, RW_NEW,
+    bloom_filter_manager_t(hashdb_dir,
+                           RW_NEW,
+                           settings.hash_truncation,
                            settings.bloom1_is_used,
                            settings.bloom1_M_hash_size,
                            settings.bloom1_k_hash_functions);

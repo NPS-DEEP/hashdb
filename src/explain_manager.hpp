@@ -72,8 +72,9 @@ class explain_manager_t {
     // get the binary hash
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(feature_line.feature);
 
-    // skip invalid hash
+    // reject invalid input
     if (binary_hash == "") {
+      std::cerr << "Error: Invalid hash: '" << feature_line.feature << "'\n";
       return;
     }
 

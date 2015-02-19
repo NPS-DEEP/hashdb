@@ -89,6 +89,12 @@ class tab_hashdigest_reader_t {
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(
                                                 block_hashdigest_string);
 
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "'\n";
+      return;
+    }
+
     // get source data
     lmdb_source_data_t source_data(repository_name, filename, 0, "");
 

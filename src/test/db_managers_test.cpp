@@ -41,6 +41,8 @@
 
 //static const char hashdb_dir[] = "temp_dir_db_managers_test.hdb";
 static const std::string hashdb_dir = "temp_dir_db_managers_test.hdb";
+static const std::string hashdb_dir2 = "temp_dir_db_managers_test2.hdb";
+static const std::string binary_0(lmdb_helper::hex_to_binary_hash("00"));
 static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
 static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
 static const std::string binary_cc(lmdb_helper::hex_to_binary_hash("cc"));
@@ -51,6 +53,7 @@ static const lmdb_source_data_t source_data1("r2", "fn3", 4, "hash5");
 static const lmdb_source_data_t source_data2("rn", "fn", 20, "yy");
 static const lmdb_source_data_t source_data3("rn3", "fn3", 0, "");
 static const lmdb_source_data_t source_data3b("rn3", "fn3", 3, "h3");
+static const lmdb_source_data_t source_data0("r", "f", 1, "");
  
  
 void create_db() {
@@ -144,12 +147,35 @@ void test_reader() {
   TEST_EQ(hash_it.binary_hash, "");
 }
 
+void create_db2() {
+
+  // use specific settings
+  hashdb_settings_t settings;
+  settings.hash_truncation = 1;
+
+  // create the DB
+  lmdb_rw_new::create(hashdb_dir2, settings);
+}
+
+void test_zero() {
+  lmdb_rw_manager_t rw_manager(hashdb_dir2);
+  rw_manager.insert(binary_0, source_data0, 4096*0);
+  rw_manager.insert(binary_0, source_data0, 4096*1);
+  rw_manager.insert(binary_0, source_data0, 4096*2);
+  rw_manager.insert(binary_0, source_data0, 4096*3);
+  lmdb_ro_manager_t ro_manager(hashdb_dir2);
+  TEST_EQ(ro_manager.find_count(binary_0), 4);
+}
+
 int main(int argc, char* argv[]) {
 
   rm_hashdb_dir(hashdb_dir);
+  rm_hashdb_dir(hashdb_dir2);
   create_db();
   test_change();
   test_reader();
+  create_db2();
+  test_zero();
   std::cout << "db_managers_test Done.\n";
   return 0;
 }

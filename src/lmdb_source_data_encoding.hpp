@@ -59,7 +59,6 @@ class lmdb_source_data_encoding {
     ~private_string_reader() {
       if (max != 0) {
         std::cout << "Data error: unread data.\n";
-        //assert(0);
       }
     }
   };

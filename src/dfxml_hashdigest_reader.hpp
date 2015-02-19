@@ -121,6 +121,13 @@ class dfxml_hashdigest_reader_t {
     // hashdigest
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(
                                    user_data.byte_run_hashdigest);
+
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cout << "Entry ignored for invalid hash '"
+                << user_data.byte_run_hashdigest << "'\n";
+      return;
+    }
  
     // file_offset
     uint64_t file_offset;
@@ -135,8 +142,9 @@ class dfxml_hashdigest_reader_t {
     }
 
     // hashdigest type
-    if (user_data.byte_run_hashdigest_type != "MD5") {
-      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for byte_run: "
+    if (user_data.byte_run_hashdigest_type != "" &&
+        user_data.byte_run_hashdigest_type != "MD5") {
+      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for byte_run: '"
                 << user_data.byte_run_hashdigest_type << "'.\n";
       return;
     }
@@ -157,8 +165,9 @@ class dfxml_hashdigest_reader_t {
     }
 
     // hashdigest type
-    if (user_data.fileobject_hashdigest_type != "MD5") {
-      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for fileobject: "
+    if (user_data.byte_run_hashdigest_type != "" &&
+        user_data.byte_run_hashdigest_type != "MD5") {
+      std::cerr << "dfxml_hashdigest_reader: Unexpected hashdigest type for fileobject: '"
                 << user_data.fileobject_hashdigest_type << "'.\n";
       return;
     }

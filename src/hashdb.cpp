@@ -85,8 +85,7 @@ const char* hashdb_version() {
                                              uint32_t p_max_duplicates) {
 
     if (mode != HASHDB_NONE) {
-      std::cerr << "invalid mode " << (int)mode << "\n";
-      assert(0);
+      std::cerr << "Usage error: invalid mode " << (int)mode << "\n";
       exit(1);
     }
     mode = HASHDB_IMPORT;
@@ -171,8 +170,7 @@ const char* hashdb_version() {
                                          const std::string& p_path_or_socket) {
     path_or_socket = p_path_or_socket;
     if (mode != HASHDB_NONE) {
-      std::cerr << "invalid mode " << (int)mode << "\n";
-      assert(0);
+      std::cerr << "Usage error: invalid mode " << (int)mode << "\n";
       exit(1);
     }
 
@@ -265,7 +263,7 @@ const char* hashdb_version() {
 // mac doesn't seem to be up to c++11 yet
 #ifndef HAVE_CXX11
   // if c++11 fail at compile time else fail at runtime upon invocation
-  hashdb_t::hashdb_t__(const hashdb_t& other) :
+  hashdb_t::hashdb_t(const hashdb_t& other) :
                  path_or_socket(""),
                  block_size(0),
                  max_duplicates(0),

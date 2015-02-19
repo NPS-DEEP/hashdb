@@ -63,7 +63,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-//zz #include <boost/filesystem.hpp> // for scan_random command
 
 /**
  * Defines the static commands that hashdb_manager can execute.
@@ -831,6 +830,12 @@ class commands_t {
     // get the binary hash
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(hash_string);
 
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cerr << "Error: Invalid hash: '" << hash_string << "'\n";
+      exit(1);
+    }
+
     // scan
     size_t count = ro_manager.find_count(binary_hash);
 
@@ -849,6 +854,12 @@ class commands_t {
 
     // get the binary hash
     std::string binary_hash = lmdb_helper::hex_to_binary_hash(hash_string);
+
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cerr << "Error: Invalid hash: '" << hash_string << "'\n";
+      exit(1);
+    }
 
     // check for no match
     if (ro_manager.find_count(binary_hash) == 0) {
@@ -927,6 +938,10 @@ class commands_t {
 
       // get count for hash
       const size_t count = ro_manager.find_count(hash_it_data.binary_hash);
+      if (count == 0) {
+        // bad state
+        assert(0);
+      }
 
       // update totals
       total_hashes += count;
@@ -978,7 +993,6 @@ class commands_t {
                                  hash_histogram_it2->second << "}\n";
     }
     delete hash_histogram;
-
   }
 
   // show hashdb duplicates for a given duplicates count
@@ -1193,7 +1207,9 @@ class commands_t {
     remove(filename2.c_str());
 
     // open the bloom filter manager
-    bloom_filter_manager_t bloom_filter_manager(hashdb_dir, RW_NEW,
+    bloom_filter_manager_t bloom_filter_manager(hashdb_dir,
+                               RW_NEW,
+                               settings.hash_truncation,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions);
@@ -1280,10 +1296,10 @@ class commands_t {
     // also write changes to cout
     std::cout << rw_manager.changes << "\n";
 
-    // give user a chance to check memory usage before leaving
-    std::cout << "Done, check Memory usage, if desired, then press Enter.";
-    std::string response_string;
-    std::getline(std::cin, response_string);
+//    // give user a chance to check memory usage before leaving
+//    std::cout << "Done, check Memory usage, if desired, then press Enter.";
+//    std::string response_string;
+//    std::getline(std::cin, response_string);
   }
 
   /**

@@ -146,6 +146,30 @@ class lmdb_helper {
     return target + size;
   }
 
+  static inline uint8_t tohex(uint8_t c) {
+    switch(c) {
+      case 0 : return '0'; break;
+      case 1 : return '1'; break;
+      case 2 : return '2'; break;
+      case 3 : return '3'; break;
+      case 4 : return '4'; break;
+      case 5 : return '5'; break;
+      case 6 : return '6'; break;
+      case 7 : return '7'; break;
+      case 8 : return '8'; break;
+      case 9 : return '9'; break;
+      case 10 : return 'a'; break;
+      case 11 : return 'b'; break;
+      case 12 : return 'c'; break;
+      case 13 : return 'd'; break;
+      case 14 : return 'e'; break;
+      case 15 : return 'f'; break;
+      default:
+        std::cerr << "char " << (uint32_t)c << "\n";
+        assert(0);
+    }
+  }
+
   public:
   static MDB_env* open_env(const std::string& store_dir,
                            file_mode_type_t file_mode) {
@@ -336,7 +360,7 @@ class lmdb_helper {
     size_t size = hex_string.size();
     // size must be even
     if (size%2 != 0) {
-      std::cerr << "hex input not aligned on even boundary in '"
+      std::cout << "hex input not aligned on even boundary in '"
                 << hex_string << "'\n";
       return "";
     }
@@ -374,12 +398,10 @@ class lmdb_helper {
   }
       
   static std::string binary_hash_to_hex(const std::string& binary_hash) {
-    size_t size = binary_hash.size();
-    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(binary_hash.c_str());
     std::stringstream ss;
-    ss << std::hex << std::setw(2) << std::setfill('0');
-    for (int i=0; i<size; i++) {
-      ss << (uint32_t)ptr[i]; // uint8_t fails with << operator
+    for (int i=0; i<binary_hash.size(); i++) {
+      uint8_t c = binary_hash.c_str()[i];
+      ss << tohex(c>>4) << tohex(c&7);
     }
     return ss.str();
   }

@@ -64,7 +64,9 @@ class lmdb_ro_manager_t {
 
           hashdb_dir(p_hashdb_dir),
           settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
-          bloom_filter_manager(hashdb_dir, READ_ONLY,
+          bloom_filter_manager(hashdb_dir,
+                               READ_ONLY,
+                               settings.hash_truncation,
                                settings.bloom1_is_used,
                                settings.bloom1_M_hash_size,
                                settings.bloom1_k_hash_functions),
