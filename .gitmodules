@@ -1,6 +1,0 @@
-[submodule "src/dfxml"]
-	path = src/dfxml
-	url = https://github.com/simsong/dfxml.git
-[submodule "src/lmdb"]
-	path = src/lmdb
-	url = git://git.openldap.org/openldap.git

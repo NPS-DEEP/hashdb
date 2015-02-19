@@ -28,32 +28,7 @@ EXTRA_DIST = \
         $(python_tests) \
         hashdb_helpers.py
 
-noinst_LTLIBRARIES = liblmdb.la libbloom.la libdfxml.la
-
-liblmdb_la_SOURCES = \
-	../lmdb/libraries/liblmdb/lmdb.h \
-	../lmdb/libraries/liblmdb/mdb.c \
-	../lmdb/libraries/liblmdb/midl.h \
-	../lmdb/libraries/liblmdb/midl.c
-
-libbloom_la_SOURCES = \
-	../misc/bloom.c \
-	../misc/bloom.h \
-	../misc/file_mapper.cpp \
-	../misc/file_mapper.hpp
-
-libdfxml_la_SOURCES = \
-	../dfxml/src/hash_t.h \
-	../dfxml/src/dfxml_writer.cpp \
-	../dfxml/src/dfxml_writer.h \
-	../dfxml/src/cppmutex.h
-
 # these CFLAGS are adapted from liblmdb/Makefile
-liblmdb_la_CFLAGS = \
-	-pthread -O3 -g \
-	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
-	-wno-format-extra-args
-liblmdb_la_LDFLAGS = -static -PIC
 
 check_PROGRAMS = \
 	db_test \
@@ -70,18 +45,19 @@ if HAVE_PYTHON
 endif
 
 # to validate backward compatibility to c++98, add option -std=c++98
-AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-isystem${top_srcdir}/src/lmdb/libraries/liblmdb \
+AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
+	-isystem${top_srcdir}/src/liblmdb \
+	-isystem${top_srcdir}/src/libdfxml \
 	-I${top_srcdir}/src \
 	$(XML_CFLAGS)
 
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
-db_test_LDADD = liblmdb.la
-db_managers_test_LDADD = liblmdb.la libbloom.la libdfxml.la
-bloom_filter_manager_test_LDADD = libbloom.la
-settings_test_LDADD = libdfxml.la
+db_test_LDADD = ../libhashdb.la
+db_managers_test_LDADD = ../libhashdb.la
+bloom_filter_manager_test_LDADD = ../libhashdb.la
+settings_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
 commands_test_LDADD = ../libhashdb.la
@@ -115,10 +91,12 @@ db_test_SOURCES = \
 	db_test.cpp
 
 db_managers_test_SOURCES = \
-	../lmdb_change_manager.hpp \
-	../lmdb_read_manager.hpp \
+	../lmdb_rw_new.hpp \
+	../lmdb_rw_manager.hpp \
+	../lmdb_ro_manager.hpp \
 	../lmdb_hash_it_data.hpp \
-	../hashdb_directory_manager.hpp \
+	../lmdb_helper.h \
+	../hashdb_settings.hpp \
 	directory_helper.hpp \
 	unit_test.h \
 	db_managers_test.cpp
@@ -126,7 +104,6 @@ db_managers_test_SOURCES = \
 bloom_filter_manager_test_SOURCES = \
 	unit_test.h \
 	directory_helper.hpp \
-	to_key_helper.hpp \
 	bloom_filter_manager_test.cpp
 
 settings_test_SOURCES = \
@@ -142,7 +119,6 @@ logger_test_SOURCES = \
 libhashdb_test_SOURCES = \
 	unit_test.h \
 	directory_helper.hpp \
-	to_key_helper.hpp \
 	libhashdb_test.cpp
 	
 commands_test_SOURCES = \

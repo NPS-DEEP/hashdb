@@ -15,10 +15,6 @@ SRC_WIN_DIST = \
 # don't include bootstrap. People run it, and they shoudln't
 # It's only for people who check out the git repo
 EXTRA_DIST = \
-	ROADMAP.txt \
-        m4/ax_boost_base.m4 \
-        m4/ax_boost_filesystem.m4 \
-        m4/ax_boost_system.m4 \
         m4/ax_pthread.m4 \
 	$(SRC_WIN_DIST)
 
@@ -78,17 +74,9 @@ windist: win64
 	@echo ""
 	@unzip -l $(distdir).zip
 
-# NOTE: for now, use older endian module so we can use available Boost versions
-pull:
-	git pull
-	(cd src/dfxml;git checkout master; git pull)
-	(cd src/btree;git checkout master; git pull)
-	(cd src/endian;git checkout master; git pull; git checkout 05ac935)
-	(cd src/lmdb;git checkout master; git pull)
-
 clean-local:
 	rm -rf $(distdir).tar.gz
 	rm -rf $(distdir).zip
 
-.PHONY: exels execlean win64 windist pull
+.PHONY: exels execlean win64 windist
 

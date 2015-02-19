@@ -24,13 +24,12 @@
 
 #ifndef DFXML_HASHDIGEST_WRITER_HPP
 #define DFXML_HASHDIGEST_WRITER_HPP
-#include "dfxml/src/dfxml_writer.h"
-#include "globals.hpp"
-
+#include <dfxml_writer.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include "globals.hpp"
 
 /**
  * Provides the service of exporting the hashdb in DFXML format.

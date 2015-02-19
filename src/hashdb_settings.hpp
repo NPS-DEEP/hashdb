@@ -25,12 +25,12 @@
 #ifndef    HASHDB_SETTINGS_HPP
 #define    HASHDB_SETTINGS_HPP
 
-#include "dfxml/src/dfxml_writer.h"
-#include "globals.hpp"
+#include <dfxml_writer.h>
 #include <string>
 #include <sstream>
 #include <cstdint>
 #include <iostream>
+#include "globals.hpp"
 
 inline bool string_to_bloom_state(std::string state_string, bool& state) {
   if (state_string == "enabled")  { state = true;  return true; }
@@ -59,14 +59,14 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        settings_version(2),
+        settings_version(globals_t::hashdb_settings_version),
         byte_alignment(globals_t::default_byte_alignment),
         hash_truncation(globals_t::default_hash_truncation),
-        hash_block_size(4096),
-        maximum_hash_duplicates(0),
-        bloom1_is_used(true),
-        bloom1_M_hash_size(28),
-        bloom1_k_hash_functions(3) {
+        hash_block_size(globals_t::default_hash_block_size),
+        maximum_hash_duplicates(globals_t::default_maximum_hash_duplicates),
+        bloom1_is_used(globals_t::default_bloom_is_used),
+        bloom1_M_hash_size(globals_t::default_bloom_M_hash_size),
+        bloom1_k_hash_functions(globals_t::default_bloom_k_hash_functions) {
   }
 
   void report_settings(std::ostream& os) const {

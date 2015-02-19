@@ -19,19 +19,21 @@
 
 # This file assists in building the hashdb_manager tool.
 
+LMDB_INCS = \
+	liblmdb/lmdb.h \
+	liblmdb/mdb.c \
+	liblmdb/midl.h \
+	liblmdb/midl.c
+
 bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 libhashdb_la_LIBADD = liblmdb.la
 noinst_LTLIBRARIES = liblmdb.la
-liblmdb_la_SOURCES = \
-	lmdb/libraries/liblmdb/lmdb.h \
-	lmdb/libraries/liblmdb/mdb.c \
-	lmdb/libraries/liblmdb/midl.h \
-	lmdb/libraries/liblmdb/midl.c
+liblmdb_la_SOURCES = $(LMDB_INCS)
 
 EXTRA_DIST = \
-	lmdb/libraries/liblmdb/COPYRIGHT
-	lmdb/libraries/liblmdb/LICENSE
+	liblmdb/COPYRIGHT \
+	liblmdb/LICENSE
 
 # these CFLAGS are adapted from liblmdb/Makefile
 liblmdb_la_CFLAGS = \
@@ -44,8 +46,9 @@ hashdb_LDFLAGS = -static
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 
 # to validate backward compatibility to c++98, add option -std=c++98
-AM_CPPFLAGS = -isystem${top_srcdir}/src/misc \
-	-I${top_srcdir}/src/lmdb/libraries/liblmdb \
+AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
+	-I${top_srcdir}/src/liblmdb \
+	-I${top_srcdir}/src/libdfxml \
 	$(XML_CFLAGS)
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
@@ -55,13 +58,16 @@ hashdb_LDADD = libhashdb.la
 HASHDB_INCS = \
 	commands.hpp \
 	dfxml_hashdigest_reader.hpp \
+	dfxml_hashdigest_writer.hpp \
 	dfxml_import_consumer.hpp \
 	dfxml_scan_consumer.hpp \
 	dfxml_scan_expanded_consumer.hpp \
-	dfxml_hashdigest_writer.hpp \
+	expand_manager.hpp \
+	explain_manager.hpp \
 	feature_file_reader.hpp \
 	feature_line.hpp \
 	main.cpp \
+	print_helper.hpp \
 	progress_tracker.hpp \
 	tab_hashdigest_reader.hpp \
 	usage.hpp
@@ -69,49 +75,48 @@ HASHDB_INCS = \
 LIBHASHDB_INCS = \
 	bloom_filter_manager.hpp \
 	crc32.h \
+	file_helper.hpp \
 	file_modes.h \
 	globals.cpp \
 	globals.hpp \
 	hashdb_changes.hpp \
 	hashdb.cpp \
-	hashdb_directory_manager.hpp \
 	hashdb.hpp \
 	hashdb_settings.hpp \
 	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	history_manager.hpp \
-	lmdb_rw_manager.hpp \
-	lmdb_rw_new.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_it_data.hpp \
 	lmdb_hash_store.hpp \
 	lmdb_helper.h \
 	lmdb_name_store.hpp \
 	lmdb_ro_manager.hpp \
+	lmdb_rw_manager.hpp \
+	lmdb_rw_new.hpp \
+	lmdb_source_data_encoding.hpp \
 	lmdb_source_data.hpp \
 	lmdb_source_it_data.hpp \
 	lmdb_source_store.hpp \
 	logger.hpp \
 	mutex_lock.hpp
 
-BLOOM_INCS = \
-	misc/bloom.c \
-	misc/bloom.h \
-	misc/file_mapper.cpp \
-	misc/file_mapper.hpp
-
-DFXML_INCS = \
-	dfxml/src/hash_t.h \
-	dfxml/src/dfxml_writer.cpp \
-	dfxml/src/dfxml_writer.h \
-	dfxml/src/cppmutex.h
-
 hashdb_SOURCES = \
 	$(HASHDB_INCS)
 
+BLOOM_INCS = \
+	libbloom/bloom.c \
+	libbloom/bloom.h \
+	libbloom/file_mapper.cpp \
+	libbloom/file_mapper.hpp
+
+DFXML_INCS = \
+	libdfxml/cppmutex.h \
+	libdfxml/dfxml_writer.cpp \
+	libdfxml/dfxml_writer.h
+
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \
-	$(LMDB_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS)
 
 include_HEADERS = hashdb.hpp

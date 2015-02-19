@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 1.2.0-beta2, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 2.0.0-beta1, bugs@digitalcorpora.org)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
@@ -65,7 +65,7 @@ fi
 m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/hashdb_cflags.m4])
-m4_include([src/dfxml/src/dfxml_configure.m4])
+m4_include([src/libdfxml/dfxml_configure.m4])
 
 ################################################################
 ## python 3 for tests

@@ -34,10 +34,6 @@
 #include "lmdb_helper.h"
 #include "directory_helper.hpp"
 #include "hashdb_settings.hpp"
-//#include "file_modes.h"
-
-//zz// file modes:
-//zz// READ_ONLY, RW_NEW, RW_MODIFY
 
 //static const char hashdb_dir[] = "temp_dir_db_managers_test.hdb";
 static const std::string hashdb_dir = "temp_dir_db_managers_test.hdb";

@@ -302,11 +302,10 @@ class lmdb_helper {
   static std::pair<uint64_t, uint64_t> encoding_to_uint64_pair(const MDB_val& val) {
     uint64_t n1;
     uint64_t n2;
-    const uint8_t* ptr2 = private_encoding_to_uint64(
-        static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data)), &n1);
+    const uint8_t* val_ptr = static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data));
+    const uint8_t* ptr2 = private_encoding_to_uint64(val_ptr, &n1);
     const uint8_t* ptr3 = private_encoding_to_uint64(ptr2, &n2);
-    if (ptr3 - static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data))
-                      > val.mv_size) {
+    if ((size_t)(ptr3 - val_ptr) > val.mv_size) {
       // corrupt data
       std::cerr << "corrupt data on read.\n";
       assert(0);
@@ -365,8 +364,8 @@ class lmdb_helper {
       return "";
     }
 
-    int i = 0;
-    int j = 0;
+    size_t i = 0;
+    size_t j = 0;
     uint8_t bin[size];
     for (; i<size; i+=2) {
       uint8_t c0 = hex_string[i];
@@ -399,7 +398,7 @@ class lmdb_helper {
       
   static std::string binary_hash_to_hex(const std::string& binary_hash) {
     std::stringstream ss;
-    for (int i=0; i<binary_hash.size(); i++) {
+    for (size_t i=0; i<binary_hash.size(); i++) {
       uint8_t c = binary_hash.c_str()[i];
       ss << tohex(c>>4) << tohex(c&7);
     }

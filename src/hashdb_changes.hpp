@@ -29,7 +29,7 @@
 
 #include <sstream>
 #include <iostream>
-#include "dfxml/src/dfxml_writer.h"
+#include <dfxml_writer.h>
 
 /**
  * The hashdb change logger holds all possible change values,

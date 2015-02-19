@@ -25,24 +25,14 @@
 #ifndef USAGE_HPP
 #define USAGE_HPP
 
-#include <config.h>
-
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <getopt.h>
 #include "bloom_filter_manager.hpp"
-#include "hashdb_settings.hpp"
 #include "globals.hpp"
 
 void usage() {
-  hashdb_settings_t s;
-
   // print usage
   std::cout
   << "hashdb Version " << PACKAGE_VERSION  << "\n"
@@ -63,19 +53,25 @@ void usage() {
   << "\n"
   << "    Options:\n"
   << "    -p, --hash_block_size=<hash block size>\n"
-  << "      <hash block size>, in bytes, of hashes(default " << s.hash_block_size << ")\n"
-  << "      expected <hash block size>, in bytes, or 0 for no restriction\n"
-  << "      (default " << s.hash_block_size << ")\n"
+  << "      <hash block size>, in bytes, of hashes(default " << globals_t::default_hash_block_size << ")\n"
+  << "      expected <hash block size>, in bytes, or use 0 for no restriction\n"
+  << "      (default " << globals_t::default_hash_block_size << ")\n"
   << "    -m, --max=<maximum>\n"
-  << "      <maximum> number of hash duplicates allowed, or 0 for no limit\n"
-  << "      (default " << s.maximum_hash_duplicates << ")\n"
+  << "      <maximum> number of hash duplicates allowed, or use 0 for no limit\n"
+  << "      (default " << globals_t::default_maximum_hash_duplicates << ")\n"
+  << "    -a, --byte_alignment=<n>\n"
+  << "      <n>, minimum byte granularity to allow, in bytes, recommend 512 for\n"
+  << "      database compactness or 1 for any alignment (default " << globals_t::default_byte_alignment << ")\n"
+  << "    -t, --hash_truncation=<n>\n"
+  << "      truncates the block hash stored to <n> bytes for database compactness,\n"
+  << "      or use 0 for no truncation (default " << globals_t::default_hash_truncation<< ")\n"
   << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
+  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(globals_t::default_bloom_is_used) << ")\n"
   << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
+  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(globals_t::default_bloom_M_hash_size) << ")\n"
   << "    --bloom_kM <k:M>\n"
-  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
-  << "      and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
+  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << globals_t::default_bloom_k_hash_functions << "\n"
+  << "      and <M>=" << globals_t::default_bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>   the file path to the new hash database to create\n"
@@ -332,12 +328,12 @@ void usage() {
   << "\n"
   << "    Options:\n"
   << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(s.bloom1_is_used) << ")\n"
+  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(globals_t::default_bloom_is_used) << ")\n"
   << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(s.bloom1_M_hash_size) << ")\n"
+  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(globals_t::default_bloom_M_hash_size) << ")\n"
   << "    --bloom_kM <k:M>\n"
-  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << s.bloom1_k_hash_functions << "\n"
-  << "      and <M>=" << s.bloom1_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
+  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << globals_t::default_bloom_k_hash_functions << "\n"
+  << "      and <M>=" << globals_t::default_bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>       the  hash database for which the bloom filters will be\n"
@@ -377,8 +373,6 @@ void usage() {
 }
 
 void detailed_usage() {
-  hashdb_settings_t s;
-
   // print usage notes and examples
   std::cout
   << "Examples:\n"

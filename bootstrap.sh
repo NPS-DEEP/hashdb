@@ -1,16 +1,5 @@
 #!/bin/sh
-# Hopefully you checked out with git clone --recursive git@github.com:simsong/hashdb.git
-
-for sub in dfxml lmdb
-do
-  if [ ! -r src/$sub/.git ] ;
-  then
-    echo bringing in submodules
-    echo next time check out with git clone --recursive
-    git submodule init
-    git submodule update
-  fi
-done
+# Hopefully you checked out with git clone git@github.com:simsong/hashdb.git
 
 # have automake do an initial population iff necessary
 if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing ]; then

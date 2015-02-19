@@ -1,4 +1,4 @@
-hashdb Version 1.2.0
+hashdb Version 2.0.0
 Usage: hashdb [-h|-H|--help|--Help] [-v|-V|--version] [-q|--quiet]
               [-f|--flags=<flags>] <command> [<args>]
 
@@ -6,8 +6,6 @@ Usage: hashdb [-h|-H|--help|--Help] [-v|-V|--version] [-q|--quiet]
   -H, --Help         print this message plus usage notes and examples
   -v, -V, --version, --Version    print version number
   -q, --quiet        quiet mode
-  -f, --flags=flags  set B-Tree flags, any of: preload:cache_branches:
-                     least_memory:low_memoy:balanced:fast:fastest
 
 hashdb supports the following commands:
 
@@ -18,11 +16,17 @@ New database:
     Options:
     -p, --hash_block_size=<hash block size>
       <hash block size>, in bytes, of hashes(default 4096)
-      expected <hash block size>, in bytes, or 0 for no restriction
+      expected <hash block size>, in bytes, or use 0 for no restriction
       (default 4096)
     -m, --max=<maximum>
-      <maximum> number of hash duplicates allowed, or 0 for no limit
+      <maximum> number of hash duplicates allowed, or use 0 for no limit
       (default 0)
+    -a, --byte_alignment=<n>
+      <n>, minimum byte granularity to allow, in bytes, recommend 512 for
+      database compactness or 1 for any alignment (default 512)
+    -t, --hash_truncation=<n>
+      truncates the block hash stored to <n> bytes for database compactness,
+      or use 0 for no truncation (default 0)
     --bloom <state>
       sets bloom filter <state> to enabled | disabled (default enabled)
     --bloom_n <n>
@@ -292,12 +296,6 @@ Tuning:
     Parameters:
     <hashdb>       the  hash database for which the bloom filters will be
                    rebuilt
-
-  upgrade <hashdb>
-    Make <hashdb> created by v1.0.0 compatible with hashdb v1.1.0+.
-
-    Parameters:
-    <hashdb>       the hash database to upgrade
 
 Performance analysis:
   add_random [-r <repository name>] <hashdb> <count>
