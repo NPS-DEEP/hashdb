@@ -167,6 +167,7 @@ class lmdb_helper {
       default:
         std::cerr << "char " << (uint32_t)c << "\n";
         assert(0);
+        return 0; // for mingw compiler
     }
   }
 
@@ -197,7 +198,7 @@ class lmdb_helper {
         }
 
         // create the store directory
-#ifdef WIN32
+#ifdef _WIN32
         if(mkdir(store_dir.c_str())){
           std::cerr << "Error: Could not make new store directory '"
                     << store_dir << "'.\nCannot continue.\n";
@@ -221,6 +222,7 @@ class lmdb_helper {
       default:
         env_flags = 0; // satisfy mingw32-g++ compiler
         assert(0);
+        return 0; // for mingw compiler
     }
 
     // open the MDB environment
