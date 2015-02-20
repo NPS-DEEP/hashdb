@@ -25,15 +25,15 @@ def parse_settings(hashdb_dir):
     settings['hash_truncation'] = int(root.find('hash_truncation').text)
     settings['hash_block_size'] = int(root.find('hash_block_size').text)
     settings['maximum_hash_duplicates'] = int(root.find('maximum_hash_duplicates').text)
-    temp = root.find('bloom1_used').text
+    temp = root.find('bloom_used').text
     if temp == "enabled":
-        settings['bloom1_used'] = True
+        settings['bloom_used'] = True
     elif temp == "disabled":
-        settings['bloom1_used'] = False
+        settings['bloom_used'] = False
     else:
         raise ValueError("invalid state '" + temp + "'")
-    settings['bloom1_k_hash_functions'] = int(root.find('bloom1_k_hash_functions').text)
-    settings['bloom1_M_hash_size'] = int(root.find('bloom1_M_hash_size').text)
+    settings['bloom_k_hash_functions'] = int(root.find('bloom_k_hash_functions').text)
+    settings['bloom_M_hash_size'] = int(root.find('bloom_M_hash_size').text)
     return settings
 
 # require a specific database size

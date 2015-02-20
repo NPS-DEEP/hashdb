@@ -22,9 +22,9 @@ def test_create():
     H.int_equals(settings['hash_truncation'], 0)
     H.int_equals(settings['hash_block_size'], 1024)
     H.int_equals(settings['maximum_hash_duplicates'], 10)
-    H.bool_equals(settings['bloom1_used'], False)
-    H.int_equals(settings['bloom1_k_hash_functions'], 4)
-    H.int_equals(settings['bloom1_M_hash_size'], 14)
+    H.bool_equals(settings['bloom_used'], False)
+    H.int_equals(settings['bloom_k_hash_functions'], 4)
+    H.int_equals(settings['bloom_M_hash_size'], 14)
 
     # cleanup
     shutil.rmtree(db1)

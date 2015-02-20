@@ -228,7 +228,7 @@ void test_tuning() {
   commands_t::import(temp_dir1, sample_dfxml4096, "repository1");
 
   // rebuild_bloom
-  settings.bloom1_M_hash_size = 20;
+  settings.bloom_M_hash_size = 20;
   commands_t::rebuild_bloom(settings, temp_dir1);
 }
 

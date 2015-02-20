@@ -57,7 +57,7 @@ void create_db() {
   // use specific settings
   hashdb_settings_t settings;
   settings.maximum_hash_duplicates = 2;
-  settings.bloom1_is_used = false;
+  settings.bloom_is_used = false;
 
   // create the DB
   lmdb_rw_new::create(hashdb_dir, settings);
