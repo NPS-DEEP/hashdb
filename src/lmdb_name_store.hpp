@@ -39,9 +39,6 @@
 #endif
 #include "mutex_lock.hpp"
 
-// enable debug
-// #define DEBUG 1
-
 class lmdb_name_store_t {
 
   private:

@@ -28,6 +28,9 @@
 #ifndef LMDB_HELPER_H
 #define LMDB_HELPER_H
 
+// enable debug
+// #define DEBUG 1
+
 #include "sys/stat.h"
 #include "file_modes.h"
 #include "lmdb.h"
@@ -259,15 +262,23 @@ class lmdb_helper {
     if (env_info.me_mapsize / ms.ms_psize == env_info.me_last_pgno + 2) {
 
       // full so grow the DB, safe since this code is locked
-#ifdef DEBUG
-      std::cout << "Growing hash store DB from " << env_info.me_mapsize
-                << " to " << env_info.me_mapsize * 2 << "\n";
-#endif
-
       // could call mdb_env_sync(env, 1) here but it does not help
 
       // grow the DB
-      rc = mdb_env_set_mapsize(env, env_info.me_mapsize * 2);
+      size_t size = env_info.me_mapsize;
+      if (size > (1<<30)) { // 1<<30 = 1,073,741,824
+        // add 1GiB
+        size += (1<<30);
+      } else {
+        // double
+        size *= 2;
+      }
+#ifdef DEBUG
+      std::cout << "Growing DB " << env << " from " << env_info.me_mapsize
+                << " to " << size << "\n";
+#endif
+
+      rc = mdb_env_set_mapsize(env, size);
       if (rc != 0) {
         // grow failed
         std::cerr << "Error growing DB: " <<  mdb_strerror(rc)
@@ -288,9 +299,6 @@ class lmdb_helper {
       std::cerr << "size failure: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
-#ifdef DEBUG
-    std::cout << "size: " << stat.ms_entries << "\n";
-#endif
     return stat.ms_entries;
   }
 
