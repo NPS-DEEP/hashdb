@@ -127,8 +127,8 @@ hashdb changes (insert):
 \hash is a tool that can be used to find data in raw media using cryptographic hashes calculated from blocks of data. It is a useful forensic investigation tool for tasks such as malware detection, child exploitation detection or corporate espionage investigations. The tool provides several capabilities that include:
 \begin{itemize}
 \item Creating hash databases of MD5 block hashes, as opposed to file hashes.
-\item Importing hash values from Digital Forensic XML (DFXML) files created by other programs such as \textbf{md5deep} or \textbf{fiwalk}.
-\item Scanning the hash database for matching hash values using either the local or remote system. 
+\item Importing block hash values from Digital Forensic XML (DFXML) files created by other programs such as \textbf{md5deep} or \textbf{fiwalk}.
+\item Scanning the hash database for matching hash values.
 \item Providing the source information for hash values. 
 \end{itemize}
 
@@ -196,7 +196,7 @@ The \bulk \hash scanner can import hashes directly into a new hash database,
 see \textbf{\autoref{ImportingAndScanning}} for importing using the \bulk \hash scanner.
 Also, third party tools can be created for importing hashes
 directly into a hash database by interfacing with the \hash library API,
-see \textbf{autoref{usingSection}}.
+see \textbf{\autoref{usingSection}}.
 
 \subsubsection{Creating a DFXML file using \textbf{md5deep}}
 
@@ -285,22 +285,17 @@ The above command specifies to export hashes and their source information from h
 \subsection{Contents of a Hash Database}
 Each \hash database is contained in a directory called \textit{$<$databasename$>$.hdb} and contains a number of files. These files are:
 \begin{verbatim}
-Bloom_filter_1
+bloom_filter
+history.xml
 lmdb_hash_store/data.mdb
 lmdb_hash_store/lock.mdb
-history.xml
+lmdb_name_store/data.mdb
+lmdb_name_store/lock.mdb
+lmdb_source_store/data.mdb
+lmdb_source_store/lock.mdb
 log.xml
+_old_history.xml
 settings.xml
-source_filename_store.dat
-source_filename_store.idx1
-source_filename_store.idx2
-source_lookup_store.dat
-source_lookup_store.idx1
-source_lookup_store.idx2
-source_metadata_store
-source_repository_name_store.dat
-source_repository_name_store.idx1
-source_repository_name_store.idx2
 \end{verbatim}
 
 These files include XML files containing configuration settings and logs, a Bloom filter file used for improving the speed of hash lookups, binary files containing stored hashes from multiple sources and binary files that allow lookup of hash source names. Of these files, the history, settings, and log files may be of interest to the user:
@@ -418,7 +413,7 @@ You should close all Command windows before running the installation executable.
 	\label{fig:windowsWarning}
 \end{figure}
 
-When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select the default configuration, which will be the 64-bit configuration for 64-bit Windows systems, or the 32-bit configuration for 32-bit Windows systems. Click on ``Install' and the installer will install \hash on your system and then notify you when it is complete. \hash is now installed on your system can be run from the command line.\\
+When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select the 64-bit configuration to install \hash and select \verb+Add to path+ to add hashdb to \verb+PATH+. \hash is now installed on your system can be run from the command line.\\
 
 \begin{figure}
 	\center
@@ -429,17 +424,19 @@ When the installer file is executed, the installation will begin and show a dial
 
 \subsection{Installing Other Related Tools}
 
-\textbf{Download and Install \bulk}\\
+\subsubsection{\bulk}
 The \bulk \hash scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
 This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hash must be installed first for \bulk to build properly with \hash. \bulk will automatically install the \textit{hashdb} scanner but only if the \hash library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.\\
 
-\textbf{Download and Install \mdd}\\
+\subsubsection{\mdd}
+The \mdd tool creates block hashes from files and directories that \hash can import.
 \mdd is available at
 \url{https://github.com/jessek/hashdeep/releases/tag/release-4.4}.
 Additional platform-specific installation structions are provided at
 \url{https://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
 
-\textbf{Download and Install \fiwalk}\\
+\subsubsection{\fiwalk}
+The \fiwalk tool creates block hashes from files and directories in images that \hash can import.
 Please see \url{http://www.forensicswiki.org/wiki/Fiwalk}.
 \textbf{fiwalk} is part of The Sleuth Kit\textregistered\xspace (TSK),
 available from \url{https://github.com/sleuthkit/sleuthkit}. \\
@@ -623,27 +620,6 @@ hashdb changes (insert):
 \end{Verbatim}
 \endgroup
 The database \texttt{\textbf{mock\_video.hdb}} now holds 2595 hash values.
-If curious, you may navigate into the directory \texttt{mock\_video.hdb} to observe its set of database files. The following lists the contents:
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
- 4097 Mar  9 21:52 Bloom_filter_1
-<DIR> Mar  9 21:56 lmdb_hash_store
- 3788 Mar  9 21:52 history.xml
- 3573 Mar  9 21:56 log.xml
- 3105 Mar  9 21:52 settings.xml
-   47 Mar  9 22:21 source_filename_store.dat
- 8192 Mar  9 21:56 source_filename_store.idx1
- 8192 Mar  9 21:56 source_filename_store.idx2
-   25 Mar  9 22:21 source_lookup_store.dat
- 8192 Mar  9 21:56 source_lookup_store.idx1
- 8192 Mar  9 21:56 source_lookup_store.idx2
- 8192 Mar  9 21:56 source_metadata_store
-   37 Mar  9 22:21 source_repository_name_store.dat
- 8192 Mar  9 21:56 source_repository_name_store.idx1
- 8192 Mar  9 21:56 source_repository_name_store.idx2
-\end{Verbatim}
-\endgroup
 
 The file \texttt{log.xml} shows that a set of hash blocks have just been inserted. Listing \ref{logexcerpt} shows the excerpt of the log file that tracks this statistic.
 \lstset{style=customfile}
@@ -699,7 +675,7 @@ Destination databases are created if they do not exist yet.
 
 \subsubsection{Tracking Changes in Hash Databases}
 Statistics about hash database changes are reported on the console and to the log file and history file inside the hash database.
-These statistics show the number of hashes inserted or removed as a result of a command, and also show the number of hashes not inserted or not removed because specific conditions were not met.
+These statistics show the number of hashes inserted into a database as a result of a command, and also show the number of hashes not removed because specific conditions were not met.
 These statistics are shown in Table \ref{tab:changeStatistics}.
 \begin{table}[!ht]
 
@@ -722,15 +698,16 @@ a 512 byte boundary (80 mod 512 $\ne$ 0).\\
 \verb+hashes_not_inserted_+ \verb+duplicate_element+ & Number of hashes not inserted because they are duplicate elements. The user attempts to import a hash where the hash value, repository name, filename, and its file offset
 are all the same.\\
 \hline
-\verb+hashes_removed+ & Number of hashes removed.\\
-\hline
-\verb+hashes_not_removed_+ \verb+invalid_byte_alignment+ &  Number of hashes not removed because the file offset was not byte aligned.\\
-\hline
-\verb+hashes_not_removed_+ \verb+no_hash+ &  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
-\hline
-\verb+hashes_not_removed_+ \verb+no_element+ &  Number of hashes not removed because the hashes, specifically identified by 
-hash value, repository name, filename, and its file offset do not exist in the database, indicating a possible mistake in database management.\\
-\hline
+% note: manipulation commands do not remove hashes, they copy them.
+%\verb+hashes_removed+ & Number of hashes removed.\\
+%\hline
+%\verb+hashes_not_removed_+ \verb+invalid_byte_alignment+ &  Number of hashes not removed because the file offset was not byte aligned.\\
+%\hline
+%\verb+hashes_not_removed_+ \verb+no_hash+ &  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
+%\hline
+%\verb+hashes_not_removed_+ \verb+no_element+ &  Number of hashes not removed because the hashes, specifically identified by 
+%hash value, repository name, filename, and its file offset do not exist in the database, indicating a possible mistake in database management.\\
+%\hline
 \end{tabular}
 \end{table}
 
@@ -839,8 +816,7 @@ o.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc09740e939d"
 \end{lstlisting}
 
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
-\textbf{\autoref{DatabaseManipulation}}
-, can mitigate this, for example:
+\textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
 \item Alternatively, use the ``deduplicate'' command to copy all hash values that have been imported exactly once.
@@ -1053,7 +1029,7 @@ followed by the filename of the DFXML file, including its full path.
 \end{itemize}
 
 \subsubsection{Querying a Remote Hash Database}
-In the future, separate \hdb Server and Cleint tools may be provided so that clients may scan a remote hash database.  This capability is currently unavailable and has been removed from \hdb and the \bulk \hdb scanner.
+In the future, separate \hdb Server and Cleint tools may be provided so that clients may scan a remote hash database.  This capability is currently unavailable.
 
 
 % \hash also provides the capability to set up a remote socket to ``scan'' an existing database. Users can set up a database on the socket and then access the ``scan'' command via that socket. To set up the scan service, users need to provide the name of the hash database and the TCP socket that will be available for clients.
@@ -1144,28 +1120,35 @@ Note that the DFXML that \hash exports is compatible but different from the DFXM
 \item The first offset is 6938624, not 0,
 because the output is sorted by hash value. 
 \item There is a \texttt{fileobject} tag wrapping every individual hash.
-\item Every entry includes a \texttt{repository\_name} tag.
+\item Every \texttt{fileobject} tag includes a \texttt{repository\_name} tag.
+\item Every \texttt{fileobject} tag includes the source file size and source file hashdigest.
 \end{enumerate}
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Excerpt of a DFXML exported by \hash, label=dfxmlHashExport]
   <fileobject>
-    <repository_name>mock_video_repository</repository_name>
-    <filename>/home/bdallen/demo/mock_video.mp4</filename>
+    <repository_name>repository_mock_video_repository.hdb/</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <filesize>10630146</filesize>
+    <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
     <byte_run file_offset='6938624' len='4096'>
       <hashdigest type='MD5'>0016aa775765eb7929ec06dea25b6f0e</hashdigest>
     </byte_run>
   </fileobject>
   <fileobject>
-    <repository_name>mock_video_repository</repository_name>
-    <filename>/home/bdallen/demo/mock_video.mp4</filename>
+    <repository_name>repository_mock_video_repository.hdb/</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <filesize>10630146</filesize>
+    <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
     <byte_run file_offset='3837952' len='4096'>
       <hashdigest type='MD5'>00183a37c80b3ee02cb4bdd3e7d7e9d2</hashdigest>
     </byte_run>
-  </fileobject>\
+  </fileobject>
   <fileobject>
-    <repository_name>mock_video_repository</repository_name>
-    <filename>/home/bdallen/demo/mock_video.mp4</filename>
+    <repository_name>repository_mock_video_repository.hdb/</repository_name>
+    <filename>/home/bdallen/demo/demo_video.mp4</filename>
+    <filesize>10630146</filesize>
+    <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
     <byte_run file_offset='5652480' len='4096'>
       <hashdigest type='MD5'>00513c9484ebc957eb928adf30504bc9</hashdigest>
     </byte_run>
