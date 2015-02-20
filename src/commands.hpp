@@ -1187,9 +1187,9 @@ class commands_t {
     settings = hashdb_settings_store_t::read_settings(hashdb_dir);
 
     // change the bloom filter settings
-    settings.bloom1_is_used = new_bloom_settings.bloom1_is_used;
-    settings.bloom1_M_hash_size = new_bloom_settings.bloom1_M_hash_size;
-    settings.bloom1_k_hash_functions = new_bloom_settings.bloom1_k_hash_functions;
+    settings.bloom_is_used = new_bloom_settings.bloom_is_used;
+    settings.bloom_M_hash_size = new_bloom_settings.bloom_M_hash_size;
+    settings.bloom_k_hash_functions = new_bloom_settings.bloom_k_hash_functions;
 
     // write back the changed settings
     hashdb_settings_store_t::write_settings(hashdb_dir, settings);
@@ -1201,18 +1201,16 @@ class commands_t {
     logger.add_hashdb_settings(settings);
 
     // remove existing bloom files
-    std::string filename1 = hashdb_dir + "/bloom_filter_1";
-    std::string filename2 = hashdb_dir + "/bloom_filter_2";
-    remove(filename1.c_str());
-    remove(filename2.c_str());
+    std::string filename = hashdb_dir + "/bloom_filter";
+    remove(filename.c_str());
 
     // open the bloom filter manager
     bloom_filter_manager_t bloom_filter_manager(hashdb_dir,
                                RW_NEW,
                                settings.hash_truncation,
-                               settings.bloom1_is_used,
-                               settings.bloom1_M_hash_size,
-                               settings.bloom1_k_hash_functions);
+                               settings.bloom_is_used,
+                               settings.bloom_M_hash_size,
+                               settings.bloom_k_hash_functions);
 
     // open DB
     lmdb_ro_manager_t ro_manager(hashdb_dir);

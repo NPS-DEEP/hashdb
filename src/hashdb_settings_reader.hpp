@@ -71,9 +71,9 @@ class hashdb_settings_reader_t {
                     HASH_TRUNCATION,
                     HASH_BLOCK_SIZE,
                     MAXIMUM_HASH_DUPLICATES,
-                    BLOOM1_USED,
-                    BLOOM1_K_HASH_FUNCTIONS,
-                    BLOOM1_M_HASH_SIZE,
+                    BLOOM_USED,
+                    BLOOM_K_HASH_FUNCTIONS,
+                    BLOOM_M_HASH_SIZE,
                     BLOOM2_USED,
                     BLOOM2_K_HASH_FUNCTIONS,
                     BLOOM2_M_HASH_SIZE};
@@ -117,9 +117,9 @@ class hashdb_settings_reader_t {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_truncation"))) return HASH_TRUNCATION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("maximum_hash_duplicates"))) return MAXIMUM_HASH_DUPLICATES;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_used"))) return BLOOM1_USED;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_k_hash_functions"))) return BLOOM1_K_HASH_FUNCTIONS;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom1_M_hash_size"))) return BLOOM1_M_HASH_SIZE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_used"))) return BLOOM_USED;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_k_hash_functions"))) return BLOOM_K_HASH_FUNCTIONS;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_M_hash_size"))) return BLOOM_M_HASH_SIZE;
     return NO_NODE;
   }
 
@@ -193,21 +193,21 @@ class hashdb_settings_reader_t {
     } else if (user_data.active_node == MAXIMUM_HASH_DUPLICATES) {
       user_data.settings->maximum_hash_duplicates = xmlChar_to_number(characters, len);
 
-    } else if (user_data.active_node == BLOOM1_USED) {
-      std::string bloom1_state_string;
-      xmlChar_to_string(characters, len, bloom1_state_string);
-      is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_is_used);
-      is_valid = string_to_bloom_state(bloom1_state_string, user_data.settings->bloom1_is_used);
+    } else if (user_data.active_node == BLOOM_USED) {
+      std::string bloom_state_string;
+      xmlChar_to_string(characters, len, bloom_state_string);
+      is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
+      is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
       if (!is_valid) {
-        exit_invalid_state("Error: invalid bloom 1 selection\n");
+        exit_invalid_state("Error: invalid bloom selection\n");
       }
 
-    } else if (user_data.active_node == BLOOM1_K_HASH_FUNCTIONS) {
-      user_data.settings->bloom1_k_hash_functions =
+    } else if (user_data.active_node == BLOOM_K_HASH_FUNCTIONS) {
+      user_data.settings->bloom_k_hash_functions =
                                       xmlChar_to_number(characters, len);
 
-    } else if (user_data.active_node == BLOOM1_M_HASH_SIZE) {
-      user_data.settings->bloom1_M_hash_size =
+    } else if (user_data.active_node == BLOOM_M_HASH_SIZE) {
+      user_data.settings->bloom_M_hash_size =
                                       xmlChar_to_number(characters, len);
     }
   }

@@ -264,7 +264,7 @@ int main(int argc,char **argv) {
           bloom_M_hash_size = std::atoi(params[1].c_str());
         } else {
           // bad input
-          std::cerr << "Invalid value for bloom filter 1 k:M: '" << optarg << "'.  " << see_usage << "\n";
+          std::cerr << "Invalid value for bloom filter k:M: '" << optarg << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
@@ -400,11 +400,11 @@ void no_C() {
 void manage_bloom_settings(hashdb_settings_t& settings) {
   // set bloom values in settings
   if (has_bloom) {
-    settings.bloom1_is_used = bloom_is_used;
+    settings.bloom_is_used = bloom_is_used;
   }
   if (has_bloom_n || has_bloom_kM) {
-    settings.bloom1_k_hash_functions = bloom_k_hash_functions;
-    settings.bloom1_M_hash_size = bloom_M_hash_size;
+    settings.bloom_k_hash_functions = bloom_k_hash_functions;
+    settings.bloom_M_hash_size = bloom_M_hash_size;
   }
 
   // check that bloom filter n or kM are selected but not both

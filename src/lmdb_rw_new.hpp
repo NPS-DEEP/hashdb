@@ -70,9 +70,9 @@ class lmdb_rw_new {
     bloom_filter_manager_t(hashdb_dir,
                            RW_NEW,
                            settings.hash_truncation,
-                           settings.bloom1_is_used,
-                           settings.bloom1_M_hash_size,
-                           settings.bloom1_k_hash_functions);
+                           settings.bloom_is_used,
+                           settings.bloom_M_hash_size,
+                           settings.bloom_k_hash_functions);
   }
 };
 

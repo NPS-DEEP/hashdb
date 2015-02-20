@@ -139,9 +139,6 @@ class expand_manager_t {
           source_list_ids() {
     source_ids = new std::set<uint64_t>;
     source_list_ids = new std::set<uint64_t>;
-
-    // print header
-    print_helper::print_header("expand-hash-Version: 2");
   }
 
   ~expand_manager_t() {

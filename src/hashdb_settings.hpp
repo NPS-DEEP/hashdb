@@ -51,10 +51,10 @@ struct hashdb_settings_t {
   uint32_t hash_truncation;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
-  // bloom 1 and 2
-  bool     bloom1_is_used;
-  uint32_t bloom1_M_hash_size;      // size of the bloom filter hash, in bits
-  uint32_t bloom1_k_hash_functions; // number of hash filter functions
+  // bloom
+  bool     bloom_is_used;
+  uint32_t bloom_M_hash_size;      // size of the bloom filter hash, in bits
+  uint32_t bloom_k_hash_functions; // number of hash filter functions
 
   // note: POD, so permit default copy and equals
 
@@ -64,9 +64,9 @@ struct hashdb_settings_t {
         hash_truncation(globals_t::default_hash_truncation),
         hash_block_size(globals_t::default_hash_block_size),
         maximum_hash_duplicates(globals_t::default_maximum_hash_duplicates),
-        bloom1_is_used(globals_t::default_bloom_is_used),
-        bloom1_M_hash_size(globals_t::default_bloom_M_hash_size),
-        bloom1_k_hash_functions(globals_t::default_bloom_k_hash_functions) {
+        bloom_is_used(globals_t::default_bloom_is_used),
+        bloom_M_hash_size(globals_t::default_bloom_M_hash_size),
+        bloom_k_hash_functions(globals_t::default_bloom_k_hash_functions) {
   }
 
   void report_settings(std::ostream& os) const {
@@ -76,9 +76,9 @@ struct hashdb_settings_t {
     os << "hash truncation: " << hash_truncation << "\n";
     os << "hash block size: " << hash_block_size << "\n";
     os << "maximum hash duplicates: " << maximum_hash_duplicates << "\n";
-    os << "bloom 1 used: " << bloom_state_to_string(bloom1_is_used) << "\n";
-    os << "bloom 1 k hash functions: " << bloom1_k_hash_functions << "\n";
-    os << "bloom 1 M hash size: " << bloom1_M_hash_size << "\n";
+    os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
+    os << "bloom k hash functions: " << bloom_k_hash_functions << "\n";
+    os << "bloom M hash size: " << bloom_M_hash_size << "\n";
   }
 
   void report_settings(dfxml_writer& x) const {
@@ -88,9 +88,9 @@ struct hashdb_settings_t {
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
 
-    x.xmlout("bloom1_used", bloom_state_to_string(bloom1_is_used));
-    x.xmlout("bloom1_k_hash_functions", (uint64_t)bloom1_k_hash_functions);
-    x.xmlout("bloom1_M_hash_size", (uint64_t)bloom1_M_hash_size);
+    x.xmlout("bloom_used", bloom_state_to_string(bloom_is_used));
+    x.xmlout("bloom_k_hash_functions", (uint64_t)bloom_k_hash_functions);
+    x.xmlout("bloom_M_hash_size", (uint64_t)bloom_M_hash_size);
   }
 };
 
