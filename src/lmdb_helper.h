@@ -402,7 +402,7 @@ class lmdb_helper {
     std::stringstream ss;
     for (size_t i=0; i<binary_hash.size(); i++) {
       uint8_t c = binary_hash.c_str()[i];
-      ss << tohex(c>>4) << tohex(c&7);
+      ss << tohex(c>>4) << tohex(c&0x0f);
     }
     return ss.str();
   }
