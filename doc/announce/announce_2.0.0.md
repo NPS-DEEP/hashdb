@@ -30,6 +30,8 @@ It is possible that in a future version of _hashdb_, equivalent client/server ca
 
 * Additional test modules were added to help validate operational integrity.
 
+_hashdb_ Version 2.0.0 is not compatible with previous versions of _hashdb_.
+
 Availability
 ============
 * Release source code: http://digitalcorpora.org/downloads/hashdb/
