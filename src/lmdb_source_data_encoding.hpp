@@ -40,6 +40,11 @@ class lmdb_source_data_encoding {
   class private_string_reader {
     const char* ptr;
     size_t max;
+
+    // do not allow copy or assignment
+    private_string_reader(const private_string_reader&);
+    private_string_reader& operator=(const private_string_reader&);
+
     public:
     private_string_reader(const char* p_ptr, size_t p_max) :
                  ptr(p_ptr), max(p_max) {

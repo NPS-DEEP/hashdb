@@ -34,6 +34,11 @@ class lmdb_context_t {
   unsigned int txn_flags; // example MDB_RDONLY
   unsigned int dbi_flags; // example MDB_DUPSORT
   int state;
+
+  // do not allow copy or assignment
+  lmdb_context_t(const lmdb_context_t&);
+  lmdb_context_t& operator=(const lmdb_context_t&);
+
   public:
   MDB_txn* txn;
   MDB_dbi dbi;
