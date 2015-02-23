@@ -33,7 +33,7 @@
 #include "file_modes.h"
 
 static const char temp_dir[] = "temp_dir_bloom_filter_manager_test";
-static const char temp[] = "temp_dir_bloom_filter_manager_test/bloom_filter_1";
+static const char temp[] = "temp_dir_bloom_filter_manager_test/bloom_filter";
 static const std::string binary_hash = lmdb_helper::hex_to_binary_hash("00112233445566778899aabbccddeeff");
 
 void run_rw_test1() {
