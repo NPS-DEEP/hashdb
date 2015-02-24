@@ -55,13 +55,14 @@ class dfxml_import_consumer_t {
   // end_byte_run
   void end_byte_run(const std::string& binary_hash,
                     uint64_t file_offset,
+                    uint32_t hash_block_size,
                     const lmdb_source_data_t& source_data) {
 
     // update progress tracker
     progress_tracker->track();
 
     // consume the element by importing it
-    rw_manager->insert(binary_hash, source_data, file_offset);
+    rw_manager->insert(binary_hash, file_offset, hash_block_size, source_data);
   }
 
   // end_fileobject

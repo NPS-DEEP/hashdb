@@ -105,7 +105,7 @@ class tab_hashdigest_reader_t {
     progress_tracker->track();
 
     // insert the entry
-    rw_manager->insert(binary_hash, source_data, file_offset);
+    rw_manager->insert(binary_hash, file_offset, sector_size, source_data);
   }
  
   public:

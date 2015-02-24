@@ -137,11 +137,6 @@ class dfxml_hashdigest_reader_t {
 
     // hash_block_size
     uint32_t hash_block_size = std::atol(user_data.byte_run_len.c_str());
-    if (user_data.hash_block_size != 0 &&
-        hash_block_size != user_data.hash_block_size) {
-      // wrong hash block size so skip it
-      return;
-    }
 
     // hashdigest type
     if (user_data.byte_run_hashdigest_type != "" &&
@@ -156,7 +151,10 @@ class dfxml_hashdigest_reader_t {
                                    user_data.fileobject_filename, 0, "");
 
     // call the hash consumer
-    user_data.dfxml_consumer->end_byte_run(binary_hash, file_offset, source_data);
+    user_data.dfxml_consumer->end_byte_run(binary_hash,
+                                           file_offset,
+                                           hash_block_size,
+                                           source_data);
   }
 
   static void end_fileobject(user_data_t& user_data) {

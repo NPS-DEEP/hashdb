@@ -82,12 +82,20 @@ class lmdb_rw_manager_t {
   }
 
   void insert(const std::string& binary_hash,
-              lmdb_source_data_t source_data,
-              uint64_t file_offset) {
+              uint64_t file_offset,
+              uint32_t hash_block_size,
+              lmdb_source_data_t source_data) {
 
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_inserted_invalid_byte_alignment;
+      return;
+    }
+
+    // validate block size
+    if (settings.hash_block_size != 0 &&
+        (hash_block_size != settings.hash_block_size)) {
+      ++changes.hashes_not_inserted_mismatched_hash_block_size;
       return;
     }
 
@@ -118,7 +126,9 @@ class lmdb_rw_manager_t {
     }
 
     // add the entry since all the checks passed
-    hash_store.insert(binary_hash, source_lookup_index, file_offset);
+    hash_store.insert(binary_hash,
+                      source_lookup_index,
+                      file_offset);
     ++changes.hashes_inserted;
 
     // add source data in case it isn't there yet
@@ -130,12 +140,20 @@ class lmdb_rw_manager_t {
 
   // remove
   void remove(const std::string& binary_hash,
-              lmdb_source_data_t source_data,
-              uint64_t file_offset) {
+              uint64_t file_offset,
+              uint32_t hash_block_size,
+              lmdb_source_data_t source_data) {
 
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_removed_invalid_byte_alignment;
+      return;
+    }
+
+    // validate hash block size
+    if (settings.hash_block_size != 0 &&
+        (hash_block_size != settings.hash_block_size)) {
+      ++changes.hashes_not_removed_mismatched_hash_block_size;
       return;
     }
 

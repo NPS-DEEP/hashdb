@@ -39,11 +39,13 @@ class hashdb_changes_t {
 
   public:
   uint32_t hashes_inserted;
+  uint32_t hashes_not_inserted_mismatched_hash_block_size;
   uint32_t hashes_not_inserted_invalid_byte_alignment;
   uint32_t hashes_not_inserted_exceeds_max_duplicates;
   uint32_t hashes_not_inserted_duplicate_element;
 
   uint32_t hashes_removed;
+  uint32_t hashes_not_removed_mismatched_hash_block_size;
   uint32_t hashes_not_removed_invalid_byte_alignment;
   uint32_t hashes_not_removed_no_hash;
   uint32_t hashes_not_removed_no_element;
@@ -51,11 +53,13 @@ class hashdb_changes_t {
   hashdb_changes_t() :
 
                      hashes_inserted(0),
+                     hashes_not_inserted_mismatched_hash_block_size(0),
                      hashes_not_inserted_invalid_byte_alignment(0),
                      hashes_not_inserted_exceeds_max_duplicates(0),
                      hashes_not_inserted_duplicate_element(0),
 
                      hashes_removed(0),
+                     hashes_not_removed_mismatched_hash_block_size(0),
                      hashes_not_removed_invalid_byte_alignment(0),
                      hashes_not_removed_no_hash(0),
                      hashes_not_removed_no_element(0) {
@@ -68,6 +72,8 @@ class hashdb_changes_t {
 
     if (hashes_inserted)
       x.xmlout("hashes_inserted", hashes_inserted);
+    if (hashes_not_inserted_mismatched_hash_block_size)
+      x.xmlout("hashes_not_inserted_mismatched_hash_block_size", hashes_not_inserted_mismatched_hash_block_size);
     if (hashes_not_inserted_invalid_byte_alignment)
       x.xmlout("hashes_not_inserted_invalid_byte_alignment", hashes_not_inserted_invalid_byte_alignment);
     if (hashes_not_inserted_exceeds_max_duplicates)
@@ -78,6 +84,8 @@ class hashdb_changes_t {
     // log any remove changes to x
     if (hashes_removed)
       x.xmlout("hashes_removed", hashes_removed);
+    if (hashes_not_removed_mismatched_hash_block_size)
+      x.xmlout("hashes_not_removed_mismatched_hash_block_size", hashes_not_removed_mismatched_hash_block_size);
     if (hashes_not_removed_invalid_byte_alignment)
       x.xmlout("hashes_not_removed_invalid_byte_alignment", hashes_not_removed_invalid_byte_alignment);
     if (hashes_not_removed_no_hash)
@@ -91,6 +99,7 @@ class hashdb_changes_t {
   void report_changes(std::ostream& os) const {
 
     bool has_remove_action = (hashes_removed ||
+                              hashes_not_removed_mismatched_hash_block_size ||
                               hashes_not_removed_invalid_byte_alignment ||
                               hashes_not_removed_no_hash ||
                               hashes_not_removed_no_element); 
@@ -98,6 +107,7 @@ class hashdb_changes_t {
     // log any insert changes to stdout
     std::cout << "hashdb changes (insert):\n"
               << "    hashes inserted: " << hashes_inserted << "\n"
+                << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n"
               << "    hashes not inserted (invalid byte alignment): " << hashes_not_inserted_invalid_byte_alignment << "\n"
               << "    hashes not inserted (exceeds max duplicates): " << hashes_not_inserted_exceeds_max_duplicates << "\n"
               << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n";
@@ -106,6 +116,7 @@ class hashdb_changes_t {
       // log any remove changes to stdout
       std::cout << "hashdb changes (remove):\n"
                 << "    hashes removed: " << hashes_removed << "\n"
+                << "    hashes not removed (mismatched hash block size): " << hashes_not_removed_mismatched_hash_block_size << "\n"
                 << "    hashes not removed (invalid byte alignment): " << hashes_not_removed_invalid_byte_alignment << "\n"
                 << "    hashes not removed (no hash): " << hashes_not_removed_no_hash << "\n"
                 << "    hashes not removed (no element): " << hashes_not_removed_no_element << "\n";

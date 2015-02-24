@@ -134,7 +134,10 @@ const char* hashdb_version() {
       lmdb_source_data_t source_data(it->repository_name, it->filename, 0, "");
 
       // insert the source data
-      rw_manager->insert(it->binary_hash, source_data, it->file_offset);
+      rw_manager->insert(it->binary_hash,
+                         it->file_offset,
+                         block_size,
+                         source_data);
 
       ++it;
     }

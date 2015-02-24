@@ -77,25 +77,14 @@ def parse_changes(lines):
     # create new db
     changes = {}
     
-    # zz
-    print(*lines, sep='\n')
-
     for line in lines:
-        print(line)
         if line.startswith("    hashes inserted: "):
-            print("a")
-            print(int(line[21:]))
-
             changes['hashes_inserted'] = int(line[21:])
-
-            print(changes['hashes_inserted'])
         if line.startswith("    hashes not inserted (mismatched hash block size): "):
             changes['hashes_not_inserted_mismatched_hash_block_size'] = int(line[54:])
         if line.startswith("    hashes not inserted (invalid byte alignment): "):
-            print("b")
             changes['hashes_not_inserted_invalid_byte_alignment'] = int(line[50:])
         if line.startswith("    hashes not inserted (exceeds max duplicates): "):
-            print("c")
             changes['hashes_not_inserted_exceeds_max_duplicates'] = int(line[50:])
         if line.startswith("    hashes not inserted (duplicate element): "):
             changes['hashes_not_inserted_duplicate_element'] = int(line[45:])
@@ -129,7 +118,7 @@ def write_temp_dfxml_hash(filename="file1",
                           file_hashdigest_type="MD5",
                           file_hashdigest="ff112233445566778899aabbccddeeff",
                           byte_run_file_offset=0,
-                          byte_run_len=0,
+                          byte_run_len=4096,
                           byte_run_hashdigest_type="MD5",
                           byte_run_hashdigest="002233445566778899aabbccddeeff"):
     tempfile = open("temp_dfxml_hash", "w")

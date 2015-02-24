@@ -62,7 +62,16 @@ class dfxml_scan_expanded_consumer_t {
   // end_byte_run
   void end_byte_run(const std::string& binary_hash,
                     uint64_t file_offset,
+                    uint32_t hash_block_size,
                     const lmdb_source_data_t& source_data) {
+
+    // for completeness, warn if hash block size disagrees with expected value
+    if (ro_manager->settings.hash_block_size != 0 &&
+        (hash_block_size != ro_manager->settings.hash_block_size)) {
+      std::cerr << "# warning: hash block size " << hash_block_size
+                << " does not match DB hash block size "
+                << ro_manager->settings.hash_block_size << "\n";
+    }
 
     // look for match
     size_t count = ro_manager->find_count(binary_hash);

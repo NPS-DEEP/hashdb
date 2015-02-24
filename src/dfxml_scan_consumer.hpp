@@ -59,6 +59,7 @@ class dfxml_scan_consumer_t {
   // end_byte_run
   void end_byte_run(const std::string& binary_hash,
                     uint64_t file_offset,
+                    uint32_t hash_block_size,
                     const lmdb_source_data_t& source_data) {
 
     // find count for this hash

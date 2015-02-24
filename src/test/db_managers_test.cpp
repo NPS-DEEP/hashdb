@@ -66,23 +66,25 @@ void create_db() {
 void test_change() {
   // insert
   lmdb_rw_manager_t manager(hashdb_dir);
-  manager.insert(binary_aa, source_data1, 4096*1);
+  manager.insert(binary_aa, 4096*1, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_inserted, 1);
-  manager.insert(binary_aa, source_data1, 4095);
+  manager.insert(binary_aa, 4096*1, 4097, source_data1);
+  TEST_EQ(manager.changes.hashes_not_inserted_mismatched_hash_block_size, 1);
+  manager.insert(binary_aa, 4095*1, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_not_inserted_invalid_byte_alignment, 1);
-  manager.insert(binary_aa, source_data1, 4096*2);
+  manager.insert(binary_aa, 4096*2, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_inserted, 2);
-  manager.insert(binary_aa, source_data1, 4096*3);
+  manager.insert(binary_aa, 4096*3, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_not_inserted_exceeds_max_duplicates, 1);
   TEST_EQ(manager.changes.hashes_inserted, 2);
-  manager.insert(binary_aa, source_data1, 4096*2);
+  manager.insert(binary_aa, 4096*2, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_not_inserted_duplicate_element, 1);
   TEST_EQ(manager.size(), 2);
 
   // remove
   TEST_EQ(manager.changes.hashes_inserted, 2);
-  manager.insert(binary_bb, source_data1, 4096*2);
-  manager.insert(binary_bb, source_data1, 4096*3);
+  manager.insert(binary_bb, 4096*2, 4096, source_data1);
+  manager.insert(binary_bb, 4096*3, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_inserted, 4);
   TEST_EQ(manager.size(), 4);
   manager.remove_hash(binary_bb);
@@ -90,17 +92,19 @@ void test_change() {
   TEST_EQ(manager.size(), 2);
   manager.remove_hash(binary_bb);
   TEST_EQ(manager.changes.hashes_not_removed_no_hash, 1);
-  manager.insert(binary_bb, source_data1, 4096*2);
-  manager.insert(binary_bb, source_data1, 4096*3);
+  manager.insert(binary_bb, 4096*2, 4096, source_data1);
+  manager.insert(binary_bb, 4096*3, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_inserted, 6);
   TEST_EQ(manager.size(), 4);
-  manager.remove(binary_bb, source_data1, 4096*2);
+  manager.remove(binary_bb, 4096*2, 4097, source_data1);
+  TEST_EQ(manager.changes.hashes_not_removed_mismatched_hash_block_size, 1);
+  manager.remove(binary_bb, 4096*2, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_removed, 3);
   TEST_EQ(manager.size(), 3);
-  manager.remove(binary_bb, source_data1, 4096*2);
+  manager.remove(binary_bb, 4096*2, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_not_removed_no_element, 1);
   TEST_EQ(manager.size(), 3);
-  manager.remove(binary_bb, source_data1, 4096*3);
+  manager.remove(binary_bb, 4096*3, 4096, source_data1);
   TEST_EQ(manager.changes.hashes_removed, 4);
   TEST_EQ(manager.size(), 2);
 
@@ -110,7 +114,7 @@ void test_change() {
   manager.add_source_data(source_data3);
 
   // add single hash
-  manager.insert(binary_cc, source_data1, 4096*4);
+  manager.insert(binary_cc, 4096*4, 4096, source_data1);
 }
 
 void test_reader() {
@@ -155,10 +159,10 @@ void create_db2() {
 
 void test_zero() {
   lmdb_rw_manager_t rw_manager(hashdb_dir2);
-  rw_manager.insert(binary_0, source_data0, 4096*0);
-  rw_manager.insert(binary_0, source_data0, 4096*1);
-  rw_manager.insert(binary_0, source_data0, 4096*2);
-  rw_manager.insert(binary_0, source_data0, 4096*3);
+  rw_manager.insert(binary_0, 4096*0, 4096, source_data0);
+  rw_manager.insert(binary_0, 4096*1, 4096, source_data0);
+  rw_manager.insert(binary_0, 4096*2, 4096, source_data0);
+  rw_manager.insert(binary_0, 4096*3, 4096, source_data0);
   lmdb_ro_manager_t ro_manager(hashdb_dir2);
   TEST_EQ(ro_manager.find_count(binary_0), 4);
 }

@@ -30,10 +30,9 @@ def test_basic_settings():
     H.int_equals(settings['bloom_M_hash_size'], 14)
 
     # byte alignment boundary
-    H.write_temp_dfxml_hash()
+    H.write_temp_dfxml_hash(byte_run_len=1024)
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
-    H.int_equals(changes['hashes_inserted'], 2)
 
 # hash block size
 def test_hash_block_size():
