@@ -14,7 +14,7 @@ def test_import():
 
     # create new db
     shutil.rmtree(db1, True)
-    H.create(db1)
+    H.hashdb(["create", db1])
 
     # import block size 4096
     lines=H.hashdb(["import", db1, "sample_dfxml4096.xml"])

@@ -8,23 +8,36 @@ import shutil
 import xml.etree.ElementTree as ET
 import hashdb_helpers as H
 
-# check that input parameters get into settings.xml
-def test_create():
-    db1 = "temp_1.hdb"
+db1 = "temp_1.hdb"
 
-    # create new db
+# check basic settings
+def test_basic_settings():
+    # remove existing DB
     shutil.rmtree(db1, True)
-    H.hashdb(["create", db1, "-p1024", "-m10", "--bloom=disabled", "--bloom_kM=4:14"])
 
+    # create new DB
+    H.hashdb(["create", db1, "-p1024", "-m3", "-a 128", "-t 7", "--bloom=disabled", "--bloom_kM=4:14"])
+
+    # validate settings parameters
     settings = H.parse_settings(db1)
     H.int_equals(settings['settings_version'], 2)
-    H.int_equals(settings['byte_alignment'], 512)
-    H.int_equals(settings['hash_truncation'], 0)
+    H.int_equals(settings['byte_alignment'], 128)
+    H.int_equals(settings['hash_truncation'], 7)
     H.int_equals(settings['hash_block_size'], 1024)
-    H.int_equals(settings['maximum_hash_duplicates'], 10)
+    H.int_equals(settings['maximum_hash_duplicates'], 3)
     H.bool_equals(settings['bloom_used'], False)
     H.int_equals(settings['bloom_k_hash_functions'], 4)
     H.int_equals(settings['bloom_M_hash_size'], 14)
+
+    # byte alignment boundary
+    H.write_temp_dfxml_hash()
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+    H.int_equals(changes['hashes_inserted'], 2)
+
+# hash block size
+def test_hash_block_size():
+    print("TBD")
 
     # cleanup
     shutil.rmtree(db1)
@@ -41,7 +54,7 @@ def option_p():
     H.int_equals(changes["hashes_inserted"], 24)
 
 if __name__=="__main__":
-    test_create()
-    option_p()
+    #test_hash_block_size()
+    test_basic_settings()
     print("Test Done.")
 

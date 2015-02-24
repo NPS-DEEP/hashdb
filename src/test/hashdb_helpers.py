@@ -5,14 +5,38 @@
 import xml.etree.ElementTree as ET
 import subprocess
 from subprocess import Popen, PIPE
+import os
 
 # run command array and return lines from it
 def hashdb(cmd):
-    cmd.insert(0, "../hashdb")
-    return Popen(cmd, stdout=PIPE).communicate()[0].decode('utf-8').split("\n")
+    # find hashdb
+    if os.path.isfile("../hashdb"):
+        # path for "make check" from base dir
+        cmd.insert(0, "../hashdb")
+    elif os.path.isfile("../hashdb.exe"):
+        # win path for "make check" from base dir
+        cmd.insert(0, "../hashdb.exe")
+    elif os.path.isfile("./hashdb"):
+        # path for "make check" from test dir
+        cmd.insert(0, "./hashdb")
+    elif os.path.isfile("./hashdb.exe"):
+        # win path for "make check" from test dir
+        cmd.insert(0, "./hashdb.exe")
+    else:
+        print("hashdb not found\n")
+        exit(1)
 
-def create(hashdb_dir):
-    subprocess.call(["../hashdb", "create", hashdb_dir])
+    # run hashdb command
+    p = Popen(cmd, stdout=PIPE)
+    lines = p.communicate()[0].decode('utf-8').split("\n")
+    if p.returncode != 0:
+        print("error with command '", end="")
+        print(*cmd, sep=' ', end="':\n")
+        print(*lines, sep='\n')
+        print("Aborting.")
+        exit(1)
+
+    return lines
 
 def parse_settings(hashdb_dir):
     settings = {}
@@ -41,16 +65,10 @@ def parse_size(lines):
     sizes = {}
     for line in lines:
         line = stream.readline()
-        if line.startswith("hash store: "):
-            sizes['hash_store'] = int(line[12:])
-        if line.startswith("source lookup store: "):
-            sizes['source_lookup_store'] = int(line[21:])
-        if line.startswith("source repository name store: "):
-            sizes['source_repository_name_store'] = int(line[30:])
-        if line.startswith("source filename store: "):
-            sizes['source_filename_store'] = int(line[23:])
-        if line.startswith("source metadata store: "):
-            sizes['source_metadata_store'] = int(line[23:])
+        if line.startswith("hash store size: "):
+            sizes['hash_store'] = int(line[17:])
+        if line.startswith("source store size: "):
+            sizes['source_store'] = int(line[19:])
     return sizes
 
 # test import
@@ -58,14 +76,26 @@ def parse_changes(lines):
 
     # create new db
     changes = {}
+    
+    # zz
+    print(*lines, sep='\n')
+
     for line in lines:
+        print(line)
         if line.startswith("    hashes inserted: "):
+            print("a")
+            print(int(line[21:]))
+
             changes['hashes_inserted'] = int(line[21:])
+
+            print(changes['hashes_inserted'])
         if line.startswith("    hashes not inserted (mismatched hash block size): "):
             changes['hashes_not_inserted_mismatched_hash_block_size'] = int(line[54:])
         if line.startswith("    hashes not inserted (invalid byte alignment): "):
+            print("b")
             changes['hashes_not_inserted_invalid_byte_alignment'] = int(line[50:])
         if line.startswith("    hashes not inserted (exceeds max duplicates): "):
+            print("c")
             changes['hashes_not_inserted_exceeds_max_duplicates'] = int(line[50:])
         if line.startswith("    hashes not inserted (duplicate element): "):
             changes['hashes_not_inserted_duplicate_element'] = int(line[45:])
@@ -79,10 +109,6 @@ def parse_changes(lines):
             changes['hashes_not_removed_no_hash'] = int(line[34:])
         if line.startswith("    hashes not removed (no element): "):
             changes['hashes_not_removed_no_element'] = int(line[37:])
-        if line.startswith("    source metadata inserted: "):
-            changes['source_metadata_inserted'] = int(line[30:])
-        if line.startswith("    source metadata not inserted (already present): "):
-            changes['source_metadata_not_inserted_already_present'] = int(line[52:])
     return changes
 
 # require equality
@@ -96,4 +122,31 @@ def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
 
+# write one block hash entry to file temp_dfxml
+def write_temp_dfxml_hash(filename="file1",
+                          repository_name="repositoryname",
+                          filesize=0,
+                          file_hashdigest_type="MD5",
+                          file_hashdigest="ff112233445566778899aabbccddeeff",
+                          byte_run_file_offset=0,
+                          byte_run_len=0,
+                          byte_run_hashdigest_type="MD5",
+                          byte_run_hashdigest="002233445566778899aabbccddeeff"):
+    tempfile = open("temp_dfxml_hash", "w")
+    tempfile.write("<?xml version='1.0' encoding='UTF-8'?>\n")
+    tempfile.write("<dfxml xmloutputversion='1.0'>\n")
+    tempfile.write("  <fileobject>\n")
+    tempfile.write("    <filename>" + filename + "</filename>\n")
+    tempfile.write("    <repository_name>" + repository_name +
+                                "</repository_name>\n")
+    tempfile.write("    <filesize>" + str(filesize) + "</filesize>\n")
+    tempfile.write("    <hashdigest type='" + file_hashdigest_type + "'>" +
+                                file_hashdigest + "</hashdigest>\n")
+    tempfile.write("    <byte_run file_offset='" + str(byte_run_file_offset) +
+                                "' len='" + str(byte_run_len) + "'>\n")
+    tempfile.write("      <hashdigest type='" + byte_run_hashdigest_type +
+                                "'>" + byte_run_hashdigest + "</hashdigest>\n")
+    tempfile.write("    </byte_run>\n")
+    tempfile.write("  </fileobject>\n")
+    tempfile.write("</dfxml>\n")
 

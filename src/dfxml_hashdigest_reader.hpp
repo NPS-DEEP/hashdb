@@ -67,6 +67,7 @@ class dfxml_hashdigest_reader_t {
     bool under_fileobject_hashdigest;
     bool under_byte_run;
     bool under_byte_run_hashdigest;
+    bool encountered_error;
 
     // parsed byte run values
     std::string byte_run_file_offset;
@@ -94,6 +95,7 @@ class dfxml_hashdigest_reader_t {
                          under_fileobject_hashdigest(false),
                          under_byte_run(false),
                          under_byte_run_hashdigest(false),
+                         encountered_error(false),
                          byte_run_file_offset(""),
                          byte_run_len(""),
                          byte_run_hashdigest_type(""),
@@ -462,7 +464,7 @@ class dfxml_hashdigest_reader_t {
 //    std::cout << "dfxml_hashdigest_reader on_warning(): " << msg << std::endl;
   }
 
-  static void on_error(void* p_user_data ATTRIBUTE_UNUSED,
+  static void on_error(void* p_user_data,
                        const char* msg,
                        ...) {
     va_list arglist;
@@ -471,9 +473,13 @@ class dfxml_hashdigest_reader_t {
     vprintf(msg, arglist);
     va_end(arglist);
 //    std::cout << "dfxml_hashdigest_reader on_error(): " << msg << std::endl;
+
+    // set up convenient reference to user data
+    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
+    user_data.encountered_error = true;
   }
 
-  static void on_fatal_error(void* p_user_data ATTRIBUTE_UNUSED,
+  static void on_fatal_error(void* p_user_data,
                              const char* msg,
                              ...) {
     va_list arglist;
@@ -482,6 +488,10 @@ class dfxml_hashdigest_reader_t {
     vprintf(msg, arglist);
     va_end(arglist);
 //    std::cout << "dfxml_hashdigest_reader on_fatal_error(): " << msg << std::endl;
+
+    // set up convenient reference to user data
+    user_data_t& user_data = *(static_cast<user_data_t*>(p_user_data));
+    user_data.encountered_error = true;
   }
 
   // ************************************************************
@@ -543,13 +553,13 @@ class dfxml_hashdigest_reader_t {
     // tools such as valgrind.  Call only in non-multithreaded environment.
     xmlCleanupParser();
 
-    if (sax_parser_resource == 0) {
+    if (sax_parser_resource == 0 && user_data.encountered_error != true) {
       // good, no failure
       return std::pair<bool, std::string>(true, "");
     } else {
       // something went wrong
       std::stringstream ss;
-      ss << "malformed DFXML file '" << dfxml_file << "'";
+      ss << "Error in DFXML file '" << dfxml_file << "'";
       return std::pair<bool, std::string>(false, ss.str());
     }
   }

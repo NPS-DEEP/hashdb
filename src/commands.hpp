@@ -193,8 +193,8 @@ class commands_t {
       std::cout << rw_manager.changes << "\n";
     } else {
       // bad, reader failed
-      // close logger
       std::cerr << do_read_pair.second << ".  Import aborted.\n";
+      exit(1);
     }
   }
 
@@ -790,11 +790,17 @@ class commands_t {
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
+    std::pair<bool, std::string> do_read_pair =
     dfxml_hashdigest_reader_t<dfxml_scan_consumer_t>::
                         do_read(dfxml_file,
                                 repository_name,
                                 ro_manager.settings.hash_block_size,
                                 &scan_consumer);
+    if (do_read_pair.first == false) {
+      // bad, reader failed
+      std::cerr << do_read_pair.second << ".  Scan aborted.\n";
+      exit(1);
+    }
   }
 
   // scan expanded
@@ -813,11 +819,17 @@ class commands_t {
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
+    std::pair<bool, std::string> do_read_pair =
     dfxml_hashdigest_reader_t<dfxml_scan_expanded_consumer_t>::
                         do_read(dfxml_file,
                                 repository_name,
                                 ro_manager.settings.hash_block_size,
                                 &scan_expanded_consumer);
+    if (do_read_pair.first == false) {
+      // bad, reader failed
+      std::cerr << do_read_pair.second << ".  Scan aborted.\n";
+      exit(1);
+    }
   }
 
   // scan hash
