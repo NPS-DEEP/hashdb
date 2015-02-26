@@ -31,8 +31,6 @@
 #include <iostream>
 #include "lmdb_helper.h"
 
-#define DEBUG
-
 class lmdb_hash_data_t {
   public:
   uint64_t source_id;
@@ -48,66 +46,13 @@ class lmdb_hash_data_t {
   bool operator==(const lmdb_hash_data_t& other) const {
     return (source_id == other.source_id && offset_index == other.offset_index);
   }
-
-  static std::string encode(const lmdb_hash_data_t& data) {
-
-    // allocate space for the encoding
-    size_t max_size = 10 + 10;
-    uint8_t encoding[max_size];
-    uint8_t* p = encoding;
-std::cout << "encoding " << encoding << "\n";
-std::cout << "p " << &p << "\n";
-
-    // encode each field
-    p = lmdb_helper::encode_uint64(data.source_id, p);
-    p = lmdb_helper::encode_uint64(data.offset_index, p);
-
-    // return encoding
-    std::string string_encoding(reinterpret_cast<char*>(p), (p-encoding));
-#ifdef DEBUG
-    std::cout << "encoding ";
-    data.report_fields(std::cout);
-    std::cout << "\n"
-              << "      to " << lmdb_helper::binary_hash_to_hex(string_encoding)
-              << "\n";
-#endif
-
-    return std::string(reinterpret_cast<char*>(p), (p-encoding));
-  }
-
-  void report_fields(std::ostream& os) const {
-    os << "{\"lmdb_hash_data\":{\"source_id\":" << source_id
-       << ",\"offset_index\":" << offset_index
-       << "}}";
-  }
-
-  static lmdb_hash_data_t decode(const std::string& encoding) {
-    const uint8_t* const p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
-    const uint8_t* p = p_start;
-    lmdb_hash_data_t data;
-    p = lmdb_helper::decode_uint64(p, &data.source_id);
-    p = lmdb_helper::decode_uint64(p, &data.offset_index);
-
-    // validate that the data was properly consumed
-    if (p - p_start != encoding.size()) {
-      assert(0);
-    }
-
-#ifdef DEBUG
-    std::cout << "decoding " << lmdb_helper::binary_hash_to_hex(encoding)
-              << "      to ";
-    data.report_fields(std::cout);
-    std::cout << "\n";
-#endif
-
-    // return decoding
-    return data;
-  }
 };
 
 inline std::ostream& operator<<(std::ostream& os,
                         const class lmdb_hash_data_t& data) {
-  data.report_fields(os);
+  os << "{\"lmdb_hash_data\":{\"source_id\":" << data.source_id
+     << ",\"offset_index\":" << data.offset_index
+     << "}}";
   return os;
 }
 

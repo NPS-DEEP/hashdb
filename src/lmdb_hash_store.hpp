@@ -34,6 +34,7 @@
 #include "lmdb_context.hpp"
 #include "lmdb_hash_data.hpp"
 #include "lmdb_hash_it_data.hpp"
+#include "lmdb_data_codec.hpp"
 #include <string>
 
 // no concurrent writes
@@ -112,7 +113,7 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_hash_data_t::encode(
+    std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
                                                 file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
@@ -148,7 +149,7 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_hash_data_t::encode(
+    std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
                                                 file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
@@ -248,7 +249,7 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_hash_data_t::encode(
+    std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
                                                 file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
@@ -334,7 +335,7 @@ class lmdb_hash_store_t {
     lmdb_hash_it_data_t it_data;
     if (rc == 0) {
       std::string encoding = lmdb_helper::get_string(context.data);
-      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(encoding);
+      lmdb_hash_data_t hash_data = lmdb_data_codec::decode_hash_data(encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,
@@ -366,7 +367,7 @@ class lmdb_hash_store_t {
       // prepare hash_it_data
       std::string binary_hash = lmdb_helper::get_string(context.key);
       std::string encoding = lmdb_helper::get_string(context.data);
-      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(encoding);
+      lmdb_hash_data_t hash_data = lmdb_data_codec::decode_hash_data(encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,
@@ -403,7 +404,7 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_hash_data_t::encode(
+    std::string encoding = lmdb_data_codec::encode_hash_data(
                  lmdb_hash_data_t(hash_it_data.source_lookup_index,
                                   hash_it_data.file_offset / byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
@@ -427,7 +428,7 @@ class lmdb_hash_store_t {
       // prepare hash_it_data
       std::string binary_hash = lmdb_helper::get_string(context.key);
       std::string next_encoding = lmdb_helper::get_string(context.data);
-      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(next_encoding);
+      lmdb_hash_data_t hash_data = lmdb_data_codec::decode_hash_data(next_encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,

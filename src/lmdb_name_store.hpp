@@ -31,7 +31,7 @@
 #include <string>
 #include "lmdb.h"
 #include "lmdb_helper.h"
-#include "lmdb_name_data.hpp"
+#include "lmdb_data_codec.hpp"
 #include "lmdb_context.hpp"
 
 // no concurrent writes
@@ -106,8 +106,8 @@ class lmdb_name_store_t {
     context.open();
 
     // encode the key
-    std::string key_encoding = lmdb_name_data_t::encode(
-                                 lmdb_name_data_t(repository_name, filename));
+    std::string key_encoding = lmdb_data_codec::encode_name_data(
+                                            repository_name, filename);
 
     lmdb_helper::point_to_string(key_encoding, context.key);
 
@@ -119,12 +119,12 @@ class lmdb_name_store_t {
     if (rc == 0) {
       // great, get the existing index
       std::string encoding = lmdb_helper::get_string(context.data);
-      source_lookup_index = lmdb_helper::decode_uint64_data(encoding);
+      source_lookup_index = lmdb_data_codec::decode_uint64_data(encoding);
     } else if (rc == MDB_NOTFOUND) {
       // fine, add new entry
       is_new = true;
       source_lookup_index = size() + 1;
-      std::string data_encoding = lmdb_helper::encode_uint64_data(source_lookup_index);
+      std::string data_encoding = lmdb_data_codec::encode_uint64_data(source_lookup_index);
       lmdb_helper::point_to_string(data_encoding, context.data);
       rc = mdb_put(context.txn, context.dbi, &context.key, &context.data,
                                                          MDB_NOOVERWRITE);
@@ -154,8 +154,8 @@ class lmdb_name_store_t {
     context.open();
 
     // encode the key
-    std::string encoding = lmdb_name_data_t::encode(
-                               lmdb_name_data_t(repository_name, filename));
+    std::string encoding = lmdb_data_codec::encode_name_data(
+                                            repository_name, filename);
     lmdb_helper::point_to_string(encoding, context.key);
 
     // see if key is there
@@ -167,7 +167,7 @@ class lmdb_name_store_t {
     if (rc == 0) {
       // great, get the existing index
       std::string data_encoding = lmdb_helper::get_string(context.data);
-      source_lookup_index = lmdb_helper::decode_uint64_data(data_encoding);
+      source_lookup_index = lmdb_data_codec::decode_uint64_data(data_encoding);
       is_there = true;
     } else if (rc == MDB_NOTFOUND) {
       // no action

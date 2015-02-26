@@ -23,7 +23,7 @@ def hashdb(cmd):
         # win path for "make check" from test dir
         cmd.insert(0, "./hashdb.exe")
     else:
-        print("hashdb not found\n")
+        print("hashdb tool not found\n")
         exit(1)
 
     # run hashdb command
@@ -34,7 +34,7 @@ def hashdb(cmd):
         print(*cmd, sep=' ', end="':\n")
         print(*lines, sep='\n')
         print("Aborting.")
-        exit(1)
+        raise Exception("hashdb aborted.")
 
     return lines
 

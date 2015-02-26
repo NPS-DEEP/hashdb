@@ -65,7 +65,7 @@ commands_test_LDADD = ../libhashdb.la
 AM_LDFLAGS = -static
 
 clean-local:
-	rm -rf temp_dir* temp_dfxml_out.xml
+	rm -rf temp_dir* temp_dfxml_out.xml temp_dfxml_hash
 
 # test with valgrind memory analysis
 run_tests_valgrind:
@@ -82,9 +82,9 @@ db_test_SOURCES = \
 	../lmdb_hash_it_data.hpp \
 	../lmdb_hash_store.hpp \
 	../lmdb_helper.h \
+	../lmdb_data_codec.hpp \
 	../lmdb_name_store.hpp \
 	../lmdb_source_data.hpp \
-	../lmdb_source_data_encoding.hpp \
 	../lmdb_source_it_data.hpp \
 	../lmdb_source_store.hpp \
 	unit_test.h \

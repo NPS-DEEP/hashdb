@@ -94,37 +94,36 @@ def test_hash_truncation():
     H.hashdb(["create", db1, "-t3", "--bloom", "disabled"])
 
     # valid entry
-    H.write_temp_dfxml_hash(file_hashdigest='00112233')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00112233')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
 
     # duplicate element
-    H.write_temp_dfxml_hash(file_hashdigest='00112244')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00112244')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_not_inserted_duplicate_element'], 1)
 
     # valid entry
-    H.write_temp_dfxml_hash(file_hashdigest='00114433')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00114433')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
-    exit(1)
 
     # create new DB with 3 byte hash truncation, with Bloom
     shutil.rmtree(db1, True)
     H.hashdb(["create", db1, "-t3"])
 
     # valid entry
-    H.write_temp_dfxml_hash(file_hashdigest='00112233')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00112233')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
 
     # duplicate element
-    H.write_temp_dfxml_hash(file_hashdigest='00112244')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00112244')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_not_inserted_duplicate_element'], 1)
 
     # valid entry
-    H.write_temp_dfxml_hash(file_hashdigest='00114433')
+    H.write_temp_dfxml_hash(byte_run_hashdigest='00114433')
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
 
@@ -137,6 +136,6 @@ if __name__=="__main__":
     test_max_duplicates()
     test_byte_alignment()
     test_hash_truncation()
-    test_bloom()
+    #test_bloom()
     print("Test Done.")
 

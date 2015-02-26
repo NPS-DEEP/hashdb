@@ -28,9 +28,6 @@
 #ifndef LMDB_HELPER_H
 #define LMDB_HELPER_H
 
-// enable debug
-// #define DEBUG 1
-
 #include "sys/stat.h"
 #include "file_modes.h"
 #include "lmdb.h"
@@ -137,8 +134,7 @@ class lmdb_helper {
     size1 : target[0] = static_cast<uint8_t>((part0      ) | 0x80);
 
     target[size-1] &= 0x7F;
-std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target << ", " << size << "\n";
-std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target + size << "\n";
+
     return target + size;
   }
 
@@ -182,8 +178,8 @@ std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target 
   // value written.  Destination must be large enough.
   static uint8_t* encode_sized_string(const std::string& text, uint8_t* p) {
     p = encode_uint64(text.size(), p);
-    std::memcpy(p, text.c_str(), sizeof(text));
-    return p + sizeof(text);
+    std::memcpy(p, text.c_str(), text.size());
+    return p + text.size();
   }
 
   // read string size and then string, return pointer past value read.
@@ -191,39 +187,9 @@ std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target 
   static const uint8_t* decode_sized_string(const uint8_t* p, std::string* text) {
     uint64_t size;
     p = decode_uint64(p, &size);
-    uint8_t b[size];
-    std::memcpy(b, p, size);
-    *text = std::string(reinterpret_cast<char*>(b), size);
+    *text = std::string(reinterpret_cast<const char*>(p), size);
     p += size;
     return p;
-  }
-
-  static std::string encode_uint64_data(const uint64_t data) {
-
-    // allocate space for the encoding
-    size_t max_size = 10;
-    uint8_t encoding[max_size];
-    uint8_t* p = encoding;
-
-    // encode the field
-    p = lmdb_helper::encode_uint64(data, p);
-
-    // return encoding
-    return std::string(reinterpret_cast<char*>(p), (p-encoding));
-  }
-
-  static uint64_t decode_uint64_data(const std::string& encoding) {
-    const uint8_t* p = reinterpret_cast<const uint8_t*>(encoding.c_str());
-    const uint8_t* p_start = p;
-    uint64_t data = 0;
-    p = decode_uint64(p, &data);
-
-    // validate that the encoding was properly consumed
-    if (p - p_start != encoding.size()) {
-      assert(0);
-    }
-
-    return data;
   }
 
   static MDB_env* open_env(const std::string& store_dir,
@@ -352,58 +318,6 @@ std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target 
     }
     return stat.ms_entries;
   }
-
-/*
-  static uint64_t encoding_to_uint64(const MDB_val& val) {
-    uint64_t n;
-    lmdb_codec::decode_uint64(
-        static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data)), &n);
-    return n;
-  }
-
-  static std::pair<uint64_t, uint64_t> encoding_to_uint64_pair(const MDB_val& val) {
-    uint64_t n1;
-    uint64_t n2;
-    const uint8_t* val_ptr = static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data));
-    const uint8_t* ptr2 = lmdb_codec::decode_uint64(val_ptr, &n1);
-    const uint8_t* ptr3 = lmdb_codec::decode_uint64(ptr2, &n2);
-    if ((size_t)(ptr3 - val_ptr) > val.mv_size) {
-      // corrupt data
-      std::cerr << "corrupt data on read.\n";
-      assert(0);
-    }
-    return std::pair<uint64_t, uint64_t>(n1, n2);
-  }
-
-  static std::string uint64_to_encoding(uint64_t n) {
-    // set value
-    uint8_t ptr[10];
-    uint8_t* ptr2 = lmdb_codec::encode_uint64((n, ptr);
-    return std::string(reinterpret_cast<char*>(ptr), ptr2 - ptr);
-  }
-
-  static std::string uint64_pair_to_encoding(uint64_t n1,
-                                             uint64_t n2) {
-    // set value
-    uint8_t ptr[10*2];
-    uint8_t* ptr2 = lmdb_codec::decode_uint64(n1, ptr);
-    uint8_t* ptr3 = lmdb_codec::decode_uint64(n2, ptr2);
-    return std::string(reinterpret_cast<char*>(ptr), ptr3 - ptr);
-  }
-
-  static std::string string_pair_to_encoding(const std::string& s1,
-                                             const std::string& s2) {
-    // build cstr
-    size_t l1 = s1.length();
-    size_t l2 = s2.length();
-    size_t l3 = l1 + 1 + l2;
-    char cstr[l3];  // space for strings separated by \0
-    std::strcpy(cstr, s1.c_str()); // copy first plus \0
-    std::memcpy(cstr+l1+1, s2.c_str(), l2);
-    std::string encoding(cstr, l3);
-    return std::string(cstr, l3);
-  }
-*/
 
   static void point_to_string(const std::string& str, MDB_val& val) {
     val.mv_size = str.size();
