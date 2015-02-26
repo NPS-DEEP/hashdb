@@ -41,48 +41,39 @@
 #include <iomanip>
 
 class lmdb_helper {
+
   private:
-  // read pointer into value, return pointer past value read.
-  // each read will consume no more than 10 bytes.
-  // note: code adapted directly from:
-  // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417 
-  static const uint8_t* private_encoding_to_uint64(const uint8_t* p_ptr, uint64_t* value) {
+  static inline uint8_t tohex(uint8_t c) {
+    switch(c) {
+      case 0 : return '0'; break;
+      case 1 : return '1'; break;
+      case 2 : return '2'; break;
+      case 3 : return '3'; break;
+      case 4 : return '4'; break;
+      case 5 : return '5'; break;
+      case 6 : return '6'; break;
+      case 7 : return '7'; break;
+      case 8 : return '8'; break;
+      case 9 : return '9'; break;
+      case 10 : return 'a'; break;
+      case 11 : return 'b'; break;
+      case 12 : return 'c'; break;
+      case 13 : return 'd'; break;
+      case 14 : return 'e'; break;
+      case 15 : return 'f'; break;
+      default:
+        std::cerr << "char " << (uint32_t)c << "\n";
+        assert(0);
+        return 0; // for mingw compiler
+    }
+  }
 
-    const uint8_t* ptr = p_ptr;
-    uint32_t b;
-
-    // Splitting into 32-bit pieces gives better performance on 32-bit
-    // processors.
-    uint32_t part0 = 0, part1 = 0, part2 = 0;
-
-    b = *(ptr++); part0  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part0 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part0 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part0 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part1  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part1 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part1 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part1 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part2  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
-    b = *(ptr++); part2 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-
-    // We have overrun the maximum size of a varint (10 bytes).  The data
-    // must be corrupt.
-    std::cerr << "corrupted uint64 protocol buffer\n";
-    assert(0);
-
-   done:
-    *value = (static_cast<uint64_t>(part0)      ) |
-             (static_cast<uint64_t>(part1) << 28) |
-             (static_cast<uint64_t>(part2) << 56);
-    return ptr;
-}
-
+  public:
   // write value into encoding, return pointer past value written.
   // each write will add no more than 10 bytes.
   // note: code adapted directly from:
   // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417 
-  inline static uint8_t* private_uint64_to_encoding(uint64_t value, uint8_t* target) {
+  static uint8_t* encode_uint64(uint64_t value, uint8_t* target) {
 
     // Splitting into 32-bit pieces gives better performance on 32-bit
     // processors.
@@ -146,35 +137,95 @@ class lmdb_helper {
     size1 : target[0] = static_cast<uint8_t>((part0      ) | 0x80);
 
     target[size-1] &= 0x7F;
+std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target << ", " << size << "\n";
+std::cout << "lmdb_helper.encode_uint64 encode " << value << " into " << target + size << "\n";
     return target + size;
   }
 
-  static inline uint8_t tohex(uint8_t c) {
-    switch(c) {
-      case 0 : return '0'; break;
-      case 1 : return '1'; break;
-      case 2 : return '2'; break;
-      case 3 : return '3'; break;
-      case 4 : return '4'; break;
-      case 5 : return '5'; break;
-      case 6 : return '6'; break;
-      case 7 : return '7'; break;
-      case 8 : return '8'; break;
-      case 9 : return '9'; break;
-      case 10 : return 'a'; break;
-      case 11 : return 'b'; break;
-      case 12 : return 'c'; break;
-      case 13 : return 'd'; break;
-      case 14 : return 'e'; break;
-      case 15 : return 'f'; break;
-      default:
-        std::cerr << "char " << (uint32_t)c << "\n";
-        assert(0);
-        return 0; // for mingw compiler
-    }
+  // read pointer into value, return pointer past value read.
+  // each read will consume no more than 10 bytes.
+  // note: code adapted directly from:
+  // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417 
+  static const uint8_t* decode_uint64(const uint8_t* p_ptr, uint64_t* value) {
+
+    const uint8_t* ptr = p_ptr;
+    uint32_t b;
+
+    // Splitting into 32-bit pieces gives better performance on 32-bit
+    // processors.
+    uint32_t part0 = 0, part1 = 0, part2 = 0;
+
+    b = *(ptr++); part0  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part0 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part0 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part0 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part1  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part1 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part1 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part1 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part2  = (b & 0x7F)      ; if (!(b & 0x80)) goto done;
+    b = *(ptr++); part2 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+
+    // We have overrun the maximum size of a varint (10 bytes).  The data
+    // must be corrupt.
+    std::cerr << "corrupted uint64 protocol buffer\n";
+    assert(0);
+
+   done:
+    *value = (static_cast<uint64_t>(part0)      ) |
+             (static_cast<uint64_t>(part1) << 28) |
+             (static_cast<uint64_t>(part2) << 56);
+    return ptr;
   }
 
-  public:
+  // write string size and then string into encoding, return pointer past
+  // value written.  Destination must be large enough.
+  static uint8_t* encode_sized_string(const std::string& text, uint8_t* p) {
+    p = encode_uint64(text.size(), p);
+    std::memcpy(p, text.c_str(), sizeof(text));
+    return p + sizeof(text);
+  }
+
+  // read string size and then string, return pointer past value read.
+  // currently, data must be valid or this can break.
+  static const uint8_t* decode_sized_string(const uint8_t* p, std::string* text) {
+    uint64_t size;
+    p = decode_uint64(p, &size);
+    uint8_t b[size];
+    std::memcpy(b, p, size);
+    *text = std::string(reinterpret_cast<char*>(b), size);
+    p += size;
+    return p;
+  }
+
+  static std::string encode_uint64_data(const uint64_t data) {
+
+    // allocate space for the encoding
+    size_t max_size = 10;
+    uint8_t encoding[max_size];
+    uint8_t* p = encoding;
+
+    // encode the field
+    p = lmdb_helper::encode_uint64(data, p);
+
+    // return encoding
+    return std::string(reinterpret_cast<char*>(p), (p-encoding));
+  }
+
+  static uint64_t decode_uint64_data(const std::string& encoding) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(encoding.c_str());
+    const uint8_t* p_start = p;
+    uint64_t data = 0;
+    p = decode_uint64(p, &data);
+
+    // validate that the encoding was properly consumed
+    if (p - p_start != encoding.size()) {
+      assert(0);
+    }
+
+    return data;
+  }
+
   static MDB_env* open_env(const std::string& store_dir,
                            file_mode_type_t file_mode) {
 
@@ -302,9 +353,10 @@ class lmdb_helper {
     return stat.ms_entries;
   }
 
+/*
   static uint64_t encoding_to_uint64(const MDB_val& val) {
     uint64_t n;
-    private_encoding_to_uint64(
+    lmdb_codec::decode_uint64(
         static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data)), &n);
     return n;
   }
@@ -313,8 +365,8 @@ class lmdb_helper {
     uint64_t n1;
     uint64_t n2;
     const uint8_t* val_ptr = static_cast<const uint8_t*>(const_cast<const void*>(val.mv_data));
-    const uint8_t* ptr2 = private_encoding_to_uint64(val_ptr, &n1);
-    const uint8_t* ptr3 = private_encoding_to_uint64(ptr2, &n2);
+    const uint8_t* ptr2 = lmdb_codec::decode_uint64(val_ptr, &n1);
+    const uint8_t* ptr3 = lmdb_codec::decode_uint64(ptr2, &n2);
     if ((size_t)(ptr3 - val_ptr) > val.mv_size) {
       // corrupt data
       std::cerr << "corrupt data on read.\n";
@@ -326,7 +378,7 @@ class lmdb_helper {
   static std::string uint64_to_encoding(uint64_t n) {
     // set value
     uint8_t ptr[10];
-    uint8_t* ptr2 = private_uint64_to_encoding(n, ptr);
+    uint8_t* ptr2 = lmdb_codec::encode_uint64((n, ptr);
     return std::string(reinterpret_cast<char*>(ptr), ptr2 - ptr);
   }
 
@@ -334,8 +386,8 @@ class lmdb_helper {
                                              uint64_t n2) {
     // set value
     uint8_t ptr[10*2];
-    uint8_t* ptr2 = private_uint64_to_encoding(n1, ptr);
-    uint8_t* ptr3 = private_uint64_to_encoding(n2, ptr2);
+    uint8_t* ptr2 = lmdb_codec::decode_uint64(n1, ptr);
+    uint8_t* ptr3 = lmdb_codec::decode_uint64(n2, ptr2);
     return std::string(reinterpret_cast<char*>(ptr), ptr3 - ptr);
   }
 
@@ -351,6 +403,7 @@ class lmdb_helper {
     std::string encoding(cstr, l3);
     return std::string(cstr, l3);
   }
+*/
 
   static void point_to_string(const std::string& str, MDB_val& val) {
     val.mv_size = str.size();
@@ -362,7 +415,7 @@ class lmdb_helper {
   }
 
   /**
-   * Return empty if hexdigest length not even or any invalid digits.
+   * Return empty if hexdigest length is not even or has any invalid digits.
    */
   static std::string hex_to_binary_hash(const std::string& hex_string) {
 

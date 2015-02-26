@@ -34,26 +34,109 @@ def test_basic_settings():
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
     H.int_equals(changes['hashes_inserted'], 1)
 
-# hash block size
 def test_hash_block_size():
-    print("TBD")
+    # create new DB
+    shutil.rmtree(db1, True)
+    H.hashdb(["create", db1])
 
-    # cleanup
-    shutil.rmtree(db1)
+    ## valid write
+    #H.write_temp_dfxml_hash();
+    #changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    #H.int_equals(changes['hashes_inserted'], 1)
 
-def option_p():
-    # only accept 512
-    db1 = "temp_1.hdb"
-    H.hashdb(["create", db1, "-p512"])
-    lines=H.hashdb(["import", db1, "sample_dfxml4096.xml"])
-    changes = H.parse_changes(lines)
-    H.int_equals(changes["hashes_inserted"], 0)
-    lines=H.hashdb(["import", db1, "sample_dfxml512.xml"])
-    changes = H.parse_changes(lines)
-    H.int_equals(changes["hashes_inserted"], 24)
+    # wrong hash block size
+    H.write_temp_dfxml_hash(byte_run_len=1024)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 0)
+    H.int_equals(changes['hashes_not_inserted_mismatched_hash_block_size'], 1)
+
+def test_max_duplicates():
+    # create new DB with max 2
+    shutil.rmtree(db1, True)
+    H.hashdb(["create", db1, "-m2"])
+
+    # add three entries where only two are allowed
+    H.write_temp_dfxml_hash(byte_run_file_offset=4096*1)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.write_temp_dfxml_hash(byte_run_file_offset=4096*2)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.write_temp_dfxml_hash(byte_run_file_offset=4096*3)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 0)
+    H.int_equals(changes['hashes_not_inserted_exceeds_max_duplicates'], 1)
+    sizes = H.parse_sizes(H.hashdb(["size", db1]))
+    H.int_equals(sizes['hash_store_size'], 2)
+
+def test_byte_alignment():
+    # create new DB with byte alignment 2
+    shutil.rmtree(db1, True)
+    H.hashdb(["create", db1, "-a2"])
+
+    # valid
+    H.write_temp_dfxml_hash(byte_run_file_offset=6)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+
+    # invalid
+    H.write_temp_dfxml_hash(byte_run_file_offset=7)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 0)
+    H.int_equals(changes['hashes_not_inserted_invalid_byte_alignment'], 1)
+    
+    # valid
+    H.write_temp_dfxml_hash(byte_run_file_offset=8)
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+
+def test_hash_truncation():
+    # create new DB with 3 byte hash truncation, no Bloom
+    shutil.rmtree(db1, True)
+    H.hashdb(["create", db1, "-t3", "--bloom", "disabled"])
+
+    # valid entry
+    H.write_temp_dfxml_hash(file_hashdigest='00112233')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+
+    # duplicate element
+    H.write_temp_dfxml_hash(file_hashdigest='00112244')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_not_inserted_duplicate_element'], 1)
+
+    # valid entry
+    H.write_temp_dfxml_hash(file_hashdigest='00114433')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+    exit(1)
+
+    # create new DB with 3 byte hash truncation, with Bloom
+    shutil.rmtree(db1, True)
+    H.hashdb(["create", db1, "-t3"])
+
+    # valid entry
+    H.write_temp_dfxml_hash(file_hashdigest='00112233')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+
+    # duplicate element
+    H.write_temp_dfxml_hash(file_hashdigest='00112244')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_not_inserted_duplicate_element'], 1)
+
+    # valid entry
+    H.write_temp_dfxml_hash(file_hashdigest='00114433')
+    changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
+    H.int_equals(changes['hashes_inserted'], 1)
+
+#def test_bloom():
+#    # no action, see C test
 
 if __name__=="__main__":
-    #test_hash_block_size()
     test_basic_settings()
+    test_hash_block_size()
+    test_max_duplicates()
+    test_byte_alignment()
+    test_hash_truncation()
+    test_bloom()
     print("Test Done.")
 

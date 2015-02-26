@@ -60,15 +60,13 @@ def parse_settings(hashdb_dir):
     settings['bloom_M_hash_size'] = int(root.find('bloom_M_hash_size').text)
     return settings
 
-# require a specific database size
-def parse_size(lines):
+def parse_sizes(lines):
     sizes = {}
     for line in lines:
-        line = stream.readline()
         if line.startswith("hash store size: "):
-            sizes['hash_store'] = int(line[17:])
+            sizes['hash_store_size'] = int(line[17:])
         if line.startswith("source store size: "):
-            sizes['source_store'] = int(line[19:])
+            sizes['source_store_size'] = int(line[19:])
     return sizes
 
 # test import

@@ -32,6 +32,7 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
+#include "lmdb_hash_data.hpp"
 #include "lmdb_hash_it_data.hpp"
 #include <string>
 
@@ -111,8 +112,9 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                           source_lookup_index, file_offset/byte_alignment);
+    std::string encoding = lmdb_hash_data_t::encode(
+                               lmdb_hash_data_t(source_lookup_index,
+                                                file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // insert
@@ -146,8 +148,9 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                           source_lookup_index, file_offset/byte_alignment);
+    std::string encoding = lmdb_hash_data_t::encode(
+                               lmdb_hash_data_t(source_lookup_index,
+                                                file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // erase
@@ -245,8 +248,9 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                           source_lookup_index, file_offset/byte_alignment);
+    std::string encoding = lmdb_hash_data_t::encode(
+                               lmdb_hash_data_t(source_lookup_index,
+                                                file_offset/byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair
@@ -329,11 +333,11 @@ class lmdb_hash_store_t {
                             MDB_SET_KEY);
     lmdb_hash_it_data_t it_data;
     if (rc == 0) {
-      std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
+      std::string encoding = lmdb_helper::get_string(context.data);
+      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
-                                    uint64_pair.first,
-                                    uint64_pair.second*byte_alignment,
+                                    hash_data.source_id,
+                                    hash_data.offset_index * byte_alignment,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data
@@ -361,12 +365,11 @@ class lmdb_hash_store_t {
 
       // prepare hash_it_data
       std::string binary_hash = lmdb_helper::get_string(context.key);
-      std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
-
+      std::string encoding = lmdb_helper::get_string(context.data);
+      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
-                                    uint64_pair.first,
-                                    uint64_pair.second*byte_alignment,
+                                    hash_data.source_id,
+                                    hash_data.offset_index * byte_alignment,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data
@@ -400,9 +403,9 @@ class lmdb_hash_store_t {
     }
 
     // set data
-    std::string encoding = lmdb_helper::uint64_pair_to_encoding(
-                                     hash_it_data.source_lookup_index,
-                                     hash_it_data.file_offset/byte_alignment);
+    std::string encoding = lmdb_hash_data_t::encode(
+                 lmdb_hash_data_t(hash_it_data.source_lookup_index,
+                                  hash_it_data.file_offset / byte_alignment));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair which must exist
@@ -423,11 +426,11 @@ class lmdb_hash_store_t {
 
       // prepare hash_it_data
       std::string binary_hash = lmdb_helper::get_string(context.key);
-      std::pair<uint64_t, uint64_t> uint64_pair =
-                          lmdb_helper::encoding_to_uint64_pair(context.data);
+      std::string next_encoding = lmdb_helper::get_string(context.data);
+      lmdb_hash_data_t hash_data = lmdb_hash_data_t::decode(next_encoding);
       it_data = lmdb_hash_it_data_t(binary_hash,
-                                    uint64_pair.first,
-                                    uint64_pair.second*byte_alignment,
+                                    hash_data.source_id,
+                                    hash_data.offset_index * byte_alignment,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data for end

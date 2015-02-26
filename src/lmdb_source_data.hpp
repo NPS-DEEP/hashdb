@@ -93,15 +93,78 @@ class lmdb_source_data_t {
     changed |= copy(other.binary_hash, binary_hash);
     return changed;
   }
+
+  void report_fields(std::ostream& os) const {
+    os << "{\"lmdb_source_data\":{\"repository_name\":\"" << repository_name
+       << "\",\"filename\":\"" << filename
+       << "\",\"filesize\":" << filesize
+       << ",\"hashdigest\":\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
+       << "\"}}";
+  }
+
+  static std::string encode(const lmdb_source_data_t& data) {
+
+    // allocate space for the encoding
+    size_t max_size =
+                      10
+                    + data.repository_name.size()
+                    + 10
+                    + data.filename.size()
+                    + 10
+                    + 10
+                    + data.binary_hash.size();
+    uint8_t encoding[max_size];
+    uint8_t* p = encoding;
+
+    // encode each field
+    p = lmdb_helper::encode_sized_string(data.repository_name, p);
+    p = lmdb_helper::encode_sized_string(data.filename, p);
+    p = lmdb_helper::encode_uint64(data.filesize, p);
+    p = lmdb_helper::encode_sized_string(data.binary_hash, p);
+
+#ifdef DEBUG
+    std::string encoding_string(reinterpret_cast<char*>(p), (p-encoding));
+    std::cout << "encoding lmdb_source_data ";
+    data.report_fields(std::cout);
+    std::cout << "\n"
+              << "      to binary data " << lmdb_helper::binary_hash_to_hex(encoding_string)
+              << " size " << encoding_string.size() << "\n";
+#endif
+
+    // return encoding
+    return std::string(reinterpret_cast<char*>(p), (p-encoding));
+
+  }
+
+  static lmdb_source_data_t decode(const std::string& encoding) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(encoding.c_str());
+    const uint8_t* p_start = p;
+    lmdb_source_data_t data;
+    p = lmdb_helper::decode_sized_string(p, &data.repository_name);
+    p = lmdb_helper::decode_sized_string(p, &data.filename);
+    p = lmdb_helper::decode_uint64(p, &data.filesize);
+    p = lmdb_helper::decode_sized_string(p, &data.binary_hash);
+
+#ifdef DEBUG
+    std::string hex_encoding = lmdb_helper::binary_hash_to_hex(encoding);
+    std::cout << "decoding binary data " << hex_encoding << " size " << encoding.size() << "\n"
+              << " to lmdb_source_data ";
+    data.report_fields(std::cout);
+    std::cout << "\n";
+#endif
+
+    // validate that the encoding was properly consumed
+    if (p - p_start != encoding.size()) {
+      assert(0);
+    }
+
+    return data;
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& os,
                         const class lmdb_source_data_t& data) {
-  os << "{\"lmdb_source_data\":{\"repository_name\":\"" << data.repository_name
-     << "\",\"filename\":\"" << data.filename
-     << "\",\"filesize\":" << data.filesize
-     << ",\"hashdigest\":\"" << lmdb_helper::binary_hash_to_hex(data.binary_hash)
-     << "\"}}";
+  data.report_fields(os);
   return os;
 }
 
