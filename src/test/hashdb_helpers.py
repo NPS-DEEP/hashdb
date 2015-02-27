@@ -23,7 +23,7 @@ def hashdb(cmd):
         # win path for "make check" from test dir
         cmd.insert(0, "./hashdb.exe")
     else:
-        print("hashdb tool not found\n")
+        print("hashdb tool not found.  Aborting.\n")
         exit(1)
 
     # run hashdb command
@@ -108,6 +108,31 @@ def bool_equals(a,b):
 def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
+
+def dfxml_hash_equals(filename="file1",
+                      repository_name="repositoryname",
+                      filesize=0,
+                      file_hashdigest_type="MD5",
+                      file_hashdigest="ff112233445566778899aabbccddeeff",
+                      byte_run_file_offset=0,
+                      byte_run_len=4096,
+                      byte_run_hashdigest_type="MD5",
+                      byte_run_hashdigest="002233445566778899aabbccddeeff"):
+    tree = ET.parse("temp_1.xml")
+    root = tree.getroot()
+    dfxml_node = root.find('dfxml')
+    fileobject_node = dfxml_node.find('fileobject')
+    str_equals(fileobject_node.find('repository_name').text, repository_name)
+    str_equals(fileobject_node.find('filename').text, file_name)
+    int_equals(int(fileobject_node.find('filesize').text), filesize)
+    str_equals(fileobject_node.find('hashdigest').attrib['type'], file_hashdigest_type)
+    str_equals(fileobject_node.find('hashdigest').text, file_hashdigest)
+
+    byte_run_node = fileobject_node.find('byte_run')
+    str_equals(byte_run_node.attrib['file_offset'], byte_run_file_offset)
+    str_equals(byte_run_node.attrib['file_len'], byte_run_len)
+    str_equals(byte_run_node.find('hashdigest').attrib['type'], byte_run_hashdigest_type)
+    str_equals(byte_run_node.find('hashdigest').text, byte_run_hashdigest)
 
 # write one block hash entry to file temp_dfxml
 def write_temp_dfxml_hash(filename="file1",
