@@ -65,7 +65,7 @@ commands_test_LDADD = ../libhashdb.la
 AM_LDFLAGS = -static
 
 clean-local:
-	rm -rf temp_dir* temp_dfxml_out.xml temp_dfxml_hash
+	rm -rf temp_*
 
 # test with valgrind memory analysis
 run_tests_valgrind:

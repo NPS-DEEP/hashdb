@@ -39,11 +39,6 @@ def test_hash_block_size():
     shutil.rmtree(db1, True)
     H.hashdb(["create", db1])
 
-    ## valid write
-    #H.write_temp_dfxml_hash();
-    #changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))
-    #H.int_equals(changes['hashes_inserted'], 1)
-
     # wrong hash block size
     H.write_temp_dfxml_hash(byte_run_len=1024)
     changes = H.parse_changes(H.hashdb(["import", db1, "temp_dfxml_hash"]))

@@ -109,41 +109,56 @@ def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
 
-def dfxml_hash_equals(filename="file1",
+def dfxml_hash_equals(
                       repository_name="repositoryname",
+                      filename="file1",
                       filesize=0,
                       file_hashdigest_type="MD5",
                       file_hashdigest="ff112233445566778899aabbccddeeff",
                       byte_run_file_offset=0,
                       byte_run_len=4096,
                       byte_run_hashdigest_type="MD5",
-                      byte_run_hashdigest="002233445566778899aabbccddeeff"):
+                      byte_run_hashdigest="00112233445566778899aabbccddeeff"):
     tree = ET.parse("temp_1.xml")
     root = tree.getroot()
-    dfxml_node = root.find('dfxml')
-    fileobject_node = dfxml_node.find('fileobject')
+    fileobject_node = root.find('fileobject')
     str_equals(fileobject_node.find('repository_name').text, repository_name)
-    str_equals(fileobject_node.find('filename').text, file_name)
-    int_equals(int(fileobject_node.find('filesize').text), filesize)
-    str_equals(fileobject_node.find('hashdigest').attrib['type'], file_hashdigest_type)
-    str_equals(fileobject_node.find('hashdigest').text, file_hashdigest)
+    str_equals(fileobject_node.find('filename').text, filename)
+
+    # filesize is optional, default 0
+    if (fileobject_node.find('filesize') == None):
+        # require default = 0
+        int_equals(filesize, 0)
+    else:
+        # use filesize
+        int_equals(int(fileobject_node.find('filesize').text), filesize)
+
+    # file hashdigest is optional
+    if (fileobject_node.find('hashdigest') == None):
+        # require default = ""
+        str_equals(file_hashdigest_type, "");
+        str_equals(file_hashdigest, "");
+    else:
+        str_equals(fileobject_node.find('hashdigest').attrib['type'], file_hashdigest_type)
+        str_equals(fileobject_node.find('hashdigest').text, file_hashdigest)
 
     byte_run_node = fileobject_node.find('byte_run')
-    str_equals(byte_run_node.attrib['file_offset'], byte_run_file_offset)
-    str_equals(byte_run_node.attrib['file_len'], byte_run_len)
+    str_equals(int(byte_run_node.attrib['file_offset']), byte_run_file_offset)
+    str_equals(int(byte_run_node.attrib['len']), byte_run_len)
     str_equals(byte_run_node.find('hashdigest').attrib['type'], byte_run_hashdigest_type)
     str_equals(byte_run_node.find('hashdigest').text, byte_run_hashdigest)
 
-# write one block hash entry to file temp_dfxml
-def write_temp_dfxml_hash(filename="file1",
+# write one block hash entry to file temp_dfxml_hash
+def write_temp_dfxml_hash(
                           repository_name="repositoryname",
+                          filename="file1",
                           filesize=0,
                           file_hashdigest_type="MD5",
                           file_hashdigest="ff112233445566778899aabbccddeeff",
                           byte_run_file_offset=0,
                           byte_run_len=4096,
                           byte_run_hashdigest_type="MD5",
-                          byte_run_hashdigest="002233445566778899aabbccddeeff"):
+                          byte_run_hashdigest="00112233445566778899aabbccddeeff"):
     tempfile = open("temp_dfxml_hash", "w")
     tempfile.write("<?xml version='1.0' encoding='UTF-8'?>\n")
     tempfile.write("<dfxml xmloutputversion='1.0'>\n")
@@ -162,3 +177,19 @@ def write_temp_dfxml_hash(filename="file1",
     tempfile.write("  </fileobject>\n")
     tempfile.write("</dfxml>\n")
 
+# write one block hash entry to file temp_tab_hash
+def write_temp_tab_hash(
+                          filename="file1",
+                          block=1,
+                          hashdigest="00112233445566778899aabbccddeeff"):
+    tempfile = open("temp_tab_hash", "w")
+    tempfile.write(filename + "\t" + hashdigest + "\t" + str(block))
+
+def rm_tempfile(filename):
+    if filename[:5] != "temp_":
+        # safeguard
+        print("aborting, invalid filename:", filename)
+        exit(1)
+    if os.path.exists(filename):
+        os.remove(filename)
+ 
