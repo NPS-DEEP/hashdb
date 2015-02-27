@@ -53,7 +53,11 @@ class tab_hashdigest_reader_t {
   void import_line(const std::string& line) {
     // skip comment lines
     if (line[0] == '#') {
-      // skip comment line
+      return;
+    }
+
+    // skip empty lines
+    if (line.size() == 0) {
       return;
     }
 
@@ -81,7 +85,7 @@ class tab_hashdigest_reader_t {
     sector_index = std::atol(line.substr(tab_index2+1).c_str());
     if (sector_index == 0) {
       // index starts at 1 so 0 is invalid
-      std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "'\n";
+      std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "', '" << line.substr(tab_index2+1) << "'\n";
       return;
     }
 
@@ -91,7 +95,7 @@ class tab_hashdigest_reader_t {
 
     // reject invalid input
     if (binary_hash == "") {
-      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "'\n";
+      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "', '" << block_hashdigest_string << "'\n";
       return;
     }
 
