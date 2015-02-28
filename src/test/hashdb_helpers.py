@@ -3,7 +3,6 @@
 # hashdb_helpers.py
 # A module for helping with hashdb tests
 import xml.etree.ElementTree as ET
-import subprocess
 from subprocess import Popen, PIPE
 import os
 

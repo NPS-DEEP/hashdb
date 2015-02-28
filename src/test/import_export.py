@@ -2,8 +2,6 @@
 #
 # Test the Import Export command group
 
-import subprocess
-#import xml.etree.ElementTree as ET
 import shutil
 import hashdb_helpers as H
 

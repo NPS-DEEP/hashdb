@@ -2,10 +2,7 @@
 #
 # Test the New Database command group
 
-#from subprocess import call
-import subprocess
 import shutil
-import xml.etree.ElementTree as ET
 import hashdb_helpers as H
 
 db1 = "temp_1.hdb"

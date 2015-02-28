@@ -21,7 +21,8 @@
 
 python_tests = \
 	new_database.py \
-	import_export.py
+	import_export.py \
+	database_manipulation.py
 
 EXTRA_DIST = \
 	vg.supp \
