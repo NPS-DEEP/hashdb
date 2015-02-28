@@ -57,6 +57,7 @@ def test_add_repository():
 
 def test_intersect():
     # db1 with a,b and db2 with b,c intersect to db3 with just b
+    # using same hash and different repository name
     shutil.rmtree(db1, True)
     shutil.rmtree(db2, True)
     shutil.rmtree(db3, True)
@@ -76,6 +77,29 @@ def test_intersect():
     H.int_equals(sizes['source_store_size'],1)
     H.hashdb(["export", db3, xml1])
     H.dfxml_hash_equals(repository_name="r2")
+
+def test_intersect():
+    # db1 with a,b and db2 with b,c intersect to db3 with just b
+    # using different hash
+    shutil.rmtree(db1, True)
+    shutil.rmtree(db2, True)
+    shutil.rmtree(db3, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.hashdb(["create", db2])
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef1")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef2")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["import", db2, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef3")
+    H.hashdb(["import", db2, "temp_dfxml_hash"])
+    H.hashdb(["intersect_hash", db1, db2, db3])
+    sizes = H.parse_sizes(H.hashdb(["size", db3]))
+    H.int_equals(sizes['hash_store_size'],1)
+    H.int_equals(sizes['source_store_size'],1)
+    H.hashdb(["export", db3, xml1])
+    H.dfxml_hash_equals(byte_run_hashdigest="00112233445566778899aabbccddeef2")
 
 if __name__=="__main__":
     test_add()
