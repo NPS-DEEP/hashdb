@@ -368,11 +368,13 @@ class commands_t {
     // 1 or 2 has become depleted so insert remaining elements
     while (hash_it_data1.is_valid) {
       copy_hash(hash_it_data1, ro_manager1, rw_manager3);
+      hash_it_data1 = ro_manager1.find_next(hash_it_data1);
       progress_tracker.track();
     }
 
     while (hash_it_data2.is_valid) {
-      copy_hash(hash_it_data2, ro_manager1, rw_manager3);
+      copy_hash(hash_it_data2, ro_manager2, rw_manager3);
+      hash_it_data2 = ro_manager2.find_next(hash_it_data2);
       progress_tracker.track();
     }
 
