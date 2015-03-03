@@ -52,7 +52,7 @@ def test_add_repository():
     sizes = H.parse_sizes(H.hashdb(["size", db2]))
     H.int_equals(sizes['hash_store_size'],1)
     H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db1, xml1])
+    H.hashdb(["export", db2, xml1])
     H.dfxml_hash_equals(repository_name="r1")
 
 def test_intersect():
@@ -78,7 +78,7 @@ def test_intersect():
     H.hashdb(["export", db3, xml1])
     H.dfxml_hash_equals(repository_name="r2")
 
-def test_intersect():
+def test_intersect_hash():
     # db1 with a,b and db2 with b,c intersect to db3 with just b
     # using different hash
     shutil.rmtree(db1, True)
@@ -101,10 +101,90 @@ def test_intersect():
     H.hashdb(["export", db3, xml1])
     H.dfxml_hash_equals(byte_run_hashdigest="00112233445566778899aabbccddeef2")
 
+def test_subtract():
+    # db1 - db2 -> db3 where source must match
+    shutil.rmtree(db1, True)
+    shutil.rmtree(db2, True)
+    shutil.rmtree(db3, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.hashdb(["create", db2])
+    H.write_temp_dfxml_hash(repository_name="r1")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["import", db2, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(repository_name="r2")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["subtract", db1, db2, db3])
+    sizes = H.parse_sizes(H.hashdb(["size", db3]))
+    H.int_equals(sizes['hash_store_size'],1)
+    H.hashdb(["export", db3, xml1])
+    H.dfxml_hash_equals(repository_name="r2")
+
+def test_subtract_hash():
+    # db1 - db2 -> db3 where hash must match
+    shutil.rmtree(db1, True)
+    shutil.rmtree(db2, True)
+    shutil.rmtree(db3, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.hashdb(["create", db2])
+    H.write_temp_dfxml_hash(repository_name="r1")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(repository_name="r2")
+    H.hashdb(["import", db2, "temp_dfxml_hash"])
+    H.hashdb(["subtract_hash", db1, db2, db3])
+    sizes = H.parse_sizes(H.hashdb(["size", db3]))
+    H.int_equals(sizes['hash_store_size'],1)
+    H.hashdb(["export", db1, xml1])
+    H.dfxml_hash_equals(byte_run_hashdigest="00")
+
+def test_subtract_repository():
+    # hash with correct repository name is added
+    shutil.rmtree(db1, True)
+    shutil.rmtree(db2, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.write_temp_dfxml_hash(repository_name="r1")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(repository_name="r2")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["subtract_repository", db1, db2, "r1"])
+    sizes = H.parse_sizes(H.hashdb(["size", db2]))
+    H.int_equals(sizes['hash_store_size'],1)
+    H.int_equals(sizes['source_store_size'],1)
+    H.hashdb(["export", db2, xml1])
+    H.dfxml_hash_equals(repository_name="r2")
+
+def test_deduplicate():
+    # hash with correct repository name is added
+    shutil.rmtree(db1, True)
+    shutil.rmtree(db2, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.write_temp_dfxml_hash(repository_name="r1")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(repository_name="r2")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["deduplicate", db1, db2])
+    sizes = H.parse_sizes(H.hashdb(["size", db2]))
+    H.int_equals(sizes['hash_store_size'],1)
+    H.int_equals(sizes['source_store_size'],1)
+    H.hashdb(["export", db2, xml1])
+    H.dfxml_hash_equals(byte_run_hashdigest="00")
+
 if __name__=="__main__":
     test_add()
     test_add_multiple()
     test_add_repository()
     test_intersect()
+    test_intersect_hash()
+    test_subtract()
+    test_subtract_hash()
+    test_subtract_repository()
+    test_deduplicate()
     print("Test Done.")
 
