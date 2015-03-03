@@ -19,6 +19,10 @@ _hashdb_ Version 2.0.0 introduces new capability:
 
 * New hash truncation option `-t` has been added to allow storing truncated block hash values, enabling hash databases to be smaller.
 
+* An optional hash label may be stored with each hash to serve as a source classifier.
+ * The optional label may be imported from DFXML as text in the new `label` attribute of the `byte_run` tag, for example `<byte_run file_offset='0' len='4096' label="L"` where `L` might indicate that the data has low entropy.
+ * The optional label may be imported using new field `hash_label` in the _hashdb_ API.  The _bulk\_extractor_ scanner may use this field for classifying hashes.
+ * When scanning for matching hashes, _hashdb_ displays label information, if present, in JSON format, for example: `{"count":2, "label":"L"}`.
 * _hashdb_ dependency on Boost was removed.  This impacts _hashdb_ several ways:
  * By not relying on Boost, it is now easier to install _hashdb_ on various systems.
  * Client/Server code which required `Boost::asio` was removed.
