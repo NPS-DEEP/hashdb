@@ -129,7 +129,8 @@ class commands_t {
     rw_manager.insert(hash_it_data.binary_hash,
                       hash_it_data.file_offset,
                       ro_manager.settings.hash_block_size,
-                      source_data);
+                      source_data,
+                      hash_it_data.hash_label);
   }
 
   public:
@@ -276,7 +277,8 @@ class commands_t {
                                           hash_it_data.source_lookup_index);
       writer.add_hashdb_element(hash_it_data.binary_hash,
                                 source_data,
-                                hash_it_data.file_offset);
+                                hash_it_data.file_offset,
+                                hash_it_data.hash_label);
       hash_it_data = ro_manager.find_next(hash_it_data);
     }
     progress_tracker.done();
@@ -426,7 +428,8 @@ class commands_t {
         rw_manager2.insert(hash_it_data.binary_hash,
                            hash_it_data.file_offset,
                            ro_manager1.settings.hash_block_size,
-                           source_data);
+                           source_data,
+                           hash_it_data.hash_label);
       }
       hash_it_data = ro_manager1.find_next(hash_it_data);
     }
@@ -478,12 +481,14 @@ class commands_t {
                                           hash_it_data1.source_lookup_index);
       if (ro_manager2.find_exact(hash_it_data1.binary_hash,
                                  source_data1,
-                                 hash_it_data1.file_offset)) {
+                                 hash_it_data1.file_offset,
+                                 hash_it_data1.hash_label)) {
 
         rw_manager3.insert(hash_it_data1.binary_hash,
                            hash_it_data1.file_offset,
                            ro_manager1.settings.hash_block_size,
-                           source_data1);
+                           source_data1,
+                           hash_it_data1.hash_label);
       }
       hash_it_data1 = ro_manager1.find_next(hash_it_data1);
       progress_tracker.track();
@@ -604,12 +609,14 @@ class commands_t {
                                           hash_it_data1.source_lookup_index);
       if (!ro_manager2.find_exact(hash_it_data1.binary_hash,
                                   source_data1,
-                                  hash_it_data1.file_offset)) {
+                                  hash_it_data1.file_offset,
+                                  hash_it_data1.hash_label)) {
 
         rw_manager3.insert(hash_it_data1.binary_hash,
                            hash_it_data1.file_offset,
                            ro_manager1.settings.hash_block_size,
-                           source_data1);
+                           source_data1,
+                           hash_it_data1.hash_label);
       }
       hash_it_data1 = ro_manager1.find_next(hash_it_data1);
       progress_tracker.track();
@@ -715,7 +722,8 @@ class commands_t {
         rw_manager2.insert(hash_it_data.binary_hash,
                            hash_it_data.file_offset,
                            ro_manager1.settings.hash_block_size,
-                           source_data);
+                           source_data,
+                           hash_it_data.hash_label);
       }
       hash_it_data = ro_manager1.find_next(hash_it_data);
     }
@@ -1300,7 +1308,8 @@ class commands_t {
       rw_manager.insert(lmdb_helper::random_binary_hash(),
                         file_offset,
                         rw_manager.settings.hash_block_size,
-                        source_data);
+                        source_data,
+                        "");
     }
 
     // close tracker

@@ -84,7 +84,8 @@ class lmdb_rw_manager_t {
   void insert(const std::string& binary_hash,
               uint64_t file_offset,
               uint32_t hash_block_size,
-              lmdb_source_data_t source_data) {
+              lmdb_source_data_t source_data,
+              const std::string& hash_label) {
 
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
@@ -108,7 +109,10 @@ class lmdb_rw_manager_t {
     if (bloom_filter_manager.is_positive(binary_hash)) {
 
       // disregard if key, value exists
-      if (hash_store.find(binary_hash, source_lookup_index, file_offset)) {
+      if (hash_store.find(binary_hash,
+                          source_lookup_index,
+                          file_offset,
+                          hash_label)) {
         // this exact entry already exists
         ++changes.hashes_not_inserted_duplicate_element;
         return;
@@ -128,7 +132,8 @@ class lmdb_rw_manager_t {
     // add the entry since all the checks passed
     hash_store.insert(binary_hash,
                       source_lookup_index,
-                      file_offset);
+                      file_offset,
+                      hash_label);
     ++changes.hashes_inserted;
 
     // add source data in case it isn't there yet
@@ -142,7 +147,8 @@ class lmdb_rw_manager_t {
   void remove(const std::string& binary_hash,
               uint64_t file_offset,
               uint32_t hash_block_size,
-              lmdb_source_data_t source_data) {
+              lmdb_source_data_t source_data,
+              const std::string& hash_label) {
 
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
@@ -168,7 +174,9 @@ class lmdb_rw_manager_t {
 
     // remove the distinct identified element
     bool did_erase = hash_store.erase(binary_hash,
-                                      source_lookup_index, file_offset);
+                                      source_lookup_index,
+                                      file_offset,
+                                      hash_label);
     if (did_erase) {
       ++changes.hashes_removed;
     } else {

@@ -63,24 +63,28 @@ class hashdb_t {
   public:
   // data structure for one import element
   struct import_element_t {
-    std::string binary_hash;
-    std::string repository_name;
-    std::string filename;
-    uint64_t file_offset;
+    const std::string binary_hash;
+    const std::string repository_name;
+    const std::string filename;
+    const uint64_t file_offset;
+    const std::string hash_label;
     import_element_t(const std::string p_binary_hash,
                      const std::string p_repository_name,
                      const std::string p_filename,
-                     uint64_t p_file_offset) :
+                     uint64_t p_file_offset,
+                     const std::string p_hash_label) :
                             binary_hash(p_binary_hash),
                             repository_name(p_repository_name),
                             filename(p_filename),
-                            file_offset(p_file_offset) {
+                            file_offset(p_file_offset),
+                            hash_label(p_hash_label) {
     }
     import_element_t() :
                             binary_hash(),
                             repository_name(),
                             filename(),
-                            file_offset(0) {
+                            file_offset(0),
+                            hash_label() {
     }
   };
 

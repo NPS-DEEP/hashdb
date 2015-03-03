@@ -31,20 +31,24 @@ struct lmdb_hash_it_data_t {
   std::string binary_hash;
   uint64_t source_lookup_index;
   uint64_t file_offset;
+  std::string hash_label;
   bool is_valid;
-  lmdb_hash_it_data_t(std::string p_binary_hash,
+  lmdb_hash_it_data_t(const std::string& p_binary_hash,
                       uint64_t p_source_lookup_index,
                       uint64_t p_file_offset,
+                      const std::string& p_hash_label,
                       bool p_is_valid) :
               binary_hash(p_binary_hash),
               source_lookup_index(p_source_lookup_index),
               file_offset(p_file_offset),
+              hash_label(p_hash_label),
               is_valid(p_is_valid) {
   }
   lmdb_hash_it_data_t() :
               binary_hash(),
               source_lookup_index(0),
               file_offset(0),
+              hash_label(),
               is_valid(false) {
   }
   bool operator==(const lmdb_hash_it_data_t& other) const {
@@ -62,7 +66,8 @@ inline std::ostream& operator<<(std::ostream& os,
      << lmdb_helper::binary_hash_to_hex(data.binary_hash)
      << "\",\"source_id\":" << data.source_lookup_index
      << ",\"file_offset\":" << data.file_offset
-     << ",\"is_valid\":" << data.is_valid
+     << ",\"hash_label\":\"" << data.hash_label
+     << "\",\"is_valid\":" << data.is_valid
      << "}";
   return os;
 }

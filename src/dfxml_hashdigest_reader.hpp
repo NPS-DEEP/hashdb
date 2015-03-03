@@ -72,6 +72,7 @@ class dfxml_hashdigest_reader_t {
     // parsed byte run values
     std::string byte_run_file_offset;
     std::string byte_run_len;
+    std::string byte_run_hash_label;
     std::string byte_run_hashdigest_type;
     std::string byte_run_hashdigest;
 
@@ -98,6 +99,7 @@ class dfxml_hashdigest_reader_t {
                          encountered_error(false),
                          byte_run_file_offset(""),
                          byte_run_len(""),
+                         byte_run_hash_label(""),
                          byte_run_hashdigest_type(""),
                          byte_run_hashdigest(""),
                          fileobject_repository_name(""),
@@ -154,7 +156,8 @@ class dfxml_hashdigest_reader_t {
     user_data.dfxml_consumer->end_byte_run(binary_hash,
                                            file_offset,
                                            hash_block_size,
-                                           source_data);
+                                           source_data,
+                                           user_data.byte_run_hash_label);
   }
 
   static void end_fileobject(user_data_t& user_data) {
@@ -210,6 +213,8 @@ class dfxml_hashdigest_reader_t {
         user_data.byte_run_file_offset = std::string ((const char*)attributes[i+1]);
       } else if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("len"))) {
         user_data.byte_run_len = std::string((const char*)attributes[i+1]);
+      } else if (xmlStrEqual(attributes[i], reinterpret_cast<const xmlChar*>("label"))) {
+        user_data.byte_run_hash_label = std::string((const char*)attributes[i+1]);
       }
 
       i += 2;

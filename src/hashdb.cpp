@@ -137,7 +137,8 @@ const char* hashdb_version() {
       rw_manager->insert(it->binary_hash,
                          it->file_offset,
                          block_size,
-                         source_data);
+                         source_data,
+                         it->hash_label);
 
       ++it;
     }

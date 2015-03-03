@@ -39,6 +39,15 @@ def test_import_export():
     H.hashdb(["export", db1, xml1])
     H.dfxml_hash_equals(repository_name="rn")
 
+    # optional hash label
+    shutil.rmtree(db1, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.write_temp_dfxml_hash(byte_run_hash_label="A")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.hashdb(["export", db1, xml1])
+    H.dfxml_hash_equals(byte_run_hash_label="A")
+
 def test_import_tab():
     # default
     shutil.rmtree(db1, True)

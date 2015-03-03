@@ -63,7 +63,8 @@ class dfxml_scan_expanded_consumer_t {
   void end_byte_run(const std::string& binary_hash,
                     uint64_t file_offset,
                     uint32_t hash_block_size,
-                    const lmdb_source_data_t& source_data) {
+                    const lmdb_source_data_t& source_data,
+                    const std::string& hash_label) {
 
     // for completeness, warn if hash block size disagrees with expected value
     if (ro_manager->settings.hash_block_size != 0 &&

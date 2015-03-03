@@ -47,9 +47,9 @@ void do_test() {
 
   // input for import
   hashdb_t::import_input_t import_input;
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 0));
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4096));
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4097)); // invalid
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 0, ""));
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4096, ""));
+  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4097, "")); // invalid
 
   // open hashdb1 for import
   std::pair<bool, std::string> import_pair = hashdb1.open_import(hashdb_dir, 4096, 20);

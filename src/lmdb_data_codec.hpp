@@ -41,13 +41,18 @@ class lmdb_data_codec {
   static std::string encode_hash_data(const lmdb_hash_data_t& data) {
 
     // allocate space for the encoding
-    size_t max_size = 10 + 10;
+    size_t max_size = 10 + 10 + data.hash_label.size();
     uint8_t encoding[max_size];
     uint8_t* p = encoding;
 
-    // encode each field
+    // encode source ID and offset index
     p = lmdb_helper::encode_uint64(data.source_id, p);
     p = lmdb_helper::encode_uint64(data.offset_index, p);
+
+    // encode hash label
+    size_t hash_label_size = data.hash_label.size();
+    std::memcpy(p, data.hash_label.c_str(), hash_label_size);
+    p += hash_label_size;
 
     // return encoding
     std::string string_encoding(reinterpret_cast<char*>(encoding), (p-encoding));
@@ -65,13 +70,19 @@ class lmdb_data_codec {
     const uint8_t* const p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
     lmdb_hash_data_t data;
+
+    // decode source ID and offset index
     p = lmdb_helper::decode_uint64(p, &data.source_id);
     p = lmdb_helper::decode_uint64(p, &data.offset_index);
 
-    // validate that the data was properly consumed
-    if (p - p_start != encoding.size()) {
+    // validate that there is space for hash label
+    if ((size_t)(p - p_start) > encoding.size()) {
       assert(0);
     }
+
+    // decode hash label
+    size_t hash_label_size = encoding.size() - (size_t)(p - p_start);
+    data.hash_label = std::string(reinterpret_cast<const char*>(p), hash_label_size);
 
 #ifdef DEBUG
     std::cout << "decoding " << lmdb_helper::binary_hash_to_hex(encoding)
@@ -134,7 +145,7 @@ class lmdb_data_codec {
 #endif
 
     // validate that the encoding was properly consumed
-    if (p - p_start != encoding.size()) {
+    if ((size_t)(p - p_start) != encoding.size()) {
       assert(0);
     }
 
@@ -185,7 +196,7 @@ class lmdb_data_codec {
     p = lmdb_helper::decode_uint64(p, &data);
 
     // validate that the encoding was properly consumed
-    if (p - p_start != encoding.size()) {
+    if ((size_t)(p - p_start) != encoding.size()) {
       assert(0);
     }
 

@@ -86,7 +86,8 @@ class lmdb_ro_manager_t {
 
   bool find_exact(const std::string& binary_hash,
                   const lmdb_source_data_t& source_data,
-                  uint64_t file_offset) const {
+                  uint64_t file_offset,
+                  const std::string& hash_label) const {
     if (!bloom_filter_manager.is_positive(binary_hash)) {
       return false;
     }
@@ -99,7 +100,7 @@ class lmdb_ro_manager_t {
     }
 
     // check hash store for exact match
-    return hash_store.find(binary_hash, pair.second, file_offset);
+    return hash_store.find(binary_hash, pair.second, file_offset, hash_label);
   }
 
   lmdb_hash_it_data_t find_first(const std::string& binary_hash) const {

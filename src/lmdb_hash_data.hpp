@@ -35,12 +35,17 @@ class lmdb_hash_data_t {
   public:
   uint64_t source_id;
   uint64_t offset_index;
+  std::string hash_label;
 
-  lmdb_hash_data_t() : source_id(0), offset_index(0) {
+  lmdb_hash_data_t() : source_id(0), offset_index(0), hash_label() {
   }
 
-  lmdb_hash_data_t(uint64_t p_source_id, uint64_t p_offset_index) :
-                 source_id(p_source_id), offset_index(p_offset_index) {
+  lmdb_hash_data_t(uint64_t p_source_id,
+                   uint64_t p_offset_index,
+                   const std::string& p_hash_label) :
+                          source_id(p_source_id),
+                          offset_index(p_offset_index),
+                          hash_label(p_hash_label) {
   }
 
   bool operator==(const lmdb_hash_data_t& other) const {
@@ -52,6 +57,7 @@ inline std::ostream& operator<<(std::ostream& os,
                         const class lmdb_hash_data_t& data) {
   os << "{\"lmdb_hash_data\":{\"source_id\":" << data.source_id
      << ",\"offset_index\":" << data.offset_index
+     << ",\"hash_label\":\"" << data.hash_label << "\""
      << "}}";
   return os;
 }

@@ -91,9 +91,10 @@ class lmdb_hash_store_t {
   }
 
   // insert or fail
-  void insert(const std::string &binary_hash,
+  void insert(const std::string& binary_hash,
               uint64_t source_lookup_index,
-              uint64_t file_offset) {
+              uint64_t file_offset,
+              const std::string& hash_label) {
 
     MUTEX_LOCK(&M);
 
@@ -115,7 +116,8 @@ class lmdb_hash_store_t {
     // set data
     std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
-                                                file_offset/byte_alignment));
+                                                file_offset/byte_alignment,
+                                                hash_label));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // insert
@@ -131,8 +133,11 @@ class lmdb_hash_store_t {
   }
 
   // erase hash, encoding pair
+  // note: hashdb does not use erase.
   bool erase(const std::string& binary_hash,
-             uint64_t source_lookup_index, uint64_t file_offset) {
+             uint64_t source_lookup_index,
+             uint64_t file_offset,
+             const std::string& hash_label) {
 
     MUTEX_LOCK(&M);
 
@@ -151,7 +156,8 @@ class lmdb_hash_store_t {
     // set data
     std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
-                                                file_offset/byte_alignment));
+                                                file_offset/byte_alignment,
+                                                hash_label));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // erase
@@ -175,6 +181,7 @@ class lmdb_hash_store_t {
   }
 
   // erase hash, return count erased
+  // note: hashdb does not use erase.
   size_t erase(const std::string& binary_hash) {
 
     MUTEX_LOCK(&M);
@@ -234,7 +241,9 @@ class lmdb_hash_store_t {
  
   // find specific hash, encoding pair
   bool find(const std::string& binary_hash,
-            uint64_t source_lookup_index, uint64_t file_offset) const {
+            uint64_t source_lookup_index,
+            uint64_t file_offset,
+            const std::string& hash_label) const {
 
     // get context
     lmdb_context_t context(env, false, true);
@@ -251,7 +260,8 @@ class lmdb_hash_store_t {
     // set data
     std::string encoding = lmdb_data_codec::encode_hash_data(
                                lmdb_hash_data_t(source_lookup_index,
-                                                file_offset/byte_alignment));
+                                                file_offset/byte_alignment,
+                                                hash_label));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair
@@ -339,6 +349,7 @@ class lmdb_hash_store_t {
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,
+                                    hash_data.hash_label,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data
@@ -371,6 +382,7 @@ class lmdb_hash_store_t {
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,
+                                    hash_data.hash_label,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data
@@ -406,7 +418,8 @@ class lmdb_hash_store_t {
     // set data
     std::string encoding = lmdb_data_codec::encode_hash_data(
                  lmdb_hash_data_t(hash_it_data.source_lookup_index,
-                                  hash_it_data.file_offset / byte_alignment));
+                                  hash_it_data.file_offset / byte_alignment,
+                                  hash_it_data.hash_label));
     lmdb_helper::point_to_string(encoding, context.data);
 
     // set the cursor to this key,data pair which must exist
@@ -432,6 +445,7 @@ class lmdb_hash_store_t {
       it_data = lmdb_hash_it_data_t(binary_hash,
                                     hash_data.source_id,
                                     hash_data.offset_index * byte_alignment,
+                                    hash_data.hash_label,
                                     true);
     } else if (rc == MDB_NOTFOUND) {
       // use default it_data for end

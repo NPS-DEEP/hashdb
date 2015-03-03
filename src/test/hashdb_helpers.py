@@ -116,6 +116,7 @@ def dfxml_hash_equals(
                       file_hashdigest="ff112233445566778899aabbccddeeff",
                       byte_run_file_offset=0,
                       byte_run_len=4096,
+                      byte_run_hash_label="",
                       byte_run_hashdigest_type="MD5",
                       byte_run_hashdigest="00112233445566778899aabbccddeeff"):
     tree = ET.parse("temp_1.xml")
@@ -144,6 +145,13 @@ def dfxml_hash_equals(
     byte_run_node = fileobject_node.find('byte_run')
     str_equals(int(byte_run_node.attrib['file_offset']), byte_run_file_offset)
     str_equals(int(byte_run_node.attrib['len']), byte_run_len)
+    # presence of hash label attribute is optional
+    if 'label' in byte_run_node.attrib:
+        # check that labels match
+        str_equals(byte_run_node.attrib['label'], byte_run_hash_label)
+    else:
+        # require default = ""
+        str_equals(byte_run_hash_label, "");
     str_equals(byte_run_node.find('hashdigest').attrib['type'], byte_run_hashdigest_type)
     str_equals(byte_run_node.find('hashdigest').text, byte_run_hashdigest)
 
@@ -156,6 +164,7 @@ def write_temp_dfxml_hash(
                           file_hashdigest="ff112233445566778899aabbccddeeff",
                           byte_run_file_offset=0,
                           byte_run_len=4096,
+                          byte_run_hash_label="",
                           byte_run_hashdigest_type="MD5",
                           byte_run_hashdigest="00112233445566778899aabbccddeeff"):
     tempfile = open("temp_dfxml_hash", "w")
@@ -169,7 +178,10 @@ def write_temp_dfxml_hash(
     tempfile.write("    <hashdigest type='" + file_hashdigest_type + "'>" +
                                 file_hashdigest + "</hashdigest>\n")
     tempfile.write("    <byte_run file_offset='" + str(byte_run_file_offset) +
-                                "' len='" + str(byte_run_len) + "'>\n")
+                                "' len='" + str(byte_run_len) + "'")
+    if byte_run_hash_label != "":
+        tempfile.write(" label='" + byte_run_hash_label + "'")
+    tempfile.write(">\n")
     tempfile.write("      <hashdigest type='" + byte_run_hashdigest_type +
                                 "'>" + byte_run_hashdigest + "</hashdigest>\n")
     tempfile.write("    </byte_run>\n")

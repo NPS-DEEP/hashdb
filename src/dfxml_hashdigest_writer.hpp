@@ -67,7 +67,8 @@ class dfxml_hashdigest_writer_t {
   // add a hashdb element
   void add_hashdb_element(const std::string& binary_hash,
                           lmdb_source_data_t source_data,
-                          uint64_t file_offset) {
+                          uint64_t file_offset,
+                          const std::string& hash_label) {
 
     // start the fileobject tag
     x.push("fileobject");
@@ -94,6 +95,9 @@ class dfxml_hashdigest_writer_t {
     std::stringstream ss;
     ss << "file_offset='" << file_offset
        << "' len='" << hash_block_size << "'";
+    if (hash_label != "") {
+      ss << " label='" << hash_label << "'";
+    }
     x.push("byte_run", ss.str());
 
     // write the block hashdigest
