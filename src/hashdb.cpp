@@ -46,9 +46,6 @@
 #include "hashdb_settings_store.hpp"
 #include "hashdb_changes.hpp"
 #include "history_manager.hpp"
-//#include "lmdb_hash_store.hpp"
-//#include "lmdb_name_store.hpp"
-//#include "lmdb_source_store.hpp"
 #include "lmdb_source_data.hpp"
 #include "lmdb_rw_manager.hpp"
 #include "lmdb_ro_manager.hpp"
@@ -117,59 +114,34 @@ const char* hashdb_version() {
   }
 
   // import
-  int hashdb_t::import(const import_input_t& input) {
+  int hashdb_t::import(const std::string& binary_hash,
+                       const uint64_t file_offset,
+                       const std::string& repository_name,
+                       const std::string& filename,
+                       const uint64_t filesize,
+                       const std::string& file_binary_hash,
+                       const std::string& block_hash_label) {
 
     // check mode
     if (mode != HASHDB_IMPORT) {
       return -1;
     }
 
-    // import each input in turn
-    std::vector<import_element_t>::const_iterator it = input.begin();
-
-    // import all elements
-    while (it != input.end()) {
-
-      // set source data record
-      lmdb_source_data_t source_data(it->repository_name, it->filename, 0, "");
-
-      // insert the source data
-      rw_manager->insert(it->binary_hash,
-                         it->file_offset,
-                         block_size,
-                         source_data,
-                         it->hash_label);
-
-      ++it;
-    }
+    // insert the source data
+    rw_manager->insert(binary_hash,
+                       file_offset,
+                       block_size,
+                       lmdb_source_data_t(repository_name,
+                                          filename,
+                                          filesize,
+                                          file_binary_hash),
+                       block_hash_label);
 
     // good, done
     return 0;
   }
 
-  // import metadata
-  int hashdb_t::import_metadata(const std::string& repository_name,
-                                          const std::string& filename,
-                                          uint64_t filesize,
-                                          const std::string& binary_hash) {
-
-    // check mode
-    if (mode != HASHDB_IMPORT) {
-      return -1;
-    }
-
-    // set source data record
-    lmdb_source_data_t source_data(repository_name, filename,
-                                   filesize, binary_hash);
-
-    // add the change
-    rw_manager->add_source_data(source_data);
-
-    // good, done
-    return 0;
-  }
-
-  // Open for scanning with a lock around one scan resource.
+  // open for scanning, return true else false with error string.
   std::pair<bool, std::string> hashdb_t::open_scan(
                                          const std::string& p_path_or_socket) {
     path_or_socket = p_path_or_socket;
@@ -197,32 +169,12 @@ const char* hashdb_version() {
   }
 
   // scan
-  int hashdb_t::scan(const scan_input_t& input, scan_output_t& output) const {
+  int hashdb_t::scan(const std::string& binary_hash,
+                     uint32_t& count) const {
 
-    // clear any old output
-    output.clear();
-           
     switch(mode) {
       case HASHDB_SCAN: {
-        // run scan
-
-        // since we optimize by limiting the return index size to uint32_t,
-        // we must reject vector size > uint32_t
-        if (input.size() > ULONG_MAX) {
-          std::cerr << "Error: array too large.  discarding.\n";
-          return -1;
-        }
-
-        // scan each input in turn
-        uint32_t input_size = (uint32_t)input.size();
-        for (uint32_t i=0; i<input_size; i++) {
-          uint32_t count = ro_manager->find_count(input[i]);
-          if (count > 0) {
-            output.push_back(std::pair<uint32_t, uint32_t>(i, count));
-          }
-        }
-
-        // good, done
+        count = ro_manager->find_count(binary_hash);
         return 0;
       }
 

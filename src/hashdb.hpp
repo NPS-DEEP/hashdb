@@ -42,9 +42,6 @@ class logger_t;
 
 /**
  * The hashdb library.
- *
- * Note: libhashdb must be compiled to support the same hash type
- * as the hash type provided in the template.
  */
 class hashdb_t {
   private:
@@ -61,53 +58,6 @@ class hashdb_t {
   logger_t* logger;
 
   public:
-  // data structure for one import element
-  struct import_element_t {
-    const std::string binary_hash;
-    const std::string repository_name;
-    const std::string filename;
-    const uint64_t file_offset;
-    const std::string hash_label;
-    import_element_t(const std::string p_binary_hash,
-                     const std::string p_repository_name,
-                     const std::string p_filename,
-                     uint64_t p_file_offset,
-                     const std::string p_hash_label) :
-                            binary_hash(p_binary_hash),
-                            repository_name(p_repository_name),
-                            filename(p_filename),
-                            file_offset(p_file_offset),
-                            hash_label(p_hash_label) {
-    }
-    import_element_t() :
-                            binary_hash(),
-                            repository_name(),
-                            filename(),
-                            file_offset(0),
-                            hash_label() {
-    }
-  };
-
-  /**
-   * The import input is an array of import_element_t objects
-   * to be imported into the hash database.
-   */
-  typedef std::vector<import_element_t> import_input_t;
-
-  /**
-   * The scan input is an array of hash values to be scanned for.
-   */
-  typedef std::vector<std::string> scan_input_t;
-
-  /**
-   * The scan output is an array of pairs of uint32_t index values that
-   * index into the input vector, and uint32_t count values, where count
-   * indicates the number of source entries that contain this hash value.
-   * The scan output does not contain scan responses for hashes
-   * that are not found (count=0).
-   */
-  typedef std::vector<std::pair<uint32_t, uint32_t> > scan_output_t;
-
   /**
    * Constructor
    */
@@ -121,17 +71,15 @@ class hashdb_t {
                                            uint32_t p_max_duplicates);
 
   /**
-   * Import.
+   * Import hash.
    */
-  int import(const import_input_t& import_input);
-
-  /**
-   * Import source metadata.
-   */
-  int import_metadata(const std::string& repository_name,
-                      const std::string& filename,
-                      uint64_t filesize,
-                      const std::string& binary_hash);
+  int import(const std::string& binary_hash,
+             const uint64_t file_offset,
+             const std::string& repository_name,
+             const std::string& filename,
+             const uint64_t filesize,
+             const std::string& file_binary_hash,
+             const std::string& block_hash_label);
 
   /**
    * Open for scanning.
@@ -142,8 +90,8 @@ class hashdb_t {
   /**
    * Scan.
    */
-  int scan(const scan_input_t& scan_input,
-           scan_output_t& scan_output) const;
+  int scan(const std::string& binary_hash,
+           uint32_t& count) const;
 
 #ifdef HAVE_CXX11
   hashdb_t(const hashdb_t& other) = delete;
