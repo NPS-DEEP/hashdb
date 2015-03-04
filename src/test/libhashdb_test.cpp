@@ -34,7 +34,6 @@
 static const std::string hashdb_dir = "temp_dir_libhashdb_test.hdb";
 static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
 static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
-static const std::string binary_ff(lmdb_helper::hex_to_binary_hash("ff"));
 static const std::string binary_big(lmdb_helper::hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
 
 void do_test() {
@@ -45,45 +44,30 @@ void do_test() {
   hashdb_t hashdb1;
   hashdb_t hashdb2;
 
-  // input for import
-  hashdb_t::import_input_t import_input;
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 0, ""));
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4096, ""));
-  import_input.push_back(hashdb_t::import_element_t(binary_aa, "rep1", "file1", 4097, "")); // invalid
-
   // open hashdb1 for import
   std::pair<bool, std::string> import_pair = hashdb1.open_import(hashdb_dir, 4096, 20);
   TEST_EQ(import_pair.first, true);
 
   // import some elements
   int status;
-  status = hashdb1.import(import_input);
-  TEST_EQ(status, 0);
-
-  // import metadata
-  status = hashdb1.import_metadata("rep1", "file1", 10000, binary_big);
-  TEST_EQ(status, 0);
-  status = hashdb1.import_metadata("zrep1", "file1", 10000, binary_big);
-  TEST_EQ(status, 0);
-  status = hashdb1.import_metadata("zrep1", "file1", 10000, binary_big);
+  status = hashdb1.import(binary_aa, 0, "rep1", "file1", 10000, binary_big, "L");
+  status = hashdb1.import(binary_aa, 4096, "rep1", "file1", 10000, binary_big, "L");
+  status = hashdb1.import(binary_aa, 4097, "rep1", "file1", 10000, binary_big, "L"); // invalid
   TEST_EQ(status, 0);
 
   // open hashdb2 for scan
   std::pair<bool, std::string> scan_pair = hashdb2.open_scan(hashdb_dir);
   TEST_EQ(scan_pair.first, true);
 
-  // populate input
-  hashdb_t::scan_input_t scan_input;
-  scan_input.push_back(binary_aa);
-  scan_input.push_back(binary_bb);
-  scan_input.push_back(binary_big);
-
-  // perform scan
-  hashdb_t::scan_output_t scan_output;
-  status = hashdb2.scan(scan_input, scan_output);
+  // scan for some hashes
+  uint32_t count;
+  status = hashdb2.scan(binary_aa, count);
+  TEST_EQ(count, 2);
+  status = hashdb2.scan(binary_bb, count);
+  TEST_EQ(count, 0);
+  status = hashdb2.scan(binary_big, count);
+  TEST_EQ(count, 0);
   TEST_EQ(status, 0);
-  TEST_EQ(scan_output.size(), 1);
-  TEST_EQ(scan_output[0].second, 2);
 }
 
 int main(int argc, char* argv[]) {
