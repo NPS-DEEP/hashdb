@@ -22,7 +22,8 @@
 python_tests = \
 	new_database.py \
 	import_export.py \
-	database_manipulation.py
+	database_manipulation.py \
+	scan_services.py
 
 EXTRA_DIST = \
 	vg.supp \
@@ -37,8 +38,7 @@ check_PROGRAMS = \
 	bloom_filter_manager_test \
 	settings_test \
 	logger_test \
-	libhashdb_test \
-	commands_test
+	libhashdb_test
 
 TESTS = $(check_PROGRAMS)
 if HAVE_PYTHON
@@ -61,7 +61,6 @@ bloom_filter_manager_test_LDADD = ../libhashdb.la
 settings_test_LDADD = ../libhashdb.la
 logger_test_LDADD = ../libhashdb.la
 libhashdb_test_LDADD = ../libhashdb.la
-commands_test_LDADD = ../libhashdb.la
 
 AM_LDFLAGS = -static
 
@@ -122,10 +121,5 @@ libhashdb_test_SOURCES = \
 	directory_helper.hpp \
 	libhashdb_test.cpp
 	
-commands_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	commands_test.cpp
-
 .PHONY: run_tests_valgrind
 
