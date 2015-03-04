@@ -162,6 +162,12 @@ class expand_manager_t {
     size_t count = ro_manager->find_count(binary_hash);
     std::cout << ", \"count\":" << count;
 
+    // if the first hash has a label, print the label too
+    lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
+    if (hash_it_data.hash_label != "") {
+      std::cout << ", \"label\":\"" << hash_it_data.hash_label << "\"";
+    }
+
     // calculate the source list ID
     uint64_t source_list_id = calculate_source_list_id(binary_hash);
 
