@@ -35,7 +35,7 @@ def hashdb(cmd):
         print("Aborting.")
         raise Exception("hashdb aborted.")
 
-    return lines
+    return lines # note: last line is blank, hashdb does not generate it.
 
 def parse_settings(hashdb_dir):
     settings = {}

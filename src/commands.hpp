@@ -926,7 +926,6 @@ class commands_t {
     }
     while (source_it_data.is_valid) {
       print_helper::print_source_fields(source_it_data);
-      std::cout << "\n";
       source_it_data = source_store.find_next(source_it_data.source_lookup_index);
     }
   }
@@ -1099,39 +1098,58 @@ class commands_t {
     }
 
     // print header information
-    print_helper::print_header("hash-table-command-Version: 2");
+    print_helper::print_header("hash-table-command-Version: 3");
 
     // for completeness, print source information for this source
+    // print as a comment
+    std::cout << "# ";
     lmdb_source_data_t source_data = ro_manager.find_source(source_id);
     print_helper::print_source_fields(lmdb_source_it_data_t(source_id, source_data, true));
-    std::cout << "\n";
 
     // start progress tracker
     progress_tracker_t progress_tracker(ro_manager.size());
 
+    // create the hash table lines in a set for ordered output when done
+    std::set<std::string>* lines = new std::set<std::string>;
+
     // look through all hashes for entries with this source ID
-    bool any_found = false;
     lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
     while (hash_it_data.is_valid) {
 
       if (hash_it_data.source_lookup_index == source_id) {
-        any_found = true;
+        // prepare the line formatted as an identified_blocks.txt feature:
+        // file offset <tab> hash <tab> count and optional label
         size_t count = ro_manager.find_count(hash_it_data.binary_hash);
-        print_helper::print_hash(hash_it_data.binary_hash, count);
+        std::stringstream ss;
+        ss << hash_it_data.file_offset << "\t"
+           << lmdb_helper::binary_hash_to_hex(hash_it_data.binary_hash) << "\t"
+           << "{\"count\":" << count;
+        if (hash_it_data.hash_label != "") {
+          ss << ",\"label\":\"" << hash_it_data.hash_label << "\"";
+        }
+        ss << "}";
+        lines->insert(ss.str());
       }
-
-      hash_it_data = ro_manager.find_next(hash_it_data);
 
       // update progress tracker
       progress_tracker.track();
+
+      // next
+      hash_it_data = ro_manager.find_next(hash_it_data);
     }
     progress_tracker.done();
 
     // say so if nothing was found
-    if (!any_found) {
+    if (lines->size() == 0) {
       std::cout << "No hashes were found with this source ID.\n";
       return;
     }
+
+    for (std::set<std::string>::const_iterator it = lines->begin();
+         it != lines->end(); ++it) {
+      std::cout << *it << "\n";
+    }
+    delete lines;
   }
 
   // expand identified_blocks.txt

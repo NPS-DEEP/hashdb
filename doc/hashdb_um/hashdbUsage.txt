@@ -243,8 +243,8 @@ Statistics:
     <number>       the requested number of duplicate hashes
 
   hash_table <hashdb> <source_id>
-    Print hash information from the given <hashdb> database for hashes
-    associated with the <source_id> source index.
+    Print hashes from the given <hashdb> database that are associated with
+    the <source_id> source index.
 
     Parameters:
     <hashdb>              the hash database to print hashes from

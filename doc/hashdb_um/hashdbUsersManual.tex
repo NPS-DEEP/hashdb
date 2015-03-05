@@ -843,9 +843,9 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{duplicates} & \verb+duplicates <hashdb> <number>+ &  Prints out hashes in the database that are sourced the given number of times\\
 \hline
-\textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<source_id>+ &  Prints out the hashes and their offsets for the specified source index\\
+\textbf{hash\_table} & \verb+hash_table <hashdb> <source_id>+ &  Prints hashes associated with the specified source index in a format compatible with \texttt{identified\_blocks.txt} files\\
 \hline
-\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, of each hash in the \texttt{identified\_blocks.txt} input file\\
+\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, default 200, of each hash in the \texttt{identified\_blocks.txt} input file\\
 \hline
 \textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for sources with hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
 \hline

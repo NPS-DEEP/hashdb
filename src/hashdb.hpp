@@ -27,7 +27,8 @@
 
 #include <string>
 #include <vector>
-#include <cstdint>
+//#include <cstdint>
+#include <stdint.h>
 
 /**
  * Version of the hashdb library.

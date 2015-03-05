@@ -78,6 +78,13 @@ class explain_manager_t {
       return;
     }
 
+    // make sure the hash is in the DB
+    size_t count = ro_manager->find_count(binary_hash);
+    if (count == 0) {
+      std::cout << "Error: Invalid hash, incorrect feature file or hash database, '" << feature_line.feature << "'\n";
+      return;
+    }
+
     // add hash to hash set if not already there
     std::pair<std::map<std::string, std::string>::iterator, bool> insert_pair =
                          hashes->insert(std::pair<std::string, std::string>(

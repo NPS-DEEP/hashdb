@@ -53,16 +53,20 @@ def test_scan_hash():
 
 def test_scan_expanded():
     lines = H.hashdb(["scan_expanded", db1, xml1])
-    print(*lines, sep='\n')
     H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":1104745215, "sources":[{"source_id":1,"file_offset":0,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
     H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":3098726271, "sources":[{"source_id":2,"file_offset":0}]}')
     H.int_equals(len(lines), 10)
 
+def test_scan_expanded_hash():
+    lines = H.hashdb(["scan_expanded_hash", db1, "11"])
+    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":3098726271, "sources":[{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.int_equals(len(lines), 5)
 
 if __name__=="__main__":
     setup()
     test_scan()
     test_scan_hash()
     test_scan_expanded()
+    test_scan_expanded_hash()
     print("Test Done.")
 

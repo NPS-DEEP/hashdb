@@ -36,8 +36,7 @@
 #include <vector>
 
 /**
- * This totally static class is a class rather than an namespace
- * so it can have private members.
+ * Static helper class.
  */
 class print_helper {
 
