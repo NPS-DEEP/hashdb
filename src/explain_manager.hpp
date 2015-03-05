@@ -114,12 +114,8 @@ class explain_manager_t {
   // print table of relevant hashes
   void print_identified_hashes() const {
 
-    if (hashes->size() == 0) {
-      std::cout << "# There are no hashes to report.\n";
-      return;
-    }
-
     // iterate through block hashes, printing hashes with identified sources
+    bool has_reportable_hash = false;
     for (hashes_it_t it = hashes->begin(); it != hashes->end(); ++it) {
 
       // get this iteration's hash and context
@@ -142,6 +138,9 @@ class explain_manager_t {
         // skip sources that are not identified
         if (source_lookup_indexes->find(hash_it_data.source_lookup_index) ==
                                                 source_lookup_indexes->end()) {
+
+          // next
+          hash_it_data = ro_manager->find_next(hash_it_data);
           continue;
         }
 
@@ -166,9 +165,15 @@ class explain_manager_t {
 
       // print the identified hash if it has at least one identified source
       if (has_identified_source) {
+        has_reportable_hash = true;
         std::cout << ss.str() << std::endl;
       }
     }
+    if (!has_reportable_hash) {
+      std::cout << "# There are no hashes to report.\n";
+      return;
+    }
+
   }
 
   // print table of relevant sources

@@ -101,12 +101,36 @@ def test_expand_identified_blocks():
     lines = H.hashdb(["expand_identified_blocks", db1, "temp_identified_blocks"])
     H.int_equals(len(lines), 4)
 
-    # test all in
+    # test all
     write_full_identified_blocks()
     lines = H.hashdb(["expand_identified_blocks", db1, "temp_identified_blocks"])
-    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":1104745215, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192}]}]')
-    H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":1104745215}]')
-    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":3098726271, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192}]}]')
+    H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.int_equals(len(lines), 7)
+
+    # test all with -m0
+    write_full_identified_blocks()
+    lines = H.hashdb(["expand_identified_blocks", "-m0", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492}]')
+    H.int_equals(len(lines), 7)
+
+    # test all with -m1
+    write_full_identified_blocks()
+    lines = H.hashdb(["expand_identified_blocks", "-m1", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.int_equals(len(lines), 7)
+
+    # test all with -m2
+    write_full_identified_blocks()
+    lines = H.hashdb(["expand_identified_blocks", "-m2", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192}]}]')
+    H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
     H.int_equals(len(lines), 7)
 
     # test invalid hash value
@@ -125,9 +149,38 @@ def test_explain_identified_blocks():
     H.str_equals(lines[6], '# There are no sources to report.')
     H.int_equals(len(lines), 8)
 
-    # test all in
+    # test all
     write_full_identified_blocks()
     lines = H.hashdb(["explain_identified_blocks", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '# hashes')
+    H.str_equals(lines[4], '["00",{"count":2},[{"source_id":1,"file_offset":4096},{"source_id":1,"file_offset":8192}]]')
+    H.str_equals(lines[5], '["11",{"count":1,"label":"L"},[{"source_id":2,"file_offset":12288}]]')
+    H.str_equals(lines[6], '# sources')
+    H.str_equals(lines[7], '{"source_id":1,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}')
+    H.str_equals(lines[8], '{"source_id":2,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}')
+    H.int_equals(len(lines), 10)
+
+    # test all with -m0
+    write_full_identified_blocks()
+    lines = H.hashdb(["explain_identified_blocks", "-m0", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '# hashes')
+    H.str_equals(lines[4], '# There are no hashes to report.')
+    H.str_equals(lines[5], '# sources')
+    H.str_equals(lines[6], '# There are no sources to report.')
+    H.int_equals(len(lines), 8)
+
+    # test all with -m1
+    write_full_identified_blocks()
+    lines = H.hashdb(["explain_identified_blocks", "-m1", db1, "temp_identified_blocks"])
+    H.str_equals(lines[3], '# hashes')
+    H.str_equals(lines[4], '["11",{"count":1,"label":"L"},[{"source_id":2,"file_offset":12288}]]')
+    H.str_equals(lines[5], '# sources')
+    H.str_equals(lines[6], '{"source_id":2,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}')
+    H.int_equals(len(lines), 8)
+
+    # test all with -m2
+    write_full_identified_blocks()
+    lines = H.hashdb(["explain_identified_blocks", "-m2", db1, "temp_identified_blocks"])
     H.str_equals(lines[3], '# hashes')
     H.str_equals(lines[4], '["00",{"count":2},[{"source_id":1,"file_offset":4096},{"source_id":1,"file_offset":8192}]]')
     H.str_equals(lines[5], '["11",{"count":1,"label":"L"},[{"source_id":2,"file_offset":12288}]]')
@@ -139,17 +192,12 @@ def test_explain_identified_blocks():
     # test invalid hash value
     write_wrong_identified_blocks()
     lines = H.hashdb(["explain_identified_blocks", db1, "temp_identified_blocks"])
-    print(*lines, sep='\n')
     H.str_equals((lines[3])[:5], 'Error')
     H.str_equals(lines[4], '# hashes')
     H.str_equals(lines[5], '# There are no hashes to report.')
     H.str_equals(lines[6], '# sources')
     H.str_equals(lines[7], '# There are no sources to report.')
     H.int_equals(len(lines), 9)
-
-
-
-    #print(*lines, sep='\n')
 
 
 if __name__=="__main__":
