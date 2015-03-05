@@ -54,22 +54,35 @@ class expand_manager_t {
   expand_manager_t(const expand_manager_t&);
   expand_manager_t& operator=(const expand_manager_t&);
 
-  // calculate source list CRC
-  uint32_t calculate_source_list_id(const std::string binary_hash) {
+  // calculate source list size and ID pair
+  std::pair<size_t, uint32_t> calculate_source_list_size_id_pair(
+                                         const std::string binary_hash) {
+    std::set<uint64_t>* temp_source_ids;
+    temp_source_ids = new std::set<uint64_t>;
+
+    // add each source ID to the temporary set
+    lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
+    while (hash_it_data.binary_hash == binary_hash) {
+
+      // add source ID
+      temp_source_ids->insert(hash_it_data.source_lookup_index);
+      hash_it_data = ro_manager->find_next(hash_it_data);
+    }
 
     // start a source list ID CRC hash
     uint32_t crc = 0;
 
     // add each source ID to the CRC hash
-    lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
-    while (hash_it_data.binary_hash == binary_hash) {
-
-      // add source ID to source list ID
-      crc = crc32(crc, reinterpret_cast<const uint8_t*>(binary_hash.c_str()), binary_hash.size());
-      hash_it_data = ro_manager->find_next(hash_it_data);
+    for (std::set<uint64_t>::const_iterator it = temp_source_ids->begin();
+         it != temp_source_ids->end(); ++it) {
+//      crc = crc32(crc, reinterpret_cast<const uint8_t*>(binary_hash.c_str()), binary_hash.size());
+      crc = crc32(crc, reinterpret_cast<const uint8_t*>(&(*it)), sizeof(uint64_t));
     }
 
-    return crc;
+    std::pair<size_t, uint64_t> pair = std::pair<size_t,uint64_t>(
+                                            temp_source_ids->size(), crc);
+    delete temp_source_ids;
+    return pair;
   }
 
   // print the source list
@@ -168,14 +181,16 @@ class expand_manager_t {
       std::cout << ", \"label\":\"" << hash_it_data.hash_label << "\"";
     }
 
-    // calculate the source list ID
-    uint64_t source_list_id = calculate_source_list_id(binary_hash);
+    // evaluate the source list
+    std::pair<size_t, uint64_t> pair =
+                           calculate_source_list_size_id_pair(binary_hash);
+    uint64_t source_list_id = pair.second;
 
     // print the source list ID
     std::cout << ", \"source_list_id\":" << source_list_id;
 
-    // print the list of sources the first time unless it is too long
-    if (count <= max_sources) {
+    // print the list of sources the first time unless the list is too long
+    if (pair.first <= max_sources) {
       if (source_list_ids->find(source_list_id) == source_list_ids->end()) {
         source_list_ids->insert(source_list_id);
         print_source_list(binary_hash);
@@ -221,7 +236,9 @@ class expand_manager_t {
     std::cout << ",";
 
     // calculate the source list ID
-    uint64_t source_list_id = calculate_source_list_id(binary_hash);
+    std::pair<size_t, uint64_t> pair =
+                           calculate_source_list_size_id_pair(binary_hash);
+    uint64_t source_list_id = pair.second;
 
     // print the source list ID
     std::cout << "{\"source_list_id\":" << source_list_id;
