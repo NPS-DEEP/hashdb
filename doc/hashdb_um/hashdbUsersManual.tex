@@ -544,6 +544,11 @@ This setting specifies the byte alignment granularity.  All file offsets must be
 
 \textbf{Hash Truncation}\\
 This setting truncates the hash stored to this length, in bytes.  By using hash truncation, hash records can be shorter than the typical length of 16 bytes for MD5 hashes.  Beware that truncating hash values increase the probability of hash collisions.  Occasional hash collisions may be acceptable.  Values as low as 6 bytes may be acceptable.\\
+When hash truncation is in use:
+\begin{itemize}
+\item When scanning for a hash, the value scanned for is truncated before the scan is performed.
+\item When truncating hashes being imported, the truncated hash value is stored in the Bloom filter, with zeros extending the hash to make it 16 bytes long.  This may result in early saturation of the Bloom filter.  To improve performance, try using the \verb+--bloom_kM+ Bloom filter setting with a $k$ value of 1.
+\end{itemize}
 
 \textbf{Bloom}\\
 This setting controls whether the Bloom filter will be enabled or disabled. \\
