@@ -45,7 +45,6 @@ def test_scan_random():
     H.hashdb(["create", "-t1", db1])
     H.hashdb(["add_random", db1, "256"])
     lines = H.hashdb(["scan_random", db1, "1"])
-    print(*lines, sep='\n')
     H.str_equals((lines[0])[:11], 'Match found')
 
 if __name__=="__main__":
