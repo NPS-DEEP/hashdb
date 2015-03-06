@@ -1291,7 +1291,7 @@ class commands_t {
     srand (time(NULL));
 
     // convert count string to number
-    uint64_t count = atol(count_string.c_str());
+    const uint64_t count = atol(count_string.c_str());
 
     // open resources
     // open DB
@@ -1340,11 +1340,6 @@ class commands_t {
 
     // also write changes to cout
     std::cout << rw_manager.changes << "\n";
-
-//    // give user a chance to check memory usage before leaving
-//    std::cout << "Done, check Memory usage, if desired, then press Enter.";
-//    std::string response_string;
-//    std::getline(std::cin, response_string);
   }
 
   /**
@@ -1352,7 +1347,11 @@ class commands_t {
    * Disable the Bloom filter to force DB lookups.
    */
   // functional analysis and testing: scan_random
-  static void scan_random(const std::string& hashdb_dir) {
+  static void scan_random(const std::string& hashdb_dir,
+                          const std::string& count_string) {
+
+    // convert count string to number
+    const uint64_t count = atol(count_string.c_str());
 
     // open DB
     lmdb_ro_manager_t ro_manager(hashdb_dir);
@@ -1363,26 +1362,26 @@ class commands_t {
     // start logger
     logger_t logger(hashdb_dir, "scan_random");
     logger.add("hashdb_dir", hashdb_dir);
+    logger.add("count", count);
 
     // scan sets of random hashes where hash values are unlikely to match
     logger.add_timestamp("begin scan_random with random hash on hashdb");
-    for (int i=1; i<=100; i++) {
-
-      for (int j=0; j<100000; j++) {
-        std::string binary_hash = lmdb_helper::random_binary_hash();
-        size_t count = ro_manager.find_count(binary_hash);
-        if (count > 0) {
-          std::cout << "Match found, hash '"
-                    << lmdb_helper::binary_hash_to_hex(binary_hash)
-                    << "', count: " << count << "\n";
-        }
+    for (uint64_t i=1; i<=count; ++i) {
+      std::string binary_hash = lmdb_helper::random_binary_hash();
+      size_t match_count = ro_manager.find_count(binary_hash);
+      if (match_count > 0) {
+        std::cout << "Match found, hash '"
+                  << lmdb_helper::binary_hash_to_hex(binary_hash)
+                  << "', count: " << match_count << "\n";
       }
 
-      // log timestamp
-      std::stringstream ss;
-      ss << "scanned random hash " << i;
-      logger.add_timestamp(ss.str());
-      std::cout << "scan random hash " << i << " of 100\n";
+      // periodically log scan count
+      if (i % 1000000 == 0) {
+        std::stringstream ss;
+        ss << "Scanning random hash " << i << " of " << count;
+        std::cout << ss.str() << std::endl;
+        logger.add_timestamp(ss.str());
+      }
     }
 
     // close logger

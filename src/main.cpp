@@ -572,8 +572,8 @@ void run_command() {
     commands_t::add_random(hashdb_arg1, hashdb_arg2, repository_name_string);
   } else if (command == "scan_random") {
     no_a(); no_t(); no_p(); no_m(); no_s(); no_A(); no_B(); no_C();
-    require_parameter_count(1);
-    commands_t::scan_random(hashdb_arg1);
+    require_parameter_count(2);
+    commands_t::scan_random(hashdb_arg1, hashdb_arg2);
   } else {
     // invalid command
     std::cerr << "Error: '" << command << "' is not a recognized command.  " << see_usage << "\n";

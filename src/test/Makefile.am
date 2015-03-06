@@ -23,7 +23,10 @@ python_tests = \
 	new_database.py \
 	import_export.py \
 	database_manipulation.py \
-	scan_services.py
+	scan_services.py \
+	statistics.py \
+	tuning.py \
+	performance_analysis.py
 
 EXTRA_DIST = \
 	vg.supp \

@@ -94,7 +94,6 @@ def test_scan_expanded_hash():
     H.int_equals(len(lines), 5)
 
 
-
 if __name__=="__main__":
     setup()
     test_scan()

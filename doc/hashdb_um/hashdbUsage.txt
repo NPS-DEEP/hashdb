@@ -311,12 +311,13 @@ Performance analysis:
     <hashdb>       the hash database to add randomly generated hashes into
     <count>        the number of randomly generated hashes to add
 
-  scan_random <hashdb>
+  scan_random <hashdb> <count>
     Scan for random hashes in the <hashdb> database.  Writes performance
     in the database's log.xml file.
 
     Parameters:
     <hashdb>       the hash database to scan
+    <count>        the number of randomly generated hashes to scan for
 
 bulk_extractor hashdb scanner:
   bulk_extractor -e hashdb -S hashdb_mode=import -o outdir1 my_image1
