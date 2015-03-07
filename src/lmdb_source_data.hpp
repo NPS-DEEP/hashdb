@@ -41,11 +41,11 @@ class lmdb_source_data_t {
       return false;
     }
     if (to != "") {
-      std::cerr << "source data string copy error, attempt to change hex "
+      std::cerr << "Warning: attempt to change source data string from hex "
                 << lmdb_helper::binary_hash_to_hex(from) << " to "
                 << lmdb_helper::binary_hash_to_hex(to) << "\n";
       std::cerr << "binary from " << from << " to " << to << "\n";
-      assert(0);
+      return false;
     }
     to = from;
     return true;
@@ -56,8 +56,9 @@ class lmdb_source_data_t {
       return false;
     }
     if (to != 0) {
-      std::cerr << "source data uint64_t copy error, attempt to change " << from << " to " << to << "\n";
-      assert(0);
+      std::cerr << "Warning: attempt to change source data uint64_t from "
+                << from << " to " << to << "\n";
+      return false;
     }
     to = from;
     return true;
