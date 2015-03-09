@@ -20,6 +20,10 @@
 /**
  * \file
  * Provides services for modifying the DB, including tracking changes.
+ *
+ * This module provides thread safety by locking every interface,
+ * protecting settings and DB integrity since actions read, check state,
+ * then write.
  */
 
 #ifndef LMDB_RW_MANAGER_HPP
@@ -40,6 +44,12 @@
 #include "lmdb_helper.h"
 #include "bloom_filter_manager.hpp"
 #include "hashdb_settings_store.hpp"
+
+// no concurrent changes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
 
 class lmdb_rw_manager_t {
 
@@ -62,6 +72,12 @@ class lmdb_rw_manager_t {
   lmdb_rw_manager_t(const lmdb_rw_manager_t&);
   lmdb_rw_manager_t& operator=(const lmdb_rw_manager_t&);
 
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
+
   public:
   lmdb_rw_manager_t(const std::string& p_hashdb_dir) :
 
@@ -78,7 +94,9 @@ class lmdb_rw_manager_t {
                      settings.byte_alignment,
                      settings.hash_truncation),
           name_store(hashdb_dir, RW_MODIFY),
-          source_store(hashdb_dir, RW_MODIFY) {
+          source_store(hashdb_dir, RW_MODIFY),
+          M() {
+    MUTEX_INIT(&M);
   }
 
   void insert(const std::string& binary_hash,
@@ -87,9 +105,12 @@ class lmdb_rw_manager_t {
               lmdb_source_data_t source_data,
               const std::string& hash_label) {
 
+    MUTEX_LOCK(&M);
+
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_inserted_invalid_byte_alignment;
+      MUTEX_UNLOCK(&M);
       return;
     }
 
@@ -97,6 +118,7 @@ class lmdb_rw_manager_t {
     if (settings.hash_block_size != 0 &&
         (hash_block_size != settings.hash_block_size)) {
       ++changes.hashes_not_inserted_mismatched_hash_block_size;
+      MUTEX_UNLOCK(&M);
       return;
     }
 
@@ -115,6 +137,7 @@ class lmdb_rw_manager_t {
                           hash_label)) {
         // this exact entry already exists
         ++changes.hashes_not_inserted_duplicate_element;
+        MUTEX_UNLOCK(&M);
         return;
       }
 
@@ -124,6 +147,7 @@ class lmdb_rw_manager_t {
         if (count >= settings.maximum_hash_duplicates) {
           // at maximum for this hash
           ++changes.hashes_not_inserted_exceeds_max_duplicates;
+          MUTEX_UNLOCK(&M);
           return;
         }
       }
@@ -141,6 +165,8 @@ class lmdb_rw_manager_t {
 
     // add hash to bloom filter, too, even if already there
     bloom_filter_manager.add_hash_value(binary_hash);
+
+    MUTEX_UNLOCK(&M);
   }
 
   // remove
@@ -150,9 +176,12 @@ class lmdb_rw_manager_t {
               lmdb_source_data_t source_data,
               const std::string& hash_label) {
 
+    MUTEX_LOCK(&M);
+
     // validate the byte alignment
     if (file_offset % settings.byte_alignment != 0) {
       ++changes.hashes_not_removed_invalid_byte_alignment;
+      MUTEX_UNLOCK(&M);
       return;
     }
 
@@ -160,6 +189,7 @@ class lmdb_rw_manager_t {
     if (settings.hash_block_size != 0 &&
         (hash_block_size != settings.hash_block_size)) {
       ++changes.hashes_not_removed_mismatched_hash_block_size;
+      MUTEX_UNLOCK(&M);
       return;
     }
 
@@ -168,6 +198,7 @@ class lmdb_rw_manager_t {
          name_store.find(source_data.repository_name, source_data.filename);
     if (lookup_pair.first == false) {
       ++changes.hashes_not_removed_no_element; // because there was no source
+      MUTEX_UNLOCK(&M);
       return;
     }
     uint64_t source_lookup_index = lookup_pair.second;
@@ -183,10 +214,14 @@ class lmdb_rw_manager_t {
       // the key with the source lookup encoding was not found
       ++changes.hashes_not_removed_no_element;
     }
+
+    MUTEX_UNLOCK(&M);
   }
 
   // remove hash
   void remove_hash(const std::string& binary_hash) {
+
+    MUTEX_LOCK(&M);
 
     // erase elements of hash
     uint32_t count = hash_store.erase(binary_hash);
@@ -197,6 +232,8 @@ class lmdb_rw_manager_t {
     } else {
       changes.hashes_removed += count;
     }
+
+    MUTEX_UNLOCK(&M);
   }
 
   // add source data
@@ -210,16 +247,23 @@ class lmdb_rw_manager_t {
       return;
     }
 
+    MUTEX_LOCK(&M);
+
     // get the source lookup index, possibly creating it
     std::pair<bool, uint64_t> pair = name_store.insert(
               source_data.repository_name, source_data.filename);
 
     // add the source data
     source_store.add(pair.second, source_data);
+
+    MUTEX_UNLOCK(&M);
   }
 
   size_t size() const {
-    return hash_store.size();
+    MUTEX_LOCK(&M);
+    size_t hash_store_size = hash_store.size();
+    MUTEX_UNLOCK(&M);
+    return hash_store_size;
   }
 };
 

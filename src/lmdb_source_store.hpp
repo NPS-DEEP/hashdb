@@ -21,6 +21,7 @@
  * \file
  * Provides source lookup using LMDB.
  *
+ * This module is not threadsafe.
  * Locks are required around contexts that can write to preserve
  * integrity, in particular to allow grow.
  *
@@ -36,24 +37,12 @@
 #include <string>
 #include "lmdb.h"
 
-// no concurrent writes
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-#include "mutex_lock.hpp"
-
 class lmdb_source_store_t {
 
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
   MDB_env* env;
-
-#ifdef HAVE_PTHREAD
-  mutable pthread_mutex_t M;                  // mutext
-#else
-  mutable int M;                              // placeholder
-#endif
 
   // disallow these
   lmdb_source_store_t(const lmdb_source_store_t&);
@@ -65,10 +54,7 @@ class lmdb_source_store_t {
 
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode_type),
-       env(),
-       M() {
-
-    MUTEX_INIT(&M);
+       env() {
 
     // the DB stage directory
     const std::string store_dir = hashdb_dir + "/lmdb_source_store";
@@ -88,8 +74,6 @@ class lmdb_source_store_t {
    */
   bool add(uint64_t source_lookup_index,
               const lmdb_source_data_t& new_source_data) {
-
-    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -156,7 +140,6 @@ class lmdb_source_store_t {
       assert(0);
     }
     context.close();
-    MUTEX_UNLOCK(&M);
     return added;
   }
 

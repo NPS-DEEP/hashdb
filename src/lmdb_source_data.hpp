@@ -64,24 +64,26 @@ class lmdb_source_data_t {
   // that bulk_extractor is importing multiple sbufs, which is expected.
   // A zeroed size and hash are size=0, hash=1 byte of 0.
   bool add(const lmdb_source_data_t& other) {
-
-    // repository name
     bool changed = false;
-    if (other.repository_name != "" && repository_name != other.repository_name) {
+
+    // check failure conditions
+    if (repository_name != "" && repository_name != other.repository_name) {
       // internal error
       assert(0);
     }
-    if (other.repository_name != "") {
+    if (filename != "" && filename != other.filename) {
+      // internal error
+      assert(0);
+    }
+
+    // set new repository name
+    if (other.repository_name != "" && repository_name != other.repository_name) {
       repository_name = other.repository_name;
       changed = true;
     }
 
-    // filename
+    // set new filename
     if (other.filename != "" && filename != other.filename) {
-      // internal error
-      assert(0);
-    }
-    if (other.filename != "") {
       filename = other.filename;
       changed = true;
     }

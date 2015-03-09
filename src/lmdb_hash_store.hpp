@@ -22,6 +22,7 @@
  * Provides hash to encoding lookup using LMDB
  * where encoding contains source_lookup_index and file_offset.
  *
+ * This module is not threadsafe.
  * Locks are required around contexts that can write to preserve
  * integrity, in particular to allow grow.
  */
@@ -37,12 +38,6 @@
 #include "lmdb_data_codec.hpp"
 #include <string>
 
-// no concurrent writes
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-#include "mutex_lock.hpp"
-
 class lmdb_hash_store_t {
 
   private:
@@ -51,12 +46,6 @@ class lmdb_hash_store_t {
   const size_t byte_alignment;
   const size_t hash_truncation;
   MDB_env* env;
-
-#ifdef HAVE_PTHREAD
-  mutable pthread_mutex_t M;                  // mutext
-#else
-  mutable int M;                              // placeholder
-#endif
 
   // disallow these
   lmdb_hash_store_t(const lmdb_hash_store_t&);
@@ -72,10 +61,7 @@ class lmdb_hash_store_t {
        file_mode(p_file_mode_type),
        byte_alignment(p_byte_alignment),
        hash_truncation(p_hash_truncation),
-       env(),
-       M() {
-
-    MUTEX_INIT(&M);
+       env() {
 
     // the DB stage directory
     const std::string store_dir = hashdb_dir + "/lmdb_hash_store";
@@ -95,8 +81,6 @@ class lmdb_hash_store_t {
               uint64_t source_lookup_index,
               uint64_t file_offset,
               const std::string& hash_label) {
-
-    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -129,7 +113,6 @@ class lmdb_hash_store_t {
     }
 
     context.close();
-    MUTEX_UNLOCK(&M);
   }
 
   // erase hash, encoding pair
@@ -138,8 +121,6 @@ class lmdb_hash_store_t {
              uint64_t source_lookup_index,
              uint64_t file_offset,
              const std::string& hash_label) {
-
-    MUTEX_LOCK(&M);
 
     // get context
     lmdb_context_t context(env, true, true);
@@ -175,7 +156,6 @@ class lmdb_hash_store_t {
 
     // close context
     context.close();
-    MUTEX_UNLOCK(&M);
 
     return status;
   }
@@ -183,8 +163,6 @@ class lmdb_hash_store_t {
   // erase hash, return count erased
   // note: hashdb does not use erase.
   size_t erase(const std::string& binary_hash) {
-
-    MUTEX_LOCK(&M);
 
     // get context
     lmdb_context_t context(env, true, true);
@@ -234,7 +212,6 @@ class lmdb_hash_store_t {
 
     // close context
     context.close();
-    MUTEX_UNLOCK(&M);
 
     return key_count;
   }

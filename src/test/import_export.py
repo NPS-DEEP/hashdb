@@ -60,7 +60,6 @@ def test_import_export():
     H.str_equals(lines[0], '{"source_id":1,"repository_name":"repositoryname","filename":"file1"}')
     H.int_equals(len(lines), 2)
 
-
 def test_import_tab():
     # default
     shutil.rmtree(db1, True)

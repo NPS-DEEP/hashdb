@@ -22,6 +22,7 @@
  * Provides repository name, filename to source lookup index lookup
  * using LMDB.
  *
+ * This module is not threadsafe.
  * Locks are required around contexts that can write to preserve
  * integrity, in particular to allow grow and to preserve accurate size.
  */
@@ -34,24 +35,12 @@
 #include "lmdb_data_codec.hpp"
 #include "lmdb_context.hpp"
 
-// no concurrent writes
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-#include "mutex_lock.hpp"
-
 class lmdb_name_store_t {
 
   private:
   const std::string hashdb_dir;
   const file_mode_type_t file_mode;
   MDB_env* env;
-
-#ifdef HAVE_PTHREAD
-  mutable pthread_mutex_t M;                  // mutext
-#else
-  mutable int M;                              // placeholder
-#endif
 
   // disallow these
   lmdb_name_store_t(const lmdb_name_store_t&);
@@ -63,10 +52,7 @@ class lmdb_name_store_t {
 
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       env(0),
-       M() {
-
-    MUTEX_INIT(&M);
+       env(0) {
 
     // create the DB environment
     MDB_env* new_env;
@@ -95,8 +81,6 @@ class lmdb_name_store_t {
    */
   std::pair<bool, uint64_t> insert(const std::string& repository_name,
                                    const std::string& filename) {
-
-    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -138,7 +122,6 @@ class lmdb_name_store_t {
     }
 
     context.close();
-    MUTEX_UNLOCK(&M);
 
     return std::pair<bool, uint64_t>(is_new, source_lookup_index);
   }
