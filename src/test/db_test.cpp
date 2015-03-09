@@ -206,58 +206,54 @@ void rw_modify_source_store() {
   lmdb_source_store_t source_store(temp_dir, RW_MODIFY);
 
   // checks while size is zero
-  lmdb_source_data_t data;
   lmdb_source_it_data_t it_data;
   TEST_EQ(source_store.size(), 0);
 
   it_data = source_store.find_first();
   TEST_EQ(it_data.is_valid, false);
 
-  // check encoding and decoding
+  // add data0 ID 0
   lmdb_source_data_t data0("r2", "fn3", 4, "hash5");
   TEST_EQ(source_store.add(0, data0), true);
+  TEST_EQ(source_store.add(0, data0), false);
+
+  // add data ID 1
+  lmdb_source_data_t data;
+  data.repository_name = "rn";
+  data.filename = "fn";
+  data.filesize = 1;
+  TEST_EQ(source_store.add(1, data), true);
+  TEST_EQ(source_store.add(1, data), false);
+  // changing file size zeroes out filesize and file hash
+  data.filesize = 20;
+  TEST_EQ(source_store.add(1, data), true);
+  TEST_EQ(source_store.add(1, data), false);
+
+  // check data0 ID 0
   lmdb_source_data_t data0b = source_store.find(0);
   TEST_EQ(data0b.repository_name, "r2");
   TEST_EQ(data0b.filename, "fn3");
   TEST_EQ(data0b.filesize, 4);
   TEST_EQ(data0b.binary_hash, "hash5");
 
-  // check add
-  TEST_EQ(source_store.add(1, data), true);
-  TEST_EQ(source_store.add(1, data), false);
-  data.repository_name = "rn";
-  TEST_EQ(source_store.add(1, data), true);
-  TEST_EQ(source_store.add(1, data), false);
-  data.filename = "fn";
-  TEST_EQ(source_store.add(1, data), true);
-  TEST_EQ(source_store.add(1, data), false);
-  data.filesize = 20;
-  TEST_EQ(source_store.add(1, data), true);
-  TEST_EQ(source_store.add(1, data), false);
-  data.binary_hash = "yy";
-  TEST_EQ(source_store.add(1, data), true);
-  TEST_EQ(source_store.add(1, data), false);
+  // check data ID 1
+  lmdb_source_data_t data1b = source_store.find(1);
+  TEST_EQ(data1b.repository_name, "rn");
+  TEST_EQ(data1b.filename, "fn");
+  TEST_EQ(data1b.filesize, 0);
+  TEST_EQ(data1b.binary_hash, lmdb_helper::hex_to_binary_hash("00"));
 
-  TEST_EQ(source_store.size(), 2);
-
-  data.repository_name = "repository_name";
-  data.filename = "filename";
-  data.filesize = 30;
-  data.binary_hash = "some hash digest";
-  TEST_EQ(source_store.add(2, data), true);
-
-  data = source_store.find(1);
-  TEST_EQ(data.repository_name, "rn");
+  // check iterator
   it_data = source_store.find_first();
   TEST_EQ(it_data.source_data.repository_name, "r2");
   TEST_EQ(it_data.is_valid, true);
   it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.source_data.repository_name, "rn");
   it_data = source_store.find_next(it_data.source_lookup_index);
-  TEST_EQ(it_data.source_data.repository_name, "repository_name");
-  TEST_EQ(it_data.is_valid, true);
-  it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.is_valid, false);
+
+  TEST_EQ(source_store.size(), 2);
+
 }
 
 void read_only_source_store() {
@@ -271,9 +267,6 @@ void read_only_source_store() {
   TEST_EQ(it_data.is_valid, true);
   it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.source_data.repository_name, "rn");
-  TEST_EQ(it_data.is_valid, true);
-  it_data = source_store.find_next(it_data.source_lookup_index);
-  TEST_EQ(it_data.source_data.repository_name, "repository_name");
   TEST_EQ(it_data.is_valid, true);
   it_data = source_store.find_next(it_data.source_lookup_index);
   TEST_EQ(it_data.is_valid, false);
