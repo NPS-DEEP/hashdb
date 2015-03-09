@@ -127,7 +127,8 @@ class expand_manager_t {
         if (source_data.filesize != 0) {
           std::cout << ",\"filesize\":" << source_data.filesize;
         }
-        if (source_data.binary_hash != "") {
+        if (source_data.binary_hash != "" && source_data.binary_hash !=
+                                     lmdb_helper::hex_to_binary_hash("00")) {
           std::cout << ",\"file_hashdigest\":\""
                     << lmdb_helper::binary_hash_to_hex(source_data.binary_hash)
                     << "\"";

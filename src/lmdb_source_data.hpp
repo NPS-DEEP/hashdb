@@ -32,37 +32,6 @@
 #include "lmdb_helper.h"
 
 class lmdb_source_data_t {
-  private:
-  // copy string
-  bool copy(const std::string& from, std::string& to) {
-    // return false if empty or same, return true if change empty
-    // fail if attempt to change non-empty destination
-    if (from == "" || from == to) {
-      return false;
-    }
-    if (to != "") {
-      std::cerr << "Warning: attempt to change source data string from hex "
-                << lmdb_helper::binary_hash_to_hex(from) << " to "
-                << lmdb_helper::binary_hash_to_hex(to) << "\n";
-      std::cerr << "binary from " << from << " to " << to << "\n";
-      return false;
-    }
-    to = from;
-    return true;
-  }
-  // copy uint64
-  bool copy(uint64_t from, uint64_t& to) {
-    if (from == 0 || from == to) {
-      return false;
-    }
-    if (to != 0) {
-      std::cerr << "Warning: attempt to change source data uint64_t from "
-                << from << " to " << to << "\n";
-      return false;
-    }
-    to = from;
-    return true;
-  }
 
   public:
   std::string repository_name;
@@ -89,12 +58,56 @@ class lmdb_source_data_t {
             && binary_hash == other.binary_hash);
   }
 
-  // add, true if added, false if same, fatal if different
+  // add, true if anything changes
+  // Fail if repository_name or filename integrity are broken.
+  // Zero out size and file hash if existing values change, indicating
+  // that bulk_extractor is importing multiple sbufs, which is expected.
+  // A zeroed size and hash are size=0, hash=1 byte of 0.
   bool add(const lmdb_source_data_t& other) {
-    bool changed = copy(other.repository_name, repository_name);
-    changed |= copy(other.filename, filename);
-    changed |= copy(other.filesize, filesize);
-    changed |= copy(other.binary_hash, binary_hash);
+
+    // repository name
+    bool changed = false;
+    if (other.repository_name != "" && repository_name != other.repository_name) {
+      // internal error
+      assert(0);
+    }
+    if (other.repository_name != "") {
+      repository_name = other.repository_name;
+      changed = true;
+    }
+
+    // filename
+    if (other.filename != "" && filename != other.filename) {
+      // internal error
+      assert(0);
+    }
+    if (other.filename != "") {
+      filename = other.filename;
+      changed = true;
+    }
+
+    // set filesize and binary_hash as required
+    if (other.filesize == 0 && other.binary_hash == "") {
+      // fields are not being set, so nothing to do
+    } else if (filesize == 0 &&
+               binary_hash == lmdb_helper::hex_to_binary_hash("00")) {
+      // file size and file hash are zeroed so leave them alone
+
+    } else if (filesize != other.filesize || binary_hash != other.binary_hash) {
+      // manage the change
+      if (filesize == 0 && binary_hash == "") {
+        // assinging values for the first time
+        filesize = other.filesize;
+        binary_hash = other.binary_hash;
+
+      } else {
+        // attempt to change existing value so zero both
+        filesize = 0;
+        binary_hash = lmdb_helper::hex_to_binary_hash("00");
+      }
+      changed = true;
+    }
+
     return changed;
   }
 };

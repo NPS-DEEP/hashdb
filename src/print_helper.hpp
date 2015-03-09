@@ -65,7 +65,8 @@ class print_helper {
     if (source.source_data.filesize != 0) {
       std::cout << ",\"filesize\":" << source.source_data.filesize;
     }
-    if (source.source_data.binary_hash != "") {
+    if (source.source_data.binary_hash != "" && lmdb_helper::binary_hash_to_hex(
+                               source.source_data.binary_hash) != "00") {
       std::cout << ",\"file_hashdigest\":\""
                 << lmdb_helper::binary_hash_to_hex(source.source_data.binary_hash)
                 << "\"";

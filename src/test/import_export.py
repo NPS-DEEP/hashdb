@@ -48,6 +48,19 @@ def test_import_export():
     H.hashdb(["export", db1, xml1])
     H.dfxml_hash_equals(byte_run_hash_label="A")
 
+    # change established file hash zeroes it
+    shutil.rmtree(db1, True)
+    H.rm_tempfile(xml1)
+    H.hashdb(["create", db1])
+    H.write_temp_dfxml_hash()
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    H.write_temp_dfxml_hash(byte_run_file_offset = 4096*1, file_hashdigest="11")
+    H.hashdb(["import", db1, "temp_dfxml_hash"])
+    lines = H.hashdb(["sources", db1])
+    H.str_equals(lines[0], '{"source_id":1,"repository_name":"repositoryname","filename":"file1"}')
+    H.int_equals(len(lines), 2)
+
+
 def test_import_tab():
     # default
     shutil.rmtree(db1, True)

@@ -111,7 +111,8 @@ class lmdb_source_store_t {
 
       // get existing source data
       std::string encoding = lmdb_helper::get_string(context.data);
-      lmdb_source_data_t source_data = lmdb_data_codec::decode_source_data(encoding);
+      lmdb_source_data_t source_data =
+                            lmdb_data_codec::decode_source_data(encoding);
 
       // add in new source data
       added = source_data.add(new_source_data);

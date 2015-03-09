@@ -85,7 +85,8 @@ class dfxml_hashdigest_writer_t {
     }
 
     // if available, write file hashdigest
-    if (source_data.binary_hash != "") {
+    if (source_data.binary_hash != ""
+        && source_data.binary_hash != lmdb_helper::binary_hash_to_hex("00")) {
       std::string file_hashdigest =
                    lmdb_helper::binary_hash_to_hex(source_data.binary_hash);
       x.xmlout("hashdigest", file_hashdigest, "type='MD5'", false);
