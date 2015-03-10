@@ -48,7 +48,6 @@ class expand_manager_t {
   const lmdb_ro_manager_t* ro_manager;
   uint32_t max_sources;
   std::set<uint64_t>* source_ids;
-  std::set<uint64_t>* source_list_ids;
 
   // do not allow copy or assignment
   expand_manager_t(const expand_manager_t&);
@@ -154,15 +153,12 @@ class expand_manager_t {
                    uint32_t p_max_sources) :
           ro_manager(p_ro_manager),
           max_sources(p_max_sources),
-          source_ids(),
-          source_list_ids() {
+          source_ids() {
     source_ids = new std::set<uint64_t>;
-    source_list_ids = new std::set<uint64_t>;
   }
 
   ~expand_manager_t() {
     delete source_ids;
-    delete source_list_ids;
   }
 
   // print expanded hash
@@ -184,17 +180,13 @@ class expand_manager_t {
     // evaluate the source list
     std::pair<size_t, uint64_t> pair =
                            calculate_source_list_size_id_pair(binary_hash);
-    uint64_t source_list_id = pair.second;
 
     // print the source list ID
-    std::cout << ", \"source_list_id\":" << source_list_id;
+    std::cout << ", \"source_list_id\":" << pair.second;
 
-    // print the list of sources the first time unless the list is too long
+    // print the source list unless the list is too long
     if (pair.first <= max_sources) {
-      if (source_list_ids->find(source_list_id) == source_list_ids->end()) {
-        source_list_ids->insert(source_list_id);
-        print_source_list(binary_hash);
-      }
+      print_source_list(binary_hash);
     }
 
     // close line
@@ -214,8 +206,7 @@ class expand_manager_t {
     }
 
     // make sure the hash is in the DB
-    size_t count = ro_manager->find_count(binary_hash);
-    if (count == 0) {
+    if (ro_manager->find_count(binary_hash) == 0) {
       std::cout << "Error: Invalid hash, incorrect feature file or hash database, '" << feature_line.feature << "'\n";
       return;
     }
@@ -238,17 +229,13 @@ class expand_manager_t {
     // calculate the source list ID
     std::pair<size_t, uint64_t> pair =
                            calculate_source_list_size_id_pair(binary_hash);
-    uint64_t source_list_id = pair.second;
 
     // print the source list ID
-    std::cout << "{\"source_list_id\":" << source_list_id;
+    std::cout << "{\"source_list_id\":" << pair.second;
 
-    // print the list of sources the first time unless it is too long
-    if (count <= max_sources) {
-      if (source_list_ids->find(source_list_id) == source_list_ids->end()) {
-        source_list_ids->insert(source_list_id);
-        print_source_list(binary_hash);
-      }
+    // print the source list unless the list is too long
+    if (pair.first <= max_sources) {
+      print_source_list(binary_hash);
     }
 
     // write the closure of the new context
