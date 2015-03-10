@@ -10,7 +10,7 @@ db2 = "temp_2.hdb"
 xml1 = "temp_1.xml"
 
 def setup():
-    # create DFXML with hsah values 00, 11, 22
+    # create DFXML with hash values 00, 11, 22
     shutil.rmtree(db1, True)
     H.hashdb(["create", db1])
     H.rm_tempfile(xml1)
@@ -28,7 +28,7 @@ def setup():
     H.hashdb(["create", db1])
     H.write_temp_dfxml_hash(byte_run_hashdigest="00", repository_name="r1")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00", repository_name="r2")
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00", repository_name="r2", byte_run_hash_label="H")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
     H.write_temp_dfxml_hash(byte_run_hashdigest="11", repository_name="r2", byte_run_hash_label="L")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
@@ -54,43 +54,43 @@ def test_scan_hash():
 def test_scan_expanded():
     # all
     lines = H.hashdb(["scan_expanded", db1, xml1])
-    H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617, "sources":[{"source_id":1,"file_offset":0,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
-    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0}]}')
+    H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617, "sources":[{"source_id":1,"file_offset":0,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":2,"file_offset":0,"label":"H","repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"label":"L"}]}')
     H.int_equals(len(lines), 10)
 
     # -m0
     lines = H.hashdb(["scan_expanded", "-m0", db1, xml1])
     H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617}')
-    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492}')
+    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492}')
     H.int_equals(len(lines), 10)
 
     # -m1
     lines = H.hashdb(["scan_expanded", "-m1", db1, xml1])
     H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617}')
-    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"label":"L","repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
     H.int_equals(len(lines), 10)
 
     # -m2
     lines = H.hashdb(["scan_expanded", "-m2", db1, xml1])
-    H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617, "sources":[{"source_id":1,"file_offset":0,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
-    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0}]}')
+    H.str_equals(lines[4], '{"block_hashdigest":"00", "count":2, "source_list_id":16178617, "sources":[{"source_id":1,"file_offset":0,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":2,"file_offset":0,"label":"H","repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.str_equals(lines[7], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"label":"L"}]}')
     H.int_equals(len(lines), 10)
 
 
 def test_scan_expanded_hash():
     # all
     lines = H.hashdb(["scan_expanded_hash", db1, "11"])
-    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"label":"L","repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
     H.int_equals(len(lines), 5)
 
     # -m0
     lines = H.hashdb(["scan_expanded_hash", "-m0", db1, "11"])
-    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492}')
+    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492}')
     H.int_equals(len(lines), 5)
 
     # -m1
     lines = H.hashdb(["scan_expanded_hash", "-m1", db1, "11"])
-    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "label":"L", "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
+    H.str_equals(lines[3], '{"block_hashdigest":"11", "count":1, "source_list_id":654825492, "sources":[{"source_id":2,"file_offset":0,"label":"L","repository_name":"r2","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}')
     H.int_equals(len(lines), 5)
 
 

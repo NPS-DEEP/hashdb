@@ -266,7 +266,7 @@ class hashdb_settings_reader_t {
       throw std::runtime_error(ss3.str());
     }
 
-    // set up the sax callback data structure with context-relavent handlers
+    // set up the sax callback data structure with context-relevant handlers
     xmlSAXHandler sax_handlers = {
       NULL,			// internalSubset
       NULL,			// isStandalone

@@ -108,6 +108,11 @@ class expand_manager_t {
       std::cout << "{\"source_id\":" << hash_it_data.source_lookup_index
                 << ",\"file_offset\":" << hash_it_data.file_offset;
 
+      // print associated hash label, if present
+      if (hash_it_data.hash_label != "") {
+        std::cout << ",\"label\":\"" << hash_it_data.hash_label << "\"";
+      }
+
       // print full source information the first time
       if (source_ids->find(hash_it_data.source_lookup_index) == source_ids->end()) {
 
@@ -175,12 +180,6 @@ class expand_manager_t {
     // print the count
     size_t count = ro_manager->find_count(binary_hash);
     std::cout << ", \"count\":" << count;
-
-    // if the first hash has a label, print the label too
-    lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
-    if (hash_it_data.hash_label != "") {
-      std::cout << ", \"label\":\"" << hash_it_data.hash_label << "\"";
-    }
 
     // evaluate the source list
     std::pair<size_t, uint64_t> pair =

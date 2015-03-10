@@ -16,7 +16,7 @@ def setup():
     H.rm_tempfile(xml1)
     H.write_temp_dfxml_hash(byte_run_hashdigest="00", byte_run_file_offset=1*4096, repository_name="r1")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00", byte_run_file_offset=2*4096, repository_name="r1")
+    H.write_temp_dfxml_hash(byte_run_hashdigest="00", byte_run_file_offset=2*4096, repository_name="r1", byte_run_hash_label="H")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
     H.write_temp_dfxml_hash(byte_run_hashdigest="11", byte_run_file_offset=3*4096, byte_run_hash_label="L")
     H.hashdb(["import", db1, "temp_dfxml_hash"])
@@ -74,7 +74,7 @@ def test_hash_table():
     # source_id 2
     lines = H.hashdb(["hash_table", db1, "2"])
     H.str_equals(lines[3], '# {"source_id":2,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}')
-    H.str_equals(lines[5], '12288	11	{"count":1,"label":"L"}')
+    H.str_equals(lines[5], '12288	11	{"count":1}')
     H.int_equals(len(lines), 7)
 
     # source_id 3
@@ -89,7 +89,7 @@ def write_full_identified_blocks():
     tempfile = open("temp_identified_blocks", "w")
     tempfile.write('4096	00	{"count":2}\n')
     tempfile.write('8192	00	{"count":2}\n')
-    tempfile.write('12288	11	{"count":1,"label":"L"}\n')
+    tempfile.write('12288	11	{"count":1}\n')
 
 def write_wrong_identified_blocks():
     tempfile = open("temp_identified_blocks", "w")
@@ -104,9 +104,9 @@ def test_expand_identified_blocks():
     # test all
     write_full_identified_blocks()
     lines = H.hashdb(["expand_identified_blocks", db1, "temp_identified_blocks"])
-    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192}]}]')
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192,"label":"H"}]}]')
     H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
-    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"label":"L","repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
     H.int_equals(len(lines), 7)
 
     # test all with -m0
@@ -114,7 +114,7 @@ def test_expand_identified_blocks():
     lines = H.hashdb(["expand_identified_blocks", "-m0", db1, "temp_identified_blocks"])
     H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735}]')
     H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
-    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1},{"source_list_id":654825492}]')
     H.int_equals(len(lines), 7)
 
     # test all with -m1
@@ -122,15 +122,15 @@ def test_expand_identified_blocks():
     lines = H.hashdb(["expand_identified_blocks", "-m1", db1, "temp_identified_blocks"])
     H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735}]')
     H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
-    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"label":"L","repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]');
     H.int_equals(len(lines), 7)
 
     # test all with -m2
     write_full_identified_blocks()
     lines = H.hashdb(["expand_identified_blocks", "-m2", db1, "temp_identified_blocks"])
-    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192}]}]')
+    H.str_equals(lines[3], '4096	00	[{"count":2},{"source_list_id":2844319735, "sources":[{"source_id":1,"file_offset":4096,"repository_name":"r1","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"},{"source_id":1,"file_offset":8192,"label":"H"}]}]')
     H.str_equals(lines[4], '8192	00	[{"count":2},{"source_list_id":2844319735}]')
-    H.str_equals(lines[5], '12288	11	[{"count":1,"label":"L"},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
+    H.str_equals(lines[5], '12288	11	[{"count":1},{"source_list_id":654825492, "sources":[{"source_id":2,"file_offset":12288,"label":"L","repository_name":"repositoryname","filename":"file1","file_hashdigest":"ff112233445566778899aabbccddeeff"}]}]')
     H.int_equals(len(lines), 7)
 
     # test invalid hash value
@@ -152,6 +152,7 @@ def test_explain_identified_blocks():
     # test all
     write_full_identified_blocks()
     lines = H.hashdb(["explain_identified_blocks", db1, "temp_identified_blocks"])
+    print(*lines, sep='\n')
     H.str_equals(lines[3], '# hashes')
     H.str_equals(lines[4], '["00",{"count":2},[{"source_id":1,"file_offset":4096},{"source_id":1,"file_offset":8192}]]')
     H.str_equals(lines[5], '["11",{"count":1,"label":"L"},[{"source_id":2,"file_offset":12288}]]')

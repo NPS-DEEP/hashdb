@@ -42,10 +42,10 @@ class explain_manager_t {
   private:
   const lmdb_ro_manager_t* ro_manager;
   const uint32_t requested_max;
-  std::map<std::string, std::string>* hashes;   // hash, feature line context
+  std::set<std::string>* hashes;                // hash
   std::set<uint64_t>* source_lookup_indexes;    // source ID
 
-  typedef std::map<std::string, std::string>::const_iterator hashes_it_t;
+  typedef std::set<std::string>::const_iterator hashes_it_t;
 
   // do not allow copy or assignment
   explain_manager_t(const explain_manager_t&);
@@ -57,7 +57,7 @@ class explain_manager_t {
                          requested_max(p_requested_max),
                          hashes(),
                          source_lookup_indexes() {
-    hashes = new std::map<std::string, std::string>;
+    hashes = new std::set<std::string>;
     source_lookup_indexes = new std::set<uint64_t>;
   }
 
@@ -86,9 +86,7 @@ class explain_manager_t {
     }
 
     // add hash to hash set if not already there
-    std::pair<std::map<std::string, std::string>::iterator, bool> insert_pair =
-                         hashes->insert(std::pair<std::string, std::string>(
-                         binary_hash, feature_line.context));
+    std::pair<hashes_it_t, bool> insert_pair = hashes->insert(binary_hash);
 
     // do not re-process this hash if it is already in the hash set
     if (insert_pair.second == false) {
@@ -118,15 +116,15 @@ class explain_manager_t {
     bool has_reportable_hash = false;
     for (hashes_it_t it = hashes->begin(); it != hashes->end(); ++it) {
 
-      // get this iteration's hash and context
-      const std::string binary_hash = it->first;
-      const std::string context = it->second;
+      // get this iteration's hash and count
+      const std::string binary_hash = *it;
+      const size_t count = ro_manager->find_count(binary_hash);
 
       // start preparing this block hash line
       std::stringstream ss;
-      ss << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash) << "\","
-         << context   // the featrure context field
-         << ",[";     // the source array open bracket
+      ss << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
+         << "\",{\"count\":" << count
+         << "},["; // count closure followed by source array open bracket
 
       // track when to put in the comma
       bool has_identified_source = false;

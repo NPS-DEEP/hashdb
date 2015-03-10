@@ -830,7 +830,7 @@ class commands_t {
     dfxml_scan_expanded_consumer_t scan_expanded_consumer(&ro_manager, max_sources);
 
     // print header information
-    print_helper::print_header("scan_expanded-command-Version: 2");
+    print_helper::print_header("scan_expanded-command-Version: 3");
 
     // run the dfxml hashdigest reader using the scan consumer
     std::string repository_name = "not used";
@@ -895,7 +895,7 @@ class commands_t {
     }
 
     // print header information
-    print_helper::print_header("scan_expanded_hash-command-Version: 2");
+    print_helper::print_header("scan_expanded_hash-command-Version: 3");
 
     // open the expand manager
     expand_manager_t expand_manager(&ro_manager, max_sources);
@@ -1118,15 +1118,12 @@ class commands_t {
 
       if (hash_it_data.source_lookup_index == source_id) {
         // prepare the line formatted as an identified_blocks.txt feature:
-        // file offset <tab> hash <tab> count and optional label
+        // file offset <tab> hash <tab> count
         size_t count = ro_manager.find_count(hash_it_data.binary_hash);
         std::stringstream ss;
         ss << hash_it_data.file_offset << "\t"
            << lmdb_helper::binary_hash_to_hex(hash_it_data.binary_hash) << "\t"
            << "{\"count\":" << count;
-        if (hash_it_data.hash_label != "") {
-          ss << ",\"label\":\"" << hash_it_data.hash_label << "\"";
-        }
         ss << "}";
         lines->insert(ss.str());
       }

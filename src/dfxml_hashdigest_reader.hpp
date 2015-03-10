@@ -511,7 +511,7 @@ class dfxml_hashdigest_reader_t {
                 const uint64_t hash_block_size,     // 0 means allow any
                 T* dfxml_consumer) {
 
-    // set up the sax callback data structure with context-relavent handlers
+    // set up the sax callback data structure with context-relevant handlers
     xmlSAXHandler sax_handlers = {
       NULL,			// internalSubset
       NULL,			// isStandalone
