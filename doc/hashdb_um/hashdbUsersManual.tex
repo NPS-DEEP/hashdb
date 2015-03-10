@@ -813,11 +813,15 @@ The second column of the \texttt{identified\_blocks.txt} file shows the actual b
 12513792	c6361fe0eb4f7b13bac6529e1cdd8ea4	{"count":1}
 \end{lstlisting}
 
-\begin{lstlisting}[float, caption={The \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. First column is the forensic path, second is the hash value, and third is the repository name, filename, and file offset}, label=identifiedSourceLine]
-12464640	1d0abbddf1344ac751d17604bdd9ebe8	{"count":1,"source
-_id":1,"repository_name":"temp1","filename":"/home/bdallen/demo8/demo_vide
-o.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc09740e939d"
-}
+\begin{lstlisting}[float, caption={Two lines from the \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. The third column is replaced with expaned information}, label=identifiedSourceLine]
+12452352	3b6b477d391f73f67c1c01e2141dbb17	[{"count":1},{"sou
+rce_list_id":2844319735, "sources":[{"source_id":1,"file_offset":10485760,
+"repository_name":"temp1","filename":"\/home\/bdallen\/demo8\/demo_video.m
+p4","filesize":10630146,"file_hashdigest":"a003483521c181d26e66dc09740e939
+d"}]}]
+12456448	89a170b6b9a948d21d1d6ee1e7cdc467	[{"count":1},{"sou
+rce_list_id":2844319735, "sources":[{"source_id":1,"file_offset":10489856}
+]}]
 \end{lstlisting}
 
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
@@ -880,8 +884,10 @@ Each line of source information describes
 the repository name, filename, file size, and file hash for a given source ID.\\
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_hashes\_and\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file using the \texttt{explain\_identified\_blocks} command}, label=explainHashesAndSources]
-# hashdb-Version: 1.1.0
-# explain_identified_blocks-command-Version: 1
+ hashdb-Version: 2.0.0
+# explain_identified_blocks-command-Version: 3
+# command_line: hashdb explain_identified_blocks temp1.hdb temp2/identifie
+d_blocks.txt
 # hashes
 ["0c5c611edc8dfd34f85c6cbf88702e51",{"count":1},[{"source_id":1,"file_offs
 et":10530816}]]
@@ -916,9 +922,9 @@ et":10522624}]]
 ["f58a09656658c6b41e244b4a6091592c",{"count":1},[{"source_id":1,"file_offs
 et":10493952}]]
 # sources
-{"source_id":1,"repository_name":"temp1","filename":"/home/bdallen/demo8/d
-emo_video.mp4","filesize":10630146,"hashdigest":"a003483521c181d26e66dc097
-40e939d"}
+{"source_id":1,"repository_name":"temp1","filename":"\/home\/bdallen\/demo
+8\/demo_video.mp4","filesize":10630146,"file_hashdigest":"a003483521c181d2
+6e66dc09740e939d"}
 \end{lstlisting}
 
 \subsection{Tuning}
