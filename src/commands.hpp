@@ -1164,7 +1164,7 @@ class commands_t {
     }
 
     // print header information
-    print_helper::print_header("expand_identified_blocks-command-Version: 2");
+    print_helper::print_header("expand_identified_blocks-command-Version: 3");
 
     // get the identified_blocks.txt file reader
     feature_file_reader_t reader(identified_blocks_file);
@@ -1196,7 +1196,7 @@ class commands_t {
     }
 
     // print header information
-    print_helper::print_header("explain_identified_blocks-command-Version: 2");
+    print_helper::print_header("explain_identified_blocks-command-Version: 3");
 
     // open the identified_blocks.txt file reader
     feature_file_reader_t reader(identified_blocks_file);

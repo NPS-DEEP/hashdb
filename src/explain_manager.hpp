@@ -151,8 +151,15 @@ class explain_manager_t {
 
         // add the source_id and file_offset entry
         ss << "{\"source_id\":" << hash_it_data.source_lookup_index
-           << ",\"file_offset\":" << hash_it_data.file_offset
-           << "}";
+           << ",\"file_offset\":" << hash_it_data.file_offset;
+
+        // add associated hash label, if present
+        if (hash_it_data.hash_label != "") {
+          ss << ",\"label\":\"" << hash_it_data.hash_label << "\"";
+        }
+
+        // close source entry
+        ss << "}";
 
         // next
         hash_it_data = ro_manager->find_next(hash_it_data);
