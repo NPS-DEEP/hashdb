@@ -59,6 +59,10 @@ typedef struct map_impl_ {
                                       region_size);
     }
 
+    uint8_t* get_address() const {
+      return static_cast<uint8_t*>(region->get_address());
+    }
+
     // do not allow these
     map_impl_(const map_impl_t& implInstance);
     map_impl_& operator=(const map_impl_&);
@@ -72,9 +76,6 @@ typedef struct map_impl_ {
       }
     }
 
-    BIP::mapped_region* getRegion() {
-      return(region);
-    }
 } map_impl_t;
 
 extern "C"
@@ -89,8 +90,7 @@ int map_file_region(const char* filePath,
     *p_impl = new map_impl_t(filePath, curMode, file_offset, region_size);
 
     // set address of mapped region
-    uint8_t* temp = static_cast<uint8_t*>((*p_impl)->getRegion()->get_address());
-    *address = temp;
+    *address = (*p_impl)->get_address();
 
     // later, may return error in map_impl_t
     return 0;
