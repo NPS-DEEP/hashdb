@@ -35,7 +35,7 @@ def hashdb(cmd):
         print("Aborting.")
         raise Exception("hashdb aborted.")
 
-    return lines # note: last line is blank, hashdb does not generate it.
+    return lines
 
 def parse_settings(hashdb_dir):
     settings = {}
@@ -99,14 +99,14 @@ def parse_changes(lines):
 
 # require equality
 def str_equals(a,b):
-    if a != b:
-        raise ValueError(a + " not equal to " + b)
+    if a.strip() != b.strip():   # strip compensates for Windows line endings
+        raise ValueError(a.strip() + " not equal to " + b.strip())
 def bool_equals(a,b):
     if a != b:
-        raise ValueError(str(a) + " not equal to " + str(b))
+        raise ValueError(a + " not equal to " + b)
 def int_equals(a,b):
     if a != b:
-        raise ValueError(str(a) + " not equal to " + str(b))
+        raise ValueError(a + " not equal to " + b)
 
 def dfxml_hash_equals(
                       repository_name="repositoryname",
@@ -143,8 +143,8 @@ def dfxml_hash_equals(
         str_equals(fileobject_node.find('hashdigest').text, file_hashdigest)
 
     byte_run_node = fileobject_node.find('byte_run')
-    str_equals(int(byte_run_node.attrib['file_offset']), byte_run_file_offset)
-    str_equals(int(byte_run_node.attrib['len']), byte_run_len)
+    int_equals(int(byte_run_node.attrib['file_offset']), byte_run_file_offset)
+    int_equals(int(byte_run_node.attrib['len']), byte_run_len)
     # presence of hash label attribute is optional
     if 'label' in byte_run_node.attrib:
         # check that labels match

@@ -118,6 +118,7 @@ class lmdb_name_store_t {
       }
     } else {
       std::cerr << "name lookup failure: " << mdb_strerror(rc) << "\n";
+      source_lookup_index = 0; // to suppress mingw warning
       assert(0);
     }
 

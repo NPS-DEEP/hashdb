@@ -23,7 +23,8 @@
 
 /**
  * \file
- * Provides a Boost file map service from C rather than from C++.
+ * Provides a system-specific memory map service for Bloom: POSIX or WIN.
+ * Legacy BOOST code is retained.
  */
 
 #include <config.h>
@@ -41,6 +42,7 @@ namespace BIP = boost::interprocess;
 
 typedef struct map_impl_ {
 
+  private:
   BIP::mapped_region* region;
 
   public:
@@ -61,13 +63,9 @@ typedef struct map_impl_ {
                                       boost_file_mode,
                                       file_offset,
                                       region_size);
-std::cout << "Boost file_mapper, offset " << file_offset << " size " << region_size << "\n";
     }
 
     uint8_t* get_address() const {
-uint8_t* temp = static_cast<uint8_t*>(region->get_address());
-std::cout << "Boost file_mapper, address: " << (void*)temp << "\n";
-
       return static_cast<uint8_t*>(region->get_address());
     }
 
@@ -87,16 +85,16 @@ std::cout << "Boost file_mapper, address: " << (void*)temp << "\n";
 
 #else
 
-#ifdef WIN32
-// usage example: https://groups.google.com/forum/#!topic/avian/Q8bwM4ksubw
-// _get_ofshandle: https://msdn.microsoft.com/en-us/library/ks2530z6.aspx
-
-#include <io.h>     // _get_osfhandle
+#ifdef _WIN32
+// file map approach adapted from liblmdb/mdb.c
+#include <windows.h>
 
 typedef struct map_impl_ {
 
+  private:
   size_t length;
-  int fd;
+  HANDLE fd;
+  HANDLE file_mapping;
   void* addr;
 
   public:
@@ -105,43 +103,62 @@ typedef struct map_impl_ {
             const size_t file_offset,
             const size_t region_size): length(0), fd(0), addr(NULL) {
 
-    // get File Descriptor
-    const int file_mode = (curMode == MAP_READ_ONLY) ?
-                                         O_RDONLY|O_BINARY : O_RDWR|O_BINARY;
-    fd = open(file_path,file_mode,0);
-    if (fd < 0) {
-      std::cerr << "cannot open Bloom Filter file\nAborting.\n";
+    // open file and get File Descriptor
+    const int desired_file_access = (curMode == MAP_READ_ONLY)
+                             ? GENERIC_READ : GENERIC_READ|GENERIC_WRITE;
+    const int share_mode = FILE_SHARE_READ|FILE_SHARE_WRITE;
+    const int creation_disposition = (curMode == MAP_READ_ONLY)
+                             ? OPEN_EXISTING : OPEN_ALWAYS;
+    const int flags_and_attributes = FILE_ATTRIBUTE_NORMAL;
+    fd = CreateFile(file_path,
+                    desired_file_access,
+                    share_mode,
+                    NULL,                           // security attributes
+                    creation_disposition,
+                    flags_and_attributes,
+                    NULL);                          // template file
+    if (fd == INVALID_HANDLE_VALUE) {
+      std::cerr << "Error " << GetLastError() << "\n";
+      std::cerr << "Failure opening Bloom Filter file " << file_path
+                << "\nAborting.\n";
       exit(1);
     }
 
-    // get handle to fd
-    intptr_t fd_handle = _get_osfhandle(fd);
-
-    // get handle to file map
-    intptr_t file_map_handle = CreateFileMapping(
-                 fd_handle,
-                 NULL,
-                 PAGE_READONLY,
-                 0,
-                 0,
-                 NULL);
+    // open file mapping
+    const int page_protection = (curMode == MAP_READ_ONLY)
+                             ? PAGE_READONLY : PAGE_READWRITE;
+    const size_t combined_size = region_size + file_offset;
+    const int maximum_size_high = combined_size >> 32;
+    const int maximum_size_low = combined_size & 0xffffffff;
+    file_mapping = CreateFileMapping(fd,
+                                     NULL,          // security attributes
+                                     page_protection,
+                                     maximum_size_high,
+                                     maximum_size_low,
+                                     NULL);         // lp name
+    if (file_mapping == 0) {
+      std::cerr << "Error " << GetLastError() << "\n";
+      std::cerr << "Failure Mapping Bloom Filter file " << file_path
+                << "\nAborting.\n";
+      exit(1);
+    }
 
     // get addr
-    addr = static_cast<uint8_t*>(MapViewOfFile(
-                 file_map_handle,
-                 FILE_MAP_READ,
-                 0,
-                 0,
-                 s.st_size));
-
-
-
-    // open MMAP
-    const int prot = (curMode == MAP_READ_ONLY) ? PROT_READ :
-                                         PROT_READ|PROT_WRITE;
-    addr = mmap(0, region_size, prot, MAP_SHARED, fd, file_offset);
-    if (addr == NULL) {
-      std::cerr << "cannot open Bloom Filter map\nAborting.\n";
+    const int desired_map_access = (curMode == MAP_READ_ONLY)
+                             ? FILE_MAP_READ : FILE_MAP_WRITE;
+    const int file_offset_high = file_offset >> 32;
+    const int file_offset_low = file_offset & 0xffffffff;
+    const size_t number_of_bytes = region_size;
+    addr = MapViewOfFile(file_mapping,
+                         desired_map_access,
+                         file_offset_high,
+                         file_offset_low,
+                         number_of_bytes);
+    if (addr == 0) {
+      std::cerr << "Failure obtaining address of Bloom Filter map."
+                << "\nAborting.\n";
+      std::cerr << "Error " << GetLastError() << "\n";
+      exit(1);
     }
 
     // save length for munmap
@@ -149,8 +166,6 @@ typedef struct map_impl_ {
   }
 
   uint8_t* get_address() const {
-std::cout << "POSIX file_mapper, address: " << (void*)addr << "\n";
-
     return static_cast<uint8_t*>(addr);
   }
 
@@ -159,17 +174,21 @@ std::cout << "POSIX file_mapper, address: " << (void*)addr << "\n";
   map_impl_& operator=(const map_impl_&);
 
   ~map_impl_() {
-    UnmapViewOfFile(addr);
-/*
-    int status = munmap(addr, length);
-    if (status != 0) {
-      std::cerr << "Error closing Bloom Filter Map.\n";
+    // close the map
+    bool status = UnmapViewOfFile(addr);
+    if (status == false) {
+      // fail if zero
+      std::cerr << "Error closing Bloom Filter map.\n";
+      std::cerr << "Error " << GetLastError() << "\n";
     }
-    status = close(fd);
-    if (status != 0) {
+
+    // close the file
+    status = CloseHandle(fd);
+    if (status == false) {
+      // fail if zero
       std::cerr << "Error closing Bloom Filter file.\n";
+      std::cerr << "Error " << GetLastError() << "\n";
     }
-*/
   }
 } map_impl_t;
 
@@ -189,6 +208,7 @@ std::cout << "POSIX file_mapper, address: " << (void*)addr << "\n";
 
 typedef struct map_impl_ {
 
+  private:
   size_t length;
   int fd;
   void* addr;
@@ -198,15 +218,11 @@ typedef struct map_impl_ {
             const map_permissions_t curMode,
             const size_t file_offset,
             const size_t region_size): length(0), fd(0), addr(NULL) {
-std::cout << "POSIX file_mapper, offset " << file_offset << " size " << region_size << "\n";
-std::cout << "POSIX file_mapper, cur_mode " << curMode << " MAP_READ_ONLY " << MAP_READ_ONLY << "\n";
 
     // get File Descriptor
     const int file_mode = (curMode == MAP_READ_ONLY) ?
                                          O_RDONLY|O_BINARY : O_RDWR|O_BINARY;
     fd = open(file_path,file_mode,0);
-std::cout << "POSIX file_mapper, file mode " << file_mode << " fd " << fd << "\n";
-std::cout << "POSIX file_mapper, filename " << file_path << "\n";
     if (fd < 0) {
       std::cerr << "cannot open Bloom Filter file\nAborting.\n";
       exit(1);
@@ -225,8 +241,6 @@ std::cout << "POSIX file_mapper, filename " << file_path << "\n";
   }
 
   uint8_t* get_address() const {
-std::cout << "POSIX file_mapper, address: " << (void*)addr << "\n";
-
     return static_cast<uint8_t*>(addr);
   }
 
@@ -237,7 +251,7 @@ std::cout << "POSIX file_mapper, address: " << (void*)addr << "\n";
   ~map_impl_() {
     int status = munmap(addr, length);
     if (status != 0) {
-      std::cerr << "Error closing Bloom Filter Map.\n";
+      std::cerr << "Error closing Bloom Filter map.\n";
     }
     status = close(fd);
     if (status != 0) {

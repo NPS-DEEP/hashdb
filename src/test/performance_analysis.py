@@ -40,10 +40,10 @@ def test_scan_random():
     H.str_equals(lines[0], 'Scanning random hash 1000000 of 1000000')
     H.int_equals(len(lines), 2)
 
-    # something found
+    # something found, statistically, this "might" fail
     shutil.rmtree(db1, True)
     H.hashdb(["create", "-t1", db1])
-    H.hashdb(["add_random", db1, "256"])
+    H.hashdb(["add_random", db1, "10000"])
     lines = H.hashdb(["scan_random", db1, "1"])
     H.str_equals((lines[0])[:11], 'Match found')
 

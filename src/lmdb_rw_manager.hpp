@@ -123,9 +123,9 @@ class lmdb_rw_manager_t {
     }
 
     // acquire existing or new source lookup index
-    std::pair<bool, uint64_t> lookup_pair =
+    const std::pair<bool, uint64_t> lookup_pair =
          name_store.insert(source_data.repository_name, source_data.filename);
-    uint64_t source_lookup_index = lookup_pair.second;
+    const uint64_t source_lookup_index = lookup_pair.second;
 
     // if the hash may exist then check against duplicates and max count
     if (bloom_filter_manager.is_positive(binary_hash)) {
@@ -143,7 +143,7 @@ class lmdb_rw_manager_t {
 
       // disregard if above max duplicates
       if (settings.maximum_hash_duplicates > 0) {
-        size_t count = hash_store.find_count(binary_hash);
+        const size_t count = hash_store.find_count(binary_hash);
         if (count >= settings.maximum_hash_duplicates) {
           // at maximum for this hash
           ++changes.hashes_not_inserted_exceeds_max_duplicates;

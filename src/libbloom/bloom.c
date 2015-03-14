@@ -22,6 +22,9 @@
  * --------------------------------------------------------------------
  *
  * Change History:
+ * Bruce Allen - March 13, 2015
+ *   - Increase BLOOM_VECTOR_OFFSET size from 4K to 64K
+ *     to handle larger Windows granularity.
  * Jon Schmid - July 10, 2013
  *   - Uses a boost::interprocess map implementation instead of 
  *     mmap(... as 'map_file_region' and 'unmap_file_region'
@@ -92,7 +95,7 @@
 #endif
 
 
-#define BLOOM_VECTOR_OFFSET 4096	/* size of one page */
+#define BLOOM_VECTOR_OFFSET 65536	/* Bloom data space is in front */
 
 #ifndef O_BINARY
 #define O_BINARY 0
