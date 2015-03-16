@@ -28,7 +28,7 @@
 #include <dfxml_writer.h>
 #include <string>
 #include <sstream>
-#include <cstdint>
+#include <stdint.h>
 #include <iostream>
 #include "globals.hpp"
 

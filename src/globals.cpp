@@ -22,7 +22,7 @@
  * Hold global variables in this globals namespace.
  */
 
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include "globals.hpp"
 

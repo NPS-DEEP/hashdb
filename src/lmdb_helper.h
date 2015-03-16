@@ -31,7 +31,7 @@
 #include "sys/stat.h"
 #include "file_modes.h"
 #include "lmdb.h"
-#include <cstdint>
+#include <stdint.h>
 #include <cstring>
 #include <sstream>
 #include <unistd.h>

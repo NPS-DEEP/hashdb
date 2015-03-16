@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <string>
 #include <sstream>
-#include <cstdint>
+#include <stdint.h>
 #include <iostream>
 
 // hashdb tuning options

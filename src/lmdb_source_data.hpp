@@ -27,7 +27,7 @@
 
 #include <string>
 #include <sstream>
-#include <cstdint>
+#include <stdint.h>
 #include <iostream>
 #include "lmdb_helper.h"
 

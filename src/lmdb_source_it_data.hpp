@@ -24,7 +24,7 @@
 
 #ifndef LMDB_SOURCE_IT_DATA_HPP
 #define LMDB_SOURCE_IT_DATA_HPP
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include "lmdb_source_data.hpp"
 

@@ -39,7 +39,7 @@
 #include "hashdb.hpp"
 #include <string>
 #include <vector>
-#include <cstdint>
+#include <stdint.h>
 #include <climits>
 #include "file_modes.h"
 #include "hashdb_settings.hpp"

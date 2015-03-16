@@ -25,7 +25,7 @@
 #ifndef GLOBALS_HPP
 #define GLOBALS_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 
 /**

@@ -24,7 +24,7 @@
 
 #ifndef LMDB_HASH_IT_DATA_HPP
 #define LMDB_HASH_IT_DATA_HPP
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 
 struct lmdb_hash_it_data_t {
