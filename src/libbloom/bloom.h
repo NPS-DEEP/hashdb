@@ -57,7 +57,7 @@ __BEGIN_DECLS
 #define BLOOM_CALC_P(m,n,k) pow(1-exp((-(double)(k)*n)/(m)),(k))
 
 typedef struct  nsrl_bloom_ {
-    map_impl_t* map_handle;	// handle to boost map implementation
+    map_impl_t* map_handle;	// handle to map implementation
     uint32_t hash_bytes;	// hash_bits/8 ; performance optimization
     uint32_t M;	                // number of bits of hash to use for each bloom function (log2(vector_bytes))
     uint32_t k;	                // number of bloom functions to use
