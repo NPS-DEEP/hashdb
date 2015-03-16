@@ -195,7 +195,7 @@ class bloom_filter_manager_t {
   }
 
   /**
-   * throw std::runtime_error if invalid.
+   * Check, abort if invalid.
    */
   static void validate_bloom_settings(hashdb_settings_t settings) {
     std::ostringstream ss;
@@ -206,8 +206,9 @@ class bloom_filter_manager_t {
       ss << "bloom bits per hash, "
          << settings.bloom_M_hash_size
          << ", exceeds " << max_M_hash_size
-         << ", which is the limit on this system";
-      throw std::runtime_error(ss.str());
+         << ", which is the limit on this system.  Please retune."
+         << "\nAborting.\n";
+      exit(1);
     }
 
     // check that bloom hash size is not too small
@@ -215,8 +216,9 @@ class bloom_filter_manager_t {
     if (settings.bloom_M_hash_size < min_M_hash_size) {
       ss << "bloom bits per hash, "
          << settings.bloom_M_hash_size
-         << ", must not be less than " << min_M_hash_size;
-      throw std::runtime_error(ss.str());
+         << ", must not be less than " << min_M_hash_size
+         << ".  Please retune.\nAborting.";
+      exit(1);
     }
 
     // check that the number of hash functions, k hash functions, is reasonable
@@ -224,8 +226,9 @@ class bloom_filter_manager_t {
      || settings.bloom_k_hash_functions > 5) {
       std::cerr << "bloom k hash functions, "
                 << settings.bloom_k_hash_functions
-                << ", must be between 1 and 5\n";
-      throw std::runtime_error(ss.str());
+                << ", must be between 1 and 5.  Please retune."
+                << "\nAborting.";
+      exit(1);
     }
   }
 };

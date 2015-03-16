@@ -75,11 +75,10 @@ const char* hashdb_version() {
                    logger(0) {
   }
 
-  // open for importing, return true else false with error string.
-  std::pair<bool, std::string> hashdb_t::open_import(
-                                             const std::string& p_hashdb_dir,
-                                             uint32_t p_block_size,
-                                             uint32_t p_max_duplicates) {
+  // open for importing else abort with error message.
+  void hashdb_t::open_import(const std::string& p_hashdb_dir,
+                             uint32_t p_block_size,
+                             uint32_t p_max_duplicates) {
 
     if (mode != HASHDB_NONE) {
       std::cerr << "Usage error: invalid mode " << (int)mode << "\n";
@@ -90,27 +89,21 @@ const char* hashdb_version() {
     block_size = p_block_size;
     max_duplicates = p_max_duplicates;
 
-    try {
-      // create settings
-      hashdb_settings_t settings;
-      settings.hash_block_size = block_size;
-      settings.maximum_hash_duplicates = max_duplicates;
+    // create settings
+    hashdb_settings_t settings;
+    settings.hash_block_size = block_size;
+    settings.maximum_hash_duplicates = max_duplicates;
 
-      // create the databases
-      lmdb_rw_new::create(path_or_socket, settings);
+    // create the databases
+    lmdb_rw_new::create(path_or_socket, settings);
 
-      // open for writing
-      rw_manager = new lmdb_rw_manager_t(path_or_socket);
+    // open for writing
+    rw_manager = new lmdb_rw_manager_t(path_or_socket);
 
-      // open logger
-      logger = new logger_t(path_or_socket, "hashdb library import");
-      logger->add_hashdb_settings(settings);
-      logger->add_timestamp("begin import");
-
-      return std::pair<bool, std::string>(true, "");
-    } catch (std::runtime_error& e) {
-      return std::pair<bool, std::string>(false, e.what());
-    }
+    // open logger
+    logger = new logger_t(path_or_socket, "hashdb library import");
+    logger->add_hashdb_settings(settings);
+    logger->add_timestamp("begin import");
   }
 
   // import
@@ -141,9 +134,8 @@ const char* hashdb_version() {
     return 0;
   }
 
-  // open for scanning, return true else false with error string.
-  std::pair<bool, std::string> hashdb_t::open_scan(
-                                         const std::string& p_path_or_socket) {
+  // open for scanning else abort with error message.
+  void hashdb_t::open_scan(const std::string& p_path_or_socket) {
     path_or_socket = p_path_or_socket;
     if (mode != HASHDB_NONE) {
       std::cerr << "Usage error: invalid mode " << (int)mode << "\n";
@@ -154,18 +146,13 @@ const char* hashdb_version() {
     if (path_or_socket.find("tcp://") == 0) {
       mode = HASHDB_SCAN_SOCKET;
       // open TCP socket service for scanning
-      std::cerr << "TCP scan currently not implemented\n";
-      return std::pair<bool, std::string>(false, "TCP scan currently not implemented");
+      std::cerr << "TCP scan currently not implemented.\nAborting.\n";
+      exit(1);
     } else {
       mode = HASHDB_SCAN;
       // open reader manager for scanning
-      try {
-        ro_manager = new lmdb_ro_manager_t(path_or_socket);
-      } catch (std::runtime_error& e) {
-        return std::pair<bool, std::string>(false, e.what());
-      }
+      ro_manager = new lmdb_ro_manager_t(path_or_socket);
     }
-    return std::pair<bool, std::string>(true, "");
   }
 
   // scan

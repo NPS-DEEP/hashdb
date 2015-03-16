@@ -32,7 +32,6 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
-#include <stdexcept>
 #include <errno.h>
 #include <cassert>
 #include "feature_line.hpp"

@@ -51,13 +51,7 @@ class hashdb_settings_store_t {
 
     // read settings
     hashdb_settings_t settings;
-    try {
-      hashdb_settings_reader_t::read_settings(filename, settings);
-    } catch (std::runtime_error& e) {
-      std::cerr << "Unable to read database settings: " << e.what() 
-                << ".\nAborting.\n";
-      exit(1);
-    }
+    hashdb_settings_reader_t::read_settings(filename, settings);
 
     // validate that the settings version is compatible with hashdb
     if (settings.settings_version != globals_t::hashdb_settings_version) {

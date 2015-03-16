@@ -65,11 +65,11 @@ class hashdb_t {
   hashdb_t();
 
   /**
-   * Open for importing, return true else false with error string.
+   * Open for importing else abort with error message.
    */
-  std::pair<bool, std::string> open_import(const std::string& p_hashdb_dir,
-                                           uint32_t p_block_size,
-                                           uint32_t p_max_duplicates);
+  void open_import(const std::string& p_hashdb_dir,
+                   uint32_t p_block_size,
+                   uint32_t p_max_duplicates);
 
   /**
    * Import hash.
@@ -83,10 +83,9 @@ class hashdb_t {
              const std::string& block_hash_label);
 
   /**
-   * Open for scanning.
-   * Return true else false with error string.
+   * Open for scanning else abort with error message.
    */
-  std::pair<bool, std::string> open_scan(const std::string& p_path_or_socket);
+  void open_scan(const std::string& p_path_or_socket);
 
   /**
    * Scan.

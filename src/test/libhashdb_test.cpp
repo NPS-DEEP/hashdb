@@ -45,8 +45,7 @@ void do_test() {
   hashdb_t hashdb2;
 
   // open hashdb1 for import
-  std::pair<bool, std::string> import_pair = hashdb1.open_import(hashdb_dir, 4096, 20);
-  TEST_EQ(import_pair.first, true);
+  hashdb1.open_import(hashdb_dir, 4096, 20);
 
   // import some elements
   int status;
@@ -56,8 +55,7 @@ void do_test() {
   TEST_EQ(status, 0);
 
   // open hashdb2 for scan
-  std::pair<bool, std::string> scan_pair = hashdb2.open_scan(hashdb_dir);
-  TEST_EQ(scan_pair.first, true);
+  hashdb2.open_scan(hashdb_dir);
 
   // scan for some hashes
   uint32_t count;

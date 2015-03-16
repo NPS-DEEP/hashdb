@@ -415,13 +415,7 @@ void manage_bloom_settings(hashdb_settings_t& settings) {
   }
 
   // check that bloom filter parameters are valid
-  try {
-    bloom_filter_manager_t::validate_bloom_settings(settings);
-  } catch (std::runtime_error& e) {
-    std::cerr << "Bloom filter input error: " << e.what()
-              << ".\nAborting.\n";
-    exit(1);
-  }
+  bloom_filter_manager_t::validate_bloom_settings(settings);
 }
 
 void run_command() {

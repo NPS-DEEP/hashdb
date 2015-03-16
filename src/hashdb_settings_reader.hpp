@@ -39,7 +39,6 @@
 #include <libxml/parser.h>
 #include <unistd.h>
 #include "hashdb_settings.hpp"
-#include <stdexcept>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -130,24 +129,6 @@ class hashdb_settings_reader_t {
     return std::atoi(number_string.c_str());
   }
 
-  __attribute__((noreturn)) static void exit_invalid_state(std::string message) {
-    std::ostringstream s;
-    s << message;
-    throw std::runtime_error(s.str());
-  }
-
-  __attribute__((noreturn)) static void exit_invalid_text(std::string message, std::string text) {
-    std::ostringstream s;
-    s << message << ": '" << text << "'.";
-    throw std::runtime_error(s.str());
-  }
-
-  __attribute__((noreturn)) static void exit_invalid_index(size_t index) {
-    std::ostringstream s;
-    s << "Invalid bloom filter index " << index << ".";
-    throw std::runtime_error(s.str());
-  }
-
   // ************************************************************
   // static sax handlers
   // ************************************************************
@@ -199,7 +180,9 @@ class hashdb_settings_reader_t {
       is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
       is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
       if (!is_valid) {
-        exit_invalid_state("Error: invalid bloom selection\n");
+        std::cerr << "Error: Invalid Bloom state in settings:\n"
+                  << user_data.settings->bloom_is_used << "\nAborting.\n";
+        exit(1);
       }
 
     } else if (user_data.active_node == BLOOM_K_HASH_FUNCTIONS) {
@@ -253,7 +236,7 @@ class hashdb_settings_reader_t {
 
   public:
   /**
-   * read onto default hashdb settings or throw std::runtime_error.
+   * read onto default hashdb settings or fail.
    */
   static void read_settings(const std::string filename,
                             hashdb_settings_t& settings) {
@@ -262,8 +245,8 @@ class hashdb_settings_reader_t {
     bool file_is_present = (access(filename.c_str(),F_OK) == 0);
     if (!file_is_present) {
       std::ostringstream ss3;
-      ss3 << "Settings file '" << filename << "' does not exist.";
-      throw std::runtime_error(ss3.str());
+      ss3 << "Settings file '" << filename << "' does not exist.\nAborting.\n";
+      exit(1);
     }
 
     // set up the sax callback data structure with context-relevant handlers
@@ -312,8 +295,8 @@ class hashdb_settings_reader_t {
     } else {
       // something went wrong
       std::ostringstream ss4;
-      ss4 << "malformed settings in file '" << filename << "'.";
-      throw std::runtime_error(ss4.str());
+      ss4 << "malformed settings in file '" << filename << "'.\nAborting.\n";
+      exit(1);
     }
   }
 };

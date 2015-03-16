@@ -32,13 +32,6 @@
 
 static std::string XML_HEADER = "<?xml version='1.0' encoding='UTF-8'?>";
 
-class history_manager_failure_exception_t: public std::exception {
-  public:
-  virtual const char* what() const throw() {
-    return "Error: history manager failure";
-  }
-};
-
 /**
  * Provides services for managing a log history.
  */
@@ -55,28 +48,30 @@ class history_manager_t {
     // open log file as text file stream
     std::fstream in(filename.c_str());
     if (!in.is_open()) {
+      std::cerr << "Warning: history log failure.\n";
       std::cerr << "Cannot open " << filename << ": " << strerror(errno) << "\n";
-      throw history_manager_failure_exception_t();
-    }
+    } else {
 
-    // read log file into vector of lines
-    std::string line;
-    while(getline(in, line)) {
-      lines.push_back(line);
-    }
+      // read log file into vector of lines
+      std::string line;
+      while(getline(in, line)) {
+        lines.push_back(line);
+      }
 
-    in.close();
+      in.close();
+    }
   }
 
   static void strip_xml_header(std::vector<std::string>& lines) {
     // abort if header is wrong
     if (lines.size() < 1 || lines[0] != XML_HEADER) {
+      std::cerr << "Warning: history log failure.\n";
       std::cerr << "strip_xml_header: invalid header\n";
-      throw history_manager_failure_exception_t();
-    }
+    } else {
 
-    // strip the header
-    lines.erase(lines.begin());
+      // strip the header
+      lines.erase(lines.begin());
+    }
   }
 
   // strip named outer tag from lines
@@ -93,8 +88,8 @@ class history_manager_t {
 
     // require minimum size
     if (lines.size() < 3) {
+      std::cerr << "Warning: history log failure.\n";
       std::cerr << "strip_outer_tag: invalid size\n";
-      throw history_manager_failure_exception_t();
     }
 
     // remove open tag
@@ -103,16 +98,15 @@ class history_manager_t {
       ++it;
     }
     if (*it != open_tag) {
-      std::cerr << "strip_outer_tag: no open tag\n";
-      throw history_manager_failure_exception_t();
+      std::cerr << "Warning: history log failure.\n";
     }
     lines.erase(it);
 
     // remove close tag
     if (lines.back() != close_tag) {
+      std::cerr << "Warning: history log failure.\n";
       std::cerr << "strip_outer_tag: no close tag,\n";
       std::cerr << "'" << lines.back() << "' is not '" << close_tag << "'\n";
-      throw history_manager_failure_exception_t();
     }
     lines.pop_back();
   }
@@ -166,57 +160,53 @@ class history_manager_t {
       move_onto(history_filename.c_str(), old_history_filename.c_str());
     }
 
-    try {
-      // read the old history lines, if available
-      std::vector<std::string> history_lines;
-      if (access(old_history_filename.c_str(), F_OK) == 0) {
-        read_lines(old_history_filename, history_lines);
+    // read the old history lines, if available
+    std::vector<std::string> history_lines;
+    if (access(old_history_filename.c_str(), F_OK) == 0) {
+      read_lines(old_history_filename, history_lines);
 
-        // strip off header and outer tags
-        strip_xml_header(history_lines);
-        strip_outer_tag("history", history_lines);
-      }
-
-      // read the log lines
-      const std::string log_filename = hashdb_dir + "/log.xml";
-      std::vector<std::string> log_lines;
-      read_lines(log_filename, log_lines);
-
-      // strip off header and outer tags from log lines
-      strip_xml_header(log_lines);
-      strip_outer_tag("log", log_lines);
-
-      // open history output stream
-      std::fstream outf;
-      outf.open(history_filename.c_str(),std::ios_base::out);
-      if (!outf.is_open()) {
-        std::cerr << "append_log_to_history: unable to open history file\n";
-        throw history_manager_failure_exception_t();
-      }
-
-      // write header and open history tag
-      outf << XML_HEADER << std::endl;
-      outf << "<history>" << std::endl;
-
-      // write the old history lines
-      for (std::vector<std::string>::const_iterator history_it = history_lines.begin(); history_it != history_lines.end(); ++history_it) {
-        outf << *history_it << std::endl;
-      }
-
-      // write the new log lines
-      for (std::vector<std::string>::const_iterator log_it = log_lines.begin(); log_it != log_lines.end(); ++log_it) {
-        outf << *log_it << std::endl;
-      }
-
-      // write closure history tag
-      outf << "</history>" << std::endl;
-
-      // close outfile
-      outf.close();
-
-    } catch (history_manager_failure_exception_t &e) {
-      std::cerr << "Warning: unable to write hashdb history file.\n";
+      // strip off header and outer tags
+      strip_xml_header(history_lines);
+      strip_outer_tag("history", history_lines);
     }
+
+    // read the log lines
+    const std::string log_filename = hashdb_dir + "/log.xml";
+    std::vector<std::string> log_lines;
+    read_lines(log_filename, log_lines);
+
+    // strip off header and outer tags from log lines
+    strip_xml_header(log_lines);
+    strip_outer_tag("log", log_lines);
+
+    // open history output stream
+    std::fstream outf;
+    outf.open(history_filename.c_str(),std::ios_base::out);
+    if (!outf.is_open()) {
+      std::cerr << "Warning: history log failure.\n";
+      std::cerr << "append_log_to_history: unable to open history file\n";
+      return;
+    }
+
+    // write header and open history tag
+    outf << XML_HEADER << std::endl;
+    outf << "<history>" << std::endl;
+
+    // write the old history lines
+    for (std::vector<std::string>::const_iterator history_it = history_lines.begin(); history_it != history_lines.end(); ++history_it) {
+      outf << *history_it << std::endl;
+    }
+
+    // write the new log lines
+    for (std::vector<std::string>::const_iterator log_it = log_lines.begin(); log_it != log_lines.end(); ++log_it) {
+      outf << *log_it << std::endl;
+    }
+
+    // write closure history tag
+    outf << "</history>" << std::endl;
+
+    // close outfile
+    outf.close();
   }
 
   /**
@@ -232,58 +222,53 @@ class history_manager_t {
     // move new_history to old_new_history if new_history exists
     move_onto(new_history_filename.c_str(), old_new_history_filename.c_str());
 
-    try {
+    // read old history lines
+    std::vector<std::string> old_history_lines;
+    read_lines(old_history_filename, old_history_lines);
 
-      // read old history lines
-      std::vector<std::string> old_history_lines;
-      read_lines(old_history_filename, old_history_lines);
+    // strip off header and outer tags from old history lines
+    strip_xml_header(old_history_lines);
+    strip_outer_tag("history", old_history_lines);
 
-      // strip off header and outer tags from old history lines
-      strip_xml_header(old_history_lines);
-      strip_outer_tag("history", old_history_lines);
+    // embed old history lines inside new "old_history" tag
+    embed_in_tag("old_history", old_history_lines);
 
-      // embed old history lines inside new "old_history" tag
-      embed_in_tag("old_history", old_history_lines);
+    // read new history lines
+    std::vector<std::string> new_history_lines;
+    read_lines(old_new_history_filename, new_history_lines);
 
-      // read new history lines
-      std::vector<std::string> new_history_lines;
-      read_lines(old_new_history_filename, new_history_lines);
+    // strip off header and outer tags of new history lines
+    strip_xml_header(new_history_lines);
+    strip_outer_tag("history", new_history_lines);
 
-      // strip off header and outer tags of new history lines
-      strip_xml_header(new_history_lines);
-      strip_outer_tag("history", new_history_lines);
-
-      // open new history output stream
-      std::fstream outf;
-      outf.open(new_history_filename.c_str(),std::ios_base::out);
-      if (!outf.is_open()) {
-        std::cerr << "merge_history_to_history: unable to open new history file\n";
-        throw history_manager_failure_exception_t();
-      }
-
-      // write header and open history tag
-      outf << XML_HEADER << std::endl;
-      outf << "<history>" << std::endl;
-
-      // write any new history lines
-      for (std::vector<std::string>::const_iterator new_history_it = new_history_lines.begin(); new_history_it != new_history_lines.end(); ++new_history_it) {
-        outf << *new_history_it << std::endl;
-      }
-
-      // append the old history lines
-      for (std::vector<std::string>::const_iterator old_history_it = old_history_lines.begin(); old_history_it != old_history_lines.end(); ++old_history_it) {
-        outf << *old_history_it << std::endl;
-      }
-
-      // write closure history tag
-      outf << "</history>" << std::endl;
-
-      // close outfile
-      outf.close();
-
-    } catch (history_manager_failure_exception_t &e) {
-      std::cerr << "Warning: unable to write hashdb history file.\n";
+    // open new history output stream
+    std::fstream outf;
+    outf.open(new_history_filename.c_str(),std::ios_base::out);
+    if (!outf.is_open()) {
+      std::cerr << "Warning: history log failure.\n";
+      std::cerr << "merge_history_to_history: unable to open new history file\n";
+      return;
     }
+
+    // write header and open history tag
+    outf << XML_HEADER << std::endl;
+    outf << "<history>" << std::endl;
+
+    // write any new history lines
+    for (std::vector<std::string>::const_iterator new_history_it = new_history_lines.begin(); new_history_it != new_history_lines.end(); ++new_history_it) {
+      outf << *new_history_it << std::endl;
+    }
+
+    // append the old history lines
+    for (std::vector<std::string>::const_iterator old_history_it = old_history_lines.begin(); old_history_it != old_history_lines.end(); ++old_history_it) {
+      outf << *old_history_it << std::endl;
+    }
+
+    // write closure history tag
+    outf << "</history>" << std::endl;
+
+    // close outfile
+    outf.close();
   }
 };
 

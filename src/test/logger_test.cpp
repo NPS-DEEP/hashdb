@@ -51,11 +51,7 @@ void run_test() {
   logger.add_hashdb_settings(settings);
   logger.add_hashdb_changes(changes);
   logger.add("add_by_itself", 3);
-
-  // check that logger is not usable once closed
   logger.close();
-  TEST_THROWS(logger.add_timestamp("already closed"), std::runtime_error);
-  TEST_THROWS(logger.close(), std::runtime_error);
 }
 
 int main(int argc, char* argv[]) {

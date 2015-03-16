@@ -33,7 +33,7 @@
 #include "hashdb_settings.hpp"
 #include "history_manager.hpp"
 #include <iostream>
-#include <stdexcept>
+#include <cassert>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
@@ -90,8 +90,8 @@ class logger_t {
    */
   void close() {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.close: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     // log closure for x
@@ -112,8 +112,8 @@ class logger_t {
    */
   void add_timestamp(const std::string& name) {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.add_timestamp: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     x.add_timestamp(name);
@@ -124,8 +124,8 @@ class logger_t {
    */
   void add_memory_usage(const std::string& name) {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.add_memory_usage: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     add_memory_usage_algorithm(&x, name);
@@ -133,8 +133,8 @@ class logger_t {
 
   void add_hashdb_settings(const hashdb_settings_t& settings) {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.add_hashdb_settings: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     settings.report_settings(x);
@@ -142,8 +142,8 @@ class logger_t {
 
   void add_hashdb_changes(const hashdb_changes_t& changes) {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.add_hashdb_changes: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     changes.report_changes(x);
@@ -155,8 +155,8 @@ class logger_t {
   template<typename T>
   void add(const std::string& tag, const T& value) {
     if (closed) {
-      // logger closed
-      throw std::runtime_error("logger.add: log file already closed");
+      // program error: logger closed
+      assert(0);
     }
 
     x.xmlout(tag, value);
