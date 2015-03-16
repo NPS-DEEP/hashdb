@@ -384,17 +384,12 @@ class lmdb_helper {
 
   // return 16 bytes of random hash
   static std::string random_binary_hash() {
-    // random hash buffer
-    union hash_buffer_t {
-      char hash[16];
-      uint32_t words[4];
-      hash_buffer_t() {
-        for (size_t i=0; i<4; i++) {
-          words[i]=rand();
-        }
-      }
-    };
-    return std::string(hash_buffer_t().hash, sizeof(hash_buffer_t));
+    char hash[16];
+    for (size_t i=0; i<16; i++) {
+      // note: uint32_t not used because windows rand only uses 15 bits.
+      hash[i]=(static_cast<char>(rand()));
+    }
+    return std::string(hash, 16);
   }
 
   // helper to get valid json output, taken from

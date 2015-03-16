@@ -37,6 +37,8 @@ It is possible that in a future version of _hashdb_, equivalent client/server ca
 
 * Calculation of the `source_list_id` value used to identify distinct source groups has been fixed so that IDs of same source groups resolve to the same value.  Before, the value was incorrectly derived by considering sources multiple times or in arbitrary order.  Now, the value is derived by considering sources exactly once, and in order.  
 
+* Performance analysis command `test_random` was improved to be more random on Windows systems, which truncated some bits to 0.
+
 * Additional test modules were added to help validate operational integrity.
 
 _hashdb_ Version 2.0.0 is not compatible with previous versions of _hashdb_.
