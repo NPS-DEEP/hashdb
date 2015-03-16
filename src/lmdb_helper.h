@@ -396,9 +396,9 @@ class lmdb_helper {
   // http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
   static std::string escape_json(const std::string& input) {
     std::ostringstream ss;
-    for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
+    //for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
     //C++98/03:
-    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
       switch (*iter) {
         case '\\': ss << "\\\\"; break;
         case '"': ss << "\\\""; break;
