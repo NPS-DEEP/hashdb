@@ -1,7 +1,7 @@
                      Announcing hashdb 2.0.0
-                        February 20, 2015
+                         March 17, 2015
 
-                          RELEASE NOTES (DRAFT)
+                          RELEASE NOTES
 
 hashdb Version 2.0.0 has been released for Linux, MacOS and Windows.
 
