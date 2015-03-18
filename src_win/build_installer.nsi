@@ -19,14 +19,14 @@
 
 !define APPNAME "HashDB ${VERSION}"
 !define REG_SUB_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
-!define COMPANYNAME "NPS"
+!define COMPANYNAME "Naval Postgraduate School"
 !define DESCRIPTION "Hash Database Tools"
 
 # These will be displayed by the "Click here for support information" link in "Add/Remove Programs"
 # It is possible to use "mailto:" links here to open the email client
 !define HELPURL "//https://github.com/simsong/hashdb" # "Support Information" link
 !define UPDATEURL "//https://github.com/simsong/hashdb" # "Product Updates" link
-!define ABOUTURL "https://github.com/simsong/hashdb" # "Publisher" link
+!define ABOUTURL "//https://github.com/simsong/hashdb" # "Publisher" link
 
 SetCompressor lzma
  
@@ -62,14 +62,14 @@ Section "${APPNAME}"
 
 	# install Registry information
 	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
-	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "${REG_SUB_KEY}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "Publisher" "$\"${COMPANYNAME}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "HelpLink" "$\"${HELPURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "URLUpdateInfo" "$\"${UPDATEURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "URLInfoAbout" "$\"${ABOUTURL}$\""
-	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayVersion" "$\"${VERSION}$\""
+	WriteRegStr HKLM "${REG_SUB_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "QuietUninstallString" "$INSTDIR\uninstall.exe /S"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "InstallLocation" "$INSTDIR"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "Publisher" "${COMPANYNAME}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "HelpLink" "${HELPURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLUpdateInfo" "${UPDATEURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "URLInfoAbout" "${ABOUTURL}"
+	WriteRegStr HKLM "${REG_SUB_KEY}" "DisplayVersion" "${VERSION}"
 	# There is no option for modifying or repairing the install
 	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoModify" 1
 	WriteRegDWORD HKLM "${REG_SUB_KEY}" "NoRepair" 1
