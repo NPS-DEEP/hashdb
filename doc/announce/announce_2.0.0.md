@@ -31,6 +31,7 @@ _hashdb_ Version 2.0.0 introduces new capability:
  * Client/Server code which required `Boost::asio` was removed.
 It is possible that in a future version of _hashdb_, equivalent client/server capability may be provided using Python and the Python Twisted module.
  * Invalid input values will use 0 instead of failing.
+ * The _hshdb_ Bloom Filter now uses `mmap` for POSIX systems and File Mapping for Windows systems instead of Boost for its file mapping.
  * _hashdb_ now uses CRC code from http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/libkern/crc32.c rather than from `Boost::crc`.
 
 * New command `subtract_repository` was added to allow removal of specific repositories.  Before, this functionality was achieved by iteratively using the `add_repository` command.  This addition fills a functional deficiency.
