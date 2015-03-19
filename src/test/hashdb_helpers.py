@@ -106,7 +106,7 @@ def bool_equals(a,b):
         raise ValueError(a + " not equal to " + b)
 def int_equals(a,b):
     if a != b:
-        raise ValueError(a + " not equal to " + b)
+        raise ValueError(str(a) + " not equal to " + str(b))
 
 def dfxml_hash_equals(
                       repository_name="repositoryname",
