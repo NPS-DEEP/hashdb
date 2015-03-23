@@ -276,10 +276,15 @@ class lmdb_helper {
     }
 
     // maybe grow the DB
-    if (env_info.me_mapsize / ms.ms_psize == env_info.me_last_pgno + 2) {
+    if (env_info.me_mapsize / ms.ms_psize <= env_info.me_last_pgno + 10) {
 
-      // full so grow the DB, safe since this code is locked
       // could call mdb_env_sync(env, 1) here but it does not help
+      // rc = mdb_env_sync(env, 1);
+      // if (rc != 0) {
+      //   std::cerr << "Error growing DB: " <<  mdb_strerror(rc)
+      //             << "\nAborting.\n";
+      //   exit(1);
+      // }
 
       // grow the DB
       size_t size = env_info.me_mapsize;

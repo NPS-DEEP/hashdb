@@ -85,6 +85,9 @@ class lmdb_hash_store_t {
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
 
+    // for validation, get size before
+    size_t size_before = lmdb_helper::size(env);
+
     // get context
     lmdb_context_t context(env, true, true);
     context.open();
@@ -113,6 +116,14 @@ class lmdb_hash_store_t {
     }
 
     context.close();
+
+    // Don't trust rc, make sure DB really grew
+    size_t size_after = lmdb_helper::size(env);
+    if (size_before+1 != size_after) {
+      std::cerr << "hash store insert error: before: " << size_before
+                << ", after: " << size_after << "\n";
+      assert(0);
+    }
   }
 
   // erase hash, encoding pair

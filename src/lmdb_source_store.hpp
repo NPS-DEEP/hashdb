@@ -78,6 +78,9 @@ class lmdb_source_store_t {
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
 
+    // for validation, get size before
+    size_t size_before = lmdb_helper::size(env);
+
     // get context
     lmdb_context_t context(env, true, false);
     context.open();
@@ -90,8 +93,10 @@ class lmdb_source_store_t {
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
+    bool changed = false;
     bool added = false;
     if (rc == 0) {
+      // there is existing data
 
       // get existing source data
       std::string encoding = lmdb_helper::get_string(context.data);
@@ -99,8 +104,8 @@ class lmdb_source_store_t {
                             lmdb_data_codec::decode_source_data(encoding);
 
       // add in new source data
-      added = source_data.add(new_source_data);
-      if (added) {
+      changed = source_data.add(new_source_data);
+      if (changed) {
         // replace the record with the fuller one
         // delete the existing record
         rc = mdb_cursor_del(context.cursor, 0);
@@ -115,6 +120,7 @@ class lmdb_source_store_t {
             std::cerr << "put error: " << mdb_strerror(rc) << "\n";
             assert(0);
           }
+
         } else {
           std::cerr << "delete error: " << mdb_strerror(rc) << "\n";
           assert(0);
@@ -135,12 +141,34 @@ class lmdb_source_store_t {
         std::cerr << "put new error: " << mdb_strerror(rc) << "\n";
         assert(0);
       }
+
     } else {
       std::cerr << "get error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
     context.close();
-    return added;
+
+    // Don't trust rc, make sure DB really grew
+    if (changed) {
+      size_t size_after = lmdb_helper::size(env);
+      if (size_before != size_after) {
+        std::cerr << "source store change error: before: " << size_before
+                  << ", after: " << size_after << "\n";
+        std::cerr << "Aborting.\n";
+        assert(0);
+      }
+    }
+    if (added) {
+      size_t size_after = lmdb_helper::size(env);
+      if (size_before+1 != size_after) {
+        std::cerr << "source store insert error: before: " << size_before
+                  << ", after: " << size_after << "\n";
+        std::cerr << "Aborting.\n";
+        assert(0);
+      }
+    }
+
+    return added|changed;
   }
 
   /**

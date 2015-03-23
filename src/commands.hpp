@@ -1333,10 +1333,12 @@ class commands_t {
     // close logger
     logger.add_timestamp("end add_random");
     logger.add_hashdb_changes(rw_manager.changes);
+    logger.add("hash_store_size", rw_manager.size());
     logger.close();
 
     // also write changes to cout
     std::cout << rw_manager.changes << "\n";
+    std::cout << "hash store size: " << rw_manager.size() << "\n";
   }
 
   /**
