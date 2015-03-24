@@ -3,7 +3,7 @@
 
                           RELEASE NOTES
 
-hashdb Version 2.0.0 has been released for Linux, MacOS and Windows.
+hashdb Version 2.0.1 has been released for Linux, MacOS and Windows.
 
 # 2.0.1 Improvements over Version 2.0.0
 * A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.
