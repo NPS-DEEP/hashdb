@@ -6,7 +6,7 @@
 hashdb Version 2.0.0 has been released for Linux, MacOS and Windows.
 
 # 2.0.1 Improvements over Version 2.0.0
-* A hash import bug is fixed where on Windows systems, when adding more than 300 million hashes at once, some hashes are silently lost.
+* A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.
 The fix is to grow the DB size sooner, when the available page size gets down to 10 instead of down to 2.  Additionally, code is added to detect this failure.
 
 # Functional Changes in v2.0.0
