@@ -74,6 +74,10 @@ class lmdb_context_t {
  
     // create txn object
     int rc = mdb_txn_begin(env, NULL, txn_flags, &txn);
+    if (rc != 0) {
+      std::cerr << "LMDB txn error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
 
     // create the database handle integer
     rc = mdb_dbi_open(txn, NULL, dbi_flags, &dbi);
@@ -103,7 +107,12 @@ class lmdb_context_t {
     // free txn object
     if ((txn_flags & READ_ONLY) == 0) {
       // RW
-      mdb_txn_commit(txn);
+      int rc = mdb_txn_commit(txn);
+      if (rc != 0) {
+        std::cerr << "LMDB txn commit error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+
     } else {
       // RO
       mdb_txn_abort(txn);

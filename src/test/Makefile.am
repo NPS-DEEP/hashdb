@@ -36,6 +36,7 @@ EXTRA_DIST = \
 # these CFLAGS are adapted from liblmdb/Makefile
 
 check_PROGRAMS = \
+	lmdb_test \
 	db_test \
 	db_managers_test \
 	bloom_filter_manager_test \
@@ -58,6 +59,7 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
+lmdb_test_LDADD = ../libhashdb.la
 db_test_LDADD = ../libhashdb.la
 db_managers_test_LDADD = ../libhashdb.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
@@ -80,6 +82,9 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
+lmdb_test_SOURCES = \
+	lmdb_test.cpp
+
 db_test_SOURCES = \
 	../lmdb_context.hpp \
 	../lmdb_hash_it_data.hpp \

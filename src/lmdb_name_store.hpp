@@ -89,9 +89,6 @@ class lmdb_name_store_t {
     lmdb_context_t context(env, true, false);
     context.open();
 
-    // for validation, get size before
-    size_t size_before = lmdb_helper::size(env);
-
     // encode the key
     std::string key_encoding = lmdb_data_codec::encode_name_data(
                                             repository_name, filename);
@@ -127,16 +124,6 @@ class lmdb_name_store_t {
     }
 
     context.close();
-
-    // Don't trust rc, make sure DB really grew
-    if (is_new) {
-      size_t size_after = lmdb_helper::size(env);
-      if (size_before+1 != size_after) {
-        std::cerr << "name store insert error: before: " << size_before
-                  << ", after: " << size_after << "\n";
-        assert(0);
-      }
-    }
 
     return std::pair<bool, uint64_t>(is_new, source_lookup_index);
   }
