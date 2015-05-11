@@ -36,6 +36,37 @@
 #include <sstream>
 #include <unistd.h>
 #include <iomanip>
+#include <pthread.h>
+
+// thread support to sync to prevent long delays
+bool sync_busy = false;
+void *perform_mdb_env_sync(void* env) {
+  if (sync_busy) {
+    // busy, so drop this sync request
+#ifdef DEBUG
+    std::cout << "sync busy\n";
+#endif
+  } else {
+    sync_busy=true;
+#ifdef DEBUG
+    std::cout << "sync start\n";
+#endif
+    int rc = mdb_env_sync(static_cast<MDB_env*>(env), 1);
+    if (rc != 0) {
+      // silently let the error go.  sync is a convenience and also sync is
+      // expected to fail when the program closes env and exits.
+#ifdef DEBUG
+      std::cout << "Note in sync DB: " <<  mdb_strerror(rc) << "\n";
+#endif
+    }
+#ifdef DEBUG
+    std::out << "sync done\n";
+#endif
+    sync_busy = false;
+  }
+  return NULL;
+}
+
 
 class lmdb_helper {
 
@@ -273,6 +304,16 @@ class lmdb_helper {
     rc = mdb_env_stat(env, &ms);
     if (rc != 0) {
       assert(0);
+    }
+
+    // occasionally sync to prevent long flush delays
+    if (ms.ms_entries % 10000000 == 0) {
+      pthread_t thread;
+      int result_code = pthread_create(&thread, NULL, perform_mdb_env_sync,
+                            static_cast<void*>(env));
+      if (result_code != 0) {
+        assert(0);
+      }
     }
 
     // maybe grow the DB
