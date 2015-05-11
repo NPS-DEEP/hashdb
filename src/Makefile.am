@@ -64,6 +64,7 @@ HASHDB_INCS = \
 	dfxml_scan_expanded_consumer.hpp \
 	expand_manager.hpp \
 	explain_manager.hpp \
+	rank_manager.hpp \
 	feature_file_reader.hpp \
 	feature_line.hpp \
 	main.cpp \

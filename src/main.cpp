@@ -539,17 +539,21 @@ void run_command() {
     commands_t::hash_table(hashdb_arg1, hashdb_arg2);
   } else if (command == "expand_identified_blocks") {
     uint32_t expand_max = (has_max) ? optional_max :
-                                        globals_t::default_scan_expanded_max;
+                            globals_t::default_expand_identified_blocks_max;
     no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
     commands_t::expand_identified_blocks(hashdb_arg1, hashdb_arg2, expand_max);
   } else if (command == "explain_identified_blocks") {
     no_a(); no_t(); no_p(); no_r(); no_s(); no_A(); no_B(); no_C();
     require_parameter_count(2);
-    uint32_t identified_blocks_max = (has_max) ? optional_max :
+    uint32_t explain_max = (has_max) ? optional_max :
                             globals_t::default_explain_identified_blocks_max;
     commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2,
-                                                      identified_blocks_max);
+                                                      explain_max);
+  } else if (command == "rank_identified_blocks") {
+    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
+    require_parameter_count(2);
+    commands_t::rank_identified_blocks(hashdb_arg1, hashdb_arg2);
   } else if (command == "rebuild_bloom") {
     no_a(); no_t(); no_p(); no_m(); no_r(); no_s();
     require_parameter_count(1);

@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Defines the static commands that hashdb_manager can execute.
+ * Explain an evaluation of identified blocks.
  */
 
 #ifndef EXPLAIN_MANAGER_HPP

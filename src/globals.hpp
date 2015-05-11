@@ -42,6 +42,7 @@ class globals_t {
   static const bool default_bloom_is_used = true;
   static const uint32_t default_bloom_M_hash_size = 28;
   static const uint32_t default_bloom_k_hash_functions = 3;
+  static const uint32_t default_expand_identified_blocks_max = 200;
   static const uint32_t default_explain_identified_blocks_max = 20;
   static const uint32_t default_import_tab_sector_size = 512;
   static bool quiet_mode;
