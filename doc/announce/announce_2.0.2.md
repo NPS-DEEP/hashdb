@@ -6,6 +6,7 @@
 hashdb Version 2.0.2 has been released for Linux, MacOS and Windows.
 
 # 2.0.2 Improvements over Version 2.0.1
+* New command `rank_identified_blocks` is added for post-processing `identified_blocks.txt` into a table of sectors along with hash count information.
 * DB Add failure is now detected at the point the LMDB transaction is committed
 rather than verifying the transaction afterwords.
 

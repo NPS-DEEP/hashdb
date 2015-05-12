@@ -83,9 +83,6 @@ class rank_manager_t {
 
     // get count of sources for this hash
     size_t count = ro_manager->find_count(binary_hash);
-if (count > 1) {
-std::cout << "count: " << count << "\n";
-}
 
     // get range of entries for the hash
     lmdb_hash_it_data_t hash_it_data = ro_manager->find_first(binary_hash);
@@ -152,7 +149,7 @@ std::cout << "count: " << count << "\n";
                 << ",{\"filename\":\""
                 << lmdb_helper::escape_json(lmdb_source_data.filename) << "\"}"
                 << ",{\"file_blocks\":" << lmdb_source_data.filesize / block_size << "}"
-                << ",{\"file_probative_blocks\":" << lmdb_source_data.filesize / block_size << "}"
+//                << ",{\"file_probative_blocks\":" << lmdb_source_data.filesize / block_size << "}"
                 << ",{\"count\":" << it->second.count << "}"
                 << ",{\"weight\":" << it->second.weight << "}"
                 << ",{\"probative_count\":" << it->second.probative_count << "}"
