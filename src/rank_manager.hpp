@@ -142,19 +142,19 @@ class rank_manager_t {
     for (sources_t::iterator it = sources->begin(); it != sources->end(); ++it) {
       uint64_t source_id = it->first;
       lmdb_source_data_t lmdb_source_data = ro_manager->find_source(source_id);
-      std::cout << "["
-                << "{\"source_id\":" << source_id << "}"
-                << ",{\"repository_name\":\""
-                << lmdb_helper::escape_json(lmdb_source_data.repository_name) << "\"}"
-                << ",{\"filename\":\""
-                << lmdb_helper::escape_json(lmdb_source_data.filename) << "\"}"
-                << ",{\"file_blocks\":" << lmdb_source_data.filesize / block_size << "}"
-//                << ",{\"file_probative_blocks\":" << lmdb_source_data.filesize / block_size << "}"
-                << ",{\"count\":" << it->second.count << "}"
-                << ",{\"weight\":" << it->second.weight << "}"
-                << ",{\"probative_count\":" << it->second.probative_count << "}"
-                << ",{\"probative_weight\":" << it->second.probative_weight << "}"
-                << "]" << std::endl;
+      std::cout << "{"
+                << "\"source_id\":" << source_id
+                << ",\"repository_name\":\""
+                << lmdb_helper::escape_json(lmdb_source_data.repository_name) << "\""
+                << ",\"filename\":\""
+                << lmdb_helper::escape_json(lmdb_source_data.filename) << "\""
+                << ",\"file_blocks\":" << lmdb_source_data.filesize / block_size
+//                << ",\"file_probative_blocks\":" << lmdb_source_data.filesize / block_size
+                << ",\"count\":" << it->second.count
+                << ",\"weight\":" << it->second.weight
+                << ",\"probative_count\":" << it->second.probative_count
+                << ",\"probative_weight\":" << it->second.probative_weight
+                << "}" << std::endl;
     }
   }
 };
