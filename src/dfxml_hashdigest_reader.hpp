@@ -327,6 +327,7 @@ class dfxml_hashdigest_reader_t {
       // clear fields under byte_run
       user_data.byte_run_file_offset = "";
       user_data.byte_run_len = "";
+      user_data.byte_run_hash_label = "";
       user_data.byte_run_hashdigest_type = "";
       user_data.byte_run_hashdigest = "";
 
