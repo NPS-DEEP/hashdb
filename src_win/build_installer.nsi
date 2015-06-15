@@ -32,7 +32,7 @@ SetCompressor lzma
  
 RequestExecutionLevel admin
  
-InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
  
 Name "${APPNAME}"
 	outFile "hashdb-${VERSION}-windowsinstaller.exe"
