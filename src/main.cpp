@@ -550,10 +550,6 @@ void run_command() {
                             globals_t::default_explain_identified_blocks_max;
     commands_t::explain_identified_blocks(hashdb_arg1, hashdb_arg2,
                                                       explain_max);
-  } else if (command == "rank_identified_blocks") {
-    no_a(); no_t(); no_p(); no_m(); no_r(); no_s(); no_A(); no_B(); no_C();
-    require_parameter_count(2);
-    commands_t::rank_identified_blocks(hashdb_arg1, hashdb_arg2);
   } else if (command == "rebuild_bloom") {
     no_a(); no_t(); no_p(); no_m(); no_r(); no_s();
     require_parameter_count(1);
