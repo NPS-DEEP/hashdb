@@ -1,14 +1,49 @@
-                     Announcing hashdb 2.0.2
+                     Announcing hashdb 2.1.0
                          <date>
 
                           RELEASE NOTES (DRAFT)
 
-hashdb Version 2.0.2 has been released for Linux, MacOS and Windows.
+hashdb Version 2.1.0 has been released for Linux, MacOS and Windows.
 
-# 2.0.2 Improvements over Version 2.0.1
+# Changes in 2.1.0 over 2.0.1
+## Functional changes
+* The storage and the reporting of entropy labels is improved.
+ Previously, entropy label flags calculated from blocks being hashed
+ were stored with source data for each source imported
+ and were reported with each source.
+ Entropy label flags are now correctly stored and reported with their
+ associated hash.
+
+ Storing entropy labels with sources rather than hashes caused several
+ problems:
+ * Labels were stored redundantly for each source of a hash.
+ * If the entropy label algorithm changed, labels became inconsistent.
+
+ The following functional changes result from this change:
+ * JSON output provides entropy labels for hashes rather than for each source
+ associated with each hash.
+ * The `import` and `export` commands now import and export using JSON
+ rather than DFXML.  The JSON syntax is hierarchical and does not
+ produce redundant information, which makes it more compact.
+ The DFXML syntax provides one hash and source pair per line,
+ which requires duplicate output, is not hierarchical, and is bulky.
+ * The existing `import` command is renamed to `import_dfxml`.
+ It is retained to provide continued support for importing from tools
+ such as `md5deep` which generate DFXML output.
+ * If the entropy label algorithm changes, old labels are replaced.
+
+ This change affects the internal operation of hashdb as follows:
+ * hashdb contains a new and separate LMDB storage Map
+ called `lmdb_flag_store` for storing flags for hashes.
+ * The `lmdb_flag_store` is a Map (not Multimap) of key=hash and value=flag.
+ * The `lmdb_flag_store` will not be a massive database, for example
+ it should easily be less than 1% the size of the hash store.
+
 * DB Add failure is now detected at the point the LMDB transaction is committed
 rather than verifying the transaction afterwords.
-* The Windows installer is corrected to install to the 64-bit executable directory.
+
+## Bug fix
+* The Windows installer is corrected to install to the 64-bit executable directory rather than to the 32-bit directory.
 
 # 2.0.1 Improvements over Version 2.0.0
 * A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.
