@@ -42,6 +42,17 @@ hashdb Version 2.1.0 has been released for Linux, MacOS and Windows.
 * DB Add failure is now detected at the point the LMDB transaction is committed
 rather than verifying the transaction afterwords.
 
+* Output from commands that produce expanded source output for a hash
+ are changed to not re-print source output for the same hash when scanned later.
+ This results in more compact output.  Measurements indicate that expanding
+ `identified_blocks.txt` using the `expand_identified_blocks` command
+ now results in expanded output that is about two times larger
+ rather than about 33 times larger.
+
+ Any tools that parse this expanded output will need to cache
+ the source information since it will not be included
+ the next time that hash is matched.
+
 ## Bug fix
 * The Windows installer is corrected to install to the 64-bit executable directory rather than to the 32-bit directory.
 

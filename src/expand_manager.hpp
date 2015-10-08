@@ -48,6 +48,7 @@ class expand_manager_t {
   const lmdb_ro_manager_t* ro_manager;
   uint32_t max_sources;
   std::set<uint64_t>* source_ids;
+  std::set<std::string>* hashes;
 
   // do not allow copy or assignment
   expand_manager_t(const expand_manager_t&);
@@ -153,12 +154,15 @@ class expand_manager_t {
                    uint32_t p_max_sources) :
           ro_manager(p_ro_manager),
           max_sources(p_max_sources),
-          source_ids() {
+          source_ids(),
+          hashes() {
     source_ids = new std::set<uint64_t>;
+    hashes = new std::set<std::string>;
   }
 
   ~expand_manager_t() {
     delete source_ids;
+    delete hashes;
   }
 
   // print expanded hash
@@ -173,20 +177,27 @@ class expand_manager_t {
     std::cout << "{\"block_hashdigest\":\""
               << lmdb_helper::binary_hash_to_hex(binary_hash) << "\"";
 
-    // print the count
-    size_t count = ro_manager->find_count(binary_hash);
-    std::cout << ", \"count\":" << count;
+    // only print count and source information once for this hash
+    if (hashes->find(binary_hash) == hashes->end()) {
 
-    // evaluate the source list
-    std::pair<size_t, uint64_t> pair =
+      // print the count
+      size_t count = ro_manager->find_count(binary_hash);
+      std::cout << ", \"count\":" << count;
+
+      // evaluate the source list
+      std::pair<size_t, uint64_t> pair =
                            calculate_source_list_size_id_pair(binary_hash);
 
-    // print the source list ID
-    std::cout << ", \"source_list_id\":" << pair.second;
+      // print the source list ID
+      std::cout << ", \"source_list_id\":" << pair.second;
 
-    // print the source list unless the list is too long
-    if (pair.first <= max_sources) {
-      print_source_list(binary_hash);
+      // print the source list unless the list is too long
+      if (pair.first <= max_sources) {
+        print_source_list(binary_hash);
+      }
+
+      // remember this hash
+      hashes->insert(binary_hash);
     }
 
     // close line
@@ -217,29 +228,39 @@ class expand_manager_t {
     // write the hashdigest
     std::cout << feature_line.feature << "\t";
 
-    // write the opening of the new context
+    // write the opening of the context
     std::cout << "[";
 
     // write the old context
     std::cout << feature_line.context;
 
-    // write the separator
-    std::cout << ",";
+    // only print count and source information once for this hash
+    if (hashes->find(binary_hash) == hashes->end()) {
 
-    // calculate the source list ID
-    std::pair<size_t, uint64_t> pair =
+      // write a separator
+      std::cout << ",";
+
+      // calculate the source list ID
+      std::pair<size_t, uint64_t> pair =
                            calculate_source_list_size_id_pair(binary_hash);
 
-    // print the source list ID
-    std::cout << "{\"source_list_id\":" << pair.second;
+      // print the source list ID
+      std::cout << "{\"source_list_id\":" << pair.second;
 
-    // print the source list unless the list is too long
-    if (pair.first <= max_sources) {
-      print_source_list(binary_hash);
+      // print the source list unless the list is too long
+      if (pair.first <= max_sources) {
+        print_source_list(binary_hash);
+      }
+
+      // close the source list ID
+      std::cout << "}";
+
+      // remember this hash
+      hashes->insert(binary_hash);
     }
 
-    // write the closure of the new context
-    std::cout << "}]" << std::endl;
+    // write the closure of the context
+    std::cout << "]" << std::endl;
   }
 };
 
