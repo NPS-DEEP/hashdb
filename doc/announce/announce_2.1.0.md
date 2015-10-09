@@ -56,9 +56,9 @@ rather than verifying the transaction afterwords.
 ## Bug fix
 * The Windows installer is corrected to install to the 64-bit executable directory rather than to the 32-bit directory.
 
-* The count of items being processed in database manipulation commands
- involving multiple input databases is corrected to show the sum of the sizes
- of the input databases rather than just the size of the first input database.
+* The count of items being processed in the `add_multiple` command
+ is corrected to reflect the sum of the sizes of the input databases
+ rather than just the size of the first input database.
 
 # 2.0.1 Improvements over Version 2.0.0
 * A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.

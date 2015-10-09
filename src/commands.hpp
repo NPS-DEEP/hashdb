@@ -473,8 +473,7 @@ class commands_t {
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin intersect");
-    size_t total_count = ro_manager1.size() + ro_manager2.size();
-    progress_tracker_t progress_tracker(total_count, &logger);
+    progress_tracker_t progress_tracker(ro_manager1.size(), &logger);
 
     // start intersect
     lmdb_hash_it_data_t hash_it_data1 = ro_manager1.find_begin();
@@ -534,8 +533,7 @@ class commands_t {
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin intersect_hash");
-    size_t total_count = ro_manager1.size() + ro_manager2.size();
-    progress_tracker_t progress_tracker(total_count, &logger);
+    progress_tracker_t progress_tracker(ro_manager1.size(), &logger);
 
     // start intersect
     lmdb_hash_it_data_t hash_it_data1 = ro_manager1.find_begin();
@@ -603,8 +601,7 @@ class commands_t {
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin subtract");
-    size_t total_count = ro_manager1.size() + ro_manager2.size();
-    progress_tracker_t progress_tracker(total_count, &logger);
+    progress_tracker_t progress_tracker(ro_manager1.size(), &logger);
 
     // start subtract
     lmdb_hash_it_data_t hash_it_data1 = ro_manager1.find_begin();
@@ -664,8 +661,7 @@ class commands_t {
     logger.add("hashdb_dir2", hashdb_dir2);
     logger.add("hashdb_dir3", hashdb_dir3);
     logger.add_timestamp("begin subtract_hash");
-    size_t total_count = ro_manager1.size() + ro_manager2.size();
-    progress_tracker_t progress_tracker(total_count, &logger);
+    progress_tracker_t progress_tracker(ro_manager1.size(), &logger);
 
     // start subtract
     lmdb_hash_it_data_t hash_it_data1 = ro_manager1.find_begin();
