@@ -56,7 +56,7 @@ rather than verifying the transaction afterwords.
 ## Bug fix
 * The Windows installer is corrected to install to the 64-bit executable directory rather than to the 32-bit directory.
 
-* The count of items being processed in the `add_multiple` command
+* The displayed number of items being processed in the `add_multiple` command
  is corrected to reflect the sum of the sizes of the input databases
  rather than just the size of the first input database.
 
