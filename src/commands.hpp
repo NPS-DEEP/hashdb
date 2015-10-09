@@ -148,7 +148,7 @@ class commands_t {
     logger.add_hashdb_settings(settings);
     logger.close();
 
-    std::cout << "Database created.\n";
+    std::cout << "New database created.\n";
   }
 
   // import
