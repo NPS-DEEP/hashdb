@@ -94,7 +94,7 @@ class explain_manager_t {
     }
   
     // do not add sources for this hash if count > requested max
-    if (ro_manager->find_count(binary_hash) > requested_max) {
+    if (requested_max != 0 && ro_manager->find_count(binary_hash) > requested_max) {
       return;
     }
 

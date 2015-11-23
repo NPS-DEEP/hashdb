@@ -192,7 +192,7 @@ class expand_manager_t {
       std::cout << ", \"source_list_id\":" << pair.second;
 
       // print the source list unless the list is too long
-      if (pair.first <= max_sources) {
+      if (max_sources == 0 || pair.first <= max_sources) {
         print_source_list(binary_hash);
       }
 
@@ -248,7 +248,7 @@ class expand_manager_t {
       std::cout << "{\"source_list_id\":" << pair.second;
 
       // print the source list unless the list is too long
-      if (pair.first <= max_sources) {
+      if (max_sources == 0 || pair.first <= max_sources) {
         print_source_list(binary_hash);
       }
 
