@@ -64,6 +64,38 @@ rather than verifying the transaction afterwords.
  `explain_identified_blocks` commands now accepts
  a value of zero to enable selecting no maximum.
 
+
+## Data Storage Changes
+Data storage changes result in a significant changes to the *hashdb* data store and the *hashdb* library API.  These are the specific changes to the data store:
+
+* Do not re-count hashes from identical sources.
+* Track the count of hashes actually imported for a source.
+
+To support this, *hashdb* databases now store the following data structures:
+
+* *hashes* - A LMDB multimap of `key=MD5, value=(source ID, source offset)`.
+* *hash_labels* - A LMDB map of `key=MD5, value=label` for keys where labels are produced.
+* *source_id_to_file_hash* - A SQL lookup map of `key=source_id, value=file_MD5`.
+* *source_metadata* - A SQL lookup of `key=file_MD5, value=(source_id, filesize, import_count)`.
+* *sources* - A SQL lookup multimap of `key=fileMD5, value=(repository_name, filename`.
+
+The *hashdb* `import` API is now as follows:
+
+* `bool has_file_hash(file_MD5)` - used to detect if this file has already been imported.
+* `import_hashes(file_md5, repository_name, filename, file_size, vector(file_offset, block_hash, label="")` - used to import all interesting hashes for a new file_md5.
+* `import_alternate_source(file_md5, repository_name, filename)` - used to map another filename to this file hash.
+
+Impact on existing workflow for `import`:
+
+* A new `import <directory path> [--whitelist <hashdb>] [--ignore_low_entropy]` *hashdb* command is added to import hashes from files in directories.  *hashdb* delegates files to threads for calculating MD5s and importing.  This is the primary means for importing.
+* The bulk_extractor hashdb import scanner will be refitted to use these interfaces.
+* The *md5deep* Import capability will be discontinued but can be refitted if desired.
+* The NSRL 512-byte block hash import capability can be refitted but since file hashes are unavailable, a file hash of "0" may be substituted to simulate one source.
+
+Impact on existing workflow for `scan`:
+
+* The *bulk_extractor* *hashdb* scanner continues to be the primary mode for scanning.
+
 # 2.0.1 Improvements over Version 2.0.0
 * A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.
 The fix is to grow the DB size sooner, when the available page size gets down to 10 instead of down to 2.  Additionally, code is added to detect this failure.
