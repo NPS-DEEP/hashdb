@@ -20,12 +20,12 @@ Use `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
 
 * `lmdb_hash_label_manager_t(hashdb_dir, rw_mode)`
 * `bool insert(binary_hash, label_string)`
-* `string find(binary_hash)`  May return "".
+* `string find(binary_hash)`  May return `""`.
 * `size_t size()`
 
 ### SQL Source Manager `sql_source_manager_t`
 
-Use type `source_metadata_t<source_id, filesize, import_count>`
+Use class `source_metadata_t {source_id, filesize, import_count}`
 
 Use `typedef vector<pair<repository_name, filename>> source_names_t`
 
@@ -39,8 +39,8 @@ Source ID to file hash:
 
 Source metadata:
 
-* bool source_metadata_insert(file_binary_hash, source_metadata)
-* source_metadata find(file_binary_hash)
+* `bool source_metadata_insert(file_binary_hash, source_metadata)`
+* `source_metadata find(file_binary_hash)`
 * `size_t source_metadata_size()`
 * `source_names_t source_metadata_find(file_binary_hash)`
 * `size_t source_metadata_size()`
@@ -57,21 +57,25 @@ Source iterator:
 * `end()`
 
 ### SQL Source Iterator `sql_source_it_t`
+
+Use class `sql_source_it_data_t {file_binary_hash, source_metadata, source_names}`
+
 * `*` Dereferencing returns `sql_source_it_data_t`
 * `++` increments iterator to next hash value.
 
-Use type: `sql_source_it_data_t<file_binary_hash, source_metadata, source_names>`
-
 ## HASHDB DB Managers
-### HASHDB Import `hashdb_import_t`
+### HASHDB Import `hashdb_import_manager_t`
 
-* `hashdb_import_t(hashdb_dir)`
+Use class `hash_data_t {file_offset, block_hash, entropy_label=""}`
+
+* `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", import_low_entropy=false)`
 * `bool has_file_hash(file_MD5)` - used to detect if this file has already been imported.
-* `import_hashes(file_md5, repository_name, filename, file_size, vector(file_offset, block_hash, label="")` - used to import all interesting hashes for a new file_md5.
-* `import_alternate_source(file_md5, repository_name, filename)` - used to map another filename to this file hash.
+* `import_hashes(file_hash, repository_name, filename, file_size, vector<hash_data_t>)` - used to import all interesting hashes for a new file hash.
+* `import_alternate_source(file_hash, repository_name, filename)` - used to map another filename to this file hash.
+* `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
-### HASHDB Scan
-* `hashdb_scan_t(hashdb_dir)`
+### HASHDB Scan `hashdb_scan_manager_t`
+* `hashdb_scan_manager_t(hashdb_dir, out_path, out_mode)` where mode is `"JSON"` or `"SQL"`
 * `id_offset_pairs_t find(binary_hash)`
 * `hashdb_scan_sizes_t size()`
 * `begin()`
