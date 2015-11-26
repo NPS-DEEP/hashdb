@@ -1,11 +1,25 @@
 # hashdb Data store
+file_mode is `READ_ONLY, RW_NEW, RW_MODIFY`
+## DB Types
+Data types support DB interfaces:
+
+* `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
+* `typedef pair<binary_hash, id_offset_pairs_t> hashdb_scan_it_data_t`
+* `typedef vector<pair<repository_name, filename>> source_names_t`
+* class `source_metadata_t {source_id, filesize, import_count}`
+* class `hash_data_t {file_offset, binary_hash, entropy_label=""}`
+* `typedef vector<hash_data_t> hash_data_list_t`
+* class `sql_source_it_data_t {file_binary_hash, source_metadata, source_names}`
+
 ## DB Managers
 ### LMDB Hash Manager `lmdb_hash_manager_t`
 
-Use `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
+* `lmdb_hash_manager_t()`
+* `int open(hashdb_dir, file_mode)` - reads `settings.json` file
+* `int close()`
+* `void insert(source_id, hash_data_list_t)` - updates changes
 
-* `lmdb_hash_manager_t(hashdb_dir, rw_mode, sector_size, hash_truncation)`
-* `bool insert(hash, source_id, file_offset)`
+binary_hash, id_offset_pairs)`
 * `id_offset_pairs_t find(binary_hash)`
 * `size_t size()`
 * `lmdb_hash_pointer_t begin()`
@@ -18,18 +32,18 @@ Use `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
 
 ### LMDB Hash Label Manager
 
-* `lmdb_hash_label_manager_t(hashdb_dir, rw_mode)`
+* `lmdb_hash_label_manager_t()`
+* `int open(hashdb_dir, file_mode)` - reads `settings.json` file
+* `int close()`
 * `bool insert(binary_hash, label_string)`
 * `string find(binary_hash)`  May return `""`.
 * `size_t size()`
 
 ### SQL Source Manager `sql_source_manager_t`
 
-Use class `source_metadata_t {source_id, filesize, import_count}`
-
-Use `typedef vector<pair<repository_name, filename>> source_names_t`
-
-* `sql_source_manager_t(hashdb_dir, rw_mode)`
+* `sql_source_manager_t()`
+* `int open(hashdb_dir, file_mode)` - reads `settings.json` file
+* `int close()`
 
 Source ID to file hash:
 
@@ -58,19 +72,15 @@ Source iterator:
 
 ### SQL Source Iterator `sql_source_it_t`
 
-Use class `sql_source_it_data_t {file_binary_hash, source_metadata, source_names}`
-
 * `*` Dereferencing returns `sql_source_it_data_t`
 * `++` increments iterator to next hash value.
 
 ## HASHDB DB Managers
 ### HASHDB Import `hashdb_import_manager_t`
 
-Use class `hash_data_t {file_offset, block_hash, entropy_label=""}`
-
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", import_low_entropy=false)`
-* `bool has_file_hash(file_MD5)` - used to detect if this file has already been imported.
-* `import_hashes(file_hash, repository_name, filename, file_size, vector<hash_data_t>)` - used to import all interesting hashes for a new file hash.
+* `bool has_file_hash(file_hash)` - used to detect if this file has already been imported.
+* `import_hashes(file_hash, repository_name, filename, file_size, hash_data_list_t)` - Used to import all interesting hashes for a new file hash.  For DB safety: mutex lock, call has_file_hash, import the vector, set has_file_hash, then unlock.  entropy_label not used.
 * `import_alternate_source(file_hash, repository_name, filename)` - used to map another filename to this file hash.
 * `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
@@ -82,7 +92,6 @@ Use class `hash_data_t {file_offset, block_hash, entropy_label=""}`
 * `end()`
 
 ### HASHDB Scan Iterator `hashdb_scan_it_t`
-Use `typedef pair<binary_hash, id_offset_pairs_t> hashdb_scan_it_data_t`
 
 * `*` Dereferencing returns `hashdb_scan_it_data_t`
 * `++` increments iterator to next hash value.
