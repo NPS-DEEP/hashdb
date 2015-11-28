@@ -19,35 +19,14 @@
 
 # This file assists in building test programs.
 
-python_tests = \
-	new_database.py \
-	import_export.py \
-	database_manipulation.py \
-	scan_services.py \
-	statistics.py \
-	tuning.py \
-	performance_analysis.py
-
 EXTRA_DIST = \
-	vg.supp \
-        $(python_tests) \
-        hashdb_helpers.py
-
-# these CFLAGS are adapted from liblmdb/Makefile
+	vg.supp
 
 check_PROGRAMS = \
-	lmdb_test \
-	db_test \
-	db_managers_test \
 	bloom_filter_manager_test \
-	settings_test \
-	logger_test \
-	libhashdb_test
+	db_managers_test
 
 TESTS = $(check_PROGRAMS)
-if HAVE_PYTHON
-  TESTS += $(python_tests)
-endif
 
 # to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
@@ -59,20 +38,14 @@ AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
-lmdb_test_LDADD = ../libhashdb.la
-db_test_LDADD = ../libhashdb.la
-db_managers_test_LDADD = ../libhashdb.la
 bloom_filter_manager_test_LDADD = ../libhashdb.la
-settings_test_LDADD = ../libhashdb.la
-logger_test_LDADD = ../libhashdb.la
-libhashdb_test_LDADD = ../libhashdb.la
+db_managers_test_LDADD = ../libhashdb.la
 
 AM_LDFLAGS = -static
 
 clean-local:
 	rm -rf temp_*
 
-# test with valgrind memory analysis
 run_tests_valgrind:
 	for test in $(bin_PROGRAMS); do \
 	  echo Begin $$test ... ; \
@@ -82,52 +55,18 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-lmdb_test_SOURCES = \
-	lmdb_test.cpp
-
-db_test_SOURCES = \
-	../lmdb_context.hpp \
-	../lmdb_hash_it_data.hpp \
-	../lmdb_hash_store.hpp \
-	../lmdb_helper.h \
-	../lmdb_data_codec.hpp \
-	../lmdb_name_store.hpp \
-	../lmdb_source_data.hpp \
-	../lmdb_source_it_data.hpp \
-	../lmdb_source_store.hpp \
+bloom_filter_manager_test_SOURCES = \
 	unit_test.h \
-	db_test.cpp
+	directory_helper.hpp \
+	bloom_filter_manager_test.cpp
 
 db_managers_test_SOURCES = \
-	../lmdb_rw_new.hpp \
-	../lmdb_rw_manager.hpp \
-	../lmdb_ro_manager.hpp \
-	../lmdb_hash_it_data.hpp \
+	../lmdb_hash_manager.hpp \
 	../lmdb_helper.h \
 	../hashdb_settings.hpp \
 	directory_helper.hpp \
 	unit_test.h \
 	db_managers_test.cpp
 
-bloom_filter_manager_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	bloom_filter_manager_test.cpp
-
-settings_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	settings_test.cpp
-
-logger_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	logger_test.cpp
-
-libhashdb_test_SOURCES = \
-	unit_test.h \
-	directory_helper.hpp \
-	libhashdb_test.cpp
-	
 .PHONY: run_tests_valgrind
 

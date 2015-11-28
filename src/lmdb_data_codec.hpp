@@ -30,34 +30,32 @@
 #include <stdint.h>
 #include <iostream>
 #include "lmdb_helper.h"
-#include "lmdb_hash_data.hpp"
-#include "lmdb_source_data.hpp"
+#include "db_typedefs.h"
+//#include "lmdb_hash_data.hpp"
+//#include "lmdb_source_data.hpp"
 
 // #define DEBUG
 
+// note offset_index is calculated from file_offset / sector_size
 class lmdb_data_codec {
 
   public:
-  static std::string encode_hash_data(const lmdb_hash_data_t& data) {
+  static std::string encode_hash_data(uint64_t source_id,
+                                      uint64_t offset_index) {
 
     // allocate space for the encoding
-    size_t max_size = 10 + 10 + data.hash_label.size();
+    size_t max_size = 10 + 10;
     uint8_t encoding[max_size];
     uint8_t* p = encoding;
 
     // encode source ID and offset index
-    p = lmdb_helper::encode_uint64(data.source_id, p);
-    p = lmdb_helper::encode_uint64(data.offset_index, p);
-
-    // encode hash label
-    size_t hash_label_size = data.hash_label.size();
-    std::memcpy(p, data.hash_label.c_str(), hash_label_size);
-    p += hash_label_size;
+    p = lmdb_helper::encode_uint64(source_id, p);
+    p = lmdb_helper::encode_uint64(offset_index, p);
 
     // return encoding
     std::string string_encoding(reinterpret_cast<char*>(encoding), (p-encoding));
 #ifdef DEBUG
-    std::cout << "encoding " << data << "\n"
+    std::cout << "encoding " << source_id << ", " offset_index << "\n"
               << "      to " << lmdb_helper::binary_hash_to_hex(string_encoding)
               << "\n";
 #endif
@@ -66,33 +64,32 @@ class lmdb_data_codec {
   }
 
   // decode hash data
-  static lmdb_hash_data_t decode_hash_data(const std::string& encoding) {
+  static std::pair<uint64_t, uint64_t> decode_hash_data(
+                                           const std::string& encoding) {
     const uint8_t* const p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
-    lmdb_hash_data_t data;
+    uint64_t source_id;
+    uint64_t offset_index;
 
     // decode source ID and offset index
-    p = lmdb_helper::decode_uint64(p, &data.source_id);
-    p = lmdb_helper::decode_uint64(p, &data.offset_index);
+    p = lmdb_helper::decode_uint64(p, &source_id);
+    p = lmdb_helper::decode_uint64(p, &offset_index);
 
     // validate that there is space for hash label
     if ((size_t)(p - p_start) > encoding.size()) {
       assert(0);
     }
 
-    // decode hash label
-    size_t hash_label_size = encoding.size() - (size_t)(p - p_start);
-    data.hash_label = std::string(reinterpret_cast<const char*>(p), hash_label_size);
-
 #ifdef DEBUG
     std::cout << "decoding " << lmdb_helper::binary_hash_to_hex(encoding)
-              << "      to " << data << "\n";
+              << "      to " << source_id << ", " offset_index << "\n";
 #endif
 
     // return decoding
-    return data;
+    return std::pair<uint64_t, uint64_t>();
   }
 
+/*
   // encode source data
   static std::string encode_source_data(const lmdb_source_data_t& data) {
 
@@ -174,6 +171,7 @@ class lmdb_data_codec {
 
     return std::string(cstr, l3);
   }
+*/
 
   static std::string encode_uint64_data(const uint64_t data) {
 

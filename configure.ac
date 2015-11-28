@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 2.0.2-dev, bugs@digitalcorpora.org)
+AC_INIT(hashdb, 2.0.2-dev, github.com/NPS-DEEP/hashdb/issues)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
@@ -22,12 +22,7 @@ AC_CONFIG_FILES([Makefile
                  src/test/Makefile
                  man/Makefile
                  doc/Makefile
-                 python/Makefile
-                 src/test/explain_be_in.txt
-                 src/test/explain_dfxml.xml
-                 src/test/sample_dfxml4096.xml
-                 src/test/sample_dfxml512.xml
-                 src/test/sample_nsrl.tab])
+                 python/Makefile])
 
 # define CC and CXX as desired for alternate compilers
 # for example "./configure CC=clang CXX=clang++"

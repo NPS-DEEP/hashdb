@@ -47,7 +47,7 @@ inline std::string bloom_state_to_string(bool state) {
 struct hashdb_settings_t {
 
   uint32_t settings_version;
-  uint32_t byte_alignment;
+  uint32_t sector_size;
   uint32_t hash_truncation;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
@@ -60,7 +60,7 @@ struct hashdb_settings_t {
 
   hashdb_settings_t() :
         settings_version(globals_t::hashdb_settings_version),
-        byte_alignment(globals_t::default_byte_alignment),
+        sector_size(globals_t::default_sector_size),
         hash_truncation(globals_t::default_hash_truncation),
         hash_block_size(globals_t::default_hash_block_size),
         maximum_hash_duplicates(globals_t::default_maximum_hash_duplicates),
@@ -72,7 +72,7 @@ struct hashdb_settings_t {
   void report_settings(std::ostream& os) const {
     os << "hashdb settings:\n";
     os << "settings version: " << settings_version << "\n";
-    os << "byte alignment: " << byte_alignment << "\n";
+    os << "sector size: " << sector_size << "\n";
     os << "hash truncation: " << hash_truncation << "\n";
     os << "hash block size: " << hash_block_size << "\n";
     os << "maximum hash duplicates: " << maximum_hash_duplicates << "\n";
@@ -83,7 +83,7 @@ struct hashdb_settings_t {
 
   void report_settings(dfxml_writer& x) const {
     x.xmlout("settings_version", settings_version);
-    x.xmlout("byte_alignment", byte_alignment);
+    x.xmlout("sector_size", sector_size);
     x.xmlout("hash_truncation", hash_truncation);
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);

@@ -34,9 +34,9 @@
 class globals_t {
   public:
   static const uint32_t hashdb_settings_version = 2;
-  static const uint32_t default_byte_alignment = 512;
+  static const uint32_t default_sector_size = 512;
   static const uint32_t default_hash_truncation = 0;
-  static const uint32_t default_hash_block_size = 4096;
+  static const uint32_t default_hash_block_size = 512;
   static const uint32_t default_scan_expanded_max = 200;
   static const uint32_t default_maximum_hash_duplicates = 0;
   static const bool default_bloom_is_used = true;

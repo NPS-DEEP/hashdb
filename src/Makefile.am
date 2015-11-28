@@ -25,7 +25,7 @@ LMDB_INCS = \
 	liblmdb/midl.h \
 	liblmdb/midl.c
 
-bin_PROGRAMS = hashdb
+# bin_PROGRAMS = hashdb
 lib_LTLIBRARIES = libhashdb.la
 libhashdb_la_LIBADD = liblmdb.la
 noinst_LTLIBRARIES = liblmdb.la
@@ -35,42 +35,20 @@ EXTRA_DIST = \
 	liblmdb/COPYRIGHT \
 	liblmdb/LICENSE
 
-# these CFLAGS are adapted from liblmdb/Makefile
 liblmdb_la_CFLAGS = \
 	-pthread -O3 -g \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
 liblmdb_la_LDFLAGS = -static -PIC
 
-hashdb_LDFLAGS = -static
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 
-# to validate backward compatibility to c++98, add option -std=c++98
 AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
 	-I${top_srcdir}/src/liblmdb \
 	-I${top_srcdir}/src/libdfxml \
 	$(XML_CFLAGS)
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
-
-hashdb_LDADD = libhashdb.la
-
-HASHDB_INCS = \
-	commands.hpp \
-	dfxml_hashdigest_reader.hpp \
-	dfxml_hashdigest_writer.hpp \
-	dfxml_import_consumer.hpp \
-	dfxml_scan_consumer.hpp \
-	dfxml_scan_expanded_consumer.hpp \
-	expand_manager.hpp \
-	explain_manager.hpp \
-	feature_file_reader.hpp \
-	feature_line.hpp \
-	main.cpp \
-	print_helper.hpp \
-	progress_tracker.hpp \
-	tab_hashdigest_reader.hpp \
-	usage.hpp
 
 LIBHASHDB_INCS = \
 	bloom_filter_manager.hpp \
@@ -79,31 +57,7 @@ LIBHASHDB_INCS = \
 	file_modes.h \
 	globals.cpp \
 	globals.hpp \
-	hashdb_changes.hpp \
-	hashdb.cpp \
-	hashdb.hpp \
-	hashdb_settings.hpp \
-	hashdb_settings_reader.hpp \
-	hashdb_settings_store.hpp \
-	history_manager.hpp \
-	lmdb_context.hpp \
-	lmdb_data_codec.hpp \
-	lmdb_hash_it_data.hpp \
-	lmdb_hash_data.hpp \
-	lmdb_hash_store.hpp \
-	lmdb_helper.h \
-	lmdb_name_store.hpp \
-	lmdb_ro_manager.hpp \
-	lmdb_rw_manager.hpp \
-	lmdb_rw_new.hpp \
-	lmdb_source_data.hpp \
-	lmdb_source_it_data.hpp \
-	lmdb_source_store.hpp \
-	logger.hpp \
 	mutex_lock.hpp
-
-hashdb_SOURCES = \
-	$(HASHDB_INCS)
 
 BLOOM_INCS = \
 	libbloom/bloom.c \
@@ -120,5 +74,5 @@ libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \
 	$(BLOOM_INCS) $(DFXML_INCS)
 
-include_HEADERS = hashdb.hpp
+#include_HEADERS = hashdb.hpp
 

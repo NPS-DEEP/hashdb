@@ -29,8 +29,9 @@
 #define LMDB_HELPER_H
 
 #include "sys/stat.h"
-#include "file_modes.h"
 #include "lmdb.h"
+#include "file_modes.h"
+#include <cassert>
 #include <stdint.h>
 #include <cstring>
 #include <sstream>
@@ -224,7 +225,7 @@ class lmdb_helper {
   }
 
   static MDB_env* open_env(const std::string& store_dir,
-                           file_mode_type_t file_mode) {
+                           const file_mode_type_t file_mode) {
 
     // create the DB environment
     MDB_env* env;
