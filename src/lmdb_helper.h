@@ -31,6 +31,7 @@
 #include "sys/stat.h"
 #include "lmdb.h"
 #include "file_modes.h"
+#include <stdexcept>
 #include <cassert>
 #include <stdint.h>
 #include <cstring>
@@ -459,6 +460,13 @@ class lmdb_helper {
       }
     }
     return ss.str();
+  }
+
+  static __attribute((noreturn)) void fail(const std::string& message, int rc) {
+    std::stringstream ss;
+    ss << "Runtime error: " << message << ": " << mdb_strerror(rc) << "\n";
+    std::cerr << ss.str();
+    throw std::runtime_error(ss.str());
   }
 };
 

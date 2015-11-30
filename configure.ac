@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 2.0.2-dev, github.com/NPS-DEEP/hashdb/issues)
+AC_INIT(hashdb, 3.0.0-dev-0, github.com/NPS-DEEP/hashdb/issues)
 AC_CONFIG_MACRO_DIR(m4)
 
 # NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,

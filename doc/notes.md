@@ -8,6 +8,7 @@
 * class `hash_data_t {binary_hash, file_offset, entropy_label=""}`
 * `typedef vector<hash_data_t> hash_data_list_t`
 * class `sql_source_it_data_t {file_binary_hash, source_metadata, source_names}`
+* iterator `lmdb_hash_pointer_t` dereferences to `binary_hash`
 
 ## hashdb Databases
 * `hashes` - LMDB multimap of `key=binary_hash, value=(source ID, source offset)`.
@@ -24,15 +25,10 @@
 
 * `lmdb_hash_manager_t(hashdb_dir, file_mode)` - reads `settings.json` file
 * `void insert(source_id, hash_data_list_t, hashdb_changes_t)` - updates changes
-* `id_offset_pairs_t find(binary_hash)`
+* `void find(binary_hash, id_offset_pairs_t&)`
+* `binary_hash find_first(id_offset_pairs_t&)`
+* `binary_hash find_next(last_binary_hash, id_offset_pairs_t&)`
 * `size_t size()`
-* `lmdb_hash_pointer_t begin()`
-* `lmdb_hash_pointer_t end()`
-
-### LMDB Hash Iterator `lmdb_hash_it_t`
-* `*` Dereferencing returns `pair<binary_hash, id_offset_pairs_t>`
-* `++` increments iterator to next hash value.
-* As with any C++ iterator, do not dereference end or increment past end.
 
 ### LMDB Hash Label Manager
 
@@ -56,13 +52,13 @@ Source metadata:
 * `bool source_metadata_insert(file_binary_hash, source_metadata)`
 * `source_metadata find(file_binary_hash)`
 * `size_t source_metadata_size()`
-* `source_names_t source_metadata_find(file_binary_hash)`
+* `void source_metadata_find(file_binary_hash, source_names_t&)`
 * `size_t source_metadata_size()`
 
 Source name lookup:
 
 * `source_name_insert(file_binary_hash, repository_name, filename)`
-* `source_names_t source_name_find(file_binary_hash)`
+* `void source_name_find(file_binary_hash, source_names_t&)`
 * `size_t source_name_size()`
 
 Source iterator:

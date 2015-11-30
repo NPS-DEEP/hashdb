@@ -48,7 +48,6 @@ struct hashdb_settings_t {
 
   uint32_t settings_version;
   uint32_t sector_size;
-  uint32_t hash_truncation;
   uint32_t hash_block_size;
   uint32_t maximum_hash_duplicates;
   // bloom
@@ -61,7 +60,6 @@ struct hashdb_settings_t {
   hashdb_settings_t() :
         settings_version(globals_t::hashdb_settings_version),
         sector_size(globals_t::default_sector_size),
-        hash_truncation(globals_t::default_hash_truncation),
         hash_block_size(globals_t::default_hash_block_size),
         maximum_hash_duplicates(globals_t::default_maximum_hash_duplicates),
         bloom_is_used(globals_t::default_bloom_is_used),
@@ -73,7 +71,6 @@ struct hashdb_settings_t {
     os << "hashdb settings:\n";
     os << "settings version: " << settings_version << "\n";
     os << "sector size: " << sector_size << "\n";
-    os << "hash truncation: " << hash_truncation << "\n";
     os << "hash block size: " << hash_block_size << "\n";
     os << "maximum hash duplicates: " << maximum_hash_duplicates << "\n";
     os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
@@ -84,7 +81,6 @@ struct hashdb_settings_t {
   void report_settings(dfxml_writer& x) const {
     x.xmlout("settings_version", settings_version);
     x.xmlout("sector_size", sector_size);
-    x.xmlout("hash_truncation", hash_truncation);
     x.xmlout("hash_block_size", hash_block_size);
     x.xmlout("maximum_hash_duplicates", (uint64_t)maximum_hash_duplicates);
 

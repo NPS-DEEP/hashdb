@@ -44,7 +44,6 @@ class bloom_filter_manager_t {
   private:
   const std::string filename;
   const file_mode_type_t file_mode;
-  const uint32_t hash_truncation;
   const bool bloom_is_used;
   const uint32_t bloom_M_hash_size; // number of bloom function bits, e.g. 28
   const uint32_t bloom_k_hash_functions; // number of hash functions, e.g. 2
@@ -110,13 +109,11 @@ class bloom_filter_manager_t {
   public:
   bloom_filter_manager_t (const std::string& p_hashdb_dir,
                           file_mode_type_t p_file_mode,
-                          uint32_t p_hash_truncation,
                           bool p_bloom_is_used,
                           uint32_t p_bloom_M_hash_size,
                           uint32_t p_bloom_k_hash_functions) :
           filename(p_hashdb_dir + "/bloom_filter"),
           file_mode(p_file_mode),
-          hash_truncation(p_hash_truncation),
           bloom_is_used(p_bloom_is_used),
           bloom_M_hash_size(p_bloom_M_hash_size),
           bloom_k_hash_functions(p_bloom_k_hash_functions),
@@ -133,11 +130,6 @@ class bloom_filter_manager_t {
     // force hash count to 16 for Bloom
     if (count > 16) {
       count = 16;
-    }
-
-    // truncate hash values if truncating
-    if (hash_truncation != 0 && count > hash_truncation) {
-      count = hash_truncation;
     }
 
     // zero-extend short hashes

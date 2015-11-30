@@ -63,9 +63,9 @@ class lmdb_data_codec {
     return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
   }
 
-  // decode hash data
+  // decode hash data to pair<source_id, offset_index>
   static std::pair<uint64_t, uint64_t> decode_hash_data(
-                                           const std::string& encoding) {
+                         const std::string& encoding, uint64_t sector_size) {
     const uint8_t* const p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
     uint64_t source_id;
@@ -86,7 +86,7 @@ class lmdb_data_codec {
 #endif
 
     // return decoding
-    return std::pair<uint64_t, uint64_t>();
+    return std::pair<uint64_t, uint64_t>(source_id, offset_index * sector_size);
   }
 
 /*
