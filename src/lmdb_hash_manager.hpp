@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Provides services for modifying the DB, including tracking changes.
+ * Manage the LMDB hash store.
  *
  * Lock non-thread-safe interfaces before use.
  */
@@ -35,7 +35,6 @@
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
-#include "mutex_lock.hpp"
 #include "bloom_filter_manager.hpp"
 #include "hashdb_changes.hpp"
 #include <vector>
@@ -43,11 +42,6 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-
-// no concurrent changes
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
 
 class lmdb_hash_manager_t {
 

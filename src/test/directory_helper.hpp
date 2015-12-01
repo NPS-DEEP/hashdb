@@ -65,6 +65,9 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/lmdb_hash_store/data.mdb").c_str());
   remove((hashdb_dir + "/lmdb_hash_store/lock.mdb").c_str());
   rmdir((hashdb_dir + "/lmdb_hash_store").c_str());
+  remove((hashdb_dir + "/lmdb_hash_label_store/data.mdb").c_str());
+  remove((hashdb_dir + "/lmdb_hash_label_store/lock.mdb").c_str());
+  rmdir((hashdb_dir + "/lmdb_hash_label_store").c_str());
   remove((hashdb_dir + "/lmdb_name_store/data.mdb").c_str());
   remove((hashdb_dir + "/lmdb_name_store/lock.mdb").c_str());
   rmdir((hashdb_dir + "/lmdb_name_store").c_str());

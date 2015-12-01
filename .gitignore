@@ -76,6 +76,9 @@ src/test/sample_nsrl.tab
 src/test/sample_dfxml4096.xml
 src/test/sample_dfxml512.xml
 
+# generated test data
+temp_dir_db_managers_test.hdb
+
 # doc
 *.aux
 *.blg

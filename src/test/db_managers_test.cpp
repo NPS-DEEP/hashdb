@@ -28,15 +28,14 @@
 #include <cstdio>
 #include "unit_test.h"
 #include "lmdb_hash_manager.hpp"
+#include "lmdb_hash_label_manager.hpp"
 #include "lmdb_helper.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "file_helper.hpp"
 #include "directory_helper.hpp"
 
-//static const char hashdb_dir[] = "temp_dir_db_managers_test.hdb";
 static const std::string hashdb_dir = "temp_dir_db_managers_test.hdb";
-static const std::string hashdb_dir2 = "temp_dir_db_managers_test2.hdb";
 static const std::string binary_0(lmdb_helper::hex_to_binary_hash("00"));
 static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
 static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
@@ -142,13 +141,69 @@ void lmdb_hash_manager_read() {
   TEST_EQ(manager.size(), 4);
 }
 
+// ************************************************************
+// lmdb_hash_label_manager
+//
+// Note that everything is tested during create rather than from individual
+// file mount modes.  That infrastructure is tested only by lmdb_hash_manager.
+// ************************************************************
+void lmdb_hash_label_manager_test() {
+  // remove any previous hashdb_dir
+  rm_hashdb_dir(hashdb_dir);
+
+  // create the hashdb directory
+  file_helper::require_no_dir(hashdb_dir);
+  file_helper::create_new_dir(hashdb_dir);
+
+  // write the settings
+  hashdb_settings_t settings;
+  hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+  // create new manager
+  lmdb_hash_label_manager_t manager(hashdb_dir, RW_NEW);
+
+  std::string label;
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "")
+
+  manager.insert(binary_aa, "");
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "")
+
+  manager.insert(binary_aa, "l1");
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "l1")
+
+  manager.insert(binary_aa, "l1");
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "l1")
+
+  manager.insert(binary_aa, "l2");
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "l1")
+
+  manager.insert(binary_bb, "l2");
+  label = manager.find(binary_bb);
+  TEST_EQ(label, "l2")
+
+  manager.insert(binary_aa, "l1");
+  label = manager.find(binary_aa);
+  TEST_EQ(label, "l1")
+}
+
+// ************************************************************
+// main
+// ************************************************************
 int main(int argc, char* argv[]) {
 
   rm_hashdb_dir(hashdb_dir);
-  rm_hashdb_dir(hashdb_dir2);
   lmdb_hash_manager_create();
   lmdb_hash_manager_write();
   lmdb_hash_manager_read();
+
+  rm_hashdb_dir(hashdb_dir);
+  lmdb_hash_label_manager_test();
+
   std::cout << "db_managers_test Done.\n";
   return 0;
 }
