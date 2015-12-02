@@ -29,8 +29,6 @@
 #include "globals.hpp"
 #include "file_modes.h"
 #include "db_typedefs.h"
-#include "hashdb_settings.hpp"
-#include "hashdb_settings_store.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"

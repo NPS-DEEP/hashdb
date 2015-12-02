@@ -3,19 +3,18 @@
 ## db Types `db_typedefs.h`
 * `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
 * `typedef pair<binary_hash, id_offset_pairs_t> hashdb_scan_it_data_t`
-* `typedef vector<pair<repository_name, filename>> source_names_t`
-* class `source_metadata_t {source_id, filesize, import_count}`
+* class `source_metadata_t {file_binary_hash, source_id, filesize, positive_count}`
 * class `hash_data_t {binary_hash, file_offset, entropy_label=""}`
 * `typedef vector<hash_data_t> hash_data_list_t`
-* class `sql_source_it_data_t {file_binary_hash, source_metadata, source_names}`
-* iterator `lmdb_hash_pointer_t` dereferences to `binary_hash`
+* `typedef pair<repository_name, fillename> source_name_t`
+* `typedef vector<source_name_t> source_names_t`
 
 ## hashdb Databases
 * `hashes` - LMDB multimap of `key=binary_hash, value=(source ID, source offset)`.
 * `hash_labels` - LMDB map of `key=binary_hash, value=label` for keys where labels are produced.
-* `source_id_to_file_hash` - SQL lookup map of `key=source_id, value=file_hash`.
-* `source_metadata` - SQL lookup of `key=file_hash, value=(source_id, filesize, import_count)`.
-* `sources` - SQL lookup multimap of `key=file_hash, value=(repository_name, filename`.
+* `source_ids` - LMDB map of `key=source_id, value=file_hash`.
+* `source_metadata` - LMDB map of `key=file_hash, value=(source_id, filesize, positive_count)`.
+* `source_names` - LMDB multimap of `key=file_hash, value=(repository_name, filename)`.
 
 ## Bottom: DB Managers
 
@@ -32,44 +31,39 @@
 
 ### LMDB Hash Label Manager
 
-* `lmdb_hash_label_manager_t(hashdb_dir, file_mode)` - reads `settings.json` file
+* `lmdb_hash_label_manager_t(hashdb_dir, file_mode)`
 * `bool insert(binary_hash, label_string)`
 * `string find(binary_hash)`  May return `""`.
 * `size_t size()`
 
-### SQL Source Manager `sql_source_manager_t`
+### LMDB Source ID Manager
+Look up file hash from source ID when scanning.
 
-* `sql_source_manager_t(hashdb_dir, file_mode)` - reads `settings.json` file
+* `lmdb_source_id_manager_t(hashdb_dir, file_mode)`
+* `void insert(source_id, file_binary_hash)` - warn to stderr and do not insert if already there
+* `file_binary_hash find(source_id)` - fail if not there
+* `size_t size()`
 
-Source ID to file hash:
+### LMDB Source Metadata Manager
+Look up source metadata from source hash when scanning.
+Use two-step import when importing vector of hashes from a source.
 
-* `bool source_id_to_file_hash_insert(source_id, file_binary_hash)`
-* `pair<bool, file_binary_hash> source_id_to_file_hash_find(source_id)`
-* `size_t source_id_to_file_hash_size()`
+* `lmdb_source_metadata_manager_t(hashdb_dir, file_mode)`
+* `pair(bool, source_id) insert_begin(file_binary_hash)` - true if ready to begin importing block hashes, false if block hashes have already been imported for this source
+* `void insert_end(file_binary_hash, source_id, filesize, positive_count)` - fail if not already there, warn to stderr and do not insert if already there and filesize not zero
+* `source_metadata_t find(file_binary_hash)` - fail if not there
+* `source_metadata_t find_first()` - `file_binary_hash` is `""` if empty
+* `source_metadata_t find_next(last_file_binary_hash)` - fail if already at end
+* `size_t size()`
 
-Source metadata:
+### LMDB Source Name Manager
+Look up source_names_t vector of repository name, filename pairs from file hash.
 
-* `bool source_metadata_insert(file_binary_hash, source_metadata)`
-* `source_metadata find(file_binary_hash)`
-* `size_t source_metadata_size()`
-* `void source_metadata_find(file_binary_hash, source_names_t&)`
-* `size_t source_metadata_size()`
+* `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
+* `void insert(file_binary_hash, repository_name, filename)` - okay if already there
+* `source_name_t find(file_binary_hash)` - fail if not there
+* `size_t size()`
 
-Source name lookup:
-
-* `source_name_insert(file_binary_hash, repository_name, filename)`
-* `void source_name_find(file_binary_hash, source_names_t&)`
-* `size_t source_name_size()`
-
-Source iterator:
-
-* `begin()`
-* `end()`
-
-### SQL Source Iterator `sql_source_it_t`
-
-* `*` Dereferencing returns `sql_source_it_data_t`
-* `++` increments iterator to next hash value.
 
 ## Middle: HASHDB DB Managers
 ### HASHDB Import `hashdb_import_manager_t`

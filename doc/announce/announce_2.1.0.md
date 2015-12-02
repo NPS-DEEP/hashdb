@@ -96,6 +96,61 @@ Impact on existing workflow for `scan`:
 
 * The *bulk_extractor* *hashdb* scanner continues to be the primary mode for scanning.
 
+## Data Interface Changes
+Several interface changes are made to reduce the size of data generated:
+#### Scan Identified Blocks
+The *bulk_extractor* output file `identified_blocks.txt` now outputs full scan information.  *hashdb* no longer supports `expand_identified_blocks` and generated file `identified_blocks_expanded.txt` is discontinued.
+The output of `identified_blocks.txt` changes to the following:
+
+    forensic path <tab> hash hexcode <tab> JSON Data
+
+where `JSON Data` includes the source list ID, any entropy label, and source information.  For example (shown on multiple lines for readability):
+
+    {
+        "source_list_id": 848153126,
+        "label": "H",
+        "sources": [{
+            "source_id": 12,
+            "file_offset": 0,
+            "filesize": 1549288,
+            "file_hashdigest": "1dd00f2e51aeebe7541cea4ade2e20b5",
+            "positive_count": 220,
+            "source_names": [{
+                "repository_name": "default_repository",
+                "filename": "KittyMaterial\/HighQuality\/DSC00003.JPG"
+            }]
+        }]
+    }
+
+Once metadata for a source ID has already been shown, it is not shown again.  Only its source ID and file offset are shown.  For example(shown on multiple lines for readability):
+
+    {
+        "source_list_id": 848153126,
+        "label": "H",
+        "sources": [{
+            "source_id": 12,
+            "file_offset": 4096
+        }]
+    }
+
+Once a hash has already been shown, no JSON Data is repeated so the JSON Data is blank.
+
+#### Sources
+Since sources are now recognized as unique by their file hash rather than by their repository name and filename, the *hashdb* `sources` command prints out JSON lines of sources for each unique source.  If a source is cited from multiple filenames or repository names, each source name is shown.  For example(shown on multiple lines for readability):
+
+    {
+        "source_id": 12,
+        "file_offset": 0,
+        "filesize": 1549288,
+        "file_hashdigest": "1dd00f2e51aeebe7541cea4ade2e20b5",
+        "source_names": [{
+            "repository_name": "default_repository",
+            "filename": "KittyMaterial\/HighQuality\/DSC00003.JPG"
+        }]
+    }
+
+
+
 # 2.0.1 Improvements over Version 2.0.0
 * A bug is fixed where on Windows systems, when importing more than 300 million hashes at once, some hashes are silently lost.
 The fix is to grow the DB size sooner, when the available page size gets down to 10 instead of down to 2.  Additionally, code is added to detect this failure.
@@ -131,7 +186,7 @@ It is possible that in a future version of _hashdb_, equivalent client/server ca
 
 * New command `subtract_repository` was added to allow removal of specific repositories.  Before, this functionality was achieved by iteratively using the `add_repository` command.  This addition fills a functional deficiency.
 
-* Calculation of the `source_list_id` value used to identify distinct source groups has been fixed so that IDs of same source groups resolve to the same value.  Before, the value was incorrectly derived by considering sources multiple times or in arbitrary order.  Now, the value is derived by considering sources exactly once, and in order.  
+* Calculation of the `source_list_id` value used to identify distinct source groups has been fixed so that IDs of same source groups resolve to the same value.  Before, the value was incorrectly derived by considering sources multiple times or in arbitrary order.  Now, the value is derived by considering sources exactly once, and in order.
 
 * Performance analysis command `test_random` was improved to be more random on Windows systems, which truncated some bits to 0.
 
