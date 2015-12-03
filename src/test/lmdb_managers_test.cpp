@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Test the db managers
+ * Test the LMDB data managers
  */
 
 #include <config.h>
@@ -29,13 +29,15 @@
 #include "unit_test.h"
 #include "lmdb_hash_manager.hpp"
 #include "lmdb_hash_label_manager.hpp"
+#include "lmdb_source_id_manager.hpp"
+#include "lmdb_source_metadata_manager.hpp"
 #include "lmdb_helper.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "file_helper.hpp"
 #include "directory_helper.hpp"
 
-static const std::string hashdb_dir = "temp_dir_db_managers_test.hdb";
+static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
 static const std::string binary_0(lmdb_helper::hex_to_binary_hash("00"));
 static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
 static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
@@ -43,20 +45,23 @@ static const std::string binary_cc(lmdb_helper::hex_to_binary_hash("cc"));
 static const std::string binary_ff(lmdb_helper::hex_to_binary_hash("ff"));
 //static const std::string binary_big(lmdb_helper::hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
 
+void make_new_hashdb_dir(std::string p_hashdb_dir) {
+  // remove any previous hashdb_dir
+  rm_hashdb_dir(p_hashdb_dir);
+
+  // create the hashdb directory
+  file_helper::require_no_dir(p_hashdb_dir);
+  file_helper::create_new_dir(p_hashdb_dir);
+
+  // write default settings
+  hashdb_settings_t settings;
+  hashdb_settings_store_t::write_settings(p_hashdb_dir, settings);
+}
+
 // ************************************************************
 // lmdb_hash_manager
 // ************************************************************
 void lmdb_hash_manager_create() {
-  // remove any previous hashdb_dir
-  rm_hashdb_dir(hashdb_dir);
-
-  // create the hashdb directory
-  file_helper::require_no_dir(hashdb_dir);
-  file_helper::create_new_dir(hashdb_dir);
-
-  // write the settings
-  hashdb_settings_t settings;
-  hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
   // create new manager
   lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
@@ -148,16 +153,6 @@ void lmdb_hash_manager_read() {
 // file mount modes.  That infrastructure is tested only by lmdb_hash_manager.
 // ************************************************************
 void lmdb_hash_label_manager_test() {
-  // remove any previous hashdb_dir
-  rm_hashdb_dir(hashdb_dir);
-
-  // create the hashdb directory
-  file_helper::require_no_dir(hashdb_dir);
-  file_helper::create_new_dir(hashdb_dir);
-
-  // write the settings
-  hashdb_settings_t settings;
-  hashdb_settings_store_t::write_settings(hashdb_dir, settings);
 
   // create new manager
   lmdb_hash_label_manager_t manager(hashdb_dir, RW_NEW);
@@ -189,6 +184,71 @@ void lmdb_hash_label_manager_test() {
   manager.insert(binary_aa, "l1");
   label = manager.find(binary_aa);
   TEST_EQ(label, "l1")
+
+  // size
+  TEST_EQ(manager.size(), 2);
+}
+
+// ************************************************************
+// lmdb_source_id_manager
+// ************************************************************
+void lmdb_source_id_manager_test() {
+
+  // create new manager
+  lmdb_source_id_manager_t manager(hashdb_dir, RW_NEW);
+
+  manager.insert(1, binary_aa);
+  manager.insert(2, binary_bb);
+//  manager.insert(1, binary_aa); // makes warning to stdout, not checked
+  std::string binary_file_hash;
+  binary_file_hash = manager.find(1);
+  TEST_EQ(binary_file_hash, binary_aa)
+  binary_file_hash = manager.find(2);
+  TEST_EQ(binary_file_hash, binary_bb)
+//  binary_file_hash = manager.find(3); // assert
+
+  // size
+  TEST_EQ(manager.size(), 2);
+}
+
+// ************************************************************
+// lmdb_source_metadata_manager
+// ************************************************************
+void lmdb_source_metadata_manager_test() {
+
+  // create new manager
+  lmdb_source_metadata_manager_t manager(hashdb_dir, RW_NEW);
+
+  std::pair<bool, uint64_t> pair;
+
+  pair = manager.insert_begin(binary_aa);
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, 1);
+
+  pair = manager.insert_begin(binary_aa);
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, 1);
+
+  pair = manager.insert_begin(binary_bb);
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, 2);
+
+  manager.insert_end(binary_aa, 10, 11, 12);
+  manager.insert_end(binary_aa, 10, 11, 12);
+  manager.insert_end(binary_bb, 20, 21, 22);
+
+  source_metadata_t data("",0,0,0);
+  data = manager.find(binary_bb);
+  TEST_EQ(data.file_binary_hash, binary_bb);
+  TEST_EQ(data.source_id, 20);
+  TEST_EQ(data.filesize, 21);
+  TEST_EQ(data.positive_count, 22);
+
+  manager.insert_end(binary_cc,0,0,0); // assert not there yet
+//  data = manager.find(binary_cc); // assert not found
+
+  // size
+  TEST_EQ(manager.size(), 2);
 }
 
 // ************************************************************
@@ -196,15 +256,26 @@ void lmdb_hash_label_manager_test() {
 // ************************************************************
 int main(int argc, char* argv[]) {
 
-  rm_hashdb_dir(hashdb_dir);
+  // lmdb_hash_manager
+  make_new_hashdb_dir(hashdb_dir);
   lmdb_hash_manager_create();
   lmdb_hash_manager_write();
   lmdb_hash_manager_read();
 
-  rm_hashdb_dir(hashdb_dir);
+  // lmdb_hash_label_manager
+  make_new_hashdb_dir(hashdb_dir);
   lmdb_hash_label_manager_test();
 
-  std::cout << "db_managers_test Done.\n";
+  // lmdb_source_id_manager
+  make_new_hashdb_dir(hashdb_dir);
+  lmdb_source_id_manager_test();
+
+  // lmdb_source_metadata_manager
+  make_new_hashdb_dir(hashdb_dir);
+  lmdb_source_metadata_manager_test();
+
+  // done
+  std::cout << "lmdb_managers_test Done.\n";
   return 0;
 }
 

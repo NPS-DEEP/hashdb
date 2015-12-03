@@ -19,13 +19,14 @@
 
 /**
  * \file
- * Manage the LMDB hash label store
+ * Manage the LMDB source ID store of key=encoding(source_id),
+ * data=file_binary_hash.
  *
  * Lock non-thread-safe interfaces before use.
  */
 
-#ifndef LMDB_HASH_LABEL_MANAGER_HPP
-#define LMDB_HASH_LABEL_MANAGER_HPP
+#ifndef LMDB_SOURCE_ID_MANAGER_HPP
+#define LMDB_SOURCE_ID_MANAGER_HPP
 #include "globals.hpp"
 #include "file_modes.h"
 #include "lmdb.h"
@@ -34,14 +35,13 @@
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
 #include "bloom_filter_manager.hpp"
-#include "hashdb_changes.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <string>
 
-class lmdb_hash_label_manager_t {
+class lmdb_source_id_manager_t {
 
   private:
   std::string hashdb_dir;
@@ -49,32 +49,27 @@ class lmdb_hash_label_manager_t {
   MDB_env* env;
 
   // do not allow copy or assignment
-  lmdb_hash_label_manager_t(const lmdb_hash_label_manager_t&);
-  lmdb_hash_label_manager_t& operator=(const lmdb_hash_label_manager_t&);
+  lmdb_source_id_manager_t(const lmdb_source_id_manager_t&);
+  lmdb_source_id_manager_t& operator=(const lmdb_source_id_manager_t&);
 
   public:
-  lmdb_hash_label_manager_t(const std::string& p_hashdb_dir,
+  lmdb_source_id_manager_t(const std::string& p_hashdb_dir,
                             const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_label_store",
+       env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_id_store",
                                                             file_mode)) {
   }
 
-  ~lmdb_hash_label_manager_t() {
+  ~lmdb_source_id_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
   }
 
   /**
-   * Insert label for hash unless some label has already been inserted for it.
+   * Insert key=source_id, value=file_binary_hash, note if already there.
    */
-  void insert(const std::string binary_hash, const std::string entropy_label) {
-
-    // skip if no entropy label
-    if (entropy_label == "") {
-      return;
-    }
+  void insert(uint64_t source_id, const std::string& file_binary_hash) {
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -84,16 +79,23 @@ class lmdb_hash_label_manager_t {
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    std::string encoding = lmdb_data_codec::encode_uint64_data(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // set data
-    lmdb_helper::point_to_string(entropy_label, context.data);
+    lmdb_helper::point_to_string(file_binary_hash, context.data);
 
     // insert unless key exists, meaning new label will not replace old label
     int rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NOOVERWRITE);
 
-    if (rc == 0 || rc == MDB_KEYEXIST) {
+    if (rc == 0) {
+      context.close();
+      return;
+    }
+
+    if (rc == MDB_KEYEXIST) {
+      std::cerr << "note: source ID " << source_id << " already exists.\n";
       context.close();
       return;
     }
@@ -104,29 +106,24 @@ class lmdb_hash_label_manager_t {
   }
 
   /**
-   * Return label else "".
+   * Find file binary hash from source ID, fail if no source ID.
    */
-  std::string find(const std::string& binary_hash) const {
+  std::string find(uint64_t source_id) const {
 
     // get context
     lmdb_context_t context(env, false, false);
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    std::string encoding = lmdb_data_codec::encode_uint64_data(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    if (rc == MDB_NOTFOUND) {
-      // no hash
-      context.close();
-      return std::string("");
-    }
-
     if (rc == 0) {
-      // has hash
+      // has source ID
       std::string label = lmdb_helper::get_string(context.data);
       context.close();
       return label;

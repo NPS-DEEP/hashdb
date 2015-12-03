@@ -28,10 +28,10 @@
 #define LMDB_HASH_MANAGER_HPP
 #include "globals.hpp"
 #include "file_modes.h"
-#include "db_typedefs.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
 #include "lmdb.h"
+#include "lmdb_typedefs.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
@@ -63,8 +63,14 @@ class lmdb_hash_manager_t {
     // find data for hash starting at cursor
     std::string binary_hash = lmdb_helper::get_string(context.key);
     std::string encoding = lmdb_helper::get_string(context.data);
-    id_offset_pairs.push_back(lmdb_data_codec::decode_hash_data(encoding,
-                                                    settings.sector_size));
+    std::pair<uint64_t, uint64_t> pair =
+                        lmdb_data_codec::decode_uint64_uint64_data(encoding);
+
+    // convert offset index to byte offset
+    pair.second *= settings.sector_size;
+
+    // add to array
+    id_offset_pairs.push_back(pair);
 
     // move cursor forward to find more data for this hash
     int rc = 0;
@@ -82,8 +88,16 @@ class lmdb_hash_manager_t {
 
         if (next_binary_hash == binary_hash) {
           // same hash so use it
-          id_offset_pairs.push_back(lmdb_data_codec::decode_hash_data(
-                                     next_encoding, settings.sector_size));
+          std::pair<uint64_t, uint64_t> next_pair =
+                                  lmdb_data_codec::decode_uint64_uint64_data(
+                                                                next_encoding);
+
+          // convert offset index to byte offset
+          next_pair.second *= settings.sector_size;
+
+          // add to array
+          id_offset_pairs.push_back(next_pair);
+
         } else {
           // different hash so done
           break;
@@ -149,7 +163,7 @@ class lmdb_hash_manager_t {
       lmdb_helper::point_to_string(it->binary_hash, context.key);
 
       // set data
-      std::string encoding = lmdb_data_codec::encode_hash_data(
+      std::string encoding = lmdb_data_codec::encode_uint64_uint64_data(
                                                     source_id, offset_index);
       lmdb_helper::point_to_string(encoding, context.data);
 

@@ -22,8 +22,8 @@
  * Provides typedefs and simple classes for DB managers.
  */
 
-#ifndef DB_TYPEDEFS_H
-#define DB_TYPEDEFS_H
+#ifndef LMDB_TYPEDEFS_H
+#define LMDB_TYPEDEFS_H
 
 #include <string>
 #include <vector>
@@ -39,17 +39,20 @@ typedef std::pair<std::string, id_offset_pairs_t> hashdb_scan_it_data_t;
 typedef std::pair<std::string, std::string> source_name_t;
 typedef std::vector<source_name_t> source_names_t;
 
-// source_metadata_t of tuple(source_id, filesize, import_count)
+// source_metadata_t of tuple(source_id, filesize, positive_count)
 class source_metadata_t {
   public:
+  std::string file_binary_hash;
   uint64_t source_id;
   uint64_t filesize;
-  uint64_t import_count;
-  source_metadata_t(uint64_t p_source_id, uint64_t p_filesize,
-                    uint64_t p_import_count) :
+  uint64_t positive_count;
+  source_metadata_t(const std::string p_file_binary_hash,
+                    uint64_t p_source_id, uint64_t p_filesize,
+                    uint64_t p_positive_count) :
+          file_binary_hash(p_file_binary_hash),
           source_id(p_source_id),
           filesize(p_filesize),
-          import_count(p_import_count) {
+          positive_count(p_positive_count) {
   }
 };
 

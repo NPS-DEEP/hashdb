@@ -1,6 +1,6 @@
 # hashdb Data store
 
-## db Types `db_typedefs.h`
+## LMDB Data Types `lmdb_typedefs.h`
 * `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
 * `typedef pair<binary_hash, id_offset_pairs_t> hashdb_scan_it_data_t`
 * class `source_metadata_t {file_binary_hash, source_id, filesize, positive_count}`
@@ -12,11 +12,11 @@
 ## hashdb Databases
 * `hashes` - LMDB multimap of `key=binary_hash, value=(source ID, source offset)`.
 * `hash_labels` - LMDB map of `key=binary_hash, value=label` for keys where labels are produced.
-* `source_ids` - LMDB map of `key=source_id, value=file_hash`.
-* `source_metadata` - LMDB map of `key=file_hash, value=(source_id, filesize, positive_count)`.
-* `source_names` - LMDB multimap of `key=file_hash, value=(repository_name, filename)`.
+* `source_ids` - LMDB map of `key=source_id, value=file_binary_hash`.
+* `source_metadata` - LMDB map of `key=file_binary_hash, value=(source_id, filesize, positive_count)`.
+* `source_names` - LMDB multimap of `key=file_binary_hash, value=(repository_name, filename)`.
 
-## Bottom: DB Managers
+## Bottom: LMDB Managers
 
 * file_mode: `READ_ONLY, RW_NEW, RW_MODIFY`
 
@@ -25,7 +25,7 @@
 * `lmdb_hash_manager_t(hashdb_dir, file_mode)` - reads `settings.json` file
 * `void insert(source_id, hash_data_list_t, hashdb_changes_t)` - updates changes
 * `void find(binary_hash, id_offset_pairs_t&)`
-* `binary_hash find_first(id_offset_pairs_t&)`
+* `binary_hash find_begin(id_offset_pairs_t&)`
 * `binary_hash find_next(last_binary_hash, id_offset_pairs_t&)`
 * `size_t size()`
 
@@ -52,7 +52,7 @@ Use two-step import when importing vector of hashes from a source.
 * `pair(bool, source_id) insert_begin(file_binary_hash)` - true if ready to begin importing block hashes, false if block hashes have already been imported for this source
 * `void insert_end(file_binary_hash, source_id, filesize, positive_count)` - fail if not already there, warn to stderr and do not insert if already there and filesize not zero
 * `source_metadata_t find(file_binary_hash)` - fail if not there
-* `source_metadata_t find_first()` - `file_binary_hash` is `""` if empty
+* `source_metadata_t find_begin()` - `file_binary_hash` is `""` if empty
 * `source_metadata_t find_next(last_file_binary_hash)` - fail if already at end
 * `size_t size()`
 
@@ -65,7 +65,7 @@ Look up source_names_t vector of repository name, filename pairs from file hash.
 * `size_t size()`
 
 
-## Middle: HASHDB DB Managers
+## Middle: HASHDB LMDB Managers
 ### HASHDB Import `hashdb_import_manager_t`
 
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", import_low_entropy=false)`
