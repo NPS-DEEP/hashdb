@@ -16,7 +16,7 @@
 * `source_metadata` - LMDB map of `key=file_binary_hash, value=(source_id, filesize, positive_count)`.
 * `source_names` - LMDB multimap of `key=file_binary_hash, value=(repository_name, filename)`.
 
-## Bottom: LMDB Managers
+## LMDB Managers
 
 * file_mode: `READ_ONLY, RW_NEW, RW_MODIFY`
 
@@ -57,32 +57,34 @@ Use two-step import when importing vector of hashes from a source.
 * `size_t size()`
 
 ### LMDB Source Name Manager
-Look up source_names_t vector of repository name, filename pairs from file hash.
+Look up `source_names_t` vector of repository name, filename pairs from file hash.
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
-* `void insert(file_binary_hash, repository_name, filename)` - okay if already there
-* `source_name_t find(file_binary_hash)` - fail if not there
+* `void insert(file_binary_hash, repository_name, filename)` - okay if already there, but do not re-add
+* `void find(file_binary_hash, &source_names_t)` - return empty vector if not there
 * `size_t size()`
 
 
-## Middle: HASHDB LMDB Managers
+## HASHDB Managers
 ### HASHDB Import `hashdb_import_manager_t`
 
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", import_low_entropy=false)`
-* `bool has_file_hash(file_hash)` - used to detect if this file has already been imported.
-* `import_hashes(file_hash, repository_name, filename, file_size, hash_data_list_t)` - Used to import all interesting hashes for a new file hash.  For DB safety: lock, call `has_file_hash`, import the vector, set `has_file_hash`, then unlock.  `entropy_label` not used.
-* `import_alternate_source(file_hash, repository_name, filename)` - used to map another filename to this file hash.
+* `bool has_file_hash(file_binary_hash)` - used to detect if this file has already been imported.
+* `import_hashes(file_binary_hash, repository_name, filename, file_size, hash_data_list_t)` - Used to import all interesting hashes for a new file hash.  For DB safety: lock, call `has_file_hash`, import the vector, set `has_file_hash`, then unlock.  `entropy_label` not used.
+* `import_alternate_source(file_binary_hash, repository_name, filename)` - used to map another filename to this file hash.
+* `json_string size()`
 * `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
 ### HASHDB Scan `hashdb_scan_manager_t`
-* `hashdb_scan_manager_t(hashdb_dir, out_path, out_mode)` where mode is `"JSON"` or `"SQL"`
+* `hashdb_scan_manager_t(hashdb_dir, out_path)`
 * `id_offset_pairs_t find(binary_hash)`
+* `source_names_t find_source_names(file_binary_hash)`
 * `hashdb_scan_sizes_t size()`
-* `begin()`
-* `end()`
+* `binary_hash hash_begin()`
+* `binary_hash hash_next(last_binary_hash)`
+* `source_metadata_t source_begin()`
+* `source_metadata_t source_next(last_binary_file_hash)`
+* `source_names_t source_names(binary_file_hash)`
+* `json_string size()`
 
-### HASHDB Scan Iterator `hashdb_scan_it_t`
-
-* `*` Dereferencing returns `hashdb_scan_it_data_t`
-* `++` increments iterator to next hash value.
 

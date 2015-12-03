@@ -31,6 +31,7 @@
 #include "lmdb_hash_label_manager.hpp"
 #include "lmdb_source_id_manager.hpp"
 #include "lmdb_source_metadata_manager.hpp"
+#include "lmdb_source_name_manager.hpp"
 #include "lmdb_helper.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
@@ -244,11 +245,42 @@ void lmdb_source_metadata_manager_test() {
   TEST_EQ(data.filesize, 21);
   TEST_EQ(data.positive_count, 22);
 
-  manager.insert_end(binary_cc,0,0,0); // assert not there yet
+//  manager.insert_end(binary_cc,0,0,0); // assert not there yet
 //  data = manager.find(binary_cc); // assert not found
 
   // size
   TEST_EQ(manager.size(), 2);
+}
+
+// ************************************************************
+// lmdb_source_name_manager
+// ************************************************************
+void lmdb_source_name_manager_test() {
+
+  source_names_t names;
+
+  // create new manager
+  lmdb_source_name_manager_t manager(hashdb_dir, RW_NEW);
+  TEST_EQ(manager.size(), 0);
+
+  manager.find(binary_aa, names);
+  TEST_EQ(names.size(), 0);
+
+  manager.insert(binary_aa, "ra1", "fa1");
+  manager.insert(binary_aa, "ra2", "fa2");
+  manager.insert(binary_bb, "rb", "fb");
+
+  manager.find(binary_aa, names);
+  TEST_EQ(names.size(), 2);
+  TEST_EQ(names[0].first, "ra1");
+  TEST_EQ(names[0].second, "fa1");
+  TEST_EQ(names[1].first, "ra2");
+  TEST_EQ(names[1].second, "fa2");
+
+  manager.find(binary_bb, names);
+  TEST_EQ(names.size(), 1);
+  TEST_EQ(names[0].first, "rb");
+  TEST_EQ(names[0].second, "fb");
 }
 
 // ************************************************************
@@ -273,6 +305,10 @@ int main(int argc, char* argv[]) {
   // lmdb_source_metadata_manager
   make_new_hashdb_dir(hashdb_dir);
   lmdb_source_metadata_manager_test();
+
+  // lmdb_source_name_manager
+  make_new_hashdb_dir(hashdb_dir);
+  lmdb_source_name_manager_test();
 
   // done
   std::cout << "lmdb_managers_test Done.\n";
