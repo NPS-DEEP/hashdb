@@ -37,7 +37,7 @@
 * `size_t size()`
 
 ### LMDB Source ID Manager
-Look up file hash from source ID when scanning.
+Look up file hash from source ID when scanning.  `key=source_id, data=file_binary_hash`.
 
 * `lmdb_source_id_manager_t(hashdb_dir, file_mode)`
 * `void insert(source_id, file_binary_hash)` - warn to stderr and do not insert if already there
@@ -47,6 +47,7 @@ Look up file hash from source ID when scanning.
 ### LMDB Source Metadata Manager
 Look up source metadata from source hash when scanning.
 Use two-step import when importing vector of hashes from a source.
+`key=file_binary_hash, data=(source_id, filesize, positive_count)`.
 
 * `lmdb_source_metadata_manager_t(hashdb_dir, file_mode)`
 * `pair(bool, source_id) insert_begin(file_binary_hash)` - true if ready to begin importing block hashes, false if block hashes have already been imported for this source
@@ -58,6 +59,7 @@ Use two-step import when importing vector of hashes from a source.
 
 ### LMDB Source Name Manager
 Look up `source_names_t` vector of repository name, filename pairs from file hash.
+`key=source_id, data=file_binary_hash`.
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
 * `void insert(file_binary_hash, repository_name, filename)` - okay if already there, but do not re-add
@@ -66,25 +68,26 @@ Look up `source_names_t` vector of repository name, filename pairs from file has
 
 
 ## HASHDB Managers
+### HASHDB Create `hashdb_create_manager`
+* `bool hashdb_create_manager::create_if_new(hashdb_dir)` - false, true, or fail.
 ### HASHDB Import `hashdb_import_manager_t`
+Import hashes.  All interfaces use lock.  Destructor appends to log.
 
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", import_low_entropy=false)`
-* `bool has_file_hash(file_binary_hash)` - used to detect if this file has already been imported.
-* `import_hashes(file_binary_hash, repository_name, filename, file_size, hash_data_list_t)` - Used to import all interesting hashes for a new file hash.  For DB safety: lock, call `has_file_hash`, import the vector, set `has_file_hash`, then unlock.  `entropy_label` not used.
-* `import_alternate_source(file_binary_hash, repository_name, filename)` - used to map another filename to this file hash.
-* `json_string size()`
+* `bool import_source_name(file_binary_hash, repository_name, filename)` - initialize the environment for this file hash.  Import name if new.  True: need to import block hashes.  False: block hashes for this source have already been imported.
+* `import_source_hashes(file_binary_hash, file_size, hash_data_list_t)` - import block hashes for this source.  Fail if `import_source_name` not called first for this `file_binary_hash`.
+* `json_string size()` - return sizes of LMDB databases in JSON format
 * `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
 ### HASHDB Scan `hashdb_scan_manager_t`
 * `hashdb_scan_manager_t(hashdb_dir, out_path)`
-* `id_offset_pairs_t find(binary_hash)`
+* `id_offset_pairs_t find_offset_pairs(binary_hash)`
 * `source_names_t find_source_names(file_binary_hash)`
-* `hashdb_scan_sizes_t size()`
 * `binary_hash hash_begin()`
 * `binary_hash hash_next(last_binary_hash)`
 * `source_metadata_t source_begin()`
 * `source_metadata_t source_next(last_binary_file_hash)`
 * `source_names_t source_names(binary_file_hash)`
-* `json_string size()`
+* `json_string size()` - return sizes of LMDB databases in JSON format
 
 

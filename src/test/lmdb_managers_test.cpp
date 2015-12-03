@@ -269,6 +269,7 @@ void lmdb_source_name_manager_test() {
   manager.insert(binary_aa, "ra1", "fa1");
   manager.insert(binary_aa, "ra2", "fa2");
   manager.insert(binary_bb, "rb", "fb");
+  manager.insert(binary_bb, "rb", "fb");
 
   manager.find(binary_aa, names);
   TEST_EQ(names.size(), 2);

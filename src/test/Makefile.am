@@ -24,7 +24,8 @@ EXTRA_DIST = \
 
 check_PROGRAMS = \
 	bloom_filter_manager_test \
-	lmdb_managers_test
+	lmdb_managers_test \
+        hashdb_managers_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -40,6 +41,7 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 bloom_filter_manager_test_LDADD = ../libhashdb.la
 lmdb_managers_test_LDADD = ../libhashdb.la
+hashdb_managers_test_LDADD = ../libhashdb.la
 
 AM_LDFLAGS = -static
 
@@ -67,6 +69,9 @@ lmdb_managers_test_SOURCES = \
 	directory_helper.hpp \
 	unit_test.h \
 	lmdb_managers_test.cpp
+
+hashdb_managers_test_SOURCES = \
+	hashdb_managers_test.cpp
 
 .PHONY: run_tests_valgrind
 
