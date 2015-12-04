@@ -77,29 +77,21 @@ void lmdb_hash_manager_write() {
   manager.find_begin(pairs);
   TEST_EQ(pairs.size(), 0);
 
-
-  // list to add
-  hash_data_list_t list;
-
   // two entries with one duplicate element
-  list.push_back(hash_data_t(binary_aa, 512, ""));
-  list.push_back(hash_data_t(binary_aa, 512, ""));
-  list.push_back(hash_data_t(binary_aa, 1024, ""));
-  list.push_back(hash_data_t(binary_bb, 2048, ""));
-  manager.insert(1, list, changes);
+  manager.insert(1, hash_data_t(binary_aa, 512, ""), changes);
+  manager.insert(1, hash_data_t(binary_aa, 512, ""), changes);
+  manager.insert(1, hash_data_t(binary_aa, 1024, ""), changes);
+  manager.insert(1, hash_data_t(binary_bb, 2048, ""), changes);
   TEST_EQ(manager.size(), 3);
   TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1)
 
   // hashes_not_inserted_invalid_sector_size
-  list.push_back(hash_data_t(binary_bb, 511, ""));
   TEST_EQ(changes.hashes_not_inserted_invalid_sector_size, 0)
-  manager.insert(1, list, changes);
+  manager.insert(1, hash_data_t(binary_bb, 511, ""), changes);
   TEST_EQ(changes.hashes_not_inserted_invalid_sector_size, 1)
 
   // new source ID
-  list.clear();
-  list.push_back(hash_data_t(binary_aa, 512, ""));
-  manager.insert(2, list, changes);
+  manager.insert(2, hash_data_t(binary_aa, 512, ""), changes);
 
   // hashes_inserted
   TEST_EQ(changes.hashes_inserted, 4)

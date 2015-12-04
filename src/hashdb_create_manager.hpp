@@ -58,12 +58,6 @@
 #include <unistd.h>
 #include <string>
 
-// no concurrent changes
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-#include "mutex_lock.hpp"
-
 class hashdb_create_manager {
   public:
   /**

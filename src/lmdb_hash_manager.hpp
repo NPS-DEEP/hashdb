@@ -135,76 +135,71 @@ class lmdb_hash_manager_t {
   }
 
   /**
-   * Insert hash data list.  Log insertion changes.
+   * Insert hash data, noting changes.
    */
   void insert(const uint64_t source_id,
-              const hash_data_list_t& hash_data_list,
+              const hash_data_t& hash_data,
               hashdb_changes_t& changes) {
 
-    // insert each hash_data entry
-    for(hash_data_list_t::const_iterator it=hash_data_list.begin();
-                                       it != hash_data_list.end(); ++it) {
-
-      // validate the byte alignment
-      if (it->file_offset % settings.sector_size != 0) {
-        ++changes.hashes_not_inserted_invalid_sector_size;
-        continue;
-      }
-      size_t offset_index = it->file_offset / settings.sector_size;
-
-      // maybe grow the DB
-      lmdb_helper::maybe_grow(env);
-
-      // get context
-      lmdb_context_t context(env, true, true);
-      context.open();
-
-      // set key
-      lmdb_helper::point_to_string(it->binary_hash, context.key);
-
-      // set data
-      std::string encoding = lmdb_data_codec::encode_uint64_uint64_data(
-                                                    source_id, offset_index);
-      lmdb_helper::point_to_string(encoding, context.data);
-
-      // see if this entry exists yet
-      // set the cursor to this key,data pair
-      int rc = mdb_cursor_get(context.cursor,
-                              &context.key, &context.data,
-                              MDB_GET_BOTH);
-      bool has_pair = false;
-      if (rc == 0) {
-        has_pair = true;
-      } else if (rc == MDB_NOTFOUND) {
-        // not found
-      } else {
-        // program error
-        has_pair = false; // satisfy mingw32-g++ compiler
-        std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
- 
-      if (has_pair) {
-        // this exact entry already exists
-        ++changes.hashes_not_inserted_duplicate_element;
-        context.close();
-        continue;
-      }
-
-      // insert the entry since all the checks passed
-      rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
-      if (rc != 0) {
-        std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
-      ++changes.hashes_inserted;
-
-      context.close();
-
-      // add hash to bloom filter, too, even if already there
-      bloom_filter_manager.add_hash_value(it->binary_hash);
+    // validate the byte alignment
+    if (hash_data.file_offset % settings.sector_size != 0) {
+      ++changes.hashes_not_inserted_invalid_sector_size;
+      return;
     }
+    size_t offset_index = hash_data.file_offset / settings.sector_size;
+
+    // maybe grow the DB
+    lmdb_helper::maybe_grow(env);
+
+    // get context
+    lmdb_context_t context(env, true, true);
+    context.open();
+
+    // set key
+    lmdb_helper::point_to_string(hash_data.binary_hash, context.key);
+
+    // set data
+    std::string encoding = lmdb_data_codec::encode_uint64_uint64_data(
+                                                    source_id, offset_index);
+    lmdb_helper::point_to_string(encoding, context.data);
+
+    // see if this entry exists yet
+    // set the cursor to this key,data pair
+    int rc = mdb_cursor_get(context.cursor,
+                            &context.key, &context.data,
+                            MDB_GET_BOTH);
+    bool has_pair = false;
+    if (rc == 0) {
+      has_pair = true;
+    } else if (rc == MDB_NOTFOUND) {
+      // not found
+    } else {
+      // program error
+      has_pair = false; // satisfy mingw32-g++ compiler
+      std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+
+    if (has_pair) {
+      // this exact entry already exists
+      ++changes.hashes_not_inserted_duplicate_element;
+      context.close();
+      return;
+    }
+
+    // insert the entry since all the checks passed
+    rc = mdb_put(context.txn, context.dbi,
+                   &context.key, &context.data, MDB_NODUPDATA);
+    if (rc != 0) {
+      std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+    ++changes.hashes_inserted;
+
+    context.close();
+
+    // add hash to bloom filter, too, even if already there
+    bloom_filter_manager.add_hash_value(hash_data.binary_hash);
   }
 
   /**

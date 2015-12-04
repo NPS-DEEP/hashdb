@@ -28,6 +28,7 @@
 #include <cstdio>
 #include "unit_test.h"
 #include "hashdb_create_manager.hpp"
+#include "hashdb_import_manager.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "file_helper.hpp"
@@ -60,12 +61,37 @@ void test_create_manager() {
 }
 
 // ************************************************************
+// hashdb_import_manager
+// ************************************************************
+// no whitelist, no import low entropy
+void test_import_manager1() {
+  // remove any previous hashdb_dir
+  rm_hashdb_dir(hashdb_dir);
+
+  // write default settings
+  hashdb_settings_t settings;
+
+  // create the hashdb directory
+  bool is_new;
+  is_new = hashdb_create_manager::create_if_new(hashdb_dir, settings);
+  TEST_EQ(is_new, true);
+
+  hashdb_import_manager_t manager(hashdb_dir, "", false);
+
+  // import data
+  //TBD
+}
+
+// ************************************************************
 // main
 // ************************************************************
 int main(int argc, char* argv[]) {
 
   // hashdb_create_manager
   test_create_manager();
+
+  // import, no whitelist, do not skip low entropy
+  test_import_manager1();
 
   // done
   std::cout << "hashdb_managers_test Done.\n";
