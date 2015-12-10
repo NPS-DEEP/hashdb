@@ -19,18 +19,48 @@
 
 # This file assists in building the hashdb_manager tool.
 
-# bin_PROGRAMS = hashdb
+LMDB_INCS = \
+	liblmdb/mdb.c \
+	liblmdb/midl.c
+
+lib_LTLIBRARIES = libhashdb.la
+libhashdb_la_LIBADD = liblmdb.la
+noinst_LTLIBRARIES = liblmdb.la
+liblmdb_la_SOURCES = $(LMDB_INCS)
 
 EXTRA_DIST = \
 	liblmdb/COPYRIGHT \
 	liblmdb/LICENSE
 
-#AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
-#	-I${top_srcdir}/src/liblmdb \
-#	-I${top_srcdir}/src/libdfxml \
-#	$(XML_CFLAGS)
-#AM_CFLAGS = $(HASHDB_CFLAGS)
-#AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
+liblmdb_la_CFLAGS = \
+	-pthread -O3 -g \
+	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
+	-Wno-format-extra-args
+liblmdb_la_LDFLAGS = -static -PIC
 
-#include_HEADERS = hashdb.hpp
+libhashdb_la_LDFLAGS = -static -PIC -avoid-version
+
+AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
+	-I${top_srcdir}/src/liblmdb \
+	-I${top_srcdir}/src/libdfxml \
+	$(XML_CFLAGS)
+AM_CFLAGS = $(HASHDB_CFLAGS)
+AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
+
+LIBHASHDB_INCS = \
+	globals.cpp \
+	hashdb.cpp
+
+BLOOM_INCS = \
+	libbloom/bloom.c \
+	libbloom/file_mapper.cpp
+
+DFXML_INCS = \
+	libdfxml/dfxml_writer.cpp
+
+libhashdb_la_SOURCES = \
+	$(LIBHASHDB_INCS) \
+	$(BLOOM_INCS) $(DFXML_INCS)
+
+include_HEADERS = hashdb.hpp
 

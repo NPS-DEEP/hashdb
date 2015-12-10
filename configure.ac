@@ -18,8 +18,9 @@ AC_CONFIG_MACRO_DIR(m4)
 #
 
 AC_CONFIG_FILES([Makefile
+                 src_libhashdb/Makefile
                  src/Makefile
-                 src/test/Makefile
+                 test/Makefile
                  man/Makefile
                  doc/Makefile
                  python/Makefile])
@@ -60,7 +61,7 @@ fi
 m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/hashdb_cflags.m4])
-m4_include([src/libdfxml/dfxml_configure.m4])
+m4_include([src_libhashdb/libdfxml/dfxml_configure.m4])
 
 ################################################################
 ## python 3 for tests

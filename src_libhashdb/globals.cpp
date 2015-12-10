@@ -22,31 +22,13 @@
  * Hold global variables in this globals namespace.
  */
 
-#ifndef GLOBALS_HPP
-#define GLOBALS_HPP
-
 #include <stdint.h>
 #include <string>
+#include "globals.hpp"
 
 /**
  * Hold global variables in this globals namespace.
  */
-class globals_t {
-  public:
-  static const uint32_t hashdb_settings_version = 3;
-  static const uint32_t default_sector_size = 512;
-  static const uint32_t default_hash_block_size = 512;
-  static const uint32_t default_scan_expanded_max = 200;
-  static const uint32_t default_maximum_hash_duplicates = 0;
-  static const bool default_bloom_is_used = true;
-  static const uint32_t default_bloom_M_hash_size = 28;
-  static const uint32_t default_bloom_k_hash_functions = 3;
-  static const uint32_t default_expand_identified_blocks_max = 200;
-  static const uint32_t default_explain_identified_blocks_max = 20;
-  static const uint32_t default_import_tab_sector_size = 512;
-  static bool quiet_mode;
-  static std::string command_line_string;
-};
-
-#endif
+std::string globals_t::command_line_string = "not defined";
+bool globals_t::quiet_mode = false;
 
