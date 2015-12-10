@@ -58,6 +58,7 @@
 #include "lmdb_source_name_manager.hpp"
 #include "bloom_filter_manager.hpp"
 #include "hashdb_changes.hpp"
+#include "logger.hpp"
 #include <unistd.h>
 #include <string>
 
@@ -92,14 +93,15 @@ namespace hashdb {
     return std::pair<bool, std::string>(true, "");
   }
 
-  // private
   /**
    * Return true and "" if hashdb is created, false and reason if not.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
    */
+  // private
   std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
-                                     const hashdb_settings_t& settings) {
+                                     const hashdb_settings_t& settings,
+                                     const std::string& log_string) {
 
     // path must be empty
     if (access(hashdb_dir.c_str(), F_OK) == 0) {
@@ -130,6 +132,10 @@ namespace hashdb {
     lmdb_source_metadata_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
 
+    // create the log
+    logger_t logger(hashdb_dir, log_string);
+    logger.close();
+
     return std::pair<bool, std::string>(true, "");
   }
 
@@ -139,14 +145,16 @@ namespace hashdb {
    * path problem happens.
    */
   // create using default settings
-  std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir) {
+  std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
+                                             const std::string& log_string) {
     hashdb_settings_t settings;
-    return create_hashdb(hashdb_dir, settings);
+    return create_hashdb(hashdb_dir, settings, log_string);
   }
 
   // create using settings from other hashdb
   std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
-                     const std::string& from_hashdb_dir) {
+                                             const std::string& from_hashdb_dir,
+                                             const std::string& log_string) {
 
     // validate from path
     std::pair<bool, std::string> pair = hashdb::is_valid_hashdb(hashdb_dir);
@@ -158,17 +166,18 @@ namespace hashdb {
     hashdb_settings_t settings(
                         hashdb_settings_store_t::read_settings(hashdb_dir));
 
-    return create_hashdb(hashdb_dir, settings);
+    return create_hashdb(hashdb_dir, settings, log_string);
   }
 
   // create using minimal settings
   std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
                      const uint32_t sector_size,
-                     const uint32_t block_size) {
+                     const uint32_t block_size,
+                     const std::string& log_string) {
     hashdb_settings_t settings;
     settings.sector_size = sector_size;
     settings.hash_block_size = block_size;
-    return create_hashdb(hashdb_dir, settings);
+    return create_hashdb(hashdb_dir, settings, log_string);
   }
 
   // create using full settings
@@ -177,14 +186,15 @@ namespace hashdb {
                      const uint32_t block_size,
                      bool bloom_is_used,
                      uint32_t bloom_M_hash_size,
-                     uint32_t bloom_k_hash_functions) {
+                     uint32_t bloom_k_hash_functions,
+                     const std::string& log_string) {
     hashdb_settings_t settings;
     settings.sector_size = sector_size;
     settings.hash_block_size = block_size;
     settings.bloom_is_used = bloom_is_used;
     settings.bloom_M_hash_size = bloom_M_hash_size;
     settings.bloom_k_hash_functions = bloom_k_hash_functions;
-    return create_hashdb(hashdb_dir, settings);
+    return create_hashdb(hashdb_dir, settings, log_string);
   }
 } // namespace hashdb
 

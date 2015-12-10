@@ -44,9 +44,8 @@ class hashdb_settings_store_t {
     // hashdb_dir containing settings.xml must exist
     std::string filename = hashdb_dir + "/settings.xml";
     if (access(filename.c_str(), F_OK) != 0) {
-      std::cerr << "zUnable to read database '" << hashdb_dir
+      std::cerr << "Unable to read database '" << hashdb_dir
                 << "'.\nAborting.\n";
-assert(0);
       exit(1);
     }
 

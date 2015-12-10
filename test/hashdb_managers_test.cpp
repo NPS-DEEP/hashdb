@@ -50,9 +50,9 @@ void test_create_manager() {
 
   // create the hashdb directory
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir);
+  pair = hashdb::create_hashdb(hashdb_dir, "test_create_manager.a");
   TEST_EQ(pair.first, true);
-  pair = hashdb::create_hashdb(hashdb_dir);
+  pair = hashdb::create_hashdb(hashdb_dir, "test_create_manager.b");
   TEST_EQ(pair.first, false);
 }
 
@@ -60,20 +60,34 @@ void test_create_manager() {
 // hashdb_import_manager
 // ************************************************************
 // no whitelist, no import low entropy
-void test_import_manager1() {
+void test_import_manager() {
 
   // remove any previous hashdb_dir
   rm_hashdb_dir(hashdb_dir);
 
   // create new hashdb directory
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir);
+  pair = hashdb::create_hashdb(hashdb_dir, "test_import_manager.a");
   TEST_EQ(pair.first, true);
 
-  hashdb::import_manager_t manager(hashdb_dir, "", false);
+  hashdb::import_manager_t manager(hashdb_dir, "", false,
+                                   "test_import_manager.b");
 
   // import data
-  //TBD
+  // Note: this is a coarse functional test.  Inspect the history log
+  // if desired.  See Python tests for fuller testing.
+  hashdb::hash_data_list_t data;
+  data.push_back(hashdb::hash_data_t(binary_aa, 0, ""));
+  data.push_back(hashdb::hash_data_t(binary_aa, 512, ""));
+  data.push_back(hashdb::hash_data_t(binary_bb, 1024, "LABEL"));
+  manager.import_source_name(binary_0, "repository0", "file0");
+  manager.import_source_hashes(binary_0, 100, data);
+  //std::cout << manager.size() << "\n";
+  manager.import_source_hashes(binary_0, 100, data);
+  //std::cout << manager.size() << "\n";
+
+  // force fail
+  //manager.import_source_hashes(binary_aa, 100, data);
 }
 
 // ************************************************************
@@ -85,7 +99,7 @@ int main(int argc, char* argv[]) {
   test_create_manager();
 
   // import, no whitelist, do not skip low entropy
-  test_import_manager1();
+  test_import_manager();
 
   // done
   std::cout << "hashdb_managers_test Done.\n";

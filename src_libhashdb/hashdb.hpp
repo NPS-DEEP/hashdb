@@ -20,6 +20,11 @@
 /**
  * \file
  * Header file for the hashdb library.
+ *
+ * Potential future changes:
+ *   A non-entropy data classifier flag may be added to hash_data_t.
+ *   Bloom filter support may be discontinued if internal data store
+ *     is optimized to support lists.
  */
 
 #ifndef HASHDB_HPP
@@ -64,7 +69,7 @@ namespace hashdb {
   typedef std::vector<hash_data_t> hash_data_list_t;
 
   // ************************************************************
-  // misc tools
+  // misc support
   // ************************************************************
   /**
    * Return true and "" if hashdb is valid, false and reason if not.
@@ -76,34 +81,50 @@ namespace hashdb {
    * Return true and "" if hashdb is created, false and reason if not.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
+   *
+   * Parameters:
+   *   hashdb_dir - Path to the database to create.  The path must not
+   *     exist yet.
+   *   log_string - String to put into the new hashdb log.
+   *   Other parameters - Other parameters control hashdb settings.
+   *
+   * Returns tuple:
+   *   True and "" if creation was successful, false and reason if not.
    */
-  std::pair<bool, std::string> create_hashdb(
-                     const std::string& hashdb_dir);
-
+  // create with default settings
   std::pair<bool, std::string> create_hashdb(
                      const std::string& hashdb_dir,
-                     const std::string& from_hashdb_dir);
+                     const std::string& log_string);
 
+  // create with settings copied from another hashdb
+  std::pair<bool, std::string> create_hashdb(
+                     const std::string& hashdb_dir,
+                     const std::string& from_hashdb_dir,
+                     const std::string& log_string);
+
+  // create with specified and default settings
   std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
                      const uint32_t sector_size,
-                     const uint32_t block_size);
+                     const uint32_t block_size,
+                     const std::string& log_string);
 
+  // create with specified settings
   std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
                      bool bloom_is_used,
                      uint32_t bloom_M_hash_size,
-                     uint32_t bloom_k_hash_functioins);
+                     uint32_t bloom_k_hash_functioins,
+                     const std::string& log_string);
 
   // ************************************************************
   // import
   // ************************************************************
   /**
-   * Manage all LMDB updates.  All interfaces are locked.
-   * Several types of change events are noted in hashdb_changes_t.
+   * Manage all LMDB updates.  All interfaces are locked and threadsafe.
    * A logger is opened for logging the command (TBD) and for logging
-   * timestamps.  Upon closure, changes are written to the logger
-   * and the logger is closed.
+   * timestamps and changes applied during the session.  Upon closure,
+   * changes are written to the logger and the logger is closed.
    */
   class import_manager_t {
 
@@ -111,7 +132,6 @@ namespace hashdb {
     hashdb_import_manager_private_t* hashdb_import_manager_private;
 
     public:
-
     // do not allow copy or assignment
 #ifdef HAVE_CXX11
     import_manager_t(const import_manager_t&) = delete;
@@ -122,39 +142,66 @@ namespace hashdb {
                                             __attribute__ ((noreturn));
 #endif
 
-    public:
-    import_manager_t(const std::string& p_hashdb_dir,
-                     const std::string& p_whitelist_hashdb_dir,
-                     const bool p_import_low_entropy);
+    /**
+     * Open hashdb for importing.
+     *
+     * Parameters:
+     *   hashdb_dir - Path to the database to append to.
+     *   whitelist_hashdb_dir - Path to a whitelist database for suppressing
+     *     importing.  To supppress, use "".
+     *   import_low_entropy - True imports flagged hashes, False does not.
+     *   log_string - This string will be logged in the log file that is
+     *      opened for this session.
+     */
+    import_manager_t(const std::string& hashdb_dir,
+                     const std::string& whitelist_hashdb_dir,
+                     const bool import_low_entropy,
+                     const std::string& log_string);
 
+    /**
+     * The destructor closes the log file and data store resources.
+     */
     ~import_manager_t();
 
     /**
-     * Initialize the environment for this file hash.  Import name if new.
-     * Return true if block hashes need to be imported for this file.
-     * Return false if block hashes have already been imported for this file.
+     * Initialize the environment to accept this file hash and import
+     * the repository name and filename if this source is not present yet.
+     *
+     * Parameters:
+     *   file_binary_hash - The MD5 hash of the source in binary form.
+     *   repository_name - The repository name to attribute the source to.
+     *   filename - The filename to attribute the source to.
+     *
+     * Returns:
+     *   True if block hashes need to be imported for this source, false
+     *   if block hashes have already been imported for this source.
      */
     bool import_source_name(const std::string& file_binary_hash,
                             const std::string& repository_name,
                             const std::string& filename);
 
     /**
-     * Import hashes from hash_data_list.  Fail on error.
+     * Import source hashes from hash_data_list.  Low entropy and whitelist
+     * hashes may be skipped, depending on initialization settings.
      *
-     * If import_low_entropy is false then skip hashes with entropy flags.
-     * In the future, a non-entropy data classifier flag may be added
-     * to hash_data_t.
+     * Parameters:
+     *   file_binary_hash - The MD5 hash of the source in binary form.
+     *   filesize - The size of the source, in bytes.
+     *   hash_data_list - The list of hashes to import, see hash_data_list_t.
      *
+     * Returns:
+     *   Nothing, but fails if import_source_name has not been called yet
+     *     for this source, so be sure to call import_source_name first.
      */
     void import_source_hashes(const std::string& file_binary_hash,
                               const uint64_t filesize,
                               const hash_data_list_t& hash_data_list);
 
-    // Sizes of LMDB databases.
+    // Returns sizes of LMDB databases in the data store.
     std::string size() const;
   };
 
-} // namespace hashdb
+}
 
 #endif
 

@@ -60,41 +60,5 @@ class source_metadata_t {
 typedef hashdb::hash_data_t hash_data_t;
 typedef hashdb::hash_data_list_t hash_data_list_t;
 
-// below is in hashdb.hpp
-
-//// hash_data_t of tuple(binary_hash, file_offset, entropy_label)
-//class hash_data_t {
-//  public:
-//  std::string binary_hash;
-//  uint64_t file_offset;
-//  std::string entropy_label;
-//  hash_data_t(const std::string& p_binary_hash,
-//              uint64_t p_file_offset,
-//              const std::string& p_entropy_label) :
-//          binary_hash(p_binary_hash),
-//          file_offset(p_file_offset),
-//          entropy_label(p_entropy_label) {
-//  }
-//};
-//
-//// hash_data_list_t
-//typedef std::vector<hash_data_t> hash_data_list_t;
-//
-//// sql_source_it_data_t of tuple(file_binary_hash, source_metadata,
-////                               source_names)
-//class sql_source_it_data_t {
-//  public:
-//  std::string file_binary_hash;
-//  source_metadata_t source_metadata;
-//  source_names_t source_names;
-//  sql_source_it_data_t(const std::string& p_file_binary_hash,
-//                    const source_metadata_t& p_source_metadata,
-//                    const source_names_t& p_source_names) :
-//          file_binary_hash(p_file_binary_hash),
-//          source_metadata(p_source_metadata),
-//          source_names(p_source_names) {
-//  }
-//};
-
 #endif
 

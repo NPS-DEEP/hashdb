@@ -66,6 +66,7 @@ class hashdb_import_manager_private_t {
   std::string hashdb_dir;
   std::string whitelist_hashdb_dir;
   bool import_low_entropy;
+  std::string log_string;
 
   // LMDB managers
   lmdb_hash_manager_t            hash_manager;
@@ -94,25 +95,28 @@ class hashdb_import_manager_private_t {
   public:
   hashdb_import_manager_private_t(const std::string& p_hashdb_dir,
                                   const std::string& p_whitelist_hashdb_dir,
-                                  const bool p_import_low_entropy) :
+                                  const bool p_import_low_entropy,
+                                  const std::string& p_log_string) :
        hashdb_dir(p_hashdb_dir),
        whitelist_hashdb_dir(p_whitelist_hashdb_dir),
        import_low_entropy(p_import_low_entropy),
+       log_string(p_log_string),
        hash_manager(hashdb_dir, RW_MODIFY),
        hash_label_manager(hashdb_dir, RW_MODIFY),
        source_id_manager(hashdb_dir, RW_MODIFY),
        source_metadata_manager(hashdb_dir, RW_MODIFY),
        source_name_manager(hashdb_dir, RW_MODIFY),
-       logger(hashdb_dir, "open RW"),
+       logger(hashdb_dir, log_string),
        changes(),
        M() {
     MUTEX_INIT(&M);
+   logger.add_timestamp("begin import");
   }
 
   ~hashdb_import_manager_private_t() {
     // log changes and close logger
     logger.add_hashdb_changes(changes);
-    logger.add_timestamp("close RW");
+    logger.add_timestamp("end import");
     logger.close();
   }
 

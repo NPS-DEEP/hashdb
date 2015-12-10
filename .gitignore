@@ -59,8 +59,8 @@ TAGS
 core.*
 src/hashdb
 src/.libs
-src/test/*_test
-src/test/temp_*
+test/*_test
+test/temp_*
 src_win/win_tests*
 hashdb*.tar.gz
 space

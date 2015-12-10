@@ -40,9 +40,9 @@ liblmdb_la_LDFLAGS = -static -PIC
 
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 
-AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
-	-I${top_srcdir}/src/liblmdb \
-	-I${top_srcdir}/src/libdfxml \
+AM_CPPFLAGS = -isystem${top_srcdir}/src_libhashdb/libbloom \
+	-I${top_srcdir}/src_libhashdb/liblmdb \
+	-I${top_srcdir}/src_libhashdb/libdfxml \
 	$(XML_CFLAGS)
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)

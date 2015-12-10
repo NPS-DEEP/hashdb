@@ -41,14 +41,14 @@ AM_LDFLAGS = -static
 
 bloom_filter_manager_test_CPPFLAGS = \
 	-I${top_srcdir}/src \
-	-isystem${top_srcdir}/src/libbloom \
-	-isystem${top_srcdir}/src/libdfxml
+	-isystem${top_srcdir}/src_libhashdb/libbloom \
+	-isystem${top_srcdir}/src_libhashdb/libdfxml
 
 lmdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/src \
-	-isystem${top_srcdir}/src/libbloom \
-	-isystem${top_srcdir}/src/libdfxml \
-	-isystem${top_srcdir}/src/liblmdb \
+	-isystem${top_srcdir}/src_libhashdb/libbloom \
+	-isystem${top_srcdir}/src_libhashdb/libdfxml \
+	-isystem${top_srcdir}/src_libhashdb/liblmdb \
 	$(XML_CFLAGS)
 
 lmdb_managers_test_LDADD = ../src_libhashdb/liblmdb.la
@@ -68,13 +68,13 @@ run_tests_valgrind:
 # tests
 # ############################################################
 bloom_filter_manager_test_SOURCES = bloom_filter_manager_test.cpp \
-	../src/libbloom/bloom.c \
-	../src/libbloom/file_mapper.cpp
+	../src_libhashdb/libbloom/bloom.c \
+	../src_libhashdb/libbloom/file_mapper.cpp
 
 lmdb_managers_test_SOURCES = lmdb_managers_test.cpp \
-	../src/libbloom/bloom.c \
-	../src/libbloom/file_mapper.cpp \
-	../src/libdfxml/dfxml_writer.cpp
+	../src_libhashdb/libbloom/bloom.c \
+	../src_libhashdb/libbloom/file_mapper.cpp \
+	../src_libhashdb/libdfxml/dfxml_writer.cpp
 
 hashdb_managers_test_SOURCES = hashdb_managers_test.cpp
 
