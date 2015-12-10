@@ -79,6 +79,7 @@ src/test/sample_dfxml512.xml
 # generated test data
 temp_dir_lmdb_managers_test.hdb
 temp_dir_hashdb_managers_test.hdb
+temp_dir_hashdb_managers_test2.hdb
 
 # doc
 *.aux

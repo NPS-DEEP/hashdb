@@ -66,12 +66,12 @@ const char* hashdb_version() {
 import_manager_t::import_manager_t(
                    const std::string& p_hashdb_dir,
                    const std::string& p_whitelist_hashdb_dir,
-                   const bool p_import_low_entropy,
+                   const bool p_skip_low_entropy,
                    const std::string& p_log_string) :
             hashdb_import_manager_private(new hashdb_import_manager_private_t(
                                           p_hashdb_dir,
                                           p_whitelist_hashdb_dir,
-                                          p_import_low_entropy,
+                                          p_skip_low_entropy,
                                           p_log_string)) {
 }
 

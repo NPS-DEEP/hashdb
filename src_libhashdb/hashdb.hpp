@@ -147,15 +147,15 @@ namespace hashdb {
      *
      * Parameters:
      *   hashdb_dir - Path to the database to append to.
-     *   whitelist_hashdb_dir - Path to a whitelist database for suppressing
-     *     importing.  To supppress, use "".
-     *   import_low_entropy - True imports flagged hashes, False does not.
+     *   whitelist_hashdb_dir - Path to a whitelist database for skipping
+     *     whitelist hashes.  To supppress, use "".
+     *   skip_low_entropy - True skips flagged hashes, False imports them.
      *   log_string - This string will be logged in the log file that is
      *      opened for this session.
      */
     import_manager_t(const std::string& hashdb_dir,
                      const std::string& whitelist_hashdb_dir,
-                     const bool import_low_entropy,
+                     const bool skip_low_entropy,
                      const std::string& log_string);
 
     /**

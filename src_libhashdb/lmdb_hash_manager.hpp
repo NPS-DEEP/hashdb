@@ -242,6 +242,39 @@ class lmdb_hash_manager_t {
   }
 
   /**
+   * Find if hash is present at all, used only in whitelist import check.
+   */
+  bool find(const std::string& binary_hash) const {
+
+    // get context
+    lmdb_context_t context(env, false, true);
+    context.open();
+
+    // set key
+    lmdb_helper::point_to_string(binary_hash, context.key);
+
+    // set the cursor to this key
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_SET_KEY);
+
+    if (rc == MDB_NOTFOUND) {
+      // no hash
+      context.close();
+      return false;
+    }
+
+    if (rc == 0) {
+      // one or more hashes
+      context.close();
+      return true;
+    }
+
+    // invalid rc
+    std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
+    assert(0);
+  }
+
+  /**
    * Return first hash and its matches.
    */
   std::string find_begin(id_offset_pairs_t& id_offset_pairs) const {

@@ -65,8 +65,11 @@ class hashdb_import_manager_private_t {
   private:
   std::string hashdb_dir;
   std::string whitelist_hashdb_dir;
-  bool import_low_entropy;
+  bool skip_low_entropy;
   std::string log_string;
+
+  // whitelist manager
+  lmdb_hash_manager_t* whitelist_hash_manager;
 
   // LMDB managers
   lmdb_hash_manager_t            hash_manager;
@@ -95,12 +98,13 @@ class hashdb_import_manager_private_t {
   public:
   hashdb_import_manager_private_t(const std::string& p_hashdb_dir,
                                   const std::string& p_whitelist_hashdb_dir,
-                                  const bool p_import_low_entropy,
+                                  const bool p_skip_low_entropy,
                                   const std::string& p_log_string) :
        hashdb_dir(p_hashdb_dir),
        whitelist_hashdb_dir(p_whitelist_hashdb_dir),
-       import_low_entropy(p_import_low_entropy),
+       skip_low_entropy(p_skip_low_entropy),
        log_string(p_log_string),
+       whitelist_hash_manager(0),
        hash_manager(hashdb_dir, RW_MODIFY),
        hash_label_manager(hashdb_dir, RW_MODIFY),
        source_id_manager(hashdb_dir, RW_MODIFY),
@@ -109,8 +113,15 @@ class hashdb_import_manager_private_t {
        logger(hashdb_dir, log_string),
        changes(),
        M() {
+
+    // maybe open the whitelist hash label manager
+    if (whitelist_hashdb_dir != "") {
+      whitelist_hash_manager = new lmdb_hash_manager_t(
+                                          whitelist_hashdb_dir, READ_ONLY);
+    }
+
     MUTEX_INIT(&M);
-   logger.add_timestamp("begin import");
+    logger.add_timestamp("begin import");
   }
 
   ~hashdb_import_manager_private_t() {
@@ -118,6 +129,7 @@ class hashdb_import_manager_private_t {
     logger.add_hashdb_changes(changes);
     logger.add_timestamp("end import");
     logger.close();
+    std::cout << "import changes " << changes << "\n";
   }
 
   /**
@@ -150,7 +162,7 @@ class hashdb_import_manager_private_t {
   /**
    * Import hashes from hash_data_list.  Fail on error.
    *
-   * If import_low_entropy is false then skip hashes with entropy flags.
+   * If skip_low_entropy is true then skip hashes with entropy flags.
    * In the future, a non-entropy data classifier flag may be added
    * to hash_data_t.
    *
@@ -170,12 +182,21 @@ class hashdb_import_manager_private_t {
                                        it != hash_data_list.end(); ++it) {
 
       // skip low entropy
-      if (import_low_entropy == false && it->entropy_label != "") {
+      if (skip_low_entropy == true && it->entropy_label != "") {
         changes.hashes_not_inserted_skip_low_entropy++;
         continue;
       }
 
-      // zzzzzzzzzzzzzzzzzz skip whitelist zzzzzzzzzzzzzzzzz
+      // skip if in whitelist
+std::cerr << "import_source_hashes.a\n";
+      if (whitelist_hash_manager != NULL) {
+std::cerr << "import_source_hashes.b\n";
+        if (whitelist_hash_manager->find(it->binary_hash)) {
+std::cerr << "import_source_hashes.c\n";
+          changes.hashes_not_inserted_skip_whitelist++;
+          continue;
+        }
+      }
 
       // insert hash
       hash_manager.insert(source_metadata.source_id, *it, changes);
