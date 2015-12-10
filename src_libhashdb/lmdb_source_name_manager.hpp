@@ -27,7 +27,6 @@
 
 #ifndef LMDB_SOURCE_NAME_MANAGER_HPP
 #define LMDB_SOURCE_NAME_MANAGER_HPP
-#include "globals.hpp"
 #include "file_modes.h"
 #include "lmdb.h"
 #include "lmdb_typedefs.h"

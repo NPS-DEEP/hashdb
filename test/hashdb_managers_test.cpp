@@ -123,6 +123,42 @@ void test_import_manager2() {
   std::cout << "db " << manager.size() << "\n";
 }
 
+void bloom_setup() {
+
+  // remove any previous hashdb_dir
+  rm_hashdb_dir(hashdb_dir);
+  rm_hashdb_dir(hashdb_dir2);
+
+  // data
+  hashdb::hash_data_list_t data;
+  data.push_back(hashdb::hash_data_t(binary_aa, 0, ""));
+  data.push_back(hashdb::hash_data_t(binary_aa, 512, ""));
+  data.push_back(hashdb::hash_data_t(binary_bb, 1024, "LABEL"));
+
+  // add data
+  std::pair<bool, std::string> pair;
+  pair = hashdb::create_hashdb(hashdb_dir, "create DB");
+  hashdb::import_manager_t manager(hashdb_dir, "", false, "import");
+  manager.import_source_name(binary_0, "rn", "fn");
+  manager.import_source_hashes(binary_0, 100, data);
+}
+
+void bloom_test() {
+  // rebuild Bloom on non-existent hashdb
+  std::pair<bool, std::string> pair;
+
+  // rebuild Bloom, off
+  pair = hashdb::rebuild_bloom(hashdb_dir, false, 2, 20, "rebuild_1");
+  TEST_EQ(pair.first, true);
+
+  // rebuild Bloom, on
+  pair = hashdb::rebuild_bloom(hashdb_dir, false, 2, 20, "rebuild_2");
+  TEST_EQ(pair.first, true);
+
+  // non-existent DB fails
+  //pair = hashdb::rebuild_bloom(hashdb_dir2, false, 2, 20, "rebuild_3");
+}
+
 // ************************************************************
 // main
 // ************************************************************
@@ -136,6 +172,13 @@ int main(int argc, char* argv[]) {
 
   // import, do not skip low entropy, no whitelist
   test_import_manager2();
+
+  // Bloom filter
+  bloom_setup();
+  bloom_test();
+
+  // presence of global variable
+  TEST_EQ(hashdb::default_sector_size, 512);
 
   // done
   std::cout << "hashdb_managers_test Done.\n";

@@ -42,7 +42,6 @@
   #include <winsock2.h>
 #endif
 
-#include "globals.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
@@ -176,7 +175,7 @@ namespace hashdb {
                      const std::string& log_string) {
     hashdb_settings_t settings;
     settings.sector_size = sector_size;
-    settings.hash_block_size = block_size;
+    settings.block_size = block_size;
     return create_hashdb(hashdb_dir, settings, log_string);
   }
 
@@ -190,13 +189,125 @@ namespace hashdb {
                      const std::string& log_string) {
     hashdb_settings_t settings;
     settings.sector_size = sector_size;
-    settings.hash_block_size = block_size;
+    settings.block_size = block_size;
     settings.bloom_is_used = bloom_is_used;
     settings.bloom_M_hash_size = bloom_M_hash_size;
     settings.bloom_k_hash_functions = bloom_k_hash_functions;
     return create_hashdb(hashdb_dir, settings, log_string);
   }
+
+  /**
+   * Return true and "" if bloom filter rebuilds, false and reason if not.
+   * The current implementation may abort if something worse than a simple
+   * path problem happens.
+   */
+  std::pair<bool, std::string> rebuild_bloom(
+                     const std::string& hashdb_dir,
+                     const bool bloom_is_used,
+                     const uint32_t bloom_M_hash_size,
+                     const uint32_t bloom_k_hash_functions,
+                     const std::string& log_string) {
+
+    // validate path
+    std::pair<bool, std::string> pair = hashdb::is_valid_hashdb(hashdb_dir);
+    if (pair.first == false) {
+      return pair;
+    }
+
+    // read existing settings
+    hashdb_settings_t settings;
+    settings = hashdb_settings_store_t::read_settings(hashdb_dir);
+
+    // change the bloom filter settings
+    settings.bloom_is_used = bloom_is_used;
+    settings.bloom_M_hash_size = bloom_M_hash_size;
+    settings.bloom_k_hash_functions = bloom_k_hash_functions;
+
+    // write back the changed settings
+    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+    logger_t logger(hashdb_dir, log_string);
+
+    // log the new settings
+    logger.add_hashdb_settings(settings);
+
+    // remove existing bloom filter
+    std::string filename = hashdb_dir + "/bloom_filter";
+    remove(filename.c_str());
+
+    // open the bloom filter manager
+    bloom_filter_manager_t bloom_filter_manager(hashdb_dir,
+                               RW_NEW,
+                               settings.bloom_is_used,
+                               settings.bloom_M_hash_size,
+                               settings.bloom_k_hash_functions);
+
+    // only add hashes if bloom is used
+    if (settings.bloom_is_used) {
+
+      // open hash DB
+      lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY);
+
+      // add hashes to the bloom filter
+      id_offset_pairs_t id_offset_pairs;
+      logger.add_timestamp("begin rebuild_bloom");
+      std::string binary_hash = manager.find_begin(id_offset_pairs);
+      while (binary_hash != "") {
+        bloom_filter_manager.add_hash_value(binary_hash);
+        binary_hash = manager.find_next(binary_hash, id_offset_pairs);
+      }
+    }
+
+    // close logger
+    logger.add_timestamp("end rebuild_bloom");
+    logger.close();
+
+    // done
+    return std::pair<bool, std::string>(true, "");
+  }
+
 } // namespace hashdb
 
 #endif
+
+  // private
+  std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
+                                     const hashdb_settings_t& settings,
+                                     const std::string& log_string) {
+
+    // path must be empty
+    if (access(hashdb_dir.c_str(), F_OK) == 0) {
+      return std::pair<bool, std::string>(false, "Path '"
+                       + hashdb_dir + "' already exists.");
+    }
+
+    // create the new hashdb directory
+    int status;
+#ifdef WIN32
+    status = mkdir(hashdb_dir.c_str());
+#else
+    status = mkdir(hashdb_dir.c_str(),0777);
+#endif
+    if (status != 0) {
+      return std::pair<bool, std::string>(false,
+                       "Unable to create new hashdb database at path '"
+                       + hashdb_dir + "'.");
+    }
+
+    // create the settings file
+    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+
+    // create new LMDB stores
+    lmdb_hash_manager_t(hashdb_dir, RW_NEW);
+    lmdb_hash_label_manager_t(hashdb_dir, RW_NEW);
+    lmdb_source_id_manager_t(hashdb_dir, RW_NEW);
+    lmdb_source_metadata_manager_t(hashdb_dir, RW_NEW);
+    lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
+
+    // create the log
+    logger_t logger(hashdb_dir, log_string);
+    logger.close();
+
+    return std::pair<bool, std::string>(true, "");
+  }
 

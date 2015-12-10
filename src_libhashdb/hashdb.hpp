@@ -48,6 +48,16 @@ namespace hashdb {
   const char* hashdb_version();
 
   // ************************************************************
+  // global settings
+  // ************************************************************
+  static const uint32_t hashdb_settings_version = 3;
+  static const uint32_t default_sector_size = 512;
+  static const uint32_t default_block_size = 512;
+  static const bool default_bloom_is_used = true;
+  static const uint32_t default_bloom_M_hash_size = 28;
+  static const uint32_t default_bloom_k_hash_functions = 3;
+ 
+  // ************************************************************
   // types used in interfaces
   // ************************************************************
   // hash_data_t of tuple(binary_hash, file_offset, entropy_label)
@@ -78,6 +88,7 @@ namespace hashdb {
                                       const std::string& hashdb_dir);
 
   /**
+   * Create a new hashdb.
    * Return true and "" if hashdb is created, false and reason if not.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
@@ -115,6 +126,18 @@ namespace hashdb {
                      bool bloom_is_used,
                      uint32_t bloom_M_hash_size,
                      uint32_t bloom_k_hash_functioins,
+                     const std::string& log_string);
+  /**
+   * Rebuild the Bloom filter.
+   * Return true and "" if bloom filter rebuilds, false and reason if not.
+   * The current implementation may abort if something worse than a simple
+   * path problem happens.
+   */
+  std::pair<bool, std::string> rebuild_bloom(
+                     const std::string& hashdb_dir,
+                     const bool bloom_is_used,
+                     const uint32_t bloom_M_hash_size,
+                     const uint32_t bloom_k_hash_functions,
                      const std::string& log_string);
 
   // ************************************************************

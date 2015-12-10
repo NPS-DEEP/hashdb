@@ -25,9 +25,9 @@
 #ifndef    HASHDB_SETTINGS_STORE_HPP
 #define    HASHDB_SETTINGS_STORE_HPP
 
-#include "globals.hpp"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_reader.hpp"
+#include "hashdb.hpp" // for globals
 #include <dfxml_writer.h>
 #include <unistd.h>
 #include <string>
@@ -54,10 +54,10 @@ class hashdb_settings_store_t {
     hashdb_settings_reader_t::read_settings(filename, settings);
 
     // validate that the settings version is compatible with hashdb
-    if (settings.settings_version != globals_t::hashdb_settings_version) {
+    if (settings.settings_version != hashdb::hashdb_settings_version) {
       std::cerr << "Database version error in settings version.\n"
                 << "Database '" << hashdb_dir << "' uses settings version " << settings.settings_version
-                << "\nbut hashdb requires settings version " << globals_t::hashdb_settings_version
+                << "\nbut hashdb requires settings version " << hashdb::hashdb_settings_version
                 << ".\nAborting.\n";
       exit(1);
     }

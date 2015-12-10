@@ -111,7 +111,7 @@ class hashdb_settings_reader_t {
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("settings_version"))) return SETTINGS_VERSION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("sector_size"))) return BYTE_ALIGNMENT;
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("hash_block_size"))) return HASH_BLOCK_SIZE;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_used"))) return BLOOM_USED;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_k_hash_functions"))) return BLOOM_K_HASH_FUNCTIONS;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_M_hash_size"))) return BLOOM_M_HASH_SIZE;
@@ -164,7 +164,7 @@ class hashdb_settings_reader_t {
     } else if (user_data.active_node == BYTE_ALIGNMENT) {
       user_data.settings->sector_size = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {
-      user_data.settings->hash_block_size = xmlChar_to_number(characters, len);
+      user_data.settings->block_size = xmlChar_to_number(characters, len);
 
     } else if (user_data.active_node == BLOOM_USED) {
       std::string bloom_state_string;

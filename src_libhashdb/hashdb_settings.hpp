@@ -30,7 +30,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <iostream>
-#include "globals.hpp"
+#include "hashdb.hpp" // for globals
 
 inline bool string_to_bloom_state(std::string state_string, bool& state) {
   if (state_string == "enabled")  { state = true;  return true; }
@@ -48,7 +48,7 @@ struct hashdb_settings_t {
 
   uint32_t settings_version;
   uint32_t sector_size;
-  uint32_t hash_block_size;
+  uint32_t block_size;
   // bloom
   bool     bloom_is_used;
   uint32_t bloom_M_hash_size;      // size of the bloom filter hash, in bits
@@ -57,19 +57,19 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        settings_version(globals_t::hashdb_settings_version),
-        sector_size(globals_t::default_sector_size),
-        hash_block_size(globals_t::default_hash_block_size),
-        bloom_is_used(globals_t::default_bloom_is_used),
-        bloom_M_hash_size(globals_t::default_bloom_M_hash_size),
-        bloom_k_hash_functions(globals_t::default_bloom_k_hash_functions) {
+        settings_version(hashdb::hashdb_settings_version),
+        sector_size(hashdb::default_sector_size),
+        block_size(hashdb::default_block_size),
+        bloom_is_used(hashdb::default_bloom_is_used),
+        bloom_M_hash_size(hashdb::default_bloom_M_hash_size),
+        bloom_k_hash_functions(hashdb::default_bloom_k_hash_functions) {
   }
 
   void report_settings(std::ostream& os) const {
     os << "hashdb settings:\n";
     os << "settings version: " << settings_version << "\n";
     os << "sector size: " << sector_size << "\n";
-    os << "hash block size: " << hash_block_size << "\n";
+    os << "hash block size: " << block_size << "\n";
     os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
     os << "bloom k hash functions: " << bloom_k_hash_functions << "\n";
     os << "bloom M hash size: " << bloom_M_hash_size << "\n";
@@ -78,7 +78,7 @@ struct hashdb_settings_t {
   void report_settings(dfxml_writer& x) const {
     x.xmlout("settings_version", settings_version);
     x.xmlout("sector_size", sector_size);
-    x.xmlout("hash_block_size", hash_block_size);
+    x.xmlout("block_size", block_size);
 
     x.xmlout("bloom_used", bloom_state_to_string(bloom_is_used));
     x.xmlout("bloom_k_hash_functions", (uint64_t)bloom_k_hash_functions);

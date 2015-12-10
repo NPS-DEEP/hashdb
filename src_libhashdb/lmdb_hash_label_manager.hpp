@@ -26,7 +26,6 @@
 
 #ifndef LMDB_HASH_LABEL_MANAGER_HPP
 #define LMDB_HASH_LABEL_MANAGER_HPP
-#include "globals.hpp"
 #include "file_modes.h"
 #include "lmdb.h"
 #include "lmdb_typedefs.h"

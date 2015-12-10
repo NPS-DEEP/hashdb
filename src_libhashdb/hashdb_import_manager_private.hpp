@@ -26,7 +26,6 @@
 
 #ifndef HASHDB_IMPORT_MANAGER_PRIVATE_HPP
 #define HASHDB_IMPORT_MANAGER_PRIVATE_HPP
-#include "globals.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
@@ -129,7 +128,6 @@ class hashdb_import_manager_private_t {
     logger.add_hashdb_changes(changes);
     logger.add_timestamp("end import");
     logger.close();
-    std::cout << "import changes " << changes << "\n";
   }
 
   /**
@@ -188,11 +186,8 @@ class hashdb_import_manager_private_t {
       }
 
       // skip if in whitelist
-std::cerr << "import_source_hashes.a\n";
       if (whitelist_hash_manager != NULL) {
-std::cerr << "import_source_hashes.b\n";
         if (whitelist_hash_manager->find(it->binary_hash)) {
-std::cerr << "import_source_hashes.c\n";
           changes.hashes_not_inserted_skip_whitelist++;
           continue;
         }

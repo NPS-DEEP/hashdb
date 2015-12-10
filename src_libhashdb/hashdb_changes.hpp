@@ -39,7 +39,7 @@ class hashdb_changes_t {
 
   public:
   uint32_t hashes_inserted;
-  uint32_t hashes_not_inserted_mismatched_hash_block_size;
+  uint32_t hashes_not_inserted_mismatched_block_size;
   uint32_t hashes_not_inserted_invalid_sector_size;
   uint32_t hashes_not_inserted_duplicate_element;
   uint32_t hashes_not_inserted_skip_low_entropy;
@@ -48,7 +48,7 @@ class hashdb_changes_t {
   hashdb_changes_t() :
 
                      hashes_inserted(0),
-                     hashes_not_inserted_mismatched_hash_block_size(0),
+                     hashes_not_inserted_mismatched_block_size(0),
                      hashes_not_inserted_invalid_sector_size(0),
                      hashes_not_inserted_duplicate_element(0),
                      hashes_not_inserted_skip_low_entropy(0),
@@ -62,8 +62,8 @@ class hashdb_changes_t {
 
     if (hashes_inserted)
       x.xmlout("hashes_inserted", hashes_inserted);
-    if (hashes_not_inserted_mismatched_hash_block_size)
-      x.xmlout("hashes_not_inserted_mismatched_hash_block_size", hashes_not_inserted_mismatched_hash_block_size);
+    if (hashes_not_inserted_mismatched_block_size)
+      x.xmlout("hashes_not_inserted_mismatched_block_size", hashes_not_inserted_mismatched_block_size);
     if (hashes_not_inserted_invalid_sector_size)
       x.xmlout("hashes_not_inserted_invalid_sector_size", hashes_not_inserted_invalid_sector_size);
     if (hashes_not_inserted_duplicate_element)
@@ -81,7 +81,7 @@ class hashdb_changes_t {
     // log any insert changes to stdout
     std::cout << "hashdb changes (insert):\n"
               << "    hashes inserted: " << hashes_inserted << "\n"
-                << "    hashes not inserted (mismatched hash block size): " << hashes_not_inserted_mismatched_hash_block_size << "\n"
+                << "    hashes not inserted (mismatched block size): " << hashes_not_inserted_mismatched_block_size << "\n"
               << "    hashes not inserted (invalid sector size): " << hashes_not_inserted_invalid_sector_size << "\n"
               << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n"
               << "    hashes not inserted (skip low entropy): " << hashes_not_inserted_skip_low_entropy<< "\n"

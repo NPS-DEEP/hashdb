@@ -48,7 +48,6 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
-	globals.cpp \
 	hashdb.cpp
 
 BLOOM_INCS = \

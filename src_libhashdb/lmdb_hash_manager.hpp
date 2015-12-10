@@ -26,7 +26,6 @@
 
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
-#include "globals.hpp"
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
