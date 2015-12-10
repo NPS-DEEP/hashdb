@@ -27,12 +27,12 @@
 #include <iomanip>
 #include <cstdio>
 #include "unit_test.h"
-//#include "hashdb.hpp"
 #include "directory_helper.hpp"
 #include "hex_helper.hpp"
 #include "../src_libhashdb/hashdb.hpp"
 
 static const std::string hashdb_dir = "temp_dir_hashdb_managers_test.hdb";
+static const std::string hashdb_dir2 = "temp_dir_hashdb_managers_test2.hdb";
 static const std::string binary_0(hex_to_binary_hash("00"));
 static const std::string binary_aa(hex_to_binary_hash("aa"));
 static const std::string binary_bb(hex_to_binary_hash("bb"));
@@ -59,7 +59,7 @@ void test_create_manager() {
 // ************************************************************
 // hashdb_import_manager
 // ************************************************************
-// no whitelist, no import low entropy
+// no whitelist, skip low entropy
 void test_import_manager() {
 
   // remove any previous hashdb_dir
@@ -70,10 +70,11 @@ void test_import_manager() {
   pair = hashdb::create_hashdb(hashdb_dir, "test_import_manager.a");
   TEST_EQ(pair.first, true);
 
-  hashdb::import_manager_t manager(hashdb_dir, "", false,
+  hashdb::import_manager_t manager(hashdb_dir, "", true,
                                    "test_import_manager.b");
 
   // import data
+  // LABEL should not be imported.
   // Note: this is a coarse functional test.  Inspect the history log
   // if desired.  See Python tests for fuller testing.
   hashdb::hash_data_list_t data;
@@ -82,12 +83,44 @@ void test_import_manager() {
   data.push_back(hashdb::hash_data_t(binary_bb, 1024, "LABEL"));
   manager.import_source_name(binary_0, "repository0", "file0");
   manager.import_source_hashes(binary_0, 100, data);
-  //std::cout << manager.size() << "\n";
+  std::cout << manager.size() << "\n";
   manager.import_source_hashes(binary_0, 100, data);
-  //std::cout << manager.size() << "\n";
+  std::cout << manager.size() << "\n";
 
   // force fail
   //manager.import_source_hashes(binary_aa, 100, data);
+}
+
+// whitelist, import low entropy
+void test_import_manager2() {
+
+  // remove any previous hashdb_dir
+  rm_hashdb_dir(hashdb_dir);
+  rm_hashdb_dir(hashdb_dir2);
+
+  // data
+  hashdb::hash_data_list_t data;
+  data.push_back(hashdb::hash_data_t(binary_aa, 0, ""));
+  data.push_back(hashdb::hash_data_t(binary_aa, 512, ""));
+  data.push_back(hashdb::hash_data_t(binary_bb, 1024, "LABEL"));
+
+  // whitelist DB in hashdb_dir
+  // LABEL should be imported
+  std::pair<bool, std::string> pair;
+  pair = hashdb::create_hashdb(hashdb_dir, "create whitelist DB");
+  hashdb::import_manager_t whitelist_manager(hashdb_dir, "", false,
+                                             "import whitelist DB");
+  whitelist_manager.import_source_name(binary_0, "w_repository0", "w_file0");
+  whitelist_manager.import_source_hashes(binary_0, 100, data);
+  std::cout << "whitelist " << whitelist_manager.size() << "\n";
+
+  // DB in hashdb_dir2
+  // nothing should be imported
+  pair = hashdb::create_hashdb(hashdb_dir2, "create import DB");
+  hashdb::import_manager_t manager(hashdb_dir2, hashdb_dir, true, "import");
+  manager.import_source_name(binary_0, "rn", "fn");
+  manager.import_source_hashes(binary_0, 100, data);
+  std::cout << "db " << manager.size() << "\n";
 }
 
 // ************************************************************
@@ -98,8 +131,11 @@ int main(int argc, char* argv[]) {
   // hashdb_create_manager
   test_create_manager();
 
-  // import, no whitelist, do not skip low entropy
+  // import, no whitelist, skip low entropy
   test_import_manager();
+
+  // import, do not skip low entropy, no whitelist
+  test_import_manager2();
 
   // done
   std::cout << "hashdb_managers_test Done.\n";
