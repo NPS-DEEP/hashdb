@@ -84,7 +84,7 @@ namespace hashdb {
     // settings version must be compatible
     hashdb_settings_t settings(
                         hashdb_settings_store_t::read_settings(hashdb_dir));
-    if (settings.settings_version < 3) {
+    if (settings.data_store_version < 3) {
         return std::pair<bool, std::string>(false, "The hashdb at path '"
                      + hashdb_dir + "' is not compatible.");
     }

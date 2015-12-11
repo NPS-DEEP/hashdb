@@ -29,11 +29,6 @@ check_PROGRAMS = \
 
 TESTS = $(check_PROGRAMS)
 
-# to validate backward compatibility to c++98, add option -std=c++98
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src_libhashdb/hashdb.hpp
-	$(XML_CFLAGS)
-
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 

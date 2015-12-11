@@ -53,12 +53,27 @@ namespace hashdb {
 // version of the hashdb library
 // ************************************************************
 /**
- * version of the hashdb library
+ * Version of the hashdb library.
  */
 extern "C"
 const char* hashdb_version() {
   return PACKAGE_VERSION;
 }
+
+// ************************************************************
+// global constants and variables
+// ************************************************************
+/**
+ * Global hashdb cosntants and variables.
+ */
+const uint32_t data_store_version = 3;
+const uint32_t default_sector_size = 512;
+const uint32_t default_block_size = 512;
+const bool default_bloom_is_used = true;
+const uint32_t default_bloom_M_hash_size = 28;
+const uint32_t default_bloom_k_hash_functions = 3;
+std::string command_line_string = "";
+bool is_quiet_mode = false;
 
 // ************************************************************
 // import

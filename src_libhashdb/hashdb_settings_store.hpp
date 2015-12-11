@@ -54,10 +54,10 @@ class hashdb_settings_store_t {
     hashdb_settings_reader_t::read_settings(filename, settings);
 
     // validate that the settings version is compatible with hashdb
-    if (settings.settings_version != hashdb::hashdb_settings_version) {
+    if (settings.data_store_version != hashdb::data_store_version) {
       std::cerr << "Database version error in settings version.\n"
-                << "Database '" << hashdb_dir << "' uses settings version " << settings.settings_version
-                << "\nbut hashdb requires settings version " << hashdb::hashdb_settings_version
+                << "Database '" << hashdb_dir << "' uses data store version " << settings.data_store_version
+                << "\nbut hashdb requires data store version " << hashdb::data_store_version
                 << ".\nAborting.\n";
       exit(1);
     }

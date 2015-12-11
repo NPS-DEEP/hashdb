@@ -46,7 +46,7 @@ inline std::string bloom_state_to_string(bool state) {
 // hashdb tuning options
 struct hashdb_settings_t {
 
-  uint32_t settings_version;
+  uint32_t data_store_version;
   uint32_t sector_size;
   uint32_t block_size;
   // bloom
@@ -57,7 +57,7 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        settings_version(hashdb::hashdb_settings_version),
+        data_store_version(hashdb::data_store_version),
         sector_size(hashdb::default_sector_size),
         block_size(hashdb::default_block_size),
         bloom_is_used(hashdb::default_bloom_is_used),
@@ -67,7 +67,7 @@ struct hashdb_settings_t {
 
   void report_settings(std::ostream& os) const {
     os << "hashdb settings:\n";
-    os << "settings version: " << settings_version << "\n";
+    os << "data store version: " << data_store_version << "\n";
     os << "sector size: " << sector_size << "\n";
     os << "hash block size: " << block_size << "\n";
     os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
@@ -76,7 +76,7 @@ struct hashdb_settings_t {
   }
 
   void report_settings(dfxml_writer& x) const {
-    x.xmlout("settings_version", settings_version);
+    x.xmlout("data_store_version", data_store_version);
     x.xmlout("sector_size", sector_size);
     x.xmlout("block_size", block_size);
 

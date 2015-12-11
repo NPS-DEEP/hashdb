@@ -65,7 +65,7 @@ class hashdb_settings_reader_t {
   // nodes
   enum node_type_t {NO_NODE,
                     // hashdb
-                    SETTINGS_VERSION,
+                    DATA_STORE_VERSION,
                     BYTE_ALIGNMENT,
                     HASH_BLOCK_SIZE,
                     BLOOM_USED,
@@ -109,7 +109,7 @@ class hashdb_settings_reader_t {
 
   // convert node name to node type
   static node_type_t xmlChar_to_node_type(const xmlChar* name) {
-    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("settings_version"))) return SETTINGS_VERSION;
+    if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("data_store_version"))) return DATA_STORE_VERSION;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("sector_size"))) return BYTE_ALIGNMENT;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("block_size"))) return HASH_BLOCK_SIZE;
     if (xmlStrEqual(name, reinterpret_cast<const xmlChar*>("bloom_used"))) return BLOOM_USED;
@@ -159,8 +159,8 @@ class hashdb_settings_reader_t {
 
     bool is_valid;
 
-    if (user_data.active_node == SETTINGS_VERSION) {
-      user_data.settings->settings_version = xmlChar_to_number(characters, len);
+    if (user_data.active_node == DATA_STORE_VERSION) {
+      user_data.settings->data_store_version = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == BYTE_ALIGNMENT) {
       user_data.settings->sector_size = xmlChar_to_number(characters, len);
     } else if (user_data.active_node == HASH_BLOCK_SIZE) {

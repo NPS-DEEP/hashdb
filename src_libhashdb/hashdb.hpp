@@ -48,14 +48,29 @@ namespace hashdb {
   const char* hashdb_version();
 
   // ************************************************************
-  // global settings
+  // global constants and variables, see hashdb.cpp for values
   // ************************************************************
-  static const uint32_t hashdb_settings_version = 3;
-  static const uint32_t default_sector_size = 512;
-  static const uint32_t default_block_size = 512;
-  static const bool default_bloom_is_used = true;
-  static const uint32_t default_bloom_M_hash_size = 28;
-  static const uint32_t default_bloom_k_hash_functions = 3;
+  /**
+   * Global Constants:
+   *   data_store_version - Current version of the hashdb data store.
+   *   default_sector_size - Default sector size.
+   *   default_block_size - Default block size.
+   *   default_bloom_is_used - Whether the Bloom filter is used by default.
+   *   default_bloom_M_hash_size - Default Bloom M value.
+   *   default_bloom_k_hash_functions - Default Bloom k value.
+   *
+   * Global Variables:
+   *   command_line_string - Set to command line for the logger, initially "".
+   *   is_quiet_mode - Set runtime status verbosity, initially not quiet.
+   */
+  extern const uint32_t data_store_version;
+  extern const uint32_t default_sector_size;
+  extern const uint32_t default_block_size;
+  extern const bool default_bloom_is_used;
+  extern const uint32_t default_bloom_M_hash_size;
+  extern const uint32_t default_bloom_k_hash_functions;
+  extern std::string command_line_string;
+  extern bool is_quiet_mode;
  
   // ************************************************************
   // types used in interfaces

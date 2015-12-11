@@ -3,8 +3,8 @@
 ## LMDB Data Types `lmdb_typedefs.h`
 * `typedef vector<pair<source_id, file_offset>> id_offset_pairs_t`
 * `typedef pair<binary_hash, id_offset_pairs_t> hashdb_scan_it_data_t`
-* class `source_metadata_t {file_binary_hash, source_id, filesize, positive_count}`
-* class `hash_data_t {binary_hash, file_offset, entropy_label=""}` - a field may be added for other label types, but use entropy_label for hashdb_import_manager_t skip_low_entropy parameter
+* class `source_metadata_t {source_id, filesize, positive_count}`
+* class `hash_data_t {binary_hash, file_offset, entropy_label=""}` - a field may be added for other label types, but use `entropy_label` for `hashdb_import_manager_t` `skip_low_entropy` parameter
 * `typedef vector<hash_data_t> hash_data_list_t`
 * `typedef pair<repository_name, fillename> source_name_t`
 * `typedef vector<source_name_t> source_names_t`
@@ -22,7 +22,7 @@
 
 ### LMDB Hash Manager `lmdb_hash_manager_t`
 
-* `lmdb_hash_manager_t(hashdb_dir, file_mode)` - reads `settings.json` file
+* `lmdb_hash_manager_t(hashdb_dir, file_mode)` - reads settings file
 * `void insert(source_id, hash_data_t, hashdb_changes_t)` - updates changes
 * `void find(binary_hash, id_offset_pairs_t&)`
 * `void find(binary_hash)` - used for whitelist scan and to rebuild Bloom
@@ -64,7 +64,7 @@ Look up `source_names_t` vector of repository name, filename pairs from file has
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
 * `void insert(file_binary_hash, repository_name, filename)` - okay if already there, but do not re-add
-* `void find(file_binary_hash, &source_names_t)` - return empty vector if not there
+* `void find(file_binary_hash, source_names_t&)` - return empty vector if not there
 * `size_t size()`
 
 
@@ -77,18 +77,18 @@ Import hashes.  All interfaces use lock.  Destructor appends to log.
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", skip_low_entropy=false)`
 * `bool import_source_name(file_binary_hash, repository_name, filename)` - initialize the environment for this file hash.  Import name if new.  True: need to import block hashes.  False: block hashes for this source have already been imported.
 * `void import_source_hashes(file_binary_hash, filesize, hash_data_list_t)` - import block hashes for this source.  Fail if `import_source_name` not called first for this `file_binary_hash`.
-* `json_string size()` - return sizes of LMDB databases in JSON format
+* `string size()` - return sizes of LMDB databases
 * `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
 ### HASHDB Scan `hashdb_scan_manager_t`
-* `hashdb_scan_manager_t(hashdb_dir, out_path)`
-* `id_offset_pairs_t find_offset_pairs(binary_hash)`
-* `source_names_t find_source_names(file_binary_hash)`
-* `binary_hash hash_begin()`
-* `binary_hash hash_next(last_binary_hash)`
-* `source_metadata_t source_begin()`
-* `source_metadata_t source_next(last_binary_file_hash)`
-* `source_names_t source_names(binary_file_hash)`
-* `json_string size()` - return sizes of LMDB databases in JSON format
+* `hashdb_scan_manager_t(hashdb_dir)`
+* `void find_offset_pairs(binary_hash, id_offset_pairs_t&)`
+* `string find_file_binary_hash(source ID)`
+* `void find_source_names(file_binary_hash, source_names_t&)`
+* `binary_hash hash_begin(id_offset_pairs&)`
+* `binary_hash hash_next(last_binary_hash, id_offset_pairs&)`
+* `pair(file_binary_hash, source_metadata_t) source_begin()`
+* `pair(file_binary_hash, source_metadata_t) source_next(last_file_binary_hash)`
+* `string size()` - return sizes of LMDB databases
 
 
