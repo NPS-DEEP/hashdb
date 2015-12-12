@@ -29,10 +29,10 @@
 #define LMDB_SOURCE_NAME_MANAGER_HPP
 #include "file_modes.h"
 #include "lmdb.h"
-#include "lmdb_typedefs.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
+#include "hashdb.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -52,7 +52,7 @@ class lmdb_source_name_manager_t {
 
   // reader
   void find_array_at_cursor(lmdb_context_t& context,
-                            source_names_t& source_names) const {
+                            hashdb::source_names_t& source_names) const {
 
     // find data for hash starting at cursor
     std::string file_binary_hash = lmdb_helper::get_string(context.key);
@@ -153,7 +153,7 @@ class lmdb_source_name_manager_t {
    * Empty response means no match.
    */
   void find(const std::string& file_binary_hash,
-            source_names_t& source_names) const {
+            hashdb::source_names_t& source_names) const {
 
     // clear existing source names vector
     source_names.clear();

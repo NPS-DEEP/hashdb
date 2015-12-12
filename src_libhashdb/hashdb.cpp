@@ -39,6 +39,7 @@
 #include "hashdb.hpp"
 #include "hashdb_tools.hpp"
 #include "hashdb_import_manager_private.hpp"
+#include "hashdb_scan_manager_private.hpp"
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -49,74 +50,108 @@
 
 namespace hashdb {
 
-// ************************************************************
-// version of the hashdb library
-// ************************************************************
-/**
- * Version of the hashdb library.
- */
-extern "C"
-const char* hashdb_version() {
-  return PACKAGE_VERSION;
+  // ************************************************************
+  // version of the hashdb library
+  // ************************************************************
+  /**
+   * Version of the hashdb library.
+   */
+  extern "C"
+  const char* hashdb_version() {
+    return PACKAGE_VERSION;
+  }
+
+  // ************************************************************
+  // import
+  // ************************************************************
+  import_manager_t::import_manager_t(
+                     const std::string& p_hashdb_dir,
+                     const std::string& p_whitelist_hashdb_dir,
+                     const bool p_skip_low_entropy,
+                     const std::string& p_log_string) :
+              hashdb_import_manager_private(new hashdb_import_manager_private_t(
+                                            p_hashdb_dir,
+                                            p_whitelist_hashdb_dir,
+                                            p_skip_low_entropy,
+                                            p_log_string)) {
+  }
+
+  import_manager_t::~import_manager_t() {
+    delete hashdb_import_manager_private;
+  }
+
+  bool import_manager_t::import_source_name(
+                              const std::string& file_binary_hash,
+                              const std::string& repository_name,
+                              const std::string& filename) {
+    return hashdb_import_manager_private->import_source_name(
+                                 file_binary_hash, repository_name, filename);
+  }
+
+  void import_manager_t::import_source_hashes(
+                              const std::string& file_binary_hash,
+                              const uint64_t filesize,
+                              const hashdb::hash_data_list_t& hash_data_list) {
+    return hashdb_import_manager_private->import_source_hashes(
+                                 file_binary_hash, filesize, hash_data_list);
+  }
+
+  std::string import_manager_t::size() const {
+    return hashdb_import_manager_private->size();
+  }
+
+  // ************************************************************
+  // scan
+  // ************************************************************
+  scan_manager_t::scan_manager_t(const std::string& p_hashdb_dir) :
+              hashdb_scan_manager_private(new hashdb_scan_manager_private_t(
+                                          p_hashdb_dir)) {
+  }
+
+  scan_manager_t::~scan_manager_t() {
+    delete hashdb_scan_manager_private;
+  }
+
+  void scan_manager_t::find_offset_pairs(const std::string& binary_hash,
+                         id_offset_pairs_t& id_offset_pairs) const {
+    return hashdb_scan_manager_private->find_offset_pairs(
+                                          binary_hash, id_offset_pairs);
+  }
+
+  void scan_manager_t::find_source_names(const std::string& file_binary_hash,
+                                       source_names_t& source_names) const {
+    return hashdb_scan_manager_private->find_source_names(file_binary_hash,
+                                                          source_names);
+  }
+
+  std::string scan_manager_t::find_file_binary_hash(const uint64_t source_id)
+                                                                      const {
+    return hashdb_scan_manager_private->find_file_binary_hash(source_id);
+  }
+
+  std::string scan_manager_t::hash_begin(id_offset_pairs_t& id_offset_pairs)
+                                                                      const {
+    return hashdb_scan_manager_private->hash_begin(id_offset_pairs);
+  }
+
+  std::string scan_manager_t::hash_next(const std::string& last_binary_hash,
+                        id_offset_pairs_t& id_offset_pairs) const {
+    return hashdb_scan_manager_private->hash_next(last_binary_hash,
+                                                  id_offset_pairs);
+  }
+
+  std::pair<std::string, source_metadata_t> scan_manager_t::source_begin() const {
+    return hashdb_scan_manager_private->source_begin();
+  }
+
+  std::pair<std::string, source_metadata_t> scan_manager_t::source_next(
+                           const std::string& last_file_binary_hash) const {
+    return hashdb_scan_manager_private->source_next(last_file_binary_hash);
+  }
+
+  std::string scan_manager_t::size() const {
+    return hashdb_scan_manager_private->size();
+  }
+
 }
 
-// ************************************************************
-// global constants and variables
-// ************************************************************
-/**
- * Global hashdb cosntants and variables.
- */
-const uint32_t data_store_version = 3;
-const uint32_t default_sector_size = 512;
-const uint32_t default_block_size = 512;
-const bool default_bloom_is_used = true;
-const uint32_t default_bloom_M_hash_size = 28;
-const uint32_t default_bloom_k_hash_functions = 3;
-std::string command_line_string = "";
-bool is_quiet_mode = false;
-
-// ************************************************************
-// import
-// ************************************************************
-import_manager_t::import_manager_t(
-                   const std::string& p_hashdb_dir,
-                   const std::string& p_whitelist_hashdb_dir,
-                   const bool p_skip_low_entropy,
-                   const std::string& p_log_string) :
-            hashdb_import_manager_private(new hashdb_import_manager_private_t(
-                                          p_hashdb_dir,
-                                          p_whitelist_hashdb_dir,
-                                          p_skip_low_entropy,
-                                          p_log_string)) {
-}
-
-import_manager_t::~import_manager_t() {
-  delete hashdb_import_manager_private;
-}
-
-bool import_manager_t::import_source_name(
-                            const std::string& file_binary_hash,
-                            const std::string& repository_name,
-                            const std::string& filename) {
-  return hashdb_import_manager_private->import_source_name(
-                               file_binary_hash, repository_name, filename);
-}
-
-void import_manager_t::import_source_hashes(
-                            const std::string& file_binary_hash,
-                            const uint64_t filesize,
-                            const hashdb::hash_data_list_t& hash_data_list) {
-  return hashdb_import_manager_private->import_source_hashes(
-                               file_binary_hash, filesize, hash_data_list);
-}
-
-std::string import_manager_t::size() const {
-  return hashdb_import_manager_private->size();
-}
-
-// ************************************************************
-// export
-// ************************************************************
-// zz
-
-} // end namespace hashdb

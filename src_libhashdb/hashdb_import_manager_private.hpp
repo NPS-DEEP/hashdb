@@ -27,17 +27,12 @@
 #ifndef HASHDB_IMPORT_MANAGER_PRIVATE_HPP
 #define HASHDB_IMPORT_MANAGER_PRIVATE_HPP
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
-#include "hashdb_settings_store.hpp"
-//#include "lmdb.h"
-#include "lmdb_typedefs.h"
-//#include "lmdb_helper.h"
+#include "hashdb.hpp"
 #include "lmdb_hash_manager.hpp"
 #include "lmdb_hash_label_manager.hpp"
 #include "lmdb_source_id_manager.hpp"
 #include "lmdb_source_metadata_manager.hpp"
 #include "lmdb_source_name_manager.hpp"
-//#include "bloom_filter_manager.hpp"
 #include "logger.hpp"
 #include "hashdb_changes.hpp"
 #include <vector>
@@ -167,16 +162,16 @@ class hashdb_import_manager_private_t {
    */
   void import_source_hashes(const std::string& file_binary_hash,
                             const uint64_t filesize,
-                            const hash_data_list_t& hash_data_list) {
+                            const hashdb::hash_data_list_t& hash_data_list) {
 
     MUTEX_LOCK(&M);
 
     // get source ID for these hashes
-    source_metadata_t source_metadata = source_metadata_manager.find(
-                                                        file_binary_hash);
+    hashdb::source_metadata_t source_metadata =
+                             source_metadata_manager.find(file_binary_hash);
 
     // process each hash data entry
-    for(hash_data_list_t::const_iterator it=hash_data_list.begin();
+    for(hashdb::hash_data_list_t::const_iterator it=hash_data_list.begin();
                                        it != hash_data_list.end(); ++it) {
 
       // skip low entropy
@@ -211,10 +206,10 @@ class hashdb_import_manager_private_t {
 
     std::stringstream ss;
     ss << "hash:" << hash_manager.size()
-       << "hash_label:" << hash_label_manager.size()
-       << "source_id:" << source_id_manager.size()
-       << "source_metadata:" << source_metadata_manager.size()
-       << "source_name:" << source_name_manager.size();
+       << ", hash_label:" << hash_label_manager.size()
+       << ", source_id:" << source_id_manager.size()
+       << ", source_metadata:" << source_metadata_manager.size()
+       << ", source_name:" << source_name_manager.size();
 
     MUTEX_UNLOCK(&M);
 

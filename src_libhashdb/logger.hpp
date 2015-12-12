@@ -37,7 +37,8 @@
 #include <malloc.h>
 #endif
 
-inline void add_memory_usage_algorithm(dfxml_writer* writer, std::string name);
+inline void add_memory_usage_algorithm(dfxml_writer* writer,
+                                       std::string command_string);
 
 /**
  * The logger logs commands performed that relate to the database.
@@ -54,7 +55,7 @@ class logger_t {
 
   public:
 
-  logger_t(std::string p_hashdb_dir, std::string name) :
+  logger_t(std::string p_hashdb_dir, std::string command_string) :
                     hashdb_dir(p_hashdb_dir),
                     x(hashdb_dir+"/log.xml", false),
                     closed(false) {
@@ -71,9 +72,7 @@ class logger_t {
     x.push("log");
 
     std::stringstream ss;
-    ss << "name='" << name << "'";
-    x.push("command", ss.str());
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", "libhashdb");
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_string);
   }
 
   ~logger_t() {

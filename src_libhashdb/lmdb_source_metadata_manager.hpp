@@ -29,10 +29,10 @@
 #define LMDB_SOURCE_METADATA_MANAGER_HPP
 #include "file_modes.h"
 #include "lmdb.h"
-#include "lmdb_typedefs.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
+#include "hashdb.hpp"
 #include "bloom_filter_manager.hpp"
 #include <vector>
 #include <unistd.h>
@@ -201,7 +201,7 @@ class lmdb_source_metadata_manager_t {
   /**
    * Find source metadata from the file binary hash, fail if no entry.
    */
-  source_metadata_t find(const std::string& file_binary_hash) const {
+  hashdb::source_metadata_t find(const std::string& file_binary_hash) const {
 
     // get context
     lmdb_context_t context(env, false, false);
@@ -220,7 +220,7 @@ class lmdb_source_metadata_manager_t {
       lmdb_data_codec::ddd_t ddd =
                            lmdb_data_codec::decode_ddd_t_data(encoding);
       context.close();
-      return source_metadata_t(file_binary_hash, ddd.d1, ddd.d2, ddd.d3);
+      return hashdb::source_metadata_t(ddd.d1, ddd.d2, ddd.d3);
     }
 
     // invalid rc
@@ -230,9 +230,9 @@ class lmdb_source_metadata_manager_t {
   }
 
   /**
-   * Return first file_binary_hash.
+   * Return first file_binary_hash and its metadata.
    */
-  source_metadata_t find_begin() const {
+  std::pair<std::string, hashdb::source_metadata_t> find_begin() const {
 
     // get context
     lmdb_context_t context(env, false, true);
@@ -244,7 +244,8 @@ class lmdb_source_metadata_manager_t {
     if (rc == MDB_NOTFOUND) {
       // no values for this hash
       context.close();
-      return source_metadata_t("", 0, 0, 0);
+      return std::pair<std::string, hashdb::source_metadata_t>(
+                                    "", hashdb::source_metadata_t(0, 0, 0));
     }
 
     if (rc == 0) {
@@ -256,7 +257,9 @@ class lmdb_source_metadata_manager_t {
       lmdb_data_codec::ddd_t ddd =
                            lmdb_data_codec::decode_ddd_t_data(encoding);
       context.close();
-      return source_metadata_t(file_binary_hash, ddd.d1, ddd.d2, ddd.d3);
+      return std::pair<std::string, hashdb::source_metadata_t>(
+                           file_binary_hash, hashdb::source_metadata_t(
+                                                   ddd.d1, ddd.d2, ddd.d3));
     }
 
     // invalid rc
@@ -265,13 +268,13 @@ class lmdb_source_metadata_manager_t {
   }
 
   /**
-   * Return next file_binary_hash or data with file_binary_hash set to "".
+   * Return next file_binary_hash and its metadata or "" and zeros.
    * Fail if already at end.
    */
-  source_metadata_t find_next(
-                       const source_metadata_t last_source_metadata) const {
+  std::pair<std::string, hashdb::source_metadata_t> find_next(
+                           const std::string& last_file_binary_hash) const {
 
-    if (last_source_metadata.file_binary_hash == "") {
+    if (last_file_binary_hash == "") {
       // program error to ask for next when at end
       std::cerr << "find_next: already at end\n";
       assert(0);
@@ -282,8 +285,7 @@ class lmdb_source_metadata_manager_t {
     context.open();
 
     // set the cursor to last entry
-    lmdb_helper::point_to_string(
-                         last_source_metadata.file_binary_hash, context.key);
+    lmdb_helper::point_to_string(last_file_binary_hash, context.key);
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
@@ -299,7 +301,8 @@ class lmdb_source_metadata_manager_t {
     if (rc == MDB_NOTFOUND) {
       // at end of DB
       context.close();
-      return source_metadata_t("", 0, 0, 0);
+      return std::pair<std::string, hashdb::source_metadata_t>(
+                                    "", hashdb::source_metadata_t(0, 0, 0));
     }
 
     if (rc == 0) {
@@ -311,7 +314,9 @@ class lmdb_source_metadata_manager_t {
       lmdb_data_codec::ddd_t ddd =
                            lmdb_data_codec::decode_ddd_t_data(encoding);
       context.close();
-      return source_metadata_t(file_binary_hash, ddd.d1, ddd.d2, ddd.d3);
+      return std::pair<std::string, hashdb::source_metadata_t>(
+                            file_binary_hash, hashdb::source_metadata_t(
+                                                  ddd.d1, ddd.d2, ddd.d3));
     }
 
     // invalid rc

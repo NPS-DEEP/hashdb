@@ -29,7 +29,6 @@
 #define LMDB_SOURCE_ID_MANAGER_HPP
 #include "file_modes.h"
 #include "lmdb.h"
-#include "lmdb_typedefs.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"

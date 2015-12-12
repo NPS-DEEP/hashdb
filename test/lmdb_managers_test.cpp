@@ -35,6 +35,7 @@
 #include "lmdb_helper.h"
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
+#include "../src_libhashdb/hashdb.hpp"
 #include "file_helper.hpp"
 #include "directory_helper.hpp"
 
@@ -71,27 +72,27 @@ void lmdb_hash_manager_create() {
 void lmdb_hash_manager_write() {
   lmdb_hash_manager_t manager(hashdb_dir, RW_MODIFY);
   hashdb_changes_t changes;
-  id_offset_pairs_t pairs;
+  hashdb::id_offset_pairs_t pairs;
 
   // make sure iterator works on an empty DB
   manager.find_begin(pairs);
   TEST_EQ(pairs.size(), 0);
 
   // two entries with one duplicate element
-  manager.insert(1, hash_data_t(binary_aa, 512, ""), changes);
-  manager.insert(1, hash_data_t(binary_aa, 512, ""), changes);
-  manager.insert(1, hash_data_t(binary_aa, 1024, ""), changes);
-  manager.insert(1, hash_data_t(binary_bb, 2048, ""), changes);
+  manager.insert(1, hashdb::hash_data_t(binary_aa, 512, ""), changes);
+  manager.insert(1, hashdb::hash_data_t(binary_aa, 512, ""), changes);
+  manager.insert(1, hashdb::hash_data_t(binary_aa, 1024, ""), changes);
+  manager.insert(1, hashdb::hash_data_t(binary_bb, 2048, ""), changes);
   TEST_EQ(manager.size(), 3);
   TEST_EQ(changes.hashes_not_inserted_duplicate_element, 1)
 
   // hashes_not_inserted_invalid_sector_size
   TEST_EQ(changes.hashes_not_inserted_invalid_sector_size, 0)
-  manager.insert(1, hash_data_t(binary_bb, 511, ""), changes);
+  manager.insert(1, hashdb::hash_data_t(binary_bb, 511, ""), changes);
   TEST_EQ(changes.hashes_not_inserted_invalid_sector_size, 1)
 
   // new source ID
-  manager.insert(2, hash_data_t(binary_aa, 512, ""), changes);
+  manager.insert(2, hashdb::hash_data_t(binary_aa, 512, ""), changes);
 
   // hashes_inserted
   TEST_EQ(changes.hashes_inserted, 4)
@@ -129,7 +130,7 @@ void lmdb_hash_manager_read() {
   lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY);
 
   // find
-  id_offset_pairs_t pairs;
+  hashdb::id_offset_pairs_t pairs;
   manager.find(binary_aa, pairs);
   TEST_EQ(pairs.size(), 3);
   manager.find(binary_bb, pairs);
@@ -230,12 +231,29 @@ void lmdb_source_metadata_manager_test() {
   manager.insert_end(binary_aa, 10, 11, 12);
   manager.insert_end(binary_bb, 20, 21, 22);
 
-  source_metadata_t data("",0,0,0);
+  hashdb::source_metadata_t data(0,0,0);
   data = manager.find(binary_bb);
-  TEST_EQ(data.file_binary_hash, binary_bb);
   TEST_EQ(data.source_id, 20);
   TEST_EQ(data.filesize, 21);
   TEST_EQ(data.positive_count, 22);
+
+  std::pair<std::string, hashdb::source_metadata_t> pair2("",
+                                           hashdb::source_metadata_t(0,0,0));
+  pair2 = manager.find_begin();
+  TEST_EQ(pair2.first, binary_aa);
+  TEST_EQ(pair2.second.source_id, 10);
+  TEST_EQ(pair2.second.filesize, 11);
+  TEST_EQ(pair2.second.positive_count, 12);
+  pair2 = manager.find_next(pair2.first);
+  TEST_EQ(pair2.first, binary_bb);
+  TEST_EQ(pair2.second.source_id, 20);
+  TEST_EQ(pair2.second.filesize, 21);
+  TEST_EQ(pair2.second.positive_count, 22);
+  pair2 = manager.find_next(pair2.first);
+  TEST_EQ(pair2.first, "");
+  TEST_EQ(pair2.second.source_id, 0);
+  TEST_EQ(pair2.second.filesize, 0);
+  TEST_EQ(pair2.second.positive_count, 0);
 
 //  manager.insert_end(binary_cc,0,0,0); // assert not there yet
 //  data = manager.find(binary_cc); // assert not found
@@ -249,7 +267,7 @@ void lmdb_source_metadata_manager_test() {
 // ************************************************************
 void lmdb_source_name_manager_test() {
 
-  source_names_t names;
+  hashdb::source_names_t names;
 
   // create new manager
   lmdb_source_name_manager_t manager(hashdb_dir, RW_NEW);

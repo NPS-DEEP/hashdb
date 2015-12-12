@@ -27,10 +27,9 @@
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
 #include "hashdb_settings_store.hpp"
+#include "hashdb_settings.hpp"
 #include "lmdb.h"
-#include "lmdb_typedefs.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
@@ -57,7 +56,7 @@ class lmdb_hash_manager_t {
 
   // reader
   void find_array_at_cursor(lmdb_context_t& context,
-                            id_offset_pairs_t& id_offset_pairs) const {
+                            hashdb::id_offset_pairs_t& id_offset_pairs) const {
 
     // find data for hash starting at cursor
     std::string binary_hash = lmdb_helper::get_string(context.key);
@@ -118,8 +117,7 @@ class lmdb_hash_manager_t {
                       const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(hashdb_settings_t(hashdb_settings_store_t::read_settings(
-                                                               hashdb_dir))),
+       settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
        bloom_filter_manager(hashdb_dir,
                             file_mode,
                             settings.bloom_is_used,
@@ -137,7 +135,7 @@ class lmdb_hash_manager_t {
    * Insert hash data, noting changes.
    */
   void insert(const uint64_t source_id,
-              const hash_data_t& hash_data,
+              const hashdb::hash_data_t& hash_data,
               hashdb_changes_t& changes) {
 
     // validate the byte alignment
@@ -206,7 +204,7 @@ class lmdb_hash_manager_t {
    * Empty response means no match.
    */
   void find(const std::string& binary_hash,
-                         id_offset_pairs_t& id_offset_pairs) const {
+                         hashdb::id_offset_pairs_t& id_offset_pairs) const {
 
     // clear any existing (source ID, file offset) pairs
     id_offset_pairs.clear();
@@ -276,7 +274,7 @@ class lmdb_hash_manager_t {
   /**
    * Return first hash and its matches.
    */
-  std::string find_begin(id_offset_pairs_t& id_offset_pairs) const {
+  std::string find_begin(hashdb::id_offset_pairs_t& id_offset_pairs) const {
 
     // clear any existing (source ID, file offset) pairs
     id_offset_pairs.clear();
@@ -314,7 +312,7 @@ class lmdb_hash_manager_t {
    * Empty response means no next.
    */
   std::string find_next(const std::string& last_binary_hash,
-                         id_offset_pairs_t& id_offset_pairs) const {
+                         hashdb::id_offset_pairs_t& id_offset_pairs) const {
 
     if (last_binary_hash == "") {
       // program error to ask for next when at end

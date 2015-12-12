@@ -27,7 +27,6 @@
 
 #include "hashdb_settings.hpp"
 #include "hashdb_settings_reader.hpp"
-#include "hashdb.hpp" // for globals
 #include <dfxml_writer.h>
 #include <unistd.h>
 #include <string>
@@ -51,13 +50,16 @@ class hashdb_settings_store_t {
 
     // read settings
     hashdb_settings_t settings;
+    uint32_t expected_data_store_version = settings.data_store_version;
     hashdb_settings_reader_t::read_settings(filename, settings);
 
     // validate that the settings version is compatible with hashdb
-    if (settings.data_store_version != hashdb::data_store_version) {
-      std::cerr << "Database version error in settings version.\n"
-                << "Database '" << hashdb_dir << "' uses data store version " << settings.data_store_version
-                << "\nbut hashdb requires data store version " << hashdb::data_store_version
+    if (settings.data_store_version != expected_data_store_version) {
+      std::cerr << "Database version error in data store version.\n"
+                << "Database '" << hashdb_dir
+                << "' uses data store version " << settings.data_store_version
+                << "\nbut hashdb requires data store version "
+                << expected_data_store_version
                 << ".\nAborting.\n";
       exit(1);
     }
@@ -86,7 +88,7 @@ class hashdb_settings_store_t {
     // write out the settings
     dfxml_writer x(filename, false);
     x.push("settings");
-    settings.report_settings(x);
+    settings.report_settings(x); // hashdb_settings_xml
     x.pop();
   }
 };

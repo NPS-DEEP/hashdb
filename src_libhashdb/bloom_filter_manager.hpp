@@ -32,7 +32,6 @@
 #define BLOOM_FILTER_MANAGER_HPP
 #include "bloom.h"
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string>
@@ -189,14 +188,18 @@ class bloom_filter_manager_t {
   /**
    * Check, abort if invalid.
    */
-  static void validate_bloom_settings(hashdb_settings_t settings) {
+  static void validate_bloom_settings(
+            const bool bloom_is_used, // not used
+            const uint32_t bloom_M_hash_size,
+            const uint32_t bloom_k_hash_functions) {
+
     std::ostringstream ss;
 
     // check that bloom hash size is not too loarge for the running system
     uint32_t max_M_hash_size = (sizeof(size_t) * 8) -1;
-    if (settings.bloom_M_hash_size > max_M_hash_size) {
+    if (bloom_M_hash_size > max_M_hash_size) {
       ss << "bloom bits per hash, "
-         << settings.bloom_M_hash_size
+         << bloom_M_hash_size
          << ", exceeds " << max_M_hash_size
          << ", which is the limit on this system.  Please retune."
          << "\nAborting.\n";
@@ -205,19 +208,19 @@ class bloom_filter_manager_t {
 
     // check that bloom hash size is not too small
     uint32_t min_M_hash_size = 3;
-    if (settings.bloom_M_hash_size < min_M_hash_size) {
+    if (bloom_M_hash_size < min_M_hash_size) {
       ss << "bloom bits per hash, "
-         << settings.bloom_M_hash_size
+         << bloom_M_hash_size
          << ", must not be less than " << min_M_hash_size
          << ".  Please retune.\nAborting.";
       exit(1);
     }
 
     // check that the number of hash functions, k hash functions, is reasonable
-    if (settings.bloom_k_hash_functions < 1
-     || settings.bloom_k_hash_functions > 5) {
+    if (bloom_k_hash_functions < 1
+     || bloom_k_hash_functions > 5) {
       std::cerr << "bloom k hash functions, "
-                << settings.bloom_k_hash_functions
+                << bloom_k_hash_functions
                 << ", must be between 1 and 5.  Please retune."
                 << "\nAborting.";
       exit(1);

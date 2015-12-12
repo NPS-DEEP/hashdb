@@ -35,6 +35,7 @@
 #include <stdint.h>
 
 class hashdb_import_manager_private_t;
+class hashdb_scan_manager_private_t;
 
 namespace hashdb {
 
@@ -48,41 +49,15 @@ namespace hashdb {
   const char* hashdb_version();
 
   // ************************************************************
-  // global constants and variables, see hashdb.cpp for values
-  // ************************************************************
-  /**
-   * Global Constants:
-   *   data_store_version - Current version of the hashdb data store.
-   *   default_sector_size - Default sector size.
-   *   default_block_size - Default block size.
-   *   default_bloom_is_used - Whether the Bloom filter is used by default.
-   *   default_bloom_M_hash_size - Default Bloom M value.
-   *   default_bloom_k_hash_functions - Default Bloom k value.
-   *
-   * Global Variables:
-   *   command_line_string - Set to command line for the logger, initially "".
-   *   is_quiet_mode - Set runtime status verbosity, initially not quiet.
-   */
-  extern const uint32_t data_store_version;
-  extern const uint32_t default_sector_size;
-  extern const uint32_t default_block_size;
-  extern const bool default_bloom_is_used;
-  extern const uint32_t default_bloom_M_hash_size;
-  extern const uint32_t default_bloom_k_hash_functions;
-  extern std::string command_line_string;
-  extern bool is_quiet_mode;
- 
-  // ************************************************************
   // types used in interfaces
   // ************************************************************
   // hash_data_t of tuple(binary_hash, file_offset, entropy_label)
-  class hash_data_t {
-    public:
+  struct hash_data_t {
     std::string binary_hash;
     uint64_t file_offset;
     std::string entropy_label;
     hash_data_t(const std::string& p_binary_hash,
-                uint64_t p_file_offset,
+                const uint64_t p_file_offset,
                 const std::string& p_entropy_label) :
             binary_hash(p_binary_hash),
             file_offset(p_file_offset),
@@ -92,6 +67,28 @@ namespace hashdb {
 
   // hash_data_list_t
   typedef std::vector<hash_data_t> hash_data_list_t;
+
+  // id_offset_pairs_t of vector of pair(source_id, file_offset)
+  typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
+  typedef std::vector<id_offset_pair_t> id_offset_pairs_t;
+
+  // source_metadata_t of tuple(source_id, filesize, positive_count)
+  struct source_metadata_t {
+    uint64_t source_id;
+    uint64_t filesize;
+    uint64_t positive_count;
+    source_metadata_t(const uint64_t p_source_id,
+                      const uint64_t p_filesize,
+                      const uint64_t p_positive_count) :
+            source_id(p_source_id),
+            filesize(p_filesize),
+            positive_count(p_positive_count) {
+    }
+  };
+
+  // source_names_t pair<repository_name, filename>
+  typedef std::pair<std::string, std::string> source_name_t;
+  typedef std::vector<source_name_t> source_names_t;
 
   // ************************************************************
   // misc support
@@ -111,37 +108,21 @@ namespace hashdb {
    * Parameters:
    *   hashdb_dir - Path to the database to create.  The path must not
    *     exist yet.
-   *   log_string - String to put into the new hashdb log.
+   *   command_string - String to put into the new hashdb log.
    *   Other parameters - Other parameters control hashdb settings.
    *
    * Returns tuple:
    *   True and "" if creation was successful, false and reason if not.
    */
-  // create with default settings
   std::pair<bool, std::string> create_hashdb(
                      const std::string& hashdb_dir,
-                     const std::string& log_string);
-
-  // create with settings copied from another hashdb
-  std::pair<bool, std::string> create_hashdb(
-                     const std::string& hashdb_dir,
-                     const std::string& from_hashdb_dir,
-                     const std::string& log_string);
-
-  // create with specified and default settings
-  std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
-                     const uint32_t sector_size,
-                     const uint32_t block_size,
-                     const std::string& log_string);
-
-  // create with specified settings
-  std::pair<bool, std::string> create_hashdb(const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
                      bool bloom_is_used,
                      uint32_t bloom_M_hash_size,
                      uint32_t bloom_k_hash_functioins,
-                     const std::string& log_string);
+                     const std::string& command_string);
+
   /**
    * Rebuild the Bloom filter.
    * Return true and "" if bloom filter rebuilds, false and reason if not.
@@ -153,7 +134,7 @@ namespace hashdb {
                      const bool bloom_is_used,
                      const uint32_t bloom_M_hash_size,
                      const uint32_t bloom_k_hash_functions,
-                     const std::string& log_string);
+                     const std::string& command_string);
 
   // ************************************************************
   // import
@@ -177,7 +158,7 @@ namespace hashdb {
 #else
     import_manager_t(const import_manager_t&) __attribute__ ((noreturn));
     import_manager_t& operator=(const import_manager_t&)
-                                            __attribute__ ((noreturn));
+                                              __attribute__ ((noreturn));
 #endif
 
     /**
@@ -188,13 +169,13 @@ namespace hashdb {
      *   whitelist_hashdb_dir - Path to a whitelist database for skipping
      *     whitelist hashes.  To supppress, use "".
      *   skip_low_entropy - True skips flagged hashes, False imports them.
-     *   log_string - This string will be logged in the log file that is
+     *   command_string - This string will be logged in the log file that is
      *      opened for this session.
      */
     import_manager_t(const std::string& hashdb_dir,
                      const std::string& whitelist_hashdb_dir,
                      const bool skip_low_entropy,
-                     const std::string& log_string);
+                     const std::string& command_string);
 
     /**
      * The destructor closes the log file and data store resources.
@@ -239,6 +220,93 @@ namespace hashdb {
     std::string size() const;
   };
 
+  // ************************************************************
+  // scan
+  // ************************************************************
+  /**
+   * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
+   */
+  class scan_manager_t {
+
+    private:
+    hashdb_scan_manager_private_t* hashdb_scan_manager_private;
+
+    public:
+    // do not allow copy or assignment
+#ifdef HAVE_CXX11
+    scan_manager_t(const scan_manager_t&) = delete;
+    scan_manager_t& operator=(const scan_manager_t&) = delete;
+#else
+    scan_manager_t(const scan_manager_t&) __attribute__ ((noreturn));
+    scan_manager_t& operator=(const scan_manager_t&)
+                                          __attribute__ ((noreturn));
+#endif
+
+    /**
+     * Open hashdb for scanning.
+     *
+     * Parameters:
+     *   hashdb_dir - Path to the database to scan against.
+     */
+    scan_manager_t(const std::string& hashdb_dir);
+
+    /**
+     * The destructor closes read-only data store resources.
+     */
+    ~scan_manager_t();
+
+    /**
+     * Find offset pairs associated with this hash.
+     * An empty list means no match.
+     */
+    void find_offset_pairs(const std::string& binary_hash,
+                           id_offset_pairs_t& id_offset_pairs) const;
+
+    /**
+     * Find source names associated with this source file's hash.
+     * An empty list means no match.
+     */
+    void find_source_names(const std::string& file_binary_hash,
+                           source_names_t& source_names) const;
+
+    /**
+     * Find source file binary hash from source ID.
+     * Fail if the requested source ID is not found.
+     */
+    std::string find_file_binary_hash(const uint64_t source_id) const;
+
+    /**
+     * Return first hash and its matches.
+     * Hash is "" and id_offset_pairs is empty when DB is empty.
+     * Please use the heap for id_offset_pairs since it can get large.
+     */
+    std::string hash_begin(id_offset_pairs_t& id_offset_pairs) const;
+
+    /**
+     * Return next hash and its matches or "" and no pairs if at end.
+     * Fail if called and already at end.
+     * Please use the heap for id_offset_pairs since it can get large.
+     */
+    std::string hash_next(const std::string& last_binary_hash,
+                          id_offset_pairs_t& id_offset_pairs) const;
+
+    /**
+     * Return first file_binary_hash and its metadata.
+     */
+    std::pair<std::string, source_metadata_t> source_begin() const;
+
+    /**
+     * Return next file_binary_hash and its metadata or "" and zeros if at end.
+     * Fail if called and already at end.
+     */
+    std::pair<std::string, source_metadata_t> source_next(
+                           const std::string& last_file_binary_hash) const;
+
+    /**
+     * Return sizes of LMDB databases.
+     */
+    std::string size() const;
+  };
 }
 
 #endif

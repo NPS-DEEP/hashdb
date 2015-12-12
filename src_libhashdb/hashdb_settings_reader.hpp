@@ -85,7 +85,8 @@ class hashdb_settings_reader_t {
     node_type_t active_node;
     size_t index;
 
-    user_data_t(hashdb_settings_t* p_settings) : settings(p_settings),
+    user_data_t(hashdb_settings_t* p_settings) :
+                    settings(p_settings),
                     active_node(NO_NODE),
                     index(0) {
     }
@@ -169,7 +170,6 @@ class hashdb_settings_reader_t {
     } else if (user_data.active_node == BLOOM_USED) {
       std::string bloom_state_string;
       xmlChar_to_string(characters, len, bloom_state_string);
-      is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
       is_valid = string_to_bloom_state(bloom_state_string, user_data.settings->bloom_is_used);
       if (!is_valid) {
         std::cerr << "Error: Invalid Bloom state in settings:\n"

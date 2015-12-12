@@ -21,9 +21,9 @@
 
 # bin_PROGRAMS = hashdb
 
-EXTRA_DIST = \
-	liblmdb/COPYRIGHT \
-	liblmdb/LICENSE
+#EXTRA_DIST = \
+#	liblmdb/COPYRIGHT \
+#	liblmdb/LICENSE
 
 #AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
 #	-I${top_srcdir}/src/liblmdb \

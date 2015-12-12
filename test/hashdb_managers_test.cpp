@@ -39,6 +39,16 @@ static const std::string binary_bb(hex_to_binary_hash("bb"));
 static const std::string binary_cc(hex_to_binary_hash("cc"));
 static const std::string binary_ff(hex_to_binary_hash("ff"));
 //static const std::string binary_big(hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
+// ************************************************************
+// helper
+// ************************************************************
+std::pair<bool, std::string> create_default_hashdb(
+                          const std::string& p_hashdb_dir,
+                          const std::string& command_string) {
+    return hashdb::create_hashdb(p_hashdb_dir,
+                                 512, 512, true, 28, 3,
+                                 command_string);
+}
 
 // ************************************************************
 // hashdb_create_manager
@@ -50,9 +60,9 @@ void test_create_manager() {
 
   // create the hashdb directory
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir, "test_create_manager.a");
+  pair = create_default_hashdb(hashdb_dir, "test_create_manager.a");
   TEST_EQ(pair.first, true);
-  pair = hashdb::create_hashdb(hashdb_dir, "test_create_manager.b");
+  pair = create_default_hashdb(hashdb_dir, "test_create_manager.b");
   TEST_EQ(pair.first, false);
 }
 
@@ -67,7 +77,7 @@ void test_import_manager() {
 
   // create new hashdb directory
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir, "test_import_manager.a");
+  pair = create_default_hashdb(hashdb_dir, "test_import_manager.a");
   TEST_EQ(pair.first, true);
 
   hashdb::import_manager_t manager(hashdb_dir, "", true,
@@ -107,7 +117,7 @@ void test_import_manager2() {
   // whitelist DB in hashdb_dir
   // LABEL should be imported
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir, "create whitelist DB");
+  pair = create_default_hashdb(hashdb_dir, "create whitelist DB");
   hashdb::import_manager_t whitelist_manager(hashdb_dir, "", false,
                                              "import whitelist DB");
   whitelist_manager.import_source_name(binary_0, "w_repository0", "w_file0");
@@ -116,7 +126,7 @@ void test_import_manager2() {
 
   // DB in hashdb_dir2
   // nothing should be imported
-  pair = hashdb::create_hashdb(hashdb_dir2, "create import DB");
+  pair = create_default_hashdb(hashdb_dir2, "create import DB");
   hashdb::import_manager_t manager(hashdb_dir2, hashdb_dir, true, "import");
   manager.import_source_name(binary_0, "rn", "fn");
   manager.import_source_hashes(binary_0, 100, data);
@@ -137,7 +147,7 @@ void bloom_setup() {
 
   // add data
   std::pair<bool, std::string> pair;
-  pair = hashdb::create_hashdb(hashdb_dir, "create DB");
+  pair = create_default_hashdb(hashdb_dir, "create DB");
   hashdb::import_manager_t manager(hashdb_dir, "", false, "import");
   manager.import_source_name(binary_0, "rn", "fn");
   manager.import_source_hashes(binary_0, 100, data);
@@ -176,9 +186,6 @@ int main(int argc, char* argv[]) {
   // Bloom filter
   bloom_setup();
   bloom_test();
-
-  // presence of global variable
-  TEST_EQ(hashdb::default_sector_size, 512);
 
   // done
   std::cout << "hashdb_managers_test Done.\n";

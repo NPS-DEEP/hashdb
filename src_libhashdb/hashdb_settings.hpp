@@ -57,12 +57,12 @@ struct hashdb_settings_t {
   // note: POD, so permit default copy and equals
 
   hashdb_settings_t() :
-        data_store_version(hashdb::data_store_version),
-        sector_size(hashdb::default_sector_size),
-        block_size(hashdb::default_block_size),
-        bloom_is_used(hashdb::default_bloom_is_used),
-        bloom_M_hash_size(hashdb::default_bloom_M_hash_size),
-        bloom_k_hash_functions(hashdb::default_bloom_k_hash_functions) {
+        data_store_version(0),
+        sector_size(0),
+        block_size(0),
+        bloom_is_used(0),
+        bloom_M_hash_size(0),
+        bloom_k_hash_functions(0) {
   }
 
   void report_settings(std::ostream& os) const {

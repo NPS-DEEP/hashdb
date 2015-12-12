@@ -54,8 +54,8 @@ Use two-step import when importing vector of hashes from a source.
 * `pair(bool, source_id) insert_begin(file_binary_hash)` - true if ready to begin importing block hashes, false if block hashes have already been imported for this source
 * `void insert_end(file_binary_hash, source_id, filesize, positive_count)` - fail if not already there, warn to stderr and do not insert if already there and filesize not zero
 * `source_metadata_t find(file_binary_hash)` - fail if not there
-* `source_metadata_t find_begin()` - `file_binary_hash` is `""` if empty
-* `source_metadata_t find_next(last_file_binary_hash)` - fail if already at end
+* `pair(file_binary_hash, source_metadata_t) find_begin()` - `file_binary_hash` is `""` if empty
+* `pair(file_binary_hash, source_metadata_t) find_next(last_file_binary_hash)` - fail if already at end
 * `size_t size()`
 
 ### LMDB Source Name Manager
@@ -83,8 +83,8 @@ Import hashes.  All interfaces use lock.  Destructor appends to log.
 ### HASHDB Scan `hashdb_scan_manager_t`
 * `hashdb_scan_manager_t(hashdb_dir)`
 * `void find_offset_pairs(binary_hash, id_offset_pairs_t&)`
-* `string find_file_binary_hash(source ID)`
 * `void find_source_names(file_binary_hash, source_names_t&)`
+* `string find_file_binary_hash(source ID)`
 * `binary_hash hash_begin(id_offset_pairs&)`
 * `binary_hash hash_next(last_binary_hash, id_offset_pairs&)`
 * `pair(file_binary_hash, source_metadata_t) source_begin()`
