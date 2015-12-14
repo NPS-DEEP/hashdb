@@ -139,8 +139,8 @@ class hashdb_import_manager_private_t {
     // add this repository name, filename entry
     source_name_manager.insert(file_binary_hash, repository_name, filename);
 
-    // begin a source metadata entry
-    std::pair<bool, uint64_t> pair = source_metadata_manager.insert_begin(
+    // start a source metadata entry
+    std::pair<bool, uint64_t> pair = source_metadata_manager.insert_start(
                                                   file_binary_hash);
 
     // add this source_id into the key=source_id, data=file_binary_hash store
@@ -160,9 +160,9 @@ class hashdb_import_manager_private_t {
    * to hash_data_t.
    *
    */
-  void import_source_hashes(const std::string& file_binary_hash,
-                            const uint64_t filesize,
-                            const hashdb::hash_data_list_t& hash_data_list) {
+  void import_source_data(const std::string& file_binary_hash,
+                          const uint64_t filesize,
+                          const hashdb::hash_data_list_t& hash_data_list) {
 
     MUTEX_LOCK(&M);
 
@@ -171,10 +171,16 @@ class hashdb_import_manager_private_t {
                              source_metadata_manager.find(file_binary_hash);
 
     // process each hash data entry
+    uint64_t positive_count = 0;
     for(hashdb::hash_data_list_t::const_iterator it=hash_data_list.begin();
                                        it != hash_data_list.end(); ++it) {
 
-      // skip low entropy
+      // track positive count
+      if (it->entropy_label == "") {
+        positive_count++;
+      }
+
+      // skip if low entropy
       if (skip_low_entropy == true && it->entropy_label != "") {
         changes.hashes_not_inserted_skip_low_entropy++;
         continue;
@@ -191,11 +197,17 @@ class hashdb_import_manager_private_t {
       // insert hash
       hash_manager.insert(source_metadata.source_id, *it, changes);
 
-      // insert hash label
+      // insert label if hash label
       if (it->entropy_label != "") {
         hash_label_manager.insert(it->binary_hash, it->entropy_label);
       }
     }
+
+    // insert source data
+    source_metadata_manager.insert_stop(file_binary_hash,
+                                        source_metadata.source_id,
+                                        filesize,
+                                        positive_count);
 
     MUTEX_UNLOCK(&M);
   }

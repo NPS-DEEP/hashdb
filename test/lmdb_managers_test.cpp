@@ -215,21 +215,21 @@ void lmdb_source_metadata_manager_test() {
 
   std::pair<bool, uint64_t> pair;
 
-  pair = manager.insert_begin(binary_aa);
+  pair = manager.insert_start(binary_aa);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 1);
 
-  pair = manager.insert_begin(binary_aa);
+  pair = manager.insert_start(binary_aa);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 1);
 
-  pair = manager.insert_begin(binary_bb);
+  pair = manager.insert_start(binary_bb);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 2);
 
-  manager.insert_end(binary_aa, 10, 11, 12);
-  manager.insert_end(binary_aa, 10, 11, 12);
-  manager.insert_end(binary_bb, 20, 21, 22);
+  manager.insert_stop(binary_aa, 10, 11, 12);
+  manager.insert_stop(binary_aa, 10, 11, 12);
+  manager.insert_stop(binary_bb, 20, 21, 22);
 
   hashdb::source_metadata_t data(0,0,0);
   data = manager.find(binary_bb);
@@ -255,7 +255,7 @@ void lmdb_source_metadata_manager_test() {
   TEST_EQ(pair2.second.filesize, 0);
   TEST_EQ(pair2.second.positive_count, 0);
 
-//  manager.insert_end(binary_cc,0,0,0); // assert not there yet
+//  manager.insert_stop(binary_cc,0,0,0); // assert not there yet
 //  data = manager.find(binary_cc); // assert not found
 
   // size

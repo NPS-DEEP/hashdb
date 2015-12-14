@@ -84,6 +84,8 @@ namespace hashdb {
             filesize(p_filesize),
             positive_count(p_positive_count) {
     }
+    source_metadata_t() : source_id(0), filesize(0), positive_count(0) {
+    }
   };
 
   // source_names_t pair<repository_name, filename>
@@ -91,7 +93,7 @@ namespace hashdb {
   typedef std::vector<source_name_t> source_names_t;
 
   // ************************************************************
-  // misc support
+  // misc support interfaces
   // ************************************************************
   /**
    * Return true and "" if hashdb is valid, false and reason if not.
@@ -200,8 +202,9 @@ namespace hashdb {
                             const std::string& filename);
 
     /**
-     * Import source hashes from hash_data_list.  Low entropy and whitelist
-     * hashes may be skipped, depending on initialization settings.
+     * Import source metadata and hash data from hash_data_list.  Low
+     * entropy and whitelist hashes may be skipped, depending on
+     * initialization settings.
      *
      * Parameters:
      *   file_binary_hash - The MD5 hash of the source in binary form.
@@ -212,9 +215,9 @@ namespace hashdb {
      *   Nothing, but fails if import_source_name has not been called yet
      *     for this source, so be sure to call import_source_name first.
      */
-    void import_source_hashes(const std::string& file_binary_hash,
-                              const uint64_t filesize,
-                              const hash_data_list_t& hash_data_list);
+    void import_source_data(const std::string& file_binary_hash,
+                            const uint64_t filesize,
+                            const hash_data_list_t& hash_data_list);
 
     // Returns sizes of LMDB databases in the data store.
     std::string size() const;

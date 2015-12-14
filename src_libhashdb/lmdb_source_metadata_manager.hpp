@@ -67,14 +67,14 @@ class lmdb_source_metadata_manager_t {
   }
 
   /**
-   * Insert Begin, key=file_binary_hash, value=0.
+   * Insert Start, key=file_binary_hash, value=0.
    *
    * Return pair(bool, source_id) where true means ready to begin importing
    * block hashes, false if block hashes have already been imported
    * for this source.
    * The source_id value is generated from formula: size()+1.
    */
-  std::pair<bool, uint64_t> insert_begin(const std::string& file_binary_hash) {
+  std::pair<bool, uint64_t> insert_start(const std::string& file_binary_hash) {
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -138,12 +138,12 @@ class lmdb_source_metadata_manager_t {
   }
 
   /**
-   * Insert End, key=file_binary_hash, value=source_id.
+   * Insert Stop, key=file_binary_hash, value=source_id.
    *
    * Fail if not already there.  Warn to stderr and do not insert
    * if already there and filesize is not zero.
    */
-  void insert_end(const std::string& file_binary_hash,
+  void insert_stop(const std::string& file_binary_hash,
                   const uint64_t source_id, const uint64_t filesize,
                   const uint64_t positive_count) {
 
@@ -179,7 +179,7 @@ class lmdb_source_metadata_manager_t {
       return;
     }
 
-    // insert end
+    // insert source data, also marking closure for this source
     std::string encoding = lmdb_data_codec::encode_ddd_t_data(
                                         source_id, filesize, positive_count);
     lmdb_helper::point_to_string(encoding, context.data);
@@ -193,7 +193,7 @@ class lmdb_source_metadata_manager_t {
       assert(0);
     }
 
-    // insert_end has ended the insertion
+    // insert_stop has ended the insertion
     context.close();
     return;
   }

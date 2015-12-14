@@ -88,11 +88,11 @@ namespace hashdb {
                                  file_binary_hash, repository_name, filename);
   }
 
-  void import_manager_t::import_source_hashes(
+  void import_manager_t::import_source_data(
                               const std::string& file_binary_hash,
                               const uint64_t filesize,
                               const hashdb::hash_data_list_t& hash_data_list) {
-    return hashdb_import_manager_private->import_source_hashes(
+    return hashdb_import_manager_private->import_source_data(
                                  file_binary_hash, filesize, hash_data_list);
   }
 

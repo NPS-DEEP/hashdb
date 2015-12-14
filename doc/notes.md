@@ -51,8 +51,8 @@ Use two-step import when importing vector of hashes from a source.
 `key=file_binary_hash, data=(source_id, filesize, positive_count)`.
 
 * `lmdb_source_metadata_manager_t(hashdb_dir, file_mode)`
-* `pair(bool, source_id) insert_begin(file_binary_hash)` - true if ready to begin importing block hashes, false if block hashes have already been imported for this source
-* `void insert_end(file_binary_hash, source_id, filesize, positive_count)` - fail if not already there, warn to stderr and do not insert if already there and filesize not zero
+* `pair(bool, source_id) insert_start(file_binary_hash)` - true if ready to start importing block hashes, false if block hashes have already been imported for this source
+* `void insert_stop(file_binary_hash, source_id, filesize, positive_count)` - fail if not already there, warn to stderr and do not insert if already there and filesize not zero
 * `source_metadata_t find(file_binary_hash)` - fail if not there
 * `pair(file_binary_hash, source_metadata_t) find_begin()` - `file_binary_hash` is `""` if empty
 * `pair(file_binary_hash, source_metadata_t) find_next(last_file_binary_hash)` - fail if already at end
@@ -76,13 +76,13 @@ Import hashes.  All interfaces use lock.  Destructor appends to log.
 
 * `hashdb_import_manager_t(hashdb_dir, whitelist_hashdb_dir="", skip_low_entropy=false)`
 * `bool import_source_name(file_binary_hash, repository_name, filename)` - initialize the environment for this file hash.  Import name if new.  True: need to import block hashes.  False: block hashes for this source have already been imported.
-* `void import_source_hashes(file_binary_hash, filesize, hash_data_list_t)` - import block hashes for this source.  Fail if `import_source_name` not called first for this `file_binary_hash`.
+* `void import_source_data(file_binary_hash, filesize, hash_data_list_t)` - import block hash data and source metadata for this source.  Fail if `import_source_name` not called first for this `file_binary_hash`.
 * `string size()` - return sizes of LMDB databases
 * `~hashdb_import_manager_t()` - append change log from `changes_t` to `hashdb_dir/log.dat`
 
 ### HASHDB Scan `hashdb_scan_manager_t`
 * `hashdb_scan_manager_t(hashdb_dir)`
-* `void find_offset_pairs(binary_hash, id_offset_pairs_t&)`
+* `void find_id_offset_pairs(binary_hash, id_offset_pairs_t&)`
 * `void find_source_names(file_binary_hash, source_names_t&)`
 * `string find_file_binary_hash(source ID)`
 * `binary_hash hash_begin(id_offset_pairs&)`
