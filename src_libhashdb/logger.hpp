@@ -94,7 +94,6 @@ class logger_t {
 
     // log closure for x
     x.add_rusage();
-    x.pop(); // command
     x.pop(); // log
 
     // mark this logger as closed

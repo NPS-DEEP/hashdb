@@ -71,11 +71,11 @@ class hashdb_scan_manager_private_t {
   }
 
   /**
-   * Find offset pairs associated with this hash.
+   * Find source ID, offset pairs associated with this hash.
    * An empty list means no match.
    */
-  void find_offset_pairs(const std::string& binary_hash,
-                         hashdb::id_offset_pairs_t& id_offset_pairs) const {
+  void find_id_offset_pairs(const std::string& binary_hash,
+                            hashdb::id_offset_pairs_t& id_offset_pairs) const {
     return hash_manager.find(binary_hash, id_offset_pairs);
   }
 

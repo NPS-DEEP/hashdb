@@ -124,6 +124,12 @@ class lmdb_hash_manager_t {
                             settings.bloom_M_hash_size,
                             settings.bloom_k_hash_functions),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)) {
+
+    // eror if settings is not initialized
+    if (settings.sector_size == 0) {
+      std::cerr << "Error: settings not initialized: " << settings << "\n";
+      assert(0);
+    }
   }
 
   ~lmdb_hash_manager_t() {

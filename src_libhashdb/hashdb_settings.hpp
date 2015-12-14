@@ -46,6 +46,7 @@ inline std::string bloom_state_to_string(bool state) {
 // hashdb tuning options
 struct hashdb_settings_t {
 
+  static const uint32_t expected_data_store_version = 3;
   uint32_t data_store_version;
   uint32_t sector_size;
   uint32_t block_size;
@@ -54,8 +55,6 @@ struct hashdb_settings_t {
   uint32_t bloom_M_hash_size;      // size of the bloom filter hash, in bits
   uint32_t bloom_k_hash_functions; // number of hash filter functions
 
-  // note: POD, so permit default copy and equals
-
   hashdb_settings_t() :
         data_store_version(0),
         sector_size(0),
@@ -63,6 +62,20 @@ struct hashdb_settings_t {
         bloom_is_used(0),
         bloom_M_hash_size(0),
         bloom_k_hash_functions(0) {
+  }
+
+  hashdb_settings_t(uint32_t p_data_store_version,
+                    uint32_t p_sector_size,
+                    uint32_t p_block_size,
+                    bool p_bloom_is_used,
+                    uint32_t p_bloom_M_hash_size,
+                    uint32_t p_bloom_k_hash_functions) :
+        data_store_version(p_data_store_version),
+        sector_size(p_sector_size),
+        block_size(p_block_size),
+        bloom_is_used(p_bloom_is_used),
+        bloom_M_hash_size(p_bloom_M_hash_size),
+        bloom_k_hash_functions(p_bloom_k_hash_functions) {
   }
 
   void report_settings(std::ostream& os) const {

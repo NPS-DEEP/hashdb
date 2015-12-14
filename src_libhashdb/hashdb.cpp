@@ -112,9 +112,9 @@ namespace hashdb {
     delete hashdb_scan_manager_private;
   }
 
-  void scan_manager_t::find_offset_pairs(const std::string& binary_hash,
+  void scan_manager_t::find_id_offset_pairs(const std::string& binary_hash,
                          id_offset_pairs_t& id_offset_pairs) const {
-    return hashdb_scan_manager_private->find_offset_pairs(
+    return hashdb_scan_manager_private->find_id_offset_pairs(
                                           binary_hash, id_offset_pairs);
   }
 

@@ -50,16 +50,15 @@ class hashdb_settings_store_t {
 
     // read settings
     hashdb_settings_t settings;
-    uint32_t expected_data_store_version = settings.data_store_version;
     hashdb_settings_reader_t::read_settings(filename, settings);
 
     // validate that the settings version is compatible with hashdb
-    if (settings.data_store_version != expected_data_store_version) {
+    if (settings.data_store_version != settings.expected_data_store_version) {
       std::cerr << "Database version error in data store version.\n"
                 << "Database '" << hashdb_dir
                 << "' uses data store version " << settings.data_store_version
                 << "\nbut hashdb requires data store version "
-                << expected_data_store_version
+                << settings.expected_data_store_version
                 << ".\nAborting.\n";
       exit(1);
     }
