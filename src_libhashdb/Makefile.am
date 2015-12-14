@@ -20,7 +20,9 @@
 # This file assists in building the hashdb_manager tool.
 
 LMDB_INCS = \
+	liblmdb/lmdb.h \
 	liblmdb/mdb.c \
+	liblmdb/midl.h \
 	liblmdb/midl.c
 
 lib_LTLIBRARIES = libhashdb.la
@@ -29,6 +31,8 @@ noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
 EXTRA_DIST = \
+	libdfxml/README \
+	libdfxml/dfxml_configure.m4 \
 	liblmdb/COPYRIGHT \
 	liblmdb/LICENSE
 
@@ -48,14 +52,40 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
-	hashdb.cpp
+	bloom_filter_manager.hpp \
+	file_helper.hpp \
+	file_modes.h \
+	hashdb_changes.hpp \
+	hashdb.cpp \
+	hashdb.hpp \
+	hashdb_import_manager_private.hpp \
+	hashdb_scan_manager_private.hpp \
+	hashdb_settings.hpp \
+	hashdb_settings_reader.hpp \
+	hashdb_settings_store.hpp \
+	hashdb_tools.hpp \
+	history_manager.hpp \
+	lmdb_context.hpp \
+	lmdb_data_codec.hpp \
+	lmdb_hash_label_manager.hpp \
+	lmdb_hash_manager.hpp \
+	lmdb_helper.h \
+	lmdb_source_id_manager.hpp \
+	lmdb_source_metadata_manager.hpp \
+	lmdb_source_name_manager.hpp \
+	logger.hpp \
+	mutex_lock.hpp
 
 BLOOM_INCS = \
 	libbloom/bloom.c \
-	libbloom/file_mapper.cpp
+	libbloom/bloom.h \
+	libbloom/file_mapper.cpp \
+	libbloom/file_mapper.hpp
 
 DFXML_INCS = \
-	libdfxml/dfxml_writer.cpp
+	libdfxml/cppmutex.h \
+	libdfxml/dfxml_writer.cpp \
+	libdfxml/dfxml_writer.h
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \

@@ -20,6 +20,9 @@
 # This file assists in building test programs.
 
 EXTRA_DIST = \
+	directory_helper.hpp \
+	hex_helper.hpp \
+	unit_test.h \
 	vg.supp
 
 check_PROGRAMS = \
@@ -46,8 +49,8 @@ lmdb_managers_test_CPPFLAGS = \
 	-isystem${top_srcdir}/src_libhashdb/liblmdb \
 	$(XML_CFLAGS)
 
-lmdb_managers_test_LDADD = ../src_libhashdb/liblmdb.la
-
+bloom_filter_manager_test_LDADD = ../src_libhashdb/libhashdb.la
+lmdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
 hashdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
 
 clean-local:
@@ -62,15 +65,8 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-bloom_filter_manager_test_SOURCES = bloom_filter_manager_test.cpp \
-	../src_libhashdb/libbloom/bloom.c \
-	../src_libhashdb/libbloom/file_mapper.cpp
-
-lmdb_managers_test_SOURCES = lmdb_managers_test.cpp \
-	../src_libhashdb/libbloom/bloom.c \
-	../src_libhashdb/libbloom/file_mapper.cpp \
-	../src_libhashdb/libdfxml/dfxml_writer.cpp
-
+bloom_filter_manager_test_SOURCES = bloom_filter_manager_test.cpp
+lmdb_managers_test_SOURCES = lmdb_managers_test.cpp
 hashdb_managers_test_SOURCES = hashdb_managers_test.cpp
 
 .PHONY: run_tests_valgrind
