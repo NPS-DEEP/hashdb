@@ -39,18 +39,22 @@
 
 class tab_hashdigest_reader_t {
   private:
-  lmdb_rw_manager_t* rw_manager;
-  progress_tracker_t* progress_tracker;
+  const std::string& hashdb_dir;
+  const std::string& tab_file;
   const std::string& repository_name;
-  const uint32_t sector_size;
-  size_t line_number;
+  const std::string& whitelist_dir;
+  const std::string& cmd;
+
+  static const uint32_t sector_size = 512;
+  static const std::string file_binary_hash("\0");
 
   // do not allow these
   tab_hashdigest_reader_t();
   tab_hashdigest_reader_t(const tab_hashdigest_reader_t&);
   tab_hashdigest_reader_t& operator=(const tab_hashdigest_reader_t&);
 
-  void import_line(const std::string& line) {
+  void add_line(const std::string& line, hashdb::hash_data_list_t& data,
+                progress_tracker_t& progress_tracker) {
     // skip comment lines
     if (line[0] == '#') {
       return;
@@ -106,32 +110,37 @@ class tab_hashdigest_reader_t {
     uint64_t file_offset = (sector_index -1) * sector_size;
 
     // update progress tracker
-    progress_tracker->track();
+    progress_tracker.track();
 
-    // insert the entry
-    rw_manager->insert(binary_hash,
-                       file_offset,
-                       sector_size,
-                       source_data,
-                       "");
+    // add the entry
+    data.push_back(hashdb::hash_data_t(binary_hash, file_offset, ""));
   }
  
   public:
-  tab_hashdigest_reader_t(lmdb_rw_manager_t* p_rw_manager,
-                           progress_tracker_t* p_progress_tracker,
-                           const std::string& p_repository_name,
-                           uint32_t p_sector_size) :
-              rw_manager(p_rw_manager),
-              progress_tracker(p_progress_tracker),
-              repository_name(p_repository_name),
-              sector_size(p_sector_size),
-              line_number(0) {
+  tab_hashdigest_reader_t(
+                     const std::string& p_hashdb_dir,
+                     const std::string& p_tab_file,
+                     const std::string& p_repository_name,
+                     const std::string& p_whitelist_dir,
+                     const std::string& p_cmd) :
+                  hashdb_dir(p_hashdb_dir),
+                  tab_file(p_tab_file),
+                  repository_name(p_repository_name),
+                  whitelist_dir(p_whitelist_dir),
+                  cmd(p_cmd) {
   }
 
   // read tab file
   std::pair<bool, std::string> read(std::string tab_file) {
 
-    // open text file
+    // validate hashdb_dir path
+    std::pair<bool, std::string> pair;
+    pair = hashdb::is_valid_hashdb(hashdb_dir);
+    if (pair.first == false) {
+      return pair;
+    }
+
+    // validate and open text file
     std::ifstream in(tab_file.c_str());
     if (!in.is_open()) {
       std::stringstream ss;
@@ -139,12 +148,35 @@ class tab_hashdigest_reader_t {
       return std::pair<bool, std::string>(false, ss.str());
     }
 
+    // validate whitelist_dir path
+    std::pair<bool, std::string> pair;
+    pair = hashdb::is_valid_hashdb(whitelist_dir);
+    if (pair.first == false) {
+      return pair;
+    }
+
+    // open hashdb manager
+    hashdb::import_manager_t manager(hashdb_dir, whitelist_dir, false)
+
+    // open progress tracker
+    progress_tracker_t progress_tracker(hashdb_dir, 0, false);
+
     // process lines
     std::string line;
+    std::vector<hashdb::hash_data_list_t> data =
+                 new std::vector<hashdb::hash_data_list_t>;
     while(getline(in, line)) {
       ++line_number;
-      import_line(line);
+      add_line(line, data);
     }
+
+    // add the source entry
+    manager.import_source_name(file_binary_hash, repository_name, tab_file);
+
+    // add the hashes
+    manager.import_source_data(file_binary_hash, 0, data);
+
+    // done
     return std::pair<bool, std::string>(true, "");
   }
 };

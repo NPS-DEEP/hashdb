@@ -71,7 +71,6 @@ class logger_t {
     // log the preamble
     x.push("log");
 
-    std::stringstream ss;
     x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_string);
   }
 

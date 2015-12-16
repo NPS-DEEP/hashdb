@@ -1,33 +1,32 @@
-\begin{small}
 \begin{footnotesize}
 \textbf{General Usage} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{hashdb <command> <options> <args>} & Run hashdb command, \texttt{-q} for quiet mode \\
+\texttt{hashdb <command> <options> <args>} & Run hashdb command \\
 \end{tabular}
 \\
 \\
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em \texttt{create [-p <hash block size>] [-m <maximum duplicates>] [-a <byte alignment>] [-t <hash truncation>] [<bloom settings>] <hashdb.hdb>} &
+\hangindent=2em \texttt{create [-b <block size>] [-s <sector size>] [<bloom settings>] <hashdb.hdb>} &
 Create a new hash database \\
 \end{tabular}
 \\
 \\
-\textbf{Import/Export} \\
+\textbf{Import} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em\texttt{import [-r <repository name>] <hashdb.hdb> <dfxml.xml>} &
-Import from DFXML file into hash database \\
-\hangindent=2em\texttt{import\_tab [-r <repository name>] [-s <sector size>] <hashdb.hdb> <dfxml.xml>} &
+\hangindent=2em\texttt{import [-r <repository name>] [-w <whitelist.hdb>] [-s <t|f>] <hashdb.hdb> <import directory>} &
+Import from path recursively into hash database, possibly suppressing low entropy hashes \\
+\hangindent=2em\texttt{import\_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <tab.txt>} &
 Import from tab file into hash database \\
-\texttt{export <hashdb.hdb> <dfxml.xml>} &
-Export hash database to DFXML file \\
+\hangindent=2em\texttt{import\_dfxml [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <dfxml.xml>} &
+Import from DFXML file into hash database \\
 \end{tabular}
 \\
 \\
 \textbf{Database Manipulation} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{add <A.hdb> <B.hdb>} & $A + B \rightarrow B$ add $A$ into $B$ \\
-\texttt{add\_multiple <A.hdb> <B.hdb> <C.hdb>} & $A + B \rightarrow C$ add $A$ and $B$ into $C$\\
+\texttt{add\_multiple <A.hdb> <B.hdb> ... <C.hdb>} & $A + B + \ldots \rightarrow C$ add $A$, $B$, \ldots into $C$\\
 \hangindent=2em\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A_r + B \rightarrow B$ add when repository name matches \\
 \texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hash and source are common\\
 \texttt{intersect\_hash <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hashes are common\\
@@ -38,24 +37,20 @@ Export hash database to DFXML file \\
 \end{tabular}
 \\
 \\
-\textbf{Scan Services} \\
+\textbf{Scan} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{scan <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matching hashes \\
-\texttt{scan\_hash <hashdb.hdb> <hash value>} & Scan for hash match \\
-\texttt{scan\_expanded [-m <number>] <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matches showing all sources\\
-\texttt{scan\_expanded\_hash [-m <number>] <hashdb.hdb> <hash value>} & Scan for hash match showing all sources\\
+\texttt{scan\_hash <hashdb.hdb> <hex block hash>} & Scan for hash match \\
 \end{tabular}
 \\
 \\
 \textbf{Statistics}\\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{size <hashdb.hdb>} & Print sizes of internal database tables \\
-\texttt{sources <hashdb.hdb>} & Print source metadata \\
+\texttt{sources <hashdb.hdb>} & Print source information \\
 \texttt{histogram <hashdb.hdb>} & Print hash distribution \\
 \texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
-\texttt{hash\_table <hashdb.hdb> <source\_id>} & Print hashes associated with the source index\\
-\hangindent=2em\texttt{expand\_identified\_blocks [-m <number>] <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Expand to include source information for each source \\
-\hangindent=2em\texttt{explain\_identified\_blocks [-m <number>] <hashdb.hdb> <identified\_blocks.txt>} & \hangindent=2em Print information about less frequently observed hashes\\
+\texttt{hash\_table <hashdb.hdb> <hex file hash>} & Print hashes associated with the source file hash\\
 \end{tabular}
 \\
 \\
@@ -67,7 +62,7 @@ Export hash database to DFXML file \\
 \\
 \textbf{Performance Analysis}\\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em\texttt{add\_random [-r <repository name>] <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
+\hangindent=2em\texttt{add\_random <hashdb.hdb> <hex file hash> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
 \texttt{scan\_random <hashdb.hdb> <count>} & Scan random hashes, log performance in \texttt{log.xml}\\
 \end{tabular}
 \\
@@ -80,5 +75,4 @@ Export hash database to DFXML file \\
 \hangindent=2em\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path\_or\_socket= outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image\\
 \end{tabular}
 \end{footnotesize}
-\end{small}
 

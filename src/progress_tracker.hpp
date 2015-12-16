@@ -21,13 +21,13 @@
  * \file
  * Track progress to show that long iterative actions are not hung.
  * Call track before operation, call done when done.
- * Writes progress to cout and optionally to logger_t.
+ * Writes progress to cout and to <dir>/progress.xml.
  * Use total=0 if total is not known.
  */
 
 #ifndef PROGRESS_TRACKER_HPP
 #define PROGRESS_TRACKER_HPP
-#include "logger.hpp"
+#include "dfxml_writer.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -38,24 +38,26 @@
 
 class progress_tracker_t {
   private:
+  const std::string dir;
   const uint64_t total;
   uint64_t index;
-  logger_t* logger;
-  bool use_logger;
-  bool is_done;
+  const bool is_quiet;
+  dfxml_writer logger;
 
   // do not allow copy or assignment
   progress_tracker_t(const progress_tracker_t&);
   progress_tracker_t& operator=(const progress_tracker_t&);
 
   public:
-  progress_tracker_t(uint64_t p_total) :
-                         total(p_total), index(0), logger(0),
-                         use_logger(false), is_done(false) {
-  }
-  progress_tracker_t(uint64_t p_total, logger_t* p_logger) :
-                         total(p_total), index(0), logger(p_logger),
-                         use_logger(true), is_done(false) {
+  progress_tracker_t(const std::string& p_dir, const uint64_t p_total,
+                     const bool p_is_quiet) :
+                         dir(p_dir),
+                         total(p_total),
+                         index(0),
+                         is_quiet(p_is_quiet),
+                         logger(dir+"/progress.xml", false) {
+    logger.push("progress");
+    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_string);
   }
 
   void track() {
@@ -68,18 +70,16 @@ class progress_tracker_t {
         // total is not known
         ss << "Processing index " << index << " of ?";
       }
-      if (!globals_t::quiet_mode) {
+      if (!is_quiet) {
         std::cout << ss.str() << "..." << std::endl;
       }
-      if (use_logger) {
-        logger->add_timestamp(ss.str());
-        logger->add_memory_usage(ss.str());
-      }
+      logger->add_timestamp(ss.str());
+      logger->add_memory_usage(ss.str());
     }
     ++index;
   }
 
-  void done() {
+  ~progress_tracker() {
     std::stringstream ss;
     if (total > 0) {
       // total is known
@@ -88,20 +88,11 @@ class progress_tracker_t {
       // total is not known
       ss << "Processing index " << index << " of " << index << " completed";
     }
-    if (!globals_t::quiet_mode) {
+    if (!is_quiet) {
       std::cout << ss.str() << std::endl;
     }
-    if (use_logger) {
-      logger->add_timestamp(ss.str());
-      logger->add_memory_usage(ss.str());
-    }
-    is_done = true;
-  }
-
-  ~progress_tracker_t() {
-    if (!is_done) {
-      std::cerr << "program error: progress_tracker.track_done not called.\n";
-    }
+    logger->add_timestamp(ss.str());
+    logger->add_memory_usage(ss.str());
   }
 };
 

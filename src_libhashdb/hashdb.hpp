@@ -46,7 +46,7 @@ namespace hashdb {
    * Version of the hashdb library.
    */
   extern "C"
-  const char* hashdb_version();
+  const char* version();
 
   // ************************************************************
   // types used in interfaces

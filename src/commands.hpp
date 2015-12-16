@@ -19,41 +19,19 @@
 
 /**
  * \file
- * Defines the static commands that hashdb_manager can execute.
+ * Provides hashdb commands.
  */
 
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-#include "globals.hpp"
-#include "file_helper.hpp"
-#include "file_modes.h"
-#include "hashdb_settings.hpp"
-#include "hashdb_settings_store.hpp"
-#include "history_manager.hpp"
-#include "lmdb_hash_store.hpp"
-#include "lmdb_hash_it_data.hpp"
-#include "lmdb_name_store.hpp"
-#include "lmdb_source_store.hpp"
-#include "lmdb_source_data.hpp"
-#include "lmdb_source_it_data.hpp"
-#include "lmdb_helper.h"
-#include "bloom_filter_manager.hpp"
-#include "lmdb_rw_manager.hpp"
-#include "lmdb_ro_manager.hpp"
-#include "lmdb_rw_new.hpp"
+#include "hashdb.hpp"
 #include "expand_manager.hpp"
-#include "explain_manager.hpp"
-#include "logger.hpp"
 #include "dfxml_hashdigest_reader.hpp"
 #include "dfxml_import_consumer.hpp"
 #include "dfxml_scan_consumer.hpp"
 #include "dfxml_scan_expanded_consumer.hpp"
 #include "dfxml_hashdigest_writer.hpp"
 #include "tab_hashdigest_reader.hpp"
-#include "hashdb.hpp"
-#include "progress_tracker.hpp"
-#include "feature_file_reader.hpp"
-#include "feature_line.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -64,97 +42,74 @@
 #include <algorithm>
 #include <vector>
 
-/**
- * Defines the static commands that hashdb_manager can execute.
- * This totally static class is a class rather than an namespace
- * so it can have private members.
- */
-
-class commands_t {
-  private:
-  static void create_if_new(const std::string& hashdb_dir,
-                            const hashdb_settings_t& settings) {
-    if (!file_helper::is_hashdb_dir(hashdb_dir)) {
-      create(hashdb_dir, settings);
-    }
-  }
-
-  static void require_compatible(const std::string hashdb_dir1,
-                                const std::string hashdb_dir2) {
-
-    // databases should not be the same one
-    if (hashdb_dir1 == hashdb_dir2) {
-      std::cerr << "Error: the databases must not be the same one:\n'"
-                << hashdb_dir1 << "', '"
-                << hashdb_dir2 << "'\n"
-                << "Aborting.\n";
-      exit(1);
-    }
-
-    // if both databases exist, some settings must match
-    if (file_helper::is_hashdb_dir(hashdb_dir1) &&
-        file_helper::is_hashdb_dir(hashdb_dir2)) {
-      hashdb_settings_t settings1 = hashdb_settings_store_t::read_settings(hashdb_dir1);
-      hashdb_settings_t settings2 = hashdb_settings_store_t::read_settings(hashdb_dir2);
-      if (settings1.hash_truncation != settings2.hash_truncation) {
-        std::cerr << "Error: database hash truncation values differ:\n"
-                  << hashdb_dir1 << ": " << settings1.hash_truncation << "\n"
-                  << hashdb_dir2 << ": " << settings2.hash_truncation << "\n"
-                  << "Aborting.\n";
-        exit(1);
-      }
-      if (settings1.hash_block_size != settings2.hash_block_size) {
-        std::cerr << "Error: database hash block size values differ:\n"
-                  << hashdb_dir1 << ": " << settings1.hash_block_size << "\n"
-                  << hashdb_dir2 << ": " << settings2.hash_block_size << "\n"
-                  << "Aborting.\n";
-        exit(1);
-      }
-    }
-  }
-
-  static void require_compatible(const std::string hashdb_dir1,
-                                const std::string hashdb_dir2,
-                                const std::string hashdb_dir3) {
-    require_compatible(hashdb_dir1, hashdb_dir2);
-    require_compatible(hashdb_dir1, hashdb_dir3);
-  };
-
-  // helper for hash copy
-  static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
+// helper for hash copy
+static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
                         const lmdb_ro_manager_t& ro_manager,
                         lmdb_rw_manager_t& rw_manager) {
-    lmdb_source_data_t source_data = ro_manager.find_source(
+  lmdb_source_data_t source_data = ro_manager.find_source(
                                        hash_it_data.source_lookup_index);
-    rw_manager.insert(hash_it_data.binary_hash,
-                      hash_it_data.file_offset,
-                      ro_manager.settings.hash_block_size,
-                      source_data,
-                      hash_it_data.hash_label);
-  }
+  rw_manager.insert(hash_it_data.binary_hash,
+                    hash_it_data.file_offset,
+                    ro_manager.settings.hash_block_size,
+                    source_data,
+                    hash_it_data.hash_label);
+}
 
-  public:
+namespace commands {
 
-  // create
-  static void create(const std::string& hashdb_dir,
-                     const hashdb_settings_t& settings) {
+  // new database
+  void create(const std::string& hashdb_dir,
+              const uint32_t sector_size,
+              const uint32_t block_size,
+              const bool bloom_is_used,
+              const uint32_t bloom_k_hash_functons,
+              const uint32_t bloom_M_hash_size,
+              const std::string& cmd) {
 
-    // create the hashdb directory
-    lmdb_rw_new::create(hashdb_dir, settings);
+    std::pair<bool, std::string> pair = hashdb::create_hashdb(
+           hashdb_dir, sector_size, block_size,
+           bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions, cmd);
 
-    // log the creation event
-    logger_t logger(hashdb_dir, "create");
-    logger.add("hashdb_dir", hashdb_dir);
-    logger.add_hashdb_settings(settings);
-    logger.close();
-
-    std::cout << "New database created.\n";
+    if (pair.first == true) {
+      std::cout << "New database created.\n";
+    } else {
+      std::cout << "Error: " << pair.second << "\n";
+    }
   }
 
   // import
   static void import(const std::string& hashdb_dir,
-                     const std::string& dfxml_file,
-                     const std::string& repository_name) {
+                     const std::string& import_dir,
+                     const std::string& repository_name,
+                     const std::string& whitelist_dir,
+                     const bool skip_low_entropy,
+                     const std::string& cmd) {
+    // import_dir.hpp
+    std::cout << "TBD\n";
+  }
+
+  // import_tab
+  static void import_tab(const std::string& hashdb_dir,
+                     const std::string& tab_file,
+                     const std::string& repository_name,
+                     const std::string& whitelist_dir,
+                     const std::string& cmd) {
+
+    reader = tab_hashdigest_reader_t(
+           hashdb_dir, tab_file, repository_name, whitelist_dir, cmd);
+
+    std::pair<bool, std::string> pair = reader.read();
+    if (pair.first == true) {
+      std::cout << "New database created.\n";
+    } else {
+      std::cout << "Error: " << pair.second << "\n";
+    }
+  }
+
+/*
+  static void import_hashdb(const std::string& hashdb_dir,
+                            const std::string& dfxml_file,
+                            const std::string& repository_name) {
 
     // require that dfxml_file exists
     file_helper::require_dfxml_file(dfxml_file);
@@ -197,58 +152,6 @@ class commands_t {
       // bad, reader failed
       std::cerr << do_read_pair.second << ".  Import aborted.\n";
       exit(1);
-    }
-  }
-
-  // import_tab
-  static void import_tab(const std::string& hashdb_dir,
-                     const std::string& tab_file,
-                     const std::string& repository_name,
-                     uint32_t sector_size) {
-
-    // require that tab file exists
-    file_helper::require_tab_file(tab_file);
-
-    // open hashdb RW manager
-    lmdb_rw_manager_t rw_manager(hashdb_dir);
-
-    logger_t logger(hashdb_dir, "import_tab");
-    logger.add("tab_file", tab_file);
-    logger.add("hashdb_dir", hashdb_dir);
-    logger.add("repository_name", repository_name);
-    logger.add_timestamp("begin import_tab");
-
-    // start progress tracker
-    progress_tracker_t progress_tracker(0, &logger);
-
-    // create the tab reader
-    tab_hashdigest_reader_t tab_hashdigest_reader(
-            &rw_manager, &progress_tracker, repository_name, sector_size);
-
-    // read the tab input
-    std::pair<bool, std::string> import_tab_pair =
-                                tab_hashdigest_reader.read(tab_file);
-
-    // close tracker
-    progress_tracker.done();
-
-    if (import_tab_pair.first == true) {
-      // good, reader worked
-
-      // close logger
-      logger.add_timestamp("end import_tab");
-      logger.add_hashdb_changes(rw_manager.changes);
-      logger.close();
-
-      // also write changes to cout
-      std::cout << rw_manager.changes << "\n";
-    } else {
-      // bad, reader failed
-      // close logger
-      logger.add_timestamp("end import_tab, import failed");
-      logger.close();
-
-      std::cerr << import_tab_pair.second << ".  Import from tab file aborted.\n";
     }
   }
 
@@ -1342,10 +1245,6 @@ class commands_t {
     std::cout << "hash store size: " << rw_manager.size() << "\n";
   }
 
-  /**
-   * Scan for random hash values that are unlikely to match.
-   * Disable the Bloom filter to force DB lookups.
-   */
   // functional analysis and testing: scan_random
   static void scan_random(const std::string& hashdb_dir,
                           const std::string& count_string) {
@@ -1388,6 +1287,7 @@ class commands_t {
     logger.add_timestamp("end scan_random");
     logger.close();
   }
+*/
 };
 
 #endif
