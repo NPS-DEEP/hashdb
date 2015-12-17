@@ -24,14 +24,12 @@
 
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
-#include "hashdb.hpp"
-#include "expand_manager.hpp"
-#include "dfxml_hashdigest_reader.hpp"
-#include "dfxml_import_consumer.hpp"
-#include "dfxml_scan_consumer.hpp"
-#include "dfxml_scan_expanded_consumer.hpp"
-#include "dfxml_hashdigest_writer.hpp"
+#include "../src_libhashdb/hashdb.hpp"
 #include "tab_hashdigest_reader.hpp"
+//#include "expand_manager.hpp"
+//#include "dfxml_scan_consumer.hpp"
+//#include "dfxml_scan_expanded_consumer.hpp"
+//#include "dfxml_hashdigest_writer.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -77,6 +75,9 @@ namespace commands {
     }
   }
 
+  // ************************************************************
+  // import
+  // ************************************************************
   // import
   static void import(const std::string& hashdb_dir,
                      const std::string& import_dir,
@@ -105,6 +106,176 @@ namespace commands {
       std::cout << "Error: " << pair.second << "\n";
     }
   }
+
+  // ************************************************************
+  // database manipulation
+  // ************************************************************
+  // add
+  static void add(const std::string& hashdb_dir,
+                  const std::string& dest_dir,
+                  const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // add_multiple
+  static void add_multiple(const std::vector<std::string>& hashdb_dirs,
+                           const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // add_repository
+  static void add_repository(const std::string& hashdb_dir,
+                             const std::string& dest_dir,
+                             const std::string& repository_name,
+                             const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // intersect
+  static void intersect(const std::string& hashdb_dir1,
+                        const std::string& hashdb_dir2,
+                        const std::string& dest_dir,
+                        const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // intersect_hash
+  static void intersect_hash(const std::string& hashdb_dir1,
+                             const std::string& hashdb_dir2,
+                             const std::string& dest_dir,
+                             const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // subtract
+  static void subtract(const std::string& hashdb_dir1,
+                       const std::string& hashdb_dir2,
+                       const std::string& dest_dir,
+                       const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // subtract_hash
+  static void subtract_hash(const std::string& hashdb_dir1,
+                            const std::string& hashdb_dir2,
+                            const std::string& dest_dir,
+                            const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // subtract_hash
+  static void subtract_hash(const std::string& hashdb_dir1,
+                            const std::string& hashdb_dir2,
+                            const std::string& dest_dir,
+                            const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // subtract_repository
+  static void subtract_repository(const std::string& hashdb_dir,
+                                  const std::string& dest_dir,
+                                  const std::string& repository_name,
+                                  const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // deduplicate
+  static void deduplicate(const std::string& hashdb_dir,
+                          const std::string& dest_dir,
+                          const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // ************************************************************
+  // scan
+  // ************************************************************
+  // scan
+  static void scan(const std::string& hashdb_dir,
+                   const std::string& dfxml_file,
+                   const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // scan_hash
+  static void scan_hash(const std::string& hashdb_dir,
+                        const std::string& hex_block_hash,
+                        const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // ************************************************************
+  // statistics
+  // ************************************************************
+  // size
+  static void size(const std::string& hashdb_dir,
+                   const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // sources
+  static void sources(const std::string& hashdb_dir,
+                      const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // histogram
+  static void histogram(const std::string& hashdb_dir,
+                        const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // duplicates
+  static void duplicates(const std::string& hashdb_dir,
+                         const std::string& number_string,
+                         const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // hash_table
+  static void hash_table(const std::string& hashdb_dir,
+                         const std::string& hex_file_hash,
+                         const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // ************************************************************
+  // tuning
+  // ************************************************************
+  // rebuild_bloom
+  static void rebuild_bloom(const std::string& hashdb_dir,
+                            const std::string& hex_file_hash,
+                            const std::string& count_string,
+                            const bool bloom_is_used,
+                            const uint32_t bloom_k_hash_functons,
+                            const uint32_t bloom_M_hash_size,
+                            const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // ************************************************************
+  // performance analysis
+  // ************************************************************
+  // add_random
+  static void add_random(const std::string& hashdb_dir,
+                         const bool bloom_is_used,
+                         const uint32_t bloom_k_hash_functons,
+                         const uint32_t bloom_M_hash_size,
+                         const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+
+  // scan_random
+  static void scan_random(const std::string& hashdb_dir,
+                          const std::string& count_string,
+                          const std::string& cmd) {
+    std::cout << "TBD\n";
+  }
+}
+
+
+
+
+
 
 /*
   static void import_hashdb(const std::string& hashdb_dir,

@@ -30,7 +30,6 @@
 #include <sstream>
 #include <stdint.h>
 #include <iostream>
-#include "hashdb.hpp" // for globals
 
 inline bool string_to_bloom_state(std::string state_string, bool& state) {
   if (state_string == "enabled")  { state = true;  return true; }

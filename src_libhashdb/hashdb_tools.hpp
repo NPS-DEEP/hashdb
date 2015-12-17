@@ -25,7 +25,6 @@
 #ifndef HASHDB_TOOLS_HPP
 #define HASHDB_TOOLS_HPP
 
-#include <config.h>
 #include "hashdb.hpp"
 
 // this process of getting WIN32 defined was inspired
@@ -225,7 +224,6 @@ namespace hashdb {
     // done
     return std::pair<bool, std::string>(true, "");
   }
-
 } // namespace hashdb
 
 #endif

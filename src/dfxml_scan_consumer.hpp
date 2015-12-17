@@ -26,7 +26,6 @@
 
 #ifndef DFXML_SCAN_CONSUMER_HPP
 #define DFXML_SCAN_CONSUMER_HPP
-#include "print_helper.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_hash_store.hpp"
 #include "lmdb_source_data.hpp"
@@ -42,6 +41,13 @@ class dfxml_scan_consumer_t {
   // do not allow copy or assignment
   dfxml_scan_consumer_t(const dfxml_scan_consumer_t&);
   dfxml_scan_consumer_t& operator=(const dfxml_scan_consumer_t&);
+
+  // print hash and its count
+//zz here?
+  void print_hash(const std::string& binary_hash, size_t count) {
+    std::cout << "[\"" << lmdb_helper::binary_hash_to_hex(binary_hash)
+              << "\",{\"count\":" << count << "}]" << std::endl;
+  }
 
   public:
   dfxml_scan_consumer_t(const lmdb_ro_manager_t* p_ro_manager) :
@@ -80,7 +86,7 @@ class dfxml_scan_consumer_t {
     }
 
     // print the hash
-    print_helper::print_hash(binary_hash, count);
+    print_hash(binary_hash, count);
   }
 
   // end_fileobject

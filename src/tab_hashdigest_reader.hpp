@@ -34,8 +34,12 @@
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
-#include "lmdb_rw_manager.hpp"
-#include "lmdb_source_data.hpp"
+#include "hashdb.hpp"
+#include "progress_tracker.hpp"
+#include "hex_helper.hpp"
+#include "crc32.h"
+
+static const std::string file_binary_hash = "\0";
 
 class tab_hashdigest_reader_t {
   private:
@@ -44,16 +48,17 @@ class tab_hashdigest_reader_t {
   const std::string& repository_name;
   const std::string& whitelist_dir;
   const std::string& cmd;
+  size_t line_number;
+  std::vector<hashdb::hash_data_list_t> data; // only gets size 1
 
   static const uint32_t sector_size = 512;
-  static const std::string file_binary_hash("\0");
 
   // do not allow these
   tab_hashdigest_reader_t();
   tab_hashdigest_reader_t(const tab_hashdigest_reader_t&);
   tab_hashdigest_reader_t& operator=(const tab_hashdigest_reader_t&);
 
-  void add_line(const std::string& line, hashdb::hash_data_list_t& data,
+  void add_line(const std::string& line, hashdb::import_manager_t& manager,
                 progress_tracker_t& progress_tracker) {
     // skip comment lines
     if (line[0] == '#') {
@@ -80,9 +85,24 @@ class tab_hashdigest_reader_t {
     // parse filename
     std::string filename = line.substr(0, tab_index1);
 
+    // binary filename is not available, so use a CRC of the filename
+    // get CRC32 of filename
+    uint32_t filename_crc = crc32(filename);
+    std::stringstream ss;
+    ss << filename_crc;
+    std::string filename_crc_string(ss.str());
+
     // parse block hashdigest
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
+
+    // get binary hash from hex hash
+    std::string binary_hash = hex_to_binary_hash(block_hashdigest_string);
+    if (binary_hash == "") {
+      // reject invalid input
+      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "', '" << block_hashdigest_string << "'\n";
+      return;
+    }
 
     // parse file offset
     size_t sector_index;
@@ -92,28 +112,18 @@ class tab_hashdigest_reader_t {
       std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "', '" << line.substr(tab_index2+1) << "'\n";
       return;
     }
-
-    // get binary hash
-    std::string binary_hash = lmdb_helper::hex_to_binary_hash(
-                                                block_hashdigest_string);
-
-    // reject invalid input
-    if (binary_hash == "") {
-      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "', '" << block_hashdigest_string << "'\n";
-      return;
-    }
-
-    // get source data
-    lmdb_source_data_t source_data(repository_name, filename, 0, "");
-
-    // get file offset
     uint64_t file_offset = (sector_index -1) * sector_size;
+
+    // add the source entry
+    manager.import_source_name(filename_crc_string, repository_name, filename);
+
+    // add the hash
+    data.clear();
+    data.push_back(hashdb::hash_data_t(binary_hash, file_offset, ""));
+    manager.import_source_data(file_binary_hash, 0, data);
 
     // update progress tracker
     progress_tracker.track();
-
-    // add the entry
-    data.push_back(hashdb::hash_data_t(binary_hash, file_offset, ""));
   }
  
   public:
@@ -127,7 +137,9 @@ class tab_hashdigest_reader_t {
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
                   whitelist_dir(p_whitelist_dir),
-                  cmd(p_cmd) {
+                  cmd(p_cmd),
+                  line_number(0),
+                  data(1) {
   }
 
   // read tab file
@@ -167,14 +179,8 @@ class tab_hashdigest_reader_t {
                  new std::vector<hashdb::hash_data_list_t>;
     while(getline(in, line)) {
       ++line_number;
-      add_line(line, data);
+      add_line(line, manager, progress_tracker);
     }
-
-    // add the source entry
-    manager.import_source_name(file_binary_hash, repository_name, tab_file);
-
-    // add the hashes
-    manager.import_source_data(file_binary_hash, 0, data);
 
     // done
     return std::pair<bool, std::string>(true, "");

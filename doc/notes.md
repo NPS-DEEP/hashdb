@@ -96,4 +96,7 @@ Import hashes.  All interfaces use lock.  Destructor appends to log.
 * `pair(bool, string) is_valid_hashdb` - Return true and "" else false and reason.
 * `pair(bool, string) create_hashdb(hashdb_dir, setting parameters)` - Create a hash database given settings.  Return true and "" else false and reason.
 * `pair(bool, string) rebuild_bloom(hashdb_dir, bloom filter parameters)` - Rebuild the Bloom filter.  Return true and "" else false and reason.
+* `pair(bool, string) check_bloom_settings(bloom filter parameters)` - Check settings.  Return true and "" else false and reason.
+* `uint64_t bloom_M_to_n(M)` Calculate n from M.
+* `uint64_t bloom_n_to_M(n)` Calculate M from n.
 

@@ -27,37 +27,101 @@
 
 #ifndef PROGRESS_TRACKER_HPP
 #define PROGRESS_TRACKER_HPP
-#include "dfxml_writer.hpp"
 
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <sstream>
 #include <iostream>
-#include "globals.hpp"
+#include <fstream>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include "json_helper.hpp"
 
 class progress_tracker_t {
   private:
   const std::string dir;
   const uint64_t total;
-  uint64_t index;
   const bool is_quiet;
-  dfxml_writer logger;
-
+  uint64_t index;
+  std::ofstream os;
+  struct timeval t0;
+  struct timeval t_last_timestamp;
+ 
   // do not allow copy or assignment
   progress_tracker_t(const progress_tracker_t&);
   progress_tracker_t& operator=(const progress_tracker_t&);
 
+  // helper
+  void add_timestamp(const std::string &name) {
+    // adapted from dfxml_writer.cpp
+    struct timeval t1;
+    gettimeofday(&t1,0);
+    struct timeval t;
+
+    // timestamp delta against t_last_timestamp
+    t.tv_sec = t1.tv_sec - t_last_timestamp.tv_sec;
+    if(t1.tv_usec > t_last_timestamp.tv_usec){
+        t.tv_usec = t1.tv_usec - t_last_timestamp.tv_usec;
+    } else {
+        t.tv_sec--;
+        t.tv_usec = (t1.tv_usec+1000000) - t_last_timestamp.tv_usec;
+    }
+    char delta[16];
+    snprintf(delta, 16, "%d.%06d", (int)t.tv_sec, (int)t.tv_usec);
+
+    // reset t_last_timestamp for the next invocation
+    gettimeofday(&t_last_timestamp,0);
+
+    // timestamp total
+    t.tv_sec = t1.tv_sec - t0.tv_sec;
+    if(t1.tv_usec > t0.tv_usec){
+        t.tv_usec = t1.tv_usec - t0.tv_usec;
+    } else {
+        t.tv_sec--;
+        t.tv_usec = (t1.tv_usec+1000000) - t0.tv_usec;
+    }
+    char total_time[16];
+    snprintf(total_time, 16, "%d.%06d", (int)t.tv_sec, (int)t.tv_usec);
+
+    // write out the named timestamp
+    std::stringstream ss;
+    os << "[{\"name\":\"" << name << "\"}"
+       << ", {\"delta\":" << delta << "}"
+       << ", {\"total\":" << total_time << "}]"
+       << "\n";
+  }
+
   public:
   progress_tracker_t(const std::string& p_dir, const uint64_t p_total,
-                     const bool p_is_quiet) :
+                     const bool p_is_quiet, const std::string& cmd) :
                          dir(p_dir),
                          total(p_total),
-                         index(0),
                          is_quiet(p_is_quiet),
-                         logger(dir+"/progress.xml", false) {
-    logger.push("progress");
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_string);
+                         index(0),
+                         os(),
+                         t0(),
+                         t_last_timestamp() {
+    std::string filename(dir+"/progress.xml");
+
+    // fatal if unable to open
+    if (!os.is_open()) {
+      std::cout << "Cannot open progress tracker file " << filename
+                << ": " << strerror(errno) << "\n";
+      exit(1);
+    }
+
+    // get t0
+    gettimeofday(&t0,0);
+    gettimeofday(&t_last_timestamp,0);
+
+    // log environment information
+    os << "# [{\"program\":\"" << PACKAGE_NAME << "\"}"
+       << ", {\"version\":\"" << PACKAGE_VERSION << "\"}"
+       << ", {\"command_line\":\"" << "\""
+       << json_helper::escape_json(cmd) << "\"}]";
   }
 
   void track() {
@@ -73,13 +137,12 @@ class progress_tracker_t {
       if (!is_quiet) {
         std::cout << ss.str() << "..." << std::endl;
       }
-      logger->add_timestamp(ss.str());
-      logger->add_memory_usage(ss.str());
+      add_timestamp(ss.str());
     }
     ++index;
   }
 
-  ~progress_tracker() {
+  ~progress_tracker_t() {
     std::stringstream ss;
     if (total > 0) {
       // total is known
@@ -91,8 +154,9 @@ class progress_tracker_t {
     if (!is_quiet) {
       std::cout << ss.str() << std::endl;
     }
-    logger->add_timestamp(ss.str());
-    logger->add_memory_usage(ss.str());
+    add_timestamp(ss.str());
+
+    os.close();
   }
 };
 

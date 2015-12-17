@@ -19,18 +19,19 @@
 
 # This file assists in building the hashdb_manager tool.
 
-# bin_PROGRAMS = hashdb
+bin_PROGRAMS = hashdb
 
-#EXTRA_DIST = \
-#	liblmdb/COPYRIGHT \
-#	liblmdb/LICENSE
+AM_CPPFLAGS = $(XML_CFLAGS)
 
-#AM_CPPFLAGS = -isystem${top_srcdir}/src/libbloom \
-#	-I${top_srcdir}/src/liblmdb \
-#	-I${top_srcdir}/src/libdfxml \
-#	$(XML_CFLAGS)
-#AM_CFLAGS = $(HASHDB_CFLAGS)
-#AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
+AM_CFLAGS = $(HASHDB_CFLAGS)
+AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
-#include_HEADERS = hashdb.hpp
+hashdb_LDFLAGS = -static
+
+hashdb_LDADD = libhashdb.la
+
+HASHDB_INCS = \
+	main.cpp
+
+hashdb_SOURCES = $(HASHDB_INCS)
 

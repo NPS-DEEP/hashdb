@@ -93,6 +93,7 @@ static uint32_t crc32_tab[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+// crc32 of some bytes
 uint32_t
 crc32(uint32_t crc, const uint8_t *buf, size_t size)
 {
@@ -105,6 +106,14 @@ crc32(uint32_t crc, const uint8_t *buf, size_t size)
 		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
 
 	return crc ^ ~0U;
+}
+
+// crc32 of a string
+uint32_t crc32(const std::string& text)
+{
+        return crc32(0,
+                     reinterpret_cast<const uint8_t*>(text.c_str()),
+                     text.size());
 }
 
 #endif

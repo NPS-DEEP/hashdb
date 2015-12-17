@@ -28,10 +28,9 @@
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
+#include <iostream>
 #include <string>
-#include "bloom_filter_manager.hpp"
-
-std::string option_r = 
+#include "bloom_helper.hpp"
 
 void usage(const uint32_t sector_size,
            const uint32_t block_size,
@@ -41,6 +40,10 @@ void usage(const uint32_t sector_size,
            const uint32_t bloom_M_hash_size,
            const uint32_t bloom_k_hash_functions) {
 
+  // bloom filter values
+  const std::string bloom_is_used_string =
+                        (bloom_is_used) ? "enabled" : "disabled";
+  uint64_t bloom_n = bloom_M_to_n(bloom_M_hash_size);
 
   // print usage
   std::cout
@@ -65,9 +68,9 @@ void usage(const uint32_t sector_size,
   << "    -s, --sector_size=<n>\n"
   << "      <sector_size>, in bytes, or 1 for any alignment (default " << sector_size << ")\n"
   << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(bloom_is_used) << ")\n"
+  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_is_used_string << ")\n"
   << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(bloom_M_hash_size) << ")\n"
+  << "      expected total number <n> of distinct hashes (default " << bloom_n << ")\n"
   << "    --bloom_kM <k:M>\n"
   << "      number of hash functions <k> and bits per hash <M> (default <k>=" << bloom_k_hash_functions << "\n"
   << "      and <M>=" << bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
@@ -110,21 +113,6 @@ void usage(const uint32_t sector_size,
   << "    Parameters:\n"
   << "    <hashdb>       the hash database to insert the imported hashes into\n"
   << "    <NIST file>   the NIST file to import hashes from\n"
-  << "\n"
-  << "  import_dfxml [-r <repository name>] <hashdb> <DFXML file>\n"
-  << "    Import hashes from file <DFXML file> into hash database <hashdb>.\n"
-  << "\n"
-  << "    Options:\n"
-  << "    -r, --repository_name=<repository name>\n"
-  << "      The repository name to use for the set of hashes being imported.\n"
-  << "      (default is \"repository_\" followed by the <import directory> path).\n"
-  << "    -w, --whitelist_dir\n"
-  << "      The path to a whitelist hash database.  Hashes matching this database\n"
-  << "      will not be imported.\n"
-  << "\n"
-  << "    Parameters:\n"
-  << "    <hashdb>       the hash database to insert the imported hashes into\n"
-  << "    <NIST file>   the DFXML file to import hashes from\n"
   << "\n"
   << "Database manipulation:\n"
   << "  add <source hashdb> <destination hashdb>\n"
@@ -281,9 +269,9 @@ void usage(const uint32_t sector_size,
   << "\n"
   << "    Options:\n"
   << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_state_to_string(bloom_is_used) << ")\n"
+  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_is_used_string << ")\n"
   << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_filter_manager_t::approximate_M_to_n(bloom_M_hash_size) << ")\n"
+  << "      expected total number <n> of distinct hashes (default " << bloom_n << ")\n"
   << "    --bloom_kM <k:M>\n"
   << "      number of hash functions <k> and bits per hash <M> (default <k>=" << bloom_k_hash_functions << "\n"
   << "      and <M>=" << bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"

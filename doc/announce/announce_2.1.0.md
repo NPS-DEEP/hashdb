@@ -53,6 +53,12 @@ rather than verifying the transaction afterwords.
  the source information since it will not be included
  the next time that hash is matched.
 
+* Discontinue support for importing and exporting data in DFXML format.
+Import modes now supported are:
+    * Recursively from a directory path.
+    * From tab-delimited data (NSRL).
+    * From bulk_extractor.
+
 ## Bug fix
 * The Windows installer is corrected to install to the 64-bit executable directory rather than to the 32-bit directory.
 

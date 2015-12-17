@@ -379,14 +379,6 @@ void run_command() {
     }
     commands::import_tab(args[0], args[1], repository_name, whitelist_dir, cmd);
 
-  } else if (command == "import_dfxml") {
-    check_params("rw", 2);
-    if (repository_name == "") {
-      repository_name = args[1];
-    }
-    commands::import_dfxml(args[0], args[1], repository_name, whitelist_dir,
-                           cmd);
-
   // database manipulation
   } else if (command == "add") {
     check_params("", 2);
@@ -461,7 +453,8 @@ void run_command() {
   // tuning
   } else if (command == "rebuild_bloom") {
     check_params("ABC", 1);
-    commands::rebuild_bloom(args[0], cmd);
+    commands::rebuild_bloom(args[0], bloom_is_used, bloom_M_hash_size,
+                            bloom_k_hash_functions, cmd);
 
   // performance analysis
   } else if (command == "add_random") {

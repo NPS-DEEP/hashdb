@@ -72,32 +72,6 @@ void *perform_mdb_env_sync(void* env) {
 
 class lmdb_helper {
 
-  private:
-  static inline uint8_t tohex(uint8_t c) {
-    switch(c) {
-      case 0 : return '0'; break;
-      case 1 : return '1'; break;
-      case 2 : return '2'; break;
-      case 3 : return '3'; break;
-      case 4 : return '4'; break;
-      case 5 : return '5'; break;
-      case 6 : return '6'; break;
-      case 7 : return '7'; break;
-      case 8 : return '8'; break;
-      case 9 : return '9'; break;
-      case 10 : return 'a'; break;
-      case 11 : return 'b'; break;
-      case 12 : return 'c'; break;
-      case 13 : return 'd'; break;
-      case 14 : return 'e'; break;
-      case 15 : return 'f'; break;
-      default:
-        std::cerr << "char " << (uint32_t)c << "\n";
-        assert(0);
-        return 0; // for mingw compiler
-    }
-  }
-
   public:
   // write value into encoding, return pointer past value written.
   // each write will add no more than 10 bytes.
@@ -374,99 +348,6 @@ class lmdb_helper {
 
   static std::string get_string(const MDB_val& val) {
     return std::string(static_cast<char*>(val.mv_data), val.mv_size);
-  }
-
-  /**
-   * Return empty if hexdigest length is not even or has any invalid digits.
-   */
-  static std::string hex_to_binary_hash(const std::string& hex_string) {
-
-    size_t size = hex_string.size();
-    // size must be even
-    if (size%2 != 0) {
-      std::cout << "hex input not aligned on even boundary in '"
-                << hex_string << "'\n";
-      return "";
-    }
-
-    size_t i = 0;
-    size_t j = 0;
-    uint8_t bin[size];
-    for (; i<size; i+=2) {
-      uint8_t c0 = hex_string[i];
-      uint8_t c1 = hex_string[i+1];
-      uint8_t d0;
-      uint8_t d1;
-
-      if(c0>='0' && c0<='9') d0 = c0-'0';
-      else if(c0>='a' && c0<='f') d0 = c0-'a'+10;
-      else if(c0>='A' && c0<='F') d0 = c0-'A'+10;
-      else {
-        std::cout << "unexpected hex character in '"
-                << hex_string << "'\n";
-        return "";
-      }
-
-      if(c1>='0' && c1<='9') d1 = c1-'0';
-      else if(c1>='a' && c1<='f') d1 = c1-'a'+10;
-      else if(c1>='A' && c1<='F') d1 = c1-'A'+10;
-      else {
-        std::cout << "unexpected hex character in '"
-                << hex_string << "'\n";
-        return "";
-      }
-
-      bin[j++] = d0 << 4 | d1;
-    }
-    return std::string(reinterpret_cast<char*>(bin), j);
-  }
-
-  static std::string binary_hash_to_hex(const std::string& binary_hash) {
-    std::stringstream ss;
-    for (size_t i=0; i<binary_hash.size(); i++) {
-      uint8_t c = binary_hash.c_str()[i];
-      ss << tohex(c>>4) << tohex(c&0x0f);
-    }
-    return ss.str();
-  }
-
-  // return 16 bytes of random hash
-  static std::string random_binary_hash() {
-    char hash[16];
-    for (size_t i=0; i<16; i++) {
-      // note: uint32_t not used because windows rand only uses 15 bits.
-      hash[i]=(static_cast<char>(rand()));
-    }
-    return std::string(hash, 16);
-  }
-
-  // helper to get valid json output, taken from
-  // http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
-  static std::string escape_json(const std::string& input) {
-    std::ostringstream ss;
-    //for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
-    //C++98/03:
-    for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-      switch (*iter) {
-        case '\\': ss << "\\\\"; break;
-        case '"': ss << "\\\""; break;
-        case '/': ss << "\\/"; break;
-        case '\b': ss << "\\b"; break;
-        case '\f': ss << "\\f"; break;
-        case '\n': ss << "\\n"; break;
-        case '\r': ss << "\\r"; break;
-        case '\t': ss << "\\t"; break;
-        default: ss << *iter; break;
-      }
-    }
-    return ss.str();
-  }
-
-  static __attribute((noreturn)) void fail(const std::string& message, int rc) {
-    std::stringstream ss;
-    ss << "Runtime error: " << message << ": " << mdb_strerror(rc) << "\n";
-    std::cerr << ss.str();
-    throw std::runtime_error(ss.str());
   }
 };
 

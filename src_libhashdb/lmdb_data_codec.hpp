@@ -31,9 +31,47 @@
 #include <iostream>
 #include "lmdb_helper.h"
 
-// #define DEBUG
+//zz
+#define DEBUG
 
 class lmdb_data_codec {
+
+  private:
+#ifdef DEBUG
+  // help debug
+  static inline uint8_t tohex(uint8_t c) {
+    switch(c) {
+      case 0 : return '0'; break;
+      case 1 : return '1'; break;
+      case 2 : return '2'; break;
+      case 3 : return '3'; break;
+      case 4 : return '4'; break;
+      case 5 : return '5'; break;
+      case 6 : return '6'; break;
+      case 7 : return '7'; break;
+      case 8 : return '8'; break;
+      case 9 : return '9'; break;
+      case 10 : return 'a'; break;
+      case 11 : return 'b'; break;
+      case 12 : return 'c'; break;
+      case 13 : return 'd'; break;
+      case 14 : return 'e'; break;
+      case 15 : return 'f'; break;
+      default:
+        std::cerr << "char " << (uint32_t)c << "\n";
+        assert(0);
+        return 0; // for mingw compiler
+    }
+  }
+  static std::string binary_hash_to_hex(const std::string& binary_hash) {
+    std::stringstream ss;
+    for (size_t i=0; i<binary_hash.size(); i++) {
+      uint8_t c = binary_hash.c_str()[i];
+      ss << tohex(c>>4) << tohex(c&0x0f);
+    }
+    return ss.str();
+  }
+#endif
 
   public:
   class ddd_t {
@@ -95,7 +133,7 @@ class lmdb_data_codec {
     std::string string_encoding(reinterpret_cast<char*>(encoding), (p-encoding));
 #ifdef DEBUG
     std::cout << "encoding " << data1 << ", " << data2 << "\n"
-              << "      to " << lmdb_helper::binary_hash_to_hex(string_encoding)
+              << "      to " << binary_hash_to_hex(string_encoding)
               << "\n";
 #endif
 
@@ -120,7 +158,7 @@ class lmdb_data_codec {
     }
 
 #ifdef DEBUG
-    std::cout << "decoding " << lmdb_helper::binary_hash_to_hex(encoding)
+    std::cout << "decoding " << binary_hash_to_hex(encoding)
               << "      to " << data1 << ", " << data2 << "\n";
 #endif
 
@@ -145,7 +183,7 @@ class lmdb_data_codec {
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding ppp data " << d1 << ", " << d2 << ", " << d3 << "\n"
               << "      to binary data "
-              << lmdb_helper::binary_hash_to_hex(encoding_string)
+              << binary_hash_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -163,7 +201,7 @@ class lmdb_data_codec {
     p = lmdb_helper::decode_uint64(p, &ddd.d3);
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::binary_hash_to_hex(encoding);
+    std::string hex_encoding = binary_hash_to_hex(encoding);
     std::cout << "decoding ddd data " << hex_encoding
               << " size " << encoding.size() << "\n"
               << " to lmdb_source_data "
@@ -198,7 +236,7 @@ class lmdb_data_codec {
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding ss data " << s1 << ", " << s2 << "\n"
               << "      to binary data "
-              << lmdb_helper::binary_hash_to_hex(encoding_string)
+              << binary_hash_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -217,7 +255,7 @@ class lmdb_data_codec {
     p = lmdb_helper::decode_sized_string(p, &s2);
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::binary_hash_to_hex(encoding);
+    std::string hex_encoding = binary_hash_to_hex(encoding);
     std::cout << "decoding ss data " << hex_encoding
               << " size " << encoding.size() << "\n"
               << " to lmdb_source_data "
