@@ -36,16 +36,17 @@
 #include "hashdb_settings.hpp"
 #include "hashdb_changes.hpp"
 #include "../src_libhashdb/hashdb.hpp"
+#include "../src/hex_helper.hpp"
 #include "file_helper.hpp"
 #include "directory_helper.hpp"
 
 static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
-static const std::string binary_0(lmdb_helper::hex_to_binary_hash("00"));
-static const std::string binary_aa(lmdb_helper::hex_to_binary_hash("aa"));
-static const std::string binary_bb(lmdb_helper::hex_to_binary_hash("bb"));
-static const std::string binary_cc(lmdb_helper::hex_to_binary_hash("cc"));
-static const std::string binary_ff(lmdb_helper::hex_to_binary_hash("ff"));
-//static const std::string binary_big(lmdb_helper::hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
+static const std::string binary_0(hex_to_binary_hash("00"));
+static const std::string binary_aa(hex_to_binary_hash("aa"));
+static const std::string binary_bb(hex_to_binary_hash("bb"));
+static const std::string binary_cc(hex_to_binary_hash("cc"));
+static const std::string binary_ff(hex_to_binary_hash("ff"));
+//static const std::string binary_big(hex_to_binary_hash("0123456789abcdef2123456789abcdef"));
 
 void make_new_hashdb_dir(std::string p_hashdb_dir) {
   // remove any previous hashdb_dir

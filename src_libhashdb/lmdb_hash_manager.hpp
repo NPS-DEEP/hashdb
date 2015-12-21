@@ -35,6 +35,7 @@
 #include "lmdb_data_codec.hpp"
 #include "bloom_filter_manager.hpp"
 #include "hashdb_changes.hpp"
+#include "hashdb.hpp" // for id_offset_pairs_t
 #include <vector>
 #include <unistd.h>
 #include <sstream>

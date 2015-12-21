@@ -100,7 +100,7 @@ static std::string hex_to_binary_hash(const std::string& hex_string) {
 /**
  * Return hexadecimal representation of the binary hash.
  */
-static std::string binary_hash_to_hex(const std::string& binary_hash) {
+std::string binary_hash_to_hex(const std::string& binary_hash) {
   std::stringstream ss;
   for (size_t i=0; i<binary_hash.size(); i++) {
     uint8_t c = binary_hash.c_str()[i];
@@ -112,7 +112,7 @@ static std::string binary_hash_to_hex(const std::string& binary_hash) {
 /**
  * Return 16 bytes of random hash.
  */
-static std::string random_binary_hash() {
+std::string random_binary_hash() {
   char hash[16];
   for (size_t i=0; i<16; i++) {
     // note: uint32_t not used because windows rand only uses 15 bits.

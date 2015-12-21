@@ -47,9 +47,10 @@ class tab_hashdigest_reader_t {
   const std::string& tab_file;
   const std::string& repository_name;
   const std::string& whitelist_dir;
+  const bool skip_low_entropy;
   const std::string& cmd;
   size_t line_number;
-  std::vector<hashdb::hash_data_list_t> data; // only gets size 1
+  hashdb::hash_data_list_t data; // only gets size 1
 
   static const uint32_t sector_size = 512;
 
@@ -132,18 +133,20 @@ class tab_hashdigest_reader_t {
                      const std::string& p_tab_file,
                      const std::string& p_repository_name,
                      const std::string& p_whitelist_dir,
+                     const bool p_skip_low_entropy,
                      const std::string& p_cmd) :
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
                   whitelist_dir(p_whitelist_dir),
+                  skip_low_entropy(p_skip_low_entropy),
                   cmd(p_cmd),
                   line_number(0),
-                  data(1) {
+                  data() { // data(1) would be nice since 1 element only
   }
 
   // read tab file
-  std::pair<bool, std::string> read(std::string tab_file) {
+  std::pair<bool, std::string> read() {
 
     // validate hashdb_dir path
     std::pair<bool, std::string> pair;
@@ -161,22 +164,20 @@ class tab_hashdigest_reader_t {
     }
 
     // validate whitelist_dir path
-    std::pair<bool, std::string> pair;
     pair = hashdb::is_valid_hashdb(whitelist_dir);
     if (pair.first == false) {
       return pair;
     }
 
     // open hashdb manager
-    hashdb::import_manager_t manager(hashdb_dir, whitelist_dir, false)
+    hashdb::import_manager_t manager(hashdb_dir, whitelist_dir,
+                                     skip_low_entropy, cmd);
 
     // open progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, 0, false);
+    progress_tracker_t progress_tracker(hashdb_dir, 0, false, cmd);
 
     // process lines
     std::string line;
-    std::vector<hashdb::hash_data_list_t> data =
-                 new std::vector<hashdb::hash_data_list_t>;
     while(getline(in, line)) {
       ++line_number;
       add_line(line, manager, progress_tracker);

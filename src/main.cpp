@@ -50,6 +50,7 @@
 #endif
 #include "usage.hpp"
 #include "commands.hpp"
+#include "bloom_helper.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -102,9 +103,6 @@ static std::string cmd= "";         // the command line invocation text
 static std::string command = "";    // the hashdb command
 static std::vector<std::string> args;
 
-// parsing
-static size_t parameter_count = 0;
-
 // helper functions
 void check_params();
 void run_command();
@@ -131,8 +129,26 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return split(s, delim, elems);
 }
 
+// from dfxml/dfxml_writer.h
+static std::string make_command_line(int argc,char * const *argv){
+    std::string command_line;
+    for(int i=0;i<argc;i++){
+        // append space separator between arguments
+        if(i>0) command_line.push_back(' ');
+        if (strchr(argv[i],' ') != NULL) {
+            // the argument has a space, so quote the argument
+            command_line.append("\"");
+            command_line.append(argv[i]);
+            command_line.append("\"");
+        } else {
+            // the argument has no space, so append as is
+            command_line.append(argv[i]);
+        }
+    }
+    return command_line;
+}
+
 int main(int argc,char **argv) {
-  command_line = dfxml_writer::make_command_line(argc, argv);
 
 #ifdef HAVE_MCHECK
   mtrace();
@@ -185,7 +201,6 @@ int main(int argc,char **argv) {
       }
       case 'H': {	// Help
         usage();
-        detailed_usage();
         exit(0);
         break;
       }
@@ -201,7 +216,7 @@ int main(int argc,char **argv) {
       }
 
       case 'q': {	// quiet mode
-        globals_t::quiet_mode = true;
+        has_quiet = true;
         break;
       }
 
@@ -236,11 +251,14 @@ int main(int argc,char **argv) {
 
       // bloom filter settings
       case 'A': {	// bloom <state>
-        has_bloom = true;
-        bool is_ok_bloom_state = string_to_bloom_state(optarg, bloom_is_used);
-        if (!is_ok_bloom_state) {
+        std::string bloom_state_string(optarg);
+        if (bloom_state_string == "enabled") {
+          has_bloom = true;
+        } else if (bloom_state_string == "disabled") {
+          has_bloom = false;
+        } else {
           std::cerr << "Invalid value for bloom filter state: '"
-                    << optarg << "'.  " << see_usage << "\n";
+                    << bloom_state_string << "'.  " << see_usage << "\n";
           exit(1);
         }
         break;
@@ -248,7 +266,7 @@ int main(int argc,char **argv) {
       case 'B': {	// bloom_n <n> expected total number of hashes
         has_bloom_n = true;
         uint64_t n = std::atol(optarg);
-        bloom_M_hash_size = bloom_filter_manager_t::approximate_n_to_M(n);
+        bloom_M_hash_size = bloom_n_to_M(n);
         bloom_k_hash_functions = 3;
         break;
       }
@@ -293,6 +311,9 @@ int main(int argc,char **argv) {
     args.push_back(std::string(argv[i]));
   }
 
+  // compose the command line
+  cmd = make_command_line(argc, argv);
+
   // run the command
   run_command();
 
@@ -306,41 +327,41 @@ int main(int argc,char **argv) {
 
 void check_params(const std::string& options, int param_count) {
   // fail if an option is not in the options set
-  if (has_sector_size && options.find("s") {
+  if (has_sector_size && options.find("s")) {
     std::cerr << "The -s sector_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_block_size && options.find("b") {
+  if (has_block_size && options.find("b")) {
     std::cerr << "The -b block_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_repository_name && options.find("r") {
+  if (has_repository_name && options.find("r")) {
     std::cerr << "The -r repository_name option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_whitelist_dir && options.find("s") {
+  if (has_whitelist_dir && options.find("s")) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_no_low_entropy && options.find("n") {
+  if (has_no_low_entropy && options.find("n")) {
     std::cerr << "The -n no_low_entropy option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_bloom && options.find("A") {
+  if (has_bloom && options.find("A")) {
     std::cerr << "The has_bloom option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_bloom_n && options.find("B") {
+  if (has_bloom_n && options.find("B")) {
     std::cerr << "The has_bloom_n option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_bloom_kM && options.find("C") {
+  if (has_bloom_kM && options.find("C")) {
     std::cerr << "The has_bloom_kM option is not allowed for this command.\n";
     exit(1);
   }
 
   // fail if param_count does not match
-  if (param_count != -1 && param_count != size(params)) {
+  if (param_count != -1 && param_count != args.size()) {
     std::cerr << "The number of paramters provided is not valid for this command.\n";
     exit(1);
   }
@@ -361,7 +382,7 @@ void run_command() {
   if (command == "create") {
     check_params("bsABC", 1);
     commands::create(args[0], sector_size, block_size,
-               bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions cmd);
+               bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions, cmd);
 
   // import
   } else if (command == "import") {
@@ -410,7 +431,7 @@ void run_command() {
 
   } else if (command == "subtract_repository") {
     check_params("", 3);
-    commands::subtract_hash(args[0], args[1], args[2], cmd);
+    commands::subtract_repository(args[0], args[1], args[2], cmd);
 
   } else if (command == "deduplicate") {
     check_params("", 2);
@@ -433,10 +454,6 @@ void run_command() {
   } else if (command == "sources") {
     check_params("", 1);
     commands::sources(args[0], cmd);
-
-  } else if (command == "histogram") {
-    check_params("", 1);
-    commands::histogram(args[0], cmd);
 
   } else if (command == "histogram") {
     check_params("", 1);

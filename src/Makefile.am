@@ -28,7 +28,7 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 hashdb_LDFLAGS = -static
 
-hashdb_LDADD = libhashdb.la
+hashdb_LDADD = ../src_libhashdb/libhashdb.la
 
 HASHDB_INCS = \
 	main.cpp

@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <vector>
 
+/*
 // helper for hash copy
 static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
                         const lmdb_ro_manager_t& ro_manager,
@@ -52,6 +53,7 @@ static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
                     source_data,
                     hash_it_data.hash_label);
 }
+*/
 
 namespace commands {
 
@@ -60,7 +62,7 @@ namespace commands {
               const uint32_t sector_size,
               const uint32_t block_size,
               const bool bloom_is_used,
-              const uint32_t bloom_k_hash_functons,
+              const uint32_t bloom_k_hash_functions,
               const uint32_t bloom_M_hash_size,
               const std::string& cmd) {
 
@@ -96,8 +98,8 @@ namespace commands {
                      const std::string& whitelist_dir,
                      const std::string& cmd) {
 
-    reader = tab_hashdigest_reader_t(
-           hashdb_dir, tab_file, repository_name, whitelist_dir, cmd);
+    tab_hashdigest_reader_t reader(hashdb_dir, tab_file, repository_name,
+                                   whitelist_dir, false, cmd);
 
     std::pair<bool, std::string> pair = reader.read();
     if (pair.first == true) {
@@ -152,14 +154,6 @@ namespace commands {
                        const std::string& hashdb_dir2,
                        const std::string& dest_dir,
                        const std::string& cmd) {
-    std::cout << "TBD\n";
-  }
-
-  // subtract_hash
-  static void subtract_hash(const std::string& hashdb_dir1,
-                            const std::string& hashdb_dir2,
-                            const std::string& dest_dir,
-                            const std::string& cmd) {
     std::cout << "TBD\n";
   }
 
@@ -243,8 +237,6 @@ namespace commands {
   // ************************************************************
   // rebuild_bloom
   static void rebuild_bloom(const std::string& hashdb_dir,
-                            const std::string& hex_file_hash,
-                            const std::string& count_string,
                             const bool bloom_is_used,
                             const uint32_t bloom_k_hash_functons,
                             const uint32_t bloom_M_hash_size,
@@ -257,9 +249,8 @@ namespace commands {
   // ************************************************************
   // add_random
   static void add_random(const std::string& hashdb_dir,
-                         const bool bloom_is_used,
-                         const uint32_t bloom_k_hash_functons,
-                         const uint32_t bloom_M_hash_size,
+                         const std::string& hex_file_hash,
+                         const std::string& count_string,
                          const std::string& cmd) {
     std::cout << "TBD\n";
   }
@@ -1459,7 +1450,6 @@ namespace commands {
     logger.close();
   }
 */
-};
 
 #endif
 
