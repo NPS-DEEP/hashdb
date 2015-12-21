@@ -86,8 +86,8 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/history.xml").c_str());
   remove((hashdb_dir + "/_old_history.xml").c_str());
   remove((hashdb_dir + "/log.xml").c_str());
-  remove((hashdb_dir + "/settings.xml").c_str());
-  remove((hashdb_dir + "/_old_settings.xml").c_str());
+  remove((hashdb_dir + "/settings.json").c_str());
+  remove((hashdb_dir + "/_old_settings.json").c_str());
   remove((hashdb_dir + "/temp_dfxml_output").c_str());
 
   if (access(hashdb_dir.c_str(), F_OK) == 0) {

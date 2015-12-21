@@ -58,7 +58,7 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
 
   // write default settings
   hashdb_settings_t settings(3, 512, 512, true, 28, 3);
-  hashdb_settings_store_t::write_settings(p_hashdb_dir, settings);
+  hashdb_settings_store::write_settings(p_hashdb_dir, settings);
 }
 
 // ************************************************************

@@ -44,10 +44,14 @@ bloom_filter_manager_test_CPPFLAGS = \
 
 lmdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb \
+	-I${top_srcdir}/rapidjson \
 	-isystem${top_srcdir}/src_libhashdb/libbloom \
 	-isystem${top_srcdir}/src_libhashdb/libdfxml \
 	-isystem${top_srcdir}/src_libhashdb/liblmdb \
 	$(XML_CFLAGS)
+
+hashdb_managers_test_CPPFLAGS = \
+	-I${top_srcdir}/rapidjson
 
 bloom_filter_manager_test_LDADD = ../src_libhashdb/libhashdb.la
 lmdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la

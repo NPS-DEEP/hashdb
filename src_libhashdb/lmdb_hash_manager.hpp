@@ -113,12 +113,24 @@ class lmdb_hash_manager_t {
     }
   }
 
+  // helper
+  hashdb_settings_t read_settings(std::string p_hashdb_dir) {
+    hashdb_settings_t p_settings;
+    std::pair<bool, std::string> pair =
+                hashdb_settings_store::read_settings(p_hashdb_dir, p_settings);
+    if (pair.first == false) {
+      std::cerr << pair.second << "\n";
+      exit(1);
+    }
+    return p_settings;
+  }
+
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
                       const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(hashdb_settings_store_t::read_settings(hashdb_dir)),
+       settings(read_settings(hashdb_dir)),
        bloom_filter_manager(hashdb_dir,
                             file_mode,
                             settings.bloom_is_used,

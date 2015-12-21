@@ -72,28 +72,9 @@ namespace hashdb {
   std::pair<bool, std::string> is_valid_hashdb(
                                       const std::string& hashdb_dir) {
 
-    // path must exist
-    if (access(hashdb_dir.c_str(), F_OK) != 0) {
-      return std::pair<bool, std::string>(false, "No hashdb at path '"
-                       + hashdb_dir + "'.");
-    }
-
-    // settings file must exist
-    std::string settings_filename = hashdb_dir + "/settings.xml";
-    if (access(settings_filename.c_str(), F_OK) != 0) {
-        return std::pair<bool, std::string>(false, "Path '"
-                     + hashdb_dir + "' is not a hashdb database.");
-    }
-
-    // settings version must be compatible
-    hashdb_settings_t settings(
-                        hashdb_settings_store_t::read_settings(hashdb_dir));
-    if (settings.data_store_version < 3) {
-        return std::pair<bool, std::string>(false, "The hashdb at path '"
-                     + hashdb_dir + "' is not compatible.");
-    }
-
-    return std::pair<bool, std::string>(true, "");
+    // validate hashdb by performing a correct read of settings
+    hashdb_settings_t settings;
+    return hashdb_settings_store::read_settings(hashdb_dir, settings);
   }
 
   /**
@@ -139,7 +120,7 @@ namespace hashdb {
     settings.bloom_k_hash_functions = bloom_k_hash_functions;
 
     // create the settings file
-    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+    hashdb_settings_store::write_settings(hashdb_dir, settings);
 
     // create new LMDB stores
     lmdb_hash_manager_t(hashdb_dir, RW_NEW);
@@ -175,7 +156,10 @@ namespace hashdb {
 
     // read existing settings
     hashdb_settings_t settings;
-    settings = hashdb_settings_store_t::read_settings(hashdb_dir);
+    pair = hashdb_settings_store::read_settings(hashdb_dir, settings);
+    if (pair.first == false) {
+      assert(0);
+    }
 
     // change the bloom filter settings
     settings.bloom_is_used = bloom_is_used;
@@ -183,7 +167,7 @@ namespace hashdb {
     settings.bloom_k_hash_functions = bloom_k_hash_functions;
 
     // write back the changed settings
-    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
+    hashdb_settings_store::write_settings(hashdb_dir, settings);
 
     logger_t logger(hashdb_dir, command_string);
 

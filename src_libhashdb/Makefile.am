@@ -47,6 +47,7 @@ libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 AM_CPPFLAGS = -isystem${top_srcdir}/src_libhashdb/libbloom \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
 	-I${top_srcdir}/src_libhashdb/libdfxml \
+	-I${top_srcdir}/rapidjson \
 	$(XML_CFLAGS)
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
@@ -61,7 +62,6 @@ LIBHASHDB_INCS = \
 	hashdb_import_manager_private.hpp \
 	hashdb_scan_manager_private.hpp \
 	hashdb_settings.hpp \
-	hashdb_settings_reader.hpp \
 	hashdb_settings_store.hpp \
 	hashdb_tools.hpp \
 	history_manager.hpp \

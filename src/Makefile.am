@@ -21,7 +21,8 @@
 
 bin_PROGRAMS = hashdb
 
-AM_CPPFLAGS = $(XML_CFLAGS)
+AM_CPPFLAGS = $(XML_CFLAGS) \
+	-I${top_srcdir}/rapidjson
 
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)

@@ -19,6 +19,7 @@ AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile
                  src_libhashdb/Makefile
+                 rapidjson/Makefile
                  src/Makefile
                  test/Makefile
                  man/Makefile

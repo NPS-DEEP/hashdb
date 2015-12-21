@@ -26,8 +26,9 @@
 #define    HASHDB_SETTINGS_STORE_HPP
 
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_reader.hpp"
-#include <dfxml_writer.h>
+#include "rapidjson.h"
+#include "writer.h"
+#include "document.h"
 #include <unistd.h>
 #include <string>
 #include <sstream>
@@ -35,43 +36,84 @@
 #include <iostream>
 
 // hashdb tuning options
-class hashdb_settings_store_t {
-  public:
+namespace hashdb_settings_store {
 
-  static hashdb_settings_t read_settings(const std::string& hashdb_dir) {
+  std::pair<bool, std::string> read_settings(const std::string& hashdb_dir,
+                                             hashdb_settings_t& settings) {
 
-    // hashdb_dir containing settings.xml must exist
-    std::string filename = hashdb_dir + "/settings.xml";
+    // path must exist
+    if (access(hashdb_dir.c_str(), F_OK) != 0) {
+      return std::pair<bool, std::string>(false, "No hashdb at path '"
+                       + hashdb_dir + "'.");
+    }
+
+    // settings file must exist
+    std::string filename = hashdb_dir + "/settings.json";
     if (access(filename.c_str(), F_OK) != 0) {
-      std::cerr << "Unable to read database '" << hashdb_dir
-                << "'.\nAborting.\n";
-      exit(1);
+        return std::pair<bool, std::string>(false, "Path '"
+                     + hashdb_dir + "' is not a hashdb database.");
     }
 
-    // read settings
-    hashdb_settings_t settings;
-    hashdb_settings_reader_t::read_settings(filename, settings);
-
-    // validate that the settings version is compatible with hashdb
-    if (settings.data_store_version != settings.expected_data_store_version) {
-      std::cerr << "Database version error in data store version.\n"
-                << "Database '" << hashdb_dir
-                << "' uses data store version " << settings.data_store_version
-                << "\nbut hashdb requires data store version "
-                << settings.expected_data_store_version
-                << ".\nAborting.\n";
-      exit(1);
+    // open settings file
+    std::ifstream in(filename);
+    if (!in.is_open()) {
+        return std::pair<bool, std::string>(false,
+               "Unable to open settings file at Path '" + hashdb_dir + ".");
     }
 
-    return settings;
+    // find and read the first line of content
+    std::string line;
+    while(getline(in, line)) {
+      if (line.size() == 0 || line[0] == '#') {
+        continue;
+      }
+      break;
+    }
+    in.close();
+    if (line.size() == 0) {
+      // no first line
+      return std::pair<bool, std::string>(false,
+                      "Empty settings file at path '" + hashdb_dir + "'.");
+    }
+
+    // parse settings into a JSON DOM document
+    rapidjson::Document document;
+    if (document.Parse(line.c_str()).HasParseError()) {
+
+      return std::pair<bool, std::string>(false,
+                      "Invalid settings file at path '" + hashdb_dir + "'.");
+    }
+    if (!document.IsObject()) {
+      return std::pair<bool, std::string>(false,
+                      "Invalid JSON in settings file at path '" +
+                      hashdb_dir + "'.");
+    }
+
+    settings.data_store_version = document["data_store_version"].GetUint64();
+    settings.sector_size = document["sector_size"].GetUint64();
+    settings.block_size = document["block_size"].GetUint64();
+    settings.bloom_is_used = document["bloom_is_used"].GetBool();
+    settings.bloom_M_hash_size = document["bloom_M_hash_size"].GetUint64();
+    settings.bloom_k_hash_functions =
+                              document["bloom_k_hash_functions"].GetUint64();
+
+    // settings version must be compatible
+    if (settings.data_store_version < settings.expected_data_store_version) {
+      return std::pair<bool, std::string>(false, "The hashdb at path '"
+                                     + hashdb_dir + "' is not compatible.");
+    }
+
+    // accept the read
+    return std::pair<bool, std::string>(true, "");
   }
+
 
   static void write_settings(const std::string& hashdb_dir,
                              const hashdb_settings_t& settings) {
 
     // calculate the settings filename
-    std::string filename = hashdb_dir + "/settings.xml";
-    std::string filename_old = hashdb_dir + "/_old_settings.xml";
+    std::string filename = hashdb_dir + "/settings.json";
+    std::string filename_old = hashdb_dir + "/_old_settings.json";
 
     // if present, move existing settings to old
     if (access(filename.c_str(), F_OK) == 0) {
@@ -84,11 +126,35 @@ class hashdb_settings_store_t {
       }
     }
 
+    // create the json settings document
+    rapidjson::Document settings_document;
+    rapidjson::Document::AllocatorType& allocator =
+                                          settings_document.GetAllocator();
+    settings_document.SetObject();
+    settings_document.AddMember("data_store_version",
+                                settings.data_store_version, allocator);
+    settings_document.AddMember("sector_size",
+                                settings.sector_size, allocator);
+    settings_document.AddMember("block_size",
+                                settings.block_size, allocator);
+    settings_document.AddMember("bloom_is_used",
+                                settings.bloom_is_used, allocator);
+    settings_document.AddMember("bloom_M_hash_size",
+                                settings.bloom_M_hash_size, allocator);
+    settings_document.AddMember("bloom_k_hash_functions",
+                                settings.bloom_k_hash_functions, allocator);
+
+    // create the json settings string
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    settings_document.Accept(writer);
+    std::string json_settings_string = strbuf.GetString();
+
     // write out the settings
-    dfxml_writer x(filename, false);
-    x.push("settings");
-    settings.report_settings(x); // hashdb_settings_xml
-    x.pop();
+    std::ofstream out;
+    out.open(filename);
+    out << json_settings_string << "\n";
+    out.close();
   }
 };
 

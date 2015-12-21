@@ -31,8 +31,7 @@
 #include <iostream>
 #include "lmdb_helper.h"
 
-//zz
-#define DEBUG
+//#define DEBUG
 
 class lmdb_data_codec {
 
