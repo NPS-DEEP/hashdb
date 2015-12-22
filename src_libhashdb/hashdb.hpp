@@ -36,6 +36,7 @@
 
 class hashdb_import_manager_private_t;
 class hashdb_scan_manager_private_t;
+struct timeval;
 
 namespace hashdb {
 
@@ -138,6 +139,13 @@ namespace hashdb {
                      const uint32_t bloom_k_hash_functions,
                      const std::string& command_string);
 
+  /**
+   * Print environment information to the stream.  Specifically, print
+   * lines starting with the pound character followed by version information,
+   * the command line, the username, if available, and the date.
+   */
+  void print_environment(const std::string& command_line, std::ostream& os);
+ 
   // ************************************************************
   // import
   // ************************************************************
@@ -309,6 +317,46 @@ namespace hashdb {
      * Return sizes of LMDB databases.
      */
     std::string size() const;
+  };
+
+  // ************************************************************
+  // timestamp
+  // ************************************************************
+  /**
+   * Provide a timestamp service.
+   */
+  class timestamp_t {
+
+    private:
+    struct timeval* t0;
+    struct timeval* t_last_timestamp;
+
+    public:
+
+    /**
+     * Create a timestamp service.
+     */
+    timestamp_t();
+
+    /**
+     * Release timestamp resources.
+     */
+    ~timestamp_t();
+
+    // do not allow copy or assignment
+#ifdef HAVE_CXX11
+    timestamp_t(const timestamp_t&) = delete;
+    timestamp_t& operator=(const timestamp_t&) = delete;
+#else
+    timestamp_t(const timestamp_t&) __attribute__ ((noreturn));
+    timestamp_t& operator=(const timestamp_t&) __attribute__ ((noreturn));
+#endif
+
+    /**
+     * Create a named timestamp and return a JSON string in format
+     * {"name":"name", "delta":delta, "total":total}.
+     */
+    std::string stamp(const std::string &name);
   };
 }
 

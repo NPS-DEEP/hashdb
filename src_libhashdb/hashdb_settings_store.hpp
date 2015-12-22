@@ -33,7 +33,7 @@
 #include <string>
 #include <sstream>
 #include <stdint.h>
-#include <iostream>
+#include <fstream>
 
 // hashdb tuning options
 namespace hashdb_settings_store {

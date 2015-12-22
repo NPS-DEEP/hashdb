@@ -25,8 +25,6 @@
 #ifndef HASHDB_TOOLS_HPP
 #define HASHDB_TOOLS_HPP
 
-#include "hashdb.hpp"
-
 // this process of getting WIN32 defined was inspired
 // from i686-w64-mingw32/sys-root/mingw/include/windows.h.
 // All this to include winsock2.h before windows.h to avoid a warning.
@@ -41,8 +39,8 @@
   #include <winsock2.h>
 #endif
 
-#include "file_modes.h"
 #include "hashdb.hpp"
+#include "file_modes.h"
 #include "hashdb_settings_store.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
@@ -55,7 +53,6 @@
 #include "lmdb_source_name_manager.hpp"
 #include "bloom_filter_manager.hpp"
 #include "hashdb_changes.hpp"
-#include "hashdb.hpp"
 #include "logger.hpp"
 #include <unistd.h>
 #include <string>
@@ -130,8 +127,7 @@ namespace hashdb {
     lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
 
     // create the log
-    logger_t logger(hashdb_dir, command_string);
-    logger.close();
+    logger_t(hashdb_dir, command_string);
 
     return std::pair<bool, std::string>(true, "");
   }
@@ -193,17 +189,12 @@ namespace hashdb {
 
       // add hashes to the bloom filter
       hashdb::id_offset_pairs_t id_offset_pairs;
-      logger.add_timestamp("begin rebuild_bloom");
       std::string binary_hash = manager.find_begin(id_offset_pairs);
       while (binary_hash != "") {
         bloom_filter_manager.add_hash_value(binary_hash);
         binary_hash = manager.find_next(binary_hash, id_offset_pairs);
       }
     }
-
-    // close logger
-    logger.add_timestamp("end rebuild_bloom");
-    logger.close();
 
     // done
     return std::pair<bool, std::string>(true, "");

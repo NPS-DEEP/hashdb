@@ -37,7 +37,6 @@
 #include "hashdb_changes.hpp"
 #include "../src_libhashdb/hashdb.hpp"
 #include "../src/hex_helper.hpp"
-#include "file_helper.hpp"
 #include "directory_helper.hpp"
 
 static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
@@ -53,8 +52,8 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
   rm_hashdb_dir(p_hashdb_dir);
 
   // create the hashdb directory
-  file_helper::require_no_dir(p_hashdb_dir);
-  file_helper::create_new_dir(p_hashdb_dir);
+  require_no_dir(p_hashdb_dir);
+  create_new_dir(p_hashdb_dir);
 
   // write default settings
   hashdb_settings_t settings(3, 512, 512, true, 28, 3);

@@ -19,10 +19,7 @@
 
 /**
  * \file
- * The logger manages logging to the hashdb log.xml file.
- * The log is created when the logger object opens,
- * and is closed by close or when the logger is destroyed,
- * e.g., by losing scope.
+ * Append change logs to the log file.
  */
 
 #ifndef LOGGER_HPP
@@ -30,161 +27,75 @@
 
 #include "hashdb_changes.hpp"
 #include "hashdb_settings.hpp"
-#include "history_manager.hpp"
 #include <iostream>
 #include <cassert>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-inline void add_memory_usage_algorithm(dfxml_writer* writer,
-                                       std::string command_string);
+#include "hashdb.hpp" // for timestamp_t
 
 /**
- * The logger logs commands performed that relate to the database.
- * Upon closure, the log is additionally appended to the history log.
+ * The logger appends database change information to the log file.
  */
 class logger_t {
   private:
   const std::string hashdb_dir;
-  dfxml_writer x;
-  bool closed;
+  std::ofstream os;
+  hashdb::timestamp_t timestamp;
 
-  // don't allow copy
-  logger_t(const logger_t& changes);
+  // do not allow copy or assignment
+  logger_t(const logger_t&);
+  logger_t& operator=(const logger_t&);
 
   public:
 
-  logger_t(std::string p_hashdb_dir, std::string command_string) :
+  logger_t(std::string p_hashdb_dir, std::string command_line) :
                     hashdb_dir(p_hashdb_dir),
-                    x(hashdb_dir+"/log.xml", false),
-                    closed(false) {
+                    os(),
+                    timestamp() {
 
-    // hashdb_dir containing settings.xml must exist
-    std::string filename = hashdb_dir + "/settings.xml";
-    if (access(filename.c_str(), F_OK) != 0) {
-      std::cerr << "Unable to read database '" << hashdb_dir
-                << "'.\nAborting.\n";
+    std::string filename(hashdb_dir+"/log.txt");
+
+    // open append, fatal if unable to open
+    os.open(filename.c_str(), std::fstream::app);
+    if (!os.is_open()) {
+      std::cout << "Cannot open log file " << filename
+                << ": " << strerror(errno) << "\nAborting.\n";
       exit(1);
     }
 
-    // log the preamble
-    x.push("log");
+    // log environment information
+    hashdb::print_environment(command_line, os);
 
-    x.add_DFXML_creator(PACKAGE_NAME, PACKAGE_VERSION, "", command_string);
+    // log start
+    os << timestamp.stamp("begin");
   }
 
-  ~logger_t() {
-    if (!closed) {
-      close();
-    }
+  // log
+  void add_log(const std::string& name) {
+    os << name;
   }
 
-  /**
-   * You can close the logger and use the log before the logger is disposed
-   * by calling close.
-   * Do not close the logger twice because this will corrupt the log file.
-   */
-  void close() {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
-
-    // log closure for x
-    x.add_rusage();
-    x.pop(); // log
-
-    // mark this logger as closed
-    x.flush();
-    closed = true;
-
-    // append log to history
-    history_manager_t::append_log_to_history(hashdb_dir);
-  }
-
-  /**
-   * Emit a named timestamp.
-   */
+  // timestamp
   void add_timestamp(const std::string& name) {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
-
-    x.add_timestamp(name);
+    os << timestamp.stamp(name);
   }
 
-  /**
-   * Emit a named memory usage report.
-   */
-  void add_memory_usage(const std::string& name) {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
-
-    add_memory_usage_algorithm(&x, name);
-  }
-
+  // settings
   void add_hashdb_settings(const hashdb_settings_t& settings) {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
-
-    settings.report_settings(x);
+    os << settings;
   }
 
   void add_hashdb_changes(const hashdb_changes_t& changes) {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
-
-    changes.report_changes(x);
+    os << changes;
   }
 
-  /**
-   * Add a tag, value pair for any type supported by xmlout.
-   */
-  template<typename T>
-  void add(const std::string& tag, const T& value) {
-    if (closed) {
-      // program error: logger closed
-      assert(0);
-    }
+  // destructor
+  ~logger_t() {
 
-    x.xmlout(tag, value);
+    // log end
+    os << timestamp.stamp("end");
+    os.close();
   }
+
 };
-
-inline void add_memory_usage_algorithm(dfxml_writer* logger, std::string name) {
-#ifdef HAVE_MALLINFO
-  // NOTE: this data may not be useful, we need a better way
-  struct mallinfo mi;
-  std::stringstream ss;
-  mi = mallinfo();
-  ss << "name='" << name
-//     << "' allocated='" << mi.arena
-     << "' occupied='" << mi.uordblks
-//     << "' arena='" << mi.arena
-//     << "' ordblks='" << mi.ordblks
-//     << "' smblks='" << mi.smblks
-//     << "' hblks='" << mi.hblks
-//     << "' hblkhd='" << mi.hblkhd
-//     << "' usmblks='" << mi.usmblks
-//     << "' fsmblks='" << mi.fsmblks
-//     << "' uordblks='" << mi.uordblks
-//     << "' fordblks='" << mi.fordblks
-//     << "' keepcost='" << mi.keepcost
-     << "'";
-
-  // add named memory usage
-  logger->xmlout("memory_usage", "",ss.str(), true);
-#endif
-}
-
 
 #endif
 

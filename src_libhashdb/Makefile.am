@@ -31,8 +31,6 @@ noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
 EXTRA_DIST = \
-	libdfxml/README \
-	libdfxml/dfxml_configure.m4 \
 	liblmdb/COPYRIGHT \
 	liblmdb/LICENSE
 
@@ -46,25 +44,22 @@ libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 
 AM_CPPFLAGS = -isystem${top_srcdir}/src_libhashdb/libbloom \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
-	-I${top_srcdir}/src_libhashdb/libdfxml \
-	-I${top_srcdir}/rapidjson \
-	$(XML_CFLAGS)
+	-I${top_srcdir}/rapidjson
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
 	bloom_filter_manager.hpp \
-	file_helper.hpp \
 	file_modes.h \
 	hashdb_changes.hpp \
 	hashdb.cpp \
 	hashdb.hpp \
+	hashdb_environment.hpp \
 	hashdb_import_manager_private.hpp \
 	hashdb_scan_manager_private.hpp \
 	hashdb_settings.hpp \
 	hashdb_settings_store.hpp \
 	hashdb_tools.hpp \
-	history_manager.hpp \
 	lmdb_context.hpp \
 	lmdb_data_codec.hpp \
 	lmdb_hash_label_manager.hpp \
@@ -74,7 +69,8 @@ LIBHASHDB_INCS = \
 	lmdb_source_metadata_manager.hpp \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
-	mutex_lock.hpp
+	mutex_lock.hpp \
+	timestamp.hpp
 
 BLOOM_INCS = \
 	libbloom/bloom.c \
@@ -82,14 +78,9 @@ BLOOM_INCS = \
 	libbloom/file_mapper.cpp \
 	libbloom/file_mapper.hpp
 
-DFXML_INCS = \
-	libdfxml/cppmutex.h \
-	libdfxml/dfxml_writer.cpp \
-	libdfxml/dfxml_writer.h
-
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) \
-	$(BLOOM_INCS) $(DFXML_INCS)
+	$(BLOOM_INCS)
 
 include_HEADERS = hashdb.hpp
 

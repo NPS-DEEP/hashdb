@@ -40,6 +40,8 @@
 #include "hashdb_tools.hpp"
 #include "hashdb_import_manager_private.hpp"
 #include "hashdb_scan_manager_private.hpp"
+#include "hashdb_environment.hpp"
+#include "timestamp.hpp"
 #include <string>
 #include <vector>
 #include <stdint.h>

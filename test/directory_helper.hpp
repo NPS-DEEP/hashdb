@@ -83,19 +83,45 @@ void rm_hashdb_dir(const std::string& hashdb_dir) {
   remove((hashdb_dir + "/lmdb_source_name_store/lock.mdb").c_str());
   rmdir((hashdb_dir + "/lmdb_source_name_store").c_str());
 
-  remove((hashdb_dir + "/history.xml").c_str());
-  remove((hashdb_dir + "/_old_history.xml").c_str());
-  remove((hashdb_dir + "/log.xml").c_str());
+  remove((hashdb_dir + "/log.txt").c_str());
   remove((hashdb_dir + "/settings.json").c_str());
   remove((hashdb_dir + "/_old_settings.json").c_str());
-  remove((hashdb_dir + "/temp_dfxml_output").c_str());
 
   if (access(hashdb_dir.c_str(), F_OK) == 0) {
     // dir exists so remove it
     int status = rmdir(hashdb_dir.c_str());
     if (status != 0) {
       std::cout << "unable to remove hashdb_dir " << hashdb_dir << ": "<< strerror(status) << "\n";
+      exit(1);
     }
+  }
+}
+
+static void require_no_dir(const std::string& dirname) __attribute__((unused));
+static void require_no_dir(const std::string& dirname) {
+  if (access(dirname.c_str(), F_OK) == 0) {
+    std::cerr << "Error: Path '" << dirname << "' already exists.  Cannot continue.\n";
+    exit(1);
+  }
+}
+
+static void create_new_dir(const std::string& new_dir) __attribute__((unused));
+static void create_new_dir(const std::string& new_dir) {
+
+  // new_dir must not exist yet
+  require_no_dir(new_dir);
+
+  // create new_dir
+  int status;
+#ifdef WIN32
+  status = mkdir(new_dir.c_str());
+#else
+  status = mkdir(new_dir.c_str(),0777);
+#endif
+  if (status != 0) {
+    std::cerr << "Error: Could not create new directory '"
+              << new_dir << "'.\nCannot continue.\n";
+    exit(1);
   }
 }
 

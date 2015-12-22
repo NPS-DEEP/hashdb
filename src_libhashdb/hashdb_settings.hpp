@@ -25,7 +25,6 @@
 #ifndef    HASHDB_SETTINGS_HPP
 #define    HASHDB_SETTINGS_HPP
 
-#include <dfxml_writer.h>
 #include <string>
 #include <sstream>
 #include <stdint.h>
@@ -85,16 +84,6 @@ struct hashdb_settings_t {
     os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
     os << "bloom k hash functions: " << bloom_k_hash_functions << "\n";
     os << "bloom M hash size: " << bloom_M_hash_size << "\n";
-  }
-
-  void report_settings(dfxml_writer& x) const {
-    x.xmlout("data_store_version", data_store_version);
-    x.xmlout("sector_size", sector_size);
-    x.xmlout("block_size", block_size);
-
-    x.xmlout("bloom_used", bloom_state_to_string(bloom_is_used));
-    x.xmlout("bloom_k_hash_functions", (uint64_t)bloom_k_hash_functions);
-    x.xmlout("bloom_M_hash_size", (uint64_t)bloom_M_hash_size);
   }
 };
 

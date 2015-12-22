@@ -9,127 +9,7 @@ hashdb \- Create and manage block hash databases.
 .SH DESCRIPTION
 .B hashdb
 provides commands for creating and managing hash databases.
-.SH OPTIONS
-.IP "-q, --quiet"
-quiet mode
-.IP "-f, --flags=flags"
-set B-Tree flags to manage runtime performance
-.IP "-p, --hash_block_size=<hash block size>"
-<hash block size>, in bytes, used to generate hashes (default 4096)
-.IP "-m, --max_duplicates=<maximum>"
-<maximum> number of hash duplicates allowed, or 0 for no limit
-(default 0)
-
-.SH BLOOM FILTER OPTIONS
-.IP "--bloom <state>"
-set bloom filter <state> to enabled | disabled (default enabled)
-.IP "--bloom_n <n>"
-expected total number <n> of unique hashes (default 1)
-.IP "--bloom_kM <k:M>"
-number of hash functions <k> and bits per hash <M> (default <k>=28
-and <M>=3 or <M>=value calculated from value in --bloom_n)
-
-.SH COMMANDS
-
-.IP "create [options]+ <hashdb>"
-Create a new hash database.
-
-.IP "import [-r <repository name>] <hashdb> <DFXML file>"
-Import hashes from file <DFXML file> into hash database <hashdb>.
-
-.IP "import_tab [-r <repository name>] [-s <sector size>] <hashdb> <tab file>"
-Import hashes from file <tab file> into hash database <hashdb>.
-
-.IP "export <hashdb> <DFXML file>"
-Export hashes from the <hashdb> to a <DFXML file>.
-
-.IP "add <source hashdb> <destination hashdb>"
-Copy hashes from the <source hashdb> to the <destination hashdb>.
-
-.IP "add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>"
-Perform a union of <source hashdb 1> and <source hashdb 2> into
-the <destination hashdb>.
-
-.IP "add_repository <source hashdb> <destination hashdb> <repository name>"
-Copy hashes from <source hashdb> to <destination hashdb>
-when the <repository name> matches.
-
-.IP "intersect <source hashdb 1> <source hashdb 2> <destination hashdb>"
-Copy hashes that are common to both <source hashdb 1> and
-<source hashdb 2> into <destination hashdb>.
-Hashes and their sources must match.
-
-.IP "intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>"
-Copy hashes that are common to both <source hashdb 1> and
-<source hashdb 2> into <destination hashdb>.
-Hashes match when hash values match, even if their associated
-source repository name and filename do not match.
-
-.IP "subtract <source hashdb 1> <source hashdb 2> <destination hashdb>"
-Copy hashes in <souce hashdb 1> and not in <source hashdb 2> into
-<destination hashdb>.
-Hashes and their sources must match.
-
-.IP "subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>"
-Copy hashes in <souce hashdb 1> and not in <source hashdb 2> into
-<destination hashdb>.
-Hashes match when hash values match, even if their associated
-source repository name and filename do not match.
-
-.IP "deduplicate <source hashdb> <destination hashdb>"
-Copy hall hashes in <source hashdb> to <destination hashdb> except
-for hashes defined multiple times.
-
-.IP "scan <path_or_socket> <DFXML file>"
-Scans the <path_or_socket> for hashes that match hashes in the <DFXML file>
-and prints out match count for matches.
-
-.IP "scan_hash <path_or_socket> <hash value>"
-Scans the <path_or_socket> for hashes that match the specified <hash value>.
-
-.IP "server <hashdb> <port number>"
-Starts a query server service for <hashdb> at <port number> for
-servicing hashdb queries (currently not available).
-
-.IP "size <hashdb>"
-Prints out size information about the given <hashdb> database.
-
-.IP "sources <hashdb>"
-Print source information indicating where the hashes in the <hashdb> came from.
-
-.IP "histogram <hashdb>"
-Print the histogram of hashes for the given <hashdb> database.
-
-.IP "duplicates <hashdb> <number>"
-Print the hashes in the given <hashdb> database that are sourced
-the given <number> of times.
-
-.IP "hash_table <hashdb>"
-Print the hashes and offsets from the given <hashdb> database for the
-<repository name> and <filename> source requested.
-
-.IP "expand_identified_blocks <hashdb> <identified blocks file>"
-Print source information for each hash in <identified blocks file>
-by referencing source information in <hashdb>.  Source information
-includes repository name, filename, and file offset.
-
-.IP "explain_identified_blocks [-m <number>] <hashdb> <identified_blocks.txt>"
-Print source information from the <hashdb> database for hashes in the
-<identified_blocks.txt> file that are not repeated more than the <number>
-of times.
-
-.IP "rebuild_bloom [options] <hashdb>"
-Rebuild the bloom filter in the <hashdb> hash database.
-
-.IP "upgrade <hashdb>"
-Make <hashdb> created by v1.0.0 compatible with hashdb v1.1.0+.
-
-.IP "add_random [-r <repository name>] <hashdb> <count>"
-Add <count> random hashes into hash database <hashdb>, generating statistics.
-
-.IP "scan_random <hashdb>"
-Scan for random hashes in hash database <hashdb>, generating statistics.
-
+For usage, please type "hashdb -h".
 .SH HISTORY
 .BR "hashdb" 
 was released into the public domain by Bruce Allen in 2013.
@@ -152,5 +32,5 @@ created by United States Government employees.
 
 .SH SEE ALSO
 .BR "hashdb" 
-wiki at https://github.com/simsong/hashdb/wiki.
+wiki at https://github.com/NPS-DEEP/hashdb/wiki.
 

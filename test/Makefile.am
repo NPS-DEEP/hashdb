@@ -39,16 +39,13 @@ AM_LDFLAGS = -static
 
 bloom_filter_manager_test_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb \
-	-isystem${top_srcdir}/src_libhashdb/libbloom \
-	-isystem${top_srcdir}/src_libhashdb/libdfxml
+	-isystem${top_srcdir}/src_libhashdb/libbloom
 
 lmdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb \
 	-I${top_srcdir}/rapidjson \
 	-isystem${top_srcdir}/src_libhashdb/libbloom \
-	-isystem${top_srcdir}/src_libhashdb/libdfxml \
-	-isystem${top_srcdir}/src_libhashdb/liblmdb \
-	$(XML_CFLAGS)
+	-isystem${top_srcdir}/src_libhashdb/liblmdb
 
 hashdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/rapidjson

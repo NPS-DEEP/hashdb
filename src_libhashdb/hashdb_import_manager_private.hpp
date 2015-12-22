@@ -51,8 +51,7 @@
  * Manage all LMDB updates.  All interfaces are locked.
  * Several types of change events are noted in hashdb_changes_t.
  * A logger is opened for logging the command and for logging
- * timestamps.  Upon closure, changes are written to the logger
- * and the logger is closed.
+ * timestamps.
  */
 class hashdb_import_manager_private_t {
 
@@ -115,14 +114,11 @@ class hashdb_import_manager_private_t {
     }
 
     MUTEX_INIT(&M);
-    logger.add_timestamp("begin import");
   }
 
   ~hashdb_import_manager_private_t() {
     // log changes and close logger
     logger.add_hashdb_changes(changes);
-    logger.add_timestamp("end import");
-    logger.close();
   }
 
   /**

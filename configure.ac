@@ -62,7 +62,6 @@ fi
 m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/hashdb_cflags.m4])
-m4_include([src_libhashdb/libdfxml/dfxml_configure.m4])
 
 ################################################################
 ## python 3 for tests
@@ -183,22 +182,6 @@ AC_SYS_POSIX_TERMIOS
 #fi
 
 ################################################################
-## support required by libxml2
-
-# the win32 configuration of libxml2 requires zlib and iconv libraries
-if test  x"$mingw" = x"yes";  then
-  AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
-  AC_CHECK_LIB([iconv], [iconv],[LIBS="-liconv $LIBS"], [AC_MSG_ERROR([Could not find win-iconv library])])
-fi
-
-# find the libxml/parser.h header
-PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4, [], [AC_MSG_ERROR([libxml2 failed])])
-
-# find the xml2 library
-AC_CHECK_LIB([xml2], [xmlSAXUserParseFile],[LIBS="-lxml2 $LIBS"],
-    [AC_MSG_ERROR([Could not find libxml2 library required to build the hashdb scanner])])
-
-################################################################
 ## OpenSSL Support is required for bloom
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
@@ -249,9 +232,9 @@ AC_CHECK_LIB([tre],[tre_regcomp])
 AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 ################################################################
-## support required by be13_api required by DFXML
-AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
-AC_CHECK_FUNCS([localtime_r getuid gethostname getwpuid getrusage mkstemp vasprintf])
+## support required by hashdb_environment.hpp
+#AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
+AC_CHECK_FUNCS([getuid getwpuid])
 
 ################################################################
 ## libtool required for preparing the hashdb library
@@ -296,6 +279,15 @@ else
   AC_MSG_NOTICE([strchr is not conforming])
 fi
 AC_LANG_POP()
+
+#################################################################
+# Get the GIT commit into the GIT_COMMIT variable
+AC_CHECK_PROG([git],[git],[yes],[no])
+AM_CONDITIONAL([FOUND_GIT],[test "x$git" = xyes])
+AM_COND_IF([FOUND_GIT],
+        [GIT_COMMIT=`git describe --dirty --always`
+         AC_MSG_NOTICE([git commit $GIT_COMMIT])],
+        [AC_MSG_WARN([git not found])])
 
 #################################################################
 ##
@@ -345,7 +337,7 @@ AC_MSG_NOTICE([  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS])
 
 AC_OUTPUT
 
-## for hashdb git version, see dfxml_configure.m4
+## for hashdb git version
 if test x"$GIT_COMMIT" != "x" ; then
   echo "#define GIT_COMMIT  \"$GIT_COMMIT\""  >> config.h
 fi

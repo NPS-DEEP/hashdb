@@ -29,7 +29,6 @@
 
 #include <sstream>
 #include <iostream>
-#include <dfxml_writer.h>
 
 /**
  * The hashdb change logger holds all possible change values,
@@ -53,27 +52,6 @@ class hashdb_changes_t {
                      hashes_not_inserted_duplicate_element(0),
                      hashes_not_inserted_skip_low_entropy(0),
                      hashes_not_inserted_skip_whitelist(0) {
-  }
-
-  void report_changes(dfxml_writer& x) const {
-
-    // log any insert changes to x
-    x.push("hashdb_changes");
-
-    if (hashes_inserted)
-      x.xmlout("hashes_inserted", hashes_inserted);
-    if (hashes_not_inserted_mismatched_block_size)
-      x.xmlout("hashes_not_inserted_mismatched_block_size", hashes_not_inserted_mismatched_block_size);
-    if (hashes_not_inserted_invalid_sector_size)
-      x.xmlout("hashes_not_inserted_invalid_sector_size", hashes_not_inserted_invalid_sector_size);
-    if (hashes_not_inserted_duplicate_element)
-      x.xmlout("hashes_not_inserted_duplicate_element", hashes_not_inserted_duplicate_element);
-    if (hashes_not_inserted_skip_low_entropy)
-      x.xmlout("hashes_not_inserted_skip_low_entropy", hashes_not_inserted_skip_low_entropy);
-    if (hashes_not_inserted_skip_whitelist)
-      x.xmlout("hashes_not_inserted_skip_whitelist", hashes_not_inserted_skip_whitelist);
-
-    x.pop();
   }
 
   void report_changes(std::ostream& os) const {
