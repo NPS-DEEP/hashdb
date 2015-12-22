@@ -68,12 +68,12 @@ namespace hashdb {
                      const std::string& p_hashdb_dir,
                      const std::string& p_whitelist_hashdb_dir,
                      const bool p_skip_low_entropy,
-                     const std::string& p_log_string) :
+                     const std::string& p_command_string) :
               hashdb_import_manager_private(new hashdb_import_manager_private_t(
                                             p_hashdb_dir,
                                             p_whitelist_hashdb_dir,
                                             p_skip_low_entropy,
-                                            p_log_string)) {
+                                            p_command_string)) {
   }
 
   import_manager_t::~import_manager_t() {

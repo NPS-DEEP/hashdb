@@ -50,7 +50,7 @@
 /**
  * Manage all LMDB updates.  All interfaces are locked.
  * Several types of change events are noted in hashdb_changes_t.
- * A logger is opened for logging the command (TBD) and for logging
+ * A logger is opened for logging the command and for logging
  * timestamps.  Upon closure, changes are written to the logger
  * and the logger is closed.
  */
@@ -60,7 +60,7 @@ class hashdb_import_manager_private_t {
   std::string hashdb_dir;
   std::string whitelist_hashdb_dir;
   bool skip_low_entropy;
-  std::string log_string;
+  std::string command_string;
 
   // whitelist manager
   lmdb_hash_manager_t* whitelist_hash_manager;
@@ -93,18 +93,18 @@ class hashdb_import_manager_private_t {
   hashdb_import_manager_private_t(const std::string& p_hashdb_dir,
                                   const std::string& p_whitelist_hashdb_dir,
                                   const bool p_skip_low_entropy,
-                                  const std::string& p_log_string) :
+                                  const std::string& p_command_string) :
        hashdb_dir(p_hashdb_dir),
        whitelist_hashdb_dir(p_whitelist_hashdb_dir),
        skip_low_entropy(p_skip_low_entropy),
-       log_string(p_log_string),
+       command_string(p_command_string),
        whitelist_hash_manager(0),
        hash_manager(hashdb_dir, RW_MODIFY),
        hash_label_manager(hashdb_dir, RW_MODIFY),
        source_id_manager(hashdb_dir, RW_MODIFY),
        source_metadata_manager(hashdb_dir, RW_MODIFY),
        source_name_manager(hashdb_dir, RW_MODIFY),
-       logger(hashdb_dir, log_string),
+       logger(hashdb_dir, command_string),
        changes(),
        M() {
 

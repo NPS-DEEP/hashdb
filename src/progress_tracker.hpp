@@ -88,9 +88,9 @@ class progress_tracker_t {
 
     // write out the named timestamp
     std::stringstream ss;
-    os << "[{\"name\":\"" << name << "\"}"
-       << ", {\"delta\":" << delta << "}"
-       << ", {\"total\":" << total_time << "}]"
+    os << "{\"name\":\"" << name << "\""
+       << ", \"delta\":" << delta
+       << ", \"total\":" << total_time << "}"
        << "\n";
   }
 
@@ -118,10 +118,10 @@ class progress_tracker_t {
     gettimeofday(&t_last_timestamp,0);
 
     // log environment information
-    os << "# [{\"program\":\"" << PACKAGE_NAME << "\"}"
-       << ", {\"version\":\"" << PACKAGE_VERSION << "\"}"
-       << ", {\"command_line\":\"" << "\""
-       << json_helper::escape_json(cmd) << "\"}]";
+    os << "# {\"program\":\"" << PACKAGE_NAME << "\""
+       << ", \"version\":\"" << PACKAGE_VERSION << "\""
+       << ", \"command_line\":\"" << "\""
+       << json_helper::escape_json(cmd) << "\"}";
   }
 
   void track() {

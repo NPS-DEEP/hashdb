@@ -18,8 +18,6 @@ Create a new hash database \\
 Import from path recursively into hash database, possibly suppressing low entropy hashes \\
 \hangindent=2em\texttt{import\_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <tab.txt>} &
 Import from tab file into hash database \\
-\hangindent=2em\texttt{import\_dfxml [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <dfxml.xml>} &
-Import from DFXML file into hash database \\
 \end{tabular}
 \\
 \\
@@ -39,7 +37,6 @@ Import from DFXML file into hash database \\
 \\
 \textbf{Scan} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{scan <hashdb.hdb> <dfxml.xml>} & Scan DFXML file for matching hashes \\
 \texttt{scan\_hash <hashdb.hdb> <hex block hash>} & Scan for hash match \\
 \end{tabular}
 \\
