@@ -44,6 +44,7 @@ class tab_hashdigest_reader_t {
   const std::string& hashdb_dir;
   const std::string& tab_file;
   const std::string& repository_name;
+  const uint32_t repository_name_crc;
   const std::string& whitelist_dir;
   const bool skip_low_entropy;
   const std::string& cmd;
@@ -87,7 +88,7 @@ class tab_hashdigest_reader_t {
     // binary file hash is not available, so use a CRC of the repository
     // name and the filename
     // get CRC32 of repository name and filename
-    uint32_t crc = crc32(repository_name, filename);
+    uint32_t crc = crc32(repository_name_crc, filename);
     std::stringstream ss;
     ss << crc;
     std::string crc_string(ss.str());
@@ -137,6 +138,7 @@ class tab_hashdigest_reader_t {
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
+                  repository_name_crc(crc32(0, repository_name)),
                   whitelist_dir(p_whitelist_dir),
                   skip_low_entropy(p_skip_low_entropy),
                   cmd(p_cmd),

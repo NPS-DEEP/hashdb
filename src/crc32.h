@@ -108,26 +108,12 @@ crc32(uint32_t crc, const uint8_t *buf, size_t size)
 	return crc ^ ~0U;
 }
 
-/*
 // crc32 of a string
-uint32_t crc32(const std::string& text)
+uint32_t crc32(const uint32_t crc, const std::string& text)
 {
-        return crc32(0,
+        return crc32(crc,
                      reinterpret_cast<const uint8_t*>(text.c_str()),
                      text.size());
-}
-*/
-
-// crc32 of two strings
-uint32_t crc32(const std::string& text1, const std::string& text2)
-{
-        uint32_t crc = crc32(0,
-                     reinterpret_cast<const uint8_t*>(text1.c_str()),
-                     text1.size());
-        return crc32(crc,
-                     reinterpret_cast<const uint8_t*>(text2.c_str()),
-                     text2.size());
-
 }
 
 #endif
