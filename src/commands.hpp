@@ -103,7 +103,7 @@ namespace commands {
 
     std::pair<bool, std::string> pair = reader.read();
     if (pair.first == true) {
-      std::cout << "New database created.\n";
+      std::cout << "Import completed.\n";
     } else {
       std::cout << "Error: " << pair.second << "\n";
     }
@@ -358,7 +358,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    create_if_new(hashdb_dir2, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir2, ro_manager1.settings);
 
     // open rw_manager2 for writing
     lmdb_rw_manager_t rw_manager2(hashdb_dir2);
@@ -405,7 +405,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager2(hashdb_dir2);
 
     // if 3 does not exist, create it with settings from 1
-    create_if_new(hashdb_dir3, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir3, ro_manager1.settings);
 
     // open 3 for writing
     lmdb_rw_manager_t rw_manager3(hashdb_dir3);
@@ -473,7 +473,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    create_if_new(hashdb_dir2, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir2, ro_manager1.settings);
 
     // open rw_manager2 for writing
     lmdb_rw_manager_t rw_manager2(hashdb_dir2);
@@ -528,7 +528,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager2(hashdb_dir2);
 
     // if 3 does not exist, create it with settings from 1
-    create_if_new(hashdb_dir3, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir3, ro_manager1.settings);
 
     // open 3 for writing
     lmdb_rw_manager_t rw_manager3(hashdb_dir3);
@@ -588,7 +588,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager2(hashdb_dir2);
 
     // if 3 does not exist, create it with settings from 1
-    create_if_new(hashdb_dir3, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir3, ro_manager1.settings);
 
     // open 3 for writing
     lmdb_rw_manager_t rw_manager3(hashdb_dir3);
@@ -656,7 +656,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager2(hashdb_dir2);
 
     // if 3 does not exist, create it with settings from 1
-    create_if_new(hashdb_dir3, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir3, ro_manager1.settings);
 
     // open 3 for writing
     lmdb_rw_manager_t rw_manager3(hashdb_dir3);
@@ -716,7 +716,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager2(hashdb_dir2);
 
     // if 3 does not exist, create it with settings from 1
-    create_if_new(hashdb_dir3, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir3, ro_manager1.settings);
 
     // open 3 for writing
     lmdb_rw_manager_t rw_manager3(hashdb_dir3);
@@ -767,7 +767,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    create_if_new(hashdb_dir2, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir2, ro_manager1.settings);
 
     // open rw_manager2 for writing
     lmdb_rw_manager_t rw_manager2(hashdb_dir2);
@@ -819,7 +819,7 @@ namespace commands {
     lmdb_ro_manager_t ro_manager1(hashdb_dir1);
 
     // if hashdb2 does not exist, create it with settings from hashdb1
-    create_if_new(hashdb_dir2, ro_manager1.settings);
+    create_if_new_hashdb(hashdb_dir2, ro_manager1.settings);
 
     // open rw_manager2 for writing
     lmdb_rw_manager_t rw_manager2(hashdb_dir2);

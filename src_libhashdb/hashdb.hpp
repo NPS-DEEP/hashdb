@@ -127,6 +127,29 @@ namespace hashdb {
                      const std::string& command_string);
 
   /**
+   * If the hashdb is new, create it using settings in the other hashdb.
+   * Return true and "" if the hashdb already exists or is created
+   * successfully.  False if the new hashdb cannot be created.
+   * The current implementation may abort if something worse than a simple
+   * path problem happens.
+   *
+   * Parameters:
+   *   hashdb_dir - Path to the database to create.  The path must not
+   *     exist yet.
+   *   other_hashdb_dir - Path to the database containing the settings
+   *     to copy.
+   *   command_string - String to put into the new hashdb log.
+   *
+   * Returns tuple:
+   *   True and "" if not created or created successfully, false and
+   *   reason if not.
+   */
+  std::pair<bool, std::string> create_if_new_hashdb(
+                     const std::string& hashdb_dir,
+                     const std::string& other_hashdb_dir,
+                     const std::string& command_string);
+
+  /**
    * Rebuild the Bloom filter.
    * Return true and "" if bloom filter rebuilds, false and reason if not.
    * The current implementation may abort if something worse than a simple
