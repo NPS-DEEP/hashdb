@@ -66,14 +66,14 @@
 #include <mcheck.h>
 #endif
 
-// global defaults
-const uint32_t default_sector_size = 0;
-const uint32_t default_block_size = 0;
-const std::string default_repository_name = "";
-const std::string default_whitelist_dir = "";
-const bool default_bloom_is_used = false;
-const uint32_t default_bloom_M_hash_size = 0;
-const uint32_t default_bloom_k_hash_functions = 0;
+// default settings
+static const uint32_t default_sector_size = 512;
+static const uint32_t default_block_size = 512;
+static const std::string default_repository_name = "";
+static const std::string default_whitelist_dir = "";
+static const bool default_bloom_is_used = true;
+static const uint32_t default_bloom_M_hash_size = 28;
+static const uint32_t default_bloom_k_hash_functions = 3;
 
 // usage
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
@@ -159,6 +159,9 @@ int main(int argc,char **argv) {
       usage();
       exit(1);
   }
+
+  // compose the command line before parsing input
+  cmd = make_command_line(argc, argv);
 
   // parse options
   int option_index; // not used by hashdb
@@ -310,9 +313,6 @@ int main(int argc,char **argv) {
   for (int i=0; i<argc; i++) {
     args.push_back(std::string(argv[i]));
   }
-
-  // compose the command line
-  cmd = make_command_line(argc, argv);
 
   // run the command
   run_command();

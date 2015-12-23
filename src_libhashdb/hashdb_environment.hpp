@@ -39,6 +39,7 @@
   #include <winsock2.h>
 #endif
 
+#include <pwd.h>
 #include <unistd.h>
 #include <iostream>
 #include <string>
@@ -49,18 +50,18 @@ namespace hashdb {
    */
   void print_environment(const std::string& command_line, std::ostream& os) {
     // version
-    os << "# libhashdb version " << PACKAGE_VERSION;
+    os << "# libhashdb version: " << PACKAGE_VERSION;
 #ifdef GIT_COMMIT
-    os << ", GIT commit " << GIT_COMMIT;
+    os << ", GIT commit: " << GIT_COMMIT;
 #endif
     os << "\n";
 
     // command
-    os << "# command " << command_line << "\n";
+    os << "# command: \"" << command_line << "\"\n";
 
     // username
 #ifdef HAVE_GETPWUID
-    os << "# username " << getwpuid(getuid())->pw_name << "\n";
+    os << "# username: " << getpwuid(getuid())->pw_name << "\n";
 #endif
 
     // date

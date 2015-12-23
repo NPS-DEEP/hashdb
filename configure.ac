@@ -234,7 +234,8 @@ AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 ################################################################
 ## support required by hashdb_environment.hpp
 #AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
-AC_CHECK_FUNCS([getuid getwpuid])
+AC_CHECK_HEADERS([pwd.h])
+AC_CHECK_FUNCS([getuid getpwuid])
 
 ################################################################
 ## libtool required for preparing the hashdb library
