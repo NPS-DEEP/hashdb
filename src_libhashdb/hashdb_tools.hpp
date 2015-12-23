@@ -133,25 +133,17 @@ namespace hashdb {
   }
 
   /**
-   * If the hashdb does not exist, create it with the settings of the
-   * other hashdb.  Return true and "" else false and reason if not.
+   * Return hashdb settings else false and reason.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
-   *
-   * Parameters:
-   *   hashdb_dir - Path to the database to create.  The path must not
-   *     exist yet.
-   *   command_string - String to put into the new hashdb log.
-   *   Other parameters - Other parameters control hashdb settings.
-   *
-   * Returns tuple:
-   *   True and "" if not created or created successfully, false and
-   *   reason if not.
    */
-  std::pair<bool, std::string> create_if_new_hashdb(
+  std::pair<bool, std::string> hashdb_settings(
                      const std::string& hashdb_dir,
-                     const std::string& other_hashdb_dir,
-                     const std::string& command_string) {
+                     uint32_t& sector_size,
+                     uint32_t& block_size,
+                     bool& bloom_is_used,
+                     uint32_t& bloom_M_hash_size,
+                     uint32_t& bloom_k_hash_functions) {
 
     hashdb_settings_t settings;
     std::pair<bool, std::string> pair;
@@ -159,27 +151,22 @@ namespace hashdb {
     // try to read hashdb_dir settings
     pair = hashdb_settings_store::read_settings(hashdb_dir, settings);
     if (pair.first == true) {
-      // hashdb_dir is valid
+      // return successful
+      sector_size = settings.sector_size;
+      block_size = settings.block_size;
+      bloom_is_used = settings.bloom_is_used;
+      bloom_M_hash_size = settings.bloom_M_hash_size;
+      bloom_k_hash_functions = settings.bloom_k_hash_functions;
+      return pair;
+    } else {
+      // return fail
+      sector_size = 0;
+      block_size = 0;
+      bloom_is_used = false;
+      bloom_M_hash_size = 0;
+      bloom_k_hash_functions = 0;
       return pair;
     }
-
-    // no hashdb_dir, so read other_hashdb_dir settings
-    pair = hashdb_settings_store::read_settings(other_hashdb_dir, settings);
-    if (pair.first == false) {
-      // bad since other_hashdb_dir is not valid
-      return pair;
-    }
-
-    // create hashdb_dir using settings from the other hashdb
-    pair = hashdb::create_hashdb(hashdb_dir,
-                                 settings.sector_size,
-                                 settings.block_size,
-                                 settings.bloom_is_used,
-                                 settings.bloom_M_hash_size,
-                                 settings.bloom_k_hash_functions,
-                                 command_string);
-
-    return pair;
   }
 
   /**

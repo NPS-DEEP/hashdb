@@ -39,8 +39,6 @@
 #include "hex_helper.hpp"
 #include "crc32.h"
 
-static const std::string file_binary_hash = "\0";
-
 class tab_hashdigest_reader_t {
   private:
   const std::string& hashdb_dir;
@@ -86,12 +84,13 @@ class tab_hashdigest_reader_t {
     // parse filename
     std::string filename = line.substr(0, tab_index1);
 
-    // binary filename is not available, so use a CRC of the filename
-    // get CRC32 of filename
-    uint32_t filename_crc = crc32(filename);
+    // binary file hash is not available, so use a CRC of the repository
+    // name and the filename
+    // get CRC32 of repository name and filename
+    uint32_t crc = crc32(repository_name, filename);
     std::stringstream ss;
-    ss << filename_crc;
-    std::string filename_crc_string(ss.str());
+    ss << crc;
+    std::string crc_string(ss.str());
 
     // parse block hashdigest
     std::string block_hashdigest_string = line.substr(
@@ -116,12 +115,12 @@ class tab_hashdigest_reader_t {
     uint64_t file_offset = (sector_index -1) * sector_size;
 
     // add the source entry
-    manager.import_source_name(filename_crc_string, repository_name, filename);
+    manager.import_source_name(crc_string, repository_name, filename);
 
     // add the hash
     data.clear();
     data.push_back(hashdb::hash_data_t(binary_hash, file_offset, ""));
-    manager.import_source_data(file_binary_hash, 0, data);
+    manager.import_source_data(crc_string, 0, data);
 
     // update progress tracker
     progress_tracker.track();
@@ -164,9 +163,11 @@ class tab_hashdigest_reader_t {
     }
 
     // validate whitelist_dir path
-    pair = hashdb::is_valid_hashdb(whitelist_dir);
-    if (pair.first == false) {
-      return pair;
+    if (whitelist_dir != "") {
+      pair = hashdb::is_valid_hashdb(whitelist_dir);
+      if (pair.first == false) {
+        return pair;
+      }
     }
 
     // open hashdb manager

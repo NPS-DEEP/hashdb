@@ -225,7 +225,9 @@ class lmdb_source_metadata_manager_t {
 
     // invalid rc
     std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-    std::cerr << "Program error: The file hash was not found.  Aborting.\n";
+    std::cerr << "Program error: The file binary hash was not found.\n"
+              << "Note that code requires that hashdb::import_source_name "
+              << "be called.\nAborting.\n";
     assert(0);
   }
 
