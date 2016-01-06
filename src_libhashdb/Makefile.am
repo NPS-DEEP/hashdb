@@ -42,14 +42,13 @@ liblmdb_la_LDFLAGS = -static -PIC
 
 libhashdb_la_LDFLAGS = -static -PIC -avoid-version
 
-AM_CPPFLAGS = -isystem${top_srcdir}/src_libhashdb/libbloom \
+AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
 	-I${top_srcdir}/rapidjson
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
-	bloom_filter_manager.hpp \
 	file_modes.h \
 	hashdb_changes.hpp \
 	hashdb.cpp \
@@ -72,15 +71,8 @@ LIBHASHDB_INCS = \
 	mutex_lock.hpp \
 	timestamp.hpp
 
-BLOOM_INCS = \
-	libbloom/bloom.c \
-	libbloom/bloom.h \
-	libbloom/file_mapper.cpp \
-	libbloom/file_mapper.hpp
-
 libhashdb_la_SOURCES = \
-	$(LIBHASHDB_INCS) \
-	$(BLOOM_INCS)
+	$(LIBHASHDB_INCS)
 
 include_HEADERS = hashdb.hpp
 

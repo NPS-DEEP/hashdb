@@ -26,7 +26,6 @@ EXTRA_DIST = \
 	vg.supp
 
 check_PROGRAMS = \
-	bloom_filter_manager_test \
 	lmdb_managers_test \
         hashdb_managers_test
 
@@ -37,20 +36,14 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 AM_LDFLAGS = -static
 
-bloom_filter_manager_test_CPPFLAGS = \
-	-I${top_srcdir}/src_libhashdb \
-	-isystem${top_srcdir}/src_libhashdb/libbloom
-
 lmdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb \
 	-I${top_srcdir}/rapidjson \
-	-isystem${top_srcdir}/src_libhashdb/libbloom \
 	-isystem${top_srcdir}/src_libhashdb/liblmdb
 
 hashdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/rapidjson
 
-bloom_filter_manager_test_LDADD = ../src_libhashdb/libhashdb.la
 lmdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
 hashdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
 
@@ -66,7 +59,6 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-bloom_filter_manager_test_SOURCES = bloom_filter_manager_test.cpp
 lmdb_managers_test_SOURCES = lmdb_managers_test.cpp
 hashdb_managers_test_SOURCES = hashdb_managers_test.cpp
 

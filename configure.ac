@@ -182,7 +182,7 @@ AC_SYS_POSIX_TERMIOS
 #fi
 
 ################################################################
-## OpenSSL Support is required for bloom
+## OpenSSL Support is required for md5 hash
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
 AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
@@ -191,7 +191,7 @@ AC_CHECK_FUNCS([EVP_get_digestbyname],,
 	AC_MSG_ERROR([SSL/OpenSSL support required]))
 
 ################################################################
-## support required by bloom.h
+## support required by LMDB
 if test  x"$mingw" != x"yes";  then
   AC_CHECK_FUNCS([mmap])
   AC_CHECK_HEADERS([sys/mman.h],,[AC_MSG_ERROR([mmap support required])])
@@ -208,8 +208,8 @@ LIBS="-lcrypto $LIBS"
 #PTHREAD: AC_CHECK_LIB([pthread],[pthread_mutexattr_settype],[],[AC_MSG_ERROR([Could not find pthread library])])
 #LIBS="-lssl -lcrypto -lpthread $LIBS"
 #LIBS="-lcrypto -lpthread $LIBS"
-## end support required by bloom.h
 
+################################################################
 # Should we disable optimization?
 AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
 # Or maybe just tone it down a bit?
