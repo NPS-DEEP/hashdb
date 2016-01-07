@@ -19,9 +19,7 @@
 
 /**
  * \file
- * Manage the LMDB source name store.
- *
- * Lock non-thread-safe interfaces before use.
+ * Manage the LMDB source name store.  Threadsafe.
  */
 
 #ifndef LMDB_SOURCE_NAME_MANAGER_HPP
@@ -36,6 +34,12 @@
 #include <iostream>
 #include <string>
 
+// no concurrent writes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 class lmdb_source_name_manager_t {
 
   private:
@@ -46,6 +50,11 @@ class lmdb_source_name_manager_t {
   file_mode_type_t file_mode;
   source_names_t* source_names;
   MDB_env* env;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
 
   // do not allow copy or assignment
   lmdb_source_name_manager_t(const lmdb_source_name_manager_t&);
@@ -138,7 +147,10 @@ class lmdb_source_name_manager_t {
        settings(read_settings(hashdb_dir)),
        id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_name_store",
-                                                                file_mode)) {
+                                                                file_mode)),
+       M() {
+
+    MUTEX_INIT(&M);
 
     // eror if settings is not initialized
     if (settings.sector_size == 0) {
@@ -161,6 +173,8 @@ class lmdb_source_name_manager_t {
   bool insert(const uint64_t source_id,
               const std::string& repository_name,
               const std::string& filename) {
+
+    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -220,11 +234,12 @@ class lmdb_source_name_manager_t {
 
     // hash source inserted
     context.close();
+    MUTEX_UNLOCK(&M);
     return has_source;
   }
 
   /**
-   * Read data for the hash.  Fail if the hash does not exist.
+   * Find source names, fail on invalid source ID.
    */
   void find(const uint64_t source_id,
             source_names_t& source_names) const {

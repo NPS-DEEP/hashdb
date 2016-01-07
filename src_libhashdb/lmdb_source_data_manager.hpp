@@ -21,8 +21,7 @@
  * \file
  * Manage the LMDB source data store of: key=source_id,
  * data=(file_binary_hash, filesize, file_type, non_probative_count)
- *
- * Lock non-thread-safe interfaces before use.
+ * Threadsafe.
  */
 
 #ifndef LMDB_SOURCE_DATA_MANAGER_HPP
@@ -39,12 +38,24 @@
 #include <iostream>
 #include <string>
 
+// no concurrent writes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 class lmdb_source_data_manager_t {
 
   private:
   std::string hashdb_dir;
   file_mode_type_t file_mode;
   MDB_env* env;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
+
 
   // do not allow copy or assignment
   lmdb_source_data_manager_t(const lmdb_source_data_manager_t&);
@@ -152,7 +163,9 @@ class lmdb_source_data_manager_t {
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_data_store",
-                                                            file_mode)) {
+                                                            file_mode)),
+       M() {
+    MUTEX_INIT(&M);
   }
 
   ~lmdb_source_data_manager_t() {
@@ -168,6 +181,7 @@ class lmdb_source_data_manager_t {
               const uint64_t filesize,
               const std::string& file_type,
               const uint64_t non_probative_count) {
+    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -202,6 +216,7 @@ class lmdb_source_data_manager_t {
  
       // new source data inserted
       context.close();
+      MUTEX_UNLOCK(&M);
       return is_new;
  
     } else {
@@ -247,9 +262,9 @@ class lmdb_source_data_manager_t {
   }
 
   /**
-   * Return first hash.
+   * Return first source ID.
    */
-  std::pair<bool, std::string> find_begin() const {
+  std::pair<bool, uint64_t> find_begin() const {
 
     // get context
     lmdb_context_t context(env, false, false);
@@ -264,12 +279,12 @@ class lmdb_source_data_manager_t {
       uint64_t source_id;
       std::string encoding = lmdb_helper::get_string(context.key);
       decode_key(encoding, source_id);
-      return std::pair<bool, std::string>(true, source_id);
+      return std::pair<bool, uint64_t>(true, source_id);
 
     } else if (rc == MDB_NOTFOUND) {
       // no key
       context.close();
-      return std::pair<bool, std::string>(false, 0);
+      return std::pair<bool, uint64_t>(false, 0);
 
     } else {
       // invalid rc
@@ -281,7 +296,7 @@ class lmdb_source_data_manager_t {
   /**
    * Return next hash.  Error if no next.
    */
-  std::string find_next(const uint64_t last_source_id) const {
+  std::pair<bool, std::string> find_next(const uint64_t last_source_id) const {
 
     // get context
     lmdb_context_t context(env, false, false);

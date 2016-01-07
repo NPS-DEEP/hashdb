@@ -21,8 +21,7 @@
  * \file
  * Manage the LMDB source ID store of key=encoding(source_id),
  * data=file_binary_hash.
- *
- * Lock non-thread-safe interfaces before use.
+ * Threadsafe.
  */
 
 #ifndef LMDB_SOURCE_ID_MANAGER_HPP
@@ -37,12 +36,23 @@
 #include <iostream>
 #include <string>
 
+// no concurrent writes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 class lmdb_source_id_manager_t {
 
   private:
   std::string hashdb_dir;
   file_mode_type_t file_mode;
   MDB_env* env;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
 
   // do not allow copy or assignment
   lmdb_source_id_manager_t(const lmdb_source_id_manager_t&);
@@ -100,7 +110,9 @@ class lmdb_source_id_manager_t {
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_id_store",
-                                                            file_mode)) {
+                                                            file_mode)),
+       M() {
+    MUTEX_INIT(&M);
   }
 
   ~lmdb_source_id_manager_t() {
@@ -113,6 +125,7 @@ class lmdb_source_id_manager_t {
    * Return false if already there.
    */
   std::pair<bool, uint64_t> insert(const std::string& file_binary_hash) {
+    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -135,6 +148,7 @@ class lmdb_source_id_manager_t {
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, source_id);
       context.close();
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, source_id);
 
     } else if (rc == MDB_NOTFOUND) {
@@ -154,6 +168,7 @@ class lmdb_source_id_manager_t {
 
       // source ID created
       context.close();
+      MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(true, source_id);
 
     } else {

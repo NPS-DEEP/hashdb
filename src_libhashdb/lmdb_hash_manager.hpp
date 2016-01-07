@@ -19,9 +19,7 @@
 
 /**
  * \file
- * Manage the LMDB hash store.
- *
- * Lock non-thread-safe interfaces before use.
+ * Manage the LMDB hash store.  Threadsafe.
  */
 
 #ifndef LMDB_HASH_MANAGER_HPP
@@ -35,6 +33,12 @@
 #include <iostream>
 #include <string>
 
+// no concurrent writes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 static const size_t PREFIX_SIZE = 8;
 
 class lmdb_hash_manager_t {
@@ -44,6 +48,11 @@ class lmdb_hash_manager_t {
   file_mode_type_t file_mode;
   std::set<std::string>* strings;
   MDB_env* env;
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
 
   // do not allow copy or assignment
   lmdb_hash_manager_t(const lmdb_hash_manager_t&);
@@ -111,7 +120,9 @@ class lmdb_hash_manager_t {
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        strings(new(std::set<std::string>)),
-       env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)) {
+       env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)),
+       M() {
+    MUTEX_INIT(&M);
   }
 
   ~lmdb_hash_manager_t() {
@@ -121,6 +132,8 @@ class lmdb_hash_manager_t {
   }
 
   bool insert(const std::string& binary_hash) {
+
+    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -160,6 +173,7 @@ class lmdb_hash_manager_t {
 
       // hash inserted
       context.close();
+      MUTEX_UNLOCK(&M);
       return true;
 
     // handle when prefix already exists
@@ -171,6 +185,7 @@ class lmdb_hash_manager_t {
 
         // suffix already exists, hash not inserted
         context.close();
+        MUTEX_UNLOCK(&M);
         return false;
 
       } else {
@@ -189,6 +204,7 @@ class lmdb_hash_manager_t {
 
         // hash inserted
         context.close();
+        MUTEX_UNLOCK(&M);
         return true;
       }
 

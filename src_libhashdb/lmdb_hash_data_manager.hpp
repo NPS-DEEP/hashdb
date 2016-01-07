@@ -19,9 +19,7 @@
 
 /**
  * \file
- * Manage the LMDB hash store.
- *
- * Lock non-thread-safe interfaces before use.
+ * Manage the LMDB hash data store.  Threadsafe.
  */
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
@@ -38,6 +36,12 @@
 #include <iostream>
 #include <string>
 
+// no concurrent writes
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+#include "mutex_lock.hpp"
+
 class lmdb_hash_data_manager_t {
 
   private:
@@ -49,6 +53,12 @@ class lmdb_hash_data_manager_t {
   hashdb_settings_t settings;
   id_offset_pairs_t& id_offset_pairs_t;
   MDB_env* env;
+
+#ifdef HAVE_PTHREAD
+  mutable pthread_mutex_t M;                  // mutext
+#else
+  mutable int M;                              // placeholder
+#endif
 
   // do not allow copy or assignment
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
@@ -148,13 +158,16 @@ class lmdb_hash_data_manager_t {
        settings(read_settings(hashdb_dir)),
        id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
-                                                                file_mode)) {
+                                                                file_mode)),
+       M() {
 
     // eror if settings is not initialized
     if (settings.sector_size == 0) {
       std::cerr << "Error: settings not initialized: " << settings << "\n";
       assert(0);
     }
+
+    MUTEX_INIT(&M);
   }
 
   ~lmdb_hash_data_manager_t() {
@@ -171,6 +184,8 @@ class lmdb_hash_data_manager_t {
                         const std::string& non_probative_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
+
+    MUTEX_LOCK(&M);
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
@@ -204,6 +219,7 @@ class lmdb_hash_data_manager_t {
  
       // hash data inserted
       context.close();
+      MUTEX_UNLOCK(&M);
       return true;
  
     } else if (rc == 0) {
@@ -228,6 +244,7 @@ class lmdb_hash_data_manager_t {
 
       // hash inserted
       context.close();
+      MUTEX_UNLOCK(&M);
       return false;
 
     } else {
@@ -246,10 +263,12 @@ class lmdb_hash_data_manager_t {
                           const uint64_t source_id,
                           const uint64_t file_offset) {
 
+    MUTEX_LOCK(&M);
+
     // validate file_offset
     if (file_offset % settings.sector_size != 0) {
       std::cerr << "invalid file offset value\n";
-      return false;
+      assert(0);
     }
 
     // maybe grow the DB
@@ -286,6 +305,7 @@ class lmdb_hash_data_manager_t {
       if (id_offset_pairs.find(id_offset_pair) != id_offset_pairs.end()) {
         // source is already there
         context.close();
+        MUTEX_UNLOCK(&M);
         return false;
       } else {
 
@@ -305,6 +325,7 @@ class lmdb_hash_data_manager_t {
 
         // hash source inserted
         context.close();
+        MUTEX_UNLOCK(&M);
         return true;
       }
 
@@ -382,7 +403,8 @@ class lmdb_hash_data_manager_t {
   /**
    * Return next hash.  Error if no next.
    */
-  std::string find_next(const std::string& last_binary_hash) const {
+  std::pair<bool, std::string> find_next(
+                        const std::string& last_binary_hash) const {
 
     if (last_binary_hash == "") {
       // program error to ask for next when at end
