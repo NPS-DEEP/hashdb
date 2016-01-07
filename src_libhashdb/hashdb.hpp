@@ -41,6 +41,17 @@ struct timeval;
 namespace hashdb {
 
   // ************************************************************
+  // typedefs
+  // ************************************************************
+  // pair(source_id, file_offset)
+  typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
+  typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
+
+  // pair(repository_name, filename)
+  typedef std::pair<std::string, std::string> source_name_t;
+  typedef std::set<source_name_t>             source_names_t;
+
+  // ************************************************************
   // version of the hashdb library
   // ************************************************************
   /**
@@ -48,50 +59,6 @@ namespace hashdb {
    */
   extern "C"
   const char* version();
-
-  // ************************************************************
-  // types used in interfaces
-  // ************************************************************
-  // hash_data_t of tuple(binary_hash, file_offset, entropy_label)
-  struct hash_data_t {
-    std::string binary_hash;
-    uint64_t file_offset;
-    std::string entropy_label;
-    hash_data_t(const std::string& p_binary_hash,
-                const uint64_t p_file_offset,
-                const std::string& p_entropy_label) :
-            binary_hash(p_binary_hash),
-            file_offset(p_file_offset),
-            entropy_label(p_entropy_label) {
-    }
-  };
-
-  // hash_data_list_t
-  typedef std::vector<hash_data_t> hash_data_list_t;
-
-  // id_offset_pairs_t of vector of pair(source_id, file_offset)
-  typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
-  typedef std::vector<id_offset_pair_t> id_offset_pairs_t;
-
-  // source_metadata_t of tuple(source_id, filesize, positive_count)
-  struct source_metadata_t {
-    uint64_t source_id;
-    uint64_t filesize;
-    uint64_t positive_count;
-    source_metadata_t(const uint64_t p_source_id,
-                      const uint64_t p_filesize,
-                      const uint64_t p_positive_count) :
-            source_id(p_source_id),
-            filesize(p_filesize),
-            positive_count(p_positive_count) {
-    }
-    source_metadata_t() : source_id(0), filesize(0), positive_count(0) {
-    }
-  };
-
-  // source_names_t pair<repository_name, filename>
-  typedef std::pair<std::string, std::string> source_name_t;
-  typedef std::vector<source_name_t> source_names_t;
 
   // ************************************************************
   // misc support interfaces
@@ -111,6 +78,9 @@ namespace hashdb {
    * Parameters:
    *   hashdb_dir - Path to the database to create.  The path must not
    *     exist yet.
+   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
+   *     align to this.
+   *   block_size - Size, in bytes, of data blocks.
    *   command_string - String to put into the new hashdb log.
    *   Other parameters - Other parameters control hashdb settings.
    *
@@ -121,9 +91,6 @@ namespace hashdb {
                      const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
-                     bool bloom_is_used,
-                     uint32_t bloom_M_hash_size,
-                     uint32_t bloom_k_hash_functioins,
                      const std::string& command_string);
 
   /**
@@ -133,7 +100,9 @@ namespace hashdb {
    *
    * Parameters:
    *   hashdb_dir - Path to the database to obtain the settings of.
-   *   Other parameters - Other parameters return hashdb setting values.
+   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
+   *     align to this.
+   *   block_size - Size, in bytes, of data blocks.
    *
    * Returns tuple:
    *   True and "" if settings were retrieved, false and reason if not.
@@ -141,23 +110,7 @@ namespace hashdb {
   std::pair<bool, std::string> hashdb_settings(
                      const std::string& hashdb_dir,
                      uint32_t& sector_size,
-                     uint32_t& block_size,
-                     bool& bloom_is_used,
-                     uint32_t& bloom_M_hash_size,
-                     uint32_t& bloom_k_hash_functioins);
-
-  /**
-   * Rebuild the Bloom filter.
-   * Return true and "" if bloom filter rebuilds, false and reason if not.
-   * The current implementation may abort if something worse than a simple
-   * path problem happens.
-   */
-  std::pair<bool, std::string> rebuild_bloom(
-                     const std::string& hashdb_dir,
-                     const bool bloom_is_used,
-                     const uint32_t bloom_M_hash_size,
-                     const uint32_t bloom_k_hash_functions,
-                     const std::string& command_string);
+                     uint32_t& block_size);
 
   /**
    * Print environment information to the stream.  Specifically, print
@@ -171,7 +124,7 @@ namespace hashdb {
   // ************************************************************
   /**
    * Manage all LMDB updates.  All interfaces are locked and threadsafe.
-   * A logger is opened for logging the command (TBD) and for logging
+   * A logger is opened for logging the command and for logging
    * timestamps and changes applied during the session.  Upon closure,
    * changes are written to the logger and the logger is closed.
    */
@@ -211,6 +164,24 @@ namespace hashdb {
      * The destructor closes the log file and data store resources.
      */
     ~import_manager_t();
+
+    /**
+     * Set up a source ID for a file binary hash.
+     *
+     * Parameters:
+     *   file_binary_hash - The MD5 hash of the source in binary form.
+     *
+     * Returns pair:
+     *   True if the file binary hash is new else false.
+     *   The source ID, which is new if it is just generated.
+     */
+    std::pair<bool, uint64_t> insert_file_binary_hash(
+                                       const std::string& file_binary_hash);
+
+
+
+
+
 
     /**
      * Initialize the environment to accept this file hash and import

@@ -32,7 +32,6 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
-#include "lmdb_data_codec.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>

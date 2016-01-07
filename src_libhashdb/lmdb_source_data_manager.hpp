@@ -19,8 +19,8 @@
 
 /**
  * \file
- * Manage the LMDB source data store of key=file_binary_hash,
- * data=(source_id, filesize, positive_count).
+ * Manage the LMDB source data store of: key=source_id,
+ * data=(file_binary_hash, filesize, file_type, non_probative_count)
  *
  * Lock non-thread-safe interfaces before use.
  */
@@ -177,7 +177,8 @@ class lmdb_source_data_manager_t {
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(source_id, context.key);
+    std::string encoding = encode_key(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // see if source data is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -224,7 +225,8 @@ class lmdb_source_data_manager_t {
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    std::string encoding = encode_key(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,

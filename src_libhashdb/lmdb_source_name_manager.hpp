@@ -19,8 +19,7 @@
 
 /**
  * \file
- * Manage the LMDB source name multimap of key=binary_file_hash,
- * value=(repository name, filename).
+ * Manage the LMDB source name store.
  *
  * Lock non-thread-safe interfaces before use.
  */
@@ -31,8 +30,6 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
-#include "lmdb_data_codec.hpp"
-#include "hashdb.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -42,149 +39,220 @@
 class lmdb_source_name_manager_t {
 
   private:
+  typedef std::pair<std::string, std::string> source_name_t;
+  typedef std::set<source_name_t> source_names_t;
+
   std::string hashdb_dir;
   file_mode_type_t file_mode;
+  source_names_t* source_names;
   MDB_env* env;
 
   // do not allow copy or assignment
   lmdb_source_name_manager_t(const lmdb_source_name_manager_t&);
   lmdb_source_name_manager_t& operator=(const lmdb_source_name_manager_t&);
 
-  // reader
-  void find_array_at_cursor(lmdb_context_t& context,
-                            hashdb::source_names_t& source_names) const {
+  // note: same as in lmdb_source_data_manager
+  // encoder for key=source_id
+  static std::string encode_key(const uint64_t source_id) {
 
-    // find data for hash starting at cursor
-    std::string file_binary_hash = lmdb_helper::get_string(context.key);
-    std::string encoding = lmdb_helper::get_string(context.data);
+    // allocate space for the encoding
+    size_t max_size = 10;
 
-    // add to array
-    source_names.push_back(lmdb_data_codec::decode_ss_t_data(encoding));
+    uint8_t encoding[max_size];
+    uint8_t* p = encoding;
 
-    // move cursor forward to find more data for this hash
-    int rc = 0;
-    while (true) {
+    // encode each field
+    p = lmdb_helper::encode_uint64_t(source_id, p);
 
-      // set cursor to next key, data pair
-      rc = mdb_cursor_get(context.cursor,
-                          &context.key, &context.data, MDB_NEXT);
+    // return encoding
+    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
+  }
 
-      if (rc == 0) {
+  // decoder for key=source_id
+  static void decode_key(uint64_t& source_id) {
+    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
+    const uint8_t* p = p_start;
 
-        // read next data
-        std::string next_file_binary_hash =
-                                    lmdb_helper::get_string(context.key);
-        std::string next_encoding = lmdb_helper::get_string(context.data);
+    p = lmdb_helper::decode_uint64_t(p, source_id);
 
-        if (next_file_binary_hash == file_binary_hash) {
-          // same file hash so use it
-          source_names.push_back(lmdb_data_codec::decode_ss_t_data(
-                                 next_encoding));
+    // validate that the decoding was properly consumed
+    if ((size_t)(p - p_start) != encoding.size()) {
+      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
+      assert(0);
+    }
+  }
 
-        } else {
-          // different hash so done
-          break;
-        }
-      } else {
-        break;
-      }
+  // encoder for data=set(repository_name, filename)
+  static std::string encode_data(const source_names_t& source_names) {
+
+    // allocate space for the encoding, slower but not wrong
+    size_t max_size = 0;
+    for (std::set<std::string>::const_iterator it = source_names.begin();
+                                         it != source_names.end(); ++it) {
+      size_t += it->first.size();
+      size_t += it->second.size();
+    }
+    size_t += 10 * source_names.size();
+
+    uint8_t encoding[max_size];
+    uint8_t* p = encoding;
+
+    // encode each field
+    for (std::set<std::string>::const_iterator it = source_names.begin();
+                                         it != source_names.end(); ++it) {
+      p = lmdb_helper::encode_string(it->first, p);
+      p = lmdb_helper::encode_string(it->second, p);
     }
 
-    if (rc != 0 && rc != MDB_NOTFOUND) {
-      // bad state
-      std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
+    // return encoding
+    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
+  }
+
+  // decoder for data=set(repository_name, filename)
+  static void decode_data(std::string& encoding,
+                          source_names_t& source_names) {
+    source_names.clear();
+    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
+    const uint8_t* p_stop = p_start + encoding.size();
+    const uint8_t* p = p_start;
+
+    while(p < p_stop) {
+      source_name_t pair;
+      p = lmdb_helper::decode_uint64_t(p, pair.first);
+      p = lmdb_helper::decode_uint64_t(p, pair.second);
+      source_names.insert(pair);
+    }
+
+    // validate that the decoding was properly consumed
+    if ((size_t)(p - p_start) != encoding.size()) {
+      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
       assert(0);
     }
   }
 
   public:
   lmdb_source_name_manager_t(const std::string& p_hashdb_dir,
-                            const file_mode_type_t p_file_mode) :
+                      const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
+       settings(read_settings(hashdb_dir)),
+       id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_name_store",
-                                                            file_mode)) {
+                                                                file_mode)) {
+
+    // eror if settings is not initialized
+    if (settings.sector_size == 0) {
+      std::cerr << "Error: settings not initialized: " << settings << "\n";
+      assert(0);
+    }
   }
 
   ~lmdb_source_name_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
+    delete id_offset_pairs
   }
 
   /**
-   * Insert key, value pair unless the pair is already there.
+   * Insert repository_name, filename pair.
+   * Return true if inserted, false if already there.
+   * Fail on invalid source ID.
    */
-  void insert(const std::string file_binary_hash,
-              const std::string repository_name,
-              const std::string filename) {
+  bool insert(const uint64_t source_id,
+              const std::string& repository_name,
+              const std::string& filename) {
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
 
     // get context
-    lmdb_context_t context(env, true, true); // writable, duplicates
+    lmdb_context_t context(env, true, false);
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(file_binary_hash, context.key);
+    std::string encoding = encode_key(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
-    // set data
-    std::string encoding = lmdb_data_codec::encode_ss_t_data(
-                                                 repository_name, filename);
-    lmdb_helper::point_to_string(encoding, context.data);
+    // read the existing hash data record
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_SET_KEY);
 
-    // insert unless key, data pair is already there
-    int rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
-
-    if (rc == 0 || rc == MDB_KEYEXIST) {
-      // data inserted or data already there
-      context.close();
-      return;
+    // the key does not need to be there, but the read attempt must not fail
+    if (rc != 0 && rc != MDB_NOTFOUND) {
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
     }
 
-    // invalid rc
-    std::cerr << "label manager rc " << mdb_strerror(rc) << "\n";
-    assert(0);
+    // set source_names
+    if (rc == 0) {
+
+      // read existing sources into set
+      encoding = lmdb_helper::get_string(context.data);
+      decode_data(encoding, source_names);
+
+    } else {
+      // new set
+      source_names.clear();
+    }
+
+    // prepare the source name pair
+    source_name_t pair(repository_name, filename);
+
+    // note if already there
+    bool has_source = source_names.find(pair) != source_names.end();
+
+    // insert new pair
+    if (!has_source) {
+      source_names.insert(pair);
+    }
+
+    // write with source inserted
+    encoding = encode_data(source_names);
+    lmdb_helper::point_to_string(encoding, context.data);
+    rc = mdb_put(context.txn, context.dbi,
+                 &context.key, &context.data, MDB_NODUPDATA);
+
+    // the write must work
+    if (rc != 0) {
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+
+    // hash source inserted
+    context.close();
+    return has_source;
   }
 
   /**
-   * Clear id_offset_pairs then populate it with matches.
-   * Empty response means no match.
+   * Read data for the hash.  Fail if the hash does not exist.
    */
-  void find(const std::string& file_binary_hash,
-            hashdb::source_names_t& source_names) const {
-
-    // clear existing source names vector
-    source_names.clear();
+  void find(const uint64_t source_id,
+            source_names_t& source_names) const {
 
     // get context
-    lmdb_context_t context(env, false, true); // read only, duplicates
+    lmdb_context_t context(env, false, false);
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(file_binary_hash, context.key);
+    std::string encoding = encode_key(source_id);
+    lmdb_helper::point_to_string(encoding, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    if (rc == MDB_NOTFOUND) {
-      // no hash
-      context.close();
-      return;
-    }
-
     if (rc == 0) {
-      // one or more hashes
-      find_array_at_cursor(context, source_names);
+      // key found
+      std::string encoding = lmdb_helper::get_string(context.data);
+      decode_data(encoding, source_names);
       context.close();
       return;
-    }
 
-    // invalid rc
-    std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-    assert(0);
+    } else {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
   }
 
   // call this from a lock to prevent getting an unstable answer.

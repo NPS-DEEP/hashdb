@@ -42,6 +42,9 @@
 typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
 typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
 
+typedef std::pair<std::string, std::string> source_name_t;
+typedef std::set<source_name_t>             source_names_t;
+
 static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
 static const std::string binary_0(hex_to_binary_hash(
                                   "00000000000000000000000000000000"));
@@ -226,125 +229,66 @@ void lmdb_source_id_manager() {
   TEST_EQ(pair.second, 1)
 }
 
-
-/*
 // ************************************************************
-// lmdb_hash_label_manager
-//
-// Note that everything is tested during create rather than from individual
-// file mount modes.  That infrastructure is tested only by lmdb_hash_manager.
+// lmdb_source_data_manager
 // ************************************************************
-void lmdb_hash_label_manager_test() {
-
-  // create new manager
-  lmdb_hash_label_manager_t manager(hashdb_dir, RW_NEW);
-
-  std::string label;
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "")
-
-  manager.insert(binary_aa, "");
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "")
-
-  manager.insert(binary_aa, "l1");
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "l1")
-
-  manager.insert(binary_aa, "l1");
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "l1")
-
-  manager.insert(binary_aa, "l2");
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "l1")
-
-  manager.insert(binary_bb, "l2");
-  label = manager.find(binary_bb);
-  TEST_EQ(label, "l2")
-
-  manager.insert(binary_aa, "l1");
-  label = manager.find(binary_aa);
-  TEST_EQ(label, "l1")
-
-  // size
-  TEST_EQ(manager.size(), 2);
-}
-
-// ************************************************************
-// lmdb_source_id_manager
-// ************************************************************
-void lmdb_source_id_manager_test() {
-
-  // create new manager
-  lmdb_source_id_manager_t manager(hashdb_dir, RW_NEW);
-
-  manager.insert(1, binary_aa);
-  manager.insert(2, binary_bb);
-//  manager.insert(1, binary_aa); // makes warning to stdout, not checked
-  std::string binary_file_hash;
-  binary_file_hash = manager.find(1);
-  TEST_EQ(binary_file_hash, binary_aa)
-  binary_file_hash = manager.find(2);
-  TEST_EQ(binary_file_hash, binary_bb)
-//  binary_file_hash = manager.find(3); // assert
-
-  // size
-  TEST_EQ(manager.size(), 2);
-}
-
-// ************************************************************
-// lmdb_source_metadata_manager
-// ************************************************************
-void lmdb_source_metadata_manager_test() {
-
-  // create new manager
-  lmdb_source_metadata_manager_t manager(hashdb_dir, RW_NEW);
-
+void lmdb_source_data_manager() {
   std::pair<bool, uint64_t> pair;
 
-  pair = manager.insert_start(binary_aa);
+  // variables
+  std::string file_binary_hash;
+  uint64_t filesize;
+  std::string file_type;
+  uint64_t non_probative_count;
+
+  // create new manager
+  lmdb_source_data_manager_t manager(hashdb_dir, RW_NEW);
+
+  // this should assert
+  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+
+  // insert
+  TEST_EQ(manager.insert_source_data(1, "fbh", 2, "ft", 3), true);
+  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+  TEST_EQ(file_binary_hash, "fbh");
+  TEST_EQ(filesize, 2);
+  TEST_EQ(file_type, "ft");
+  TEST_EQ(non_probative_count, 3);
+
+  // change
+  TEST_EQ(manager.insert_source_data(1, "fbh2", 22, "ft2", 32), false);
+  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+  TEST_EQ(file_binary_hash, "fbh2");
+  TEST_EQ(filesize, 22);
+  TEST_EQ(file_type, "ft2");
+  TEST_EQ(non_probative_count, 32);
+
+  // insert second
+  TEST_EQ(manager.insert_source_data(0, "", 0, "", 0), true);
+  manager.find(0, file_binary_hash, filesize, file_type, non_probative_count);
+  TEST_EQ(file_binary_hash, "");
+  TEST_EQ(filesize, 0);
+  TEST_EQ(file_type, "");
+  TEST_EQ(non_probative_count, 0);
+
+  // make sure 1 is still in place
+  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+  TEST_EQ(file_binary_hash, "fbh2");
+  TEST_EQ(filesize, 22);
+  TEST_EQ(file_type, "ft2");
+  TEST_EQ(non_probative_count, 32);
+
+  // iterator
+  std::pair<bool, uint64_t> pair;
+  pair = manager.find_begin();
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, 0);
+  pair = manager.find_next(pair.second);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 1);
-
-  pair = manager.insert_start(binary_aa);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, 1);
-
-  pair = manager.insert_start(binary_bb);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, 2);
-
-  manager.insert_stop(binary_aa, 10, 11, 12);
-  manager.insert_stop(binary_aa, 10, 11, 12);
-  manager.insert_stop(binary_bb, 20, 21, 22);
-
-  hashdb::source_metadata_t data(0,0,0);
-  data = manager.find(binary_bb);
-  TEST_EQ(data.source_id, 20);
-  TEST_EQ(data.filesize, 21);
-  TEST_EQ(data.positive_count, 22);
-
-  std::pair<std::string, hashdb::source_metadata_t> pair2("",
-                                           hashdb::source_metadata_t(0,0,0));
-  pair2 = manager.find_begin();
-  TEST_EQ(pair2.first, binary_aa);
-  TEST_EQ(pair2.second.source_id, 10);
-  TEST_EQ(pair2.second.filesize, 11);
-  TEST_EQ(pair2.second.positive_count, 12);
-  pair2 = manager.find_next(pair2.first);
-  TEST_EQ(pair2.first, binary_bb);
-  TEST_EQ(pair2.second.source_id, 20);
-  TEST_EQ(pair2.second.filesize, 21);
-  TEST_EQ(pair2.second.positive_count, 22);
-  pair2 = manager.find_next(pair2.first);
-  TEST_EQ(pair2.first, "");
-  TEST_EQ(pair2.second.source_id, 0);
-  TEST_EQ(pair2.second.filesize, 0);
-  TEST_EQ(pair2.second.positive_count, 0);
-
-//  manager.insert_stop(binary_cc,0,0,0); // assert not there yet
-//  data = manager.find(binary_cc); // assert not found
+  pair = manager.find_next(pair.second);
+  TEST_EQ(pair.first, false);
+  TEST_EQ(pair.second, 0);
 
   // size
   TEST_EQ(manager.size(), 2);
@@ -353,35 +297,31 @@ void lmdb_source_metadata_manager_test() {
 // ************************************************************
 // lmdb_source_name_manager
 // ************************************************************
-void lmdb_source_name_manager_test() {
+void lmdb_source_name_manager() {
+  std::pair<bool, uint64_t> pair;
 
-  hashdb::source_names_t names;
+  // variables
+  source_names_t source_names;
 
   // create new manager
   lmdb_source_name_manager_t manager(hashdb_dir, RW_NEW);
-  TEST_EQ(manager.size(), 0);
 
-  manager.find(binary_aa, names);
-  TEST_EQ(names.size(), 0);
+  // this should assert
+  manager.find(1, source_names);
 
-  manager.insert(binary_aa, "ra1", "fa1");
-  manager.insert(binary_aa, "ra2", "fa2");
-  manager.insert(binary_bb, "rb", "fb");
-  manager.insert(binary_bb, "rb", "fb");
+  // insert, find
+  TEST_EQ(manager.insert_source_data(1, "rn", "fn"), true);
+  TEST_EQ(manager.insert_source_data(1, "rn", "fn"), false);
+  TEST_EQ(manager.insert_source_data(1, "rn2", "fn2"), true);
+  manager.find(1, source_names);
+  TEST_EQ(source_names.find(1)->first, "rn");
+  TEST_EQ(source_names.find(1)->second, "fn");
+  TEST_EQ(source_names.find(2)->first, "rn2");
+  TEST_EQ(source_names.find(2)->second, "fn2");
 
-  manager.find(binary_aa, names);
-  TEST_EQ(names.size(), 2);
-  TEST_EQ(names[0].first, "ra1");
-  TEST_EQ(names[0].second, "fa1");
-  TEST_EQ(names[1].first, "ra2");
-  TEST_EQ(names[1].second, "fa2");
-
-  manager.find(binary_bb, names);
-  TEST_EQ(names.size(), 1);
-  TEST_EQ(names[0].first, "rb");
-  TEST_EQ(names[0].second, "fb");
+  // size
+  TEST_EQ(manager.size(), 2);
 }
-*/
 
 // ************************************************************
 // main
@@ -400,23 +340,12 @@ int main(int argc, char* argv[]) {
 
   // source ID manager
   lmdb_source_id_manager();
-/*
-  // lmdb_hash_label_manager
-  make_new_hashdb_dir(hashdb_dir);
-  lmdb_hash_label_manager_test();
 
-  // lmdb_source_id_manager
-  make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_id_manager_test();
+  // source data manager
+  lmdb_source_data_manager();
 
-  // lmdb_source_metadata_manager
-  make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_metadata_manager_test();
-
-  // lmdb_source_name_manager
-  make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_name_manager_test();
-*/
+  // source name manager
+  lmdb_source_name_manager();
 
   // done
   std::cout << "lmdb_managers_test Done.\n";
