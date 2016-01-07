@@ -27,102 +27,82 @@
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdb_settings_store.hpp"
-#include "hashdb_settings.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
-#include "lmdb_data_codec.hpp"
-#include "bloom_filter_manager.hpp"
-#include "hashdb_changes.hpp"
-#include "hashdb.hpp" // for id_offset_pairs_t
-#include <vector>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <string>
+
+static const size_t PREFIX_SIZE = 8;
 
 class lmdb_hash_manager_t {
 
   private:
   std::string hashdb_dir;
   file_mode_type_t file_mode;
-  hashdb_settings_t settings;
-  bloom_filter_manager_t bloom_filter_manager;
+  std::set<std::string>* strings;
   MDB_env* env;
 
   // do not allow copy or assignment
   lmdb_hash_manager_t(const lmdb_hash_manager_t&);
   lmdb_hash_manager_t& operator=(const lmdb_hash_manager_t&);
 
-  // reader
-  void find_array_at_cursor(lmdb_context_t& context,
-                            hashdb::id_offset_pairs_t& id_offset_pairs) const {
+  // encode strings
+  static std::string encode_strings(const std::set<std::string> strings) {
 
-    // find data for hash starting at cursor
-    std::string binary_hash = lmdb_helper::get_string(context.key);
-    std::string encoding = lmdb_helper::get_string(context.data);
-    std::pair<uint64_t, uint64_t> pair =
-                        lmdb_data_codec::decode_uint64_uint64_data(encoding);
+    // allocate space for the encoding, this can break if
+    // it is faster to be liberal than to be exact,
+    // so permit up to 15-byte size suffixes
+    size_t max_size = strings.size() * 16;
 
-    // convert offset index to byte offset
-    pair.second *= settings.sector_size;
+    uint8_t encoding[max_size];
+    uint8_t* p = encoding;
 
-    // add to array
-    id_offset_pairs.push_back(pair);
-
-    // move cursor forward to find more data for this hash
-    int rc = 0;
-    while (true) {
-
-      // set cursor to next key, data pair
-      rc = mdb_cursor_get(context.cursor,
-                          &context.key, &context.data, MDB_NEXT);
-
-      if (rc == 0) {
-
-        // read next data
-        std::string next_binary_hash = lmdb_helper::get_string(context.key);
-        std::string next_encoding = lmdb_helper::get_string(context.data);
-
-        if (next_binary_hash == binary_hash) {
-          // same hash so use it
-          std::pair<uint64_t, uint64_t> next_pair =
-                                  lmdb_data_codec::decode_uint64_uint64_data(
-                                                                next_encoding);
-
-          // convert offset index to byte offset
-          next_pair.second *= settings.sector_size;
-
-          // add to array
-          id_offset_pairs.push_back(next_pair);
-
-        } else {
-          // different hash so done
-          break;
-        }
-      } else {
-        break;
-      }
+    // encode each field
+    for (std::set<std::string>::const_iterator it = strings.begin();
+                                               it != strings.end(); ++it) {
+      p = lmdb_helper::encode_sized_string(*it, p);
     }
 
-    if (rc != 0 && rc != MDB_NOTFOUND) {
-      // bad state
-      std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
+#ifdef DEBUG
+    std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
+    std::cout << "encoding strings data array size " << strings.size()
+              << "\nto binary data "
+              << binary_hash_to_hex(encoding_string)
+              << " size " << encoding_string.size() << "\n";
+#endif
+
+    // return encoding
+    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
   }
 
-  // helper
-  hashdb_settings_t read_settings(std::string p_hashdb_dir) {
-    hashdb_settings_t p_settings;
-    std::pair<bool, std::string> pair =
-                hashdb_settings_store::read_settings(p_hashdb_dir, p_settings);
-    if (pair.first == false) {
-      std::cerr << pair.second << "\n";
-      exit(1);
+  // decode strings
+  static void decode_strings(const std::string& encoding,
+                             std::set<std::string>& strings) {
+    strings.clear();
+    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
+    const uint8_t* p_stop = p_start + encoding.size();
+    const uint8_t* p = p_start;
+    std::string s;
+    while(p < p_stop) {
+      p = lmdb_helper::decode_string(p, s);
+      strings.insert(s);
     }
-    return p_settings;
+
+#ifdef DEBUG
+    std::string hex_encoding = binary_hash_to_hex(encoding);
+    std::cout << "decoding strings data " << hex_encoding
+              << " size " << encoding.size() << "\n"
+              << " to lmdb_source_data array size " << strings.size() << "\n";
+#endif
+
+    // validate that the decoding was properly consumed
+    if ((size_t)(p - p_start) != encoding.size()) {
+      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
+      assert(0);
+    }
   }
 
   public:
@@ -130,256 +110,142 @@ class lmdb_hash_manager_t {
                       const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(read_settings(hashdb_dir)),
-       bloom_filter_manager(hashdb_dir,
-                            file_mode,
-                            settings.bloom_is_used,
-                            settings.bloom_M_hash_size,
-                            settings.bloom_k_hash_functions),
+       strings(new(std::set<std::string>)),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)) {
-
-    // eror if settings is not initialized
-    if (settings.sector_size == 0) {
-      std::cerr << "Error: settings not initialized: " << settings << "\n";
-      assert(0);
-    }
   }
 
   ~lmdb_hash_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
+    delete strings;
   }
 
-  /**
-   * Insert hash data, noting changes.
-   */
-  void insert(const uint64_t source_id,
-              const hashdb::hash_data_t& hash_data,
-              hashdb_changes_t& changes) {
-
-    // validate the byte alignment
-    if (hash_data.file_offset % settings.sector_size != 0) {
-      ++changes.hashes_not_inserted_invalid_sector_size;
-      return;
-    }
-    size_t offset_index = hash_data.file_offset / settings.sector_size;
+  bool insert(const std::string& binary_hash) {
 
     // maybe grow the DB
     lmdb_helper::maybe_grow(env);
 
     // get context
-    lmdb_context_t context(env, true, true);
+    lmdb_context_t context(env, true, false);
     context.open();
 
-    // set key
-    lmdb_helper::point_to_string(hash_data.binary_hash, context.key);
+    // convert binary_hash into prefix and suffix
+    std::string hash_prefix = binary_hash.substr(0, PREFIX_SIZE);
+    std::string hash_suffix = (binary_hash.size() > PREFIX_SIZE) ?
+                                    binary_hash.substr(PREFIX_SIZE) : "";
 
-    // set data
-    std::string encoding = lmdb_data_codec::encode_uint64_uint64_data(
-                                                    source_id, offset_index);
-    lmdb_helper::point_to_string(encoding, context.data);
+    // see if prefix is already there
+    // set key to prefix
+    lmdb_helper::point_to_string(hash_prefix, context.key);
 
-    // see if this entry exists yet
-    // set the cursor to this key,data pair
-    int rc = mdb_cursor_get(context.cursor,
-                            &context.key, &context.data,
-                            MDB_GET_BOTH);
-    bool has_pair = false;
-    if (rc == 0) {
-      has_pair = true;
-    } else if (rc == MDB_NOTFOUND) {
-      // not found
-    } else {
-      // program error
-      has_pair = false; // satisfy mingw32-g++ compiler
-      std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-
-    if (has_pair) {
-      // this exact entry already exists
-      ++changes.hashes_not_inserted_duplicate_element;
-      context.close();
-      return;
-    }
-
-    // insert the entry since all the checks passed
-    rc = mdb_put(context.txn, context.dbi,
-                   &context.key, &context.data, MDB_NODUPDATA);
-    if (rc != 0) {
-      std::cerr << "LMDB insert error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-    ++changes.hashes_inserted;
-
-    context.close();
-
-    // add hash to bloom filter, too, even if already there
-    bloom_filter_manager.add_hash_value(hash_data.binary_hash);
-  }
-
-  /**
-   * Clear id_offset_pairs then populate it with matches.
-   * Empty response means no match.
-   */
-  void find(const std::string& binary_hash,
-                         hashdb::id_offset_pairs_t& id_offset_pairs) const {
-
-    // clear any existing (source ID, file offset) pairs
-    id_offset_pairs.clear();
-
-    // get context
-    lmdb_context_t context(env, false, true);
-    context.open();
-
-    // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
-
-    // set the cursor to this key
+    // set cursor to prefix
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
+    // handle when prefix and suffix is new
     if (rc == MDB_NOTFOUND) {
-      // no hash
-      context.close();
-      return;
-    }
+      // no hash so add new prefix and suffix
+      // set data to suffix
+      lmdb_helper::point_to_string(hash_suffix, context.data);
 
-    if (rc == 0) {
-      // one or more hashes
-      find_array_at_cursor(context, id_offset_pairs);
-      context.close();
-      return;
-    }
+      // add this new prefix and its suffix
+      rc = mdb_put(context.txn, context.dbi,
+                   &context.key, &context.data, MDB_NODUPDATA);
 
-    // invalid rc
-    std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-    assert(0);
+      // the add request must work
+      if (rc != 0) {
+        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+
+      // hash inserted
+      context.close();
+      return true;
+
+    // handle when prefix already exists
+    } else if (rc == 0) {
+      std::string encoding = lmdb_helper::get_string(context.data);
+      decode_strings(encoding, *strings);
+
+      if (strings->find(hash_suffix) != strings->end()) {
+
+        // suffix already exists, hash not inserted
+        context.close();
+        return false;
+
+      } else {
+
+        // suffix did not exist, so add suffix and write back
+        encoding = encode_strings(*strings);
+        lmdb_helper::point_to_string(encoding, context.data);
+        rc = mdb_put(context.txn, context.dbi,
+                       &context.key, &context.data, MDB_NODUPDATA);
+
+        // write must work
+        if (rc != 0) {
+          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+          assert(0);
+        }
+
+        // hash inserted
+        context.close();
+        return true;
+      }
+
+    } else {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
   }
 
   /**
-   * Find if hash is present at all, used only in whitelist import check.
+   * Find if hash is present.
    */
   bool find(const std::string& binary_hash) const {
 
     // get context
-    lmdb_context_t context(env, false, true);
+    lmdb_context_t context(env, false, false);
     context.open();
 
-    // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    // convert binary_hash into prefix and suffix
+    std::string hash_prefix = binary_hash.substr(0, PREFIX_SIZE);
+    std::string hash_suffix = (binary_hash.size() > PREFIX_SIZE) ?
+                                    binary_hash.substr(PREFIX_SIZE) : "";
 
-    // set the cursor to this key
+    // see if prefix is already there
+    // set key to prefix
+    lmdb_helper::point_to_string(hash_prefix, context.key);
+
+    // set cursor to prefix
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
+    // handle when prefix is not there
     if (rc == MDB_NOTFOUND) {
-      // no hash
+      // the hash is not present because the prefix is not present
       context.close();
       return false;
-    }
 
-    if (rc == 0) {
-      // one or more hashes
-      context.close();
-      return true;
-    }
+      // get set of suffixes and look for a match
+      std::string encoding = lmdb_helper::get_string(context.data);
+      decode_strings(encoding, *strings);
 
-    // invalid rc
-    std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-    assert(0);
-  }
+      if (strings->find(hash_suffix) != strings->end()) {
+        // suffix found
+        context.close();
+        return true;
 
-  /**
-   * Return first hash and its matches.
-   */
-  std::string find_begin(hashdb::id_offset_pairs_t& id_offset_pairs) const {
-
-    // clear any existing (source ID, file offset) pairs
-    id_offset_pairs.clear();
-
-    // get context
-    lmdb_context_t context(env, false, true);
-    context.open();
-
-    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_FIRST);
-
-    if (rc == MDB_NOTFOUND) {
-      // no values for this hash
-      context.close();
-      return std::string("");
-    }
-
-    if (rc == 0) {
-      // get this hash
-      std::string binary_hash = lmdb_helper::get_string(context.key);
-
-      // one or more values for this hash
-      find_array_at_cursor(context, id_offset_pairs);
-      context.close();
-      return binary_hash;
-    }
-
-    // invalid rc
-    std::cerr << "LMDB find_begin error: " << mdb_strerror(rc) << "\n";
-    assert(0);
-  }
-
-  /**
-   * Return next hash and its matches or "" and no pairs.
-   * Empty response means no next.
-   */
-  std::string find_next(const std::string& last_binary_hash,
-                         hashdb::id_offset_pairs_t& id_offset_pairs) const {
-
-    if (last_binary_hash == "") {
-      // program error to ask for next when at end
-      std::cerr << "find_next: already at end\n";
+      } else {
+        // suffix not found
+        context.close();
+        return false;
+      }
+    } else {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
-
-    // clear any existing (source ID, file offset) pairs
-    id_offset_pairs.clear();
-
-    // get context
-    lmdb_context_t context(env, false, true);
-    context.open();
-
-    // set the cursor to last hash
-    lmdb_helper::point_to_string(last_binary_hash, context.key);
-    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_SET_KEY);
-
-    // the last hash must exist
-    if (rc != 0) {
-      std::cerr << "LMDB find_next error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-
-    // move cursor to this hash
-    rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                        MDB_NEXT_NODUP);
-
-    if (rc == MDB_NOTFOUND) {
-      // no values for this hash
-      context.close();
-      return std::string("");
-    }
-
-    if (rc == 0) {
-      // get this hash
-      std::string binary_hash = lmdb_helper::get_string(context.key);
-
-      // one or more values for this hash
-      find_array_at_cursor(context, id_offset_pairs);
-      context.close();
-      return binary_hash;
-    }
-
-    // invalid rc
-    std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
-    assert(0);
   }
 
   // call this from a lock to prevent getting an unstable answer.

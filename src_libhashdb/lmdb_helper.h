@@ -40,44 +40,42 @@
 #include <iomanip>
 #include <pthread.h>
 
-// thread support to sync to prevent long delays
-bool sync_busy = false;
-void *perform_mdb_env_sync(void* env) {
-  if (sync_busy) {
-    // busy, so drop this sync request
+namespace lmdb_helper {
+
+  // thread support to sync to prevent long delays
+  static bool sync_busy = false;
+  static void *perform_mdb_env_sync(void* env) {
+    if (sync_busy) {
+      // busy, so drop this sync request
 #ifdef DEBUG
-    std::cout << "sync busy\n";
+      std::cout << "sync busy\n";
 #endif
-  } else {
-    sync_busy=true;
+    } else {
+      sync_busy=true;
 #ifdef DEBUG
-    std::cout << "sync start\n";
+      std::cout << "sync start\n";
 #endif
-    int rc = mdb_env_sync(static_cast<MDB_env*>(env), 1);
-    if (rc != 0) {
-      // silently let the error go.  sync is a convenience and also sync is
-      // expected to fail when the program closes env and exits.
+      int rc = mdb_env_sync(static_cast<MDB_env*>(env), 1);
+      if (rc != 0) {
+        // silently let the error go.  sync is a convenience and also sync is
+        // expected to fail when the program closes env and exits.
 #ifdef DEBUG
-      std::cout << "Note in sync DB: " <<  mdb_strerror(rc) << "\n";
+        std::cout << "Note in sync DB: " <<  mdb_strerror(rc) << "\n";
 #endif
+      }
+#ifdef DEBUG
+      std::out << "sync done\n";
+#endif
+      sync_busy = false;
     }
-#ifdef DEBUG
-    std::out << "sync done\n";
-#endif
-    sync_busy = false;
+    return NULL;
   }
-  return NULL;
-}
 
-
-class lmdb_helper {
-
-  public:
   // write value into encoding, return pointer past value written.
   // each write will add no more than 10 bytes.
   // note: code adapted directly from:
   // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417
-  static uint8_t* encode_uint64(uint64_t value, uint8_t* target) {
+  uint8_t* encode_uint64(uint64_t value, uint8_t* target) {
 
     // Splitting into 32-bit pieces gives better performance on 32-bit
     // processors.
@@ -149,7 +147,7 @@ class lmdb_helper {
   // each read will consume no more than 10 bytes.
   // note: code adapted directly from:
   // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417
-  static const uint8_t* decode_uint64(const uint8_t* p_ptr, uint64_t* value) {
+  const uint8_t* decode_uint64(const uint8_t* p_ptr, uint64_t& value) {
 
     const uint8_t* ptr = p_ptr;
     uint32_t b;
@@ -175,15 +173,15 @@ class lmdb_helper {
     assert(0);
 
    done:
-    *value = (static_cast<uint64_t>(part0)      ) |
-             (static_cast<uint64_t>(part1) << 28) |
-             (static_cast<uint64_t>(part2) << 56);
+    value = (static_cast<uint64_t>(part0)      ) |
+            (static_cast<uint64_t>(part1) << 28) |
+            (static_cast<uint64_t>(part2) << 56);
     return ptr;
   }
 
   // write string size and then string into encoding, return pointer past
   // value written.  Destination must be large enough.
-  static uint8_t* encode_sized_string(const std::string& text, uint8_t* p) {
+  uint8_t* encode_string(const std::string& text, uint8_t* p) {
     p = encode_uint64(text.size(), p);
     std::memcpy(p, text.c_str(), text.size());
     return p + text.size();
@@ -191,15 +189,15 @@ class lmdb_helper {
 
   // read string size and then string, return pointer past value read.
   // currently, data must be valid or this can break.
-  static const uint8_t* decode_sized_string(const uint8_t* p, std::string* text) {
+  const uint8_t* decode_string(const uint8_t* p, std::string& text) {
     uint64_t size;
     p = decode_uint64(p, &size);
-    *text = std::string(reinterpret_cast<const char*>(p), size);
+    text = std::string(reinterpret_cast<const char*>(p), size);
     p += size;
     return p;
   }
 
-  static MDB_env* open_env(const std::string& store_dir,
+  MDB_env* open_env(const std::string& store_dir,
                            const file_mode_type_t file_mode) {
 
     // create the DB environment
@@ -264,7 +262,7 @@ class lmdb_helper {
     return env;
   }
 
-  static void maybe_grow(MDB_env* env) {
+  void maybe_grow(MDB_env* env) {
     // http://comments.gmane.org/gmane.network.openldap.technical/11699
     // also see mdb_env_set_mapsize
 
@@ -328,7 +326,7 @@ class lmdb_helper {
   }
 
   // size
-  static size_t size(MDB_env* env) {
+  size_t size(MDB_env* env) {
 
     // obtain statistics
     MDB_stat stat;
@@ -341,12 +339,12 @@ class lmdb_helper {
     return stat.ms_entries;
   }
 
-  static void point_to_string(const std::string& str, MDB_val& val) {
+  void point_to_string(const std::string& str, MDB_val& val) {
     val.mv_size = str.size();
     val.mv_data = static_cast<void*>(const_cast<char*>(str.c_str()));
   }
 
-  static std::string get_string(const MDB_val& val) {
+  std::string get_string(const MDB_val& val) {
     return std::string(static_cast<char*>(val.mv_data), val.mv_size);
   }
 };

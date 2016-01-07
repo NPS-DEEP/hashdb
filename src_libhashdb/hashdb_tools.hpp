@@ -51,7 +51,6 @@
 #include "lmdb_source_id_manager.hpp"
 #include "lmdb_source_metadata_manager.hpp"
 #include "lmdb_source_name_manager.hpp"
-#include "bloom_filter_manager.hpp"
 #include "hashdb_changes.hpp"
 #include "logger.hpp"
 #include <unistd.h>
@@ -83,9 +82,6 @@ namespace hashdb {
                      const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
-                     bool bloom_is_used,
-                     uint32_t bloom_M_hash_size,
-                     uint32_t bloom_k_hash_functions,
                      const std::string& command_string) {
 
     // path must be empty
@@ -112,9 +108,6 @@ namespace hashdb {
     settings.data_store_version = CURRENT_DATA_STORE_VERSION;
     settings.sector_size = sector_size;
     settings.block_size = block_size;
-    settings.bloom_is_used = bloom_is_used;
-    settings.bloom_M_hash_size = bloom_M_hash_size;
-    settings.bloom_k_hash_functions = bloom_k_hash_functions;
 
     // create the settings file
     hashdb_settings_store::write_settings(hashdb_dir, settings);
@@ -140,10 +133,7 @@ namespace hashdb {
   std::pair<bool, std::string> hashdb_settings(
                      const std::string& hashdb_dir,
                      uint32_t& sector_size,
-                     uint32_t& block_size,
-                     bool& bloom_is_used,
-                     uint32_t& bloom_M_hash_size,
-                     uint32_t& bloom_k_hash_functions) {
+                     uint32_t& block_size) {
 
     hashdb_settings_t settings;
     std::pair<bool, std::string> pair;
@@ -154,88 +144,15 @@ namespace hashdb {
       // return successful
       sector_size = settings.sector_size;
       block_size = settings.block_size;
-      bloom_is_used = settings.bloom_is_used;
-      bloom_M_hash_size = settings.bloom_M_hash_size;
-      bloom_k_hash_functions = settings.bloom_k_hash_functions;
       return pair;
     } else {
       // return fail
       sector_size = 0;
       block_size = 0;
-      bloom_is_used = false;
-      bloom_M_hash_size = 0;
-      bloom_k_hash_functions = 0;
       return pair;
     }
   }
 
-  /**
-   * Return true and "" if bloom filter rebuilds, false and reason if not.
-   * The current implementation may abort if something worse than a simple
-   * path problem happens.
-   */
-  std::pair<bool, std::string> rebuild_bloom(
-                     const std::string& hashdb_dir,
-                     const bool bloom_is_used,
-                     const uint32_t bloom_M_hash_size,
-                     const uint32_t bloom_k_hash_functions,
-                     const std::string& command_string) {
-
-    // validate path
-    std::pair<bool, std::string> pair = hashdb::is_valid_hashdb(hashdb_dir);
-    if (pair.first == false) {
-      return pair;
-    }
-
-    // read existing settings
-    hashdb_settings_t settings;
-    pair = hashdb_settings_store::read_settings(hashdb_dir, settings);
-    if (pair.first == false) {
-      assert(0);
-    }
-
-    // change the bloom filter settings
-    settings.bloom_is_used = bloom_is_used;
-    settings.bloom_M_hash_size = bloom_M_hash_size;
-    settings.bloom_k_hash_functions = bloom_k_hash_functions;
-
-    // write back the changed settings
-    hashdb_settings_store::write_settings(hashdb_dir, settings);
-
-    logger_t logger(hashdb_dir, command_string);
-
-    // log the new settings
-    logger.add_hashdb_settings(settings);
-
-    // remove existing bloom filter
-    std::string filename = hashdb_dir + "/bloom_filter";
-    remove(filename.c_str());
-
-    // open the bloom filter manager
-    bloom_filter_manager_t bloom_filter_manager(hashdb_dir,
-                               RW_NEW,
-                               settings.bloom_is_used,
-                               settings.bloom_M_hash_size,
-                               settings.bloom_k_hash_functions);
-
-    // only add hashes if bloom is used
-    if (settings.bloom_is_used) {
-
-      // open hash DB
-      lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY);
-
-      // add hashes to the bloom filter
-      hashdb::id_offset_pairs_t id_offset_pairs;
-      std::string binary_hash = manager.find_begin(id_offset_pairs);
-      while (binary_hash != "") {
-        bloom_filter_manager.add_hash_value(binary_hash);
-        binary_hash = manager.find_next(binary_hash, id_offset_pairs);
-      }
-    }
-
-    // done
-    return std::pair<bool, std::string>(true, "");
-  }
 } // namespace hashdb
 
 #endif

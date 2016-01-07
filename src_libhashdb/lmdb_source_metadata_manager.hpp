@@ -33,7 +33,6 @@
 #include "lmdb_context.hpp"
 #include "lmdb_data_codec.hpp"
 #include "hashdb.hpp"
-#include "bloom_filter_manager.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>

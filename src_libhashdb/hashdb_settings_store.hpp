@@ -92,10 +92,6 @@ namespace hashdb_settings_store {
     settings.data_store_version = document["data_store_version"].GetUint64();
     settings.sector_size = document["sector_size"].GetUint64();
     settings.block_size = document["block_size"].GetUint64();
-    settings.bloom_is_used = document["bloom_is_used"].GetBool();
-    settings.bloom_M_hash_size = document["bloom_M_hash_size"].GetUint64();
-    settings.bloom_k_hash_functions =
-                              document["bloom_k_hash_functions"].GetUint64();
 
     // settings version must be compatible
     if (settings.data_store_version < settings.expected_data_store_version) {
@@ -137,12 +133,6 @@ namespace hashdb_settings_store {
                                 settings.sector_size, allocator);
     settings_document.AddMember("block_size",
                                 settings.block_size, allocator);
-    settings_document.AddMember("bloom_is_used",
-                                settings.bloom_is_used, allocator);
-    settings_document.AddMember("bloom_M_hash_size",
-                                settings.bloom_M_hash_size, allocator);
-    settings_document.AddMember("bloom_k_hash_functions",
-                                settings.bloom_k_hash_functions, allocator);
 
     // create the json settings string
     rapidjson::StringBuffer strbuf;
