@@ -30,7 +30,7 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
-#include "lmdb_data_codec.hpp"
+#include "lmdb_changes.hpp"
 #include "hashdb.hpp"
 #include <vector>
 #include <unistd.h>
@@ -62,7 +62,7 @@ class lmdb_source_data_manager_t {
   lmdb_source_data_manager_t& operator=(const lmdb_source_data_manager_t&);
 
   // encoder for key=source_id
-  static std::string encode_key(const uint64_t source_id) {
+  std::string encode_key(const uint64_t source_id) const {
 
     // allocate space for the encoding
     size_t max_size = 10;
@@ -78,7 +78,7 @@ class lmdb_source_data_manager_t {
   }
 
   // decoder for key=source_id
-  static void decode_key(uint64_t& source_id) {
+  void decode_key(const std::string& encoding, uint64_t& source_id) const {
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
 
@@ -92,33 +92,33 @@ class lmdb_source_data_manager_t {
   }
 
   // encoder for data=file_binary_hash, filesize, file_type, non_probative_count
-  static std::string encode_data(const std::string& file_binary_hash
-                                 const uint64_t filesize,
-                                 const std::string& file_type,
-                                 const uint64_t non_probative_count) {
+  std::string encode_data(const std::string& file_binary_hash,
+                          const uint64_t filesize,
+                          const std::string& file_type,
+                          const uint64_t non_probative_count) const {
 
     // allocate space for the encoding
     size_t max_size = file_binary_hash.size() + 10 + 10 +
-                      file_type.size + 10 + 10;
+                      file_type.size() + 10 + 10;
 
     uint8_t encoding[max_size];
     uint8_t* p = encoding;
 
     // encode each field
-    p = lmdb_helper::encode_sized_string(file_binary_hash, p);
+    p = lmdb_helper::encode_string(file_binary_hash, p);
     p = lmdb_helper::encode_uint64_t(filesize, p);
-    p = lmdb_helper::encode_sized_string(file_type, p);
+    p = lmdb_helper::encode_string(file_type, p);
     p = lmdb_helper::encode_uint64_t(non_probative_count, p);
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding file_binary_hash "
-              << binary_hash_to_hex(file_binary_hash)
+              << lmdb_helper::bin_to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
               << " non_probative_count " << non_probative_count
               << "\nto binary data "
-              << binary_hash_to_hex(encoding_string)
+              << lmdb_helper::bin_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -127,11 +127,11 @@ class lmdb_source_data_manager_t {
   }
 
   // decoder for data=file_binary_hash, filesize, file_type, non_probative_count
-  static void decode_data(std::string& encoding,
-                          std::string& file_binary_hash,
-                          uint64_t& filesize,
-                          std::string& file_type,
-                          uint64_t& non_probative_count) {
+  void decode_data(const std::string& encoding,
+                   std::string& file_binary_hash,
+                   uint64_t& filesize,
+                   std::string& file_type,
+                   uint64_t& non_probative_count) const {
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
 
@@ -141,10 +141,11 @@ class lmdb_source_data_manager_t {
     p = lmdb_helper::decode_uint64_t(p, non_probative_count);
 
 #ifdef DEBUG
-    std::string hex_encoding = binary_hash_to_hex(encoding);
+    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
-              << " file_binary_hash " << binary_hash_to_hex(file_binary_hash)
+              << " file_binary_hash "
+              << lmdb_helper::bin_to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
               << " non_probative_count " << non_probative_count << "\n";
@@ -180,7 +181,8 @@ class lmdb_source_data_manager_t {
               const std::string& file_binary_hash,
               const uint64_t filesize,
               const std::string& file_type,
-              const uint64_t non_probative_count) {
+              const uint64_t non_probative_count,
+              lmdb_changes_t& changes) {
     MUTEX_LOCK(&M);
 
     // maybe grow the DB
@@ -202,7 +204,7 @@ class lmdb_source_data_manager_t {
       bool is_new = (rc == MDB_NOTFOUND);
 
       // perform insert, there or not
-      std::string encoding = encode_data(file_binary_hash, filesize, file_type,
+      encoding = encode_data(file_binary_hash, filesize, file_type,
                              non_probative_count);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
@@ -216,6 +218,11 @@ class lmdb_source_data_manager_t {
  
       // new source data inserted
       context.close();
+      if (is_new) {
+        ++changes.source_data;
+      } else {
+        ++changes.source_data_false;
+      }
       MUTEX_UNLOCK(&M);
       return is_new;
  
@@ -229,7 +236,7 @@ class lmdb_source_data_manager_t {
   /**
    * Find data else fail.
    */
-  void find(uint64_t source_id,
+  void find(const uint64_t source_id,
             std::string& file_binary_hash,
             uint64_t& filesize,
             std::string& file_type,
@@ -249,8 +256,9 @@ class lmdb_source_data_manager_t {
 
     if (rc == 0) {
       // hash found
-      std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(file_binary_hash, filesize, file_type, non_probative_count);
+      encoding = lmdb_helper::get_string(context.data);
+      decode_data(encoding, file_binary_hash, filesize, file_type,
+                  non_probative_count);
       context.close();
       return;
 
@@ -296,7 +304,7 @@ class lmdb_source_data_manager_t {
   /**
    * Return next source ID.  Error if no next.
    */
-  std::pair<bool, std::string> find_next(const uint64_t last_source_id) const {
+  std::pair<bool, uint64_t> find_next(const uint64_t last_source_id) const {
 
     // get context
     lmdb_context_t context(env, false, false);
@@ -325,9 +333,10 @@ class lmdb_source_data_manager_t {
 
     } else if (rc == 0) {
       uint64_t source_id;
-      std::string encoding = lmdb_helper::get_string(context.key);
+      encoding = lmdb_helper::get_string(context.key);
       decode_key(encoding, source_id);
-      return std::pair<bool, std::string>(true, source_id);
+      context.close();
+      return std::pair<bool, uint64_t>(true, source_id);
 
     } else {
       // invalid rc

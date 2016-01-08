@@ -63,12 +63,14 @@ class lmdb_context_t {
 
   ~lmdb_context_t() {
     if (state != 2) {
+      std::cerr << "Error: LMDB context not 2: state " << state << "\n";
       assert(0);
     }
   }
 
   void open() {
     if (state++ != 0) {
+      std::cerr << "Error: LMDB context not 0: state " << state << "\n";
       assert(0);
     }
  

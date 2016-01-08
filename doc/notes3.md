@@ -68,7 +68,7 @@ hashdb interfaces use the `hashdb` namespace, are defined in `hashdb.hpp`, and a
 Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes to change log.
 
 * `import_manager_t(hashdb_dir)`
-* `pair(bool, source_id) insert_file_binary_hash(file_binary_hash)` - false if already there
+* `pair(bool, source_id) insert_source_file_hash(file_binary_hash)` - false if already there
 * `bool insert_source_name(source_id, repository_name, filename)` - false if already there
 * `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, non_probative_count)` - true if new, false if re-inserted
 * `bool insert_hash(binary_hash)` - true if inserted, false if already there

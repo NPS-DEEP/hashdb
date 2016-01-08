@@ -31,6 +31,7 @@
 #include "document.h"
 #include <unistd.h>
 #include <string>
+#include <string.h> // for strerror
 #include <sstream>
 #include <stdint.h>
 #include <fstream>
@@ -104,14 +105,14 @@ namespace hashdb_settings_store {
   }
 
 
-  static void write_settings(const std::string& hashdb_dir,
+  std::pair<bool, std::string> write_settings(const std::string& hashdb_dir,
                              const hashdb_settings_t& settings) {
 
     // calculate the settings filename
     std::string filename = hashdb_dir + "/settings.json";
     std::string filename_old = hashdb_dir + "/_old_settings.json";
 
-    // if present, move existing settings to old
+    // if present, try to move existing settings to old
     if (access(filename.c_str(), F_OK) == 0) {
       std::remove(filename_old.c_str());
       int status = std::rename(filename.c_str(), filename_old.c_str());
@@ -143,8 +144,13 @@ namespace hashdb_settings_store {
     // write out the settings
     std::ofstream out;
     out.open(filename);
+    if (!out.is_open()) {
+      return std::pair<bool, std::string>(false, std::string(strerror(errno)));
+    }
+      
     out << json_settings_string << "\n";
     out.close();
+    return std::pair<bool, std::string>(true, "");
   }
 };
 

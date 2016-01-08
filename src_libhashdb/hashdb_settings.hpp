@@ -30,17 +30,6 @@
 #include <stdint.h>
 #include <iostream>
 
-inline bool string_to_bloom_state(std::string state_string, bool& state) {
-  if (state_string == "enabled")  { state = true;  return true; }
-  if (state_string == "disabled") { state = false; return true; }
-  state = false;
-  return false;
-}
-
-inline std::string bloom_state_to_string(bool state) {
-  return ((state==true) ? "enabled" : "disabled");
-}
-
 // hashdb tuning options
 struct hashdb_settings_t {
 
@@ -56,24 +45,15 @@ struct hashdb_settings_t {
   hashdb_settings_t() :
         data_store_version(0),
         sector_size(0),
-        block_size(0),
-        bloom_is_used(0),
-        bloom_M_hash_size(0),
-        bloom_k_hash_functions(0) {
+        block_size(0) {
   }
 
   hashdb_settings_t(uint32_t p_data_store_version,
                     uint32_t p_sector_size,
-                    uint32_t p_block_size,
-                    bool p_bloom_is_used,
-                    uint32_t p_bloom_M_hash_size,
-                    uint32_t p_bloom_k_hash_functions) :
+                    uint32_t p_block_size) :
         data_store_version(p_data_store_version),
         sector_size(p_sector_size),
-        block_size(p_block_size),
-        bloom_is_used(p_bloom_is_used),
-        bloom_M_hash_size(p_bloom_M_hash_size),
-        bloom_k_hash_functions(p_bloom_k_hash_functions) {
+        block_size(p_block_size) {
   }
 
   void report_settings(std::ostream& os) const {
@@ -81,9 +61,6 @@ struct hashdb_settings_t {
     os << "data store version: " << data_store_version << "\n";
     os << "sector size: " << sector_size << "\n";
     os << "hash block size: " << block_size << "\n";
-    os << "bloom used: " << bloom_state_to_string(bloom_is_used) << "\n";
-    os << "bloom k hash functions: " << bloom_k_hash_functions << "\n";
-    os << "bloom M hash size: " << bloom_M_hash_size << "\n";
   }
 };
 

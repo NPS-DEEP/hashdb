@@ -28,6 +28,7 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
+#include "lmdb_changes.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -62,7 +63,7 @@ class lmdb_source_name_manager_t {
 
   // note: same as in lmdb_source_data_manager
   // encoder for key=source_id
-  static std::string encode_key(const uint64_t source_id) {
+  std::string encode_key(const uint64_t source_id) const {
 
     // allocate space for the encoding
     size_t max_size = 10;
@@ -78,7 +79,7 @@ class lmdb_source_name_manager_t {
   }
 
   // decoder for key=source_id
-  static void decode_key(uint64_t& source_id) {
+  void decode_key(const std::string& encoding, uint64_t& source_id) const {
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
 
@@ -92,23 +93,23 @@ class lmdb_source_name_manager_t {
   }
 
   // encoder for data=set(repository_name, filename)
-  static std::string encode_data(const source_names_t& source_names) {
+  std::string encode_data(const source_names_t& names) const {
 
     // allocate space for the encoding, slower but not wrong
     size_t max_size = 0;
-    for (std::set<std::string>::const_iterator it = source_names.begin();
-                                         it != source_names.end(); ++it) {
-      size_t += it->first.size();
-      size_t += it->second.size();
+    for (source_names_t::const_iterator it = names.begin();
+                                         it != names.end(); ++it) {
+      max_size += it->first.size();
+      max_size += it->second.size();
     }
-    size_t += 10 * source_names.size();
+    max_size += 10 * names.size();
 
     uint8_t encoding[max_size];
     uint8_t* p = encoding;
 
     // encode each field
-    for (std::set<std::string>::const_iterator it = source_names.begin();
-                                         it != source_names.end(); ++it) {
+    for (source_names_t::const_iterator it = names.begin();
+                                         it != names.end(); ++it) {
       p = lmdb_helper::encode_string(it->first, p);
       p = lmdb_helper::encode_string(it->second, p);
     }
@@ -118,18 +119,18 @@ class lmdb_source_name_manager_t {
   }
 
   // decoder for data=set(repository_name, filename)
-  static void decode_data(std::string& encoding,
-                          source_names_t& source_names) {
-    source_names.clear();
+  void decode_data(const std::string& encoding,
+                   source_names_t& names) const {
+    names.clear();
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p_stop = p_start + encoding.size();
     const uint8_t* p = p_start;
 
     while(p < p_stop) {
       source_name_t pair;
-      p = lmdb_helper::decode_uint64_t(p, pair.first);
-      p = lmdb_helper::decode_uint64_t(p, pair.second);
-      source_names.insert(pair);
+      p = lmdb_helper::decode_string(p, pair.first);
+      p = lmdb_helper::decode_string(p, pair.second);
+      names.insert(pair);
     }
 
     // validate that the decoding was properly consumed
@@ -144,25 +145,18 @@ class lmdb_source_name_manager_t {
                       const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(read_settings(hashdb_dir)),
-       id_offset_pairs(new id_offset_pairs_t),
+       source_names(new source_names_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_name_store",
                                                                 file_mode)),
        M() {
 
     MUTEX_INIT(&M);
-
-    // eror if settings is not initialized
-    if (settings.sector_size == 0) {
-      std::cerr << "Error: settings not initialized: " << settings << "\n";
-      assert(0);
-    }
   }
 
   ~lmdb_source_name_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
-    delete id_offset_pairs
+    delete source_names; 
   }
 
   /**
@@ -172,7 +166,8 @@ class lmdb_source_name_manager_t {
    */
   bool insert(const uint64_t source_id,
               const std::string& repository_name,
-              const std::string& filename) {
+              const std::string& filename,
+              lmdb_changes_t& changes) {
 
     MUTEX_LOCK(&M);
 
@@ -202,26 +197,26 @@ class lmdb_source_name_manager_t {
 
       // read existing sources into set
       encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, source_names);
+      decode_data(encoding, *source_names);
 
     } else {
       // new set
-      source_names.clear();
+      source_names->clear();
     }
 
     // prepare the source name pair
     source_name_t pair(repository_name, filename);
 
     // note if already there
-    bool has_source = source_names.find(pair) != source_names.end();
+    bool is_new = source_names->find(pair) == source_names->end();
 
     // insert new pair
-    if (!has_source) {
-      source_names.insert(pair);
+    if (is_new) {
+      source_names->insert(pair);
     }
 
     // write with source inserted
-    encoding = encode_data(source_names);
+    encoding = encode_data(*source_names);
     lmdb_helper::point_to_string(encoding, context.data);
     rc = mdb_put(context.txn, context.dbi,
                  &context.key, &context.data, MDB_NODUPDATA);
@@ -234,15 +229,20 @@ class lmdb_source_name_manager_t {
 
     // hash source inserted
     context.close();
+    if (is_new) {
+      ++changes.source_name;
+    } else {
+      ++changes.source_name_false;
+    }
     MUTEX_UNLOCK(&M);
-    return has_source;
+    return is_new;
   }
 
   /**
    * Find source names, fail on invalid source ID.
    */
   void find(const uint64_t source_id,
-            source_names_t& source_names) const {
+            source_names_t& names) const {
 
     // get context
     lmdb_context_t context(env, false, false);
@@ -258,8 +258,8 @@ class lmdb_source_name_manager_t {
 
     if (rc == 0) {
       // key found
-      std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, source_names);
+      encoding = lmdb_helper::get_string(context.data);
+      decode_data(encoding, names);
       context.close();
       return;
 

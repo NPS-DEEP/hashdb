@@ -25,9 +25,11 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include "hashdb_changes.hpp"
+#include "lmdb_changes.hpp"
 #include "hashdb_settings.hpp"
+#include <fstream>
 #include <iostream>
+#include <cstring>
 #include <cassert>
 #include "hashdb.hpp" // for timestamp_t
 
@@ -83,7 +85,7 @@ class logger_t {
     os << settings;
   }
 
-  void add_hashdb_changes(const hashdb_changes_t& changes) {
+  void add_lmdb_changes(const lmdb_changes_t& changes) {
     os << changes;
   }
 

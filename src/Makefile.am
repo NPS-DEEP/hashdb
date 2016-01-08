@@ -19,7 +19,7 @@
 
 # This file assists in building the hashdb_manager tool.
 
-bin_PROGRAMS = hashdb
+#bin_PROGRAMS = hashdb
 
 AM_CPPFLAGS = -I${top_srcdir}/rapidjson
 

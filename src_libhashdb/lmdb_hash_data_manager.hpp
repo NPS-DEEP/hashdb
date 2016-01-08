@@ -30,17 +30,21 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
+#include "lmdb_changes.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <set>
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
 #include "mutex_lock.hpp"
+
+#define DEBUG
 
 class lmdb_hash_data_manager_t {
 
@@ -51,7 +55,7 @@ class lmdb_hash_data_manager_t {
   std::string hashdb_dir;
   file_mode_type_t file_mode;
   hashdb_settings_t settings;
-  id_offset_pairs_t& id_offset_pairs_t;
+  id_offset_pairs_t* id_offset_pairs;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -66,25 +70,25 @@ class lmdb_hash_data_manager_t {
 
   // encoder for data=non_probative_label, entropy, block_label,
   //                  set(source_id, file_offset)
-  static std::string encode_data(const std::string& non_probative_label,
-                                 const uint64_t entropy,
-                                 const std::string& block_label,
-                                 const id_offset_pairs_t& id_offset_pairs) {
+  std::string encode_data(const std::string& non_probative_label,
+                          const uint64_t entropy,
+                          const std::string& block_label,
+                          const id_offset_pairs_t& pairs) const {
 
     // allocate space for the encoding
     size_t max_size = non_probative_label.size() + 10 + 10 +
-                      block_label.size + 10 +
-                      id_offset_pairs.size * (10 + 10);
+                      block_label.size() + 10 +
+                      pairs.size() * (10 + 10);
 
     uint8_t encoding[max_size];
     uint8_t* p = encoding;
 
     // encode each field
-    p = lmdb_helper::encode_sized_string(non_probative_label, p);
+    p = lmdb_helper::encode_string(non_probative_label, p);
     p = lmdb_helper::encode_uint64_t(entropy, p);
-    p = lmdb_helper::encode_sized_string(block_label, p);
-    for (std::set<std::string>::const_iterator it = id_offset_pairs.begin();
-                                         it != id_offset_pairs.end(); ++it) {
+    p = lmdb_helper::encode_string(block_label, p);
+    for (id_offset_pairs_t::const_iterator it = pairs.begin();
+                                         it != pairs.end(); ++it) {
       p = lmdb_helper::encode_uint64_t(it->first, p);
       // require offset to be valid
       if (it->second % settings.sector_size != 0) {
@@ -99,9 +103,9 @@ class lmdb_hash_data_manager_t {
     std::cout << "encoding label " << non_probative_label
               << " entropy " << entropy
               << " block_label " << block_label
-              << " pairs count " << id_offset_pairs.size()
+              << " pairs count " << pairs.size()
               << "\nto binary data "
-              << binary_hash_to_hex(encoding_string)
+              << lmdb_helper::bin_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -111,12 +115,12 @@ class lmdb_hash_data_manager_t {
 
   // decoder for data=non_probative_label, entropy, block_label,
   //                  set(source_id, file_offset)
-  static void decode_data(std::string& encoding,
-                          std::string& non_probative_label,
-                          uint64_t& entropy,
-                          std::string& block_label,
-                          id_offset_pairs_t& id_offset_pairs) {
-    id_offset_pairs.clear();
+  void decode_data(const std::string& encoding,
+                   std::string& non_probative_label,
+                   uint64_t& entropy,
+                   std::string& block_label,
+                   id_offset_pairs_t& pairs) const {
+    pairs.clear();
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p_stop = p_start + encoding.size();
     const uint8_t* p = p_start;
@@ -130,17 +134,17 @@ class lmdb_hash_data_manager_t {
       p = lmdb_helper::decode_uint64_t(p, pair.first);
       p = lmdb_helper::decode_uint64_t(p, pair.second);
       pair.second *= settings.sector_size;
-      id_offset_pairs.insert(pair);
+      pairs.insert(pair);
     }
 
 #ifdef DEBUG
-    std::string hex_encoding = binary_hash_to_hex(encoding);
+    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
               << " non_probative_label " << non_probative_label
               << " entropy " << entropy 
               << " block_label " << block_label
-              << " id_offset_pairs size " << id_offset_pairs.size() << "\n";
+              << " id_offset_pairs size " << pairs.size() << "\n";
 #endif
 
     // validate that the decoding was properly consumed
@@ -152,19 +156,23 @@ class lmdb_hash_data_manager_t {
 
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
-                      const file_mode_type_t p_file_mode) :
+                           const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(read_settings(hashdb_dir)),
+       settings(),
        id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
        M() {
 
+    // read settings
+    std::pair<bool, std::string> pair =
+                hashdb_settings_store::read_settings(hashdb_dir, settings);
+
     // eror if settings is not initialized
-    if (settings.sector_size == 0) {
-      std::cerr << "Error: settings not initialized: " << settings << "\n";
-      assert(0);
+    if (pair.first == false) {
+      std::cerr << pair.second << "\n";
+      assert(0); // higher checking should have caught this.
     }
 
     MUTEX_INIT(&M);
@@ -173,7 +181,6 @@ class lmdb_hash_data_manager_t {
   ~lmdb_hash_data_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
-    delete id_offset_pairs
   }
 
   /**
@@ -183,7 +190,8 @@ class lmdb_hash_data_manager_t {
   bool insert_hash_data(const std::string& binary_hash,
                         const std::string& non_probative_label,
                         const uint64_t entropy,
-                        const std::string& block_label) {
+                        const std::string& block_label,
+                        lmdb_changes_t& changes) {
 
     MUTEX_LOCK(&M);
 
@@ -206,7 +214,7 @@ class lmdb_hash_data_manager_t {
       // hash is not there
       id_offset_pairs->clear();
       encoding = encode_data(non_probative_label, entropy, block_label,
-                             id_offset_pairs);
+                             *id_offset_pairs);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
@@ -219,19 +227,20 @@ class lmdb_hash_data_manager_t {
  
       // hash data inserted
       context.close();
+      ++changes.hash_data;
       MUTEX_UNLOCK(&M);
       return true;
  
     } else if (rc == 0) {
       // already there, but change
-      std::string& p_non_probative_label;
+      std::string p_non_probative_label;
       uint64_t p_entropy;
-      std::string& p_block_label;
-      encoding = lmdb_helper::get_string(context.key);
+      std::string p_block_label;
+      encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, p_non_probative_label, p_entropy, p_block_label,
-                  id_offset_pairs);
+                  *id_offset_pairs);
       encoding = encode_data(non_probative_label, entropy, block_label,
-                             id_offset_pairs);
+                             *id_offset_pairs);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
@@ -244,6 +253,7 @@ class lmdb_hash_data_manager_t {
 
       // hash inserted
       context.close();
+      ++changes.hash_data_false;
       MUTEX_UNLOCK(&M);
       return false;
 
@@ -261,13 +271,15 @@ class lmdb_hash_data_manager_t {
    */
   bool insert_hash_source(const std::string& binary_hash,
                           const uint64_t source_id,
-                          const uint64_t file_offset) {
+                          const uint64_t file_offset,
+                          lmdb_changes_t& changes) {
 
     MUTEX_LOCK(&M);
 
     // validate file_offset
     if (file_offset % settings.sector_size != 0) {
-      std::cerr << "invalid file offset value\n";
+      std::cerr << "Error: invalid file offset value " << file_offset
+                << " is not divisible by " << settings.sector_size << "\n";
       assert(0);
     }
 
@@ -289,30 +301,31 @@ class lmdb_hash_data_manager_t {
       // good, the hash exists to add source data
 
       // the hash data values to preserve
-      std::string& non_probative_label;
+      std::string non_probative_label;
       uint64_t entropy;
-      std::string& _block_label;
+      std::string block_label;
 
       // the source pair to add
       id_offset_pair_t id_offset_pair(source_id, file_offset);
 
       // decode the hash data record
-      encoding = lmdb_helper::get_string(context.key);
+      std::string encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, non_probative_label, entropy, block_label,
-                  id_offset_pairs);
+                  *id_offset_pairs);
 
       // make sure the source is not already there
-      if (id_offset_pairs.find(id_offset_pair) != id_offset_pairs.end()) {
+      if (id_offset_pairs->find(id_offset_pair) != id_offset_pairs->end()) {
         // source is already there
         context.close();
+        ++changes.hash_source_false;
         MUTEX_UNLOCK(&M);
         return false;
       } else {
 
         // add the new source
-        id_offset_pairs.insert(id_offset_pair);
+        id_offset_pairs->insert(id_offset_pair);
         encoding = encode_data(non_probative_label, entropy, block_label,
-                               id_offset_pairs);
+                               *id_offset_pairs);
         lmdb_helper::point_to_string(encoding, context.data);
         rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
@@ -325,6 +338,7 @@ class lmdb_hash_data_manager_t {
 
         // hash source inserted
         context.close();
+        ++changes.hash_source;
         MUTEX_UNLOCK(&M);
         return true;
       }
@@ -339,11 +353,11 @@ class lmdb_hash_data_manager_t {
   /**
    * Read data for the hash.  Fail if the hash does not exist.
    */
-  void find(std::string& binary_hash,
+  void find(const std::string& binary_hash,
             std::string& non_probative_label,
             uint64_t& entropy,
             std::string& block_label,
-            id_offset_pairs_t& id_offset_pairs) const {
+            id_offset_pairs_t& pairs) const {
 
     // get context
     lmdb_context_t context(env, false, false);
@@ -360,7 +374,7 @@ class lmdb_hash_data_manager_t {
       // hash found
       std::string encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, non_probative_label, entropy, block_label,
-                  id_offset_pairs);
+                  pairs);
       context.close();
       return;
 
@@ -386,8 +400,8 @@ class lmdb_hash_data_manager_t {
     if (rc == 0) {
       // return the key
       context.close();
-      return std::pair<bool, std::string>(true,
-                                          lmdb_helper::get_string(context.key);
+      return std::pair<bool, std::string>(
+                            true, lmdb_helper::get_string(context.key));
 
     } else if (rc == MDB_NOTFOUND) {
       // no hash
@@ -440,8 +454,8 @@ class lmdb_hash_data_manager_t {
     } else if (rc == 0) {
       // return this hash
       context.close();
-      return std::pair<bool, std::string>(true,
-                                          lmdb_helper::get_string(context.key);
+      return std::pair<bool, std::string>(
+                            true, lmdb_helper::get_string(context.key));
 
     } else {
       // invalid rc

@@ -50,11 +50,11 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
 	file_modes.h \
-	hashdb_changes.hpp \
 	hashdb.hpp \
 	hashdb_settings.hpp \
 	hashdb_settings_store.hpp \
 	libhashdb.cpp \
+	lmdb_changes.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_data_manager.hpp \
 	lmdb_hash_manager.hpp \

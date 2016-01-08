@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <iomanip>
 #include <pthread.h>
+#include <iostream>
 
 namespace lmdb_helper {
 
@@ -75,7 +76,7 @@ namespace lmdb_helper {
   // each write will add no more than 10 bytes.
   // note: code adapted directly from:
   // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417
-  uint8_t* encode_uint64(uint64_t value, uint8_t* target) {
+  uint8_t* encode_uint64_t(uint64_t value, uint8_t* target) {
 
     // Splitting into 32-bit pieces gives better performance on 32-bit
     // processors.
@@ -147,7 +148,7 @@ namespace lmdb_helper {
   // each read will consume no more than 10 bytes.
   // note: code adapted directly from:
   // https://code.google.com/p/protobuf/source/browse/trunk/src/google/protobuf/io/coded_stream.cc?r=417
-  const uint8_t* decode_uint64(const uint8_t* p_ptr, uint64_t& value) {
+  const uint8_t* decode_uint64_t(const uint8_t* p_ptr, uint64_t& value) {
 
     const uint8_t* ptr = p_ptr;
     uint32_t b;
@@ -182,7 +183,7 @@ namespace lmdb_helper {
   // write string size and then string into encoding, return pointer past
   // value written.  Destination must be large enough.
   uint8_t* encode_string(const std::string& text, uint8_t* p) {
-    p = encode_uint64(text.size(), p);
+    p = encode_uint64_t(text.size(), p);
     std::memcpy(p, text.c_str(), text.size());
     return p + text.size();
   }
@@ -191,7 +192,7 @@ namespace lmdb_helper {
   // currently, data must be valid or this can break.
   const uint8_t* decode_string(const uint8_t* p, std::string& text) {
     uint64_t size;
-    p = decode_uint64(p, &size);
+    p = decode_uint64_t(p, size);
     text = std::string(reinterpret_cast<const char*>(p), size);
     p += size;
     return p;
@@ -347,6 +348,42 @@ namespace lmdb_helper {
   std::string get_string(const MDB_val& val) {
     return std::string(static_cast<char*>(val.mv_data), val.mv_size);
   }
+
+  // string to hexadecimal digits, for diagnostics use only
+  static inline uint8_t tohex(uint8_t c) {
+    switch(c) {
+      case 0 : return '0'; break;
+      case 1 : return '1'; break;
+      case 2 : return '2'; break;
+      case 3 : return '3'; break;
+      case 4 : return '4'; break;
+      case 5 : return '5'; break;
+      case 6 : return '6'; break;
+      case 7 : return '7'; break;
+      case 8 : return '8'; break;
+      case 9 : return '9'; break;
+      case 10 : return 'a'; break;
+      case 11 : return 'b'; break;
+      case 12 : return 'c'; break;
+      case 13 : return 'd'; break;
+      case 14 : return 'e'; break;
+      case 15 : return 'f'; break;
+      default:
+        std::cerr << "char " << (uint32_t)c << "\n";
+        assert(0);
+        return 0; // for mingw compiler
+    }
+  }
+  // string to hexadecimal digits, for diagnostics use only
+  static std::string bin_to_hex(const std::string& s) {
+    std::stringstream ss;
+    for (size_t i=0; i<s.size(); i++) {
+      uint8_t c = s.c_str()[i];
+      ss << tohex(c>>4) << tohex(c&0x0f);
+    }
+    return ss.str();
+  }
+
 };
 
 #endif

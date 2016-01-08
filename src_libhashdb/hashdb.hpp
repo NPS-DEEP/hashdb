@@ -20,11 +20,6 @@
 /**
  * \file
  * Header file for the hashdb library.
- *
- * Potential future changes:
- *   A non-entropy data classifier flag may be added to hash_data_t.
- *   Bloom filter support may be discontinued if internal data store
- *     is optimized to support lists.
  */
 
 #ifndef HASHDB_HPP
@@ -39,9 +34,9 @@ class lmdb_hash_manager_t;
 class lmdb_source_data_manager_t;
 class lmdb_source_id_manager_t;
 class lmdb_source_name_manager_t;
+class lmdb_changes_t;
 struct timeval; // for timestamp service
 class logger_t;
-class hashdb_changes_t;
 
 namespace hashdb {
 
@@ -143,7 +138,7 @@ namespace hashdb {
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
     logger_t* logger;
-    hashdb_changes_t* changes;
+    lmdb_changes_t* changes;
 
     public:
     // do not allow copy or assignment
@@ -180,7 +175,7 @@ namespace hashdb {
      *   True if the file binary hash is new else false.
      *   The source ID, which is new if it is just generated.
      */
-    std::pair<bool, uint64_t> insert_file_binary_hash(
+    std::pair<bool, uint64_t> insert_source_file_hash(
                                        const std::string& file_binary_hash);
 
     /**
@@ -410,7 +405,7 @@ namespace hashdb {
      * Returns pair:
      *   True if source ID is available, false and 0 if at end of DB.
      */
-    std::pair<bool, std::string> find_next(const uint64_t last_source_id) const;
+    std::pair<bool, uint64_t> find_next(const uint64_t last_source_id) const;
 
     /**
      * Return sizes of LMDB databases.

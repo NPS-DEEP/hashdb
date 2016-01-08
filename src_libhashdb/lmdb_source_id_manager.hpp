@@ -30,6 +30,7 @@
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
+#include "lmdb_changes.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -59,7 +60,7 @@ class lmdb_source_id_manager_t {
   lmdb_source_id_manager_t& operator=(const lmdb_source_id_manager_t&);
 
   // encoder for data=source ID
-  static std::string encode_data(const uint64_t source_id) {
+  std::string encode_data(const uint64_t source_id) const {
 
     // allocate space for the encoding
     size_t max_size = 10;
@@ -74,7 +75,7 @@ class lmdb_source_id_manager_t {
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding source_id " << source_id
               << "\nto binary data "
-              << binary_hash_to_hex(encoding_string)
+              << lmdb_helper::bin_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -83,15 +84,14 @@ class lmdb_source_id_manager_t {
   }
 
   // decoder for data=source_id
-  static void decode_data(std::string& encoding,
-                          uint64_t& source_id) {
+  void decode_data(const std::string& encoding, uint64_t& source_id) const {
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
 
-    p = lmdb_helper::decode_uint64_t(p, entropy);
+    p = lmdb_helper::decode_uint64_t(p, source_id);
 
 #ifdef DEBUG
-    std::string hex_encoding = binary_hash_to_hex(encoding);
+    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
               << " source_id " << source_id << "\n";
@@ -106,7 +106,7 @@ class lmdb_source_id_manager_t {
 
   public:
   lmdb_source_id_manager_t(const std::string& p_hashdb_dir,
-                            const file_mode_type_t p_file_mode) :
+                           const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_id_store",
@@ -124,7 +124,8 @@ class lmdb_source_id_manager_t {
    * Insert key=file_binary_hash, value=source_id.  Return source_id.
    * Return false if already there.
    */
-  std::pair<bool, uint64_t> insert(const std::string& file_binary_hash) {
+  std::pair<bool, uint64_t> insert(const std::string& file_binary_hash,
+                                   lmdb_changes_t& changes) {
     MUTEX_LOCK(&M);
 
     // maybe grow the DB
@@ -148,6 +149,7 @@ class lmdb_source_id_manager_t {
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, source_id);
       context.close();
+      ++changes.source_file_hash_false;
       MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, source_id);
 
@@ -168,6 +170,7 @@ class lmdb_source_id_manager_t {
 
       // source ID created
       context.close();
+      ++changes.source_file_hash;
       MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(true, source_id);
 
@@ -200,7 +203,11 @@ class lmdb_source_id_manager_t {
       uint64_t source_id;
       decode_data(encoding, source_id);
       context.close();
-      return label;
+      return std::pair<bool, uint64_t>(true, source_id);
+
+    } else if (rc == MDB_NOTFOUND) {
+      context.close();
+      return std::pair<bool, uint64_t>(false, 0);
 
     } else {
       // invalid rc
