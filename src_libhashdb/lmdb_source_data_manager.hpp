@@ -294,7 +294,7 @@ class lmdb_source_data_manager_t {
   }
 
   /**
-   * Return next hash.  Error if no next.
+   * Return next source ID.  Error if no next.
    */
   std::pair<bool, std::string> find_next(const uint64_t last_source_id) const {
 

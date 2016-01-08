@@ -133,6 +133,13 @@ namespace hashdb {
    */
   class import_manager_t {
 
+    private:
+    lmdb_hash_data_manager_t* lmdb_hash_data_manager;
+    lmdb_hash_manager_t* lmdb_hash_manager;
+    lmdb_source_data_manager_t* lmdb_source_data_manager;
+    lmdb_source_id_manager_t* lmdb_source_id_manager;
+    lmdb_source_name_manager_t* lmdb_source_name_manager;
+
     public:
     // do not allow copy or assignment
 #ifdef HAVE_CXX11
@@ -237,11 +244,9 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   non_probative_label - Text indicating how the associated block
-     *     is non-probative, else "" if not.
-     *   entropy - A numeric entropy value for the associated block.
-     *   block_label - Text indicating the type of the block or "" for
-     *     no label.
+     *   source_id - The source ID for this source data.
+     *   file_offset - The byte offset into the file where the hash is
+           located.
      *
      * Returns:
      *   True if the source pair is added, false if already there.
@@ -263,6 +268,13 @@ namespace hashdb {
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
    */
   class scan_manager_t {
+
+    private:
+    lmdb_hash_data_manager_t* lmdb_hash_data_manager;
+    lmdb_hash_manager_t* lmdb_hash_manager;
+    lmdb_source_data_manager_t* lmdb_source_data_manager;
+    lmdb_source_id_manager_t* lmdb_source_id_manager;
+    lmdb_source_name_manager_t* lmdb_source_name_manager;
 
     public:
     // do not allow copy or assignment
@@ -298,6 +310,24 @@ namespace hashdb {
      *   True if the hash is present, false if not.
      */
     bool find_hash(const std::string& binary_hash) const;
+
+    /**
+     * Find hash, fail if hash is not present.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *   non_probative_label - Text indicating how the associated block
+     *     is non-probative, else "" if not.
+     *   entropy - A numeric entropy value for the associated block.
+     *   block_label - Text indicating the type of the block or "" for
+     *     no label.
+     *   id_offset_pairs - Set of pairs of source ID and file offset values.
+     */
+    void find_hash_data(std::string& binary_hash,
+                        std::string& non_probative_label,
+                        uint64_t& entropy,
+                        std::string& block_label,
+                        id_offset_pairs_t& id_offset_pairs) const;
 
     /**
      * Find source data for the given source ID, fail on invalid ID.

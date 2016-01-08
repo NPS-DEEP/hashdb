@@ -51,25 +51,19 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 LIBHASHDB_INCS = \
 	file_modes.h \
 	hashdb_changes.hpp \
-	hashdb.cpp \
 	hashdb.hpp \
-	hashdb_environment.hpp \
-	hashdb_import_manager_private.hpp \
-	hashdb_scan_manager_private.hpp \
 	hashdb_settings.hpp \
 	hashdb_settings_store.hpp \
-	hashdb_tools.hpp \
+	libhashdb.cpp \
 	lmdb_context.hpp \
-	lmdb_data_codec.hpp \
-	lmdb_hash_label_manager.hpp \
+	lmdb_hash_data_manager.hpp \
 	lmdb_hash_manager.hpp \
 	lmdb_helper.h \
+	lmdb_source_data_manager.hpp \
 	lmdb_source_id_manager.hpp \
-	lmdb_source_metadata_manager.hpp \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
-	mutex_lock.hpp \
-	timestamp.hpp
+	mutex_lock.hpp
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS)

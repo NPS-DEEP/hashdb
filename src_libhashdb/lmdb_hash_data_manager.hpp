@@ -341,7 +341,8 @@ class lmdb_hash_data_manager_t {
    */
   void find(std::string& binary_hash,
             std::string& non_probative_label,
-            uint64_t entropy,
+            uint64_t& entropy,
+            std::string& block_label,
             id_offset_pairs_t& id_offset_pairs) const {
 
     // get context

@@ -79,7 +79,8 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 
 ### Scan
 * `scan_manager_t(hashdb_dir)`
-* `bool find_hash(binary_hash, non_probative_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `bool find_hash(binary_hash)`
+* `void find_hash_data(binary_hash, non_probative_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `bool find_source_data(source_id, file_binary_hash&, filesize&, file_type&, non_probative_count&)` - fail on invalid source ID
 * `bool find_source_names(source_id, source_names_t&)` - fail on invalid source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`
