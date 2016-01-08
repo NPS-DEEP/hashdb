@@ -47,9 +47,7 @@ static const std::string block_ff(hex_to_binary_hash("ff"));
 std::pair<bool, std::string> create_default_hashdb(
                           const std::string& p_hashdb_dir,
                           const std::string& command_string) {
-    return hashdb::create_hashdb(p_hashdb_dir,
-                                 512, 512, true, 28, 3,
-                                 command_string);
+    return hashdb::create_hashdb(p_hashdb_dir, 512, 512, command_string);
 }
 
 // ************************************************************
@@ -87,6 +85,7 @@ void test_create_manager() {
   TEST_EQ(pair.first, false);
 }
 
+/*
 // ************************************************************
 // hashdb_import_manager
 // ************************************************************
@@ -152,42 +151,6 @@ void test_import_manager2() {
   manager.import_source_name(binary_0, "rn", "fn");
   manager.import_source_data(binary_0, 100, data);
   std::cout << "db " << manager.size() << "\n";
-}
-
-void bloom_setup() {
-
-  // remove any previous hashdb_dir
-  rm_hashdb_dir(hashdb_dir);
-  rm_hashdb_dir(hashdb_dir2);
-
-  // data
-  hashdb::hash_data_list_t data;
-  data.push_back(hashdb::hash_data_t(binary_aa, 0, ""));
-  data.push_back(hashdb::hash_data_t(binary_aa, 512, ""));
-  data.push_back(hashdb::hash_data_t(binary_bb, 1024, "LABEL"));
-
-  // add data
-  std::pair<bool, std::string> pair;
-  pair = create_default_hashdb(hashdb_dir, "create DB");
-  hashdb::import_manager_t manager(hashdb_dir, "", false, "import");
-  manager.import_source_name(binary_0, "rn", "fn");
-  manager.import_source_data(binary_0, 100, data);
-}
-
-void bloom_test() {
-  // rebuild Bloom on non-existent hashdb
-  std::pair<bool, std::string> pair;
-
-  // rebuild Bloom, off
-  pair = hashdb::rebuild_bloom(hashdb_dir, false, 2, 20, "rebuild_1");
-  TEST_EQ(pair.first, true);
-
-  // rebuild Bloom, on
-  pair = hashdb::rebuild_bloom(hashdb_dir, false, 2, 20, "rebuild_2");
-  TEST_EQ(pair.first, true);
-
-  // non-existent DB fails
-  //pair = hashdb::rebuild_bloom(hashdb_dir2, false, 2, 20, "rebuild_3");
 }
 
 // ************************************************************
@@ -310,6 +273,7 @@ void scan_test() {
   TEST_EQ(pair.second.filesize, 200);
   TEST_EQ(pair.second.positive_count, 2);
 }
+*/
 
 // ************************************************************
 // main
@@ -319,6 +283,7 @@ int main(int argc, char* argv[]) {
   // hashdb_create_manager
   test_create_manager();
 
+/*
   // import, no whitelist, skip low entropy
   test_import_manager();
 
@@ -328,13 +293,10 @@ int main(int argc, char* argv[]) {
   // valid hashdb check
   test_is_valid_hashdb();
 
-  // Bloom filter
-  bloom_setup();
-  bloom_test();
-
   // scan
   scan_setup();
   scan_test();
+*/
 
   // done
   std::cout << "hashdb_managers_test Done.\n";

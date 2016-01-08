@@ -37,33 +37,50 @@
 class hashdb_changes_t {
 
   public:
-  uint32_t hashes_inserted;
-  uint32_t hashes_not_inserted_mismatched_block_size;
-  uint32_t hashes_not_inserted_invalid_sector_size;
-  uint32_t hashes_not_inserted_duplicate_element;
-  uint32_t hashes_not_inserted_skip_low_entropy;
-  uint32_t hashes_not_inserted_skip_whitelist;
+  uint32_t file_binary_hash;
+  uint32_t file_binary_hash_false;
+  uint32_t source_name;
+  uint32_t source_name_false;
+  uint32_t source_data;
+  uint32_t source_data_false;
+  uint32_t hash;
+  uint32_t hash_false;
+  uint32_t hash_data;
+  uint32_t hash_data_false;
+  uint32_t hash_source;
+  uint32_t hash_source_false;
 
   hashdb_changes_t() :
-
-                     hashes_inserted(0),
-                     hashes_not_inserted_mismatched_block_size(0),
-                     hashes_not_inserted_invalid_sector_size(0),
-                     hashes_not_inserted_duplicate_element(0),
-                     hashes_not_inserted_skip_low_entropy(0),
-                     hashes_not_inserted_skip_whitelist(0) {
+           file_binary_hash(0),
+           file_binary_hash_false(0),
+           source_name(0),
+           source_name_false(0),
+           source_data(0),
+           source_data_false(0),
+           hash(0),
+           hash_false(0),
+           hash_data(0),
+           hash_data_false(0),
+           hash_source(0),
+           hash_source_false(0) {
   }
 
   void report_changes(std::ostream& os) const {
 
     // log any insert changes to stdout
-    std::cout << "hashdb changes (insert):\n"
-              << "    hashes inserted: " << hashes_inserted << "\n"
-                << "    hashes not inserted (mismatched block size): " << hashes_not_inserted_mismatched_block_size << "\n"
-              << "    hashes not inserted (invalid sector size): " << hashes_not_inserted_invalid_sector_size << "\n"
-              << "    hashes not inserted (duplicate element): " << hashes_not_inserted_duplicate_element << "\n"
-              << "    hashes not inserted (skip low entropy): " << hashes_not_inserted_skip_low_entropy<< "\n"
-              << "    hashes not inserted (skip whitelist): " << hashes_not_inserted_skip_whitelist<< "\n";
+    std::cout << "file_binary_hash: " << file_binary_hash << "\n"
+              << "file_binary_hash_false: " << file_binary_hash_false << "\n"
+              << "source_name: " << source_name << "\n"
+              << "source_name_false: " << source_name_false << "\n"
+              << "source_data: " << source_data << "\n"
+              << "source_data_false: " << source_data_false << "\n"
+              << "hash: " << hash << "\n"
+              << "hash_false: " << hash_false << "\n"
+              << "hash_data: " << hash_data << "\n"
+              << "hash_data_false: " << hash_data_false << "\n"
+              << "hash_source: " << hash_source << "\n"
+              << "hash_source_false: " << hash_source_false << "\n"
+              ;
   }
 };
 

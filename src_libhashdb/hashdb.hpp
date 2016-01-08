@@ -31,7 +31,7 @@
 #define HASHDB_HPP
 
 #include <string>
-#include <vector>
+#include <set>
 #include <stdint.h>
 
 class lmdb_hash_data_manager_t;
@@ -39,7 +39,9 @@ class lmdb_hash_manager_t;
 class lmdb_source_data_manager_t;
 class lmdb_source_id_manager_t;
 class lmdb_source_name_manager_t;
-struct timeval;
+struct timeval; // for timestamp service
+class logger_t;
+class hashdb_changes_t;
 
 namespace hashdb {
 
@@ -140,6 +142,9 @@ namespace hashdb {
     lmdb_source_id_manager_t* lmdb_source_id_manager;
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
+    logger_t* logger;
+    hashdb_changes_t* changes;
+
     public:
     // do not allow copy or assignment
 #ifdef HAVE_CXX11
@@ -157,7 +162,8 @@ namespace hashdb {
      * Parameters:
      *   hashdb_dir - Path to the hashdb data store to import into.
      */
-    import_manager_t(const std::string& hashdb_dir);
+    import_manager_t(const std::string& hashdb_dir,
+                     const std::string& command_string);
 
     /**
      * The destructor closes the log file and data store resources.

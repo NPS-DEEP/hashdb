@@ -37,8 +37,6 @@
   #include <winsock2.h>
 #endif
 #include "hashdb.hpp"
-#include "hashdb_environment.hpp"
-#include "timestamp.hpp"
 #include <string>
 #include <sstream>
 #include <vector>
@@ -53,6 +51,8 @@
 #include <pwd.h>    // for print_environment
 #include <unistd.h> // for print_environment
 #include <iostream> // for print_environment
+#include "logger.hpp"
+#include "hashdb_changes.hpp"
 
 /**
  * The current version of the hashdb data store.
@@ -221,62 +221,104 @@ namespace hashdb {
   // ************************************************************
   // import
   // ************************************************************
-  import_manager_t::import_manager_t(const std::string& hashdb_dir) :
-          lmdb_hash_data_manager(new lmdb_hash_data_manager_t(hashdb_dir),
-          lmdb_hash_manager(new lmdb_hash_manager_t(hashdb_dir),
-          lmdb_source_data_manager(new lmdb_source_data_manager_t(hashdb_dir),
-          lmdb_source_id_manager(new lmdb_source_id_manager_t(hashdb_dir),
-          lmdb_source_name_manager(new lmdb_source_name_manager_t(hashdb_dir) {
+  import_manager_t::import_manager_t(const std::string& hashdb_dir,
+                                     const std::string& command_string) :
+          lmdb_hash_data_manager(new lmdb_hash_data_manager_t(hashdb_dir)),
+          lmdb_hash_manager(new lmdb_hash_manager_t(hashdb_dir)),
+          lmdb_source_data_manager(new lmdb_source_data_manager_t(hashdb_dir)),
+          lmdb_source_id_manager(new lmdb_source_id_manager_t(hashdb_dir)),
+          lmdb_source_name_manager(new lmdb_source_name_manager_t(hashdb_dir)),
+          logger(new logger_t(hashdb_dir, command_string)),
+          changes(new hashdb_changes_t) {
   }
 
   import_manager_t::~import_manager_t() {
+    logger->add_hashdb_changes(*changes);
     delete lmdb_hash_data_manager;
     delete lmdb_hash_manager;
     delete lmdb_source_data_manager;
     delete lmdb_source_id_manager;
     delete lmdb_source_name_manager;
+    delete loggger;
+    delete changes;
   }
 
   std::pair<bool, uint64_t> import_manager_t::insert_file_binary_hash(
                                        const std::string& file_binary_hash) {
-    return lmdb_source_id_manager->insert(file_binary_hash);
+    std::pair<bool, uinit64_t> pair =
+                          lmdb_source_id_manager->insert(file_binary_hash);
+    if (pair.first) {
+      changes->file_binary_hash++;
+    } else {
+      changes->file_binary_hash_false++;
+    }
+    return pair;
   }
 
 
   bool import_manager_t::insert_source_name(const uint64_t source_id,
                           const std::string& repository_name,
                           const std::string& filename) {
-    return lmdb_source_name_manager->insert(source_id,
+    bool flag = lmdb_source_name_manager->insert(source_id,
                                             repository_name, filename);
+    if (flag) {
+      changes->source_name++;
+    } else {
+      changes->source_name_false++;
+    }
+    return flag;
   }
-
 
   bool import_manager_t::insert_source_data(const uint64_t source_id,
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
                           const uint64_t non_probative_count) {
-    return lmdb_source_data_manager->insert(source_id,
+    bool flag = lmdb_source_data_manager->insert(source_id,
            file_binary_hash, filesize, file_type, non_probative_count);
+    if (flag) {
+      changes->source_data++;
+    } else {
+      changes->source_data_false++;
+    }
+    return flag;
   }
 
   bool import_manager_t::insert_hash(const std::string& binary_hash) {
-    return lmdb_hash_manager->insert(binary_hash);
+    bool flag = lmdb_hash_manager->insert(binary_hash);
+    if (flag) {
+      changes->hash++;
+    } else {
+      changes->hash_false++;
+    }
+    return flag;
   }
 
   bool import_manager_t::insert_hash_data(const std::string& binary_hash,
                         const std::string& non_probative_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
-    return lmdb_hash_data_manager->insert_hash_data(binary_hash,
+    bool flag = lmdb_hash_data_manager->insert_hash_data(binary_hash,
                               non_probative_label, entropy, block_label);
+    if (flag) {
+      changes->hash_data++;
+    } else {
+      changes->hash_data_false++;
+    }
+    return flag;
   }
 
   bool import_manager_t::insert_hash_source(const std::string& binary_hash,
                           const uint64_t source_id,
                           const uint64_t file_offset) {
-    return lmdb_hash_data_manager->insert_hash_source(binary_hash,
+    bool flag = lmdb_hash_data_manager->insert_hash_source(binary_hash,
                                                source_id, file_offset);
+    if (flag) {
+      changes->hash_source++;
+    } else {
+      changes->hash_source_false++;
+    }
+    return flag;
   }
 
   std::string import_manager_t::size() const {
