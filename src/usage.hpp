@@ -30,20 +30,11 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
-#include "bloom_helper.hpp"
 
 void usage(const uint32_t sector_size,
            const uint32_t block_size,
            const std::string& repository_name,
-           const std::string& whitelist_dir,
-           const bool bloom_is_used,
-           const uint32_t bloom_M_hash_size,
-           const uint32_t bloom_k_hash_functions) {
-
-  // bloom filter values
-  const std::string bloom_is_used_string =
-                        (bloom_is_used) ? "enabled" : "disabled";
-  uint64_t bloom_n = bloom_M_to_n(bloom_M_hash_size);
+           const std::string& whitelist_dir) {
 
   // print usage
   std::cout
@@ -67,13 +58,6 @@ void usage(const uint32_t sector_size,
   << "      (default " << block_size << ")\n"
   << "    -s, --sector_size=<n>\n"
   << "      <sector_size>, in bytes, or 1 for any alignment (default " << sector_size << ")\n"
-  << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_is_used_string << ")\n"
-  << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_n << ")\n"
-  << "    --bloom_kM <k:M>\n"
-  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << bloom_k_hash_functions << "\n"
-  << "      and <M>=" << bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>   the file path to the new hash database to create\n"
@@ -253,23 +237,6 @@ void usage(const uint32_t sector_size,
   << "    Parameters:\n"
   << "    <hashdb>              the hash database to print hashes from\n"
   << "    <hex file hash>       the file hash of the source to print hashes for\n"
-  << "\n"
-  << "Tuning:\n"
-  << "  rebuild_bloom [options] <hashdb>\n"
-  << "    Rebuild the bloom filter in the <hashdb> hash database.\n"
-  << "\n"
-  << "    Options:\n"
-  << "    --bloom <state>\n"
-  << "      sets bloom filter <state> to enabled | disabled (default " << bloom_is_used_string << ")\n"
-  << "    --bloom_n <n>\n"
-  << "      expected total number <n> of distinct hashes (default " << bloom_n << ")\n"
-  << "    --bloom_kM <k:M>\n"
-  << "      number of hash functions <k> and bits per hash <M> (default <k>=" << bloom_k_hash_functions << "\n"
-  << "      and <M>=" << bloom_M_hash_size << " or <M>=value calculated from value in --bloom_n)\n"
-  << "\n"
-  << "    Parameters:\n"
-  << "    <hashdb>       the  hash database for which the bloom filters will be\n"
-  << "                   rebuilt\n"
   << "\n"
   << "Performance analysis:\n"
   << "  add_random <hashdb> <hex file hash> <count>\n"

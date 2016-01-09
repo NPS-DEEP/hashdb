@@ -66,22 +66,17 @@ static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
 
     uint32_t sector_size;
     uint32_t block_size;
-    bool bloom_is_used;
-    uint32_t bloom_M_hash_size;
-    uint32_t bloom_k_hash_functions;
     std::pair<bool, std::string> pair;
 
     // try to read hashdb_dir settings
-    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size,
-                   bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions);
+    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size);
     if (pair.first == true) {
       // hashdb_dir already exists
       return pair;
     }
 
     // no hashdb_dir, so read from_hashdb_dir settings
-    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size,
-                   bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions);
+    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size);
     if (pair.first == false) {
       // bad since from_hashdb_dir is not valid
       return pair;
@@ -91,9 +86,6 @@ static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
     pair = hashdb::create_hashdb(hashdb_dir,
                                  sector_size,
                                  block_size,
-                                 bloom_is_used,
-                                 bloom_M_hash_size,
-                                 bloom_k_hash_functions,
                                  command_string);
 
     return pair;
@@ -107,14 +99,10 @@ namespace commands {
   void create(const std::string& hashdb_dir,
               const uint32_t sector_size,
               const uint32_t block_size,
-              const bool bloom_is_used,
-              const uint32_t bloom_k_hash_functions,
-              const uint32_t bloom_M_hash_size,
               const std::string& cmd) {
 
     std::pair<bool, std::string> pair = hashdb::create_hashdb(
-           hashdb_dir, sector_size, block_size,
-           bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions, cmd);
+           hashdb_dir, sector_size, block_size, cmd);
 
     if (pair.first == true) {
       std::cout << "New database created.\n";
@@ -141,11 +129,9 @@ namespace commands {
   static void import_tab(const std::string& hashdb_dir,
                      const std::string& tab_file,
                      const std::string& repository_name,
-                     const std::string& whitelist_dir,
                      const std::string& cmd) {
 
-    tab_hashdigest_reader_t reader(hashdb_dir, tab_file, repository_name,
-                                   whitelist_dir, false, cmd);
+    tab_hashdigest_reader_t reader(hashdb_dir, tab_file, repository_name, cmd);
 
     std::pair<bool, std::string> pair = reader.read();
     if (pair.first == true) {
@@ -275,18 +261,6 @@ namespace commands {
   static void hash_table(const std::string& hashdb_dir,
                          const std::string& hex_file_hash,
                          const std::string& cmd) {
-    std::cout << "TBD\n";
-  }
-
-  // ************************************************************
-  // tuning
-  // ************************************************************
-  // rebuild_bloom
-  static void rebuild_bloom(const std::string& hashdb_dir,
-                            const bool bloom_is_used,
-                            const uint32_t bloom_k_hash_functons,
-                            const uint32_t bloom_M_hash_size,
-                            const std::string& cmd) {
     std::cout << "TBD\n";
   }
 
@@ -1330,65 +1304,6 @@ namespace commands {
     // print identified sources
     std::cout << "# sources\n";
     explain_manager.print_identified_sources();
-  }
-
-  // rebuild bloom
-  static void rebuild_bloom(const hashdb_settings_t& new_bloom_settings,
-                            const std::string& hashdb_dir) {
-
-    // read existing settings
-    hashdb_settings_t settings;
-    settings = hashdb_settings_store_t::read_settings(hashdb_dir);
-
-    // change the bloom filter settings
-    settings.bloom_is_used = new_bloom_settings.bloom_is_used;
-    settings.bloom_M_hash_size = new_bloom_settings.bloom_M_hash_size;
-    settings.bloom_k_hash_functions = new_bloom_settings.bloom_k_hash_functions;
-
-    // write back the changed settings
-    hashdb_settings_store_t::write_settings(hashdb_dir, settings);
-
-    logger_t logger(hashdb_dir, "rebuild_bloom");
-    logger.add("hashdb_dir", hashdb_dir);
-
-    // log the new settings
-    logger.add_hashdb_settings(settings);
-
-    // remove existing bloom files
-    std::string filename = hashdb_dir + "/bloom_filter";
-    remove(filename.c_str());
-
-    // open the bloom filter manager
-    bloom_filter_manager_t bloom_filter_manager(hashdb_dir,
-                               RW_NEW,
-                               settings.hash_truncation,
-                               settings.bloom_is_used,
-                               settings.bloom_M_hash_size,
-                               settings.bloom_k_hash_functions);
-
-    // open DB
-    lmdb_ro_manager_t ro_manager(hashdb_dir);
-
-    // start progress tracker
-    progress_tracker_t progress_tracker(ro_manager.size());
-
-    // add hashes to the bloom filter
-    logger.add_timestamp("begin rebuild_bloom");
-    lmdb_hash_it_data_t hash_it_data = ro_manager.find_begin();
-    while (hash_it_data.is_valid) {
-      bloom_filter_manager.add_hash_value(hash_it_data.binary_hash);
-      hash_it_data = ro_manager.find_next(hash_it_data);
-      progress_tracker.track();
-    }
-
-    // close tracker
-    progress_tracker.done();
-
-    // close logger
-    logger.add_timestamp("end rebuild_bloom");
-    logger.close();
-
-    std::cout << "rebuild_bloom complete.\n";
   }
 
   // functional analysis and testing: add_random

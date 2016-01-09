@@ -37,7 +37,7 @@ struct hashdb_settings_t {
   uint32_t data_store_version;
   uint32_t sector_size;
   uint32_t block_size;
-  // bloom
+  // zzz bloom
   bool     bloom_is_used;
   uint32_t bloom_M_hash_size;      // size of the bloom filter hash, in bits
   uint32_t bloom_k_hash_functions; // number of hash filter functions

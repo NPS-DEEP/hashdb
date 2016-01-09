@@ -50,7 +50,6 @@
 #endif
 #include "usage.hpp"
 #include "commands.hpp"
-#include "bloom_helper.hpp"
 
 // Standard includes
 #include <cstdlib>
@@ -71,9 +70,6 @@ static const uint32_t default_sector_size = 512;
 static const uint32_t default_block_size = 512;
 static const std::string default_repository_name = "";
 static const std::string default_whitelist_dir = "";
-static const bool default_bloom_is_used = true;
-static const uint32_t default_bloom_M_hash_size = 28;
-static const uint32_t default_bloom_k_hash_functions = 3;
 
 // usage
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
@@ -85,18 +81,12 @@ static bool has_block_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
 static bool has_no_low_entropy = false;
-static bool has_bloom = false;                 // A
-static bool has_bloom_n = false;               // B
-static bool has_bloom_kM = false;              // C
 
 // option values
 static uint32_t sector_size = default_sector_size;
 static uint32_t block_size = default_block_size;
 static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
-static bool bloom_is_used = default_bloom_is_used;
-static uint32_t bloom_M_hash_size = default_bloom_M_hash_size;
-static uint32_t bloom_k_hash_functions = default_bloom_k_hash_functions;
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -108,9 +98,8 @@ void check_params();
 void run_command();
 void usage() {
   // usage.hpp
-  usage(default_sector_size, default_block_size, default_repository_name,
-        default_whitelist_dir, default_bloom_is_used,
-        default_bloom_M_hash_size, default_bloom_k_hash_functions);
+  usage(default_sector_size, default_block_size,
+        default_repository_name, default_whitelist_dir);
 }
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
@@ -179,15 +168,12 @@ int main(int argc,char **argv) {
       {"repository_name", required_argument, 0, 'r'},
       {"whitelist_dir",   required_argument, 0, 'w'},
       {"no_low_entropy",        no_argument, 0, 'n'},
-      {"bloom",           required_argument, 0, 'A'},
-      {"bloom_n",         required_argument, 0, 'B'},
-      {"bloom_kM",        required_argument, 0, 'C'},
 
       // end
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqs:b:r:w:nA:B:C:", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqs:b:r:w:n", long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -252,43 +238,6 @@ int main(int argc,char **argv) {
         break;
       }
 
-      // bloom filter settings
-      case 'A': {	// bloom <state>
-        std::string bloom_state_string(optarg);
-        if (bloom_state_string == "enabled") {
-          has_bloom = true;
-        } else if (bloom_state_string == "disabled") {
-          has_bloom = false;
-        } else {
-          std::cerr << "Invalid value for bloom filter state: '"
-                    << bloom_state_string << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        break;
-      }
-      case 'B': {	// bloom_n <n> expected total number of hashes
-        has_bloom_n = true;
-        uint64_t n = std::atol(optarg);
-        bloom_M_hash_size = bloom_n_to_M(n);
-        bloom_k_hash_functions = 3;
-        break;
-      }
-      case 'C': {	// bloom_kM <k:M> k hash functions and M hash size
-        has_bloom_kM = true;
-        std::vector<std::string> params = split(std::string(optarg), ':');
-
-        if (params.size() == 2) {
-          bloom_M_hash_size = std::atoi(params[1].c_str());
-          bloom_k_hash_functions = std::atoi(params[0].c_str());
-        } else {
-          // bad input
-          std::cerr << "Invalid value for bloom filter k:M: '"
-                    << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-        break;
-      }
-
       default:
 //        std::cerr << "unexpected command character " << ch << "\n";
         exit(1);
@@ -347,18 +296,6 @@ void check_params(const std::string& options, int param_count) {
     std::cerr << "The -n no_low_entropy option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_bloom && options.find("A")) {
-    std::cerr << "The has_bloom option is not allowed for this command.\n";
-    exit(1);
-  }
-  if (has_bloom_n && options.find("B")) {
-    std::cerr << "The has_bloom_n option is not allowed for this command.\n";
-    exit(1);
-  }
-  if (has_bloom_kM && options.find("C")) {
-    std::cerr << "The has_bloom_kM option is not allowed for this command.\n";
-    exit(1);
-  }
 
   // fail if param_count does not match
   if (param_count != -1 && param_count != args.size()) {
@@ -380,9 +317,8 @@ void check_params(const std::string& options, int param_count) {
 void run_command() {
   // new database
   if (command == "create") {
-    check_params("bsABC", 1);
-    commands::create(args[0], sector_size, block_size,
-               bloom_is_used, bloom_M_hash_size, bloom_k_hash_functions, cmd);
+    check_params("bs", 1);
+    commands::create(args[0], sector_size, block_size, cmd);
 
   // import
   } else if (command == "import") {
@@ -394,11 +330,11 @@ void run_command() {
                      has_no_low_entropy, cmd);
 
   } else if (command == "import_tab") {
-    check_params("rw", 2);
+    check_params("r", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::import_tab(args[0], args[1], repository_name, whitelist_dir, cmd);
+    commands::import_tab(args[0], args[1], repository_name, cmd);
 
   // database manipulation
   } else if (command == "add") {
@@ -466,12 +402,6 @@ void run_command() {
   } else if (command == "hash_table") {
     check_params("", 2);
     commands::hash_table(args[0], args[1], cmd);
-
-  // tuning
-  } else if (command == "rebuild_bloom") {
-    check_params("ABC", 1);
-    commands::rebuild_bloom(args[0], bloom_is_used, bloom_M_hash_size,
-                            bloom_k_hash_functions, cmd);
 
   // performance analysis
   } else if (command == "add_random") {

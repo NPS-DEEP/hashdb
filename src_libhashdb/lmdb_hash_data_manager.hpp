@@ -44,8 +44,6 @@
 #endif
 #include "mutex_lock.hpp"
 
-#define DEBUG
-
 class lmdb_hash_data_manager_t {
 
   private:

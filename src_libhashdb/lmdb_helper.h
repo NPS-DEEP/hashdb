@@ -41,6 +41,8 @@
 #include <pthread.h>
 #include <iostream>
 
+#define DEBUG
+
 namespace lmdb_helper {
 
   // thread support to sync to prevent long delays
@@ -65,7 +67,7 @@ namespace lmdb_helper {
 #endif
       }
 #ifdef DEBUG
-      std::out << "sync done\n";
+      std::cout << "sync done\n";
 #endif
       sync_busy = false;
     }
@@ -349,6 +351,7 @@ namespace lmdb_helper {
     return std::string(static_cast<char*>(val.mv_data), val.mv_size);
   }
 
+#ifdef DEBUG
   // string to hexadecimal digits, for diagnostics use only
   static inline uint8_t tohex(uint8_t c) {
     switch(c) {
@@ -383,6 +386,7 @@ namespace lmdb_helper {
     }
     return ss.str();
   }
+#endif
 
 };
 

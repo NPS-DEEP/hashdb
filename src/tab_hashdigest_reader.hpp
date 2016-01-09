@@ -37,19 +37,14 @@
 #include "hashdb.hpp"
 #include "progress_tracker.hpp"
 #include "hex_helper.hpp"
-#include "crc32.h"
 
 class tab_hashdigest_reader_t {
   private:
   const std::string& hashdb_dir;
   const std::string& tab_file;
   const std::string& repository_name;
-  const uint32_t repository_name_crc;
-  const std::string& whitelist_dir;
-  const bool skip_low_entropy;
   const std::string& cmd;
   size_t line_number;
-  hashdb::hash_data_list_t data; // only gets size 1
 
   static const uint32_t sector_size = 512;
 
@@ -82,46 +77,55 @@ class tab_hashdigest_reader_t {
       return;
     }
 
-    // parse filename
-    std::string filename = line.substr(0, tab_index1);
+    // get file hash
+    std::string file_hash_string = line.substr(0, tab_index1);
+    std::string file_binary_hash = hex_to_binary_hash(file_hash_string);
+    if (file_binary_hash.size() == 0) {
+      std::cerr << "file hexdigest is invalid on line " << line_number
+                << ": '" << line << "', '" << file_hash_string << "'\n";
+      return;
+    }
 
-    // binary file hash is not available, so use a CRC of the repository
-    // name and the filename
-    // get CRC32 of repository name and filename
-    uint32_t crc = crc32(repository_name_crc, filename);
-    std::stringstream ss;
-    ss << crc;
-    std::string crc_string(ss.str());
-
-    // parse block hashdigest
+    // get block hash 
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
-
-    // get binary hash from hex hash
-    std::string binary_hash = hex_to_binary_hash(block_hashdigest_string);
-    if (binary_hash == "") {
-      // reject invalid input
-      std::cerr << "Invalid hash on line " << line_number << ": '" << line << "', '" << block_hashdigest_string << "'\n";
+    std::string block_binary_hash = hex_to_binary_hash(block_hashdigest_string);
+    if (block_binary_hash == "") {
+      std::cerr << "Invalid block hash on line " << line_number
+                << ": '" << line << "', '" << block_hashdigest_string << "'\n";
       return;
     }
 
-    // parse file offset
+    // get file offset
     size_t sector_index;
-    sector_index = std::atol(line.substr(tab_index2+1).c_str());
+    sector_index = std::atol(line.substr(tab_index2 + 1).c_str());
     if (sector_index == 0) {
       // index starts at 1 so 0 is invalid
-      std::cerr << "Invalid sector index on line " << line_number << ": '" << line << "', '" << line.substr(tab_index2+1) << "'\n";
+      std::cerr << "Invalid sector index on line " << line_number
+                << ": '" << line << "', '"
+                << line.substr(tab_index2 + 1) << "'\n";
       return;
     }
-    uint64_t file_offset = (sector_index -1) * sector_size;
+    uint64_t file_offset = (sector_index - 1) * sector_size;
 
-    // add the source entry
-    manager.import_source_name(crc_string, repository_name, filename);
+    // add source file hash
+    std::pair<bool, uint64_t> pair = manager.insert_source_file_hash(
+                                                         file_binary_hash);
+    uint64_t source_id = pair.second;
 
-    // add the hash
-    data.clear();
-    data.push_back(hashdb::hash_data_t(binary_hash, file_offset, ""));
-    manager.import_source_data(crc_string, 0, data);
+    if (pair.first == true) {
+      // source is new so add name and data for it
+      manager.insert_source_name(source_id, repository_name, tab_file);
+      manager.insert_source_data(source_id, file_binary_hash, 0, "", 0);
+    }
+
+    // add block hash
+    bool is_added = manager.insert_hash(block_binary_hash);
+    if (is_added) {
+      // hash is new so add hash data and source
+      manager.insert_hash_data(block_binary_hash, "", 0, "");
+      manager.insert_hash_source(block_binary_hash, source_id, file_offset);
+    }
 
     // update progress tracker
     progress_tracker.track();
@@ -132,18 +136,12 @@ class tab_hashdigest_reader_t {
                      const std::string& p_hashdb_dir,
                      const std::string& p_tab_file,
                      const std::string& p_repository_name,
-                     const std::string& p_whitelist_dir,
-                     const bool p_skip_low_entropy,
                      const std::string& p_cmd) :
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
-                  repository_name_crc(crc32(0, repository_name)),
-                  whitelist_dir(p_whitelist_dir),
-                  skip_low_entropy(p_skip_low_entropy),
                   cmd(p_cmd),
-                  line_number(0),
-                  data() { // data(1) would be nice since 1 element only
+                  line_number(0) {
   }
 
   // read tab file
@@ -164,17 +162,8 @@ class tab_hashdigest_reader_t {
       return std::pair<bool, std::string>(false, ss.str());
     }
 
-    // validate whitelist_dir path
-    if (whitelist_dir != "") {
-      pair = hashdb::is_valid_hashdb(whitelist_dir);
-      if (pair.first == false) {
-        return pair;
-      }
-    }
-
     // open hashdb manager
-    hashdb::import_manager_t manager(hashdb_dir, whitelist_dir,
-                                     skip_low_entropy, cmd);
+    hashdb::import_manager_t manager(hashdb_dir, cmd);
 
     // open progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, 0, false, cmd);
