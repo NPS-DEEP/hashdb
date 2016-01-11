@@ -61,8 +61,6 @@ void make_dir_if_not_there(const std::string& temp_dir) {
 }
 
 void rm_hashdb_dir(const std::string& hashdb_dir) {
-  remove((hashdb_dir + "/bloom_filter").c_str());
-
   remove((hashdb_dir + "/lmdb_hash_data_store/data.mdb").c_str());
   remove((hashdb_dir + "/lmdb_hash_data_store/lock.mdb").c_str());
   rmdir((hashdb_dir + "/lmdb_hash_data_store").c_str());
