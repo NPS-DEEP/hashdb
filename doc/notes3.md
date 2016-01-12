@@ -19,12 +19,12 @@ The LMDB managers provide low-level interfaces used by the hashdb library and ar
 * `size_t size()`
 
 ### LMDB Hash Data Manager
-`key=binary_hash, data=(non_probative_label, entropy, block_label, set(source_id, file_offset))`
+`key=binary_hash, data=(low_entropy_label, entropy, block_label, set(source_id, file_offset))`
 
 * `lmdb_hash_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert_hash_data(binary_hash, non_probative_label, entropy, block_label)` - true if new, false if re-inserted
+* `bool insert_hash_data(binary_hash, low_entropy_label, entropy, block_label)` - true if new, false, do not change, and note if not new
 * `bool insert_hash_source(binary_hash, source_id, file_offset)` - false if source already there, fail if invalid file offset or no hash data
-* `void find(binary_hash, non_probative_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `void find(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `pair(bool, binary_hash) find_begin()`
 * `pair(bool, binary_hash) find_next(last_binary_hash)`
 * `size_t size()`
@@ -42,11 +42,11 @@ Look up source ID from file binary hash.
 ### LMDB Source Data Manager
 Look up source data from source ID.
 
-`key=source_id, data=(file_binary_hash, filesize, file_type, non_probative_count)`
+`key=source_id, data=(file_binary_hash, filesize, file_type, low_entropy_count)`
 
 * `lmdb_source_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, file_binary_hash, filesize, file_type, non_probative_count)` - true if new, false if re-inserted
-* `void find(source_id, file_binary_hash&, filesize&, file_type&, non_probative_count&)` - fail on invalid source ID
+* `bool insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new, false if re-inserted
+* `void find(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
 * `pair(bool, source_id) find_begin()` - false if empty
 * `pair(bool, source_id) find_next()` - fail if already at end
 * `size_t size()`
@@ -70,9 +70,9 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 * `import_manager_t(hashdb_dir)`
 * `pair(bool, source_id) insert_source_file_hash(file_binary_hash)` - false if already there
 * `bool insert_source_name(source_id, repository_name, filename)` - false if already there
-* `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, non_probative_count)` - true if new, false if re-inserted
+* `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new, false if re-inserted
 * `bool insert_hash(binary_hash)` - true if inserted, false if already there
-* `bool insert_hash_data(binary_hash, non_probative_label, entropy, block_label)` - true if new or change, false if re-inserted
+* `bool insert_hash_data(binary_hash, low_entropy_label, entropy, block_label)` - true if new, false, do not change, and note if not new
 * `bool insert_hash_source(binary_hash, source_id, file_offset)` - false if source already there, fail if invalid file offset or no hash data
 * `string size()` - return sizes of LMDB databases
 * `~import_manager_t()` - append changes to change log at `hashdb_dir/log.dat`
@@ -80,8 +80,8 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 ### Scan
 * `scan_manager_t(hashdb_dir)`
 * `bool find_hash(binary_hash)`
-* `void find_hash_data(binary_hash, non_probative_label&, entropy&, block_label&, id_offset_pairs_t&)`
-* `void find_source_data(source_id, file_binary_hash&, filesize&, file_type&, non_probative_count&)` - fail on invalid source ID
+* `void find_hash_data(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `void find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
 * `void find_source_names(source_id, source_names_t&)` - fail on invalid source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`
 * `pair(bool, binary_hash) hash_begin()`

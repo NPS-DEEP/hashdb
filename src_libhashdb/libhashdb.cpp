@@ -278,9 +278,9 @@ namespace hashdb {
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
-                          const uint64_t non_probative_count) {
+                          const uint64_t low_entropy_count) {
     return lmdb_source_data_manager->insert(source_id, file_binary_hash,
-                        filesize, file_type, non_probative_count, *changes);
+                        filesize, file_type, low_entropy_count, *changes);
   }
 
   bool import_manager_t::insert_hash(const std::string& binary_hash) {
@@ -288,11 +288,11 @@ namespace hashdb {
   }
 
   bool import_manager_t::insert_hash_data(const std::string& binary_hash,
-                        const std::string& non_probative_label,
+                        const std::string& low_entropy_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
     return lmdb_hash_data_manager->insert_hash_data(binary_hash,
-                        non_probative_label, entropy, block_label, *changes);
+                        low_entropy_label, entropy, block_label, *changes);
   }
 
   bool import_manager_t::insert_hash_source(const std::string& binary_hash,
@@ -340,22 +340,22 @@ namespace hashdb {
     return lmdb_hash_manager->find(binary_hash);
   }
 
-  void scan_manager_t::find_hash_data(std::string& binary_hash,
-                      std::string& non_probative_label,
+  void scan_manager_t::find_hash_data(const std::string& binary_hash,
+                      std::string& low_entropy_label,
                       uint64_t& entropy,
                       std::string& block_label,
                       id_offset_pairs_t& id_offset_pairs) const {
     return lmdb_hash_data_manager->find(binary_hash,
-                non_probative_label, entropy, block_label, id_offset_pairs);
+                low_entropy_label, entropy, block_label, id_offset_pairs);
   }
 
-  void scan_manager_t::find_source_data(uint64_t source_id,
+  void scan_manager_t::find_source_data(const uint64_t source_id,
                         std::string& file_binary_hash,
                         uint64_t& filesize,
                         std::string& file_type,
-                        uint64_t& non_probative_count) const {
+                        uint64_t& low_entropy_count) const {
     return lmdb_source_data_manager->find(source_id,
-                 file_binary_hash, filesize, file_type, non_probative_count);
+                 file_binary_hash, filesize, file_type, low_entropy_count);
   }
 
   void scan_manager_t::find_source_names(const uint64_t source_id,
