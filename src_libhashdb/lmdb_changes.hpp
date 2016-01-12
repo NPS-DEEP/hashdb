@@ -42,10 +42,12 @@ class lmdb_changes_t {
   uint32_t source_name_false;
   uint32_t source_data;
   uint32_t source_data_false;
+  uint32_t source_data_different;
   uint32_t hash;
   uint32_t hash_false;
   uint32_t hash_data;
   uint32_t hash_data_false;
+  uint32_t hash_data_different;
   uint32_t hash_source;
   uint32_t hash_source_false;
 
@@ -56,10 +58,12 @@ class lmdb_changes_t {
            source_name_false(0),
            source_data(0),
            source_data_false(0),
+           source_data_different(0),
            hash(0),
            hash_false(0),
            hash_data(0),
            hash_data_false(0),
+           hash_data_different(0),
            hash_source(0),
            hash_source_false(0) {
   }
@@ -73,10 +77,12 @@ class lmdb_changes_t {
               << "source_name_false: " << source_name_false << "\n"
               << "source_data: " << source_data << "\n"
               << "source_data_false: " << source_data_false << "\n"
+              << "source_data_different: " << source_data_different << "\n"
               << "hash: " << hash << "\n"
               << "hash_false: " << hash_false << "\n"
               << "hash_data: " << hash_data << "\n"
               << "hash_data_false: " << hash_data_false << "\n"
+              << "hash_data_different: " << hash_data_different << "\n"
               << "hash_source: " << hash_source << "\n"
               << "hash_source_false: " << hash_source_false << "\n"
               ;

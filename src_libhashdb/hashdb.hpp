@@ -196,7 +196,7 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
-     *   non_probative_count - The count of non-probative hashes
+     *   low_entropy_count - The count of non-probative hashes
      *     identified for this source.
      *
      * Returns:
@@ -206,7 +206,7 @@ namespace hashdb {
                             const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
-                            const uint64_t non_probative_count);
+                            const uint64_t low_entropy_count);
 
     /**
      * Insert the block hash value into the database.
@@ -225,17 +225,17 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   non_probative_label - Text indicating how the associated block
-     *     is non-probative, else "" if not.
+     *   low_entropy_label - Text indicating how the associated block
+     *     may be considered non-probative, else "" if not.
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *
      * Returns:
-     *   True if the setting is new else false and overwrite.
+     *   True if the setting is new else false, do not change, and note.
      */
     bool insert_hash_data(const std::string& binary_hash,
-                          const std::string& non_probative_label,
+                          const std::string& low_entropy_label,
                           const uint64_t entropy,
                           const std::string& block_label);
 
@@ -317,15 +317,15 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   non_probative_label - Text indicating how the associated block
-     *     is non-probative, else "" if not.
+     *   low_entropy_label - Text indicating how the associated block
+     *     may be considered non-probative, else "" if not.
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   id_offset_pairs - Set of pairs of source ID and file offset values.
      */
-    void find_hash_data(std::string& binary_hash,
-                        std::string& non_probative_label,
+    void find_hash_data(const std::string& binary_hash,
+                        std::string& low_entropy_label,
                         uint64_t& entropy,
                         std::string& block_label,
                         id_offset_pairs_t& id_offset_pairs) const;
@@ -338,14 +338,14 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
-     *   non_probative_count - The count of non-probative hashes
-     *     identified for this source.
+     *   low_entropy_count - The count of hashes identified for this
+     *     source which may be considered non-probative.
      */
-    void find_source_data(uint64_t source_id,
+    void find_source_data(const uint64_t source_id,
                           std::string& file_binary_hash,
                           uint64_t& filesize,
                           std::string& file_type,
-                          uint64_t& non_probative_count) const;
+                          uint64_t& low_entropy_count) const;
 
     /**
      * Find source names for the given source ID, fail on invalid ID.

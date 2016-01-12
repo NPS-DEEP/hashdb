@@ -66,15 +66,15 @@ class lmdb_hash_data_manager_t {
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
   lmdb_hash_data_manager_t& operator=(const lmdb_hash_data_manager_t&);
 
-  // encoder for data=non_probative_label, entropy, block_label,
+  // encoder for data=low_entropy_label, entropy, block_label,
   //                  set(source_id, file_offset)
-  std::string encode_data(const std::string& non_probative_label,
+  std::string encode_data(const std::string& low_entropy_label,
                           const uint64_t entropy,
                           const std::string& block_label,
                           const id_offset_pairs_t& pairs) const {
 
     // allocate space for the encoding
-    size_t max_size = non_probative_label.size() + 10 + 10 +
+    size_t max_size = low_entropy_label.size() + 10 + 10 +
                       block_label.size() + 10 +
                       pairs.size() * (10 + 10);
 
@@ -82,7 +82,7 @@ class lmdb_hash_data_manager_t {
     uint8_t* p = encoding;
 
     // encode each field
-    p = lmdb_helper::encode_string(non_probative_label, p);
+    p = lmdb_helper::encode_string(low_entropy_label, p);
     p = lmdb_helper::encode_uint64_t(entropy, p);
     p = lmdb_helper::encode_string(block_label, p);
     for (id_offset_pairs_t::const_iterator it = pairs.begin();
@@ -98,7 +98,7 @@ class lmdb_hash_data_manager_t {
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding label " << non_probative_label
+    std::cout << "encoding label " << low_entropy_label
               << " entropy " << entropy
               << " block_label " << block_label
               << " pairs count " << pairs.size()
@@ -111,10 +111,10 @@ class lmdb_hash_data_manager_t {
     return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
   }
 
-  // decoder for data=non_probative_label, entropy, block_label,
+  // decoder for data=low_entropy_label, entropy, block_label,
   //                  set(source_id, file_offset)
   void decode_data(const std::string& encoding,
-                   std::string& non_probative_label,
+                   std::string& low_entropy_label,
                    uint64_t& entropy,
                    std::string& block_label,
                    id_offset_pairs_t& pairs) const {
@@ -123,7 +123,7 @@ class lmdb_hash_data_manager_t {
     const uint8_t* p_stop = p_start + encoding.size();
     const uint8_t* p = p_start;
 
-    p = lmdb_helper::decode_string(p, non_probative_label);
+    p = lmdb_helper::decode_string(p, low_entropy_label);
     p = lmdb_helper::decode_uint64_t(p, entropy);
     p = lmdb_helper::decode_string(p, block_label);
 
@@ -139,7 +139,7 @@ class lmdb_hash_data_manager_t {
     std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
-              << " non_probative_label " << non_probative_label
+              << " low_entropy_label " << low_entropy_label
               << " entropy " << entropy 
               << " block_label " << block_label
               << " id_offset_pairs size " << pairs.size() << "\n";
@@ -183,10 +183,10 @@ class lmdb_hash_data_manager_t {
 
   /**
    * Insert hash data.
-   * Return true if new, false but change if not new.
+   * Return true if new, false, do not change, and note if not new.
    */
   bool insert_hash_data(const std::string& binary_hash,
-                        const std::string& non_probative_label,
+                        const std::string& low_entropy_label,
                         const uint64_t entropy,
                         const std::string& block_label,
                         lmdb_changes_t& changes) {
@@ -211,7 +211,7 @@ class lmdb_hash_data_manager_t {
     if (rc == MDB_NOTFOUND) {
       // hash is not there
       id_offset_pairs->clear();
-      encoding = encode_data(non_probative_label, entropy, block_label,
+      encoding = encode_data(low_entropy_label, entropy, block_label,
                              *id_offset_pairs);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
@@ -230,26 +230,20 @@ class lmdb_hash_data_manager_t {
       return true;
  
     } else if (rc == 0) {
-      // already there, but change
-      std::string p_non_probative_label;
+      // already there, note if different
+      std::string p_low_entropy_label;
       uint64_t p_entropy;
       std::string p_block_label;
       encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, p_non_probative_label, p_entropy, p_block_label,
+      decode_data(encoding, p_low_entropy_label, p_entropy, p_block_label,
                   *id_offset_pairs);
-      encoding = encode_data(non_probative_label, entropy, block_label,
-                             *id_offset_pairs);
-      lmdb_helper::point_to_string(encoding, context.data);
-      rc = mdb_put(context.txn, context.dbi,
-                   &context.key, &context.data, MDB_NODUPDATA);
-
-      // the change request must work
-      if (rc != 0) {
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        assert(0);
+      if (low_entropy_label != p_low_entropy_label ||
+          entropy != p_entropy ||
+          block_label != p_block_label) {
+        ++changes.hash_data_different;
       }
 
-      // hash inserted
+      // hash is different
       context.close();
       ++changes.hash_data_false;
       MUTEX_UNLOCK(&M);
@@ -299,7 +293,7 @@ class lmdb_hash_data_manager_t {
       // good, the hash exists to add source data
 
       // the hash data values to preserve
-      std::string non_probative_label;
+      std::string low_entropy_label;
       uint64_t entropy;
       std::string block_label;
 
@@ -308,7 +302,7 @@ class lmdb_hash_data_manager_t {
 
       // decode the hash data record
       std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, non_probative_label, entropy, block_label,
+      decode_data(encoding, low_entropy_label, entropy, block_label,
                   *id_offset_pairs);
 
       // make sure the source is not already there
@@ -322,7 +316,7 @@ class lmdb_hash_data_manager_t {
 
         // add the new source
         id_offset_pairs->insert(id_offset_pair);
-        encoding = encode_data(non_probative_label, entropy, block_label,
+        encoding = encode_data(low_entropy_label, entropy, block_label,
                                *id_offset_pairs);
         lmdb_helper::point_to_string(encoding, context.data);
         rc = mdb_put(context.txn, context.dbi,
@@ -352,7 +346,7 @@ class lmdb_hash_data_manager_t {
    * Read data for the hash.  Fail if the hash does not exist.
    */
   void find(const std::string& binary_hash,
-            std::string& non_probative_label,
+            std::string& low_entropy_label,
             uint64_t& entropy,
             std::string& block_label,
             id_offset_pairs_t& pairs) const {
@@ -371,7 +365,7 @@ class lmdb_hash_data_manager_t {
     if (rc == 0) {
       // hash found
       std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, non_probative_label, entropy, block_label,
+      decode_data(encoding, low_entropy_label, entropy, block_label,
                   pairs);
       context.close();
       return;

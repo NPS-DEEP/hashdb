@@ -20,7 +20,7 @@
 /**
  * \file
  * Manage the LMDB source data store of: key=source_id,
- * data=(file_binary_hash, filesize, file_type, non_probative_count)
+ * data=(file_binary_hash, filesize, file_type, low_entropy_count)
  * Threadsafe.
  */
 
@@ -91,11 +91,11 @@ class lmdb_source_data_manager_t {
     }
   }
 
-  // encoder for data=file_binary_hash, filesize, file_type, non_probative_count
+  // encoder for data=file_binary_hash, filesize, file_type, low_entropy_count
   std::string encode_data(const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
-                          const uint64_t non_probative_count) const {
+                          const uint64_t low_entropy_count) const {
 
     // allocate space for the encoding
     size_t max_size = file_binary_hash.size() + 10 + 10 +
@@ -108,7 +108,7 @@ class lmdb_source_data_manager_t {
     p = lmdb_helper::encode_string(file_binary_hash, p);
     p = lmdb_helper::encode_uint64_t(filesize, p);
     p = lmdb_helper::encode_string(file_type, p);
-    p = lmdb_helper::encode_uint64_t(non_probative_count, p);
+    p = lmdb_helper::encode_uint64_t(low_entropy_count, p);
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
@@ -116,7 +116,7 @@ class lmdb_source_data_manager_t {
               << lmdb_helper::bin_to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
-              << " non_probative_count " << non_probative_count
+              << " low_entropy_count " << low_entropy_count
               << "\nto binary data "
               << lmdb_helper::bin_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
@@ -126,19 +126,19 @@ class lmdb_source_data_manager_t {
     return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
   }
 
-  // decoder for data=file_binary_hash, filesize, file_type, non_probative_count
+  // decoder for data=file_binary_hash, filesize, file_type, low_entropy_count
   void decode_data(const std::string& encoding,
                    std::string& file_binary_hash,
                    uint64_t& filesize,
                    std::string& file_type,
-                   uint64_t& non_probative_count) const {
+                   uint64_t& low_entropy_count) const {
     const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
     const uint8_t* p = p_start;
 
     p = lmdb_helper::decode_string(p, file_binary_hash);
     p = lmdb_helper::decode_uint64_t(p, filesize);
     p = lmdb_helper::decode_string(p, file_type);
-    p = lmdb_helper::decode_uint64_t(p, non_probative_count);
+    p = lmdb_helper::decode_uint64_t(p, low_entropy_count);
 
 #ifdef DEBUG
     std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
@@ -148,7 +148,7 @@ class lmdb_source_data_manager_t {
               << lmdb_helper::bin_to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
-              << " non_probative_count " << non_probative_count << "\n";
+              << " low_entropy_count " << low_entropy_count << "\n";
 #endif
 
     // validate that the decoding was properly consumed
@@ -175,13 +175,13 @@ class lmdb_source_data_manager_t {
   }
 
   /**
-   * Return true if new, false and replace if not new.
+   * Return true if new, false, do not change, and note if not new.
    */
   bool insert(const uint64_t source_id,
               const std::string& file_binary_hash,
               const uint64_t filesize,
               const std::string& file_type,
-              const uint64_t non_probative_count,
+              const uint64_t low_entropy_count,
               lmdb_changes_t& changes) {
     MUTEX_LOCK(&M);
 
@@ -200,12 +200,11 @@ class lmdb_source_data_manager_t {
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    if (rc == MDB_NOTFOUND || rc == 0) {
-      bool is_new = (rc == MDB_NOTFOUND);
+    if (rc == MDB_NOTFOUND) {
 
-      // perform insert, there or not
+      // perform insert
       encoding = encode_data(file_binary_hash, filesize, file_type,
-                             non_probative_count);
+                             low_entropy_count);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
@@ -218,14 +217,34 @@ class lmdb_source_data_manager_t {
  
       // new source data inserted
       context.close();
-      if (is_new) {
-        ++changes.source_data;
-      } else {
-        ++changes.source_data_false;
-      }
+      ++changes.source_data;
       MUTEX_UNLOCK(&M);
-      return is_new;
- 
+      return true;
+
+    } else if (rc == 0) {
+      // already there, note if different
+      std::string p_file_binary_hash;
+      uint64_t p_filesize;
+      std::string p_file_type;
+      uint64_t p_low_entropy_count;
+
+      encoding = lmdb_helper::get_string(context.data);
+      decode_data(encoding, p_file_binary_hash, p_filesize, p_file_type,
+                  p_low_entropy_count);
+
+      if (file_binary_hash != p_file_binary_hash ||
+          filesize != p_filesize ||
+          file_type != p_file_type ||
+          low_entropy_count != p_low_entropy_count) {
+        ++changes.source_data_different;
+      }
+
+      // no change
+      context.close();
+      ++changes.source_data_false;
+      MUTEX_UNLOCK(&M);
+      return false;
+
     } else {
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
@@ -240,7 +259,7 @@ class lmdb_source_data_manager_t {
             std::string& file_binary_hash,
             uint64_t& filesize,
             std::string& file_type,
-            uint64_t& non_probative_count) const {
+            uint64_t& low_entropy_count) const {
 
     // get context
     lmdb_context_t context(env, false, false); // not writable, no duplicates
@@ -258,7 +277,7 @@ class lmdb_source_data_manager_t {
       // hash found
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, file_binary_hash, filesize, file_type,
-                  non_probative_count);
+                  low_entropy_count);
       context.close();
       return;
 

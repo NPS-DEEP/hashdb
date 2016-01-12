@@ -26,8 +26,7 @@ EXTRA_DIST = \
 	vg.supp
 
 check_PROGRAMS = \
-	lmdb_managers_test \
-        hashdb_managers_test
+	lmdb_managers_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -41,11 +40,7 @@ lmdb_managers_test_CPPFLAGS = \
 	-I${top_srcdir}/rapidjson \
 	-isystem${top_srcdir}/src_libhashdb/liblmdb
 
-hashdb_managers_test_CPPFLAGS = \
-	-I${top_srcdir}/rapidjson
-
 lmdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
-hashdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
 
 clean-local:
 	rm -rf temp_*
@@ -60,7 +55,6 @@ run_tests_valgrind:
 # tests
 # ############################################################
 lmdb_managers_test_SOURCES = lmdb_managers_test.cpp
-hashdb_managers_test_SOURCES = hashdb_managers_test.cpp
 
 .PHONY: run_tests_valgrind
 

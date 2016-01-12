@@ -139,7 +139,7 @@ void lmdb_hash_data_manager() {
 
   // variables
   std::pair<bool, std::string> settings_pair;
-  std::string non_probative_label;
+  std::string low_entropy_label;
   uint64_t entropy;
   std::string block_label;
   id_offset_pairs_t id_offset_pairs;
@@ -154,22 +154,23 @@ void lmdb_hash_data_manager() {
   lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW);
 
   // insert
-  TEST_EQ(manager.insert_hash_data(binary_0, "npl", 1, "bl", changes), true);
+  TEST_EQ(manager.insert_hash_data(binary_0, "lel", 1, "bl", changes), true);
   TEST_EQ(changes.hash_data, 1);
-  manager.find(binary_0, non_probative_label, entropy, block_label,
+  manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs);
-  TEST_EQ(non_probative_label, "npl");
+  TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
 
-  // change
-  TEST_EQ(manager.insert_hash_data(binary_0, "npl2", 2, "bl2", changes), false);
+  // no change
+  TEST_EQ(manager.insert_hash_data(binary_0, "lel2", 2, "bl2", changes), false);
   TEST_EQ(changes.hash_data_false, 1);
-  manager.find(binary_0, non_probative_label, entropy, block_label,
+  TEST_EQ(changes.hash_data_different, 1);
+  manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs);
-  TEST_EQ(non_probative_label, "npl2");
-  TEST_EQ(entropy, 2);
-  TEST_EQ(block_label, "bl2");
+  TEST_EQ(low_entropy_label, "lel");
+  TEST_EQ(entropy, 1);
+  TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 0);
 
   // these should assert
@@ -183,11 +184,11 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_source_false, 1);
   manager.insert_hash_source(binary_0, 1, 1024, changes);
   
-  manager.find(binary_0, non_probative_label, entropy, block_label,
+  manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs);
-  TEST_EQ(non_probative_label, "npl2");
-  TEST_EQ(entropy, 2);
-  TEST_EQ(block_label, "bl2");
+  TEST_EQ(low_entropy_label, "lel");
+  TEST_EQ(entropy, 1);
+  TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 2);
   id_offset_pairs_t::const_iterator it = id_offset_pairs.begin();
   TEST_EQ(it->first, 1);
@@ -197,7 +198,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(it->second, 1024);
 
   // check iterator
-  TEST_EQ(manager.insert_hash_data(binary_1, "npl3", 3, "bl3", changes), true);
+  TEST_EQ(manager.insert_hash_data(binary_1, "lel3", 3, "bl3", changes), true);
   std::pair<bool, std::string> pair;
   pair = manager.find_begin();
   TEST_EQ(pair.first, true);
@@ -252,46 +253,47 @@ void lmdb_source_data_manager() {
   std::string file_binary_hash;
   uint64_t filesize;
   std::string file_type;
-  uint64_t non_probative_count;
+  uint64_t low_entropy_count;
 
   // create new manager
   lmdb_source_data_manager_t manager(hashdb_dir, RW_NEW);
 
   // this should assert
-  //manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+  //manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
 
   // insert
   TEST_EQ(manager.insert(1, "fbh", 2, "ft", 3, changes), true);
   TEST_EQ(changes.source_data, 1);
-  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
+  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
-  TEST_EQ(non_probative_count, 3);
+  TEST_EQ(low_entropy_count, 3);
 
-  // change
+  // no change
   TEST_EQ(manager.insert(1, "fbh2", 22, "ft2", 32, changes), false);
   TEST_EQ(changes.source_data_false, 1);
-  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
-  TEST_EQ(file_binary_hash, "fbh2");
-  TEST_EQ(filesize, 22);
-  TEST_EQ(file_type, "ft2");
-  TEST_EQ(non_probative_count, 32);
+  TEST_EQ(changes.source_data_different, 1);
+  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  TEST_EQ(file_binary_hash, "fbh");
+  TEST_EQ(filesize, 2);
+  TEST_EQ(file_type, "ft");
+  TEST_EQ(low_entropy_count, 3);
 
   // insert second
   TEST_EQ(manager.insert(0, "", 0, "", 0, changes), true);
-  manager.find(0, file_binary_hash, filesize, file_type, non_probative_count);
+  manager.find(0, file_binary_hash, filesize, file_type, low_entropy_count);
   TEST_EQ(file_binary_hash, "");
   TEST_EQ(filesize, 0);
   TEST_EQ(file_type, "");
-  TEST_EQ(non_probative_count, 0);
+  TEST_EQ(low_entropy_count, 0);
 
   // make sure 1 is still in place
-  manager.find(1, file_binary_hash, filesize, file_type, non_probative_count);
-  TEST_EQ(file_binary_hash, "fbh2");
-  TEST_EQ(filesize, 22);
-  TEST_EQ(file_type, "ft2");
-  TEST_EQ(non_probative_count, 32);
+  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  TEST_EQ(file_binary_hash, "fbh");
+  TEST_EQ(filesize, 2);
+  TEST_EQ(file_type, "ft");
+  TEST_EQ(low_entropy_count, 3);
 
   // iterator
   std::pair<bool, uint64_t> pair;

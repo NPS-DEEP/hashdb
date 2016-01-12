@@ -26,6 +26,7 @@
 #define COMMANDS_HPP
 #include "../src_libhashdb/hashdb.hpp"
 #include "tab_hashdigest_reader.hpp"
+#include "database_operator.hpp"
 //#include "expand_manager.hpp"
 //#include "dfxml_scan_consumer.hpp"
 //#include "dfxml_scan_expanded_consumer.hpp"
@@ -148,12 +149,12 @@ namespace commands {
   static void add(const std::string& hashdb_dir,
                   const std::string& dest_dir,
                   const std::string& cmd) {
-    hashdb::scan_manager_t manager_a(hashdb_dir, cmd);
-    hashdb::import_manager_t manager_b(dest_dir)
+    hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
     std::pair<bool, std::string> pair = manager_a.hash_begin();
     while (pair.first != false) {
       // add data for binary_hash from A to B
-      database_operator.add(pair.second, manager_a, manager_b);
+      database_operator::add(pair.second, manager_a, manager_b);
       pair = manager_a.hash_next(pair.second);
     }
   }
@@ -169,11 +170,12 @@ namespace commands {
 
     std::string binary_hash;
     std::pair<bool, std::string> hash_pair;
-    std::pair<std::string, hashdb:scan_manager_t*> hash_producer_pair;
+    std::pair<std::string, hashdb::scan_manager_t*> hash_producer_pair;
 
-    // open the consumer
-    std::string dest_dir = hashdb_dirs.pop_back();
-    hashdb::import_manager_t consumer(dest_dir, cmd);
+    // open the consumer from hashdb_dirs[0]
+    std::vector<std::string>::const_iterator hashdb_dir_it =
+                                                          hashdb_dirs.begin();
+    hashdb::import_manager_t consumer(*hashdb_dir_it, cmd);
 
     // the multimap for processing hashes in order from the producers
     ordered_producers_t ordered_producers;
@@ -181,18 +183,18 @@ namespace commands {
     // a producer
     hashdb::scan_manager_t* producer;
 
-    // open the producers
-    for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
-         it != hashdb_dirs.end()) {
+    // open the producers from hashdb_dirs[1+]
+    while (++hashdb_dir_it != hashdb_dirs.end()) {
 
       // create a producer
-      producer = new hashdb::scan_manager_t(*it);
+      producer = new hashdb::scan_manager_t(*hashdb_dir_it);
 
       // read first hash
       hash_pair = producer->hash_begin();
-      if (pair.first) {
+      if (hash_pair.first == true) {
         // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(pair.second, producer);
+        ordered_producers.insert(hash_producer_pair_t(
+                                          hash_pair.second, producer));
       } else {
         // no hashes for this producer so close it
         delete producer;
@@ -210,14 +212,15 @@ namespace commands {
       database_operator::add(binary_hash, *producer, consumer);
 
       // remove this hash
-      ordered_producer->erase(it);
+      ordered_producers.erase(it);
 
-      // insert the next hash
-      hash_pair = ordered_producer.hash_next(binary_hash);
+      // get the next hash
+      hash_pair = producer->hash_next(binary_hash);
 
       if (hash_pair.first) {
         // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(pair.second, producer);
+        ordered_producers.insert(hash_producer_pair_t(
+                                          hash_pair.second, producer));
       } else {
         // no hashes for this producer so close it
         delete producer;
