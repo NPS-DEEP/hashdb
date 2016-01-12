@@ -148,81 +148,13 @@ namespace commands {
   static void add(const std::string& hashdb_dir,
                   const std::string& dest_dir,
                   const std::string& cmd) {
-    hashdb::scan_manager_t manager_a(hashdb_dir, cmd);
-    hashdb::import_manager_t manager_b(dest_dir)
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
-      // add data for binary_hash from A to B
-      database_operator.add(pair.second, manager_a, manager_b);
-      pair = manager_a.hash_next(pair.second);
-    }
+    std::cout << "TBD\n";
   }
 
   // add_multiple
   static void add_multiple(const std::vector<std::string>& hashdb_dirs,
                            const std::string& cmd) {
-
-    typedef std::multimap<std::string, hashdb::scan_manager_t*>
-                                                     ordered_producers_t;
-    typedef std::pair<std::string, hashdb::scan_manager_t*>
-                                                     hash_producer_pair_t;
-
-    std::string binary_hash;
-    std::pair<bool, std::string> hash_pair;
-    std::pair<std::string, hashdb:scan_manager_t*> hash_producer_pair;
-
-    // open the consumer
-    std::string dest_dir = hashdb_dirs.pop_back();
-    hashdb::import_manager_t consumer(dest_dir, cmd);
-
-    // the multimap for processing hashes in order from the producers
-    ordered_producers_t ordered_producers;
-
-    // a producer
-    hashdb::scan_manager_t* producer;
-
-    // open the producers
-    for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
-         it != hashdb_dirs.end()) {
-
-      // create a producer
-      producer = new hashdb::scan_manager_t(*it);
-
-      // read first hash
-      hash_pair = producer->hash_begin();
-      if (pair.first) {
-        // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(pair.second, producer);
-      } else {
-        // no hashes for this producer so close it
-        delete producer;
-      }
-    }
-
-    // add ordered hashes from producers until all hashes are consumed
-    while (ordered_producers.size() != 0) {
-      // get the hash, producer pair for the first hash
-      ordered_producers_t::iterator it = ordered_producers.begin();
-      binary_hash = it->first;
-      producer = it->second;
-
-      // add the hash to the consumer
-      database_operator::add(binary_hash, *producer, consumer);
-
-      // remove this hash
-      ordered_producer->erase(it);
-
-      // insert the next hash
-      hash_pair = ordered_producer.hash_next(binary_hash);
-
-      if (hash_pair.first) {
-        // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(pair.second, producer);
-      } else {
-        // no hashes for this producer so close it
-        delete producer;
-      }
-    }
+    std::cout << "TBD\n";
   }
 
   // add_repository
