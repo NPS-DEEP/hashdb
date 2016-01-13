@@ -73,18 +73,9 @@ namespace database_operator {
     manager_a.find_hash(binary_hash, low_entropy_label,
                         entropy, block_label, *id_offset_pairs);
 
-    // add hash from A to B
-    bool hash_added = manager_b.insert_hash(binary_hash);
+    // add hashes from A to B
 
-    // add hash data from A to B
-    if (hash_added == true) {
-      manager_b.insert_hash_data(
-                       binary_hash, low_entropy_label, entropy, block_label);
-    }
-
-    // add hash sources from A to B
-
-    // process each source ID, file offset pair for hash
+    // process each source ID, file offset pair for the hash
     for (hashdb::id_offset_pairs_t::const_iterator it =
               id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
 
@@ -92,33 +83,33 @@ namespace database_operator {
       manager_a.find_source_data(it->first, file_binary_hash,
                                  filesize, file_type, low_entropy_count);
 
-      // find or create source ID for source data in B
-      std::pair<bool, uint64_t> pair_b = manager_b.insert_source_file_hash(
+      // get or create source ID for source data in B
+      std::pair<bool, uint64_t> pair_b = manager_b.insert_source_id(
                                                            file_binary_hash);
 
-      // add the id_offst_pair
-      manager_b.insert_hash_source(binary_hash, pair_b.second, it->second);
+      // add the hash with this source ID, offset pair
+      manager_b.insert_hash(binary_hash, pair_b.second, it->second,
+                            low_entropy_label, entropy, block_label);
 
-      // do not re-add source data
-      if (source_ids->find(pair_b.second) != source_ids->end()) {
-        continue;
+      // add the source data if it is new
+      if (source_ids->find(pair_b.second) == source_ids->end()) {
+
+        // remember this source ID
+        source_ids->insert(pair_b.second);
+
+        // insert source names in B, there or not, in case there are new names
+        manager_a.find_source_names(it->first, *source_names);
+        for (hashdb::source_names_t::const_iterator it2 = source_names->begin();
+             it2 != source_names->end(); ++it2) {
+          manager_b.insert_source_name(pair_b.second, it2->first, it2->second);
+        }
+
+        // copy the source data
+        if (pair_b.first == true) {
+          manager_b.insert_source_data(pair_b.second, file_binary_hash,
+                                       filesize, file_type, low_entropy_count);
+        }
       }
-
-      // if the source ID is new, copy the source data
-      if (pair_b.first == true) {
-        manager_b.insert_source_data(pair_b.second, file_binary_hash,
-                                     filesize, file_type, low_entropy_count);
-      }
-
-      // insert source names in B, there or not, in case there are new names
-      manager_a.find_source_names(it->first, *source_names);
-      for (hashdb::source_names_t::const_iterator it2 = source_names->begin();
-           it2 != source_names->end(); ++it2) {
-        manager_b.insert_source_name(pair_b.second, it2->first, it2->second);
-      }
-
-      // remember this source ID
-      source_ids->insert(pair_b.second);
     }
 
     // clean up

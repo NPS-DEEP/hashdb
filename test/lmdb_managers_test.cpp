@@ -88,12 +88,12 @@ void lmdb_hash_manager_write() {
 
   // add
   TEST_EQ(manager.insert(binary_0, changes), true);
-  TEST_EQ(changes.hash, 1);
+  TEST_EQ(changes.hash_inserted, 1);
   TEST_EQ(manager.find(binary_0), true);
 
   // re-add
   TEST_EQ(manager.insert(binary_0, changes), false);
-  TEST_EQ(changes.hash_false, 1);
+  TEST_EQ(changes.hash_not_inserted, 1);
   TEST_EQ(manager.find(binary_0), true);
 
   // check prefix-suffix split
@@ -153,9 +153,11 @@ void lmdb_hash_data_manager() {
   // create new manager
   lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW);
 
+  TEST_EQ(id_offset_pairs.size(), 0);
+
   // insert
-  TEST_EQ(manager.insert_hash_data(binary_0, "lel", 1, "bl", changes), true);
-  TEST_EQ(changes.hash_data, 1);
+  TEST_EQ(manager.insert(binary_0, 1, 512, "lel", 1, "bl", changes), true);
+  TEST_EQ(changes.hash_data_inserted, 1);
   TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
@@ -167,26 +169,23 @@ void lmdb_hash_data_manager() {
                id_offset_pairs), false);
 
   // no change
-  TEST_EQ(manager.insert_hash_data(binary_0, "lel2", 2, "bl2", changes), false);
-  TEST_EQ(changes.hash_data_false, 1);
-  TEST_EQ(changes.hash_data_different, 1);
+  TEST_EQ(manager.insert(binary_0, 1, 512, "lel2", 2, "bl2", changes), false);
+  TEST_EQ(changes.hash_data_metadata_different, 1);
+  TEST_EQ(changes.hash_data_not_inserted_duplicate_source, 1);
   TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
-  TEST_EQ(id_offset_pairs.size(), 0);
+  TEST_EQ(id_offset_pairs.size(), 1);
 
-  // these should assert
-  //manager.insert_hash_source(binary_0, 1, 513, changes);
-  //manager.insert_hash_source(binary_1, 1, 512, changes);
+  // invalid file offset
+  TEST_EQ(manager.insert(binary_0, 1, 513, "lel", 1, "bl", changes), false);
+  TEST_EQ(changes.hash_data_not_inserted_invalid_file_offset, 1);
 
-  // add sources
-  manager.insert_hash_source(binary_0, 1, 512, changes);
-  TEST_EQ(changes.hash_source, 1);
-  manager.insert_hash_source(binary_0, 1, 512, changes);
-  TEST_EQ(changes.hash_source_false, 1);
-  manager.insert_hash_source(binary_0, 1, 1024, changes);
+  // add source ID, offset pair
+  TEST_EQ(manager.insert(binary_0, 1, 1024, "lel", 1, "bl", changes), true);
+  TEST_EQ(changes.hash_data_inserted, 2);
   
   TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs), true);
@@ -202,7 +201,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(it->second, 1024);
 
   // check iterator
-  TEST_EQ(manager.insert_hash_data(binary_1, "lel3", 3, "bl3", changes), true);
+  TEST_EQ(manager.insert(binary_1, 2, 4096, "lel3", 3, "bl3", changes), true);
   std::pair<bool, std::string> pair;
   pair = manager.find_begin();
   TEST_EQ(pair.first, true);
@@ -217,7 +216,7 @@ void lmdb_hash_data_manager() {
   // size
   TEST_EQ(manager.size(), 2);
 
-  // MAX_ID_OFFSET_PAIRS
+  // max_sources: NOTE: to test: create db with max_id_offset_pairs = 2.
   // NOTE: to test, change hardcoded value in lmdb_hash_data_manager.hpp to 2
   //TEST_EQ(manager.insert_hash_data(binary_0, "lel", 1, "bl", changes), false);
   //manager.insert_hash_source(binary_0, 1, 4096, changes);
@@ -239,12 +238,12 @@ void lmdb_source_id_manager() {
   TEST_EQ(pair.second, 0)
 
   pair = manager.insert(binary_0, changes);
-  TEST_EQ(changes.source_file_hash, 1);
+  TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 1)
 
   pair = manager.insert(binary_0, changes);
-  TEST_EQ(changes.source_file_hash_false, 1);
+  TEST_EQ(changes.source_id_not_inserted, 1);
   TEST_EQ(pair.first, false);
   TEST_EQ(pair.second, 1)
 
@@ -273,7 +272,7 @@ void lmdb_source_data_manager() {
 
   // insert
   TEST_EQ(manager.insert(1, "fbh", 2, "ft", 3, changes), true);
-  TEST_EQ(changes.source_data, 1);
+  TEST_EQ(changes.source_data_inserted, 1);
   manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
@@ -282,7 +281,7 @@ void lmdb_source_data_manager() {
 
   // no change
   TEST_EQ(manager.insert(1, "fbh2", 22, "ft2", 32, changes), false);
-  TEST_EQ(changes.source_data_false, 1);
+  TEST_EQ(changes.source_data_not_inserted, 1);
   TEST_EQ(changes.source_data_different, 1);
   manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
   TEST_EQ(file_binary_hash, "fbh");
@@ -339,9 +338,9 @@ void lmdb_source_name_manager() {
 
   // insert, find
   TEST_EQ(manager.insert(1, "rn", "fn", changes), true);
-  TEST_EQ(changes.source_name, 1);
+  TEST_EQ(changes.source_name_inserted, 1);
   TEST_EQ(manager.insert(1, "rn", "fn", changes), false);
-  TEST_EQ(changes.source_name_false, 1);
+  TEST_EQ(changes.source_name_not_inserted, 1);
   TEST_EQ(manager.insert(1, "rn2", "fn2", changes), true);
   manager.find(1, source_names);
   source_names_t::const_iterator it = source_names.begin();

@@ -149,7 +149,7 @@ class lmdb_source_id_manager_t {
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, source_id);
       context.close();
-      ++changes.source_file_hash_false;
+      ++changes.source_id_not_inserted;
       MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(false, source_id);
 
@@ -170,7 +170,7 @@ class lmdb_source_id_manager_t {
 
       // source ID created
       context.close();
-      ++changes.source_file_hash;
+      ++changes.source_id_inserted;
       MUTEX_UNLOCK(&M);
       return std::pair<bool, uint64_t>(true, source_id);
 

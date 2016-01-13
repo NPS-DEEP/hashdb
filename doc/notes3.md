@@ -14,7 +14,7 @@ The LMDB managers provide low-level interfaces used by the hashdb library and ar
 `key=first 8 bytes of binary hash, data=set of last 8 bytes of binary hash matching the hash prefix in the key.`
 
 * `lmdb_hash_manager_t(hashdb_dir, file_mode)`
-* `bool insert(binary_hash)` - false if already there
+* `bool insert(binary_hash, &changes)` - false if already there
 * `bool find(binary_hash)`
 * `size_t size()`
 
@@ -22,8 +22,7 @@ The LMDB managers provide low-level interfaces used by the hashdb library and ar
 `key=binary_hash, data=(low_entropy_label, entropy, block_label, set(source_id, file_offset))`
 
 * `lmdb_hash_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert_hash_data(binary_hash, low_entropy_label, entropy, block_label)` - true if new, false, do not change, and note if not new
-* `bool insert_hash_source(binary_hash, source_id, file_offset)` - false if source already there or more than hardcoded max, fail if invalid file offset or no hash data
+* `bool insert(source_id, file_offset, binary_hash, low_entropy_label, entropy, block_label, &changes)` - true if inserted, false if not
 * `bool find(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `pair(bool, binary_hash) find_begin()`
 * `pair(bool, binary_hash) find_next(last_binary_hash)`
@@ -35,7 +34,7 @@ Look up source ID from file binary hash.
 `key=file_binary_hash, data=source_id`
 
 * `lmdb_source_id_hash_manager_t(hashdb_dir, file_mode)`
-* `pair(bool, source_id) insert(file_binary_hash)` - true if a new source ID is created, false if source ID already exists
+* `pair(bool, source_id, &changes) insert(file_binary_hash)` - true if a new source ID is created, false if source ID already exists
 * `pair(bool, source_id) find(file_binary_hash)` - true if found else false and zero
 * `size_t size()`
 
@@ -45,7 +44,7 @@ Look up source data from source ID.
 `key=source_id, data=(file_binary_hash, filesize, file_type, low_entropy_count)`
 
 * `lmdb_source_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new, false, do not change, and note if not new
+* `bool insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count, &changes)` - true if new, false, do not change, and note if not new
 * `void find(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
 * `pair(bool, source_id) find_begin()` - false if empty
 * `pair(bool, source_id) find_next()` - fail if already at end
@@ -57,7 +56,7 @@ Look up a set of source names given a source ID.
 `key=source_id, data=(source_names_t)`.
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, repository_name, filename)` - true if inserted, false if already there
+* `bool insert(source_id, repository_name, filename, &changes)` - true if inserted, false if already there
 * `void find(source_id, source_names_t&)` - fail on invalid source ID
 * `size_t size()`
 
@@ -68,12 +67,10 @@ hashdb interfaces use the `hashdb` namespace, are defined in `hashdb.hpp`, and a
 Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes to change log.
 
 * `import_manager_t(hashdb_dir)`
-* `pair(bool, source_id) insert_source_file_hash(file_binary_hash)` - false if already there
+* `pair(bool, source_id) insert_source_id(file_binary_hash)` - false if already there
 * `bool insert_source_name(source_id, repository_name, filename)` - false if already there
 * `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new, false, do not change, and note if not new
-* `bool insert_hash(binary_hash)` - true if inserted, false if already there
-* `bool insert_hash_data(binary_hash, low_entropy_label, entropy, block_label)` - true if new, false, do not change, and note if not new
-* `bool insert_hash_source(binary_hash, source_id, file_offset)` - false if source already there or more than hardcoded max, fail if invalid file offset or no hash data
+* `bool insert_hash(binary_hash, source_id, file_offset, low_entropy_label, entropy, block_label)` - true if inserted, false if not
 * `string size()` - return sizes of LMDB databases
 * `~import_manager_t()` - append changes to change log at `hashdb_dir/log.dat`
 

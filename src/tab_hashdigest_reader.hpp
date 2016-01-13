@@ -108,9 +108,8 @@ class tab_hashdigest_reader_t {
     }
     uint64_t file_offset = (sector_index - 1) * sector_size;
 
-    // add source file hash
-    std::pair<bool, uint64_t> pair = manager.insert_source_file_hash(
-                                                         file_binary_hash);
+    // get source ID
+    std::pair<bool, uint64_t> pair = manager.insert_source_id(file_binary_hash);
     uint64_t source_id = pair.second;
 
     if (pair.first == true) {
@@ -120,12 +119,7 @@ class tab_hashdigest_reader_t {
     }
 
     // add block hash
-    bool is_added = manager.insert_hash(block_binary_hash);
-    if (is_added) {
-      // hash is new so add hash data and source
-      manager.insert_hash_data(block_binary_hash, "", 0, "");
-      manager.insert_hash_source(block_binary_hash, source_id, file_offset);
-    }
+    manager.insert_hash(block_binary_hash, source_id, file_offset, "", 0, "");
 
     // update progress tracker
     progress_tracker.track();

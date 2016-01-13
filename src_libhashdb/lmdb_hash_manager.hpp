@@ -179,7 +179,7 @@ class lmdb_hash_manager_t {
 
       // hash inserted
       context.close();
-      ++changes.hash;
+      ++changes.hash_inserted;
       MUTEX_UNLOCK(&M);
       return true;
 
@@ -192,7 +192,7 @@ class lmdb_hash_manager_t {
 
         // suffix already exists, hash not inserted
         context.close();
-        ++changes.hash_false;
+        ++changes.hash_not_inserted;
         MUTEX_UNLOCK(&M);
         return false;
 
@@ -213,7 +213,7 @@ class lmdb_hash_manager_t {
 
         // hash inserted
         context.close();
-        ++changes.hash;
+        ++changes.hash_inserted;
         MUTEX_UNLOCK(&M);
         return true;
       }

@@ -175,7 +175,7 @@ namespace hashdb {
      *   True if the file binary hash is new else false.
      *   The source ID, which is new if it is just generated.
      */
-    std::pair<bool, uint64_t> insert_source_file_hash(
+    std::pair<bool, uint64_t> insert_source_id(
                                        const std::string& file_binary_hash);
 
     /**
@@ -209,22 +209,14 @@ namespace hashdb {
                             const uint64_t low_entropy_count);
 
     /**
-     * Insert the block hash value into the database.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *
-     * Returns:
-     *   True if the hash is inserted, false if it is already there.
-     */
-    bool insert_hash(const std::string& binary_hash);
-
-    /**
      * Insert hash data.
      * Return true if new, false but overwrite if not new.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
+     *   source_id - The source ID for this source data.
+     *   file_offset - The byte offset into the file where the hash is
+     *     located.
      *   low_entropy_label - Text indicating how the associated block
      *     may be considered non-probative, else "" if not.
      *   entropy - A numeric entropy value for the associated block.
@@ -232,29 +224,14 @@ namespace hashdb {
      *     no label.
      *
      * Returns:
-     *   True if the setting is new else false, do not change, and note.
+     *   True if new, false if not.
      */
-    bool insert_hash_data(const std::string& binary_hash,
-                          const std::string& low_entropy_label,
-                          const uint64_t entropy,
-                          const std::string& block_label);
-
-    /**
-     * Insert hash source.
-     * Fail if the file offset is invalid or there is no hash data yet.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *   source_id - The source ID for this source data.
-     *   file_offset - The byte offset into the file where the hash is
-           located.
-     *
-     * Returns:
-     *   True if the source pair is added, false if already there.
-     */
-    bool insert_hash_source(const std::string& binary_hash,
-                            const uint64_t source_id,
-                            const uint64_t file_offset);
+    bool insert_hash(const std::string& binary_hash,
+                     const uint64_t source_id,
+                     const uint64_t file_offset,
+                     const std::string& low_entropy_label,
+                     const uint64_t entropy,
+                     const std::string& block_label);
 
     /**
      * Returns sizes of LMDB databases in the data store.

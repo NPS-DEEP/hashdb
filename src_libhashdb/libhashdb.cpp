@@ -261,7 +261,7 @@ namespace hashdb {
     delete changes;
   }
 
-  std::pair<bool, uint64_t> import_manager_t::insert_source_file_hash(
+  std::pair<bool, uint64_t> import_manager_t::insert_source_id(
                                        const std::string& file_binary_hash) {
     return lmdb_source_id_manager->insert(file_binary_hash, *changes);
   }
@@ -283,23 +283,14 @@ namespace hashdb {
                         filesize, file_type, low_entropy_count, *changes);
   }
 
-  bool import_manager_t::insert_hash(const std::string& binary_hash) {
-    return lmdb_hash_manager->insert(binary_hash, *changes);
-  }
-
-  bool import_manager_t::insert_hash_data(const std::string& binary_hash,
+  bool import_manager_t::insert_hash(const std::string& binary_hash,
+                        const uint64_t source_id,
+                        const uint64_t file_offset,
                         const std::string& low_entropy_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
-    return lmdb_hash_data_manager->insert_hash_data(binary_hash,
+    return lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
                         low_entropy_label, entropy, block_label, *changes);
-  }
-
-  bool import_manager_t::insert_hash_source(const std::string& binary_hash,
-                          const uint64_t source_id,
-                          const uint64_t file_offset) {
-    return lmdb_hash_data_manager->insert_hash_source(binary_hash,
-                                          source_id, file_offset, *changes);
   }
 
   std::string import_manager_t::size() const {

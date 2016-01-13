@@ -184,14 +184,22 @@ class lmdb_hash_data_manager_t {
   }
 
   /**
-   * Insert hash data.
+   * Insert hash with source data and metadata.
    * Return true if new, false, do not change, and note if not new.
    */
-  bool insert_hash_data(const std::string& binary_hash,
-                        const std::string& low_entropy_label,
-                        const uint64_t entropy,
-                        const std::string& block_label,
-                        lmdb_changes_t& changes) {
+  bool insert(const std::string& binary_hash,
+              const uint64_t source_id,
+              const uint64_t file_offset,
+              const std::string& low_entropy_label,
+              const uint64_t entropy,
+              const std::string& block_label,
+              lmdb_changes_t& changes) {
+
+    // validate file_offset
+    if (file_offset % settings.sector_size != 0) {
+      ++changes.hash_data_not_inserted_invalid_file_offset;
+      return false;
+    }
 
     MUTEX_LOCK(&M);
 
@@ -212,7 +220,10 @@ class lmdb_hash_data_manager_t {
     std::string encoding;
     if (rc == MDB_NOTFOUND) {
       // hash is not there
+
+      // start id_offset_pairs
       id_offset_pairs->clear();
+      id_offset_pairs->insert(id_offset_pair_t(source_id, file_offset));
       encoding = encode_data(low_entropy_label, entropy, block_label,
                              *id_offset_pairs);
       lmdb_helper::point_to_string(encoding, context.data);
@@ -227,12 +238,14 @@ class lmdb_hash_data_manager_t {
  
       // hash data inserted
       context.close();
-      ++changes.hash_data;
+      ++changes.hash_data_inserted;
       MUTEX_UNLOCK(&M);
       return true;
  
     } else if (rc == 0) {
-      // already there, note if different
+      // hash is already there
+
+      // note if data portion is different
       std::string p_low_entropy_label;
       uint64_t p_entropy;
       std::string p_block_label;
@@ -242,108 +255,47 @@ class lmdb_hash_data_manager_t {
       if (low_entropy_label != p_low_entropy_label ||
           entropy != p_entropy ||
           block_label != p_block_label) {
-        ++changes.hash_data_different;
+        ++changes.hash_data_metadata_different;
       }
 
-      // hash is different
-      context.close();
-      ++changes.hash_data_false;
-      MUTEX_UNLOCK(&M);
-      return false;
-
-    } else {
-      // invalid rc
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-  }
-
-  /**
-   * Insert hash source.
-   * Return true if added, false if the source is already there.
-   * Fail if the file offset is invalid or there is no hash data yet.
-   */
-  bool insert_hash_source(const std::string& binary_hash,
-                          const uint64_t source_id,
-                          const uint64_t file_offset,
-                          lmdb_changes_t& changes) {
-
-    MUTEX_LOCK(&M);
-
-    // validate file_offset
-    if (file_offset % settings.sector_size != 0) {
-      std::cerr << "Error: invalid file offset value " << file_offset
-                << " is not divisible by " << settings.sector_size << "\n";
-      assert(0);
-    }
-
-    // maybe grow the DB
-    lmdb_helper::maybe_grow(env);
-
-    // get context
-    lmdb_context_t context(env, true, false);
-    context.open();
-
-    // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
-
-    // read the existing hash data record
-    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_SET_KEY);
-
-    if (rc == 0) {
-      // good, the hash exists to add source data
-
-      // the hash data values to preserve
-      std::string low_entropy_label;
-      uint64_t entropy;
-      std::string block_label;
-
-      // the source pair to add
+      // skip if source is already there
       id_offset_pair_t id_offset_pair(source_id, file_offset);
-
-      // decode the hash data record
-      std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, low_entropy_label, entropy, block_label,
-                  *id_offset_pairs);
-
-      // make sure the source is not already there
       if (id_offset_pairs->find(id_offset_pair) != id_offset_pairs->end()) {
         // source is already there
         context.close();
-        ++changes.hash_source_false;
+        ++changes.hash_data_not_inserted_duplicate_source;
         MUTEX_UNLOCK(&M);
         return false;
-      } else {
-
-        // do not exceed max
-        if (id_offset_pairs->size() >= MAX_ID_OFFSET_PAIRS) {
-          context.close();
-          ++changes.hash_source_max;
-          MUTEX_UNLOCK(&M);
-          return false;
-        }
-
-        // add the new source
-        id_offset_pairs->insert(id_offset_pair);
-        encoding = encode_data(low_entropy_label, entropy, block_label,
-                               *id_offset_pairs);
-        lmdb_helper::point_to_string(encoding, context.data);
-        rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
-
-        // the change request must work
-        if (rc != 0) {
-          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-          assert(0);
-        }
-
-        // hash source inserted
-        context.close();
-        ++changes.hash_source;
-        MUTEX_UNLOCK(&M);
-        return true;
       }
+
+      // skip if source count is at max source ID offset pairs
+//zz      if (id_offset_pairs->size() >= settings.max_id_offset_pairs) {
+      if (id_offset_pairs->size() >= 100) {
+        context.close();
+        ++changes.hash_data_not_inserted_max_id_offset_pairs;
+        MUTEX_UNLOCK(&M);
+        return false;
+      }
+
+      // add the new source
+      id_offset_pairs->insert(id_offset_pair);
+      encoding = encode_data(low_entropy_label, entropy, block_label,
+                             *id_offset_pairs);
+      lmdb_helper::point_to_string(encoding, context.data);
+      rc = mdb_put(context.txn, context.dbi,
+                   &context.key, &context.data, MDB_NODUPDATA);
+
+      // the change request must work
+      if (rc != 0) {
+        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+
+      // hash source inserted
+      context.close();
+      ++changes.hash_data_inserted;
+      MUTEX_UNLOCK(&M);
+      return true;
 
     } else {
       // invalid rc

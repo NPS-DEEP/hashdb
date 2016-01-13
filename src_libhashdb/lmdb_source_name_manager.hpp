@@ -186,56 +186,76 @@ class lmdb_source_name_manager_t {
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    // the key does not need to be there, but the read attempt must not fail
-    if (rc != 0 && rc != MDB_NOTFOUND) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
+    if (rc == MDB_NOTFOUND) {
 
-    // set source_names
-    if (rc == 0) {
+      // new set of source names
+      source_names->clear();
+
+      // insert new source name
+      source_names->insert(source_name_t(repository_name, filename));
+
+      // write with source inserted
+      encoding = encode_data(*source_names);
+      lmdb_helper::point_to_string(encoding, context.data);
+      rc = mdb_put(context.txn, context.dbi,
+                   &context.key, &context.data, MDB_NODUPDATA);
+
+      // the write must work
+      if (rc != 0) {
+        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+        assert(0);
+      }
+
+      // new hash source inserted
+      context.close();
+      ++changes.source_name_inserted;
+      MUTEX_UNLOCK(&M);
+      return true;
+
+    } else if (rc == 0) {
 
       // read existing sources into set
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, *source_names);
 
+      // prepare the source name pair
+      source_name_t pair(repository_name, filename);
+
+      // add if not already there
+      if (source_names->find(pair) == source_names->end()) {
+        // add new source name
+        source_names->insert(pair);
+
+        // write with source name pair inserted
+        encoding = encode_data(*source_names);
+        lmdb_helper::point_to_string(encoding, context.data);
+        rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
+
+        // the write must work
+        if (rc != 0) {
+          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+          assert(0);
+        }
+
+        // hash source inserted
+        context.close();
+        ++changes.source_name_inserted;
+        MUTEX_UNLOCK(&M);
+        return true;
+
+      } else {
+        // the source name is already there
+        context.close();
+        ++changes.source_name_not_inserted;
+        MUTEX_UNLOCK(&M);
+        return false;
+      }
     } else {
-      // new set
-      source_names->clear();
-    }
-
-    // prepare the source name pair
-    source_name_t pair(repository_name, filename);
-
-    // note if already there
-    bool is_new = source_names->find(pair) == source_names->end();
-
-    // insert new pair
-    if (is_new) {
-      source_names->insert(pair);
-    }
-
-    // write with source inserted
-    encoding = encode_data(*source_names);
-    lmdb_helper::point_to_string(encoding, context.data);
-    rc = mdb_put(context.txn, context.dbi,
-                 &context.key, &context.data, MDB_NODUPDATA);
-
-    // the write must work
-    if (rc != 0) {
+      // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
-
-    // hash source inserted
-    context.close();
-    if (is_new) {
-      ++changes.source_name;
-    } else {
-      ++changes.source_name_false;
-    }
-    MUTEX_UNLOCK(&M);
-    return is_new;
   }
 
   /**

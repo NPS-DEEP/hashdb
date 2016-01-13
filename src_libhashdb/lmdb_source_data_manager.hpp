@@ -217,7 +217,7 @@ class lmdb_source_data_manager_t {
  
       // new source data inserted
       context.close();
-      ++changes.source_data;
+      ++changes.source_data_inserted;
       MUTEX_UNLOCK(&M);
       return true;
 
@@ -241,7 +241,7 @@ class lmdb_source_data_manager_t {
 
       // no change
       context.close();
-      ++changes.source_data_false;
+      ++changes.source_data_not_inserted;
       MUTEX_UNLOCK(&M);
       return false;
 
