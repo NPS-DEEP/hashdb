@@ -70,8 +70,8 @@ namespace database_operator {
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
     // get hash data from A
-    manager_a.find_hash_data(binary_hash, low_entropy_label,
-                             entropy, block_label, *id_offset_pairs);
+    manager_a.find_hash(binary_hash, low_entropy_label,
+                        entropy, block_label, *id_offset_pairs);
 
     // add hash from A to B
     bool hash_added = manager_b.insert_hash(binary_hash);

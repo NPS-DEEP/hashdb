@@ -302,17 +302,6 @@ namespace hashdb {
     ~scan_manager_t();
 
     /**
-     * Find if hash is present.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *
-     * Returns:
-     *   True if the hash is present, false if not.
-     */
-    bool find_hash(const std::string& binary_hash) const;
-
-    /**
      * Find hash, fail if hash is not present.
      *
      * Parameters:
@@ -323,12 +312,15 @@ namespace hashdb {
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   id_offset_pairs - Set of pairs of source ID and file offset values.
+     *
+     * Returns:
+     *   True if the hash is present, false if not.
      */
-    void find_hash_data(const std::string& binary_hash,
-                        std::string& low_entropy_label,
-                        uint64_t& entropy,
-                        std::string& block_label,
-                        id_offset_pairs_t& id_offset_pairs) const;
+    bool find_hash(const std::string& binary_hash,
+                   std::string& low_entropy_label,
+                   uint64_t& entropy,
+                   std::string& block_label,
+                   id_offset_pairs_t& id_offset_pairs) const;
 
     /**
      * Find source data for the given source ID, fail on invalid ID.

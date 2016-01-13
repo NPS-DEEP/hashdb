@@ -336,17 +336,23 @@ namespace hashdb {
     delete lmdb_source_name_manager;
   }
 
-  bool scan_manager_t::find_hash(const std::string& binary_hash) const {
-    return lmdb_hash_manager->find(binary_hash);
-  }
-
-  void scan_manager_t::find_hash_data(const std::string& binary_hash,
+  bool scan_manager_t::find_hash(const std::string& binary_hash,
                       std::string& low_entropy_label,
                       uint64_t& entropy,
                       std::string& block_label,
                       id_offset_pairs_t& id_offset_pairs) const {
-    return lmdb_hash_data_manager->find(binary_hash,
+    if (lmdb_hash_manager->find(binary_hash) == true) {
+      // hash may be present so use hash data manager
+      return lmdb_hash_data_manager->find(binary_hash,
                 low_entropy_label, entropy, block_label, id_offset_pairs);
+    } else {
+      // hash is not present so return false
+      low_entropy_label = "";
+      entropy = 0;
+      block_label = "";
+      id_offset_pairs.clear();
+      return false;
+    }
   }
 
   void scan_manager_t::find_source_data(const uint64_t source_id,

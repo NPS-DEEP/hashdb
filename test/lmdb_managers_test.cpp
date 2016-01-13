@@ -156,18 +156,22 @@ void lmdb_hash_data_manager() {
   // insert
   TEST_EQ(manager.insert_hash_data(binary_0, "lel", 1, "bl", changes), true);
   TEST_EQ(changes.hash_data, 1);
-  manager.find(binary_0, low_entropy_label, entropy, block_label,
-               id_offset_pairs);
+  TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
+               id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
+
+  // not there
+  TEST_EQ(manager.find(binary_1, low_entropy_label, entropy, block_label,
+               id_offset_pairs), false);
 
   // no change
   TEST_EQ(manager.insert_hash_data(binary_0, "lel2", 2, "bl2", changes), false);
   TEST_EQ(changes.hash_data_false, 1);
   TEST_EQ(changes.hash_data_different, 1);
-  manager.find(binary_0, low_entropy_label, entropy, block_label,
-               id_offset_pairs);
+  TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
+               id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
@@ -184,8 +188,8 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_source_false, 1);
   manager.insert_hash_source(binary_0, 1, 1024, changes);
   
-  manager.find(binary_0, low_entropy_label, entropy, block_label,
-               id_offset_pairs);
+  TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
+               id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");

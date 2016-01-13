@@ -24,7 +24,7 @@ The LMDB managers provide low-level interfaces used by the hashdb library and ar
 * `lmdb_hash_data_manager_t(hashdb_dir, file_mode)`
 * `bool insert_hash_data(binary_hash, low_entropy_label, entropy, block_label)` - true if new, false, do not change, and note if not new
 * `bool insert_hash_source(binary_hash, source_id, file_offset)` - false if source already there or more than hardcoded max, fail if invalid file offset or no hash data
-* `void find(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `bool find(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `pair(bool, binary_hash) find_begin()`
 * `pair(bool, binary_hash) find_next(last_binary_hash)`
 * `size_t size()`
@@ -79,8 +79,7 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 
 ### Scan
 * `scan_manager_t(hashdb_dir)`
-* `bool find_hash(binary_hash)`
-* `void find_hash_data(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `bool find_hash(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `void find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
 * `void find_source_names(source_id, source_names_t&)` - fail on invalid source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`

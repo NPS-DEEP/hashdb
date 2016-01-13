@@ -353,9 +353,9 @@ class lmdb_hash_data_manager_t {
   }
 
   /**
-   * Read data for the hash.  Fail if the hash does not exist.
+   * Read data for the hash.  False if the hash does not exist.
    */
-  void find(const std::string& binary_hash,
+  bool find(const std::string& binary_hash,
             std::string& low_entropy_label,
             uint64_t& entropy,
             std::string& block_label,
@@ -378,7 +378,16 @@ class lmdb_hash_data_manager_t {
       decode_data(encoding, low_entropy_label, entropy, block_label,
                   pairs);
       context.close();
-      return;
+      return true;
+
+    } else if (rc == MDB_NOTFOUND) {
+      // no hash
+      context.close();
+      low_entropy_label = "";
+      entropy = 0;
+      block_label = "";
+      pairs.clear();
+      return false;
 
     } else {
       // invalid rc
