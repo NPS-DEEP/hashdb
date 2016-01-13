@@ -36,20 +36,21 @@
 class lmdb_changes_t {
 
   public:
-  uint32_t source_file_hash;
-  uint32_t source_file_hash_false;
-  uint32_t source_name;
-  uint32_t source_name_false;
-  uint32_t source_data;
-  uint32_t source_data_false;
-  uint32_t source_data_different;
-  uint32_t hash;
-  uint32_t hash_false;
-  uint32_t hash_data;
-  uint32_t hash_data_false;
-  uint32_t hash_data_different;
-  uint32_t hash_source;
-  uint32_t hash_source_false;
+  size_t source_file_hash;
+  size_t source_file_hash_false;
+  size_t source_name;
+  size_t source_name_false;
+  size_t source_data;
+  size_t source_data_false;
+  size_t source_data_different;
+  size_t hash;
+  size_t hash_false;
+  size_t hash_data;
+  size_t hash_data_false;
+  size_t hash_data_different;
+  size_t hash_source;
+  size_t hash_source_false;
+  size_t hash_source_max;
 
   lmdb_changes_t() :
            source_file_hash(0),
@@ -65,7 +66,8 @@ class lmdb_changes_t {
            hash_data_false(0),
            hash_data_different(0),
            hash_source(0),
-           hash_source_false(0) {
+           hash_source_false(0),
+           hash_source_max(0) {
   }
 
   void report_changes(std::ostream& os) const {
@@ -85,6 +87,7 @@ class lmdb_changes_t {
               << "hash_data_different: " << hash_data_different << "\n"
               << "hash_source: " << hash_source << "\n"
               << "hash_source_false: " << hash_source_false << "\n"
+              << "hash_source_max: " << hash_source_max << "\n"
               ;
   }
 };

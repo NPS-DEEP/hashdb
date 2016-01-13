@@ -212,6 +212,12 @@ void lmdb_hash_data_manager() {
 
   // size
   TEST_EQ(manager.size(), 2);
+
+  // MAX_ID_OFFSET_PAIRS
+  // NOTE: to test, change hardcoded value in lmdb_hash_data_manager.hpp to 2
+  //TEST_EQ(manager.insert_hash_data(binary_0, "lel", 1, "bl", changes), false);
+  //manager.insert_hash_source(binary_0, 1, 4096, changes);
+  //TEST_EQ(changes.hash_source_max, 1);
 }
 
 // ************************************************************

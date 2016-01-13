@@ -44,6 +44,8 @@
 #endif
 #include "mutex_lock.hpp"
 
+static uint32_t MAX_ID_OFFSET_PAIRS = 100000; // 100,000
+
 class lmdb_hash_data_manager_t {
 
   private:
@@ -313,6 +315,14 @@ class lmdb_hash_data_manager_t {
         MUTEX_UNLOCK(&M);
         return false;
       } else {
+
+        // do not exceed max
+        if (id_offset_pairs->size() >= MAX_ID_OFFSET_PAIRS) {
+          context.close();
+          ++changes.hash_source_max;
+          MUTEX_UNLOCK(&M);
+          return false;
+        }
 
         // add the new source
         id_offset_pairs->insert(id_offset_pair);
