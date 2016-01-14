@@ -146,7 +146,7 @@ void lmdb_hash_data_manager() {
   lmdb_changes_t changes;
 
   // write default settings
-  hashdb_settings_t settings(3, 512, 512);
+  hashdb_settings_t settings(3, 512, 512, 100000, 16, 8*8);
   settings_pair = hashdb_settings_store::write_settings(hashdb_dir, settings);
   TEST_EQ(settings_pair.first, true);
 

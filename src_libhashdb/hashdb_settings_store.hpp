@@ -93,6 +93,9 @@ namespace hashdb_settings_store {
     settings.data_store_version = document["data_store_version"].GetUint64();
     settings.sector_size = document["sector_size"].GetUint64();
     settings.block_size = document["block_size"].GetUint64();
+    settings.max_id_offset_pairs = document["max_id_offset_pairs"].GetUint64();
+    settings.hash_manager_hash_bytes = document["hash_manager_hash_bytes"].GetUint64();
+    settings.hash_manager_key_bits = document["hash_manager_key_bits"].GetUint64();
 
     // settings version must be compatible
     if (settings.data_store_version < settings.expected_data_store_version) {
@@ -123,32 +126,14 @@ namespace hashdb_settings_store {
       }
     }
 
-    // create the json settings document
-    rapidjson::Document settings_document;
-    rapidjson::Document::AllocatorType& allocator =
-                                          settings_document.GetAllocator();
-    settings_document.SetObject();
-    settings_document.AddMember("data_store_version",
-                                settings.data_store_version, allocator);
-    settings_document.AddMember("sector_size",
-                                settings.sector_size, allocator);
-    settings_document.AddMember("block_size",
-                                settings.block_size, allocator);
-
-    // create the json settings string
-    rapidjson::StringBuffer strbuf;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-    settings_document.Accept(writer);
-    std::string json_settings_string = strbuf.GetString();
-
-    // write out the settings
+    // write the settings
     std::ofstream out;
     out.open(filename);
     if (!out.is_open()) {
       return std::pair<bool, std::string>(false, std::string(strerror(errno)));
     }
       
-    out << json_settings_string << "\n";
+    out << settings << "\n";
     out.close();
     return std::pair<bool, std::string>(true, "");
   }

@@ -269,8 +269,7 @@ class lmdb_hash_data_manager_t {
       }
 
       // skip if source count is at max source ID offset pairs
-//zz      if (id_offset_pairs->size() >= settings.max_id_offset_pairs) {
-      if (id_offset_pairs->size() >= 100) {
+      if (id_offset_pairs->size() >= settings.max_id_offset_pairs) {
         context.close();
         ++changes.hash_data_not_inserted_max_id_offset_pairs;
         MUTEX_UNLOCK(&M);

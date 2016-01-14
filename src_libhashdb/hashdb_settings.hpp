@@ -37,32 +37,50 @@ struct hashdb_settings_t {
   uint32_t data_store_version;
   uint32_t sector_size;
   uint32_t block_size;
+  uint32_t max_id_offset_pairs;
+  uint32_t hash_manager_hash_bytes;
+  uint32_t hash_manager_key_bits;
 
   hashdb_settings_t() :
         data_store_version(0),
         sector_size(0),
-        block_size(0) {
+        block_size(0),
+        max_id_offset_pairs(0),
+        hash_manager_hash_bytes(0),
+        hash_manager_key_bits(0) {
   }
 
   hashdb_settings_t(uint32_t p_data_store_version,
                     uint32_t p_sector_size,
-                    uint32_t p_block_size) :
+                    uint32_t p_block_size,
+                    uint32_t p_max_id_offset_pairs,
+                    uint32_t p_hash_manager_hash_bytes,
+                    uint32_t p_hash_manager_key_bits) :
+
         data_store_version(p_data_store_version),
         sector_size(p_sector_size),
-        block_size(p_block_size) {
+        block_size(p_block_size),
+        max_id_offset_pairs(p_max_id_offset_pairs),
+        hash_manager_hash_bytes(p_hash_manager_hash_bytes),
+        hash_manager_key_bits(p_hash_manager_key_bits) {
   }
 
-  void report_settings(std::ostream& os) const {
-    os << "hashdb settings:\n";
-    os << "data store version: " << data_store_version << "\n";
-    os << "sector size: " << sector_size << "\n";
-    os << "hash block size: " << block_size << "\n";
+  std::string settings_string() const {
+    std::stringstream ss;
+    ss << "{\"data_store_version\":" << data_store_version
+       << ", \"sector_size\":" << sector_size
+       << ", \"block_size\":" << block_size
+       << ", \"max_id_offset_pairs\":" << max_id_offset_pairs
+       << ", \"hash_manager_hash_bytes\":" << hash_manager_hash_bytes
+       << ", \"hash_manager_key_bits\":" << hash_manager_key_bits
+       << "}";
+    return ss.str();
   }
 };
 
 inline std::ostream& operator<<(std::ostream& os,
                          const struct hashdb_settings_t& settings) {
-  settings.report_settings(os);
+  os << settings.settings_string();
   return os;
 }
 
