@@ -319,6 +319,28 @@ void lmdb_hash_data_manager() {
   //TEST_EQ(changes.hash_source_max, 1);
 }
 
+void lmdb_hash_data_manager_settings() {
+  make_new_hashdb_dir(hashdb_dir);
+  lmdb_changes_t changes;
+  std::pair<bool, std::string> pair;
+  pair = hashdb_settings_t::write_settings(hashdb_dir,
+                                           hashdb_settings_t(3,1,1,2,0,0));
+
+  // create new manager
+  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW);
+
+  // test sector size 1 and duplicates limit 2
+  TEST_EQ(changes.hash_data_inserted, 0);
+  TEST_EQ(manager.insert(binary_0, 1, 1, "lel", 1, "bl", changes), true);
+  TEST_EQ(changes.hash_data_inserted, 1);
+  TEST_EQ(manager.insert(binary_0, 1, 1, "lel", 1, "bl", changes), false);
+  TEST_EQ(changes.hash_data_inserted, 1);
+  TEST_EQ(manager.insert(binary_0, 1, 2, "lel", 1, "bl", changes), true);
+  TEST_EQ(changes.hash_data_inserted, 2);
+  TEST_EQ(manager.insert(binary_0, 1, 3, "lel", 1, "bl", changes), false);
+  TEST_EQ(changes.hash_data_inserted, 2);
+}
+
 // ************************************************************
 // lmdb_source_id_manager
 // ************************************************************
@@ -466,6 +488,7 @@ int main(int argc, char* argv[]) {
 
   // lmdb_hash_data_manager
   lmdb_hash_data_manager();
+  lmdb_hash_data_manager_settings();
 
   // source ID manager
   lmdb_source_id_manager();
