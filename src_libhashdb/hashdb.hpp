@@ -81,8 +81,13 @@ namespace hashdb {
    *   sector_size - Minimal sector size of data, in bytes.  Blocks must
    *     align to this.
    *   block_size - Size, in bytes, of data blocks.
+   *   max_id_offset_pairs - The maximum number of source ID, source file
+   *     offset pairs to store for a single hash value.
+   *   hash_prefix_bits - The number of hash prefix bits to use as the
+   *     key in the optimized hash storage.
+   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
+   *     value in the optimized hash storage.
    *   command_string - String to put into the new hashdb log.
-   *   Other parameters - Other parameters control hashdb settings.
    *
    * Returns tuple:
    *   True and "" if creation was successful, false and reason if not.
@@ -91,6 +96,9 @@ namespace hashdb {
                      const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
+                     const uint32_t max_id_offset_pairs,
+                     const uint32_t hash_prefix_bits,
+                     const uint32_t hash_suffix_bytes,
                      const std::string& command_string);
 
   /**
@@ -103,6 +111,12 @@ namespace hashdb {
    *   sector_size - Minimal sector size of data, in bytes.  Blocks must
    *     align to this.
    *   block_size - Size, in bytes, of data blocks.
+   *   max_id_offset_pairs - The maximum number of source ID, source file
+   *     offset pairs to store for a single hash value.
+   *   hash_prefix_bits - The number of hash prefix bits to use as the
+   *     key in the optimized hash storage.
+   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
+   *     value in the optimized hash storage.
    *
    * Returns tuple:
    *   True and "" if settings were retrieved, false and reason if not.
@@ -110,7 +124,10 @@ namespace hashdb {
   std::pair<bool, std::string> hashdb_settings(
                      const std::string& hashdb_dir,
                      uint32_t& sector_size,
-                     uint32_t& block_size);
+                     uint32_t& block_size,
+                     uint32_t& max_id_offset_pairs,
+                     uint32_t& hash_prefix_bits,
+                     uint32_t& hash_suffix_bytes);
 
   /**
    * Print environment information to the stream.  Specifically, print

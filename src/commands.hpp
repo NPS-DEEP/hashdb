@@ -67,17 +67,22 @@ static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
 
     uint32_t sector_size;
     uint32_t block_size;
+    uint32_t max_id_offset_pairs;
+    uint32_t hash_prefix_bits;
+    uint32_t hash_suffix_bytes;
     std::pair<bool, std::string> pair;
 
     // try to read hashdb_dir settings
-    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size);
+    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size,
+         max_id_offset_pairs, hash_prefix_bits, hash_suffix_bytes);
     if (pair.first == true) {
       // hashdb_dir already exists
       return pair;
     }
 
     // no hashdb_dir, so read from_hashdb_dir settings
-    pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size);
+    pair = hashdb::hashdb_settings(from_hashdb_dir, sector_size, block_size,
+         max_id_offset_pairs, hash_prefix_bits, hash_suffix_bytes);
     if (pair.first == false) {
       // bad since from_hashdb_dir is not valid
       return pair;
@@ -87,6 +92,9 @@ static inline void copy_hash(lmdb_hash_it_data_t hash_it_data,
     pair = hashdb::create_hashdb(hashdb_dir,
                                  sector_size,
                                  block_size,
+                                 max_id_offset_pairs,
+                                 hash_prefix_bits,
+                                 hash_suffix_bytes,
                                  command_string);
 
     return pair;
@@ -100,10 +108,14 @@ namespace commands {
   void create(const std::string& hashdb_dir,
               const uint32_t sector_size,
               const uint32_t block_size,
+              const uint32_t max_id_offset_pairs,
+              const uint32_t hash_prefix_bits,
+              const uint32_t hash_suffix_bytes,
               const std::string& cmd) {
 
     std::pair<bool, std::string> pair = hashdb::create_hashdb(
-           hashdb_dir, sector_size, block_size, cmd);
+           hashdb_dir, sector_size, block_size, max_id_offset_pairs,
+           hash_prefix_bits, hash_suffix_bytes, cmd);
 
     if (pair.first == true) {
       std::cout << "New database created.\n";
@@ -120,7 +132,6 @@ namespace commands {
                      const std::string& import_dir,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
-                     const bool skip_low_entropy,
                      const std::string& cmd) {
     // import_dir.hpp
     std::cout << "TBD\n";

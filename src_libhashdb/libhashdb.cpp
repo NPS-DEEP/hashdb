@@ -54,7 +54,6 @@
 #include <iostream>     // for print_environment
 #include "file_modes.h"
 #include "hashdb_settings.hpp"
-#include "hashdb_settings_store.hpp"
 #include "lmdb_hash_data_manager.hpp"
 #include "lmdb_hash_manager.hpp"
 #include "lmdb_source_data_manager.hpp"
@@ -117,7 +116,7 @@ namespace hashdb {
 
     // validate hashdb by performing a correct read of settings
     hashdb_settings_t settings;
-    return hashdb_settings_store::read_settings(hashdb_dir, settings);
+    return hashdb_settings_t::read_settings(hashdb_dir, settings);
   }
 
   /**
@@ -129,6 +128,9 @@ namespace hashdb {
                      const std::string& hashdb_dir,
                      const uint32_t sector_size,
                      const uint32_t block_size,
+                     const uint32_t max_id_offset_pairs,
+                     const uint32_t hash_prefix_bits,
+                     const uint32_t hash_suffix_bytes,
                      const std::string& command_string) {
 
     // path must be empty
@@ -155,10 +157,13 @@ namespace hashdb {
     settings.data_store_version = CURRENT_DATA_STORE_VERSION;
     settings.sector_size = sector_size;
     settings.block_size = block_size;
+    settings.max_id_offset_pairs = max_id_offset_pairs;
+    settings.hash_prefix_bits = hash_prefix_bits;
+    settings.hash_suffix_bytes = hash_suffix_bytes;
 
     // create the settings file
     std::pair<bool, std::string> pair =
-                hashdb_settings_store::write_settings(hashdb_dir, settings);
+                hashdb_settings_t::write_settings(hashdb_dir, settings);
     if (pair.first == false) {
       return pair;
     }
@@ -184,24 +189,24 @@ namespace hashdb {
   std::pair<bool, std::string> hashdb_settings(
                      const std::string& hashdb_dir,
                      uint32_t& sector_size,
-                     uint32_t& block_size) {
+                     uint32_t& block_size,
+                     uint32_t& max_id_offset_pairs,
+                     uint32_t& hash_prefix_bits,
+                     uint32_t& hash_suffix_bytes) {
 
     hashdb_settings_t settings;
     std::pair<bool, std::string> pair;
 
     // try to read hashdb_dir settings
-    pair = hashdb_settings_store::read_settings(hashdb_dir, settings);
-    if (pair.first == true) {
-      // return successful
-      sector_size = settings.sector_size;
-      block_size = settings.block_size;
-      return pair;
-    } else {
-      // return fail
-      sector_size = 0;
-      block_size = 0;
-      return pair;
-    }
+    pair = hashdb_settings_t::read_settings(hashdb_dir, settings);
+    sector_size = settings.sector_size;
+    block_size = settings.block_size;
+    max_id_offset_pairs = settings.max_id_offset_pairs;
+    hash_prefix_bits = settings.hash_prefix_bits;
+    hash_suffix_bytes = settings.hash_suffix_bytes;
+
+    // return what read_settings returned
+    return pair;
   }
 
   /**

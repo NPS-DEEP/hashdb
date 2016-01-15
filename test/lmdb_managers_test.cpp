@@ -75,6 +75,12 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
 // ************************************************************
 void lmdb_hash_manager_create() {
 
+  // write default settings
+  hashdb_settings_t settings(3, 512, 512, 100000, 16, 8*8);
+  std::pair<bool, std::string> settings_pair;
+  settings_pair = hashdb_settings_t::write_settings(hashdb_dir, settings);
+  TEST_EQ(settings_pair.first, true);
+
   // create new manager
   lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
 }
@@ -147,7 +153,7 @@ void lmdb_hash_data_manager() {
 
   // write default settings
   hashdb_settings_t settings(3, 512, 512, 100000, 16, 8*8);
-  settings_pair = hashdb_settings_store::write_settings(hashdb_dir, settings);
+  settings_pair = hashdb_settings_t::write_settings(hashdb_dir, settings);
   TEST_EQ(settings_pair.first, true);
 
   // create new manager

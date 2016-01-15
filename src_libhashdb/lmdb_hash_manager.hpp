@@ -25,6 +25,7 @@
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
 #include "file_modes.h"
+#include "hashdb_settings.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
@@ -41,13 +42,16 @@
 #endif
 #include "mutex_lock.hpp"
 
-static const size_t PREFIX_SIZE = 8;
+static uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
 
 class lmdb_hash_manager_t {
 
   private:
   std::string hashdb_dir;
   file_mode_type_t file_mode;
+  int prefix_bytes;
+  uint8_t prefix_mask;
+  int suffix_bytes;
   std::set<std::string>* suffix_strings;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
@@ -116,14 +120,55 @@ class lmdb_hash_manager_t {
     }
   }
 
+  inline std::pair<std::string, std::string> hash_pair(
+                              const std::string& binary_hash) const {
+    int size = binary_hash.size();
+
+    // prefix string
+    int prefix_size = (size > prefix_bytes) ? prefix_bytes : size;
+    std::string prefix_string = binary_hash.substr(0, prefix_size);
+
+    // maybe zero out some bits at the end of the prefix string
+    if (prefix_size == prefix_bytes) {
+      prefix_string[prefix_bytes-1] &= prefix_mask;
+    }
+
+    // suffix string
+    int suffix_start = size - suffix_bytes;
+    if (suffix_start < prefix_size) {
+      suffix_start = prefix_size;
+    }
+    std::string suffix_string = (suffix_start < size) ?
+                      binary_hash.substr(suffix_start, suffix_bytes) : "";
+    return std::pair<std::string, std::string>(prefix_string, suffix_string);
+  }
+
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
                       const file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
+       prefix_bytes(0),
+       prefix_mask(0),
+       suffix_bytes(0),
        suffix_strings(new(std::set<std::string>)),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)),
        M() {
+
+    // read settings
+    hashdb_settings_t settings;
+    std::pair<bool, std::string> pair =
+                hashdb_settings_t::read_settings(hashdb_dir, settings);
+
+    // eror if settings is not initialized
+    if (pair.first == false) {
+      std::cerr << pair.second << "\n";
+      assert(0); // higher checking should have caught this.
+    }
+    prefix_bytes = (settings.hash_prefix_bits + 7) / 8;
+    prefix_mask = masks[settings.hash_prefix_bits];
+    suffix_bytes = settings.hash_suffix_bytes;
+
     MUTEX_INIT(&M);
   }
 
@@ -145,13 +190,11 @@ class lmdb_hash_manager_t {
     context.open();
 
     // convert binary_hash into prefix and suffix
-    std::string hash_prefix = binary_hash.substr(0, PREFIX_SIZE);
-    std::string hash_suffix = (binary_hash.size() > PREFIX_SIZE) ?
-                                    binary_hash.substr(PREFIX_SIZE) : "";
+    std::pair<std::string, std::string> pair = hash_pair(binary_hash);
 
     // see if prefix is already there
     // set key to prefix
-    lmdb_helper::point_to_string(hash_prefix, context.key);
+    lmdb_helper::point_to_string(pair.first, context.key);
 
     // set cursor to prefix
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -163,7 +206,7 @@ class lmdb_hash_manager_t {
     if (rc == MDB_NOTFOUND) {
       // set data to suffix
       suffix_strings->clear();
-      suffix_strings->insert(hash_suffix);
+      suffix_strings->insert(pair.second);
       encoding = encode_data(*suffix_strings);
       lmdb_helper::point_to_string(encoding, context.data);
 
@@ -188,7 +231,7 @@ class lmdb_hash_manager_t {
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, *suffix_strings);
 
-      if (suffix_strings->find(hash_suffix) != suffix_strings->end()) {
+      if (suffix_strings->find(pair.second) != suffix_strings->end()) {
 
         // suffix already exists, hash not inserted
         context.close();
@@ -199,7 +242,7 @@ class lmdb_hash_manager_t {
       } else {
 
         // suffix did not exist, so add suffix and write back
-        suffix_strings->insert(hash_suffix);
+        suffix_strings->insert(pair.second);
         encoding = encode_data(*suffix_strings);
         lmdb_helper::point_to_string(encoding, context.data);
         rc = mdb_put(context.txn, context.dbi,
@@ -235,13 +278,11 @@ class lmdb_hash_manager_t {
     context.open();
 
     // convert binary_hash into prefix and suffix
-    std::string hash_prefix = binary_hash.substr(0, PREFIX_SIZE);
-    std::string hash_suffix = (binary_hash.size() > PREFIX_SIZE) ?
-                                    binary_hash.substr(PREFIX_SIZE) : "";
+    std::pair<std::string, std::string> pair = hash_pair(binary_hash);
 
     // see if prefix is already there
     // set key to prefix
-    lmdb_helper::point_to_string(hash_prefix, context.key);
+    lmdb_helper::point_to_string(pair.first, context.key);
 
     // set cursor to prefix
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -258,7 +299,7 @@ class lmdb_hash_manager_t {
       std::string encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, *suffix_strings);
 
-      if (suffix_strings->find(hash_suffix) != suffix_strings->end()) {
+      if (suffix_strings->find(pair.second) != suffix_strings->end()) {
         // suffix found
         context.close();
         return true;

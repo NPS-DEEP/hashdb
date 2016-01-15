@@ -25,7 +25,6 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdb_settings_store.hpp"
 #include "hashdb_settings.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
@@ -167,7 +166,7 @@ class lmdb_hash_data_manager_t {
 
     // read settings
     std::pair<bool, std::string> pair =
-                hashdb_settings_store::read_settings(hashdb_dir, settings);
+                hashdb_settings_t::read_settings(hashdb_dir, settings);
 
     // eror if settings is not initialized
     if (pair.first == false) {

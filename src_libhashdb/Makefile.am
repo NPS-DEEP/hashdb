@@ -52,7 +52,6 @@ LIBHASHDB_INCS = \
 	file_modes.h \
 	hashdb.hpp \
 	hashdb_settings.hpp \
-	hashdb_settings_store.hpp \
 	libhashdb.cpp \
 	lmdb_changes.hpp \
 	lmdb_context.hpp \

@@ -34,7 +34,10 @@
 void usage(const uint32_t sector_size,
            const uint32_t block_size,
            const std::string& repository_name,
-           const std::string& whitelist_dir) {
+           const std::string& whitelist_dir,
+           const uint32_t max_id_offset_pairs,
+           const uint32_t hash_prefix_bits,
+           const uint32_t hash_suffix_bytes) {
 
   // print usage
   std::cout
@@ -58,6 +61,13 @@ void usage(const uint32_t sector_size,
   << "      (default " << block_size << ")\n"
   << "    -s, --sector_size=<n>\n"
   << "      <sector_size>, in bytes, or 1 for any alignment (default " << sector_size << ")\n"
+  << "    -m, --max_id_offset_pairs=<max>\n"
+  << "      The maximum number of source ID, source file offset references to\n"
+  << "      store for a hash (default " << max_id_offset_pairs << ")\n"
+  << "    -t, --tuning=<hash prefix bits:hash suffix bytes>\n"
+  << "      The number of hash prefix bits and suffix bytes to use for\n"
+  << "      optimizing hash storage (default " << hash_prefix_bits << ":"
+  <<        hash_suffix_bytes << ")\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>   the file path to the new hash database to create\n"
@@ -74,10 +84,7 @@ void usage(const uint32_t sector_size,
   << "      (default is \"repository_\" followed by the <import directory> path).\n"
   << "    -w, --whitelist_dir\n"
   << "      The path to a whitelist hash database.  Hashes matching this database\n"
-  << "      will not be imported.\n"
-  << "    -n, --no_low_entropy\n"
-  << "      Use this option to suppress importing hashes marked as having low\n"
-  << "      entropy.\n"
+  << "      will be marked with a whitelist entropy flag.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <import dir>   the directory to recursively import from\n"

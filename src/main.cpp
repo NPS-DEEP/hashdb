@@ -70,6 +70,9 @@ static const uint32_t default_sector_size = 512;
 static const uint32_t default_block_size = 512;
 static const std::string default_repository_name = "";
 static const std::string default_whitelist_dir = "";
+static const uint32_t default_max_id_offset_pairs = 100000; // 100,000
+static const uint32_t default_hash_prefix_bits = 6*8;   // 6 bytes of prefix
+static const uint32_t default_hash_suffix_bytes = 16-6; // 16-6 bytes of suffix
 
 // usage
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
@@ -80,13 +83,17 @@ static bool has_sector_size = false;
 static bool has_block_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
-static bool has_no_low_entropy = false;
+static bool has_max_id_offset_pairs = false;
+static bool has_tuning = false;
 
 // option values
 static uint32_t sector_size = default_sector_size;
 static uint32_t block_size = default_block_size;
 static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
+static uint32_t max_id_offset_pairs = default_max_id_offset_pairs;
+static uint32_t hash_prefix_bits = default_hash_prefix_bits ;
+static uint32_t hash_suffix_bytes = default_hash_suffix_bytes;
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -98,8 +105,13 @@ void check_params();
 void run_command();
 void usage() {
   // usage.hpp
-  usage(default_sector_size, default_block_size,
-        default_repository_name, default_whitelist_dir);
+  usage(default_sector_size,
+        default_block_size,
+        default_repository_name,
+        default_whitelist_dir,
+        default_max_id_offset_pairs,
+        default_hash_prefix_bits,
+        default_hash_suffix_bytes);
 }
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
@@ -158,22 +170,24 @@ int main(int argc,char **argv) {
 
     const struct option long_options[] = {
       // options
-      {"help",                  no_argument, 0, 'h'},
-      {"Help",                  no_argument, 0, 'H'},
-      {"version",               no_argument, 0, 'v'},
-      {"Version",               no_argument, 0, 'V'},
-      {"quiet",                 no_argument, 0, 'q'},
-      {"sector_size",     required_argument, 0, 's'},
-      {"block_size",      required_argument, 0, 'b'},
-      {"repository_name", required_argument, 0, 'r'},
-      {"whitelist_dir",   required_argument, 0, 'w'},
-      {"no_low_entropy",        no_argument, 0, 'n'},
+      {"help",                      no_argument, 0, 'h'},
+      {"Help",                      no_argument, 0, 'H'},
+      {"version",                   no_argument, 0, 'v'},
+      {"Version",                   no_argument, 0, 'V'},
+      {"quiet",                     no_argument, 0, 'q'},
+      {"sector_size",         required_argument, 0, 's'},
+      {"block_size",          required_argument, 0, 'b'},
+      {"repository_name",     required_argument, 0, 'r'},
+      {"whitelist_dir",       required_argument, 0, 'w'},
+      {"max_id_offset_pairs", required_argument, 0, 'm'},
+      {"tuning",              required_argument, 0, 't'},
 
       // end
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqs:b:r:w:n", long_options, &option_index);
+    int ch = getopt_long(argc, argv, "hHvVqs:b:r:w:m:t:",
+                         long_options, &option_index);
     if (ch == -1) {
       // no more arguments
       break;
@@ -233,8 +247,23 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'n': {	// no low entropy
-        has_no_low_entropy = true;
+      case 'm': {	// max source ID file offset pairs
+        has_max_id_offset_pairs = true;
+        max_id_offset_pairs = std::atoi(optarg);
+        break;
+      }
+
+      case 't': {	// tuning hash_prefix_bits:hash_suffix_bytes
+        has_tuning = true;
+        std::vector<std::string> params = split(std::string(optarg), ':');
+
+        if (params.size() != 2) {
+          std::cerr << "Invalid value for tuning: '" << optarg << "'.  " << see_usage << "\n";
+          exit(1);
+        }
+
+        hash_prefix_bits = std::atoi(params[0].c_str());
+        hash_suffix_bytes = std::atoi(params[1].c_str());
         break;
       }
 
@@ -276,24 +305,28 @@ int main(int argc,char **argv) {
 
 void check_params(const std::string& options, int param_count) {
   // fail if an option is not in the options set
-  if (has_sector_size && options.find("s")) {
+  if (has_sector_size && options.find("s") == -1) {
     std::cerr << "The -s sector_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_block_size && options.find("b")) {
+  if (has_block_size && options.find("b") == -1) {
     std::cerr << "The -b block_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_repository_name && options.find("r")) {
+  if (has_repository_name && options.find("r") == -1) {
     std::cerr << "The -r repository_name option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_whitelist_dir && options.find("s")) {
+  if (has_whitelist_dir && options.find("w") == -1) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_no_low_entropy && options.find("n")) {
-    std::cerr << "The -n no_low_entropy option is not allowed for this command.\n";
+  if (has_max_id_offset_pairs && options.find("m") == -1) {
+    std::cerr << "The -m max_id_offset_pairs option is not allowed for this command.\n";
+    exit(1);
+  }
+  if (has_max_id_offset_pairs && options.find("t") == -1) {
+    std::cerr << "The -t tuning option is not allowed for this command.\n";
     exit(1);
   }
 
@@ -317,8 +350,9 @@ void check_params(const std::string& options, int param_count) {
 void run_command() {
   // new database
   if (command == "create") {
-    check_params("bs", 1);
-    commands::create(args[0], sector_size, block_size, cmd);
+    check_params("bsmt", 1);
+    commands::create(args[0], sector_size, block_size, max_id_offset_pairs,
+                     hash_prefix_bits, hash_suffix_bytes, cmd);
 
   // import
   } else if (command == "import") {
@@ -326,8 +360,7 @@ void run_command() {
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::import(args[0], args[1], repository_name, whitelist_dir,
-                     has_no_low_entropy, cmd);
+    commands::import(args[0], args[1], repository_name, whitelist_dir, cmd);
 
   } else if (command == "import_tab") {
     check_params("r", 2);
