@@ -388,7 +388,7 @@ namespace lmdb_helper {
   }
 #endif
 
-};
+}
 
 #endif
 

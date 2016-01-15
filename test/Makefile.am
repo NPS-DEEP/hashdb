@@ -21,7 +21,6 @@
 
 EXTRA_DIST = \
 	directory_helper.hpp \
-	hex_helper.hpp \
 	unit_test.h \
 	vg.supp
 

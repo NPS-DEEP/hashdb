@@ -79,7 +79,7 @@ class tab_hashdigest_reader_t {
 
     // get file hash
     std::string file_hash_string = line.substr(0, tab_index1);
-    std::string file_binary_hash = hex_to_binary_hash(file_hash_string);
+    std::string file_binary_hash = hex_to_bin(file_hash_string);
     if (file_binary_hash.size() == 0) {
       std::cerr << "file hexdigest is invalid on line " << line_number
                 << ": '" << line << "', '" << file_hash_string << "'\n";
@@ -89,7 +89,7 @@ class tab_hashdigest_reader_t {
     // get block hash 
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
-    std::string block_binary_hash = hex_to_binary_hash(block_hashdigest_string);
+    std::string block_binary_hash = hex_to_bin(block_hashdigest_string);
     if (block_binary_hash == "") {
       std::cerr << "Invalid block hash on line " << line_number
                 << ": '" << line << "', '" << block_hashdigest_string << "'\n";

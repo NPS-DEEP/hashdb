@@ -53,9 +53,10 @@ static inline uint8_t tohex(uint8_t c) {
 }
 
 /**
- * Return empty if hexdigest length is not even or has any invalid digits.
+ * Return binary string or empty if hexdigest length is not even
+ * or has any invalid digits.
  */
-static std::string hex_to_binary_hash(const std::string& hex_string) {
+static std::string hex_to_bin(const std::string& hex_string) {
 
   size_t size = hex_string.size();
   // size must be even
@@ -98,9 +99,9 @@ static std::string hex_to_binary_hash(const std::string& hex_string) {
 }
 
 /**
- * Return hexadecimal representation of the binary hash.
+ * Return hexadecimal representation of the binary string.
  */
-std::string binary_hash_to_hex(const std::string& binary_hash) {
+std::string bin_to_hex(const std::string& binary_hash) {
   std::stringstream ss;
   for (size_t i=0; i<binary_hash.size(); i++) {
     uint8_t c = binary_hash.c_str()[i];

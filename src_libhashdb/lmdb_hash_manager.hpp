@@ -83,8 +83,16 @@ class lmdb_hash_manager_t {
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding strings data array size " << strings.size()
-              << "\nto binary data "
+    std::cout << "encoding " << strings.size()
+              << " of data\n";
+    for (int i=0; i<strings.size(); ++i) {
+      std::cout << "string " << i
+                << ": " << lmdb_helper::bin_to_hex(encoding_string) << "\n";
+    }
+
+
+
+    std::cout << "to binary data "
               << lmdb_helper::bin_to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
@@ -140,6 +148,13 @@ class lmdb_hash_manager_t {
     }
     std::string suffix_string = (suffix_start < size) ?
                       binary_hash.substr(suffix_start, suffix_bytes) : "";
+#ifdef DEBUG
+    std::cout << "binary hash " << lmdb_helper::bin_to_hex(binary_hash)
+              << " to '" << lmdb_helper::bin_to_hex(prefix_string)
+              << "', '" << lmdb_helper::bin_to_hex(suffix_string)
+              << "'\n";
+#endif
+
     return std::pair<std::string, std::string>(prefix_string, suffix_string);
   }
 
@@ -166,7 +181,7 @@ class lmdb_hash_manager_t {
       assert(0); // higher checking should have caught this.
     }
     prefix_bytes = (settings.hash_prefix_bits + 7) / 8;
-    prefix_mask = masks[settings.hash_prefix_bits];
+    prefix_mask = masks[settings.hash_prefix_bits % 8];
     suffix_bytes = settings.hash_suffix_bytes;
 
     MUTEX_INIT(&M);
