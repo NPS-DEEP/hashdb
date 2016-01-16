@@ -27,6 +27,7 @@
 #include "../src_libhashdb/hashdb.hpp"
 #include "tab_hashdigest_reader.hpp"
 #include "database_operator.hpp"
+#include "hex_helper.hpp"
 //#include "expand_manager.hpp"
 //#include "dfxml_scan_consumer.hpp"
 //#include "dfxml_scan_expanded_consumer.hpp"
@@ -308,7 +309,41 @@ namespace commands {
   static void scan_hash(const std::string& hashdb_dir,
                         const std::string& hex_block_hash,
                         const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // get the binary hash
+    std::string binary_hash = hex_to_bin(hash_string);
+
+    // reject invalid input
+    if (binary_hash == "") {
+      std::cerr << "Error: Invalid hash: '" << hash_string << "'\n";
+      exit(1);
+    }
+
+    // make fields
+    std::string low_entropy_label;
+    uint64_t entropy;
+    std::string block_label;
+    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    hashdb::source_names_t* source_names = new hashdb::source_names_t;
+
+    // open DB
+    hashdb::scan_manager_t scan_manager(hashdb_dir);
+
+    // scan
+    bool found = scan_manager.find_hash(binary_hash, low_entropy_label,
+                                   block_label, *id_offset_pairs);
+
+    if (found == false) {
+      std::cout << "Hash not found for '" << hex_block_hash << "'\n";
+      return;
+    }
+
+    // create the expand manager for printing the hash data
+    expand_manager_t expand_manager(scan_manager);
+
+    // print the hash data
+    expand_manager.print_hash(binary_hash, low_entropy_label,
+                              block_label, id_offset_pairs);
   }
 
   // ************************************************************

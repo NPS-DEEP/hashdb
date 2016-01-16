@@ -19,15 +19,24 @@
 
 /**
  * \file
- * Expand sources for a hash and print them.
- * Do not print more than max_sources sources for a given hash.
- * Generate and print source IDs.
- * Do not re-print any sources for a previously seen source ID.
+ * Print source information for a hash.
+ *
+ * Do not print anything if the hash has been printed before.
+ * Do not print any sources data if it has been printed before.
+ * Print a JSON object of source_list_id, sources, id_offset_pairs:
+ *     source_list_id is the calculated, ordered CRC32 of the source IDs.
+ *     sources is an array of source data.
+ *     One object in sources is names, whose value is an array of
+ *     filenames and repository names.
+ *     id_offset_pairs is an array of pairs of source IDs and source offsets.
+ *
+ * Example abbreviated syntax:
+ * [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800}],
+ * "id_offset_pairs":[1,0,1,65536]}]
  */
 
 #ifndef EXPAND_MANAGER_HPP
 #define EXPAND_MANAGER_HPP
-//zz #include "print_helper.hpp"
 #include "lmdb_ro_manager.hpp"
 #include "lmdb_hash_it_data.hpp"
 #include "lmdb_source_data.hpp"
@@ -45,10 +54,11 @@
 class expand_manager_t {
 
   private:
-  const lmdb_ro_manager_t* ro_manager;
-  uint32_t max_sources;
-  std::set<uint64_t>* source_ids;
+  const hashdb::scan_manager_t scan_manager;
   std::set<std::string>* hashes;
+  std::set<uint64_t>* source_ids;
+  hashdb::id_offset_pairs_t* id_offset_pairs;
+  hashdb::source_names_t* source_names;
 
   // do not allow copy or assignment
   expand_manager_t(const expand_manager_t&);
@@ -262,7 +272,63 @@ class expand_manager_t {
     // write the closure of the context
     std::cout << "]" << std::endl;
   }
+
+  void print_hash_line(const std::string& binary_hash,
+                       const std::string& low_entropy_label,
+                       const uint64_t entropy,
+                       const std::string& block_label,
+                       const hashdb::id_offset_pairs_t& id_offset_pairs) {
+
+    // skip if the hash has previously been processed
+    if (hashes->find(binary_hash) != hashes->end()) {
+      return;
+    }
+
+    // begin the JSON output array
+    std::cout << "[";
+
+    // calculate the source list ID
+    hashdb::id_offset_pairs_t::const_iterator it;
+    uint32_t crc = 0;
+    for (it = id_offset_pairs.begin(); it != id_offset_pairs.end; ++it) {
+      crc = crc32(crc, reinterpret_cast<const uint8_t*>&(it->first),
+                  sizeof(uint64_t));
+    }
+
+    // print the source list ID
+    std::cout << "{\"source_list_id\":" << crc << "}";
+
+    // print any sources that have not been printed yet
+    for (it = id_offset_pairs.begin(); it != id_offset_pairs.end; ++it) {
+      if sources->find(it->first) == sources->end() {
+        sources->insert(it->first);
+       //zz print array 
+
+
+    for (std::set<uint64_t>::const_iterator it = temp_source_ids->begin();
+         it != temp_source_ids->end(); ++it) {
+//      crc = crc32(crc, reinterpret_cast<const uint8_t*>(binary_hash.c_str()), binary_hash.size());
+      crc = crc32(crc, reinterpret_cast<const uint8_t*>(&(*it)), sizeof(uint64_t));
+    }
+
+
 };
 
 #endif
+
+/**
+ * \file
+ * Print source information for a hash.
+ *
+ * Do not print anything if the hash has been printed before.
+ * Do not print any sources data if it has been printed before.
+ * Print a JSON object of source_list_id, sources, id_offset_pairs:
+ *     source_list_id is the calculated, ordered CRC32 of the source IDs.
+ *     sources is an array of source data.
+ *     id_offset_pairs is an array of pairs of source IDs and source offsets.
+ *
+ * Example abbreviated syntax:
+ * [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800}],
+ * "id_offset_pairs":[1,0,1,65536]}]
+ */
 
