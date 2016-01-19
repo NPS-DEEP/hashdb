@@ -36,6 +36,9 @@
 #include <iostream>
 #include <string>
 #include <set>
+#ifdef DEBUG
+#include "to_hex.hpp"
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -104,7 +107,7 @@ class lmdb_hash_data_manager_t {
               << " block_label " << block_label
               << " pairs count " << pairs.size()
               << "\nto binary data "
-              << lmdb_helper::bin_to_hex(encoding_string)
+              << to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -137,7 +140,7 @@ class lmdb_hash_data_manager_t {
     }
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
+    std::string hex_encoding = to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
               << " low_entropy_label " << low_entropy_label

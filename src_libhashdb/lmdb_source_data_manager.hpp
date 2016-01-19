@@ -37,6 +37,9 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#ifdef DEBUG
+#include "to_hex.hpp"
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -113,12 +116,12 @@ class lmdb_source_data_manager_t {
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding file_binary_hash "
-              << lmdb_helper::bin_to_hex(file_binary_hash)
+              << to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
               << " low_entropy_count " << low_entropy_count
               << "\nto binary data "
-              << lmdb_helper::bin_to_hex(encoding_string)
+              << to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -141,11 +144,11 @@ class lmdb_source_data_manager_t {
     p = lmdb_helper::decode_uint64_t(p, low_entropy_count);
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
+    std::string hex_encoding = to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
               << " file_binary_hash "
-              << lmdb_helper::bin_to_hex(file_binary_hash)
+              << to_hex(file_binary_hash)
               << " filesize " << filesize
               << " file_type " << file_type
               << " low_entropy_count " << low_entropy_count << "\n";

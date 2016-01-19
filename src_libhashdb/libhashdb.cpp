@@ -61,6 +61,8 @@
 #include "lmdb_source_name_manager.hpp"
 #include "logger.hpp"
 #include "lmdb_changes.hpp"
+#include "crc32.h"      // for scan_expanded
+#include "to_hex.hpp"      // for scan_expanded
 
 /**
  * The current version of the hashdb data store.
@@ -322,7 +324,11 @@ namespace hashdb {
           lmdb_source_id_manager(
                      new lmdb_source_id_manager_t(hashdb_dir, RW_MODIFY)),
           lmdb_source_name_manager(
-                     new lmdb_source_name_manager_t(hashdb_dir, RW_MODIFY)) {
+                     new lmdb_source_name_manager_t(hashdb_dir, RW_MODIFY)),
+
+          // for scan_expanded
+          hashes(new std::set<std::string>),
+          source_ids(new std::set<uint64_t>) {
   }
 
   scan_manager_t::~scan_manager_t() {
@@ -331,23 +337,162 @@ namespace hashdb {
     delete lmdb_source_data_manager;
     delete lmdb_source_id_manager;
     delete lmdb_source_name_manager;
+
+    // for scan_expanded
+    delete hashes;
+    delete source_ids;
+  }
+
+  // Example abbreviated syntax:
+  // [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800,
+  // "file_hash":"f7035a...", "names":[{"repository_name":"repository1",
+  // "filename":"filename1"}]}]}, {"id_offset_pairs":[1,0,1,65536]}]
+  bool scan_manager_t::find_expanded(const std::string& binary_hash,
+                                     std::string& expanded_text) {
+
+    // fields to hold the scan
+    std::string low_entropy_label;
+    uint64_t entropy;
+    std::string block_label;
+    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+
+    // scan
+    bool matched = scan_manager_t::find_hash(binary_hash,
+               low_entropy_label, entropy, block_label, *id_offset_pairs);
+
+    // done if no match
+    if (matched == false) {
+      expanded_text.clear();
+      delete id_offset_pairs;
+      return false;
+    }
+
+    // done if matched before
+    if (hashes->find(binary_hash) != hashes->end()) {
+      expanded_text.clear();
+      delete id_offset_pairs;
+      return true;
+    }
+
+    // remember this hash match to skip it later
+    hashes->insert(binary_hash);
+
+    // prepare JSON
+    std::stringstream *ss = new std::stringstream;
+    *ss << "[";
+
+    // provide JSON object[0]: source_list_id
+    hashdb::id_offset_pairs_t::const_iterator it;
+    uint32_t crc = 0;
+    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
+      crc = crc32(crc, reinterpret_cast<const uint8_t*>(&(it->first)),
+                  sizeof(uint64_t));
+    }
+    *ss << "{\"source_list_id\":" << crc << "}";
+
+    // provide JSON object[1]: sources with their source data and names list
+    *ss << ",{\"sources\":[";
+
+    // fields to hold source information
+    std::string file_binary_hash;
+    uint64_t filesize;
+    std::string file_type;
+    uint64_t low_entropy_count;
+    hashdb::source_names_t* source_names(new hashdb::source_names_t);
+
+    // print any sources that have not been printed yet
+    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
+      if (source_ids->find(it->first) == source_ids->end()) {
+        // remember this source ID to skip it later
+        source_ids->insert(it->first);
+
+        // read source data
+        find_source_data(it->first, file_binary_hash, filesize,
+                         file_type, low_entropy_count);
+
+        // read source names
+        find_source_names(it->first, *source_names);
+
+        // provide source data
+        *ss << "{\"source_id\":" << it->first
+            << "\"file_hash\":\"" << to_hex(file_binary_hash) << "\""
+            << ",\"filesize\":" << filesize
+            << ",\"file_type\":\"" << file_type << "\""
+            << ",\"low_entropy_count\":" << low_entropy_count
+            ;
+
+        // provide source names
+        *ss << ",\"names\"[";
+        int i = 0;
+        hashdb::source_names_t::const_iterator name_it;
+        for (name_it = source_names->begin(); name_it != source_names->end();
+             ++name_it, ++i) {
+
+          // put comma before all but first name pair
+          if (i > 0) {
+            *ss << ",";
+          }
+
+          // provide name pair
+          *ss << "{\"repository_name\":\"" << escape_json(name_it->first)
+              << "\",\"filename\":\"" << escape_json(name_it->second)
+              << "\"}";
+        }
+
+        // close source names list and source data
+        *ss << "]}";
+      }
+    }
+
+    // close JSON object[1]
+    *ss << "]}";
+
+    // provide JSON object[2]: id_offset_pairs
+    *ss << ",{\"id_offset_pairs\":[";
+    int j=0;
+    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end();
+          ++it, ++j) {
+
+      // put comma before all but first id_offset pair
+      if (j > 0) {
+        *ss << ",";
+      }
+
+      // provide pair
+      *ss << it->first << ","
+          << it->second;
+    }
+
+    // close JSON object[2]
+    *ss << "]}";
+ 
+    // close JSON
+    *ss << "]";
+
+    // copy stream
+    expanded_text = ss->str();
+
+    delete id_offset_pairs;
+    delete ss;
+    delete source_names;
+    return true;
   }
 
   bool scan_manager_t::find_hash(const std::string& binary_hash,
                       std::string& low_entropy_label,
                       uint64_t& entropy,
                       std::string& block_label,
-                      id_offset_pairs_t& id_offset_pairs) const {
+                      id_offset_pairs_t& pairs) const {
     if (lmdb_hash_manager->find(binary_hash) == true) {
       // hash may be present so use hash data manager
       return lmdb_hash_data_manager->find(binary_hash,
-                low_entropy_label, entropy, block_label, id_offset_pairs);
+                low_entropy_label, entropy, block_label, pairs);
     } else {
       // hash is not present so return false
       low_entropy_label = "";
       entropy = 0;
       block_label = "";
-      id_offset_pairs.clear();
+      pairs.clear();
       return false;
     }
   }

@@ -311,39 +311,27 @@ namespace commands {
                         const std::string& cmd) {
 
     // get the binary hash
-    std::string binary_hash = hex_to_bin(hash_string);
+    std::string binary_hash = hex_to_bin(hex_block_hash);
 
     // reject invalid input
     if (binary_hash == "") {
-      std::cerr << "Error: Invalid hash: '" << hash_string << "'\n";
+      std::cerr << "Error: Invalid hash: '" << hex_block_hash << "'\n";
       exit(1);
     }
-
-    // make fields
-    std::string low_entropy_label;
-    uint64_t entropy;
-    std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
-    hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
     // open DB
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
     // scan
-    bool found = scan_manager.find_hash(binary_hash, low_entropy_label,
-                                   block_label, *id_offset_pairs);
+    std::string* expanded_text = new std::string;
+    bool found = scan_manager.find_expanded(binary_hash, *expanded_text);
 
-    if (found == false) {
+    if (found == true) {
+      std::cout << *expanded_text << std::endl;
+    } else {
       std::cout << "Hash not found for '" << hex_block_hash << "'\n";
-      return;
     }
-
-    // create the expand manager for printing the hash data
-    expand_manager_t expand_manager(scan_manager);
-
-    // print the hash data
-    expand_manager.print_hash(binary_hash, low_entropy_label,
-                              block_label, id_offset_pairs);
+    delete expanded_text;
   }
 
   // ************************************************************

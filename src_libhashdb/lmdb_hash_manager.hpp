@@ -35,6 +35,9 @@
 #include <iostream>
 #include <string>
 #include <set>
+#ifdef DEBUG
+#include "to_hex.hpp"
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -87,13 +90,13 @@ class lmdb_hash_manager_t {
               << " of data\n";
     for (int i=0; i<strings.size(); ++i) {
       std::cout << "string " << i
-                << ": " << lmdb_helper::bin_to_hex(encoding_string) << "\n";
+                << ": " << to_hex(encoding_string) << "\n";
     }
 
 
 
     std::cout << "to binary data "
-              << lmdb_helper::bin_to_hex(encoding_string)
+              << to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -115,7 +118,7 @@ class lmdb_hash_manager_t {
     }
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
+    std::string hex_encoding = to_hex(encoding);
     std::cout << "decoding strings data " << hex_encoding
               << " size " << encoding.size() << "\n"
               << " to lmdb_source_data array size " << strings.size() << "\n";
@@ -149,9 +152,9 @@ class lmdb_hash_manager_t {
     std::string suffix_string = (suffix_start < size) ?
                       binary_hash.substr(suffix_start, suffix_bytes) : "";
 #ifdef DEBUG
-    std::cout << "binary hash " << lmdb_helper::bin_to_hex(binary_hash)
-              << " to '" << lmdb_helper::bin_to_hex(prefix_string)
-              << "', '" << lmdb_helper::bin_to_hex(suffix_string)
+    std::cout << "binary hash " << to_hex(binary_hash)
+              << " to '" << to_hex(prefix_string)
+              << "', '" << to_hex(suffix_string)
               << "'\n";
 #endif
 

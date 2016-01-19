@@ -108,6 +108,7 @@ crc32(uint32_t crc, const uint8_t *buf, size_t size)
 	return crc ^ ~0U;
 }
 
+/*
 // crc32 of a string
 uint32_t crc32(const uint32_t crc, const std::string& text)
 {
@@ -115,5 +116,6 @@ uint32_t crc32(const uint32_t crc, const std::string& text)
                      reinterpret_cast<const uint8_t*>(text.c_str()),
                      text.size());
 }
+*/
 
 #endif

@@ -59,6 +59,7 @@ TAGS
 core.*
 src/hashdb
 src/.libs
+src_libhashdb/.libs
 test/*_test
 test/temp_*
 src_win/win_tests*

@@ -271,6 +271,10 @@ namespace hashdb {
     lmdb_source_id_manager_t* lmdb_source_id_manager;
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
+    // support scan_expanded
+    std::set<std::string>* hashes;
+    std::set<uint64_t>* source_ids;
+
     public:
     // do not allow copy or assignment
 #ifdef HAVE_CXX11
@@ -294,6 +298,30 @@ namespace hashdb {
      * The destructor closes read-only data store resources.
      */
     ~scan_manager_t();
+
+    /**
+     * Scan for a hash and return expanded source information associated
+     * with it.
+     *
+     * scan_manager caches hashes and source IDs and does not return
+     * source information for hashes or sources that has already been
+     * returned.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form to scan for.
+     *   expanded_text - Text about matched sources, or blank if text
+     *     for the scanned hash has been returned in a previous scan.
+     *
+     *     Text is in JSON format.  Example abbreviated syntax:
+     *     [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800,
+     *     "file_hash":"f7035a...", "names":[{"repository_name":"repository1",
+     *     "filename":"filename1"}]}]}, {"id_offset_pairs":[1,0,1,65536]}]
+     *
+     * Returns:
+     *   True if the hash is present, false if not.
+     */
+    bool find_expanded(const std::string& binary_hash,
+                       std::string& expanded_text);
 
     /**
      * Find hash, fail if hash is not present.

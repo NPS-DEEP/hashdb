@@ -36,6 +36,9 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#ifdef DEBUG
+#include "to_hex.hpp"
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -75,7 +78,7 @@ class lmdb_source_id_manager_t {
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
     std::cout << "encoding source_id " << source_id
               << "\nto binary data "
-              << lmdb_helper::bin_to_hex(encoding_string)
+              << to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
 
@@ -91,7 +94,7 @@ class lmdb_source_id_manager_t {
     p = lmdb_helper::decode_uint64_t(p, source_id);
 
 #ifdef DEBUG
-    std::string hex_encoding = lmdb_helper::bin_to_hex(encoding);
+    std::string hex_encoding = to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
               << " source_id " << source_id << "\n";
