@@ -22,8 +22,8 @@
  * Provides hashdb commands.
  */
 
-#ifndef DATABASE_OPERATOR_HPP
-#define DATABASE_OPERATOR_HPP
+#ifndef ADD_HPP
+#define ADD_HPP
 #include "../src_libhashdb/hashdb.hpp"
 
 // Standard includes
@@ -46,7 +46,7 @@
 //                 SUBTRACT_REPOSITORY,
 //                 DEDUPLICATE};
 
-namespace database_operator {
+namespace add {
 
   // add
   void add(const std::string& binary_hash,

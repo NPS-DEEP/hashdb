@@ -76,8 +76,9 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 
 ### Scan
 * `scan_manager_t(hashdb_dir)`
-* `bool find_expanded(source_id, expanded_text&)` - find and return JSON text
+* `bool find_expanded_hash(binary_hash, expanded_text&)` - find and return JSON text
 * `bool find_hash(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `bool find_expanded_source(source_id, expanded_text&)` - find and return JSON text
 * `void find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
 * `void find_source_names(source_id, source_names_t&)` - fail on invalid source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`
@@ -86,6 +87,7 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 * `pair(bool, source_id) source_begin()`
 * `pair(bool, source_id) source_next(last_source_id)`
 * `string size()` - return sizes of LMDB databases
+* `size_t size()` - return number of unique hashes in hash_data
 
 ### Functions
 * `extern C char* version()` - Return the hashdb version.

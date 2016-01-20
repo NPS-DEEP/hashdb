@@ -94,6 +94,57 @@ static std::string escape_json(const std::string& input) {
   return ss.str();
 }
 
+// helper for producing expanded source for a source ID
+static void provide_source_information(const hashdb::scan_manager_t& manager,
+                                       const uint64_t source_id,
+                                       std::stringstream& ss) {
+
+  // fields to hold source information
+  std::string file_binary_hash;
+  uint64_t filesize;
+  std::string file_type;
+  uint64_t low_entropy_count;
+  hashdb::source_names_t* source_names(new hashdb::source_names_t);
+
+  // read source data
+  manager.find_source_data(source_id, file_binary_hash, filesize,
+                           file_type, low_entropy_count);
+
+  // read source names
+  manager.find_source_names(source_id, *source_names);
+
+  // provide source data
+  ss << "{\"source_id\":" << source_id
+     << "\"file_hash\":\"" << to_hex(file_binary_hash) << "\""
+     << ",\"filesize\":" << filesize
+     << ",\"file_type\":\"" << file_type << "\""
+     << ",\"low_entropy_count\":" << low_entropy_count
+     ;
+
+  // provide source names
+  ss << ",\"names\"[";
+  int i = 0;
+  hashdb::source_names_t::const_iterator it;
+  for (it = source_names->begin(); it != source_names->end();
+       ++it, ++i) {
+
+    // put comma before all but first name pair
+    if (i > 0) {
+      ss << ",";
+    }
+
+    // provide name pair
+    ss << "{\"repository_name\":\"" << escape_json(it->first)
+       << "\",\"filename\":\"" << escape_json(it->second)
+       << "\"}";
+  }
+
+  // close source names list and source data
+  ss << "]}";
+
+  delete source_names;
+}
+
 namespace hashdb {
 
   // ************************************************************
@@ -300,7 +351,7 @@ namespace hashdb {
                         low_entropy_label, entropy, block_label, *changes);
   }
 
-  std::string import_manager_t::size() const {
+  std::string import_manager_t::sizes() const {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
@@ -347,8 +398,8 @@ namespace hashdb {
   // [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800,
   // "file_hash":"f7035a...", "names":[{"repository_name":"repository1",
   // "filename":"filename1"}]}]}, {"id_offset_pairs":[1,0,1,65536]}]
-  bool scan_manager_t::find_expanded(const std::string& binary_hash,
-                                     std::string& expanded_text) {
+  bool scan_manager_t::find_expanded_hash(const std::string& binary_hash,
+                                          std::string& expanded_text) {
 
     // fields to hold the scan
     std::string low_entropy_label;
@@ -393,54 +444,14 @@ namespace hashdb {
     // provide JSON object[1]: sources with their source data and names list
     *ss << ",{\"sources\":[";
 
-    // fields to hold source information
-    std::string file_binary_hash;
-    uint64_t filesize;
-    std::string file_type;
-    uint64_t low_entropy_count;
-    hashdb::source_names_t* source_names(new hashdb::source_names_t);
-
     // print any sources that have not been printed yet
     for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
       if (source_ids->find(it->first) == source_ids->end()) {
         // remember this source ID to skip it later
         source_ids->insert(it->first);
 
-        // read source data
-        find_source_data(it->first, file_binary_hash, filesize,
-                         file_type, low_entropy_count);
-
-        // read source names
-        find_source_names(it->first, *source_names);
-
-        // provide source data
-        *ss << "{\"source_id\":" << it->first
-            << "\"file_hash\":\"" << to_hex(file_binary_hash) << "\""
-            << ",\"filesize\":" << filesize
-            << ",\"file_type\":\"" << file_type << "\""
-            << ",\"low_entropy_count\":" << low_entropy_count
-            ;
-
-        // provide source names
-        *ss << ",\"names\"[";
-        int i = 0;
-        hashdb::source_names_t::const_iterator name_it;
-        for (name_it = source_names->begin(); name_it != source_names->end();
-             ++name_it, ++i) {
-
-          // put comma before all but first name pair
-          if (i > 0) {
-            *ss << ",";
-          }
-
-          // provide name pair
-          *ss << "{\"repository_name\":\"" << escape_json(name_it->first)
-              << "\",\"filename\":\"" << escape_json(name_it->second)
-              << "\"}";
-        }
-
-        // close source names list and source data
-        *ss << "]}";
+        // provide the complete source information for this source ID
+        provide_source_information(*this, it->first, *ss);
       }
     }
 
@@ -449,12 +460,12 @@ namespace hashdb {
 
     // provide JSON object[2]: id_offset_pairs
     *ss << ",{\"id_offset_pairs\":[";
-    int j=0;
+    int i=0;
     for (it = id_offset_pairs->begin(); it != id_offset_pairs->end();
-          ++it, ++j) {
+          ++it, ++i) {
 
       // put comma before all but first id_offset pair
-      if (j > 0) {
+      if (i > 0) {
         *ss << ",";
       }
 
@@ -474,7 +485,6 @@ namespace hashdb {
 
     delete id_offset_pairs;
     delete ss;
-    delete source_names;
     return true;
   }
 
@@ -495,6 +505,14 @@ namespace hashdb {
       pairs.clear();
       return false;
     }
+  }
+
+  void scan_manager_t::find_expanded_source(const uint64_t source_id,
+                                            std::string& expanded_text) const {
+    std::stringstream* ss = new std::stringstream;
+    provide_source_information(*this, source_id, *ss);
+    expanded_text = ss->str();
+    delete ss;
   }
 
   void scan_manager_t::find_source_data(const uint64_t source_id,
@@ -529,11 +547,12 @@ namespace hashdb {
     return lmdb_source_data_manager->find_begin();
   }
 
-  std::pair<bool, uint64_t> scan_manager_t::find_next(const uint64_t last_source_id) const {
+  std::pair<bool, uint64_t> scan_manager_t::source_next(
+                                   const uint64_t last_source_id) const {
     return lmdb_source_data_manager->find_next(last_source_id);
   }
 
-  std::string scan_manager_t::size() const {
+  std::string scan_manager_t::sizes() const {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
@@ -542,6 +561,10 @@ namespace hashdb {
        << ", \"source_name\":" << lmdb_source_name_manager->size()
        << "}";
     return ss.str();
+  }
+
+  size_t scan_manager_t::size() const {
+    return lmdb_hash_data_manager->size();
   }
 
   // ************************************************************

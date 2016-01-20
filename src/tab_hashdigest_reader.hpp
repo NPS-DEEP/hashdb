@@ -160,7 +160,7 @@ class tab_hashdigest_reader_t {
     hashdb::import_manager_t manager(hashdb_dir, cmd);
 
     // open progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, 0, false, cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, 0);
 
     // process lines
     std::string line;

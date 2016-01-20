@@ -41,7 +41,6 @@ class progress_tracker_t {
   private:
   const std::string dir;
   const uint64_t total;
-  const bool is_quiet;
   uint64_t index;
   std::ofstream os;
   hashdb::timestamp_t timestamp;
@@ -51,11 +50,9 @@ class progress_tracker_t {
   progress_tracker_t& operator=(const progress_tracker_t&);
 
   public:
-  progress_tracker_t(const std::string& p_dir, const uint64_t p_total,
-                     const bool p_is_quiet, const std::string& command_line) :
+  progress_tracker_t(const std::string& p_dir, const uint64_t p_total) :
                          dir(p_dir),
                          total(p_total),
-                         is_quiet(p_is_quiet),
                          index(0),
                          os(),
                          timestamp() {
@@ -68,9 +65,6 @@ class progress_tracker_t {
                 << ": " << strerror(errno) << "\n";
       exit(1);
     }
-
-    // log environment information
-    hashdb::print_environment(command_line, os);
   }
 
   void track() {
@@ -83,9 +77,7 @@ class progress_tracker_t {
         // total is not known
         ss << "Processing index " << index << " of ?";
       }
-      if (!is_quiet) {
-        std::cout << ss.str() << "..." << std::endl;
-      }
+      std::cout << ss.str() << "..." << std::endl;
       os << timestamp.stamp(ss.str());
     }
     ++index;
@@ -100,9 +92,7 @@ class progress_tracker_t {
       // total is not known
       ss << "Processing index " << index << " of " << index << " completed";
     }
-    if (!is_quiet) {
-      std::cout << ss.str() << std::endl;
-    }
+    std::cout << ss.str() << std::endl;
     os << timestamp.stamp(ss.str());
 
     os.close();
