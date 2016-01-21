@@ -355,9 +355,9 @@ namespace hashdb {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
-       << ", \"source_data\":" << lmdb_source_data_manager->size()
-       << ", \"source_id\":" << lmdb_source_id_manager->size()
-       << ", \"source_name\":" << lmdb_source_name_manager->size()
+       << ", \"source_data_store\":" << lmdb_source_data_manager->size()
+       << ", \"source_id_store\":" << lmdb_source_id_manager->size()
+       << ", \"source_name_store\":" << lmdb_source_name_manager->size()
        << "}";
     return ss.str();
   }
@@ -556,9 +556,9 @@ namespace hashdb {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
-       << ", \"source_data\":" << lmdb_source_data_manager->size()
-       << ", \"source_id\":" << lmdb_source_id_manager->size()
-       << ", \"source_name\":" << lmdb_source_name_manager->size()
+       << ", \"source_data_store\":" << lmdb_source_data_manager->size()
+       << ", \"source_id_store\":" << lmdb_source_id_manager->size()
+       << ", \"source_name_store\":" << lmdb_source_name_manager->size()
        << "}";
     return ss.str();
   }

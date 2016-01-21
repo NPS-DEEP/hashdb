@@ -8,17 +8,21 @@
 \\
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em \texttt{create [-b <block size>] [-s <sector size>] [-m <max ID offset pairs>] [-t <hash bytes:key bits>] <hashdb.hdb>} &
+\hangindent=2em \texttt{create [-b <block size>] [-s <sector size>] [-m <max ID offset pairs>] [-t <hash prefix bits:hash suffix bytes>] <hashdb.hdb>} &
 Create a new hash database \\
 \end{tabular}
 \\
 \\
-\textbf{Import} \\
+\textbf{Import/Export} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \hangindent=2em\texttt{import [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <import directory>} &
 Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits \\
 \hangindent=2em\texttt{import\_tab [-r <repository name>] <hashdb.hdb> <tab.txt>} &
 Import from tab file into hash database \\
+\hangindent=2em\texttt{import\_json <hashdb.hdb> <hashdb.json>} &
+Import JSON format data into hash database \\
+\hangindent=2em\texttt{export\_json <hashdb.hdb> <hashdb.json>} &
+Export hash database data in JSON format \\
 \end{tabular}
 \\
 \\
@@ -55,7 +59,7 @@ Import from tab file into hash database \\
 \\
 \textbf{Performance Analysis}\\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em\texttt{add\_random <hashdb.hdb> <hex file hash> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
+\hangindent=2em\texttt{add\_random <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
 \texttt{scan\_random <hashdb.hdb> <count>} & Scan random hashes, log performance in \texttt{log.xml}\\
 \end{tabular}
 \\

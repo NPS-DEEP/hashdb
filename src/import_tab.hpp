@@ -22,14 +22,11 @@
  * Provides the service of importing hash data from a file formatted
  * using tab delimited fields, specifically:
  * <file hash>\t<block hash>\t<block offset>\n
- *
- * zlib reader adapted from online file zpipe.c
  */
 
-#ifndef TAB_HASHDIGEST_READER_HPP
-#define TAB_HASHDIGEST_READER_HPP
+#ifndef IMPORT_TAB_HPP
+#define IMPORT_TAB_HPP
 
-#include <zlib.h>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -38,23 +35,29 @@
 #include "progress_tracker.hpp"
 #include "hex_helper.hpp"
 
-class tab_hashdigest_reader_t {
+class import_tab_t {
   private:
+  // state
   const std::string& hashdb_dir;
   const std::string& tab_file;
   const std::string& repository_name;
   const std::string& cmd;
   size_t line_number;
 
+  // resources
+  hashdb::import_manager_t manager;
+  std::ifstream in;
+  progress_tracker_t progress_tracker;
+
   static const uint32_t sector_size = 512;
 
   // do not allow these
-  tab_hashdigest_reader_t();
-  tab_hashdigest_reader_t(const tab_hashdigest_reader_t&);
-  tab_hashdigest_reader_t& operator=(const tab_hashdigest_reader_t&);
+  import_tab_t();
+  import_tab_t(const import_tab_t&);
+  import_tab_t& operator=(const import_tab_t&);
 
-  void add_line(const std::string& line, hashdb::import_manager_t& manager,
-                progress_tracker_t& progress_tracker) {
+  void add_line(const std::string& line) {
+
     // skip comment lines
     if (line[0] == '#') {
       return;
@@ -125,49 +128,61 @@ class tab_hashdigest_reader_t {
     progress_tracker.track();
   }
  
-  public:
-  tab_hashdigest_reader_t(
-                     const std::string& p_hashdb_dir,
-                     const std::string& p_tab_file,
-                     const std::string& p_repository_name,
-                     const std::string& p_cmd) :
+  import_tab_t(const std::string& p_hashdb_dir,
+               const std::string& p_tab_file,
+               const std::string& p_repository_name,
+               const std::string& p_cmd) :
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
                   cmd(p_cmd),
-                  line_number(0) {
+                  line_number(0),
+                  manager(hashdb_dir, cmd),
+                  in(tab_file),
+                  progress_tracker(hashdb_dir, 0) {
   }
 
+  ~import_tab_t() {
+    in.close();
+  }
+
+  void read_lines() {
+    std::string line;
+    while(getline(in, line)) {
+      ++line_number;
+      add_line(line);
+    }
+  }
+
+  public:
   // read tab file
-  std::pair<bool, std::string> read() {
+  static std::pair<bool, std::string> read(
+                     const std::string& p_hashdb_dir,
+                     const std::string& p_tab_file,
+                     const std::string& p_repository_name,
+                     const std::string& p_cmd) {
 
     // validate hashdb_dir path
     std::pair<bool, std::string> pair;
-    pair = hashdb::is_valid_hashdb(hashdb_dir);
+    pair = hashdb::is_valid_hashdb(p_hashdb_dir);
     if (pair.first == false) {
       return pair;
     }
 
-    // validate and open text file
-    std::ifstream in(tab_file.c_str());
-    if (!in.is_open()) {
+    // validate ability to open the tab file
+    std::ifstream p_in(p_tab_file.c_str());
+    if (!p_in.is_open()) {
       std::stringstream ss;
-      ss << "Cannot open " << tab_file << ": " << strerror(errno);
+      ss << "Cannot open " << p_tab_file << ": " << strerror(errno);
       return std::pair<bool, std::string>(false, ss.str());
     }
+    p_in.close();
 
-    // open hashdb manager
-    hashdb::import_manager_t manager(hashdb_dir, cmd);
+    // create the reader
+    import_tab_t reader(p_hashdb_dir, p_tab_file, p_repository_name, p_cmd);
 
-    // open progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, 0);
-
-    // process lines
-    std::string line;
-    while(getline(in, line)) {
-      ++line_number;
-      add_line(line, manager, progress_tracker);
-    }
+    // read the lines
+    reader.read_lines();
 
     // done
     return std::pair<bool, std::string>(true, "");
