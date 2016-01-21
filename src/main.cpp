@@ -71,8 +71,8 @@ static const uint32_t default_block_size = 512;
 static const std::string default_repository_name = "";
 static const std::string default_whitelist_dir = "";
 static const uint32_t default_max_id_offset_pairs = 100000; // 100,000
-static const uint32_t default_hash_prefix_bits = 6*8;   // 6 bytes of prefix
-static const uint32_t default_hash_suffix_bytes = 16-6; // 16-6 bytes of suffix
+static const uint32_t default_hash_prefix_bits = 28; // for 2^28
+static const uint32_t default_hash_suffix_bytes = 3; // for 2^(3*8)
 
 // usage
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
@@ -368,6 +368,10 @@ void run_command() {
       repository_name = args[1];
     }
     commands::import_tab(args[0], args[1], repository_name, cmd);
+
+  } else if (command == "import_json") {
+    check_params("", 2);
+    commands::import_json(args[0], args[1], cmd);
 
   // database manipulation
   } else if (command == "add") {

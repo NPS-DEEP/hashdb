@@ -26,6 +26,7 @@
 #define COMMANDS_HPP
 #include "../src_libhashdb/hashdb.hpp"
 #include "import_tab.hpp"
+#include "import_json.hpp"
 #include "add.hpp"
 #include "hex_helper.hpp"
 //#include "expand_manager.hpp"
@@ -136,6 +137,21 @@ namespace commands {
 
     std::pair<bool, std::string> pair = import_tab_t::read(
                                 hashdb_dir, tab_file, repository_name, cmd);
+
+    if (pair.first == true) {
+      std::cout << "Import completed.\n";
+    } else {
+      std::cout << "Error: " << pair.second << "\n";
+    }
+  }
+
+  // import_json
+  static void import_json(const std::string& hashdb_dir,
+                          const std::string& json_file,
+                          const std::string& cmd) {
+
+    std::pair<bool, std::string> pair = import_json_t::read(
+                                               hashdb_dir, json_file, cmd);
 
     if (pair.first == true) {
       std::cout << "Import completed.\n";
