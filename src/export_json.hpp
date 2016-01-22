@@ -36,8 +36,8 @@
  * Identify type by field, one of: "block_hash", "filesize", or "filename".
  */
 
-#ifndef IMPORT_JSON_HPP
-#define IMPORT_JSON_HPP
+#ifndef TAB_HASHDIGEST_READER_HPP
+#define TAB_HASHDIGEST_READER_HPP
 
 #include <zlib.h>
 #include <iostream>

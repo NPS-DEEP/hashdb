@@ -373,6 +373,10 @@ void run_command() {
     check_params("", 2);
     commands::import_json(args[0], args[1], cmd);
 
+  } else if (command == "export_json") {
+    check_params("", 2);
+    commands::export_json(args[0], args[1], cmd);
+
   // database manipulation
   } else if (command == "add") {
     check_params("", 2);

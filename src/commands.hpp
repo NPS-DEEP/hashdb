@@ -160,6 +160,21 @@ namespace commands {
     }
   }
 
+  // export_json
+  static void export_json(const std::string& hashdb_dir,
+                          const std::string& json_file,
+                          const std::string& cmd) {
+
+    std::pair<bool, std::string> pair = export_json_t::write(
+                                               hashdb_dir, json_file, cmd);
+
+    if (pair.first == true) {
+      std::cout << "Export completed.\n";
+    } else {
+      std::cout << "Error: " << pair.second << "\n";
+    }
+  }
+
   // ************************************************************
   // database manipulation
   // ************************************************************
