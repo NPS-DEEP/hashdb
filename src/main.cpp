@@ -446,8 +446,8 @@ void run_command() {
 
   // performance analysis
   } else if (command == "add_random") {
-    check_params("", 3);
-    commands::add_random(args[0], args[1], args[2], cmd);
+    check_params("", 2);
+    commands::add_random(args[0], args[1], cmd);
 
   } else if (command == "scan_random") {
     check_params("", 2);
