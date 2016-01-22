@@ -19,7 +19,8 @@
 
 /**
  * \file
- * Import from data in JSON format.  Input types are:
+ * Export data in JSON format.  Line types are one of:
+ *   "block_hash", "filesize", "filename".
  *
  * Block hash data:
  *   {"block_hash":"a7df...", "file_hash":"b9e7...", "file_offset":4096,
@@ -32,12 +33,10 @@
  * Source name:
  *   {"file_hash":"b9e7...", "repository_name":"repository1",
  *   "filename":"filename1.dat"}
- *
- * Identify type by field, one of: "block_hash", "filesize", or "filename".
  */
 
-#ifndef TAB_HASHDIGEST_READER_HPP
-#define TAB_HASHDIGEST_READER_HPP
+#ifndef EXPORT_JSON_HPP
+#define EXPORT_JSON_HPP
 
 #include <zlib.h>
 #include <iostream>
@@ -53,224 +52,150 @@
 #include "writer.h"
 #include "document.h"
 
-class import_json_t {
+class export_json_t {
   private:
 
   // state
   const std::string& hashdb_dir;
   const std::string& json_file;
   const std::string& cmd;
-  size_t line_number;
 
   // resources
-  hashdb::import_manager_t manager;
-  std::ifstream in;
+  hashdb::scan_manager_t manager;
+  std::ofstream out;
   progress_tracker_t progress_tracker;
 
   // do not allow these
-  import_json_t();
-  import_json_t(const import_json_t&);
-  import_json_t& operator=(const import_json_t&);
+  export_json_t();
+  export_json_t(const export_json_t&);
+  export_json_t& operator=(const export_json_t&);
 
-  // private, used by read()
-  import_json_t(const std::string& p_hashdb_dir,
+  // private, used by write()
+  export_json_t(const std::string& p_hashdb_dir,
                 const std::string& p_json_file,
                 const std::string& p_cmd) :
         hashdb_dir(p_hashdb_dir),
         json_file(p_json_file),
         cmd(p_cmd),
-        line_number(0),
-        manager(hashdb_dir, cmd),
-        in(json_file),
+        manager(hashdb_dir),
+        out(json_file),
         progress_tracker(hashdb_dir, 0) {
   }
 
-  ~import_json_t() {
-    in.close();
+  ~export_json_t() {
+    out.close();
   }
 
-  void show_bad_line(const std::string& line) {
-    std::cerr << "Invalid line " << line_number << ": '" << line << "'\n";
+  // Source data:
+  //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
+  //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+  //   "filename":"filename1"}]}
+  void write_sources() {
+
+    // source fields
+    std::string file_binary_hash;
+    uint64_t filesize;
+    std::string file_type;
+    uint64_t low_entropy_count;
+    hashdb::source_names_t* source_names = new hashdb::source_names_t;
+
+    std::pair<bool, uint64_t> pair = manager.source_begin();
+    while (pair.first != false) {
+      // source data
+      manager.find_source_data(pair.second, file_binary_hash, filesize,
+                               file_type, low_entropy_count);
+      std::string file_hash = bin_to_hex(file_binary_hash);
+      std::cout << "{\"file_hash\":\"" << file_hash
+                << "\",\"filesize\":" << filesize
+                << ",\"file_type\":\"" << file_type
+                << "\",\"low_entropy_count\":" << low_entropy_count
+                ;
+
+      // source names
+      manager.find_source_names(pair.second, *source_names);
+      hashdb::source_names_t::const_iterator it;
+      int i=0;
+      std::cout << ",\"names\":[{";
+      for (it = source_names->begin(); it != source_names->end(); ++it, ++i) {
+        if (i != 0) {
+          // no comma before first pair
+          std::cout << ",";
+        }
+        std::cout << "\"repository_name\":\"" << it->first
+                  << "\",\"filename\":\"" << it->second
+                  << "\"";
+      }
+      std::cout << "}]}";
+
+      // next
+      pair = manager.source_next(pair.second);
+    }
+
+    delete source_names;
   }
 
   // Block hash data:
-  //   {"block_hash":"a7df...", "file_hash":"b9e7...", "file_offset":4096,
-  //   "low_entropy_label":"W", "entropy":8, "block_label":"txt"}
-  void add_block_hash_data(const rapidjson::Document& document,
-                           const std::string& line) {
+  //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
+  //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+  void write_hashes() {
 
-    // block_hash
-    if (!document.HasMember("block_hash") ||
-                  !document["block_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string block_hash = document["block_hash"].GetString();
+    // hash fields
+    std::string binary_hash;
+    std::string low_entropy_label;
+    uint64_t entropy;
+    std::string block_label;
+    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
 
-    // file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string file_hash = document["file_hash"].GetString();
+    // source fields just for file_binary_hash
+    std::string file_binary_hash;
+    uint64_t filesize;
+    std::string file_type;
+    uint64_t low_entropy_count;
 
-    // file_offset
-    if (!document.HasMember("file_offset") ||
-                  !document["file_offset"].IsNumber()) {
-      show_bad_line(line);
-      return;
-    }
-    uint64_t file_offset = document["file_offset"].GetUint64();
+    std::pair<bool, std::string> pair = manager.hash_begin();
 
-    // low_entropy_label (optional)
-    std::string low_entropy_label =
-                 (document.HasMember("low_entropy_label") &&
-                  document["low_entropy_label"].IsString()) ?
-                     document["low_entropy_label"].GetString() : "";
+    while (pair.first != false) {
 
-    // entropy (optional)
-    uint64_t entropy =
-                 (document.HasMember("entropy") &&
-                  document["entropy"].IsNumber()) ?
-                     document["entropy"].GetUint64() : 0;
+      // hash data
+      manager.find_hash(binary_hash, low_entropy_label, entropy, block_label,
+                        *id_offset_pairs);
 
-    // block_label (optional)
-    std::string block_label =
-                 (document.HasMember("block_label") &&
-                  document["block_label"].IsString()) ?
-                     document["block_label"].GetString() : "";
+      std::cout << "{\"block_hash\":\"" << bin_to_hex(binary_hash)
+                << "\",\"low_entropy_label\":\"" << low_entropy_label
+                << "\",\"entropy\":" << entropy
+                << ",\"block_label\":\"" << block_label
+                << "\"source_offset_pairs\":[";
 
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
+      int i=0;
+      hashdb::id_offset_pairs_t::const_iterator it;
+      for (it = id_offset_pairs->begin(); it != id_offset_pairs->end();
+                                                            ++it, ++i) {
+        if (i != 0) {
+          // no comma before first pair
+          std::cout << ",";
+        }
 
-    // add the block hash
-    manager.insert_hash(hex_to_bin(block_hash), id_pair.second, file_offset,
-                        low_entropy_label, entropy, block_label);
-  }
+        // get file hash
+        manager.find_source_data(it->first, file_binary_hash, filesize,
+                                 file_type, low_entropy_count);
 
-  //Source data:
-  //  {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //  "low_entropy_count":4}
-  void add_source_data(const rapidjson::Document& document,
-                       const std::string& line) {
-
-    // file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string file_hash = document["file_hash"].GetString();
-
-    // filesize
-    if (!document.HasMember("filesize") ||
-                  !document["filesize"].IsNumber()) {
-      show_bad_line(line);
-      return;
-    }
-    uint64_t filesize = document["filesize"].GetUint64();
-
-    // file_type (optional)
-    std::string file_type =
-                 (document.HasMember("file_type") &&
-                  document["file_type"].IsString()) ?
-                     document["file_type"].GetString() : "";
-
-    // low_entropy_count (optional)
-    uint64_t low_entropy_count =
-                 (document.HasMember("low_entropy_count") &&
-                  document["low_entropy_count"].IsNumber()) ?
-                     document["low_entropy_count"].GetUint64() : 0;
-
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
-
-    // add the block hash
-    manager.insert_source_data(id_pair.second, hex_to_bin(file_hash),
-                               filesize, file_type, low_entropy_count);
-  }
-
-  // source name:
-  //   {"file_hash":"b9e7...", "repository_name":"repository1",
-  //   "filename":"filename1.dat"}
-  void add_source_name(const rapidjson::Document& document,
-                       const std::string& line) {
-
-    // file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string file_hash = document["file_hash"].GetString();
-
-    // repository_name 
-    if (!document.HasMember("repository_name") ||
-                  !document["repository_name"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string repository_name = document["repository_name"].GetString();
-
-    // filename 
-    if (!document.HasMember("filename") ||
-                  !document["filename"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string filename = document["filename"].GetString();
-
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
-
-    // add the source name
-    manager.insert_source_name(id_pair.second, repository_name, filename);
-  }
-
-  void read_lines() {
-    std::string line;
-    while(getline(in, line)) {
-      ++line_number;
-
-      // skip comment lines
-      if (line[0] == '#') {
-        continue;
+        // source, offset pair
+        std::cout << "\"" << bin_to_hex(file_binary_hash);
+        std::cout << "\"," << it->second;
       }
+      std::cout << "]}";
 
-      // skip empty lines
-      if (line.size() == 0) {
-        continue;
-      }
-
-      // open the line as a JSON DOM document
-      rapidjson::Document document;
-      if (document.Parse(line.c_str()).HasParseError() ||
-          !document.IsObject()) {
-        show_bad_line(line);
-        continue;
-      }
-
-      // process block hash data
-      if (document.HasMember("block_hash")) {
-        add_block_hash_data(document, line);
-      } else if (document.HasMember("filesize")) {
-        add_source_data(document, line);
-      } else if (document.HasMember("filename")) {
-        add_source_name(document, line);
-      } else {
-        show_bad_line(line);
-      }
+      // next
+      pair = manager.hash_next(pair.second);
     }
+
+    delete id_offset_pairs;
   }
 
   public:
 
   // read JSON file
-  static std::pair<bool, std::string> read(
+  static std::pair<bool, std::string> write(
                      const std::string& p_hashdb_dir,
                      const std::string& p_json_file,
                      const std::string& p_cmd) {
@@ -282,20 +207,23 @@ class import_json_t {
       return pair;
     }
 
-    // validate ability to open the JSON file
-    std::ifstream p_in(p_json_file.c_str());
-    if (!p_in.is_open()) {
+    // validate ability to open the JSON file for writing
+    std::ofstream p_out(p_json_file.c_str());
+    if (!p_out.is_open()) {
       std::stringstream ss;
       ss << "Cannot open " << p_json_file << ": " << strerror(errno);
       return std::pair<bool, std::string>(false, ss.str());
     }
-    p_in.close();
+    p_out.close();
 
-    // create the reader
-    import_json_t reader(p_hashdb_dir, p_json_file, p_cmd);
+    // create the writer
+    export_json_t writer(p_hashdb_dir, p_json_file, p_cmd);
 
-    // read the lines
-    reader.read_lines();
+    // write source data
+    writer.write_sources();
+
+    // write hash data
+    writer.write_hashes();
 
     // done
     return std::pair<bool, std::string>(true, "");

@@ -27,6 +27,7 @@
 #include "../src_libhashdb/hashdb.hpp"
 #include "import_tab.hpp"
 #include "import_json.hpp"
+#include "export_json.hpp"
 #include "add.hpp"
 #include "hex_helper.hpp"
 //#include "expand_manager.hpp"

@@ -93,66 +93,10 @@ class import_json_t {
     std::cerr << "Invalid line " << line_number << ": '" << line << "'\n";
   }
 
-  // Block hash data:
-  //   {"block_hash":"a7df...", "file_hash":"b9e7...", "file_offset":4096,
-  //   "low_entropy_label":"W", "entropy":8, "block_label":"txt"}
-  void add_block_hash_data(const rapidjson::Document& document,
-                           const std::string& line) {
-
-    // block_hash
-    if (!document.HasMember("block_hash") ||
-                  !document["block_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string block_hash = document["block_hash"].GetString();
-
-    // file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
-      show_bad_line(line);
-      return;
-    }
-    std::string file_hash = document["file_hash"].GetString();
-
-    // file_offset
-    if (!document.HasMember("file_offset") ||
-                  !document["file_offset"].IsNumber()) {
-      show_bad_line(line);
-      return;
-    }
-    uint64_t file_offset = document["file_offset"].GetUint64();
-
-    // low_entropy_label (optional)
-    std::string low_entropy_label =
-                 (document.HasMember("low_entropy_label") &&
-                  document["low_entropy_label"].IsString()) ?
-                     document["low_entropy_label"].GetString() : "";
-
-    // entropy (optional)
-    uint64_t entropy =
-                 (document.HasMember("entropy") &&
-                  document["entropy"].IsNumber()) ?
-                     document["entropy"].GetUint64() : 0;
-
-    // block_label (optional)
-    std::string block_label =
-                 (document.HasMember("block_label") &&
-                  document["block_label"].IsString()) ?
-                     document["block_label"].GetString() : "";
-
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
-
-    // add the block hash
-    manager.insert_hash(hex_to_bin(block_hash), id_pair.second, file_offset,
-                        low_entropy_label, entropy, block_label);
-  }
-
-  //Source data:
-  //  {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //  "low_entropy_count":4}
+  // Source data:
+  //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
+  //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+  //   "filename":"filename1"}]}
   void add_source_data(const rapidjson::Document& document,
                        const std::string& line) {
 
@@ -166,7 +110,7 @@ class import_json_t {
 
     // filesize
     if (!document.HasMember("filesize") ||
-                  !document["filesize"].IsNumber()) {
+                  !document["filesize"].IsUint64()) {
       show_bad_line(line);
       return;
     }
@@ -181,7 +125,7 @@ class import_json_t {
     // low_entropy_count (optional)
     uint64_t low_entropy_count =
                  (document.HasMember("low_entropy_count") &&
-                  document["low_entropy_count"].IsNumber()) ?
+                  document["low_entropy_count"].IsUint64()) ?
                      document["low_entropy_count"].GetUint64() : 0;
 
     // get or create source ID
@@ -191,44 +135,104 @@ class import_json_t {
     // add the block hash
     manager.insert_source_data(id_pair.second, hex_to_bin(file_hash),
                                filesize, file_type, low_entropy_count);
+
+    // names:[]
+    if (!document.HasMember("names") ||
+                  !document["names"].IsArray()) {
+      show_bad_line(line);
+      return;
+    }
+    const rapidjson::Value& json_names = document["names"];
+    for (rapidjson::SizeType i = 0; i< json_names.Size(); ++i) {
+
+      // repository_name
+      if (!json_names[i].HasMember("repository_name") ||
+                    !json_names[i]["repository_name"].IsString()) {
+        show_bad_line(line);
+        return;
+      }
+      std::string repository_name =
+                     json_names[i]["repository_name"].GetString();
+
+      // filename
+      if (!json_names[i].HasMember("filename") ||
+                    !json_names[i]["filename"].IsString()) {
+        show_bad_line(line);
+        return;
+      }
+      std::string filename = json_names[i]["filename"].GetString();
+
+      // add the name pair
+      manager.insert_source_name(id_pair.second, repository_name, filename);
+    }
   }
 
-  // source name:
-  //   {"file_hash":"b9e7...", "repository_name":"repository1",
-  //   "filename":"filename1.dat"}
-  void add_source_name(const rapidjson::Document& document,
-                       const std::string& line) {
+  // Block hash data:
+  //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
+  //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
 
-    // file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
+
+  void add_hash_data(const rapidjson::Document& document,
+                     const std::string& line) {
+
+    // block_hash
+    if (!document.HasMember("block_hash") ||
+                  !document["block_hash"].IsString()) {
       show_bad_line(line);
       return;
     }
-    std::string file_hash = document["file_hash"].GetString();
+    std::string binary_hash = hex_to_bin(document["block_hash"].GetString());
 
-    // repository_name 
-    if (!document.HasMember("repository_name") ||
-                  !document["repository_name"].IsString()) {
+    // low_entropy_label (optional)
+    std::string low_entropy_label =
+                 (document.HasMember("low_entropy_label") &&
+                  document["low_entropy_label"].IsString()) ?
+                     document["low_entropy_label"].GetString() : "";
+
+    // entropy (optional)
+    uint64_t entropy =
+                 (document.HasMember("entropy") &&
+                  document["entropy"].IsUint64()) ?
+                     document["entropy"].GetUint64() : 0;
+
+    // block_label (optional)
+    std::string block_label =
+                 (document.HasMember("block_label") &&
+                  document["block_label"].IsString()) ?
+                     document["block_label"].GetString() : "";
+
+    // source_id_pairs:[]
+    if (!document.HasMember("source_id_pairs") ||
+                  !document["source_id_pairs"].IsArray()) {
       show_bad_line(line);
       return;
     }
-    std::string repository_name = document["repository_name"].GetString();
+    const rapidjson::Value& json_pairs = document["source_offset_pairs"];
+    for (rapidjson::SizeType i = 0; i+1 < json_pairs.Size(); i+=2) {
 
-    // filename 
-    if (!document.HasMember("filename") ||
-                  !document["filename"].IsString()) {
-      show_bad_line(line);
-      return;
+      // source hash
+      if (!json_pairs[i].IsString()) {
+        show_bad_line(line);
+        return;
+      }
+      std::string file_binary_hash = hex_to_bin(json_pairs[i].GetString());
+
+      // file_offset
+      if (!document.HasMember("file_offset") ||
+                    !document["file_offset"].IsUint64()) {
+        show_bad_line(line);
+        return;
+      }
+      uint64_t file_offset = document["file_offset"].GetUint64();
+
+      // get source ID or new source ID
+      std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
+                                                        file_binary_hash);
+
+      // insert the hash
+      manager.insert_hash(binary_hash, id_pair.second, file_offset,
+                          low_entropy_label, entropy, block_label);
     }
-    std::string filename = document["filename"].GetString();
-
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
-
-    // add the source name
-    manager.insert_source_name(id_pair.second, repository_name, filename);
   }
 
   void read_lines() {
@@ -255,12 +259,10 @@ class import_json_t {
       }
 
       // process block hash data
-      if (document.HasMember("block_hash")) {
-        add_block_hash_data(document, line);
-      } else if (document.HasMember("filesize")) {
+      if (document.HasMember("file_hash")) {
         add_source_data(document, line);
-      } else if (document.HasMember("filename")) {
-        add_source_name(document, line);
+      } else if (document.HasMember("block_hash")) {
+        add_hash_data(document, line);
       } else {
         show_bad_line(line);
       }
