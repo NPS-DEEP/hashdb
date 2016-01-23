@@ -22,6 +22,7 @@ AC_CONFIG_FILES([Makefile
                  rapidjson/Makefile
                  src/Makefile
                  test/Makefile
+                 test_py/Makefile
                  man/Makefile
                  doc/Makefile
                  python/Makefile])
