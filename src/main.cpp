@@ -101,7 +101,6 @@ static std::string command = "";    // the hashdb command
 static std::vector<std::string> args;
 
 // helper functions
-void check_params();
 void run_command();
 void usage() {
   // usage.hpp
@@ -303,36 +302,30 @@ int main(int argc,char **argv) {
   return 0;
 }
 
-void check_params(const std::string& options, int param_count) {
+void check_options(const std::string& options) {
   // fail if an option is not in the options set
-  if (has_sector_size && options.find("s") == -1) {
+  if (has_sector_size && options.find("s") == std::string::npos) {
     std::cerr << "The -s sector_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_block_size && options.find("b") == -1) {
+  if (has_block_size && options.find("b") == std::string::npos) {
     std::cerr << "The -b block_size option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_repository_name && options.find("r") == -1) {
+  if (has_repository_name && options.find("r") == std::string::npos) {
     std::cerr << "The -r repository_name option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_whitelist_dir && options.find("w") == -1) {
+  if (has_whitelist_dir && options.find("w") == std::string::npos) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_id_offset_pairs && options.find("m") == -1) {
+  if (has_max_id_offset_pairs && options.find("m") == std::string::npos) {
     std::cerr << "The -m max_id_offset_pairs option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_id_offset_pairs && options.find("t") == -1) {
+  if (has_max_id_offset_pairs && options.find("t") == std::string::npos) {
     std::cerr << "The -t tuning option is not allowed for this command.\n";
-    exit(1);
-  }
-
-  // fail if param_count does not match
-  if (param_count != -1 && param_count != args.size()) {
-    std::cerr << "The number of paramters provided is not valid for this command.\n";
     exit(1);
   }
 
@@ -346,6 +339,18 @@ void check_params(const std::string& options, int param_count) {
     exit(1);
   }
 }
+
+void check_params(const std::string& options, size_t param_count) {
+  // check options
+  check_options(options);
+  // check param count
+  if (param_count != args.size()) {
+    std::cerr << "The number of paramters provided is not valid for this command.\n";
+    exit(1);
+  }
+}
+
+
 
 void run_command() {
   // new database
@@ -383,7 +388,12 @@ void run_command() {
     commands::add(args[0], args[1], cmd);
 
   } else if (command == "add_multiple") {
-    check_params("", -1);
+    check_options("");
+    // check param count
+    if (args.size() < 2) {
+      std::cerr << "The number of paramters provided is not valid for this command.\n";
+      exit(1);
+    }
     commands::add_multiple(args, cmd);
 
   } else if (command == "add_repository") {

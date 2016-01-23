@@ -133,10 +133,10 @@ class lmdb_hash_manager_t {
 
   inline std::pair<std::string, std::string> hash_pair(
                               const std::string& binary_hash) const {
-    int size = binary_hash.size();
+    int hash_size = binary_hash.size();
 
     // prefix string
-    int prefix_size = (size > prefix_bytes) ? prefix_bytes : size;
+    int prefix_size = (hash_size > prefix_bytes) ? prefix_bytes : hash_size;
     std::string prefix_string = binary_hash.substr(0, prefix_size);
 
     // maybe zero out some bits at the end of the prefix string
@@ -145,11 +145,11 @@ class lmdb_hash_manager_t {
     }
 
     // suffix string
-    int suffix_start = size - suffix_bytes;
+    int suffix_start = hash_size - suffix_bytes;
     if (suffix_start < prefix_size) {
       suffix_start = prefix_size;
     }
-    std::string suffix_string = (suffix_start < size) ?
+    std::string suffix_string = (suffix_start < hash_size) ?
                       binary_hash.substr(suffix_start, suffix_bytes) : "";
 #ifdef DEBUG
     std::cout << "binary hash " << to_hex(binary_hash)

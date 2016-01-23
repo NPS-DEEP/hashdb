@@ -46,8 +46,6 @@
 #endif
 #include "mutex_lock.hpp"
 
-static uint32_t MAX_ID_OFFSET_PAIRS = 100000; // 100,000
-
 class lmdb_hash_data_manager_t {
 
   private:
