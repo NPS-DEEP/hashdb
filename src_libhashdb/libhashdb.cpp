@@ -115,7 +115,7 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
 
   // provide source data
   ss << "{\"source_id\":" << source_id
-     << "\"file_hash\":\"" << to_hex(file_binary_hash) << "\""
+     << "\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
      << ",\"filesize\":" << filesize
      << ",\"file_type\":\"" << file_type << "\""
      << ",\"low_entropy_count\":" << low_entropy_count
@@ -436,7 +436,7 @@ namespace hashdb {
     hashdb::id_offset_pairs_t::const_iterator it;
     uint32_t crc = 0;
     for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
-      crc = crc32(crc, reinterpret_cast<const uint8_t*>(&(it->first)),
+      crc = hashdb::crc32(crc, reinterpret_cast<const uint8_t*>(&(it->first)),
                   sizeof(uint64_t));
     }
     *ss << "{\"source_list_id\":" << crc << "}";

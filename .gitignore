@@ -62,6 +62,7 @@ src/.libs
 src_libhashdb/.libs
 test/*_test
 test/temp_*
+test_py/temp_*
 src_win/win_tests*
 hashdb*.tar.gz
 space

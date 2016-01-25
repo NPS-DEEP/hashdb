@@ -63,14 +63,19 @@ Look up a set of source names given a source ID.
 ## HASHDB Interfaces
 hashdb interfaces use the `hashdb` namespace, are defined in `hashdb.hpp`, and are linked using the `libhashdb` library.  Interfaces can assert on unexpected error.
 
+### Settings
+Hold hashdb settings.
+
+* `settings_t()` - create settings with default values.
+
 ### Import
 Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes to change log.
 
 * `import_manager_t(hashdb_dir)`
 * `pair(bool, source_id) insert_source_id(file_binary_hash)` - false if already there
 * `bool insert_source_name(source_id, repository_name, filename)` - false if already there
-* `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new, false, do not change, and note if not new
-* `bool insert_hash(binary_hash, source_id, file_offset, low_entropy_label, entropy, block_label)` - true if inserted, false if not
+* `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new else false and overwrite
+* `bool insert_hash(binary_hash, source_id, file_offset, low_entropy_label, entropy, block_label)` - true if inserted else false and overwrite
 * `string size()` - return sizes of LMDB databases
 * `~import_manager_t()` - append changes to change log at `hashdb_dir/log.dat`
 
