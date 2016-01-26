@@ -41,12 +41,10 @@ class import_tab_t {
   const std::string& hashdb_dir;
   const std::string& tab_file;
   const std::string& repository_name;
-  const std::string& cmd;
   size_t line_number;
 
   // resources
   hashdb::import_manager_t manager;
-  std::ifstream in;
   progress_tracker_t progress_tracker;
 
   static const uint32_t sector_size = 512;
@@ -131,22 +129,16 @@ class import_tab_t {
   import_tab_t(const std::string& p_hashdb_dir,
                const std::string& p_tab_file,
                const std::string& p_repository_name,
-               const std::string& p_cmd) :
+               const std::string& cmd) :
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
-                  cmd(p_cmd),
                   line_number(0),
                   manager(hashdb_dir, cmd),
-                  in(tab_file),
                   progress_tracker(hashdb_dir, 0) {
   }
 
-  ~import_tab_t() {
-    in.close();
-  }
-
-  void read_lines() {
+  void read_lines(std::istream& in) {
     std::string line;
     while(getline(in, line)) {
       ++line_number;
@@ -156,37 +148,17 @@ class import_tab_t {
 
   public:
   // read tab file
-  static std::pair<bool, std::string> read(
-                     const std::string& p_hashdb_dir,
-                     const std::string& p_tab_file,
-                     const std::string& p_repository_name,
-                     const std::string& p_cmd) {
-
-    // validate hashdb_dir path
-    std::pair<bool, std::string> pair;
-    hashdb::settings_t settings;
-    pair = hashdb::read_settings(p_hashdb_dir, settings);
-    if (pair.first == false) {
-      return pair;
-    }
-
-    // validate ability to open the tab file
-    std::ifstream p_in(p_tab_file.c_str());
-    if (!p_in.is_open()) {
-      std::stringstream ss;
-      ss << "Cannot open " << p_tab_file << ": " << strerror(errno);
-      return std::pair<bool, std::string>(false, ss.str());
-    }
-    p_in.close();
+  static void read(const std::string& hashdb_dir,
+                   const std::string& tab_file,
+                   const std::string& repository_name,
+                   const std::string& cmd,
+                   std::istream& in) {
 
     // create the reader
-    import_tab_t reader(p_hashdb_dir, p_tab_file, p_repository_name, p_cmd);
+    import_tab_t reader(hashdb_dir, tab_file, repository_name, cmd);
 
     // read the lines
-    reader.read_lines();
-
-    // done
-    return std::pair<bool, std::string>(true, "");
+    reader.read_lines(in);
   }
 };
 

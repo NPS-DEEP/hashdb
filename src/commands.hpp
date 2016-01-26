@@ -130,14 +130,22 @@ namespace commands {
                      const std::string& repository_name,
                      const std::string& cmd) {
 
-    std::pair<bool, std::string> pair = import_tab_t::read(
-                                hashdb_dir, tab_file, repository_name, cmd);
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
-    if (pair.first == true) {
-      std::cout << "Import completed.\n";
-    } else {
-      std::cout << "Error: " << pair.second << "\n";
+    // open the tab file for reading
+    std::ifstream in(tab_file.c_str());
+    if (!in.is_open()) {
+      std::cout << "Error: Cannot open " << tab_file
+                << ": " << strerror(errno) << "\n";
+      exit(1);
     }
+
+    import_tab_t::read(hashdb_dir, tab_file, repository_name, cmd, in);
+
+    // done
+    in.close();
+    std::cout << "import_tab completed.\n";
   }
 
   // import_json
@@ -161,7 +169,7 @@ namespace commands {
 
     // done
     in.close();
-    std::cout << "Import completed.\n";
+    std::cout << "import_json completed.\n";
   }
 
   // export_json
@@ -185,7 +193,7 @@ namespace commands {
 
     // done
     out.close();
-    std::cout << "Export completed.\n";
+    std::cout << "export_json completed.\n";
   }
 
   // ************************************************************
