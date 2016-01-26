@@ -53,7 +53,7 @@
 #include <unistd.h>     // for print_environment
 #include <iostream>     // for print_environment
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
+#include "settings_manager.hpp"
 #include "lmdb_hash_data_manager.hpp"
 #include "lmdb_hash_manager.hpp"
 #include "lmdb_source_data_manager.hpp"
@@ -63,11 +63,6 @@
 #include "lmdb_changes.hpp"
 #include "crc32.h"      // for scan_expanded
 #include "to_hex.hpp"      // for scan_expanded
-
-/**
- * The current version of the hashdb data store.
- */
-static const uint32_t CURRENT_DATA_STORE_VERSION = 3;
 
 /**
  * Timestamp helper to get valid json output.
@@ -145,6 +140,18 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
   delete source_names;
 }
 
+// helper: read settings, report and fail on error
+static hashdb::settings_t private_read_settings(const std::string& hashdb_dir) {
+  hashdb::settings_t settings;
+  std::pair<bool, std::string> pair = hashdb::read_settings(
+                                                    hashdb_dir, settings);
+  if (pair.first == false) {
+    std::cerr << "Error: hashdb settings file not read.  Aborting.\n";
+    exit(1);
+  }
+  return settings;
+}
+
 namespace hashdb {
 
   // ************************************************************
@@ -162,28 +169,13 @@ namespace hashdb {
   // misc support interfaces
   // ************************************************************
   /**
-   * Return true and "" if hashdb is valid, false and reason if not.
-   */
-  std::pair<bool, std::string> is_valid_hashdb(
-                                      const std::string& hashdb_dir) {
-
-    // validate hashdb by performing a correct read of settings
-    hashdb_settings_t settings;
-    return hashdb_settings_t::read_settings(hashdb_dir, settings);
-  }
-
-  /**
    * Return true and "" if hashdb is created, false and reason if not.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
    */
   std::pair<bool, std::string> create_hashdb(
                      const std::string& hashdb_dir,
-                     const uint32_t sector_size,
-                     const uint32_t block_size,
-                     const uint32_t max_id_offset_pairs,
-                     const uint32_t hash_prefix_bits,
-                     const uint32_t hash_suffix_bytes,
+                     const hashdb::settings_t& settings,
                      const std::string& command_string) {
 
     // path must be empty
@@ -205,25 +197,18 @@ namespace hashdb {
                        + hashdb_dir + "'.");
     }
 
-    // settings
-    hashdb_settings_t settings;
-    settings.data_store_version = CURRENT_DATA_STORE_VERSION;
-    settings.sector_size = sector_size;
-    settings.block_size = block_size;
-    settings.max_id_offset_pairs = max_id_offset_pairs;
-    settings.hash_prefix_bits = hash_prefix_bits;
-    settings.hash_suffix_bytes = hash_suffix_bytes;
-
     // create the settings file
     std::pair<bool, std::string> pair =
-                hashdb_settings_t::write_settings(hashdb_dir, settings);
+                hashdb::write_settings(hashdb_dir, settings);
     if (pair.first == false) {
       return pair;
     }
 
     // create new LMDB stores
-    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW);
-    lmdb_hash_manager_t(hashdb_dir, RW_NEW);
+    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW,
+                       settings.sector_size, settings.max_id_offset_pairs);
+    lmdb_hash_manager_t(hashdb_dir, RW_NEW,
+                       settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_id_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
@@ -232,34 +217,6 @@ namespace hashdb {
     logger_t(hashdb_dir, command_string);
 
     return std::pair<bool, std::string>(true, "");
-  }
-
-  /**
-   * Return hashdb settings else false and reason.
-   * The current implementation may abort if something worse than a simple
-   * path problem happens.
-   */
-  std::pair<bool, std::string> hashdb_settings(
-                     const std::string& hashdb_dir,
-                     uint32_t& sector_size,
-                     uint32_t& block_size,
-                     uint32_t& max_id_offset_pairs,
-                     uint32_t& hash_prefix_bits,
-                     uint32_t& hash_suffix_bytes) {
-
-    hashdb_settings_t settings;
-    std::pair<bool, std::string> pair;
-
-    // try to read hashdb_dir settings
-    pair = hashdb_settings_t::read_settings(hashdb_dir, settings);
-    sector_size = settings.sector_size;
-    block_size = settings.block_size;
-    max_id_offset_pairs = settings.max_id_offset_pairs;
-    hash_prefix_bits = settings.hash_prefix_bits;
-    hash_suffix_bytes = settings.hash_suffix_bytes;
-
-    // return what read_settings returned
-    return pair;
   }
 
   /**
@@ -290,22 +247,60 @@ namespace hashdb {
   }
 
   // ************************************************************
+  // settings
+  // ************************************************************
+  settings_t::settings_t() :
+         settings_version(CURRENT_SETTINGS_VERSION),
+         sector_size(512),
+         block_size(512),
+         max_id_offset_pairs(100000), // 100,000
+         hash_prefix_bits(28),        // for 2^28
+         hash_suffix_bytes(3) {       // for 2^(3*8)
+  }
+
+  std::string settings_t::settings_string() const {
+    std::stringstream ss;
+    ss << "{\"settings_version\":" << settings_version
+       << ", \"sector_size\":" << sector_size
+       << ", \"block_size\":" << block_size
+       << ", \"max_id_offset_pairs\":" << max_id_offset_pairs
+       << ", \"hash_prefix_bits\":" << hash_prefix_bits
+       << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
+       << "}";
+    return ss.str();
+  }
+
+  // ************************************************************
   // import
   // ************************************************************
   import_manager_t::import_manager_t(const std::string& hashdb_dir,
                                      const std::string& command_string) :
-          lmdb_hash_data_manager(
-                     new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_hash_manager(
-                     new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_data_manager(
-                     new lmdb_source_data_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_id_manager(
-                     new lmdb_source_id_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_name_manager(
-                     new lmdb_source_name_manager_t(hashdb_dir, RW_MODIFY)),
+          // LMDB managers
+          lmdb_hash_data_manager(0),
+          lmdb_hash_manager(0),
+          lmdb_source_data_manager(0),
+          lmdb_source_id_manager(0),
+          lmdb_source_name_manager(0),
+
+          // log
           logger(new logger_t(hashdb_dir, command_string)),
           changes(new lmdb_changes_t) {
+
+    // read settings
+    hashdb::settings_t settings = private_read_settings(hashdb_dir);
+
+    // open managers
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
+            RW_MODIFY, settings.sector_size, settings.max_id_offset_pairs);
+    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
+            settings.hash_prefix_bits, settings.hash_suffix_bytes);
+    lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
+                                                              RW_MODIFY);
+    lmdb_source_id_manager = new lmdb_source_id_manager_t(hashdb_dir,
+                                                              RW_MODIFY);
+    lmdb_source_name_manager = new lmdb_source_name_manager_t(hashdb_dir,
+                                                              RW_MODIFY);
+
   }
 
   import_manager_t::~import_manager_t() {
@@ -366,20 +361,31 @@ namespace hashdb {
   // scan
   // ************************************************************
   scan_manager_t::scan_manager_t(const std::string& hashdb_dir) :
-          lmdb_hash_data_manager(
-                     new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_hash_manager(
-                     new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_data_manager(
-                     new lmdb_source_data_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_id_manager(
-                     new lmdb_source_id_manager_t(hashdb_dir, RW_MODIFY)),
-          lmdb_source_name_manager(
-                     new lmdb_source_name_manager_t(hashdb_dir, RW_MODIFY)),
+          // LMDB managers
+          lmdb_hash_data_manager(0),
+          lmdb_hash_manager(0),
+          lmdb_source_data_manager(0),
+          lmdb_source_id_manager(0),
+          lmdb_source_name_manager(0),
 
           // for scan_expanded
           hashes(new std::set<std::string>),
           source_ids(new std::set<uint64_t>) {
+
+    // read settings
+    hashdb::settings_t settings = private_read_settings(hashdb_dir);
+
+    // open managers
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
+            READ_ONLY, settings.sector_size, settings.max_id_offset_pairs);
+    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
+            settings.hash_prefix_bits, settings.hash_suffix_bytes);
+    lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
+                                                              READ_ONLY);
+    lmdb_source_id_manager = new lmdb_source_id_manager_t(hashdb_dir,
+                                                              READ_ONLY);
+    lmdb_source_name_manager = new lmdb_source_name_manager_t(hashdb_dir,
+                                                              READ_ONLY);
   }
 
   scan_manager_t::~scan_manager_t() {

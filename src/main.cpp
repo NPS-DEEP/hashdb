@@ -65,14 +65,12 @@
 #include <mcheck.h>
 #endif
 
+#include "../src_libhashdb/hashdb.hpp" // for settings
+
 // default settings
-static const uint32_t default_sector_size = 512;
-static const uint32_t default_block_size = 512;
+static const hashdb::settings_t default_settings;
 static const std::string default_repository_name = "";
 static const std::string default_whitelist_dir = "";
-static const uint32_t default_max_id_offset_pairs = 100000; // 100,000
-static const uint32_t default_hash_prefix_bits = 28; // for 2^28
-static const uint32_t default_hash_suffix_bytes = 3; // for 2^(3*8)
 
 // usage
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
@@ -87,13 +85,9 @@ static bool has_max_id_offset_pairs = false;
 static bool has_tuning = false;
 
 // option values
-static uint32_t sector_size = default_sector_size;
-static uint32_t block_size = default_block_size;
+hashdb::settings_t settings;
 static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
-static uint32_t max_id_offset_pairs = default_max_id_offset_pairs;
-static uint32_t hash_prefix_bits = default_hash_prefix_bits ;
-static uint32_t hash_suffix_bytes = default_hash_suffix_bytes;
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -104,13 +98,7 @@ static std::vector<std::string> args;
 void run_command();
 void usage() {
   // usage.hpp
-  usage(default_sector_size,
-        default_block_size,
-        default_repository_name,
-        default_whitelist_dir,
-        default_max_id_offset_pairs,
-        default_hash_prefix_bits,
-        default_hash_suffix_bytes);
+  usage(default_repository_name, default_whitelist_dir);
 }
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
@@ -224,13 +212,13 @@ int main(int argc,char **argv) {
 
       case 's': {	// sector size
         has_sector_size = true;
-        sector_size = std::atoi(optarg);
+        settings.sector_size = std::atoi(optarg);
         break;
       }
 
       case 'b': {	// block size
         has_block_size = true;
-        block_size = std::atoi(optarg);
+        settings.block_size = std::atoi(optarg);
         break;
       }
 
@@ -248,7 +236,7 @@ int main(int argc,char **argv) {
 
       case 'm': {	// max source ID file offset pairs
         has_max_id_offset_pairs = true;
-        max_id_offset_pairs = std::atoi(optarg);
+        settings.max_id_offset_pairs = std::atoi(optarg);
         break;
       }
 
@@ -261,8 +249,8 @@ int main(int argc,char **argv) {
           exit(1);
         }
 
-        hash_prefix_bits = std::atoi(params[0].c_str());
-        hash_suffix_bytes = std::atoi(params[1].c_str());
+        settings.hash_prefix_bits = std::atoi(params[0].c_str());
+        settings.hash_suffix_bytes = std::atoi(params[1].c_str());
         break;
       }
 
@@ -330,10 +318,11 @@ void check_options(const std::string& options) {
   }
 
   // fail if block size is incompatible with sector size
-  if (sector_size == 0 || (block_size % sector_size) != 0) {
+  if (settings.sector_size == 0 ||
+      (settings.block_size % settings.sector_size) != 0) {
     std::cerr << "Incompatible values for block size: "
-              << block_size
-              << " and sector size : " << sector_size
+              << settings.block_size
+              << " and sector size : " << settings.sector_size
               << ".  block size must be divisible by sector size.\n"
               << see_usage << "\n";
     exit(1);
@@ -356,8 +345,7 @@ void run_command() {
   // new database
   if (command == "create") {
     check_params("bsmt", 1);
-    commands::create(args[0], sector_size, block_size, max_id_offset_pairs,
-                     hash_prefix_bits, hash_suffix_bytes, cmd);
+    commands::create(args[0], settings, cmd);
 
   // import
   } else if (command == "import") {

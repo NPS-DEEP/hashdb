@@ -202,7 +202,8 @@ class export_json_t {
 
     // validate hashdb_dir path
     std::pair<bool, std::string> pair;
-    pair = hashdb::is_valid_hashdb(p_hashdb_dir);
+    hashdb::settings_t settings;
+    pair = hashdb::read_settings(p_hashdb_dir, settings);
     if (pair.first == false) {
       return pair;
     }

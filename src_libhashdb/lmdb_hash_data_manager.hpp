@@ -25,7 +25,6 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
@@ -52,9 +51,10 @@ class lmdb_hash_data_manager_t {
   typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
   typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
 
-  std::string hashdb_dir;
-  file_mode_type_t file_mode;
-  hashdb_settings_t settings;
+  const std::string hashdb_dir;
+  const file_mode_type_t file_mode;
+  const uint32_t sector_size;
+  const uint32_t max_id_offset_pairs;
   id_offset_pairs_t* id_offset_pairs;
   MDB_env* env;
 
@@ -91,10 +91,10 @@ class lmdb_hash_data_manager_t {
                                          it != pairs.end(); ++it) {
       p = lmdb_helper::encode_uint64_t(it->first, p);
       // require offset to be valid
-      if (it->second % settings.sector_size != 0) {
+      if (it->second % sector_size != 0) {
         assert(0);
       }
-      uint64_t offset_index = it->second / settings.sector_size;
+      uint64_t offset_index = it->second / sector_size;
       p = lmdb_helper::encode_uint64_t(offset_index, p);
     }
 
@@ -133,7 +133,7 @@ class lmdb_hash_data_manager_t {
       id_offset_pair_t pair;
       p = lmdb_helper::decode_uint64_t(p, pair.first);
       p = lmdb_helper::decode_uint64_t(p, pair.second);
-      pair.second *= settings.sector_size;
+      pair.second *= sector_size;
       pairs.insert(pair);
     }
 
@@ -156,24 +156,17 @@ class lmdb_hash_data_manager_t {
 
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
-                           const file_mode_type_t p_file_mode) :
+                           const file_mode_type_t p_file_mode,
+                           const uint32_t p_sector_size,
+                           const uint32_t p_max_id_offset_pairs) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       settings(),
+       sector_size(p_sector_size),
+       max_id_offset_pairs(p_max_id_offset_pairs),
        id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
        M() {
-
-    // read settings
-    std::pair<bool, std::string> pair =
-                hashdb_settings_t::read_settings(hashdb_dir, settings);
-
-    // eror if settings is not initialized
-    if (pair.first == false) {
-      std::cerr << pair.second << "\n";
-      assert(0); // higher checking should have caught this.
-    }
 
     MUTEX_INIT(&M);
   }
@@ -196,7 +189,7 @@ class lmdb_hash_data_manager_t {
               lmdb_changes_t& changes) {
 
     // validate file_offset
-    if (file_offset % settings.sector_size != 0) {
+    if (file_offset % sector_size != 0) {
       ++changes.hash_data_not_inserted_invalid_file_offset;
       return false;
     }
@@ -269,7 +262,7 @@ class lmdb_hash_data_manager_t {
       }
 
       // skip if source count is at max source ID offset pairs
-      if (id_offset_pairs->size() >= settings.max_id_offset_pairs) {
+      if (id_offset_pairs->size() >= max_id_offset_pairs) {
         context.close();
         ++changes.hash_data_not_inserted_max_id_offset_pairs;
         MUTEX_UNLOCK(&M);

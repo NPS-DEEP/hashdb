@@ -30,14 +30,12 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include "../src_libhashdb/hashdb.hpp" // for settings
 
-void usage(const uint32_t sector_size,
-           const uint32_t block_size,
-           const std::string& repository_name,
-           const std::string& whitelist_dir,
-           const uint32_t max_id_offset_pairs,
-           const uint32_t hash_prefix_bits,
-           const uint32_t hash_suffix_bytes) {
+void usage(const std::string& repository_name,
+           const std::string& whitelist_dir) {
+
+  const hashdb::settings_t settings;
 
   // print usage
   std::cout
@@ -58,16 +56,16 @@ void usage(const uint32_t sector_size,
   << "    Options:\n"
   << "    -b, --block_size=<block size>\n"
   << "      <block size>, in bytes, or use 0 for no restriction\n"
-  << "      (default " << block_size << ")\n"
+  << "      (default " << settings.block_size << ")\n"
   << "    -s, --sector_size=<n>\n"
-  << "      <sector_size>, in bytes, or 1 for any alignment (default " << sector_size << ")\n"
+  << "      <sector_size>, in bytes, or 1 for any alignment (default " << settings.sector_size << ")\n"
   << "    -m, --max_id_offset_pairs=<max>\n"
   << "      The maximum number of source ID, source file offset references to\n"
-  << "      store for a hash (default " << max_id_offset_pairs << ")\n"
+  << "      store for a hash (default " << settings.max_id_offset_pairs << ")\n"
   << "    -t, --tuning=<hash prefix bits:hash suffix bytes>\n"
   << "      The number of hash prefix bits and suffix bytes to use for\n"
-  << "      optimizing hash storage (default " << hash_prefix_bits << ":"
-  <<        hash_suffix_bytes << ")\n"
+  << "      optimizing hash storage (default " << settings.hash_prefix_bits << ":"
+  <<        settings.hash_suffix_bytes << ")\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>   the file path to the new hash database to create\n"

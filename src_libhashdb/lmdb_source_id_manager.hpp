@@ -49,8 +49,8 @@
 class lmdb_source_id_manager_t {
 
   private:
-  std::string hashdb_dir;
-  file_mode_type_t file_mode;
+  const std::string hashdb_dir;
+  const file_mode_type_t file_mode;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;                  // mutext

@@ -51,37 +51,25 @@ static std::pair<bool, std::string> create_if_new(
                                   const std::string& from_hashdb_dir,
                                   const std::string& command_string) {
 
-  uint32_t sector_size;
-  uint32_t block_size;
-  uint32_t max_id_offset_pairs;
-  uint32_t hash_prefix_bits;
-  uint32_t hash_suffix_bytes;
   std::pair<bool, std::string> pair;
+  hashdb::settings_t settings;
 
   // try to read hashdb_dir settings
-  pair = hashdb::hashdb_settings(hashdb_dir, sector_size, block_size,
-       max_id_offset_pairs, hash_prefix_bits, hash_suffix_bytes);
+  pair = hashdb::read_settings(hashdb_dir, settings);
   if (pair.first == true) {
     // hashdb_dir already exists
     return pair;
   }
 
   // no hashdb_dir, so read from_hashdb_dir settings
-  pair = hashdb::hashdb_settings(from_hashdb_dir, sector_size, block_size,
-       max_id_offset_pairs, hash_prefix_bits, hash_suffix_bytes);
+  pair = hashdb::read_settings(from_hashdb_dir, settings);
   if (pair.first == false) {
     // bad since from_hashdb_dir is not valid
     return pair;
   }
 
   // create hashdb_dir using from_hashdb_dir settings
-  pair = hashdb::create_hashdb(hashdb_dir,
-                               sector_size,
-                               block_size,
-                               max_id_offset_pairs,
-                               hash_prefix_bits,
-                               hash_suffix_bytes,
-                               command_string);
+  pair = hashdb::create_hashdb(hashdb_dir, settings, command_string);
 
   return pair;
 }
@@ -99,16 +87,11 @@ namespace commands {
   // new database
   // ************************************************************
   void create(const std::string& hashdb_dir,
-              const uint32_t sector_size,
-              const uint32_t block_size,
-              const uint32_t max_id_offset_pairs,
-              const uint32_t hash_prefix_bits,
-              const uint32_t hash_suffix_bytes,
+              const hashdb::settings_t& settings,
               const std::string& cmd) {
 
     std::pair<bool, std::string> pair = hashdb::create_hashdb(
-           hashdb_dir, sector_size, block_size, max_id_offset_pairs,
-           hash_prefix_bits, hash_suffix_bytes, cmd);
+                                             hashdb_dir, settings, cmd);
 
     if (pair.first == true) {
       std::cout << "New database created.\n";

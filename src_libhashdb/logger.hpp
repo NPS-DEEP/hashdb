@@ -26,7 +26,7 @@
 #define LOGGER_HPP
 
 #include "lmdb_changes.hpp"
-#include "hashdb_settings.hpp"
+#include "hashdb.hpp" // for settings
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -81,8 +81,8 @@ class logger_t {
   }
 
   // settings
-  void add_hashdb_settings(const hashdb_settings_t& settings) {
-    os << settings;
+  void add_hashdb_settings(const hashdb::settings_t& settings) {
+    os << settings.settings_string();
   }
 
   void add_lmdb_changes(const lmdb_changes_t& changes) {

@@ -19,11 +19,11 @@
 
 /**
  * \file
- * This file manages the hashdb settings.
+ * Read and write hashdb settings
  */
 
-#ifndef    HASHDB_SETTINGS_HPP
-#define    HASHDB_SETTINGS_HPP
+#ifndef SETTINGS_MANAGER_HPP
+#define SETTINGS_MANAGER_HPP
 
 #include <string>
 #include <sstream>
@@ -32,60 +32,15 @@
 #include <unistd.h>
 #include <string.h> // for strerror
 #include <fstream>
+#include "hashdb.hpp" // for settings
 #include "rapidjson.h"
 #include "writer.h"
 #include "document.h"
 
+namespace hashdb {
 
-// hashdb tuning options
-struct hashdb_settings_t {
-
-  static const uint32_t expected_data_store_version = 3;
-  uint32_t data_store_version;
-  uint32_t sector_size;
-  uint32_t block_size;
-  uint32_t max_id_offset_pairs;
-  uint32_t hash_prefix_bits;
-  uint32_t hash_suffix_bytes;
-
-  hashdb_settings_t() :
-        data_store_version(0),
-        sector_size(0),
-        block_size(0),
-        max_id_offset_pairs(0),
-        hash_prefix_bits(0),
-        hash_suffix_bytes(0) {
-  }
-
-  hashdb_settings_t(uint32_t p_data_store_version,
-                    uint32_t p_sector_size,
-                    uint32_t p_block_size,
-                    uint32_t p_max_id_offset_pairs,
-                    uint32_t p_hash_prefix_bits,
-                    uint32_t p_hash_suffix_bytes) :
-
-        data_store_version(p_data_store_version),
-        sector_size(p_sector_size),
-        block_size(p_block_size),
-        max_id_offset_pairs(p_max_id_offset_pairs),
-        hash_prefix_bits(p_hash_prefix_bits),
-        hash_suffix_bytes(p_hash_suffix_bytes) {
-  }
-
-  std::string settings_string() const {
-    std::stringstream ss;
-    ss << "{\"data_store_version\":" << data_store_version
-       << ", \"sector_size\":" << sector_size
-       << ", \"block_size\":" << block_size
-       << ", \"max_id_offset_pairs\":" << max_id_offset_pairs
-       << ", \"hash_prefix_bits\":" << hash_prefix_bits
-       << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
-       << "}";
-    return ss.str();
-  }
-
-  static std::pair<bool, std::string> read_settings(
-               const std::string& hashdb_dir, hashdb_settings_t& settings) {
+  std::pair<bool, std::string> read_settings(
+               const std::string& hashdb_dir, hashdb::settings_t& settings) {
 
     // path must exist
     if (access(hashdb_dir.c_str(), F_OK) != 0) {
@@ -136,7 +91,7 @@ struct hashdb_settings_t {
     }
 
     // parse the values
-    settings.data_store_version = document["data_store_version"].GetUint64();
+    settings.settings_version = document["settings_version"].GetUint64();
     settings.sector_size = document["sector_size"].GetUint64();
     settings.block_size = document["block_size"].GetUint64();
     settings.max_id_offset_pairs = document["max_id_offset_pairs"].GetUint64();
@@ -144,7 +99,7 @@ struct hashdb_settings_t {
     settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
 
     // settings version must be compatible
-    if (settings.data_store_version < settings.expected_data_store_version) {
+    if (settings.settings_version < hashdb::CURRENT_SETTINGS_VERSION) {
       return std::pair<bool, std::string>(false, "The hashdb at path '"
                                      + hashdb_dir + "' is not compatible.");
     }
@@ -155,7 +110,7 @@ struct hashdb_settings_t {
 
 
   static std::pair<bool, std::string> write_settings(
-          const std::string& hashdb_dir, const hashdb_settings_t& settings) {
+          const std::string& hashdb_dir, const hashdb::settings_t& settings) {
 
     // calculate the settings filename
     std::string filename = hashdb_dir + "/settings.json";
@@ -178,17 +133,12 @@ struct hashdb_settings_t {
     if (!out.is_open()) {
       return std::pair<bool, std::string>(false, std::string(strerror(errno)));
     }
-      
-    out << settings.settings_string() << "\n";
+
+    out << settings.settings_string() << "}\n";
     out.close();
+
     return std::pair<bool, std::string>(true, "");
   }
-};
-
-inline std::ostream& operator<<(std::ostream& os,
-                         const struct hashdb_settings_t& settings) {
-  os << settings.settings_string();
-  return os;
 }
 
 #endif

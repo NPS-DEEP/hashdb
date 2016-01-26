@@ -47,8 +47,8 @@ class lmdb_source_name_manager_t {
   typedef std::pair<std::string, std::string> source_name_t;
   typedef std::set<source_name_t> source_names_t;
 
-  std::string hashdb_dir;
-  file_mode_type_t file_mode;
+  const std::string hashdb_dir;
+  const file_mode_type_t file_mode;
   source_names_t* source_names;
   MDB_env* env;
 #ifdef HAVE_PTHREAD

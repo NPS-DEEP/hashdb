@@ -25,7 +25,6 @@
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
 #include "file_modes.h"
-#include "hashdb_settings.hpp"
 #include "lmdb.h"
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
@@ -50,11 +49,11 @@ static uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
 class lmdb_hash_manager_t {
 
   private:
-  std::string hashdb_dir;
-  file_mode_type_t file_mode;
-  int prefix_bytes;
-  uint8_t prefix_mask;
-  int suffix_bytes;
+  const std::string hashdb_dir;
+  const file_mode_type_t file_mode;
+  const int prefix_bytes;
+  const uint8_t prefix_mask;
+  const int suffix_bytes;
   std::set<std::string>* suffix_strings;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
@@ -163,29 +162,17 @@ class lmdb_hash_manager_t {
 
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
-                      const file_mode_type_t p_file_mode) :
+                      const file_mode_type_t p_file_mode,
+                      const uint32_t p_hash_prefix_bits,
+                      const uint32_t p_hash_suffix_bytes) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       prefix_bytes(0),
-       prefix_mask(0),
-       suffix_bytes(0),
+       prefix_bytes((p_hash_prefix_bits + 7) / 8),
+       prefix_mask(masks[p_hash_prefix_bits % 8]),
+       suffix_bytes(p_hash_suffix_bytes),
        suffix_strings(new(std::set<std::string>)),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)),
        M() {
-
-    // read settings
-    hashdb_settings_t settings;
-    std::pair<bool, std::string> pair =
-                hashdb_settings_t::read_settings(hashdb_dir, settings);
-
-    // eror if settings is not initialized
-    if (pair.first == false) {
-      std::cerr << pair.second << "\n";
-      assert(0); // higher checking should have caught this.
-    }
-    prefix_bytes = (settings.hash_prefix_bits + 7) / 8;
-    prefix_mask = masks[settings.hash_prefix_bits % 8];
-    suffix_bytes = settings.hash_suffix_bytes;
 
     MUTEX_INIT(&M);
   }

@@ -61,14 +61,42 @@ namespace hashdb {
   const char* version();
 
   // ************************************************************
-  // misc support interfaces
+  // settings
   // ************************************************************
   /**
-   * Return true and "" if hashdb is valid, false and reason if not.
+   * The current version of the hashdb data store.
    */
-  std::pair<bool, std::string> is_valid_hashdb(
-                                      const std::string& hashdb_dir);
+  const uint32_t CURRENT_SETTINGS_VERSION = 3;
 
+  /**
+   * Provides hashdb settings.
+   *
+   * Attributes:
+   *   settings_version - The version of the settings record
+   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
+   *     align to this.
+   *   block_size - Size, in bytes, of data blocks.
+   *   max_id_offset_pairs - The maximum number of source ID, source file
+   *     offset pairs to store for a single hash value.
+   *   hash_prefix_bits - The number of hash prefix bits to use as the
+   *     key in the optimized hash storage.
+   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
+   *     value in the optimized hash storage.
+   */
+  struct settings_t {
+    uint32_t settings_version;
+    uint32_t sector_size;
+    uint32_t block_size;
+    uint32_t max_id_offset_pairs;
+    uint32_t hash_prefix_bits;
+    uint32_t hash_suffix_bytes;
+    settings_t();
+    std::string settings_string() const;
+  };
+
+  // ************************************************************
+  // misc support interfaces
+  // ************************************************************
   /**
    * Create a new hashdb.
    * Return true and "" if hashdb is created, false and reason if not.
@@ -78,15 +106,7 @@ namespace hashdb {
    * Parameters:
    *   hashdb_dir - Path to the database to create.  The path must not
    *     exist yet.
-   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
-   *     align to this.
-   *   block_size - Size, in bytes, of data blocks.
-   *   max_id_offset_pairs - The maximum number of source ID, source file
-   *     offset pairs to store for a single hash value.
-   *   hash_prefix_bits - The number of hash prefix bits to use as the
-   *     key in the optimized hash storage.
-   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
-   *     value in the optimized hash storage.
+   *   settings - The hashdb settings.
    *   command_string - String to put into the new hashdb log.
    *
    * Returns tuple:
@@ -94,11 +114,7 @@ namespace hashdb {
    */
   std::pair<bool, std::string> create_hashdb(
                      const std::string& hashdb_dir,
-                     const uint32_t sector_size,
-                     const uint32_t block_size,
-                     const uint32_t max_id_offset_pairs,
-                     const uint32_t hash_prefix_bits,
-                     const uint32_t hash_suffix_bytes,
+                     const hashdb::settings_t& settings,
                      const std::string& command_string);
 
   /**
@@ -108,26 +124,14 @@ namespace hashdb {
    *
    * Parameters:
    *   hashdb_dir - Path to the database to obtain the settings of.
-   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
-   *     align to this.
-   *   block_size - Size, in bytes, of data blocks.
-   *   max_id_offset_pairs - The maximum number of source ID, source file
-   *     offset pairs to store for a single hash value.
-   *   hash_prefix_bits - The number of hash prefix bits to use as the
-   *     key in the optimized hash storage.
-   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
-   *     value in the optimized hash storage.
+   *   settings - The hashdb settings.
    *
    * Returns tuple:
    *   True and "" if settings were retrieved, false and reason if not.
    */
-  std::pair<bool, std::string> hashdb_settings(
+  std::pair<bool, std::string> read_settings(
                      const std::string& hashdb_dir,
-                     uint32_t& sector_size,
-                     uint32_t& block_size,
-                     uint32_t& max_id_offset_pairs,
-                     uint32_t& hash_prefix_bits,
-                     uint32_t& hash_suffix_bytes);
+                     hashdb::settings_t& settings);
 
   /**
    * Print environment information to the stream.  Specifically, print
