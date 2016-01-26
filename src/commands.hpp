@@ -352,6 +352,9 @@ namespace commands {
                         const std::string& hex_block_hash,
                         const std::string& cmd) {
 
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
     // get the binary hash
     std::string binary_hash = hex_to_bin(hex_block_hash);
 
@@ -383,6 +386,9 @@ namespace commands {
   static void size(const std::string& hashdb_dir,
                    const std::string& cmd) {
 
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
     // open DB
     hashdb::scan_manager_t manager(hashdb_dir);
 
@@ -406,6 +412,9 @@ namespace commands {
   // histogram
   static void histogram(const std::string& hashdb_dir,
                         const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
     // open DB
     hashdb::scan_manager_t manager(hashdb_dir);
@@ -496,6 +505,9 @@ namespace commands {
                          const std::string& number_string,
                          const std::string& cmd) {
 
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
     // convert duplicates string to number
     uint32_t number = atoi(number_string.c_str());
 
@@ -553,6 +565,9 @@ namespace commands {
   static void hash_table(const std::string& hashdb_dir,
                          const std::string& hex_file_hash,
                          const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
     // open DB
     hashdb::scan_manager_t manager(hashdb_dir);
@@ -612,6 +627,9 @@ namespace commands {
                          const std::string& count_string,
                          const std::string& cmd) {
 
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
 
@@ -650,6 +668,9 @@ namespace commands {
   static void scan_random(const std::string& hashdb_dir,
                           const std::string& count_string,
                           const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
