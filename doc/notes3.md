@@ -91,7 +91,7 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 * `pair(bool, binary_hash) hash_next(last_binary_hash)`
 * `pair(bool, source_id) source_begin()`
 * `pair(bool, source_id) source_next(last_source_id)`
-* `string size()` - return sizes of LMDB databases
+* `string sizes()` - return sizes of LMDB databases
 * `size_t size()` - return number of unique hashes in hash_data
 
 ### Functions

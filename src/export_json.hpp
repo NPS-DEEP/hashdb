@@ -19,20 +19,20 @@
 
 /**
  * \file
- * Export data in JSON format.  Line types are one of:
- *   "block_hash", "filesize", "filename".
- *
- * Block hash data:
- *   {"block_hash":"a7df...", "file_hash":"b9e7...", "file_offset":4096,
- *   "low_entropy_label":"W", "entropy":8, "block_label":"txt"}
+ * Export data in JSON format.  Lines are one of:
+ *   source data, block hash data, or comment.
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "low_entropy_count":4}
+ *   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+ *   "filename":"filename1"}]}
  *
- * Source name:
- *   {"file_hash":"b9e7...", "repository_name":"repository1",
- *   "filename":"filename1.dat"}
+ * Block hash data:
+ *   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
+ *   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+ *
+ * Comment line:
+ *   Comment lines start with #.
  */
 
 #ifndef EXPORT_JSON_HPP
@@ -57,13 +57,10 @@ class export_json_t {
 
   // state
   const std::string& hashdb_dir;
-  const std::string& json_file;
-  const std::string& cmd;
 
   // resources
   hashdb::scan_manager_t manager;
-  std::ofstream out;
-  progress_tracker_t progress_tracker;
+  progress_tracker_t progress_tracker; // just track hash DB progress
 
   // do not allow these
   export_json_t();
@@ -71,26 +68,17 @@ class export_json_t {
   export_json_t& operator=(const export_json_t&);
 
   // private, used by write()
-  export_json_t(const std::string& p_hashdb_dir,
-                const std::string& p_json_file,
-                const std::string& p_cmd) :
+  export_json_t(const std::string& p_hashdb_dir) :
         hashdb_dir(p_hashdb_dir),
-        json_file(p_json_file),
-        cmd(p_cmd),
         manager(hashdb_dir),
-        out(json_file),
-        progress_tracker(hashdb_dir, 0) {
-  }
-
-  ~export_json_t() {
-    out.close();
+        progress_tracker(hashdb_dir, manager.size()) {
   }
 
   // Source data:
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
   //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
   //   "filename":"filename1"}]}
-  void write_sources() {
+  void write_source_data(std::ostream& os) {
 
     // source fields
     std::string file_binary_hash;
@@ -105,27 +93,27 @@ class export_json_t {
       manager.find_source_data(pair.second, file_binary_hash, filesize,
                                file_type, low_entropy_count);
       std::string file_hash = bin_to_hex(file_binary_hash);
-      std::cout << "{\"file_hash\":\"" << file_hash
-                << "\",\"filesize\":" << filesize
-                << ",\"file_type\":\"" << file_type
-                << "\",\"low_entropy_count\":" << low_entropy_count
-                ;
+      os << "{\"file_hash\":\"" << file_hash
+         << "\",\"filesize\":" << filesize
+         << ",\"file_type\":\"" << file_type
+         << "\",\"low_entropy_count\":" << low_entropy_count
+         ;
 
       // source names
       manager.find_source_names(pair.second, *source_names);
       hashdb::source_names_t::const_iterator it;
       int i=0;
-      std::cout << ",\"names\":[{";
+      os << ",\"names\":[{";
       for (it = source_names->begin(); it != source_names->end(); ++it, ++i) {
         if (i != 0) {
           // no comma before first pair
-          std::cout << ",";
+          os << ",";
         }
-        std::cout << "\"repository_name\":\"" << it->first
-                  << "\",\"filename\":\"" << it->second
-                  << "\"";
+        os << "\"repository_name\":\"" << it->first
+           << "\",\"filename\":\"" << it->second
+           << "\"";
       }
-      std::cout << "}]}";
+      os << "}]}\n";
 
       // next
       pair = manager.source_next(pair.second);
@@ -137,7 +125,7 @@ class export_json_t {
   // Block hash data:
   //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
   //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
-  void write_hashes() {
+  void write_block_hash_data(std::ostream& os) {
 
     // hash fields
     std::string binary_hash;
@@ -160,11 +148,11 @@ class export_json_t {
       manager.find_hash(binary_hash, low_entropy_label, entropy, block_label,
                         *id_offset_pairs);
 
-      std::cout << "{\"block_hash\":\"" << bin_to_hex(binary_hash)
-                << "\",\"low_entropy_label\":\"" << low_entropy_label
-                << "\",\"entropy\":" << entropy
-                << ",\"block_label\":\"" << block_label
-                << "\"source_offset_pairs\":[";
+      os << "{\"block_hash\":\"" << bin_to_hex(binary_hash)
+         << "\",\"low_entropy_label\":\"" << low_entropy_label
+         << "\",\"entropy\":" << entropy
+         << ",\"block_label\":\"" << block_label
+         << "\"source_offset_pairs\":[";
 
       int i=0;
       hashdb::id_offset_pairs_t::const_iterator it;
@@ -172,7 +160,7 @@ class export_json_t {
                                                             ++it, ++i) {
         if (i != 0) {
           // no comma before first pair
-          std::cout << ",";
+          os << ",";
         }
 
         // get file hash
@@ -180,12 +168,13 @@ class export_json_t {
                                  file_type, low_entropy_count);
 
         // source, offset pair
-        std::cout << "\"" << bin_to_hex(file_binary_hash);
-        std::cout << "\"," << it->second;
+        os << "\"" << bin_to_hex(file_binary_hash)
+           << "\"," << it->second;
       }
-      std::cout << "]}";
+      os << "]}";
 
       // next
+      progress_tracker.track();
       pair = manager.hash_next(pair.second);
     }
 
@@ -194,40 +183,23 @@ class export_json_t {
 
   public:
 
-  // read JSON file
-  static std::pair<bool, std::string> write(
-                     const std::string& p_hashdb_dir,
-                     const std::string& p_json_file,
-                     const std::string& p_cmd) {
-
-    // validate hashdb_dir path
-    std::pair<bool, std::string> pair;
-    hashdb::settings_t settings;
-    pair = hashdb::read_settings(p_hashdb_dir, settings);
-    if (pair.first == false) {
-      return pair;
-    }
-
-    // validate ability to open the JSON file for writing
-    std::ofstream p_out(p_json_file.c_str());
-    if (!p_out.is_open()) {
-      std::stringstream ss;
-      ss << "Cannot open " << p_json_file << ": " << strerror(errno);
-      return std::pair<bool, std::string>(false, ss.str());
-    }
-    p_out.close();
+  // write JSON to stream
+  static void write(const std::string& p_hashdb_dir,
+                    const std::string& cmd,
+                    std::ostream& os) {
 
     // create the writer
-    export_json_t writer(p_hashdb_dir, p_json_file, p_cmd);
+    export_json_t writer(p_hashdb_dir);
+
+    // write cmd
+    os << "# " << cmd << "\n"
+       << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // write source data
-    writer.write_sources();
+    writer.write_source_data(os);
 
-    // write hash data
-    writer.write_hashes();
-
-    // done
-    return std::pair<bool, std::string>(true, "");
+    // write block hash data
+    writer.write_block_hash_data(os);
   }
 };
 

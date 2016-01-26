@@ -61,33 +61,9 @@
 #include "lmdb_source_name_manager.hpp"
 #include "logger.hpp"
 #include "lmdb_changes.hpp"
+#include "escape_json.hpp"
 #include "crc32.h"      // for scan_expanded
 #include "to_hex.hpp"      // for scan_expanded
-
-/**
- * Timestamp helper to get valid json output.
- */
-// taken from
-// http://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c
-static std::string escape_json(const std::string& input) {
-  std::ostringstream ss;
-  //for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
-  //C++98/03:
-  for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-    switch (*iter) {
-      case '\\': ss << "\\\\"; break;
-      case '"': ss << "\\\""; break;
-      case '/': ss << "\\/"; break;
-      case '\b': ss << "\\b"; break;
-      case '\f': ss << "\\f"; break;
-      case '\n': ss << "\\n"; break;
-      case '\r': ss << "\\r"; break;
-      case '\t': ss << "\\t"; break;
-      default: ss << *iter; break;
-    }
-  }
-  return ss.str();
-}
 
 // helper for producing expanded source for a source ID
 static void provide_source_information(const hashdb::scan_manager_t& manager,
@@ -129,8 +105,8 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
     }
 
     // provide name pair
-    ss << "{\"repository_name\":\"" << escape_json(it->first)
-       << "\",\"filename\":\"" << escape_json(it->second)
+    ss << "{\"repository_name\":\"" << hashdb::escape_json(it->first)
+       << "\",\"filename\":\"" << hashdb::escape_json(it->second)
        << "\"}";
   }
 
@@ -513,14 +489,6 @@ namespace hashdb {
     }
   }
 
-  void scan_manager_t::find_expanded_source(const uint64_t source_id,
-                                            std::string& expanded_text) const {
-    std::stringstream* ss = new std::stringstream;
-    provide_source_information(*this, source_id, *ss);
-    expanded_text = ss->str();
-    delete ss;
-  }
-
   void scan_manager_t::find_source_data(const uint64_t source_id,
                         std::string& file_binary_hash,
                         uint64_t& filesize,
@@ -624,7 +592,7 @@ namespace hashdb {
 
     // return the named timestamp
     std::stringstream ss;
-    ss << "{\"name\":\"" << escape_json(name) << "\""
+    ss << "{\"name\":\"" << hashdb::escape_json(name) << "\""
        << ", \"delta\":" << delta
        << ", \"total\":" << total_time << "}"
        << "\n";

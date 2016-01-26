@@ -74,6 +74,17 @@ static std::pair<bool, std::string> create_if_new(
   return pair;
 }
 
+// require hashdb_dir else fail
+static void require_hashdb_dir(const std::string& hashdb_dir) {
+  std::pair<bool, std::string> pair;
+  hashdb::settings_t settings;
+  pair = hashdb::read_settings(hashdb_dir, settings);
+  if (pair.first == false) {
+    std::cout << "Error: " << pair.second << "\n";
+    exit(1);
+  }
+}
+
 static void print_header(const std::string& command_id,
                          const std::string& cmd) {
   std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
@@ -134,14 +145,23 @@ namespace commands {
                           const std::string& json_file,
                           const std::string& cmd) {
 
-    std::pair<bool, std::string> pair = import_json_t::read(
-                                               hashdb_dir, json_file, cmd);
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
-    if (pair.first == true) {
-      std::cout << "Import completed.\n";
-    } else {
-      std::cout << "Error: " << pair.second << "\n";
+    // open the JSON file for reading
+    std::ifstream in(json_file.c_str());
+    if (!in.is_open()) {
+      std::cout << "Error: Cannot open " << json_file
+                << ": " << strerror(errno) << "\n";
+      exit(1);
     }
+
+    // import the hashdb
+    import_json_t::read(hashdb_dir, cmd, in);
+
+    // done
+    in.close();
+    std::cout << "Import completed.\n";
   }
 
   // export_json
@@ -149,14 +169,23 @@ namespace commands {
                           const std::string& json_file,
                           const std::string& cmd) {
 
-    std::pair<bool, std::string> pair = export_json_t::write(
-                                               hashdb_dir, json_file, cmd);
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
-    if (pair.first == true) {
-      std::cout << "Export completed.\n";
-    } else {
-      std::cout << "Error: " << pair.second << "\n";
+    // open the JSON file for writing
+    std::ofstream out(json_file.c_str());
+    if (!out.is_open()) {
+      std::cout << "Error: Cannot open " << json_file
+                << ": " << strerror(errno) << "\n";
+      exit(1);
     }
+
+    // export the hashdb
+    export_json_t::write(hashdb_dir, cmd, out);
+
+    // done
+    out.close();
+    std::cout << "Export completed.\n";
   }
 
   // ************************************************************
@@ -347,33 +376,23 @@ namespace commands {
                    const std::string& cmd) {
 
     // open DB
-    hashdb::scan_manager_t scan_manager(hashdb_dir);
+    hashdb::scan_manager_t manager(hashdb_dir);
 
-    std::cout << scan_manager.sizes() << std::endl;
+    std::cout << manager.sizes() << std::endl;
   }
 
   // sources
   static void sources(const std::string& hashdb_dir,
                       const std::string& cmd) {
 
-    // open DB
-    hashdb::scan_manager_t scan_manager(hashdb_dir);
-    std::pair<bool, uint64_t> pair = scan_manager.source_begin();
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
 
-    // note if the DB is empty
-    if (pair.first == false) {
-      std::cout << "There are no sources in this database.\n";
-      return;
-    }
+    // open DB
+    hashdb::scan_manager_t manager(hashdb_dir);
 
     // print the sources
-    std::string* expanded_text = new std::string;
-    while (pair.first == true) {
-      scan_manager.find_expanded_source(pair.second, *expanded_text);
-      std::cout << *expanded_text << std::endl;
-      pair = scan_manager.source_next(pair.second);
-    }
-    delete expanded_text;
+    export_json_t::write(hashdb_dir, cmd, std::cout);
   }
 
   // histogram

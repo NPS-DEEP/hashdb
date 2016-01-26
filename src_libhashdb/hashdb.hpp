@@ -349,24 +349,6 @@ namespace hashdb {
                    id_offset_pairs_t& id_offset_pairs) const;
 
     /**
-     * Obtain expanded source data and source names for this source ID.
-     * It is an error if the source ID does not exist.
-     *
-     * Parameters:
-     *   source_id - The source ID of the source to obtain expanded
-     *     information from.
-     *   expanded_text - Text about the source corresponding to this source ID.
-     *
-     *     Text is in JSON format.  Example abbreviated syntax:
-     *     {"source_id":1, "file_hash":"f7035a...", "filesize", 800,
-     *       "file_type":"txt", "low_entropy_count":8,
-     *       "names":[{"repository_name":"repository1",
-     *       "filename":"filename1"}]}
-     */
-    void find_expanded_source(const uint64_t source_id,
-                              std::string& expanded_text) const;
-
-    /**
      * Find source data for the given source ID, fail on invalid ID.
      *
      * Parameters:

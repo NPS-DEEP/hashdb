@@ -19,21 +19,20 @@
 
 /**
  * \file
- * Import from data in JSON format.  Input types are:
- *
- * Block hash data:
- *   {"block_hash":"a7df...", "file_hash":"b9e7...", "file_offset":4096,
- *   "low_entropy_label":"W", "entropy":8, "block_label":"txt"}
+ * Import from data in JSON format.  Lines are one of:
+ *   source data, block hash data, or comment.
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "low_entropy_count":4}
+ *   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+ *   "filename":"filename1"}]}
  *
- * Source name:
- *   {"file_hash":"b9e7...", "repository_name":"repository1",
- *   "filename":"filename1.dat"}
+ * Block hash data:
+ *   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
+ *   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
  *
- * Identify type by field, one of: "block_hash", "filesize", or "filename".
+ * Comment line:
+ *   Comment lines start with #.
  */
 
 #ifndef IMPORT_JSON_HPP
@@ -58,13 +57,10 @@ class import_json_t {
 
   // state
   const std::string& hashdb_dir;
-  const std::string& json_file;
-  const std::string& cmd;
   size_t line_number;
 
   // resources
   hashdb::import_manager_t manager;
-  std::ifstream in;
   progress_tracker_t progress_tracker;
 
   // do not allow these
@@ -74,22 +70,14 @@ class import_json_t {
 
   // private, used by read()
   import_json_t(const std::string& p_hashdb_dir,
-                const std::string& p_json_file,
-                const std::string& p_cmd) :
+                const std::string& cmd) :
         hashdb_dir(p_hashdb_dir),
-        json_file(p_json_file),
-        cmd(p_cmd),
         line_number(0),
         manager(hashdb_dir, cmd),
-        in(json_file),
         progress_tracker(hashdb_dir, 0) {
   }
 
-  ~import_json_t() {
-    in.close();
-  }
-
-  void show_bad_line(const std::string& line) {
+  void report_invalid_line(const std::string& line) {
     std::cerr << "Invalid line " << line_number << ": '" << line << "'\n";
   }
 
@@ -97,13 +85,13 @@ class import_json_t {
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
   //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
   //   "filename":"filename1"}]}
-  void add_source_data(const rapidjson::Document& document,
-                       const std::string& line) {
+  void read_source_data(const rapidjson::Document& document,
+                        const std::string& line) {
 
     // file_hash
     if (!document.HasMember("file_hash") ||
                   !document["file_hash"].IsString()) {
-      show_bad_line(line);
+      report_invalid_line(line);
       return;
     }
     std::string file_hash = document["file_hash"].GetString();
@@ -111,7 +99,7 @@ class import_json_t {
     // filesize
     if (!document.HasMember("filesize") ||
                   !document["filesize"].IsUint64()) {
-      show_bad_line(line);
+      report_invalid_line(line);
       return;
     }
     uint64_t filesize = document["filesize"].GetUint64();
@@ -139,7 +127,7 @@ class import_json_t {
     // names:[]
     if (!document.HasMember("names") ||
                   !document["names"].IsArray()) {
-      show_bad_line(line);
+      report_invalid_line(line);
       return;
     }
     const rapidjson::Value& json_names = document["names"];
@@ -148,7 +136,7 @@ class import_json_t {
       // repository_name
       if (!json_names[i].HasMember("repository_name") ||
                     !json_names[i]["repository_name"].IsString()) {
-        show_bad_line(line);
+        report_invalid_line(line);
         return;
       }
       std::string repository_name =
@@ -157,7 +145,7 @@ class import_json_t {
       // filename
       if (!json_names[i].HasMember("filename") ||
                     !json_names[i]["filename"].IsString()) {
-        show_bad_line(line);
+        report_invalid_line(line);
         return;
       }
       std::string filename = json_names[i]["filename"].GetString();
@@ -172,13 +160,13 @@ class import_json_t {
   //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
 
 
-  void add_hash_data(const rapidjson::Document& document,
-                     const std::string& line) {
+  void read_block_hash_data(const rapidjson::Document& document,
+                            const std::string& line) {
 
     // block_hash
     if (!document.HasMember("block_hash") ||
                   !document["block_hash"].IsString()) {
-      show_bad_line(line);
+      report_invalid_line(line);
       return;
     }
     std::string binary_hash = hex_to_bin(document["block_hash"].GetString());
@@ -201,10 +189,10 @@ class import_json_t {
                   document["block_label"].IsString()) ?
                      document["block_label"].GetString() : "";
 
-    // source_id_pairs:[]
-    if (!document.HasMember("source_id_pairs") ||
-                  !document["source_id_pairs"].IsArray()) {
-      show_bad_line(line);
+    // source_offset_pairs:[]
+    if (!document.HasMember("source_offset_pairs") ||
+                  !document["source_offset_pairs"].IsArray()) {
+      report_invalid_line(line);
       return;
     }
     const rapidjson::Value& json_pairs = document["source_offset_pairs"];
@@ -212,7 +200,7 @@ class import_json_t {
 
       // source hash
       if (!json_pairs[i].IsString()) {
-        show_bad_line(line);
+        report_invalid_line(line);
         return;
       }
       std::string file_binary_hash = hex_to_bin(json_pairs[i].GetString());
@@ -220,12 +208,12 @@ class import_json_t {
       // file_offset
       if (!document.HasMember("file_offset") ||
                     !document["file_offset"].IsUint64()) {
-        show_bad_line(line);
+        report_invalid_line(line);
         return;
       }
       uint64_t file_offset = document["file_offset"].GetUint64();
 
-      // get source ID or new source ID
+      // get source ID or new source ID from file hash
       std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
                                                         file_binary_hash);
 
@@ -235,7 +223,7 @@ class import_json_t {
     }
   }
 
-  void read_lines() {
+  void read_lines(std::istream& in) {
     std::string line;
     while(getline(in, line)) {
       ++line_number;
@@ -254,17 +242,17 @@ class import_json_t {
       rapidjson::Document document;
       if (document.Parse(line.c_str()).HasParseError() ||
           !document.IsObject()) {
-        show_bad_line(line);
+        report_invalid_line(line);
         continue;
       }
 
-      // process block hash data
+      // import JSON
       if (document.HasMember("file_hash")) {
-        add_source_data(document, line);
+        read_source_data(document, line);
       } else if (document.HasMember("block_hash")) {
-        add_hash_data(document, line);
+        read_block_hash_data(document, line);
       } else {
-        show_bad_line(line);
+        report_invalid_line(line);
       }
     }
   }
@@ -272,36 +260,15 @@ class import_json_t {
   public:
 
   // read JSON file
-  static std::pair<bool, std::string> read(
-                     const std::string& p_hashdb_dir,
-                     const std::string& p_json_file,
-                     const std::string& p_cmd) {
-
-    // validate hashdb_dir path
-    std::pair<bool, std::string> pair;
-    hashdb::settings_t settings;
-    pair = hashdb::read_settings(p_hashdb_dir, settings);
-    if (pair.first == false) {
-      return pair;
-    }
-
-    // validate ability to open the JSON file
-    std::ifstream p_in(p_json_file.c_str());
-    if (!p_in.is_open()) {
-      std::stringstream ss;
-      ss << "Cannot open " << p_json_file << ": " << strerror(errno);
-      return std::pair<bool, std::string>(false, ss.str());
-    }
-    p_in.close();
+  static void read(const std::string& hashdb_dir,
+                   const std::string& cmd,
+                   std::istream& in) {
 
     // create the reader
-    import_json_t reader(p_hashdb_dir, p_json_file, p_cmd);
+    import_json_t reader(hashdb_dir, cmd);
 
     // read the lines
-    reader.read_lines();
-
-    // done
-    return std::pair<bool, std::string>(true, "");
+    reader.read_lines(in);
   }
 };
 
