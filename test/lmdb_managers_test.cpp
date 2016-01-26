@@ -34,7 +34,6 @@
 #include "lmdb_source_name_manager.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_changes.hpp"
-#include "hashdb_settings.hpp"
 #include "../src_libhashdb/hashdb.hpp"
 #include "../src/hex_helper.hpp"
 #include "directory_helper.hpp"
@@ -78,20 +77,12 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
 // lmdb_hash_manager
 // ************************************************************
 void lmdb_hash_manager_create() {
-
-  // write default settings
-  make_new_hashdb_dir(hashdb_dir);
-  hashdb_settings_t settings(3, 512, 512, 100000, 8*8, 8);
-  std::pair<bool, std::string> settings_pair;
-  settings_pair = hashdb_settings_t::write_settings(hashdb_dir, settings);
-  TEST_EQ(settings_pair.first, true);
-
   // create new manager
-  lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+  lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 28, 3);
 }
 
 void lmdb_hash_manager_write() {
-  lmdb_hash_manager_t manager(hashdb_dir, RW_MODIFY);
+  lmdb_hash_manager_t manager(hashdb_dir, RW_MODIFY, 28, 3);
   lmdb_changes_t changes;
 
   // find when empty
@@ -129,7 +120,7 @@ void lmdb_hash_manager_write() {
 }
 
 void lmdb_hash_manager_read() {
-  lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY);
+  lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY, 28, 3);
 
   // find
   TEST_EQ(manager.find(binary_0), true);
@@ -154,9 +145,7 @@ void lmdb_hash_manager_settings() {
   {
   } { // 1 prefix bit, no suffix
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,1,0));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
     manager.insert(      hex_to_bin("ffffffffffffffffffffffffffffffff"), changes);
 
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),false);
@@ -166,17 +155,13 @@ void lmdb_hash_manager_settings() {
 
   } { // demonstrate that the db is cleared
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,1,0));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
     TEST_EQ(manager.size(), 0);
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),false);
 
   } { // 1 prefix bit, no suffix, demonstrate adding 0 instead of 1
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,1,0));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
     manager.insert(      hex_to_bin("00000000000000000000000000000000"), changes);
 
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),true);
@@ -186,9 +171,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 2 prefix bits, no suffix
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,2,0));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 2, 0);
 
     manager.insert(      hex_to_bin("ffffffffffffffffffffffffffffffff"), changes);
     TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),true);
@@ -199,9 +182,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 1 prefix bit, 1 suffix byte
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,1,1));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 1);
 
     manager.insert(      hex_to_bin("ffffffffffffffffffffffffffffffff"), changes);
 
@@ -213,9 +194,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 9 prefix bits, 2 suffix bytes
     make_new_hashdb_dir(hashdb_dir);
-    pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                             hashdb_settings_t(3,0,0,0,9,2));
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW);
+    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 9, 2);
 
     manager.insert(      hex_to_bin("ffffffffffffffffffffffffffffffff"), changes);
     TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),true);
@@ -240,14 +219,8 @@ void lmdb_hash_data_manager() {
   id_offset_pairs_t id_offset_pairs;
   lmdb_changes_t changes;
 
-  // write default settings
-  make_new_hashdb_dir(hashdb_dir);
-  hashdb_settings_t settings(3, 512, 512, 100000, 8*8, 8);
-  settings_pair = hashdb_settings_t::write_settings(hashdb_dir, settings);
-  TEST_EQ(settings_pair.first, true);
-
   // create new manager
-  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW);
+  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW, 512, 100000);
 
   TEST_EQ(id_offset_pairs.size(), 0);
 
@@ -322,12 +295,9 @@ void lmdb_hash_data_manager() {
 void lmdb_hash_data_manager_settings() {
   make_new_hashdb_dir(hashdb_dir);
   lmdb_changes_t changes;
-  std::pair<bool, std::string> pair;
-  pair = hashdb_settings_t::write_settings(hashdb_dir,
-                                           hashdb_settings_t(3,1,1,2,0,0));
 
   // create new manager
-  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW);
+  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW, 1, 2);
 
   // test sector size 1 and duplicates limit 2
   TEST_EQ(changes.hash_data_inserted, 0);
