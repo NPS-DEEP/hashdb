@@ -77,8 +77,11 @@ class import_json_t {
         progress_tracker(hashdb_dir, 0) {
   }
 
-  void report_invalid_line(const std::string& line) {
-    std::cerr << "Invalid line " << line_number << ": '" << line << "'\n";
+  void report_invalid_line(const std::string& field,
+                           const std::string& line) const {
+    std::cerr << "Invalid line " << line_number
+              << " field: " << field
+              << ": '" << line << "'\n";
   }
 
   // Source data:
@@ -91,7 +94,7 @@ class import_json_t {
     // file_hash
     if (!document.HasMember("file_hash") ||
                   !document["file_hash"].IsString()) {
-      report_invalid_line(line);
+      report_invalid_line("source data file_hash", line);
       return;
     }
     std::string file_hash = document["file_hash"].GetString();
@@ -99,7 +102,7 @@ class import_json_t {
     // filesize
     if (!document.HasMember("filesize") ||
                   !document["filesize"].IsUint64()) {
-      report_invalid_line(line);
+      report_invalid_line("source data filesize", line);
       return;
     }
     uint64_t filesize = document["filesize"].GetUint64();
@@ -127,7 +130,7 @@ class import_json_t {
     // names:[]
     if (!document.HasMember("names") ||
                   !document["names"].IsArray()) {
-      report_invalid_line(line);
+      report_invalid_line("source data names", line);
       return;
     }
     const rapidjson::Value& json_names = document["names"];
@@ -136,7 +139,7 @@ class import_json_t {
       // repository_name
       if (!json_names[i].HasMember("repository_name") ||
                     !json_names[i]["repository_name"].IsString()) {
-        report_invalid_line(line);
+        report_invalid_line("source data repository_name", line);
         return;
       }
       std::string repository_name =
@@ -145,7 +148,7 @@ class import_json_t {
       // filename
       if (!json_names[i].HasMember("filename") ||
                     !json_names[i]["filename"].IsString()) {
-        report_invalid_line(line);
+        report_invalid_line("source data filename", line);
         return;
       }
       std::string filename = json_names[i]["filename"].GetString();
@@ -166,7 +169,7 @@ class import_json_t {
     // block_hash
     if (!document.HasMember("block_hash") ||
                   !document["block_hash"].IsString()) {
-      report_invalid_line(line);
+      report_invalid_line("block hash data block_hash", line);
       return;
     }
     std::string binary_hash = hex_to_bin(document["block_hash"].GetString());
@@ -192,7 +195,7 @@ class import_json_t {
     // source_offset_pairs:[]
     if (!document.HasMember("source_offset_pairs") ||
                   !document["source_offset_pairs"].IsArray()) {
-      report_invalid_line(line);
+      report_invalid_line("block hash data source_offset_pairs", line);
       return;
     }
     const rapidjson::Value& json_pairs = document["source_offset_pairs"];
@@ -200,18 +203,19 @@ class import_json_t {
 
       // source hash
       if (!json_pairs[i].IsString()) {
-        report_invalid_line(line);
+        report_invalid_line("block hash data source_offset_pair source hash",
+                            line);
         return;
       }
       std::string file_binary_hash = hex_to_bin(json_pairs[i].GetString());
 
-      // file_offset
-      if (!document.HasMember("file_offset") ||
-                    !document["file_offset"].IsUint64()) {
-        report_invalid_line(line);
+      // file offset
+      if (!json_pairs[i+1].IsUint64()) {
+        report_invalid_line("block hash data source_offset_pair file offset",
+                            line);
         return;
       }
-      uint64_t file_offset = document["file_offset"].GetUint64();
+      uint64_t file_offset = json_pairs[i+1].GetUint64();
 
       // get source ID or new source ID from file hash
       std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
@@ -242,7 +246,7 @@ class import_json_t {
       rapidjson::Document document;
       if (document.Parse(line.c_str()).HasParseError() ||
           !document.IsObject()) {
-        report_invalid_line(line);
+        report_invalid_line("DOM parse error", line);
         continue;
       }
 
@@ -252,7 +256,7 @@ class import_json_t {
       } else if (document.HasMember("block_hash")) {
         read_block_hash_data(document, line);
       } else {
-        report_invalid_line(line);
+        report_invalid_line("no file_hash or block_hash", line);
       }
     }
   }

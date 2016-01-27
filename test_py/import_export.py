@@ -74,5 +74,6 @@ def test_import_json():
 if __name__=="__main__":
     test_import_tab1()
     test_import_tab2()
+    test_import_json()
     print("Test Done.")
 
