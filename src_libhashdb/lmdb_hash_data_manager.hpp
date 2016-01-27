@@ -90,7 +90,7 @@ class lmdb_hash_data_manager_t {
     for (id_offset_pairs_t::const_iterator it = pairs.begin();
                                          it != pairs.end(); ++it) {
       p = lmdb_helper::encode_uint64_t(it->first, p);
-      // require offset to be valid
+      // higher layer must already require offset to be valid
       if (it->second % sector_size != 0) {
         assert(0);
       }
@@ -100,11 +100,17 @@ class lmdb_hash_data_manager_t {
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding label " << low_entropy_label
+    std::cout << "encoding low entropy label " << low_entropy_label
               << " entropy " << entropy
               << " block_label " << block_label
-              << " pairs count " << pairs.size()
-              << "\nto binary data "
+              << " id_offset_pairs size " << pairs.size()
+              << " id_offset_pairs[";
+    for (id_offset_pairs_t::const_iterator it = pairs.begin();
+                                         it != pairs.end(); ++it) {
+      std::cout << "(" << it->first << "," << it->second << ")";
+    }
+
+    std::cout << "]\nto binary data "
               << hashdb::to_hex(encoding_string)
               << " size " << encoding_string.size() << "\n";
 #endif
@@ -144,7 +150,13 @@ class lmdb_hash_data_manager_t {
               << " low_entropy_label " << low_entropy_label
               << " entropy " << entropy 
               << " block_label " << block_label
-              << " id_offset_pairs size " << pairs.size() << "\n";
+              << " id_offset_pairs size " << pairs.size()
+              << " id_offset_pairs[";
+    for (id_offset_pairs_t::const_iterator it = pairs.begin();
+                                         it != pairs.end(); ++it) {
+      std::cout << "(" << it->first << "," << it->second << ")";
+    }
+    std::cout << "]\n";
 #endif
 
     // validate that the decoding was properly consumed
@@ -169,6 +181,12 @@ class lmdb_hash_data_manager_t {
        M() {
 
     MUTEX_INIT(&M);
+
+    // require valid parameters
+    if (sector_size == 0) {
+      std::cerr << "invalid hash data store configuration\n";
+      assert(0);
+    }
   }
 
   ~lmdb_hash_data_manager_t() {
@@ -187,6 +205,12 @@ class lmdb_hash_data_manager_t {
               const uint64_t entropy,
               const std::string& block_label,
               lmdb_changes_t& changes) {
+
+    // require valid binary_hash
+    if (binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
 
     // validate file_offset
     if (file_offset % sector_size != 0) {
@@ -262,7 +286,8 @@ class lmdb_hash_data_manager_t {
       }
 
       // skip if source count is at max source ID offset pairs
-      if (id_offset_pairs->size() >= max_id_offset_pairs) {
+      if (max_id_offset_pairs != 0 &&
+          id_offset_pairs->size() >= max_id_offset_pairs) {
         context.close();
         ++changes.hash_data_not_inserted_max_id_offset_pairs;
         MUTEX_UNLOCK(&M);
@@ -304,6 +329,12 @@ class lmdb_hash_data_manager_t {
             uint64_t& entropy,
             std::string& block_label,
             id_offset_pairs_t& pairs) const {
+
+    // require valid binary_hash
+    if (binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
 
     // get context
     lmdb_context_t context(env, false, false);

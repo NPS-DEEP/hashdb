@@ -218,22 +218,33 @@ void lmdb_hash_data_manager() {
   std::string block_label;
   id_offset_pairs_t id_offset_pairs;
   lmdb_changes_t changes;
+  id_offset_pairs_t::const_iterator it;
 
   // create new manager
   lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW, 512, 100000);
 
   TEST_EQ(id_offset_pairs.size(), 0);
 
-  // insert
+  // binary_0 not there
+  TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
+               id_offset_pairs), false);
+
+  // insert binary_0
   TEST_EQ(manager.insert(binary_0, 1, 512, "lel", 1, "bl", changes), true);
   TEST_EQ(changes.hash_data_inserted, 1);
+
+  // binary_0 there
   TEST_EQ(manager.find(binary_0, low_entropy_label, entropy, block_label,
                id_offset_pairs), true);
   TEST_EQ(low_entropy_label, "lel");
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
+  TEST_EQ(id_offset_pairs.size(), 1);
+  it = id_offset_pairs.begin();
+  TEST_EQ(it->first, 1);
+  TEST_EQ(it->second, 512);
 
-  // not there
+  // binary_1 not there
   TEST_EQ(manager.find(binary_1, low_entropy_label, entropy, block_label,
                id_offset_pairs), false);
 
@@ -247,6 +258,9 @@ void lmdb_hash_data_manager() {
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 1);
+  it = id_offset_pairs.begin();
+  TEST_EQ(it->first, 1);
+  TEST_EQ(it->second, 512);
 
   // invalid file offset
   TEST_EQ(manager.insert(binary_0, 1, 513, "lel", 1, "bl", changes), false);
@@ -262,7 +276,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 2);
-  id_offset_pairs_t::const_iterator it = id_offset_pairs.begin();
+  it = id_offset_pairs.begin();
   TEST_EQ(it->first, 1);
   TEST_EQ(it->second, 512);
   ++it;

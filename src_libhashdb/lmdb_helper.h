@@ -41,7 +41,7 @@
 #include <pthread.h>
 #include <iostream>
 
-//#define DEBUG
+#define DEBUG
 
 namespace lmdb_helper {
 

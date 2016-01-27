@@ -318,6 +318,9 @@ namespace hashdb {
                         const std::string& low_entropy_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
+
+    // insert into hash manager and hash data manager
+    lmdb_hash_manager->insert(binary_hash, *changes);
     return lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
                         low_entropy_label, entropy, block_label, *changes);
   }
@@ -504,8 +507,8 @@ namespace hashdb {
   }
 
   std::pair<bool, uint64_t> scan_manager_t::find_source_id(
-                              const std::string& binary_file_hash) const {
-    return lmdb_source_id_manager->find(binary_file_hash);
+                              const std::string& file_binary_hash) const {
+    return lmdb_source_id_manager->find(file_binary_hash);
   }
 
   std::pair<bool, std::string> scan_manager_t::hash_begin() const {

@@ -151,9 +151,9 @@ class lmdb_hash_manager_t {
     std::string suffix_string = (suffix_start < hash_size) ?
                       binary_hash.substr(suffix_start, suffix_bytes) : "";
 #ifdef DEBUG
-    std::cout << "binary hash " << hashdb::to_hex(binary_hash)
-              << " to '" << hashdb::to_hex(prefix_string)
-              << "', '" << hashdb::to_hex(suffix_string)
+    std::cout << "binary hash '" << hashdb::to_hex(binary_hash)
+              << "' to hash prefix '" << hashdb::to_hex(prefix_string)
+              << "', hash suffix '" << hashdb::to_hex(suffix_string)
               << "'\n";
 #endif
 
@@ -175,6 +175,12 @@ class lmdb_hash_manager_t {
        M() {
 
     MUTEX_INIT(&M);
+
+    // require valid parameters
+    if (prefix_bytes == 0) {
+      std::cerr << "invalid hash store configuration\n";
+      assert(0);
+    }
   }
 
   ~lmdb_hash_manager_t() {
@@ -184,6 +190,12 @@ class lmdb_hash_manager_t {
   }
 
   bool insert(const std::string& binary_hash, lmdb_changes_t& changes) {
+
+    // require valid binary_hash
+    if (binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
 
     MUTEX_LOCK(&M);
 
@@ -277,6 +289,12 @@ class lmdb_hash_manager_t {
    * Find if hash is present.
    */
   bool find(const std::string& binary_hash) const {
+
+    // require valid binary_hash
+    if (binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
 
     // get context
     lmdb_context_t context(env, false, false);

@@ -129,6 +129,13 @@ class lmdb_source_id_manager_t {
    */
   std::pair<bool, uint64_t> insert(const std::string& file_binary_hash,
                                    lmdb_changes_t& changes) {
+
+    // require valid file_binary_hash
+    if (file_binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
+
     MUTEX_LOCK(&M);
 
     // maybe grow the DB
@@ -187,14 +194,20 @@ class lmdb_source_id_manager_t {
   /**
    * Find source ID else false.
    */
-  std::pair<bool, uint64_t> find(const std::string& binary_file_hash) const {
+  std::pair<bool, uint64_t> find(const std::string& file_binary_hash) const {
+
+    // require valid file_binary_hash
+    if (file_binary_hash.size() == 0) {
+      std::cerr << "empty key\n";
+      assert(0);
+    }
 
     // get context
     lmdb_context_t context(env, false, false);
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_file_hash, context.key);
+    lmdb_helper::point_to_string(file_binary_hash, context.key);
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,

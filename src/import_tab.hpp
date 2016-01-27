@@ -114,10 +114,12 @@ class import_tab_t {
     uint64_t source_id = pair.second;
 
     if (pair.first == true) {
-      // source is new so add name and data for it
-      manager.insert_source_name(source_id, repository_name, tab_file);
+      // source is new so add data for it
       manager.insert_source_data(source_id, file_binary_hash, 0, "", 0);
     }
+
+    // add name pair
+    manager.insert_source_name(source_id, repository_name, tab_file);
 
     // add block hash
     manager.insert_hash(block_binary_hash, source_id, file_offset, "", 0, "");

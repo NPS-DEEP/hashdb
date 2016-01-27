@@ -128,7 +128,6 @@ class export_json_t {
   void write_block_hash_data(std::ostream& os) {
 
     // hash fields
-    std::string binary_hash;
     std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
@@ -145,14 +144,14 @@ class export_json_t {
     while (pair.first != false) {
 
       // hash data
-      manager.find_hash(binary_hash, low_entropy_label, entropy, block_label,
+      manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
                         *id_offset_pairs);
 
-      os << "{\"block_hash\":\"" << bin_to_hex(binary_hash)
+      os << "{\"block_hash\":\"" << bin_to_hex(pair.second)
          << "\",\"low_entropy_label\":\"" << low_entropy_label
          << "\",\"entropy\":" << entropy
          << ",\"block_label\":\"" << block_label
-         << "\"source_offset_pairs\":[";
+         << "\",\"source_offset_pairs\":[";
 
       int i=0;
       hashdb::id_offset_pairs_t::const_iterator it;
@@ -171,7 +170,7 @@ class export_json_t {
         os << "\"" << bin_to_hex(file_binary_hash)
            << "\"," << it->second;
       }
-      os << "]}";
+      os << "]}\n";
 
       // next
       progress_tracker.track();
@@ -192,7 +191,7 @@ class export_json_t {
     export_json_t writer(p_hashdb_dir);
 
     // write cmd
-    os << "# " << cmd << "\n"
+    os << "# command: '" << cmd << "'\n"
        << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // write source data

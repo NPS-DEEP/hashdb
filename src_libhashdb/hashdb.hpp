@@ -387,7 +387,7 @@ namespace hashdb {
      *   The source ID associated with the file binary hash else 0.
      */
     std::pair<bool, uint64_t> find_source_id(
-                                const std::string& binary_file_hash) const;
+                                const std::string& file_binary_hash) const;
 
     /**
      * Return the first block hash in the database.

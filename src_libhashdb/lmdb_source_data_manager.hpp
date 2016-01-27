@@ -186,6 +186,7 @@ class lmdb_source_data_manager_t {
               const std::string& file_type,
               const uint64_t low_entropy_count,
               lmdb_changes_t& changes) {
+
     MUTEX_LOCK(&M);
 
     // maybe grow the DB
