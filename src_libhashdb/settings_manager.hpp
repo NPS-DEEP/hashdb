@@ -134,7 +134,7 @@ namespace hashdb {
       return std::pair<bool, std::string>(false, std::string(strerror(errno)));
     }
 
-    out << settings.settings_string() << "}\n";
+    out << settings.settings_string() << "\n";
     out.close();
 
     return std::pair<bool, std::string>(true, "");
