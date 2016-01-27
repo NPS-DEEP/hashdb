@@ -24,7 +24,7 @@ def hashdb(cmd):
         cmd.insert(0, "./src/hashdb.exe")
     else:
         print("hashdb tool not found.  Aborting.\n")
-        exit(1)
+        raise ValueError("hashdb not found")
 
     # run hashdb command
     p = Popen(cmd, stdout=PIPE)
@@ -54,20 +54,52 @@ def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
 
+def _bad_list(a,b):
+    print("a")
+    for line in a:
+        print("'%s'\n" % line)
+    print("\nb")
+    for line in b:
+        print("'%s'\n" % line)
+    raise ValueError("list mismatch")
+
+# length must be the same, but comments may differ
+def lines_equals(a,b):
+    # length differs
+    if len(a) != len(b):
+        _bad_list(a,b)
+    # lines differ
+    for item_a, item_b in zip(a, b):
+        if item_a[0] != '#' and item_b[0] != '#' and \
+                                   item_a.strip() != item_b.strip():
+            print("a '" + item_a + "', b'" + item_b + "'")
+            _bad_list(a,b)
+
 def rm_tempfile(filename):
     if filename[:5] != "temp_":
         # safeguard
         print("aborting, invalid filename:", filename)
-        exit(1)
+        raise ValueError("%s not found." % filename)
     if os.path.exists(filename):
         os.remove(filename)
  
 def rm_tempdir(dirname):
     if dirname[:5] != "temp_":
         # safeguard
-        print("aborting, invalid dirname:", filename)
-        exit(1)
+        print("aborting, invalid dirname:", dirname)
+        raise ValueError("%s not found." % dirname)
     if os.path.exists(dirname):
         # remove existing DB
         shutil.rmtree(dirname, True)
+
+def make_tempfile(filename, lines):
+    if filename[:5] != "temp_":
+        # safeguard
+        print("aborting, invalid filename:", filename)
+        raise ValueError("%s not found." % filename)
+
+    # overwrite file with lines
+    f = open(filename, 'w')
+    for line in lines:
+        f.write("%s\n" % line)
 
