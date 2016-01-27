@@ -70,9 +70,10 @@ def lines_equals(a,b):
         _bad_list(a,b)
     # lines differ
     for item_a, item_b in zip(a, b):
-        if item_a[0] != '#' and item_b[0] != '#' and \
+        if len(item_a) != 0 and len(item_b) != 0 and \
+           item_a[0] != '#' and item_b[0] != '#' and \
                                    item_a.strip() != item_b.strip():
-            print("a '" + item_a + "', b'" + item_b + "'")
+            print("mismatch: a '" + item_a + "', b'" + item_b + "'")
             _bad_list(a,b)
 
 def rm_tempfile(filename):

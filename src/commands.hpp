@@ -28,6 +28,7 @@
 #include "import_tab.hpp"
 #include "import_json.hpp"
 #include "export_json.hpp"
+#include "scan_hashes.hpp"
 #include "add.hpp"
 #include "hex_helper.hpp"
 //#include "expand_manager.hpp"
@@ -342,9 +343,25 @@ namespace commands {
   // ************************************************************
   // scan
   static void scan(const std::string& hashdb_dir,
-                   const std::string& dfxml_file,
+                   const std::string& hashes_file,
                    const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
+    // open the hashes file for reading
+    std::ifstream in(hashes_file.c_str());
+    if (!in.is_open()) {
+      std::cout << "Error: Cannot open " << hashes_file
+                << ": " << strerror(errno) << "\n";
+      exit(1);
+    }
+
+    scan_hashes_t::read(hashdb_dir, cmd, in);
+
+    // done
+    in.close();
+    std::cout << "# scan completed.\n";
   }
 
   // scan_hash

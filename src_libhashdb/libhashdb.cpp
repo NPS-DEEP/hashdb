@@ -86,7 +86,7 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
 
   // provide source data
   ss << "{\"source_id\":" << source_id
-     << "\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
+     << ",\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
      << ",\"filesize\":" << filesize
      << ",\"file_type\":\"" << file_type << "\""
      << ",\"low_entropy_count\":" << low_entropy_count
