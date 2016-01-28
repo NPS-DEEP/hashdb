@@ -259,9 +259,9 @@ class lmdb_source_name_manager_t {
   }
 
   /**
-   * Find source names, fail on invalid source ID.
+   * Find source names, false on no source ID.
    */
-  void find(const uint64_t source_id,
+  bool find(const uint64_t source_id,
             source_names_t& names) const {
 
     // get context
@@ -281,7 +281,13 @@ class lmdb_source_name_manager_t {
       encoding = lmdb_helper::get_string(context.data);
       decode_data(encoding, names);
       context.close();
-      return;
+      return true;
+
+    } else if (rc == MDB_NOTFOUND) {
+      // source ID can be created but not be in the source_name store yet
+      names.clear();
+      context.close();
+      return false;
 
     } else {
       // invalid rc

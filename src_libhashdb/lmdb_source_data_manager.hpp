@@ -257,9 +257,9 @@ class lmdb_source_data_manager_t {
   }
 
   /**
-   * Find data else fail.
+   * Find data, false on no source ID.
    */
-  void find(const uint64_t source_id,
+  bool find(const uint64_t source_id,
             std::string& file_binary_hash,
             uint64_t& filesize,
             std::string& file_type,
@@ -283,7 +283,15 @@ class lmdb_source_data_manager_t {
       decode_data(encoding, file_binary_hash, filesize, file_type,
                   low_entropy_count);
       context.close();
-      return;
+      return true;
+
+    } else if (rc == MDB_NOTFOUND) {
+      file_binary_hash = "";
+      filesize = 0;
+      file_type = "";
+      low_entropy_count = 0;
+      context.close();
+      return false;
 
     } else {
       // invalid rc

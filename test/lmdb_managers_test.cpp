@@ -366,18 +366,23 @@ void lmdb_source_data_manager() {
   uint64_t filesize;
   std::string file_type;
   uint64_t low_entropy_count;
+  bool found;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
   lmdb_source_data_manager_t manager(hashdb_dir, RW_NEW);
 
-  // this should assert
-  //manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  // no source ID
+  found =
+    manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  TEST_EQ(found, false);
 
   // insert
   TEST_EQ(manager.insert(1, "fbh", 2, "ft", 3, changes), true);
   TEST_EQ(changes.source_data_inserted, 1);
-  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  found =
+    manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  TEST_EQ(found, true);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
@@ -433,13 +438,15 @@ void lmdb_source_name_manager() {
   std::pair<bool, uint64_t> pair;
   source_names_t source_names;
   lmdb_changes_t changes;
+  bool found;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
   lmdb_source_name_manager_t manager(hashdb_dir, RW_NEW);
 
   // this should assert
-  //manager.find(1, source_names);
+  found = manager.find(1, source_names);
+  TEST_EQ(found, false);
 
   // insert, find
   TEST_EQ(manager.insert(1, "rn", "fn", changes), true);
@@ -447,7 +454,8 @@ void lmdb_source_name_manager() {
   TEST_EQ(manager.insert(1, "rn", "fn", changes), false);
   TEST_EQ(changes.source_name_not_inserted, 1);
   TEST_EQ(manager.insert(1, "rn2", "fn2", changes), true);
-  manager.find(1, source_names);
+  found = manager.find(1, source_names);
+  TEST_EQ(found, true);
   source_names_t::const_iterator it = source_names.begin();
   TEST_EQ(it->first, "rn");
   TEST_EQ(it->second, "fn");

@@ -492,7 +492,7 @@ namespace hashdb {
     }
   }
 
-  void scan_manager_t::find_source_data(const uint64_t source_id,
+  bool scan_manager_t::find_source_data(const uint64_t source_id,
                         std::string& file_binary_hash,
                         uint64_t& filesize,
                         std::string& file_type,
@@ -501,7 +501,7 @@ namespace hashdb {
                  file_binary_hash, filesize, file_type, low_entropy_count);
   }
 
-  void scan_manager_t::find_source_names(const uint64_t source_id,
+  bool scan_manager_t::find_source_names(const uint64_t source_id,
                          source_names_t& source_names) const {
     return lmdb_source_name_manager->find(source_id, source_names);
   }

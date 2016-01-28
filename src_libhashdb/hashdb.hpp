@@ -349,7 +349,7 @@ namespace hashdb {
                    id_offset_pairs_t& id_offset_pairs) const;
 
     /**
-     * Find source data for the given source ID, fail on invalid ID.
+     * Find source data for the given source ID, false on no source ID.
      *
      * Parameters:
      *   source_id - The source ID for this source data.
@@ -359,21 +359,21 @@ namespace hashdb {
      *   low_entropy_count - The count of hashes identified for this
      *     source which may be considered non-probative.
      */
-    void find_source_data(const uint64_t source_id,
+    bool find_source_data(const uint64_t source_id,
                           std::string& file_binary_hash,
                           uint64_t& filesize,
                           std::string& file_type,
                           uint64_t& low_entropy_count) const;
 
     /**
-     * Find source names for the given source ID, fail on invalid ID.
+     * Find source names for the given source ID, false on no source ID.
      *
      * Parameters:
      *   source_id - The source ID for this source data.
      *   source_names - Set of pairs of repository_name, filename
      *     attributed to this source ID.
      */
-    void find_source_names(const uint64_t source_id,
+    bool find_source_names(const uint64_t source_id,
                            source_names_t& source_names) const;
 
     /**

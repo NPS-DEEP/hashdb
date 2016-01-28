@@ -45,7 +45,7 @@ Look up source data from source ID.
 
 * `lmdb_source_data_manager_t(hashdb_dir, file_mode)`
 * `bool insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count, &changes)` - true if new, false, do not change, and note if not new
-* `void find(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
+* `bool find(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - false on no source ID
 * `pair(bool, source_id) find_begin()` - false if empty
 * `pair(bool, source_id) find_next()` - fail if already at end
 * `size_t size()`
@@ -57,7 +57,7 @@ Look up a set of source names given a source ID.
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
 * `bool insert(source_id, repository_name, filename, &changes)` - true if inserted, false if already there
-* `void find(source_id, source_names_t&)` - fail on invalid source ID
+* `bool find(source_id, source_names_t&)` - false on no source ID
 * `size_t size()`
 
 ## HASHDB Interfaces
@@ -84,8 +84,8 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 * `bool find_expanded_hash(binary_hash, expanded_text&)` - find and return JSON text
 * `bool find_hash(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
 * `bool find_expanded_source(source_id, expanded_text&)` - find and return JSON text
-* `void find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - fail on invalid source ID
-* `void find_source_names(source_id, source_names_t&)` - fail on invalid source ID
+* `bool find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - false on no source ID
+* `bool find_source_names(source_id, source_names_t&)` - false on no source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`
 * `pair(bool, binary_hash) hash_begin()`
 * `pair(bool, binary_hash) hash_next(last_binary_hash)`
