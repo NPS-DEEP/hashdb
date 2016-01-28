@@ -73,7 +73,7 @@ def lines_equals(a,b):
         if len(item_a) != 0 and len(item_b) != 0 and \
            item_a[0] != '#' and item_b[0] != '#' and \
                                    item_a.strip() != item_b.strip():
-            print("mismatch: a '" + item_a + "', b'" + item_b + "'")
+            print("mismatch:\na: '" + item_a + "',\nb:'" + item_b + "'")
             _bad_list(a,b)
 
 def rm_tempfile(filename):

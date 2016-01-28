@@ -93,7 +93,7 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
      ;
 
   // provide source names
-  ss << ",\"names\"[";
+  ss << ",\"names\":[";
   int i = 0;
   hashdb::source_names_t::const_iterator it;
   for (it = source_names->begin(); it != source_names->end();
