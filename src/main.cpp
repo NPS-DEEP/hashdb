@@ -451,6 +451,14 @@ void run_command() {
     check_params("", 2);
     commands::scan_random(args[0], args[1], cmd);
 
+  } else if (command == "add_same") {
+    check_params("", 2);
+    commands::add_same(args[0], args[1], cmd);
+
+  } else if (command == "scan_same") {
+    check_params("", 2);
+    commands::scan_same(args[0], args[1], cmd);
+
   // error
   } else {
     std::cerr << "Error: unsupported command.\nAborting.\n";

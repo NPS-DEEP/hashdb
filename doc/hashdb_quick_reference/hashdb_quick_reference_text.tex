@@ -59,8 +59,10 @@ Export hash database data in JSON format \\
 \\
 \textbf{Performance Analysis}\\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em\texttt{add\_random <hashdb.hdb> <count>} & Add random hashes, log performance in \texttt{log.xml}\\
-\texttt{scan\_random <hashdb.hdb> <count>} & Scan random hashes, log performance in \texttt{log.xml}\\
+\hangindent=2em\texttt{add\_random <hashdb.hdb> <count>} & Add random hashes, log to \texttt{timestamp.json}\\
+\texttt{scan\_random <hashdb.hdb> <count>} & Scan random hashes, log to \texttt{timestamp.json}\\
+\hangindent=2em\texttt{add\_same <hashdb.hdb> <count>} & Add same hashes, log to \texttt{timestamp.json}\\
+\texttt{scan\_same <hashdb.hdb> <count>} & Scan same hashes, log to \texttt{timestamp.json}\\
 \end{tabular}
 \\
 \\

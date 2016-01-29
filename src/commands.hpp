@@ -695,7 +695,7 @@ namespace commands {
     const uint64_t count = atol(count_string.c_str());
 
     // initialize random seed
-    srand (time(NULL));
+    srand (time(NULL)+1); // ensure seed is different by advancing 1 second
 
     // open manager
     hashdb::scan_manager_t manager(hashdb_dir);
@@ -714,6 +714,86 @@ namespace commands {
 
       if (found) {
         std::cout << "Match found, hash "
+                  << bin_to_hex(binary_hash)
+                  << ": " << *expanded_text << "\n";
+      }
+
+      // update progress tracker
+      progress_tracker.track();
+    }
+  }
+
+  // add_same
+  static void add_same(const std::string& hashdb_dir,
+                       const std::string& count_string,
+                       const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
+    // convert count string to number
+    const uint64_t count = atol(count_string.c_str());
+
+    // open manager
+    hashdb::import_manager_t manager(hashdb_dir, cmd);
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
+
+    // set up the source
+    std::pair<bool, uint64_t> id_pair =
+                       manager.insert_source_id(hex_to_bin("00"));
+    if (id_pair.first == false) {
+      std::cerr << id_pair.second << "\n";
+      exit(1);
+    }
+    manager.insert_source_name(id_pair.second, "add_same_repository_name",
+                               "add_same_filename");
+    manager.insert_source_data(id_pair.second, hex_to_bin("00"), 0, "", 0);
+
+    // hash to use
+    std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
+
+    // insert count same hshes into the database
+    for (uint64_t i=0; i<count; i++) {
+
+      // update progress tracker
+      progress_tracker.track();
+
+      // add hash
+      manager.insert_hash(binary_hash, id_pair.second, 0,"",0,"");
+    }
+  }
+
+  // scan_same
+  static void scan_same(const std::string& hashdb_dir,
+                        const std::string& count_string,
+                        const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
+    // convert count string to number
+    const uint64_t count = atol(count_string.c_str());
+
+    // open manager
+    hashdb::scan_manager_t manager(hashdb_dir);
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
+
+    // space for match
+    std::string* expanded_text = new std::string;
+
+    // hash to use
+    std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
+
+    // scan same hash repeatedly
+    for (uint64_t i=1; i<=count; ++i) {
+      bool found = manager.find_expanded_hash(binary_hash, *expanded_text);
+
+      if (!found) {
+        std::cout << "Match not found, hash "
                   << bin_to_hex(binary_hash)
                   << ": " << expanded_text << "\n";
       }
