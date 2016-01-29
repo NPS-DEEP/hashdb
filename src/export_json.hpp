@@ -123,9 +123,9 @@ class export_json_t {
   // Block hash data:
   //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
   //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
-  void write_block_hash_data(std::ostream& os) {
+  void write_block_hash_data(const std::string& cmd, std::ostream& os) {
 
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size());
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     // hash fields
     std::string low_entropy_label;
@@ -198,7 +198,7 @@ class export_json_t {
     writer.write_source_data(os);
 
     // write block hash data
-    writer.write_block_hash_data(os);
+    writer.write_block_hash_data(cmd, os);
   }
 
   // just print sources to stdout

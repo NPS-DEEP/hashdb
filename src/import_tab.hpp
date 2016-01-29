@@ -137,7 +137,7 @@ class import_tab_t {
                   repository_name(p_repository_name),
                   line_number(0),
                   manager(hashdb_dir, cmd),
-                  progress_tracker(hashdb_dir, 0) {
+                  progress_tracker(hashdb_dir, 0, cmd) {
   }
 
   void read_lines(std::istream& in) {

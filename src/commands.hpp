@@ -440,7 +440,7 @@ namespace commands {
     print_header("histogram-command-Version: 2", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size());
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     // total number of hashes in the database
     uint64_t total_hashes = 0;
@@ -541,7 +541,7 @@ namespace commands {
     print_header("duplicates-command-Version: 2", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size());
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     bool any_found = false;
 
@@ -605,7 +605,7 @@ namespace commands {
     print_header("hash-table-command-Version: 3", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size());
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     // space for variables
     std::string low_entropy_label;
@@ -659,7 +659,7 @@ namespace commands {
     hashdb::import_manager_t manager(hashdb_dir, cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, count);
+    progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // set up the source
     std::pair<bool, uint64_t> id_pair =
@@ -701,7 +701,7 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, count);
+    progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // space for match
     std::string* expanded_text = new std::string;

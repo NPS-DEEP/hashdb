@@ -74,7 +74,7 @@ class import_json_t {
         hashdb_dir(p_hashdb_dir),
         line_number(0),
         manager(hashdb_dir, cmd),
-        progress_tracker(hashdb_dir, 0) {
+        progress_tracker(hashdb_dir, 0, cmd) {
   }
 
   void report_invalid_line(const std::string& field,

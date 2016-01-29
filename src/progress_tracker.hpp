@@ -49,7 +49,8 @@ class progress_tracker_t {
   progress_tracker_t& operator=(const progress_tracker_t&);
 
   public:
-  progress_tracker_t(const std::string& p_dir, const uint64_t p_total) :
+  progress_tracker_t(const std::string& p_dir, const uint64_t p_total,
+                     const std::string& cmd) :
                          dir(p_dir),
                          total(p_total),
                          index(0),
@@ -64,6 +65,10 @@ class progress_tracker_t {
                 << ": " << strerror(errno) << "\n";
       exit(1);
     }
+
+    // put header in log
+    os << "# command: '" << cmd << "'\n"
+       << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
   }
 
   void track() {
