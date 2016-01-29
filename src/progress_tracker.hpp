@@ -20,8 +20,7 @@
 /**
  * \file
  * Track progress to show that long iterative actions are not hung.
- * Call track before operation, call done when done.
- * Writes progress to cout and to <dir>/progress.json log.
+ * Writes progress to cout and to <dir>/timestamp.json log.
  * Use total=0 if total is not known.
  */
 
@@ -56,7 +55,7 @@ class progress_tracker_t {
                          index(0),
                          os(),
                          timestamp() {
-    std::string filename(dir+"/progress.json");
+    std::string filename(dir+"/timestamp.json");
 
     // open, fatal if unable to open
     os.open(filename.c_str());
