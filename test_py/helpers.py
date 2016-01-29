@@ -55,18 +55,18 @@ def int_equals(a,b):
         raise ValueError(str(a) + " not equal to " + str(b))
 
 def _bad_list(a,b):
-    print("a")
+    print("a:")
     for line in a:
-        print("'%s'\n" % line)
-    print("\nb")
+        print("'%s'" % line)
+    print("b:")
     for line in b:
-        print("'%s'\n" % line)
+        print("'%s'" % line)
     raise ValueError("list mismatch")
 
 # length must be the same, but comments may differ
 def lines_equals(a,b):
     # length differs
-    if len(a) != len(b):
+    if len(a) != len(b) or len(a) == 0:
         _bad_list(a,b)
     # lines differ
     for item_a, item_b in zip(a, b):

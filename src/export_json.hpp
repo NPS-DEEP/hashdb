@@ -60,7 +60,6 @@ class export_json_t {
 
   // resources
   hashdb::scan_manager_t manager;
-  progress_tracker_t progress_tracker; // just track hash DB progress
 
   // do not allow these
   export_json_t();
@@ -70,8 +69,7 @@ class export_json_t {
   // private, used by write()
   export_json_t(const std::string& p_hashdb_dir) :
         hashdb_dir(p_hashdb_dir),
-        manager(hashdb_dir),
-        progress_tracker(hashdb_dir, manager.size()) {
+        manager(hashdb_dir) {
   }
 
   // Source data:
@@ -103,17 +101,17 @@ class export_json_t {
       manager.find_source_names(pair.second, *source_names);
       hashdb::source_names_t::const_iterator it;
       int i=0;
-      os << ",\"names\":[{";
+      os << ",\"names\":[";
       for (it = source_names->begin(); it != source_names->end(); ++it, ++i) {
         if (i != 0) {
           // no comma before first pair
           os << ",";
         }
-        os << "\"repository_name\":\"" << it->first
+        os << "{\"repository_name\":\"" << it->first
            << "\",\"filename\":\"" << it->second
-           << "\"";
+           << "\"}";
       }
-      os << "}]}\n";
+      os << "]}\n";
 
       // next
       pair = manager.source_next(pair.second);
@@ -126,6 +124,8 @@ class export_json_t {
   //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
   //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
   void write_block_hash_data(std::ostream& os) {
+
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size());
 
     // hash fields
     std::string low_entropy_label;
@@ -200,6 +200,17 @@ class export_json_t {
     // write block hash data
     writer.write_block_hash_data(os);
   }
+
+  // just print sources to stdout
+  static void print_sources(const std::string& p_hashdb_dir) {
+
+    // create the printer
+    export_json_t export_json(p_hashdb_dir);
+
+    // write source data
+    export_json.write_source_data(std::cout);
+  }
+
 };
 
 #endif

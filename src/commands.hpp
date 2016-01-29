@@ -423,7 +423,7 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // print the sources
-    export_json_t::write(hashdb_dir, cmd, std::cout);
+    export_json_t::print_sources(hashdb_dir);
   }
 
   // histogram
@@ -559,8 +559,10 @@ namespace commands {
       manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
                         *id_offset_pairs);
       if (id_offset_pairs->size() == number) {
+        // show hash with requested duplicates number
         manager.find_expanded_hash(pair.second, *expanded_text);
         std::cout << bin_to_hex(pair.second) << "\t" << *expanded_text << "\n";
+        any_found = true;
       }
 
       // move forward
