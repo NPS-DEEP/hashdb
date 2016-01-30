@@ -82,7 +82,7 @@ class progress_tracker_t {
         ss << "# Processing index " << index << " of ?";
       }
       std::cout << ss.str() << "..." << std::endl;
-      os << timestamp.stamp(ss.str());
+      os << timestamp.stamp(ss.str()) << std::endl;
     }
     ++index;
   }
@@ -97,7 +97,7 @@ class progress_tracker_t {
       ss << "# Processing index " << index << " of " << index << " completed.";
     }
     std::cout << ss.str() << std::endl;
-    os << timestamp.stamp(ss.str());
+    os << timestamp.stamp(ss.str()) << std::endl;
 
     os.close();
   }

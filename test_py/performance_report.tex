@@ -1,0 +1,96 @@
+
+%\documentclass[10pt,twoside,twocolumn]{article}
+\documentclass[12pt,twoside]{article}
+\usepackage[bf,small]{caption}
+\usepackage[letterpaper,hmargin=1in,vmargin=1in]{geometry}
+\usepackage{paralist} % comapctitem, compactdesc, compactenum
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{./graphics/}}
+\usepackage{xspace}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{float}
+\hyphenation{Sub-Bytes Shift-Rows Mix-Col-umns Add-Round-Key}
+
+\setlength{\parskip}{12pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hdb}{\emph{hashdb}\xspace}
+
+\begin{document}
+
+\begin{center}
+\Large \hdb v3.0 Timing Analysis
+\end{center}
+
+Graphs show timing for importing and scanning under varying conditions.
+
+Timing analyses performed:
+\begin{compactitem}
+\item Random hash: Random hashes are imported and scanned using default parameters.
+\item Same hash, diferent source offset: The same hash is imported and scanned, with a maximum duplicates count of 200.
+\item Random hash, small hash key space: Random hashes are imported and scanned, where the key space is 14 bits.  With one million hashes, the average bucket size is $1,000,000 / 2^{14} = 61$.
+\end{compactitem}
+
+\subsubsection* {Random Hash}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_add_random_delta}
+  \includegraphics[scale=0.52]{temp_add_random_total}
+  \caption*{Import random hashes.}
+\end{figure}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_scan_random_delta}
+  \includegraphics[scale=0.52]{temp_scan_random_total}
+  \caption*{Scan random hashes.}
+\end{figure}
+
+\subsection* {Same Hash, Different Source Offset}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_add_same_delta}
+  \includegraphics[scale=0.52]{temp_add_same_total}
+  \caption*{Import same hashes, different source offset.}
+\end{figure}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_scan_same_delta}
+  \includegraphics[scale=0.52]{temp_scan_same_total}
+  \caption*{Scan same hashes, different source offset.}
+\end{figure}
+
+\subsubsection* {Random Hash, Small Hash Key Space}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_add_random_key_delta}
+  \includegraphics[scale=0.52]{temp_add_random_key_total}
+  \caption*{Import same hashes, different source offset.}
+\end{figure}
+
+\begin{figure}[H]
+  \center
+  \includegraphics[scale=0.52]{temp_scan_random_key_delta}
+  \includegraphics[scale=0.52]{temp_scan_random_key_total}
+  \caption*{Scan same hashes, different source offset.}
+\end{figure}
+
+Conclusions:
+\begin{compactitem}
+\item Performance significantly degrades within 200 sources per hash.
+\item Performance degrades when hash values have multiple hash suffixes.
+\end{compactitem}
+
+
+\end{document}
+

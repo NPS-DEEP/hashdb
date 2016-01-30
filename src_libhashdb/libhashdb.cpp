@@ -598,7 +598,7 @@ namespace hashdb {
     ss << "{\"name\":\"" << hashdb::escape_json(name) << "\""
        << ", \"delta\":" << delta
        << ", \"total\":" << total_time << "}"
-       << "\n";
+       ;
     return ss.str();
   }
 }

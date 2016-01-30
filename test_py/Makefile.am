@@ -17,7 +17,7 @@
 #
 # Released into the public domain on February 25, 2013 by Bruce Allen.
 
-# This file assists in building test programs.
+# This file assists in testing and timing analysis.
 
 python_tests = \
 	new_database.py \
@@ -29,12 +29,19 @@ python_tests = \
 
 EXTRA_DIST = \
 	$(python_tests) \
-	helpers.py
+	helpers.py \
+	plot_performance.py \
+	performance_report.tex
 
 if HAVE_PYTHON
   TESTS = $(python_tests)
 endif
 
+performance_report:
+	./plot_performance.py
+	pdflatex performance_report.tex
+
 clean-local:
-	rm -rf temp_*
+	rm -rf temp_* performance_report.aux performance_report.log \
+	performance_report.out performance_report.pdf
 

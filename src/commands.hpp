@@ -724,6 +724,7 @@ namespace commands {
   }
 
   // add_same
+  // add same hash but different source offset
   static void add_same(const std::string& hashdb_dir,
                        const std::string& count_string,
                        const std::string& cmd) {
@@ -733,6 +734,12 @@ namespace commands {
 
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
+
+    // get sector size
+    hashdb::settings_t settings;
+    std::pair<bool, std::string> pair =
+                        hashdb::read_settings(hashdb_dir, settings);
+    const uint64_t sector_size = settings.sector_size;
 
     // open manager
     hashdb::import_manager_t manager(hashdb_dir, cmd);
@@ -761,7 +768,7 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(binary_hash, id_pair.second, 0,"",0,"");
+      manager.insert_hash(binary_hash, id_pair.second, i*sector_size, "",0,"");
     }
   }
 

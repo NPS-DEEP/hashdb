@@ -40,9 +40,9 @@ def test_same():
     lines = H.hashdb(["add_same", "temp_1.hdb", "100"])
     H.lines_equals(lines, [
 '# Processing index 100 of 100 completed.',
-'hash_data_inserted: 1',
+'hash_data_inserted: 100',
 'hash_data_metadata_different: 0',
-'hash_data_not_inserted_duplicate_source: 99',
+'hash_data_not_inserted_duplicate_source: 0',
 'hash_data_not_inserted_invalid_file_offset: 0',
 'hash_data_not_inserted_max_id_offset_pairs: 0',
 'hash_inserted: 1',

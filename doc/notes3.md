@@ -97,8 +97,8 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 ### Functions
 * `extern C char* version()` - Return the hashdb version.
 * `pair(bool, string) is_valid_hashdb` - Return true and "" else false and reason the DB is not valid.
-* `pair(bool, string) create_hashdb(hashdb_dir, setting parameters)` - Create a hash database given settings.  Return true and "" else false and reason for failure.
-* `pair(bool, string) hashdb_settings(hashdb_dir, setting parameters&)` - Query settings else false and reason for failure.
+* `pair(bool, string) create_hashdb(hashdb_dir, settings)` - Create a hash database given settings.  Return true and "" else false and reason for failure.
+* `pair(bool, string) read_settings(hashdb_dir, settings&)` - Query settings else false and reason for failure.
 * `print_enviornment(command_line_string, ostream&)` - print command and environment to output stream.
 * `import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy, max_entropy, repository_name, import_path)` - import from path to hashdb
 
