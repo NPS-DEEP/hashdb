@@ -31,7 +31,8 @@ EXTRA_DIST = \
 	$(python_tests) \
 	helpers.py \
 	plot_performance.py \
-	performance_report.tex
+	performance_report.tex \
+	plot_timestamp.py
 
 if HAVE_PYTHON
   TESTS = $(python_tests)
