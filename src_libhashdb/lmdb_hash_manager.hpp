@@ -187,6 +187,8 @@ class lmdb_hash_manager_t {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
     delete suffix_strings;
+
+    MUTEX_DESTROY(&M);
   }
 
   bool insert(const std::string& binary_hash, lmdb_changes_t& changes) {

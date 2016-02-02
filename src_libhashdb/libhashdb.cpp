@@ -280,7 +280,12 @@ namespace hashdb {
   }
 
   import_manager_t::~import_manager_t() {
+
+    // show changes
     logger->add_lmdb_changes(*changes);
+    std::cout << *changes;
+
+    // close resources
     delete lmdb_hash_data_manager;
     delete lmdb_hash_manager;
     delete lmdb_source_data_manager;

@@ -45,7 +45,7 @@ clean-local:
 	rm -rf temp_*
 
 run_tests_valgrind:
-	for test in $(bin_PROGRAMS); do \
+	for test in $(check_PROGRAMS); do \
 	  echo Begin $$test ... ; \
 	  valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=vg.supp ./$$test; \
 	done

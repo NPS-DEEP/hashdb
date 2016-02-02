@@ -664,10 +664,6 @@ namespace commands {
     // set up the source
     std::pair<bool, uint64_t> id_pair =
                        manager.insert_source_id(hex_to_bin("00"));
-    if (id_pair.first == false) {
-      std::cerr << id_pair.second << "\n";
-      exit(1);
-    }
     manager.insert_source_name(id_pair.second, "add_random_repository_name",
                                "add_random_filename");
     manager.insert_source_data(id_pair.second, hex_to_bin("00"), 0, "", 0);
@@ -721,6 +717,8 @@ namespace commands {
       // update progress tracker
       progress_tracker.track();
     }
+
+    delete expanded_text;
   }
 
   // add_same
@@ -750,10 +748,6 @@ namespace commands {
     // set up the source
     std::pair<bool, uint64_t> id_pair =
                        manager.insert_source_id(hex_to_bin("00"));
-    if (id_pair.first == false) {
-      std::cerr << id_pair.second << "\n";
-      exit(1);
-    }
     manager.insert_source_name(id_pair.second, "add_same_repository_name",
                                "add_same_filename");
     manager.insert_source_data(id_pair.second, hex_to_bin("00"), 0, "", 0);
@@ -808,6 +802,8 @@ namespace commands {
       // update progress tracker
       progress_tracker.track();
     }
+
+    delete expanded_text;
   }
 }
 

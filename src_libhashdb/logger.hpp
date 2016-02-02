@@ -85,6 +85,7 @@ class logger_t {
     os << settings.settings_string();
   }
 
+  // changes
   void add_lmdb_changes(const lmdb_changes_t& changes) {
     os << changes;
   }
@@ -93,7 +94,7 @@ class logger_t {
   ~logger_t() {
 
     // log end
-    os << timestamp.stamp("end");
+    os << timestamp.stamp("end") << "\n";
     os.close();
   }
 

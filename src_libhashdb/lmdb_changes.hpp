@@ -79,22 +79,70 @@ class lmdb_changes_t {
 
   void report_changes(std::ostream& os) const {
 
-    // log any insert changes to stdout
-    std::cout << "hash_data_inserted: " << hash_data_inserted << "\n"
-              << "hash_data_metadata_different: " << hash_data_metadata_different << "\n"
-              << "hash_data_not_inserted_duplicate_source: " << hash_data_not_inserted_duplicate_source<< "\n"
-              << "hash_data_not_inserted_invalid_file_offset: " << hash_data_not_inserted_invalid_file_offset<< "\n"
-              << "hash_data_not_inserted_max_id_offset_pairs: " << hash_data_not_inserted_max_id_offset_pairs<< "\n"
-              << "hash_inserted: " << hash_inserted<< "\n"
-              << "hash_not_inserted: " << hash_not_inserted<< "\n"
-              << "source_data_inserted: " << source_data_inserted << "\n"
-              << "source_data_different: " << source_data_different<< "\n"
-              << "source_data_not_inserted: " << source_data_not_inserted << "\n"
-              << "source_id_inserted: " << source_id_inserted << "\n"
-              << "source_id_not_inserted: " << source_id_not_inserted << "\n"
-              << "source_name_inserted: " << source_name_inserted << "\n"
-              << "source_name_not_inserted: " << source_name_not_inserted << "\n"
-              ;
+    os << "hashdb changes:\n";
+    // log changes
+    if (hash_data_inserted) {
+      os << "    hash_data_inserted: " << hash_data_inserted << "\n";
+    }
+    if (hash_data_metadata_different) {
+      os << "    hash_data_metadata_different: "
+         << hash_data_metadata_different << "\n";
+    }
+    if (hash_data_not_inserted_duplicate_source) {
+      os << "    hash_data_not_inserted_duplicate_source: "
+         << hash_data_not_inserted_duplicate_source<< "\n";
+    }
+    if (hash_data_not_inserted_invalid_file_offset) {
+      os << "    hash_data_not_inserted_invalid_file_offset: "
+         << hash_data_not_inserted_invalid_file_offset<< "\n";
+    }
+    if (hash_data_not_inserted_max_id_offset_pairs) {
+      os << "    hash_data_not_inserted_max_id_offset_pairs: "
+         << hash_data_not_inserted_max_id_offset_pairs<< "\n";
+    }
+    if (hash_inserted) {
+      os << "    hash_inserted: " << hash_inserted<< "\n";
+    }
+    if (hash_not_inserted) {
+      os << "    hash_not_inserted: " << hash_not_inserted<< "\n";
+    }
+    if (source_data_inserted) {
+      os << "    source_data_inserted: " << source_data_inserted << "\n";
+    }
+    if (source_data_different) {
+      os << "    source_data_different: " << source_data_different<< "\n";
+    }
+    if (source_data_not_inserted) {
+      os << "    source_data_not_inserted: " << source_data_not_inserted << "\n";
+    }
+    if (source_id_inserted) {
+      os << "    source_id_inserted: " << source_id_inserted << "\n";
+    }
+    if (source_id_not_inserted) {
+      os << "    source_id_not_inserted: " << source_id_not_inserted << "\n";
+    }
+    if (source_name_inserted) {
+      os << "    source_name_inserted: " << source_name_inserted << "\n";
+    }
+    if (source_name_not_inserted) {
+      os << "    source_name_not_inserted: " << source_name_not_inserted << "\n";
+    }
+    if (hash_data_inserted == 0 &&
+        hash_data_metadata_different == 0 &&
+        hash_data_not_inserted_duplicate_source == 0 &&
+        hash_data_not_inserted_invalid_file_offset == 0 &&
+        hash_data_not_inserted_max_id_offset_pairs == 0 &&
+        hash_inserted == 0 &&
+        hash_not_inserted == 0 &&
+        source_data_inserted == 0 &&
+        source_data_different == 0 &&
+        source_data_not_inserted == 0 &&
+        source_id_inserted == 0 &&
+        source_id_not_inserted == 0 &&
+        source_name_inserted == 0 &&
+        source_name_not_inserted == 0) {
+       os << "No changes.\n";
+    }
   }
 };
 

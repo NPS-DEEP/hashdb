@@ -192,6 +192,9 @@ class lmdb_hash_data_manager_t {
   ~lmdb_hash_data_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
+    delete id_offset_pairs;
+
+    MUTEX_DESTROY(&M);
   }
 
   /**

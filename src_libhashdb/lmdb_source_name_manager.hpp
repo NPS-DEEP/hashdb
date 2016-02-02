@@ -157,6 +157,8 @@ class lmdb_source_name_manager_t {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
     delete source_names; 
+
+    MUTEX_DESTROY(&M);
   }
 
   /**

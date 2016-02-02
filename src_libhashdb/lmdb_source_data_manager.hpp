@@ -175,6 +175,8 @@ class lmdb_source_data_manager_t {
   ~lmdb_source_data_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
+
+    MUTEX_DESTROY(&M);
   }
 
   /**

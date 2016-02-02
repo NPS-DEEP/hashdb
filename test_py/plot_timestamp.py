@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# graph timestamps in <hashdb.hdb>/timestamp.json
+#
+# usage: plot_timestamp.py hashdb.hdb
+#
+# graph timestamps from <hashdb.hdb>/timestamp.json into
+# temp_deltas.pdf and temp_totals.pdf
 
 import sys
 import pylab
