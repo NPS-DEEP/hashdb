@@ -180,9 +180,9 @@ class lmdb_source_data_manager_t {
   }
 
   /**
-   * Return true if new, false, do not change, and note if not new.
+   * Insert unless there and same.
    */
-  bool insert(const uint64_t source_id,
+  void insert(const uint64_t source_id,
               const std::string& file_binary_hash,
               const uint64_t filesize,
               const std::string& file_type,
@@ -225,10 +225,10 @@ class lmdb_source_data_manager_t {
       context.close();
       ++changes.source_data_inserted;
       MUTEX_UNLOCK(&M);
-      return true;
+      return;
 
     } else if (rc == 0) {
-      // already there, note if different
+      // already there, note and change if different
       std::string p_file_binary_hash;
       uint64_t p_filesize;
       std::string p_file_type;
@@ -242,14 +242,28 @@ class lmdb_source_data_manager_t {
           filesize != p_filesize ||
           file_type != p_file_type ||
           low_entropy_count != p_low_entropy_count) {
-        ++changes.source_data_different;
+        ++changes.source_data_changed;
+
+        // overwrite
+        encoding = encode_data(file_binary_hash, filesize, file_type,
+                               low_entropy_count);
+        lmdb_helper::point_to_string(encoding, context.data);
+        rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
+
+        // the overwrite must work
+        if (rc != 0) {
+          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+          assert(0);
+        }
+      } else { 
+        ++changes.source_data_same;
       }
 
-      // no change
+      // closeure for already there
       context.close();
-      ++changes.source_data_not_inserted;
       MUTEX_UNLOCK(&M);
-      return false;
+      return;
 
     } else {
       // invalid rc

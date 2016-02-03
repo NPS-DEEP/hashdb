@@ -200,17 +200,16 @@ namespace hashdb {
                                        const std::string& file_binary_hash);
 
     /**
-     * Insert repository_name, filename pair.
-     * Return true if inserted, false if already there.
-     * Fail on invalid source ID.
+     * Insert the repository_name, filename pair associated with the
+     * source ID unless already there.
      */
-    bool insert_source_name(const uint64_t source_id,
+    void insert_source_name(const uint64_t source_id,
                             const std::string& repository_name,
                             const std::string& filename);
 
 
     /**
-     * Insert the source data associated with the source ID.
+     * Insert or change the source data associated with the source ID.
      *
      * Parameters:
      *   source_id - The source ID for this source data.
@@ -219,19 +218,15 @@ namespace hashdb {
      *   file_type - A string representing the type of the file.
      *   low_entropy_count - The count of non-probative hashes
      *     identified for this source.
-     *
-     * Returns:
-     *   True if the setting is new else false and overwrite.
      */
-    bool insert_source_data(const uint64_t source_id,
+    void insert_source_data(const uint64_t source_id,
                             const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
                             const uint64_t low_entropy_count);
 
     /**
-     * Insert hash data.
-     * Return true if new, false but overwrite if not new.
+     * Insert or change the hash data associated with the binary_hash.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
@@ -243,11 +238,8 @@ namespace hashdb {
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
-     *
-     * Returns:
-     *   True if new, false if not.
      */
-    bool insert_hash(const std::string& binary_hash,
+    void insert_hash(const std::string& binary_hash,
                      const uint64_t source_id,
                      const uint64_t file_offset,
                      const std::string& low_entropy_label,

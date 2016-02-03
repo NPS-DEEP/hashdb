@@ -162,11 +162,9 @@ class lmdb_source_name_manager_t {
   }
 
   /**
-   * Insert repository_name, filename pair.
-   * Return true if inserted, false if already there.
-   * Fail on invalid source ID.
+   * Insert repository_name, filename pair unless pair is already there.
    */
-  bool insert(const uint64_t source_id,
+  void insert(const uint64_t source_id,
               const std::string& repository_name,
               const std::string& filename,
               lmdb_changes_t& changes) {
@@ -212,7 +210,7 @@ class lmdb_source_name_manager_t {
       context.close();
       ++changes.source_name_inserted;
       MUTEX_UNLOCK(&M);
-      return true;
+      return;
 
     } else if (rc == 0) {
 
@@ -244,14 +242,14 @@ class lmdb_source_name_manager_t {
         context.close();
         ++changes.source_name_inserted;
         MUTEX_UNLOCK(&M);
-        return true;
+        return;
 
       } else {
         // the source name is already there
         context.close();
-        ++changes.source_name_not_inserted;
+        ++changes.source_name_already_present;
         MUTEX_UNLOCK(&M);
-        return false;
+        return;
       }
     } else {
       // invalid rc

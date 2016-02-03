@@ -301,23 +301,23 @@ namespace hashdb {
   }
 
 
-  bool import_manager_t::insert_source_name(const uint64_t source_id,
+  void import_manager_t::insert_source_name(const uint64_t source_id,
                           const std::string& repository_name,
                           const std::string& filename) {
-    return lmdb_source_name_manager->insert(
+    lmdb_source_name_manager->insert(
                              source_id, repository_name, filename, *changes);
   }
 
-  bool import_manager_t::insert_source_data(const uint64_t source_id,
+  void import_manager_t::insert_source_data(const uint64_t source_id,
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
                           const uint64_t low_entropy_count) {
-    return lmdb_source_data_manager->insert(source_id, file_binary_hash,
+    lmdb_source_data_manager->insert(source_id, file_binary_hash,
                         filesize, file_type, low_entropy_count, *changes);
   }
 
-  bool import_manager_t::insert_hash(const std::string& binary_hash,
+  void import_manager_t::insert_hash(const std::string& binary_hash,
                         const uint64_t source_id,
                         const uint64_t file_offset,
                         const std::string& low_entropy_label,
@@ -326,7 +326,7 @@ namespace hashdb {
 
     // insert into hash manager and hash data manager
     lmdb_hash_manager->insert(binary_hash, *changes);
-    return lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
+    lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
                         low_entropy_label, entropy, block_label, *changes);
   }
 

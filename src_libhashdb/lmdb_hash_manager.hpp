@@ -191,7 +191,7 @@ class lmdb_hash_manager_t {
     MUTEX_DESTROY(&M);
   }
 
-  bool insert(const std::string& binary_hash, lmdb_changes_t& changes) {
+  void insert(const std::string& binary_hash, lmdb_changes_t& changes) {
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
@@ -243,7 +243,7 @@ class lmdb_hash_manager_t {
       context.close();
       ++changes.hash_inserted;
       MUTEX_UNLOCK(&M);
-      return true;
+      return;
 
     // handle when prefix already exists
     } else if (rc == 0) {
@@ -254,9 +254,9 @@ class lmdb_hash_manager_t {
 
         // suffix already exists, hash not inserted
         context.close();
-        ++changes.hash_not_inserted;
+        ++changes.hash_already_present;
         MUTEX_UNLOCK(&M);
-        return false;
+        return;
 
       } else {
 
@@ -277,7 +277,7 @@ class lmdb_hash_manager_t {
         context.close();
         ++changes.hash_inserted;
         MUTEX_UNLOCK(&M);
-        return true;
+        return;
       }
 
     } else {
