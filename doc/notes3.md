@@ -7,23 +7,27 @@
 * `source_names_t: typedef set<source_name_t> source_names_t`
 * `file_mode_t {READ_ONLY, RW_NEW, RW_MODIFY}`
 
-## LMDB Managers
+## LMDB Data Store Managers
 The LMDB managers provide low-level interfaces used by the hashdb library and are not visible at the hashdb interface.
 
 ### LMDB Hash Manager
+See if a block hash is likely to be present, find probable approximate source count.
+
 `key=first 8 bytes of binary hash, data=set of last 8 bytes of binary hash matching the hash prefix in the key.`
 
 * `lmdb_hash_manager_t(hashdb_dir, file_mode)`
 * `void insert(binary_hash, &changes)`
-* `bool find(binary_hash)`
+* `size_t find(binary_hash)`
 * `size_t size()`
 
 ### LMDB Hash Data Manager
-`key=binary_hash, data=(low_entropy_label, entropy, block_label, set(source_id, file_offset))`
+Look up information associated with a given block hash.
+
+`key=binary_hash, data=(entropy, block_label, set(source_id, file_offset))`
 
 * `lmdb_hash_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, file_offset, binary_hash, low_entropy_label, entropy, block_label, &changes)` - true if inserted, false if not
-* `bool find(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `void insert(source_id, file_offset, binary_hash, entropy, block_label, &changes)` - change if different
+* `bool find(binary_hash, entropy&, block_label&, id_offset_pairs_t&)`
 * `pair(bool, binary_hash) find_begin()`
 * `pair(bool, binary_hash) find_next(last_binary_hash)`
 * `size_t size()`
@@ -44,7 +48,7 @@ Look up source data from source ID.
 `key=source_id, data=(file_binary_hash, filesize, file_type, low_entropy_count)`
 
 * `lmdb_source_data_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count, &changes)` - true if new, false, do not change, and note if not new
+* `void insert(source_id, file_binary_hash, filesize, file_type, low_entropy_count, &changes)` - change if different
 * `bool find(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - false on no source ID
 * `pair(bool, source_id) find_begin()` - false if empty
 * `pair(bool, source_id) find_next()` - fail if already at end
@@ -56,33 +60,29 @@ Look up a set of source names given a source ID.
 `key=source_id, data=(source_names_t)`.
 
 * `lmdb_source_name_manager_t(hashdb_dir, file_mode)`
-* `bool insert(source_id, repository_name, filename, &changes)` - true if inserted, false if already there
+* `void insert(source_id, repository_name, filename, &changes)`
 * `bool find(source_id, source_names_t&)` - false on no source ID
 * `size_t size()`
 
 ## HASHDB Interfaces
 hashdb interfaces use the `hashdb` namespace, are defined in `hashdb.hpp`, and are linked using the `libhashdb` library.  Interfaces can assert on unexpected error.
 
-### Settings
-Hold hashdb settings.
-
-* `settings_t()` - create settings with default values.
-
 ### Import
 Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes to change log.
 
 * `import_manager_t(hashdb_dir)`
 * `pair(bool, source_id) insert_source_id(file_binary_hash)` - false if already there
-* `bool insert_source_name(source_id, repository_name, filename)` - false if already there
-* `bool insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - true if new else false and overwrite
-* `void insert_hash(binary_hash, source_id, file_offset, low_entropy_label, entropy, block_label)` - overwrite data fields
+* `void insert_source_name(source_id, repository_name, filename)`
+* `void insert_source_data(source_id, file_binary_hash, filesize, file_type, low_entropy_count)` - change if different
+* `void insert_hash(binary_hash, source_id, file_offset, entropy, block_label)` - change if different
 * `string size()` - return sizes of LMDB databases
 * `~import_manager_t()` - append changes to change log at `hashdb_dir/log.dat`
 
 ### Scan
 * `scan_manager_t(hashdb_dir)`
 * `bool find_expanded_hash(binary_hash, expanded_text&)` - find and return JSON text
-* `bool find_hash(binary_hash, low_entropy_label&, entropy&, block_label&, id_offset_pairs_t&)`
+* `bool find_hash(binary_hash, entropy&, block_label&, id_offset_pairs_t&)`
+* `size_t find_approximate_hash_count(binary_hash)`
 * `bool find_source_data(source_id, file_binary_hash&, filesize&, file_type&, low_entropy_count&)` - false on no source ID
 * `bool find_source_names(source_id, source_names_t&)` - false on no source ID
 * `pair(bool, source_id) find_source_id(file_binary_hash)`
@@ -93,11 +93,19 @@ Import hashes.  Interfaces use lock for DB safety.  Destructor appends changes t
 * `string sizes()` - return sizes of LMDB databases
 * `size_t size()` - return number of unique hashes in hash_data
 
-### Functions
+### Settings
+Hold hashdb settings.
+
+* `settings_t()` - create a settings object with default values.
+
+### Timestamp
+* `timestamp_t()`
+* `string stamp(text)`
+### Support Functions
+
 * `extern C char* version()` - Return the hashdb version.
-* `pair(bool, string) is_valid_hashdb` - Return true and "" else false and reason the DB is not valid.
 * `pair(bool, string) create_hashdb(hashdb_dir, settings)` - Create a hash database given settings.  Return true and "" else false and reason for failure.
 * `pair(bool, string) read_settings(hashdb_dir, settings&)` - Query settings else false and reason for failure.
-* `print_enviornment(command_line_string, ostream&)` - print command and environment to output stream.
+* `print_enviornment(command_line_string, ostream&)` - print command and environment to output stream. - this interface may be removed.
 * `import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy, max_entropy, repository_name, import_path)` - import from path to hashdb
 
