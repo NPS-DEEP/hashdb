@@ -233,8 +233,6 @@ namespace hashdb {
      *   source_id - The source ID for this source data.
      *   file_offset - The byte offset into the file where the hash is
      *     located.
-     *   low_entropy_label - Text indicating how the associated block
-     *     may be considered non-probative, else "" if not.
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
@@ -242,7 +240,6 @@ namespace hashdb {
     void insert_hash(const std::string& binary_hash,
                      const uint64_t source_id,
                      const uint64_t file_offset,
-                     const std::string& low_entropy_label,
                      const uint64_t entropy,
                      const std::string& block_label);
 
@@ -324,8 +321,6 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   low_entropy_label - Text indicating how the associated block
-     *     may be considered non-probative, else "" if not.
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
@@ -335,7 +330,6 @@ namespace hashdb {
      *   True if the hash is present, false if not.
      */
     bool find_hash(const std::string& binary_hash,
-                   std::string& low_entropy_label,
                    uint64_t& entropy,
                    std::string& block_label,
                    id_offset_pairs_t& id_offset_pairs) const;

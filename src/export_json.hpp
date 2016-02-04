@@ -28,8 +28,8 @@
  *   "filename":"filename1"}]}
  *
  * Block hash data:
- *   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
- *   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+ *   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
+ *   "source_offset_pairs":["b9e7...", 4096]}
  *
  * Comment line:
  *   Comment lines start with #.
@@ -121,14 +121,13 @@ class export_json_t {
   }
 
   // Block hash data:
-  //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
-  //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+  //   {"block_hash":"a7df...", "entropy":8,
+  //   "block_label":"W", "source_offset_pairs":["b9e7...", 4096]}
   void write_block_hash_data(const std::string& cmd, std::ostream& os) {
 
     progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     // hash fields
-    std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
@@ -144,11 +143,9 @@ class export_json_t {
     while (pair.first != false) {
 
       // hash data
-      manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
-                        *id_offset_pairs);
+      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
 
       os << "{\"block_hash\":\"" << bin_to_hex(pair.second)
-         << "\",\"low_entropy_label\":\"" << low_entropy_label
          << "\",\"entropy\":" << entropy
          << ",\"block_label\":\"" << block_label
          << "\",\"source_offset_pairs\":[";

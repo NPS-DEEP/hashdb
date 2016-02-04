@@ -68,15 +68,13 @@ class lmdb_hash_data_manager_t {
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
   lmdb_hash_data_manager_t& operator=(const lmdb_hash_data_manager_t&);
 
-  // encoder for data=low_entropy_label, entropy, block_label,
-  //                  set(source_id, file_offset)
-  std::string encode_data(const std::string& low_entropy_label,
-                          const uint64_t entropy,
+  // encoder for data=entropy, block_label, set(source_id, file_offset)
+  std::string encode_data(const uint64_t entropy,
                           const std::string& block_label,
                           const id_offset_pairs_t& pairs) const {
 
     // allocate space for the encoding
-    size_t max_size = low_entropy_label.size() + 10 + 10 +
+    size_t max_size = 10 +
                       block_label.size() + 10 +
                       pairs.size() * (10 + 10);
 
@@ -84,7 +82,6 @@ class lmdb_hash_data_manager_t {
     uint8_t* p = encoding;
 
     // encode each field
-    p = lmdb_helper::encode_string(low_entropy_label, p);
     p = lmdb_helper::encode_uint64_t(entropy, p);
     p = lmdb_helper::encode_string(block_label, p);
     for (id_offset_pairs_t::const_iterator it = pairs.begin();
@@ -100,7 +97,7 @@ class lmdb_hash_data_manager_t {
 
 #ifdef DEBUG
     std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding low entropy label " << low_entropy_label
+    std::cout << "encoding"
               << " entropy " << entropy
               << " block_label " << block_label
               << " id_offset_pairs size " << pairs.size()
@@ -119,10 +116,8 @@ class lmdb_hash_data_manager_t {
     return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
   }
 
-  // decoder for data=low_entropy_label, entropy, block_label,
-  //                  set(source_id, file_offset)
+  // decoder for data=entropy, block_label, set(source_id, file_offset)
   void decode_data(const std::string& encoding,
-                   std::string& low_entropy_label,
                    uint64_t& entropy,
                    std::string& block_label,
                    id_offset_pairs_t& pairs) const {
@@ -131,7 +126,6 @@ class lmdb_hash_data_manager_t {
     const uint8_t* p_stop = p_start + encoding.size();
     const uint8_t* p = p_start;
 
-    p = lmdb_helper::decode_string(p, low_entropy_label);
     p = lmdb_helper::decode_uint64_t(p, entropy);
     p = lmdb_helper::decode_string(p, block_label);
 
@@ -147,7 +141,6 @@ class lmdb_hash_data_manager_t {
     std::string hex_encoding = hashdb::to_hex(encoding);
     std::cout << "decoding " << hex_encoding
               << " size " << encoding.size() << "\n to"
-              << " low_entropy_label " << low_entropy_label
               << " entropy " << entropy 
               << " block_label " << block_label
               << " id_offset_pairs size " << pairs.size()
@@ -204,7 +197,6 @@ class lmdb_hash_data_manager_t {
   void insert(const std::string& binary_hash,
               const uint64_t source_id,
               const uint64_t file_offset,
-              const std::string& low_entropy_label,
               const uint64_t entropy,
               const std::string& block_label,
               lmdb_changes_t& changes) {
@@ -244,8 +236,7 @@ class lmdb_hash_data_manager_t {
       // start id_offset_pairs
       id_offset_pairs->clear();
       id_offset_pairs->insert(id_offset_pair_t(source_id, file_offset));
-      encoding = encode_data(low_entropy_label, entropy, block_label,
-                             *id_offset_pairs);
+      encoding = encode_data(entropy, block_label, *id_offset_pairs);
       lmdb_helper::point_to_string(encoding, context.data);
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
@@ -268,14 +259,11 @@ class lmdb_hash_data_manager_t {
 
       // note if data portion is different
       bool data_is_different = false;
-      std::string p_low_entropy_label;
       uint64_t p_entropy;
       std::string p_block_label;
       encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, p_low_entropy_label, p_entropy, p_block_label,
-                  *id_offset_pairs);
-      if (low_entropy_label != p_low_entropy_label ||
-          entropy != p_entropy ||
+      decode_data(encoding, p_entropy, p_block_label, *id_offset_pairs);
+      if (entropy != p_entropy ||
           block_label != p_block_label) {
         ++changes.hash_data_data_changed;
         data_is_different = true;
@@ -311,8 +299,7 @@ class lmdb_hash_data_manager_t {
 
         // write the change
         id_offset_pairs->insert(id_offset_pair);
-        encoding = encode_data(low_entropy_label, entropy, block_label,
-                               *id_offset_pairs);
+        encoding = encode_data(entropy, block_label, *id_offset_pairs);
         lmdb_helper::point_to_string(encoding, context.data);
         rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
@@ -340,7 +327,6 @@ class lmdb_hash_data_manager_t {
    * Read data for the hash.  False if the hash does not exist.
    */
   bool find(const std::string& binary_hash,
-            std::string& low_entropy_label,
             uint64_t& entropy,
             std::string& block_label,
             id_offset_pairs_t& pairs) const {
@@ -365,15 +351,13 @@ class lmdb_hash_data_manager_t {
     if (rc == 0) {
       // hash found
       std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, low_entropy_label, entropy, block_label,
-                  pairs);
+      decode_data(encoding, entropy, block_label, pairs);
       context.close();
       return true;
 
     } else if (rc == MDB_NOTFOUND) {
       // no hash
       context.close();
-      low_entropy_label = "";
       entropy = 0;
       block_label = "";
       pairs.clear();

@@ -28,8 +28,8 @@
  *   "filename":"filename1"}]}
  *
  * Block hash data:
- *   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
- *   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+ *   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
+ *   "source_offset_pairs":["b9e7...", 4096]}
  *
  * Comment line:
  *   Comment lines start with #.
@@ -159,8 +159,8 @@ class import_json_t {
   }
 
   // Block hash data:
-  //   {"block_hash":"a7df...", "low_entropy_label":"W", "entropy":8,
-  //   "block_label":"txt", "source_offset_pairs":["b9e7...", 4096]}
+  //   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
+  //   "source_offset_pairs":["b9e7...", 4096]}
 
 
   void read_block_hash_data(const rapidjson::Document& document,
@@ -173,12 +173,6 @@ class import_json_t {
       return;
     }
     std::string binary_hash = hex_to_bin(document["block_hash"].GetString());
-
-    // low_entropy_label (optional)
-    std::string low_entropy_label =
-                 (document.HasMember("low_entropy_label") &&
-                  document["low_entropy_label"].IsString()) ?
-                     document["low_entropy_label"].GetString() : "";
 
     // entropy (optional)
     uint64_t entropy =
@@ -223,7 +217,7 @@ class import_json_t {
 
       // insert the hash
       manager.insert_hash(binary_hash, id_pair.second, file_offset,
-                          low_entropy_label, entropy, block_label);
+                          entropy, block_label);
     }
   }
 

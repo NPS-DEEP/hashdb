@@ -122,7 +122,7 @@ class import_tab_t {
     manager.insert_source_name(source_id, repository_name, tab_file);
 
     // add block hash
-    manager.insert_hash(block_binary_hash, source_id, file_offset, "", 0, "");
+    manager.insert_hash(block_binary_hash, source_id, file_offset, 0, "");
 
     // update progress tracker
     progress_tracker.track();

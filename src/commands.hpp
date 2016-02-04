@@ -453,7 +453,6 @@ namespace commands {
                 new std::map<uint32_t, uint64_t>();
 
     // space for variables
-    std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
@@ -467,8 +466,7 @@ namespace commands {
     }
 
     while (pair.first == true) {
-      manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
-                        *id_offset_pairs);
+      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
       uint64_t count = id_offset_pairs->size();
       // update total hashes observed
       total_hashes += count;
@@ -546,7 +544,6 @@ namespace commands {
     bool any_found = false;
 
     // space for variables
-    std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
@@ -556,8 +553,7 @@ namespace commands {
     std::pair<bool, std::string> pair = manager.hash_begin();
 
     while (pair.first == true) {
-      manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
-                        *id_offset_pairs);
+      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
       if (id_offset_pairs->size() == number) {
         // show hash with requested duplicates number
         manager.find_expanded_hash(pair.second, *expanded_text);
@@ -608,7 +604,6 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
 
     // space for variables
-    std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
@@ -619,8 +614,7 @@ namespace commands {
     std::pair<bool, std::string> pair = manager.hash_begin();
 
     while (pair.first == true) {
-      manager.find_hash(pair.second, low_entropy_label, entropy, block_label,
-                        *id_offset_pairs);
+      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
       for (hashdb::id_offset_pairs_t::const_iterator it =
             id_offset_pairs->begin(); it!= id_offset_pairs->end(); ++it) {
         if (it->first == source_id) {
@@ -675,7 +669,7 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(random_binary_hash(), id_pair.second, 0,"",0,"");
+      manager.insert_hash(random_binary_hash(), id_pair.second, 0, 0, "");
     }
   }
 
@@ -762,7 +756,7 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(binary_hash, id_pair.second, i*sector_size, "",0,"");
+      manager.insert_hash(binary_hash, id_pair.second, i*sector_size, 0, "");
     }
   }
 

@@ -57,7 +57,6 @@ namespace add {
     std::set<uint64_t>* source_ids = new std::set<uint64_t>;
 
     // hash data
-    std::string low_entropy_label = "";
     uint64_t entropy = 0;
     std::string block_label = "";
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
@@ -70,8 +69,7 @@ namespace add {
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
     // get hash data from A
-    manager_a.find_hash(binary_hash, low_entropy_label,
-                        entropy, block_label, *id_offset_pairs);
+    manager_a.find_hash(binary_hash, entropy, block_label, *id_offset_pairs);
 
     // add hashes from A to B
 
@@ -89,7 +87,7 @@ namespace add {
 
       // add the hash with this source ID, offset pair
       manager_b.insert_hash(binary_hash, pair_b.second, it->second,
-                            low_entropy_label, entropy, block_label);
+                            entropy, block_label);
 
       // add the source data if it is new
       if (source_ids->find(pair_b.second) == source_ids->end()) {

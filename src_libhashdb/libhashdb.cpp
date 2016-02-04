@@ -320,14 +320,13 @@ namespace hashdb {
   void import_manager_t::insert_hash(const std::string& binary_hash,
                         const uint64_t source_id,
                         const uint64_t file_offset,
-                        const std::string& low_entropy_label,
                         const uint64_t entropy,
                         const std::string& block_label) {
 
     // insert into hash manager and hash data manager
     lmdb_hash_manager->insert(binary_hash, *changes);
     lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
-                        low_entropy_label, entropy, block_label, *changes);
+                                   entropy, block_label, *changes);
   }
 
   std::string import_manager_t::sizes() const {
@@ -392,14 +391,13 @@ namespace hashdb {
                                           std::string& expanded_text) {
 
     // fields to hold the scan
-    std::string low_entropy_label;
     uint64_t entropy;
     std::string block_label;
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
 
     // scan
     bool matched = scan_manager_t::find_hash(binary_hash,
-               low_entropy_label, entropy, block_label, *id_offset_pairs);
+                                  entropy, block_label, *id_offset_pairs);
 
     // done if no match
     if (matched == false) {
@@ -479,17 +477,15 @@ namespace hashdb {
   }
 
   bool scan_manager_t::find_hash(const std::string& binary_hash,
-                      std::string& low_entropy_label,
                       uint64_t& entropy,
                       std::string& block_label,
                       id_offset_pairs_t& pairs) const {
     if (lmdb_hash_manager->find(binary_hash) == true) {
       // hash may be present so use hash data manager
       return lmdb_hash_data_manager->find(binary_hash,
-                low_entropy_label, entropy, block_label, pairs);
+                                          entropy, block_label, pairs);
     } else {
       // hash is not present so return false
-      low_entropy_label = "";
       entropy = 0;
       block_label = "";
       pairs.clear();
