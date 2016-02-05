@@ -192,14 +192,14 @@ class lmdb_hash_data_manager_t {
 
   /**
    * Insert hash with source data and metadata.  Overwrite data if there
-   * and changed.
+   * and changed.  Return source count.
    */
-  void insert(const std::string& binary_hash,
-              const uint64_t source_id,
-              const uint64_t file_offset,
-              const uint64_t entropy,
-              const std::string& block_label,
-              lmdb_changes_t& changes) {
+  size_t insert(const std::string& binary_hash,
+                const uint64_t source_id,
+                const uint64_t file_offset,
+                const uint64_t entropy,
+                const std::string& block_label,
+                lmdb_changes_t& changes) {
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
@@ -210,7 +210,7 @@ class lmdb_hash_data_manager_t {
     // validate file_offset
     if (file_offset % sector_size != 0) {
       ++changes.hash_data_invalid_file_offset;
-      return;
+      return 0;
     }
 
     MUTEX_LOCK(&M);
@@ -252,7 +252,7 @@ class lmdb_hash_data_manager_t {
       ++changes.hash_data_data_inserted;
       ++changes.hash_data_source_inserted;
       MUTEX_UNLOCK(&M);
-      return;
+      return 0;
  
     } else if (rc == 0) {
       // hash is already there
@@ -312,9 +312,10 @@ class lmdb_hash_data_manager_t {
       }
 
       // done with hash already there
+      size_t source_count = id_offset_pairs->size(); // get this inside lock
       context.close();
       MUTEX_UNLOCK(&M);
-      return;
+      return source_count;
 
     } else {
       // invalid rc

@@ -317,7 +317,7 @@ namespace hashdb {
                             std::string& expanded_text);
 
     /**
-     * Find hash, fail if hash is not present.
+     * Find hash.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
@@ -333,6 +333,17 @@ namespace hashdb {
                    uint64_t& entropy,
                    std::string& block_label,
                    id_offset_pairs_t& id_offset_pairs) const;
+
+    /**
+     * Find approximate hash count.  Faster than find_hash, but can be wrong.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
+     *   Approximate hash count.
+     */
+    size_t find_approximate_hash_count(const std::string& binary_hash) const;
 
     /**
      * Find source data for the given source ID, false on no source ID.

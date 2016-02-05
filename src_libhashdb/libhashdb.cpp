@@ -324,9 +324,9 @@ namespace hashdb {
                         const std::string& block_label) {
 
     // insert into hash manager and hash data manager
-    lmdb_hash_manager->insert(binary_hash, *changes);
-    lmdb_hash_data_manager->insert(binary_hash, source_id, file_offset,
-                                   entropy, block_label, *changes);
+    const size_t count = lmdb_hash_data_manager->insert(binary_hash,
+                    source_id, file_offset, entropy, block_label, *changes);
+    lmdb_hash_manager->insert(binary_hash, count, *changes);
   }
 
   std::string import_manager_t::sizes() const {
@@ -480,7 +480,7 @@ namespace hashdb {
                       uint64_t& entropy,
                       std::string& block_label,
                       id_offset_pairs_t& pairs) const {
-    if (lmdb_hash_manager->find(binary_hash) == true) {
+    if (lmdb_hash_manager->find(binary_hash) > 0) {
       // hash may be present so use hash data manager
       return lmdb_hash_data_manager->find(binary_hash,
                                           entropy, block_label, pairs);
@@ -491,6 +491,11 @@ namespace hashdb {
       pairs.clear();
       return false;
     }
+  }
+
+  size_t scan_manager_t::find_approximate_hash_count(
+                                    const std::string& binary_hash) const {
+    return lmdb_hash_manager->find(binary_hash);
   }
 
   bool scan_manager_t::find_source_data(const uint64_t source_id,
