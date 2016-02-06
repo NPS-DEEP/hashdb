@@ -24,6 +24,9 @@
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
+
+#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+
 #include "file_modes.h"
 #include "lmdb.h"
 #include "lmdb_helper.h"
@@ -35,7 +38,7 @@
 #include <iostream>
 #include <string>
 #include <set>
-#ifdef DEBUG
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 #include "to_hex.hpp"
 #endif
 
@@ -44,6 +47,13 @@
 #include <pthread.h>
 #endif
 #include "mutex_lock.hpp"
+
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+static void print_mdb_val(const std::string& name, const MDB_val& val) {
+  std::cerr << name << ": "
+            << hashdb::to_hex(lmdb_helper::get_string(val)) << "\n";
+}
+#endif
 
 class lmdb_hash_data_manager_t {
 
@@ -67,97 +77,6 @@ class lmdb_hash_data_manager_t {
   // do not allow copy or assignment
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
   lmdb_hash_data_manager_t& operator=(const lmdb_hash_data_manager_t&);
-
-  // encoder for data=entropy, block_label, set(source_id, file_offset)
-  std::string encode_data(const uint64_t entropy,
-                          const std::string& block_label,
-                          const id_offset_pairs_t& pairs) const {
-
-    // allocate space for the encoding
-    size_t max_size = 10 +
-                      block_label.size() + 10 +
-                      pairs.size() * (10 + 10);
-
-    uint8_t encoding[max_size];
-    uint8_t* p = encoding;
-
-    // encode each field
-    p = lmdb_helper::encode_uint64_t(entropy, p);
-    p = lmdb_helper::encode_string(block_label, p);
-    for (id_offset_pairs_t::const_iterator it = pairs.begin();
-                                         it != pairs.end(); ++it) {
-      p = lmdb_helper::encode_uint64_t(it->first, p);
-      // higher layer must already require offset to be valid
-      if (it->second % sector_size != 0) {
-        assert(0);
-      }
-      uint64_t offset_index = it->second / sector_size;
-      p = lmdb_helper::encode_uint64_t(offset_index, p);
-    }
-
-#ifdef DEBUG
-    std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding"
-              << " entropy " << entropy
-              << " block_label " << block_label
-              << " id_offset_pairs size " << pairs.size()
-              << " id_offset_pairs[";
-    for (id_offset_pairs_t::const_iterator it = pairs.begin();
-                                         it != pairs.end(); ++it) {
-      std::cout << "(" << it->first << "," << it->second << ")";
-    }
-
-    std::cout << "]\nto binary data "
-              << hashdb::to_hex(encoding_string)
-              << " size " << encoding_string.size() << "\n";
-#endif
-
-    // return encoding
-    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
-  }
-
-  // decoder for data=entropy, block_label, set(source_id, file_offset)
-  void decode_data(const std::string& encoding,
-                   uint64_t& entropy,
-                   std::string& block_label,
-                   id_offset_pairs_t& pairs) const {
-    pairs.clear();
-    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
-    const uint8_t* p_stop = p_start + encoding.size();
-    const uint8_t* p = p_start;
-
-    p = lmdb_helper::decode_uint64_t(p, entropy);
-    p = lmdb_helper::decode_string(p, block_label);
-
-    while(p < p_stop) {
-      id_offset_pair_t pair;
-      p = lmdb_helper::decode_uint64_t(p, pair.first);
-      p = lmdb_helper::decode_uint64_t(p, pair.second);
-      pair.second *= sector_size;
-      pairs.insert(pair);
-    }
-
-#ifdef DEBUG
-    std::string hex_encoding = hashdb::to_hex(encoding);
-    std::cout << "decoding " << hex_encoding
-              << " size " << encoding.size() << "\n to"
-              << " entropy " << entropy 
-              << " block_label " << block_label
-              << " id_offset_pairs size " << pairs.size()
-              << " id_offset_pairs[";
-    for (id_offset_pairs_t::const_iterator it = pairs.begin();
-                                         it != pairs.end(); ++it) {
-      std::cout << "(" << it->first << "," << it->second << ")";
-    }
-    std::cout << "]\n";
-#endif
-
-    // validate that the decoding was properly consumed
-    if ((size_t)(p - p_start) != encoding.size()) {
-      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
-      assert(0);
-    }
-  }
 
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
@@ -212,6 +131,7 @@ class lmdb_hash_data_manager_t {
       ++changes.hash_data_invalid_file_offset;
       return 0;
     }
+    const uint64_t file_offset_index = file_offset / sector_size;
 
     MUTEX_LOCK(&M);
 
@@ -223,21 +143,35 @@ class lmdb_hash_data_manager_t {
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    context.key.mv_size = binary_hash.size();
+    context.key.mv_data =
+               static_cast<void*>(const_cast<char*>(binary_hash.c_str()));
 
     // see if hash is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    std::string encoding;
     if (rc == MDB_NOTFOUND) {
       // hash is not there
 
-      // start id_offset_pairs
-      id_offset_pairs->clear();
-      id_offset_pairs->insert(id_offset_pair_t(source_id, file_offset));
-      encoding = encode_data(entropy, block_label, *id_offset_pairs);
-      lmdb_helper::point_to_string(encoding, context.data);
+      // make data with enough space for fields
+      const size_t block_label_size = block_label.size();
+      uint8_t data[10 + (10 + block_label_size) + 10 + 10];
+      uint8_t* p = data;
+      p = lmdb_helper::encode_uint64_t(entropy, p);
+      p = lmdb_helper::encode_uint64_t(block_label_size, p);
+      std::memcpy(p, block_label.c_str(), block_label_size);
+      p += block_label_size;
+      p = lmdb_helper::encode_uint64_t(source_id, p);
+      p = lmdb_helper::encode_uint64_t(file_offset_index, p);
+
+      // store data at new key
+      context.data.mv_size = p - data;
+      context.data.mv_data = data;
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager insert new key", context.key);
+print_mdb_val("hash_data_manager insert new data", context.data);
+#endif
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
 
@@ -248,74 +182,150 @@ class lmdb_hash_data_manager_t {
       }
  
       // hash data inserted
-      context.close();
       ++changes.hash_data_data_inserted;
       ++changes.hash_data_source_inserted;
+      context.close();
       MUTEX_UNLOCK(&M);
       return 0;
  
     } else if (rc == 0) {
-      // hash is already there
-
-      // note if data portion is different
-      bool data_is_different = false;
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager insert change from key", context.key);
+print_mdb_val("hash_data_manager insert change from data", context.data);
+#endif
+      // read the hash data entropy
       uint64_t p_entropy;
-      std::string p_block_label;
-      encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, p_entropy, p_block_label, *id_offset_pairs);
-      if (entropy != p_entropy ||
-          block_label != p_block_label) {
-        ++changes.hash_data_data_changed;
-        data_is_different = true;
-      } else {
-        ++changes.hash_data_data_same;
-      }
+      const uint8_t* const old_p_start =
+                                 static_cast<uint8_t*>(context.data.mv_data);
+      const uint8_t* old_p = old_p_start;
+      old_p = lmdb_helper::decode_uint64_t(old_p, p_entropy);
 
-      // note if id_offset_pairs changes
-      bool pair_change = false;
-      id_offset_pair_t id_offset_pair(source_id, file_offset);
-      if (max_id_offset_pairs != 0 &&
-          id_offset_pairs->size() >= max_id_offset_pairs) {
+      // read the hash data block_label size
+      uint64_t p_block_label_size;
+      old_p = lmdb_helper::decode_uint64_t(old_p, p_block_label_size);
 
-        // no pair change because at max
-        ++changes.hash_data_source_at_max;
-      } else {
-        // not at max but the id_offset pair may already be there
-        if (id_offset_pairs->find(id_offset_pair) != id_offset_pairs->end()) {
+      // read the hash data block_label
+      std::string p_block_label =
+         std::string(reinterpret_cast<const char*>(old_p), p_block_label_size);
+      old_p += p_block_label_size;
 
-          // no pair change because already there
-          ++changes.hash_data_source_already_present;
+      // note if the data portion is the same
+      const bool data_same = entropy == p_entropy &&
+                             block_label == p_block_label;
 
-        } else {
-          // not at max and not already there so pair change
-          id_offset_pairs->insert(id_offset_pair);
-          pair_change = true;
-          ++changes.hash_data_source_inserted;
+      // note old_p_source_start for later
+      const uint8_t* const old_p_source_start = old_p;
+
+      // now look for the source_id, offset
+      bool source_present = false;
+      const uint8_t* old_p_end = static_cast<uint8_t*>(context.data.mv_data) +
+                                 context.data.mv_size;
+      size_t count = 0;
+      while (old_p < old_p_end) {
+        uint64_t p_source_id;
+        old_p = lmdb_helper::decode_uint64_t(old_p, p_source_id);
+        uint64_t p_file_offset_index;
+        old_p = lmdb_helper::decode_uint64_t(old_p, p_file_offset_index);
+        if (source_id == p_source_id &&
+            file_offset_index == p_file_offset_index) {
+          // source is present
+          source_present = true;
+          // don't break, keep going because we still need to calculate count
         }
+        ++count;
       }
 
-      // write if changed
-      if (data_is_different || pair_change) {
+      // read must align to data record
+      if (old_p != old_p_end) {
+        assert(0);
+      }
 
-        // write the change
-        id_offset_pairs->insert(id_offset_pair);
-        encoding = encode_data(entropy, block_label, *id_offset_pairs);
-        lmdb_helper::point_to_string(encoding, context.data);
+      // note if count is at max
+      const bool at_max = (count >= max_id_offset_pairs) ? true : false;
+ 
+std::cerr << "insert.b\n";
+      // handle no change: same data, same source or at max
+      if (data_same && (source_present || at_max)) {
+std::cerr << "insert.c\n";
+        ++changes.hash_data_data_same;
+        if (source_present) {
+          ++changes.hash_data_source_already_present;
+        } else {
+          ++changes.hash_data_source_at_max;
+        }
+        context.close();
+        MUTEX_UNLOCK(&M);
+        return count;
+
+      } else {
+std::cerr << "insert.d\n";
+        // handle change: changed data and/or new source
+
+        // build new record, make it sufficiently bigger than before.
+        const size_t block_label_size = block_label.size();
+        uint8_t* const new_data =
+                 new uint8_t[context.data.mv_size + 10*5 + block_label_size];
+        uint8_t* new_p = new_data;
+
+        // put in the data fields
+        new_p = lmdb_helper::encode_uint64_t(entropy, new_p);
+        new_p = lmdb_helper::encode_uint64_t(block_label_size, new_p);
+        std::memcpy(new_p, block_label.c_str(), block_label_size);
+        new_p += block_label_size;
+
+        // put in the existing source
+        size_t existing_source_size = old_p - old_p_source_start;
+        memcpy(new_p, old_p_source_start, existing_source_size);
+        new_p += existing_source_size;
+
+        // append any new source
+        if (!source_present && !at_max) {
+          // append the source
+          new_p = lmdb_helper::encode_uint64_t(source_id, new_p);
+          new_p = lmdb_helper::encode_uint64_t(file_offset_index, new_p);
+        }
+
+        // point to new_data
+        context.data.mv_size = new_p - new_data;
+        context.data.mv_data = new_data;
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager insert change to key", context.key);
+print_mdb_val("hash_data_manager insert change to data", context.data);
+#endif
+
+        // store the new data
         rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
 
-        // the change request must work
+        // the add request must work
         if (rc != 0) {
           std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
           assert(0);
         }
+
+        // note changes
+        if (data_same) {
+          ++changes.hash_data_data_same;
+        } else {
+          ++changes.hash_data_data_changed;
+        }
+        if (source_present) {
+          ++changes.hash_data_source_already_present;
+        }
+        if (at_max) {
+          ++changes.hash_data_source_at_max;
+        }
+        if (!source_present && !at_max) {
+          ++changes.hash_data_source_inserted;
+        }
+
+        delete new_data;
       }
 
-      // done with hash already there
-      size_t source_count = id_offset_pairs->size(); // get this inside lock
+      // done
       context.close();
       MUTEX_UNLOCK(&M);
-      return source_count;
+      return count;
 
     } else {
       // invalid rc
@@ -343,7 +353,9 @@ class lmdb_hash_data_manager_t {
     context.open();
 
     // set key
-    lmdb_helper::point_to_string(binary_hash, context.key);
+    context.key.mv_size = binary_hash.size();
+    context.key.mv_data =
+                 static_cast<void*>(const_cast<char*>(binary_hash.c_str()));
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -351,8 +363,44 @@ class lmdb_hash_data_manager_t {
 
     if (rc == 0) {
       // hash found
-      std::string encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, entropy, block_label, pairs);
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager find key", context.key);
+print_mdb_val("hash_data_manager find data", context.data);
+#endif
+
+      // read the hash data entropy
+      const uint8_t* p = static_cast<uint8_t*>(context.data.mv_data);
+      p = lmdb_helper::decode_uint64_t(p, entropy);
+
+      // read the hash data block_label size
+      uint64_t p_block_label_size;
+      p = lmdb_helper::decode_uint64_t(p, p_block_label_size);
+
+      // read the hash data block_label
+      block_label = std::string(
+                     reinterpret_cast<const char*>(p), p_block_label_size);
+      p += p_block_label_size;
+
+      // clear any existing pairs
+      pairs.clear();
+
+      // read the source_id, offset pairs
+      const uint8_t* const p_end =
+           static_cast<uint8_t*>(context.data.mv_data) + context.data.mv_size;
+      while (p < p_end) {
+        uint64_t source_id;
+        p = lmdb_helper::decode_uint64_t(p, source_id);
+        uint64_t file_offset_index;
+        p = lmdb_helper::decode_uint64_t(p, file_offset_index);
+        uint64_t file_offset = file_offset_index * sector_size;
+        pairs.insert(id_offset_pair_t(source_id, file_offset));
+      }
+
+      // read must align to data record
+      if (p != p_end) {
+        assert(0);
+      }
+
       context.close();
       return true;
 

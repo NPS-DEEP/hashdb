@@ -22,8 +22,39 @@
  * Manage the LMDB hash store.  Threadsafe.
  */
 
+/** The following Python program generates example count encodings:
+#!/usr/bin/env python3
+#
+# Show some values for 4-bit high, 4-bit low encoding
+
+lookup = [1, 5, 25, 125, 625, 3125, 15625, 78125, 390625, 1953125, 9765625,
+          48828125, 244140625, 1220703125, 6103515625, 30517578125]
+
+for i in range(1500):
+
+    m = i + 5
+
+    x = 0
+    while m > 19:
+        x+=1
+        m = m // 5
+
+    # shift m down by 4
+    if m > 4:
+        m -= 4
+    else:
+        m = 0
+
+    source_count = (m+4) * lookup[x] - 5
+
+    print("before: %d   after: %d   x: %d m:%d" % (i, source_count, x, m))
+*/
+
 #ifndef LMDB_HASH_MANAGER_HPP
 #define LMDB_HASH_MANAGER_HPP
+
+//#define DEBUG_LMDB_HASH_MANAGER_HPP
+
 #include "file_modes.h"
 #include "lmdb.h"
 #include "lmdb_helper.h"
@@ -34,9 +65,9 @@
 #include <iostream>
 #include <string>
 #include <set>
-//#ifdef DEBUG
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 #include "to_hex.hpp"
-//#endif
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -44,12 +75,12 @@
 #endif
 #include "mutex_lock.hpp"
 
-//#ifdef DEBUG
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 static void print_mdb_val(const std::string& name, const MDB_val& val) {
   std::cerr << name << ": "
             << hashdb::to_hex(lmdb_helper::get_string(val)) << "\n";
 }
-//#endif
+#endif
 
 static uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
 
@@ -71,6 +102,30 @@ class lmdb_hash_manager_t {
   // do not allow copy or assignment
   lmdb_hash_manager_t(const lmdb_hash_manager_t&);
   lmdb_hash_manager_t& operator=(const lmdb_hash_manager_t&);
+
+  inline uint8_t count_to_byte(size_t count) const {
+    size_t x = 0;
+    size_t m = count + 5;
+    while (m > 19) {
+      m /= 5;
+      ++x;
+    }
+    m = (m > 4) ? m - 4 : 0;
+    if (x > 15) {
+      // cap exponent
+      x = 15;
+    }
+    return (x<<4) + m;
+  }
+
+  inline size_t byte_to_count(uint8_t b) const {
+    const uint64_t lookup[] = {1, 5, 25, 125, 625, 3125, 15625, 78125,
+                               390625, 1953125, 9765625, 48828125, 244140625,
+                               1220703125, 6103515625, 30517578125};
+    const size_t x = b >> 4;
+    const size_t m = b & 0x0f;
+    return (m + 4) * lookup[x] - 5;
+  }
 
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
@@ -133,31 +188,11 @@ class lmdb_hash_manager_t {
       memcpy(data, binary_hash.c_str(), hash_size);
     } else {
       // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size - 1 - num_suffix_bytes), num_suffix_bytes);
+      memcpy(data, binary_hash.c_str() + (hash_size -  num_suffix_bytes), num_suffix_bytes);
     }
-
-    // calculate exponent for encoding
-    size_t temp = source_count + 6;
-    if (temp > 0xffffffff) {
-      // clip to fit within 32-bit size_t
-      temp = 0xffffffff;
-    }
-    uint8_t x = 0;
-    while (temp > 15) {
-      x++;
-      temp /= 5;
-    }
-
-    // calculate mantissa for encoding
-//    if (temp < 0) {
-//      // invalid data
-//      std::cerr << "corrupted DB\n";
-//      assert(0);
-//    }
-    uint8_t m = temp;
 
     // append count encoding to data
-    data[num_suffix_bytes] = (x<<4) + m;
+    data[num_suffix_bytes] = count_to_byte(source_count);
 
     // ************************************************************
     // insert
@@ -186,8 +221,10 @@ class lmdb_hash_manager_t {
       // set context data
       context.data.mv_size = num_suffix_bytes + 1;
       context.data.mv_data = data;
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager insert not found key", context.key);
 print_mdb_val("hash_manager insert not found data", context.data);
+#endif
 
       // add this new key and data
       rc = mdb_put(context.txn, context.dbi,
@@ -201,7 +238,8 @@ print_mdb_val("hash_manager insert not found data", context.data);
 
       // hash inserted
       context.close();
-      ++changes.hash_inserted;
+      ++changes.hash_prefix_inserted;
+      ++changes.hash_suffix_inserted;
       MUTEX_UNLOCK(&M);
       return;
 
@@ -228,15 +266,16 @@ print_mdb_val("hash_manager insert not found data", context.data);
 
         if (match == true) {
           // suffix already there
-          ++changes.hash_already_present;
 
           // maybe update count
-          if (p[i + num_suffix_bytes] == data[num_suffix_bytes]) {
+          if (p[i + num_suffix_bytes] != data[num_suffix_bytes]) {
 
             // write back just to update count
             p[i + num_suffix_bytes] = data[num_suffix_bytes];
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager insert update count key", context.key);
 print_mdb_val("hash_manager insert update count data", context.data);
+#endif
             rc = mdb_put(context.txn, context.dbi,
                            &context.key, &context.data, MDB_NODUPDATA);
 
@@ -245,6 +284,10 @@ print_mdb_val("hash_manager insert update count data", context.data);
               std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
               assert(0);
             }
+
+            ++changes.hash_count_changed;
+          } else {
+            ++changes.hash_not_changed;
           }
 
           // done because suffix matched
@@ -265,8 +308,10 @@ print_mdb_val("hash_manager insert update count data", context.data);
       // write new data
       context.data.mv_size = new_size;
       context.data.mv_data = new_data;
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager insert append key", context.key);
 print_mdb_val("hash_manager insert append data", context.data);
+#endif
       rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
 
@@ -279,9 +324,9 @@ print_mdb_val("hash_manager insert append data", context.data);
         assert(0);
       }
 
-      // hash inserted
+      // hash suffix inserted
       context.close();
-      ++changes.hash_inserted;
+      ++changes.hash_suffix_inserted;
       MUTEX_UNLOCK(&M);
       return;
     }
@@ -292,8 +337,6 @@ print_mdb_val("hash_manager insert append data", context.data);
    */
   size_t find(const std::string& binary_hash) const {
 
-std::cerr << "find "
-          << hashdb::to_hex(binary_hash) << "\n";
     // require valid binary_hash
     if (binary_hash.size() == 0) {
       std::cerr << "empty key\n";
@@ -323,7 +366,7 @@ std::cerr << "find "
       memcpy(data, binary_hash.c_str(), hash_size);
     } else {
       // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size - 1 - num_suffix_bytes),
+      memcpy(data, binary_hash.c_str() + (hash_size -  num_suffix_bytes),
               num_suffix_bytes);
     }
 
@@ -339,7 +382,9 @@ std::cerr << "find "
     context.key.mv_size = prefix_size;
     context.key.mv_data = key;
 
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager find look for key", context.key);
+#endif
     // set cursor
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
@@ -352,8 +397,10 @@ print_mdb_val("hash_manager find look for key", context.key);
 
     } else if (rc == 0) {
       // prefix present, so look for a match
+#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager find key", context.key);
 print_mdb_val("hash_manager find data", context.data);
+#endif
 
       // validate data size
       if (context.data.mv_size % (num_suffix_bytes +1) != 0) {
@@ -374,15 +421,8 @@ print_mdb_val("hash_manager find data", context.data);
         }
 
         if (match == true) {
-          // reconstruct approximate source_count
-          const size_t x = (p[i + num_suffix_bytes]) >> 4;
-          const size_t m = (p[i + num_suffix_bytes]) & 0x0f;
-          size_t source_count = 1;
-          for (size_t k = 0; k < x; k++) {
-            source_count *= 5;
-          }
-          // zz
-          source_count = (m + 4) * source_count - 10;
+          // extract approximate source_count then close context
+          size_t source_count = byte_to_count(p[i + num_suffix_bytes]);
           context.close();
           return source_count;
         }

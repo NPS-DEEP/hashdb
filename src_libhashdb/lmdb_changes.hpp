@@ -46,8 +46,10 @@ class lmdb_changes_t {
   size_t hash_data_invalid_file_offset;
 
   // hash
-  size_t hash_inserted;
-  size_t hash_already_present;
+  size_t hash_prefix_inserted;
+  size_t hash_suffix_inserted;
+  size_t hash_count_changed;
+  size_t hash_not_changed;
 
   // source_data
   size_t source_data_inserted;
@@ -70,8 +72,10 @@ class lmdb_changes_t {
             hash_data_source_already_present(0),
             hash_data_source_at_max(0),
             hash_data_invalid_file_offset(0),
-            hash_inserted(0),
-            hash_already_present(0),
+            hash_prefix_inserted(0),
+            hash_suffix_inserted(0),
+            hash_count_changed(0),
+            hash_not_changed(0),
             source_data_inserted(0),
             source_data_changed(0),
             source_data_same(0),
@@ -112,11 +116,17 @@ class lmdb_changes_t {
       os << "    hash_data_invalid_file_offset: "
          << hash_data_invalid_file_offset<< "\n";
     }
-    if (hash_inserted) {
-      os << "    hash_inserted: " << hash_inserted<< "\n";
+    if (hash_prefix_inserted) {
+      os << "    hash_prefix_inserted: " << hash_prefix_inserted<< "\n";
     }
-    if (hash_already_present) {
-      os << "    hash_already_present: " << hash_already_present<< "\n";
+    if (hash_suffix_inserted) {
+      os << "    hash_suffix_inserted: " << hash_suffix_inserted<< "\n";
+    }
+    if (hash_count_changed) {
+      os << "    hash_count_changed: " << hash_count_changed<< "\n";
+    }
+    if (hash_not_changed) {
+      os << "    hash_not_changed: " << hash_not_changed<< "\n";
     }
     if (source_data_inserted) {
       os << "    source_data_inserted: " << source_data_inserted << "\n";
@@ -146,8 +156,10 @@ class lmdb_changes_t {
         hash_data_source_already_present == 0 &&
         hash_data_source_at_max == 0 &&
         hash_data_invalid_file_offset == 0 &&
-        hash_inserted == 0 &&
-        hash_already_present == 0 &&
+        hash_prefix_inserted == 0 &&
+        hash_suffix_inserted == 0 &&
+        hash_count_changed == 0 &&
+        hash_not_changed == 0 &&
         source_data_inserted == 0 &&
         source_data_changed == 0 &&
         source_data_same == 0 &&
