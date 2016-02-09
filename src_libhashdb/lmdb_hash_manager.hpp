@@ -66,7 +66,7 @@ for i in range(1500):
 #include <string>
 #include <set>
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
-#include "to_hex.hpp"
+#include "print_lmdb_val.hpp"
 #endif
 
 // no concurrent writes
@@ -76,13 +76,6 @@ for i in range(1500):
 #include "mutex_lock.hpp"
 
 namespace hashdb {
-
-#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
-static void print_mdb_val(const std::string& name, const MDB_val& val) {
-  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
-}
-}
-#endif
 
 static uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
 

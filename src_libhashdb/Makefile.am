@@ -62,7 +62,8 @@ LIBHASHDB_INCS = \
 	lmdb_source_id_manager.hpp \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
-	mutex_lock.hpp
+	mutex_lock.hpp \
+	print_lmdb_val.hpp
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS)

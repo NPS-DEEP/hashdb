@@ -5,9 +5,9 @@
 import helpers as H
 
 json_data = ["#","#", \
-'{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","low_entropy_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}',
-'{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","low_entropy_count":4,"names":[{"repository_name":"r2","filename":"f2"}]}',
-'{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","low_entropy_count":6,"names":[{"repository_name":"r3","filename":"f3"}]}',
+'{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","nonprobative_count":4,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","nonprobative_count":6,"names":[{"repository_name":"r3","filename":"f3"}]}',
 '{"block_hash":"2222222222222222","low_entropy_label":"le1","entropy":7,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","low_entropy_label":"le2","entropy":8,"block_label":"bl2","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
 '{"block_hash":"ffffffffffffffff","low_entropy_label":"le3","entropy":9,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
@@ -54,7 +54,7 @@ def test_sources():
     _setup([
 '{"file_hash":"0011223344556677","filesize":0,"names":[]}'])
     expected_answer = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","low_entropy_count":0,"names":[]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}',
 '']
     returned_answer = H.hashdb(["sources", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
@@ -63,7 +63,7 @@ def test_sources():
     _setup([
 '{"file_hash":"0011223344556677","filesize":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}'])
     expected_answer = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","low_entropy_count":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
 '']
     returned_answer = H.hashdb(["sources", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
@@ -99,7 +99,7 @@ def test_duplicates():
 '# duplicates-command-Version: 2',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
-'Processing index 2 of 2 completed',
+'Processing index 2 of 2 completed.',
 ''])
 
     # one
@@ -108,8 +108,8 @@ def test_duplicates():
 '# hashdb-Version: 3.0.0-dev-0',
 '# duplicates-command-Version: 2',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 1',
-'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","low_entropy_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
-'Processing index 2 of 2 completed',
+'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
+'Processing index 2 of 2 completed.',
 ''])
 
     # two
@@ -118,7 +118,7 @@ def test_duplicates():
 '# hashdb-Version: 3.0.0-dev-0',
 '# duplicates-command-Version: 2',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 2',
-'2222222222222222	[{"source_list_id":2390350426},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","low_entropy_count":0,"names":[]}]},{"id_offset_pairs":[1,0,1,512]}]',
+'2222222222222222	[{"source_list_id":2390350426},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0,1,512]}]',
 '# Processing index 2 of 2 completed.',
 ''])
 
@@ -129,7 +129,7 @@ def test_duplicates():
 '# duplicates-command-Version: 2',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
-'Processing index 2 of 2 completed',
+'Processing index 2 of 2 completed.',
 ''])
 
 def test_hash_table():
@@ -151,7 +151,7 @@ def test_hash_table():
 '# hashdb-Version: 3.0.0-dev-0',
 '# hash-table-command-Version: 3',
 '# command_line: ../src/hashdb hash_table temp_1.hdb 0000000000000000',
-'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","low_entropy_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
+'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
 '2222222222222222	[{"source_list_id":2390350426},{"sources":[]},{"id_offset_pairs":[1,0,1,512]}]',
 '2222222222222222	',
 '# Processing index 2 of 2 completed.',

@@ -29,9 +29,7 @@
 #include <iostream>
 #include <string>
 #include <set>
-#ifdef DEBUG
 #include "to_hex.hpp"
-#endif
 
 namespace hashdb {
 

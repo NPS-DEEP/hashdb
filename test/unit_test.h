@@ -20,6 +20,9 @@
 /**
  * \file
  * Support for simple unit testing.
+ * WARNING: If LHS or RHS are functions and the test fails, the function
+ *          will be run again when printing the error, which can return
+ *          a differnet result than was actually tested.
  */
 
 #ifndef UNIT_TEST_H

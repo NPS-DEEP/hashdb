@@ -38,7 +38,7 @@
 #include <iostream>
 #include <string>
 #ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-#include "to_hex.hpp"
+#include "print_lmdb_val.hpp"
 #endif
 
 // no concurrent writes
@@ -48,13 +48,6 @@
 #include "mutex_lock.hpp"
 
 namespace hashdb {
-
-#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-static void print_mdb_val(const std::string& name, const MDB_val& val) {
-  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
-}
-}
-#endif
 
 class lmdb_source_name_manager_t {
 

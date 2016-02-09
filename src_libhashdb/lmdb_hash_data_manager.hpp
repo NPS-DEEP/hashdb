@@ -39,7 +39,7 @@
 #include <string>
 #include <set>
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-#include "to_hex.hpp"
+#include "print_lmdb_val.hpp"
 #endif
 
 // no concurrent writes
@@ -49,12 +49,6 @@
 #include "mutex_lock.hpp"
 
 namespace hashdb {
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-static void print_mdb_val(const std::string& name, const MDB_val& val) {
-  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
-}
-#endif
 
 class lmdb_hash_data_manager_t {
 
@@ -127,11 +121,7 @@ class lmdb_hash_data_manager_t {
       assert(0);
     }
 
-    // validate file_offset
-    if (file_offset % sector_size != 0) {
-      ++changes.hash_data_invalid_file_offset;
-      return 0;
-    }
+    // calculate file offset index
     const uint64_t file_offset_index = file_offset / sector_size;
 
     MUTEX_LOCK(&M);
@@ -154,6 +144,14 @@ class lmdb_hash_data_manager_t {
 
     if (rc == MDB_NOTFOUND) {
       // hash is not there
+
+      // validate file_offset
+      if (file_offset % sector_size != 0) {
+        ++changes.hash_data_invalid_file_offset;
+        context.close();
+        MUTEX_UNLOCK(&M);
+        return 0;
+      }
 
       // make data with enough space for fields
       const size_t block_label_size = block_label.size();
@@ -187,7 +185,7 @@ print_mdb_val("hash_data_manager insert new data", context.data);
       ++changes.hash_data_source_inserted;
       context.close();
       MUTEX_UNLOCK(&M);
-      return 0;
+      return 1;
  
     } else if (rc == 0) {
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
@@ -240,6 +238,14 @@ print_mdb_val("hash_data_manager insert change from data", context.data);
         assert(0);
       }
 
+      // now that we have count, validate file_offset
+      if (file_offset % sector_size != 0) {
+        ++changes.hash_data_invalid_file_offset;
+        context.close();
+        MUTEX_UNLOCK(&M);
+        return count;
+      }
+
       // note if count is at max
       const bool at_max = (count >= max_id_offset_pairs) ? true : false;
  
@@ -275,11 +281,14 @@ print_mdb_val("hash_data_manager insert change from data", context.data);
         memcpy(new_p, old_p_source_start, existing_source_size);
         new_p += existing_source_size;
 
-        // append any new source
+        // append the new source
         if (!source_present && !at_max) {
           // append the source
           new_p = lmdb_helper::encode_uint64_t(source_id, new_p);
           new_p = lmdb_helper::encode_uint64_t(file_offset_index, new_p);
+
+          // include the new source in the count
+          ++count;
         }
 
         // point to new_data
@@ -402,6 +411,9 @@ print_mdb_val("hash_data_manager find data", context.data);
       return true;
 
     } else if (rc == MDB_NOTFOUND) {
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager no find key", context.key);
+#endif
       // no hash
       context.close();
       entropy = 0;
@@ -429,6 +441,10 @@ print_mdb_val("hash_data_manager find data", context.data);
                             MDB_FIRST);
 
     if (rc == 0) {
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager find_begin key", context.key);
+print_mdb_val("hash_data_manager find_begin data", context.data);
+#endif
       // return the key
       std::string binary_hash = std::string(
               static_cast<char*>(context.key.mv_data), context.key.mv_size);
