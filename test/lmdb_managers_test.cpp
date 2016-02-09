@@ -467,7 +467,7 @@ void lmdb_source_data_manager() {
   std::string file_binary_hash;
   uint64_t filesize;
   std::string file_type;
-  uint64_t low_entropy_count;
+  uint64_t nonprobative_count;
   bool found;
 
   // create new manager
@@ -476,7 +476,7 @@ void lmdb_source_data_manager() {
 
   // no source ID
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(found, false);
 
   // insert
@@ -485,12 +485,12 @@ void lmdb_source_data_manager() {
   TEST_EQ(changes.source_data_changed, 0);
   TEST_EQ(changes.source_data_same, 0);
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(found, true);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
-  TEST_EQ(low_entropy_count, 3);
+  TEST_EQ(nonprobative_count, 3);
 
   // insert same
   manager.insert(1, "fbh", 2, "ft", 3, changes);
@@ -498,38 +498,38 @@ void lmdb_source_data_manager() {
   TEST_EQ(changes.source_data_changed, 0);
   TEST_EQ(changes.source_data_same, 1);
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(found, true);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
-  TEST_EQ(low_entropy_count, 3);
+  TEST_EQ(nonprobative_count, 3);
 
   // change
   manager.insert(1, "fbh2", 22, "ft2", 32, changes);
   TEST_EQ(changes.source_data_inserted, 1);
   TEST_EQ(changes.source_data_changed, 1);
   TEST_EQ(changes.source_data_same, 1);
-  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(file_binary_hash, "fbh2");
   TEST_EQ(filesize, 22);
   TEST_EQ(file_type, "ft2");
-  TEST_EQ(low_entropy_count, 32);
+  TEST_EQ(nonprobative_count, 32);
 
   // insert second
   manager.insert(0, "", 0, "", 0, changes);
-  manager.find(0, file_binary_hash, filesize, file_type, low_entropy_count);
+  manager.find(0, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(file_binary_hash, "");
   TEST_EQ(filesize, 0);
   TEST_EQ(file_type, "");
-  TEST_EQ(low_entropy_count, 0);
+  TEST_EQ(nonprobative_count, 0);
 
   // make sure 1 is still in place
-  manager.find(1, file_binary_hash, filesize, file_type, low_entropy_count);
+  manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
   TEST_EQ(file_binary_hash, "fbh2");
   TEST_EQ(filesize, 22);
   TEST_EQ(file_type, "ft2");
-  TEST_EQ(low_entropy_count, 32);
+  TEST_EQ(nonprobative_count, 32);
 
   // iterator
   std::pair<bool, uint64_t> pair;

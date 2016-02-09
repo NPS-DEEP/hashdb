@@ -74,12 +74,12 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
   std::string file_binary_hash;
   uint64_t filesize;
   std::string file_type;
-  uint64_t low_entropy_count;
+  uint64_t nonprobative_count;
   hashdb::source_names_t* source_names(new hashdb::source_names_t);
 
   // read source data
   manager.find_source_data(source_id, file_binary_hash, filesize,
-                           file_type, low_entropy_count);
+                           file_type, nonprobative_count);
 
   // read source names
   manager.find_source_names(source_id, *source_names);
@@ -89,7 +89,7 @@ static void provide_source_information(const hashdb::scan_manager_t& manager,
      << ",\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
      << ",\"filesize\":" << filesize
      << ",\"file_type\":\"" << file_type << "\""
-     << ",\"low_entropy_count\":" << low_entropy_count
+     << ",\"nonprobative_count\":" << nonprobative_count
      ;
 
   // provide source names
@@ -312,9 +312,9 @@ namespace hashdb {
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
-                          const uint64_t low_entropy_count) {
+                          const uint64_t nonprobative_count) {
     lmdb_source_data_manager->insert(source_id, file_binary_hash,
-                        filesize, file_type, low_entropy_count, *changes);
+                        filesize, file_type, nonprobative_count, *changes);
   }
 
   void import_manager_t::insert_hash(const std::string& binary_hash,
@@ -502,9 +502,9 @@ namespace hashdb {
                         std::string& file_binary_hash,
                         uint64_t& filesize,
                         std::string& file_type,
-                        uint64_t& low_entropy_count) const {
+                        uint64_t& nonprobative_count) const {
     return lmdb_source_data_manager->find(source_id,
-                 file_binary_hash, filesize, file_type, low_entropy_count);
+                file_binary_hash, filesize, file_type, nonprobative_count);
   }
 
   bool scan_manager_t::find_source_names(const uint64_t source_id,

@@ -24,7 +24,7 @@
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+ *   "nonprobative_count":4, "names":[{"repository_name":"repository1",
  *   "filename":"filename1"}]}
  *
  * Block hash data:
@@ -86,7 +86,7 @@ class import_json_t {
 
   // Source data:
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+  //   "nonprobative_count":4, "names":[{"repository_name":"repository1",
   //   "filename":"filename1"}]}
   void read_source_data(const rapidjson::Document& document,
                         const std::string& line) {
@@ -113,11 +113,11 @@ class import_json_t {
                   document["file_type"].IsString()) ?
                      document["file_type"].GetString() : "";
 
-    // low_entropy_count (optional)
-    uint64_t low_entropy_count =
-                 (document.HasMember("low_entropy_count") &&
-                  document["low_entropy_count"].IsUint64()) ?
-                     document["low_entropy_count"].GetUint64() : 0;
+    // nonprobative_count (optional)
+    uint64_t nonprobative_count =
+                 (document.HasMember("nonprobative_count") &&
+                  document["nonprobative_count"].IsUint64()) ?
+                     document["nonprobative_count"].GetUint64() : 0;
 
     // get or create source ID
     std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
@@ -125,7 +125,7 @@ class import_json_t {
 
     // add the block hash
     manager.insert_source_data(id_pair.second, hex_to_bin(file_hash),
-                               filesize, file_type, low_entropy_count);
+                               filesize, file_type, nonprobative_count);
 
     // names:[]
     if (!document.HasMember("names") ||

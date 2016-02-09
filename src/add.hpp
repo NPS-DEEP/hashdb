@@ -65,7 +65,7 @@ namespace add {
     std::string file_binary_hash = "";
     uint64_t filesize = 0;
     std::string file_type = "";
-    uint64_t low_entropy_count = 0;
+    uint64_t nonprobative_count = 0;
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
     // get hash data from A
@@ -79,7 +79,7 @@ namespace add {
 
       // get source data from A
       manager_a.find_source_data(it->first, file_binary_hash,
-                                 filesize, file_type, low_entropy_count);
+                                 filesize, file_type, nonprobative_count);
 
       // get or create source ID for source data in B
       std::pair<bool, uint64_t> pair_b = manager_b.insert_source_id(
@@ -105,7 +105,7 @@ namespace add {
         // copy the source data
         if (pair_b.first == true) {
           manager_b.insert_source_data(pair_b.second, file_binary_hash,
-                                       filesize, file_type, low_entropy_count);
+                                   filesize, file_type, nonprobative_count);
         }
       }
     }

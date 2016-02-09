@@ -44,12 +44,12 @@ namespace hashdb {
     std::string file_binary_hash;
     uint64_t filesize;
     std::string file_type;
-    uint64_t low_entropy_count;
+    uint64_t nonprobative_count;
     hashdb::source_names_t* source_names(new hashdb::source_names_t);
 
     // read source data
     manager.find_source_data(source_id, file_binary_hash, filesize,
-                             file_type, low_entropy_count);
+                             file_type, nonprobative_count);
 
     // read source names
     manager.find_source_names(source_id, *source_names);
@@ -59,7 +59,7 @@ namespace hashdb {
        << "\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
        << ",\"filesize\":" << filesize
        << ",\"file_type\":\"" << file_type << "\""
-       << ",\"low_entropy_count\":" << low_entropy_count
+       << ",\"nonprobative_count\":" << nonprobative_count
        ;
 
     // provide source names

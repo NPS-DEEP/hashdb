@@ -215,14 +215,14 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
-     *   low_entropy_count - The count of non-probative hashes
+     *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
      */
     void insert_source_data(const uint64_t source_id,
                             const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
-                            const uint64_t low_entropy_count);
+                            const uint64_t nonprobative_count);
 
     /**
      * Insert or change the hash data associated with the binary_hash.
@@ -352,14 +352,14 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
-     *   low_entropy_count - The count of hashes identified for this
-     *     source which may be considered non-probative.
+     *   nonprobative_count - The count of non-probative hashes
+     *     identified for this source.
      */
     bool find_source_data(const uint64_t source_id,
                           std::string& file_binary_hash,
                           uint64_t& filesize,
                           std::string& file_type,
-                          uint64_t& low_entropy_count) const;
+                          uint64_t& nonprobative_count) const;
 
     /**
      * Find source names for the given source ID, false on no source ID.

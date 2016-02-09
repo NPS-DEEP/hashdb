@@ -20,7 +20,7 @@
 /**
  * \file
  * Manage the LMDB source data store of: key=source_id,
- * data=(file_binary_hash, filesize, file_type, low_entropy_count)
+ * data=(file_binary_hash, filesize, file_type, nonprobative_count)
  * Threadsafe.
  */
 
@@ -104,7 +104,7 @@ class lmdb_source_data_manager_t {
               const std::string& file_binary_hash,
               const uint64_t filesize,
               const std::string& file_type,
-              const uint64_t low_entropy_count,
+              const uint64_t nonprobative_count,
               hashdb::lmdb_changes_t& changes) {
 
     MUTEX_LOCK(&M);
@@ -135,7 +135,7 @@ class lmdb_source_data_manager_t {
     p = lmdb_helper::encode_uint64_t(file_type_size, p);
     std::memcpy(p, file_type.c_str(), file_type_size);
     p += file_type_size;
-    p = lmdb_helper::encode_uint64_t(low_entropy_count, p);
+    p = lmdb_helper::encode_uint64_t(nonprobative_count, p);
 
     // see if source data is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -214,7 +214,7 @@ print_mdb_val("source_data_manager insert change to data", context.data);
             std::string& file_binary_hash,
             uint64_t& filesize,
             std::string& file_type,
-            uint64_t& low_entropy_count) const {
+            uint64_t& nonprobative_count) const {
 
     // get context
     hashdb::lmdb_context_t context(env, false, false); // not writable, no duplicates
@@ -258,8 +258,8 @@ print_mdb_val("source_data_manager find data", context.data);
                             file_type_size);
       p += file_type_size;
 
-      // read low_entropy_count
-      p = lmdb_helper::decode_uint64_t(p, low_entropy_count);
+      // read nonprobative_count
+      p = lmdb_helper::decode_uint64_t(p, nonprobative_count);
 
       // validate that the decoding was properly consumed
       if (p != p_stop) {
@@ -276,7 +276,7 @@ print_mdb_val("source_data_manager no find key", context.key);
       file_binary_hash = "";
       filesize = 0;
       file_type = "";
-      low_entropy_count = 0;
+      nonprobative_count = 0;
       context.close();
       return false;
 

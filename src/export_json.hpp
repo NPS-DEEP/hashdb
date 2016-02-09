@@ -24,7 +24,7 @@
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+ *   "nonprobative_count":4, "names":[{"repository_name":"repository1",
  *   "filename":"filename1"}]}
  *
  * Block hash data:
@@ -74,7 +74,7 @@ class export_json_t {
 
   // Source data:
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //   "low_entropy_count":4, "names":[{"repository_name":"repository1",
+  //   "nonprobative_count":4, "names":[{"repository_name":"repository1",
   //   "filename":"filename1"}]}
   void write_source_data(std::ostream& os) {
 
@@ -82,19 +82,19 @@ class export_json_t {
     std::string file_binary_hash;
     uint64_t filesize;
     std::string file_type;
-    uint64_t low_entropy_count;
+    uint64_t nonprobative_count;
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
     std::pair<bool, uint64_t> pair = manager.source_begin();
     while (pair.first != false) {
       // source data
       manager.find_source_data(pair.second, file_binary_hash, filesize,
-                               file_type, low_entropy_count);
+                               file_type, nonprobative_count);
       std::string file_hash = bin_to_hex(file_binary_hash);
       os << "{\"file_hash\":\"" << file_hash
          << "\",\"filesize\":" << filesize
          << ",\"file_type\":\"" << file_type
-         << "\",\"low_entropy_count\":" << low_entropy_count
+         << "\",\"nonprobative_count\":" << nonprobative_count
          ;
 
       // source names
@@ -136,7 +136,7 @@ class export_json_t {
     std::string file_binary_hash;
     uint64_t filesize;
     std::string file_type;
-    uint64_t low_entropy_count;
+    uint64_t nonprobative_count;
 
     std::pair<bool, std::string> pair = manager.hash_begin();
 
@@ -161,7 +161,7 @@ class export_json_t {
 
         // get file hash
         manager.find_source_data(it->first, file_binary_hash, filesize,
-                                 file_type, low_entropy_count);
+                                 file_type, nonprobative_count);
 
         // source, offset pair
         os << "\"" << bin_to_hex(file_binary_hash)
