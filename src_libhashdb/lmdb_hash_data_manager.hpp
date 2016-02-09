@@ -25,7 +25,7 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 
-#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+//#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -48,10 +48,11 @@
 #endif
 #include "mutex_lock.hpp"
 
+namespace hashdb {
+
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 static void print_mdb_val(const std::string& name, const MDB_val& val) {
-  std::cerr << name << ": "
-            << hashdb::to_hex(lmdb_helper::get_string(val)) << "\n";
+  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
 }
 #endif
 
@@ -62,7 +63,7 @@ class lmdb_hash_data_manager_t {
   typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
 
   const std::string hashdb_dir;
-  const file_mode_type_t file_mode;
+  const hashdb::file_mode_type_t file_mode;
   const uint32_t sector_size;
   const uint32_t max_id_offset_pairs;
   id_offset_pairs_t* id_offset_pairs;
@@ -80,7 +81,7 @@ class lmdb_hash_data_manager_t {
 
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
-                           const file_mode_type_t p_file_mode,
+                           const hashdb::file_mode_type_t p_file_mode,
                            const uint32_t p_sector_size,
                            const uint32_t p_max_id_offset_pairs) :
        hashdb_dir(p_hashdb_dir),
@@ -118,7 +119,7 @@ class lmdb_hash_data_manager_t {
                 const uint64_t file_offset,
                 const uint64_t entropy,
                 const std::string& block_label,
-                lmdb_changes_t& changes) {
+                hashdb::lmdb_changes_t& changes) {
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
@@ -139,7 +140,7 @@ class lmdb_hash_data_manager_t {
     lmdb_helper::maybe_grow(env);
 
     // get context
-    lmdb_context_t context(env, true, false);
+    hashdb::lmdb_context_t context(env, true, false);
     context.open();
 
     // set key
@@ -218,8 +219,7 @@ print_mdb_val("hash_data_manager insert change from data", context.data);
 
       // now look for the source_id, offset
       bool source_present = false;
-      const uint8_t* old_p_end = static_cast<uint8_t*>(context.data.mv_data) +
-                                 context.data.mv_size;
+      const uint8_t* const old_p_end = old_p_start + context.data.mv_size;
       size_t count = 0;
       while (old_p < old_p_end) {
         uint64_t p_source_id;
@@ -243,10 +243,8 @@ print_mdb_val("hash_data_manager insert change from data", context.data);
       // note if count is at max
       const bool at_max = (count >= max_id_offset_pairs) ? true : false;
  
-std::cerr << "insert.b\n";
       // handle no change: same data, same source or at max
       if (data_same && (source_present || at_max)) {
-std::cerr << "insert.c\n";
         ++changes.hash_data_data_same;
         if (source_present) {
           ++changes.hash_data_source_already_present;
@@ -258,7 +256,6 @@ std::cerr << "insert.c\n";
         return count;
 
       } else {
-std::cerr << "insert.d\n";
         // handle change: changed data and/or new source
 
         // build new record, make it sufficiently bigger than before.
@@ -349,7 +346,7 @@ print_mdb_val("hash_data_manager insert change to data", context.data);
     }
 
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
     // set key
@@ -425,7 +422,7 @@ print_mdb_val("hash_data_manager find data", context.data);
   std::pair<bool, std::string> find_begin() const {
 
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -433,9 +430,10 @@ print_mdb_val("hash_data_manager find data", context.data);
 
     if (rc == 0) {
       // return the key
+      std::string binary_hash = std::string(
+              static_cast<char*>(context.key.mv_data), context.key.mv_size);
       context.close();
-      return std::pair<bool, std::string>(
-                            true, lmdb_helper::get_string(context.key));
+      return std::pair<bool, std::string>(true, binary_hash);
 
     } else if (rc == MDB_NOTFOUND) {
       // no hash
@@ -462,11 +460,13 @@ print_mdb_val("hash_data_manager find data", context.data);
     }
 
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
     // set the cursor to last hash
-    lmdb_helper::point_to_string(last_binary_hash, context.key);
+    context.key.mv_size = last_binary_hash.size();
+    context.key.mv_data =
+             static_cast<void*>(const_cast<char*>(last_binary_hash.c_str()));
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
@@ -486,10 +486,16 @@ print_mdb_val("hash_data_manager find data", context.data);
       return std::pair<bool, std::string>(false, std::string(""));
 
     } else if (rc == 0) {
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager find_next key", context.key);
+print_mdb_val("hash_data_manager find_next data", context.data);
+#endif
+
       // return this hash
+      std::string binary_hash = std::string(
+              static_cast<char*>(context.key.mv_data), context.key.mv_size);
       context.close();
-      return std::pair<bool, std::string>(
-                            true, lmdb_helper::get_string(context.key));
+      return std::pair<bool, std::string>(true, binary_hash);
 
     } else {
       // invalid rc
@@ -503,6 +509,8 @@ print_mdb_val("hash_data_manager find data", context.data);
     return lmdb_helper::size(env);
   }
 };
+
+} // end namespace hashdb
 
 #endif
 

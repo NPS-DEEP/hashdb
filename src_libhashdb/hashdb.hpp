@@ -28,17 +28,16 @@
 #include <string>
 #include <set>
 #include <stdint.h>
-
-class lmdb_hash_data_manager_t;
-class lmdb_hash_manager_t;
-class lmdb_source_data_manager_t;
-class lmdb_source_id_manager_t;
-class lmdb_source_name_manager_t;
-class lmdb_changes_t;
-struct timeval; // for timestamp service
-class logger_t;
+#include <sys/time.h>   // timeval for timestamp
 
 namespace hashdb {
+  class lmdb_hash_data_manager_t;
+  class lmdb_hash_manager_t;
+  class lmdb_source_data_manager_t;
+  class lmdb_source_id_manager_t;
+  class lmdb_source_name_manager_t;
+  class lmdb_changes_t;
+  class logger_t;
 
   // ************************************************************
   // typedefs
@@ -159,7 +158,7 @@ namespace hashdb {
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
     logger_t* logger;
-    lmdb_changes_t* changes;
+    hashdb::lmdb_changes_t* changes;
 
     public:
     // do not allow copy or assignment

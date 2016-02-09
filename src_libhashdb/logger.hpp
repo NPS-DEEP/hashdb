@@ -33,6 +33,8 @@
 #include <cassert>
 #include "hashdb.hpp" // for timestamp_t
 
+namespace hashdb {
+
 /**
  * The logger appends database change information to the log file.
  */
@@ -86,7 +88,7 @@ class logger_t {
   }
 
   // changes
-  void add_lmdb_changes(const lmdb_changes_t& changes) {
+  void add_lmdb_changes(const hashdb::lmdb_changes_t& changes) {
     os << changes;
   }
 
@@ -99,6 +101,8 @@ class logger_t {
   }
 
 };
+
+} // end namespace hashdb
 
 #endif
 

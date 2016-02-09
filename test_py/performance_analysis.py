@@ -11,21 +11,15 @@ def test_random():
     H.hashdb(["create", "temp_1.hdb"])
     lines = H.hashdb(["add_random", "temp_1.hdb", "100"])
     H.lines_equals(lines, [
-'# Processing index 100 of 100 completed.',
-'hash_data_inserted: 100',
-'hash_data_metadata_different: 0',
-'hash_data_not_inserted_duplicate_source: 0',
-'hash_data_not_inserted_invalid_file_offset: 0',
-'hash_data_not_inserted_max_id_offset_pairs: 0',
-'hash_inserted: 100',
-'hash_not_inserted: 0',
-'source_data_inserted: 1',
-'source_data_different: 0',
-'source_data_not_inserted: 0',
-'source_id_inserted: 1',
-'source_id_not_inserted: 0',
-'source_name_inserted: 1',
-'source_name_not_inserted: 0',
+'Processing index 100 of 100 completed.',
+'hashdb changes:',
+'    hash_data_data_inserted: 100',
+'    hash_data_source_inserted: 100',
+'    hash_prefix_inserted: 100',
+'    hash_suffix_inserted: 100',
+'    source_data_inserted: 1',
+'    source_id_inserted: 1',
+'    source_name_inserted: 1',
 ''])
     H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
 
@@ -39,21 +33,18 @@ def test_same():
     H.hashdb(["create", "temp_1.hdb"])
     lines = H.hashdb(["add_same", "temp_1.hdb", "100"])
     H.lines_equals(lines, [
-'# Processing index 100 of 100 completed.',
-'hash_data_inserted: 100',
-'hash_data_metadata_different: 0',
-'hash_data_not_inserted_duplicate_source: 0',
-'hash_data_not_inserted_invalid_file_offset: 0',
-'hash_data_not_inserted_max_id_offset_pairs: 0',
-'hash_inserted: 1',
-'hash_not_inserted: 99',
-'source_data_inserted: 1',
-'source_data_different: 0',
-'source_data_not_inserted: 0',
-'source_id_inserted: 1',
-'source_id_not_inserted: 0',
-'source_name_inserted: 1',
-'source_name_not_inserted: 0',
+'Processing index 100 of 100 completed.',
+'hashdb changes:',
+'    hash_data_data_inserted: 1',
+'    hash_data_data_same: 99',
+'    hash_data_source_inserted: 100',
+'    hash_prefix_inserted: 1',
+'    hash_suffix_inserted: 1',
+'    hash_count_changed: 31',
+'    hash_not_changed: 68',
+'    source_data_inserted: 1',
+'    source_id_inserted: 1',
+'    source_name_inserted: 1',
 ''])
     H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
 

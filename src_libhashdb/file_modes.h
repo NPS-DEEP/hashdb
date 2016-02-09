@@ -30,29 +30,32 @@
 #include <string>
 #include <iostream>
 
-enum file_mode_type_t {READ_ONLY,
-                       RW_NEW,
-                       RW_MODIFY};
+namespace hashdb {
+  enum file_mode_type_t {READ_ONLY,
+                         RW_NEW,
+                         RW_MODIFY};
 
-inline std::string file_mode_type_to_string(file_mode_type_t type) {
-  switch(type) {
-    case READ_ONLY: return "read_only";
-    case RW_NEW: return "rw_new";
-    case RW_MODIFY: return "rw_modify";
-    default: assert(0); std::exit(1);
+  inline std::string file_mode_type_to_string(file_mode_type_t type) {
+    switch(type) {
+      case READ_ONLY: return "read_only";
+      case RW_NEW: return "rw_new";
+      case RW_MODIFY: return "rw_modify";
+      default: assert(0); std::exit(1);
+    }
+  }
+
+  inline bool string_to_file_mode_type(const std::string& name, file_mode_type_t& type) {
+    if (name == "read_only") { type = READ_ONLY; return true; }
+    if (name == "rw_new")    { type = RW_NEW;    return true; }
+    if (name == "rw_modify") { type = RW_MODIFY; return true; }
+    type = READ_ONLY;
+    return false;
   }
 }
 
-inline bool string_to_file_mode_type(const std::string& name, file_mode_type_t& type) {
-  if (name == "read_only") { type = READ_ONLY; return true; }
-  if (name == "rw_new")    { type = RW_NEW;    return true; }
-  if (name == "rw_modify") { type = RW_MODIFY; return true; }
-  type = READ_ONLY;
-  return false;
-}
-
-inline std::ostream& operator<<(std::ostream& os, const file_mode_type_t& t) {
-  os << file_mode_type_to_string(t);
+inline std::ostream& operator<<(std::ostream& os,
+                                const hashdb::file_mode_type_t& t) {
+  os << hashdb::file_mode_type_to_string(t);
   return os;
 }
 

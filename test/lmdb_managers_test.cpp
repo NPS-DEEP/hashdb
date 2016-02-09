@@ -79,13 +79,13 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
 void lmdb_hash_manager_create() {
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 28, 3);
 }
 
 // run after create
 void lmdb_hash_manager_write() {
-  lmdb_hash_manager_t manager(hashdb_dir, RW_MODIFY, 28, 3);
-  lmdb_changes_t changes;
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_MODIFY, 28, 3);
+  hashdb::lmdb_changes_t changes;
 
   // find when empty
   TEST_EQ(manager.find(binary_0), 0);
@@ -136,7 +136,7 @@ void lmdb_hash_manager_write() {
 
 // run after read
 void lmdb_hash_manager_read() {
-  lmdb_hash_manager_t manager(hashdb_dir, READ_ONLY, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::READ_ONLY, 28, 3);
 
   // find
   TEST_EQ(manager.find(binary_0), 2);
@@ -156,12 +156,12 @@ void lmdb_hash_manager_read() {
 void lmdb_hash_manager_settings() {
   std::pair<bool, std::string> pair;
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
 
   {
   } { // 1 prefix bit, no suffix
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
     manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
 
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),0);
@@ -171,13 +171,13 @@ void lmdb_hash_manager_settings() {
 
   } { // demonstrate that the db is cleared
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
     TEST_EQ(manager.size(), 0);
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),0);
 
   } { // 1 prefix bit, no suffix, demonstrate adding 0 instead of 1
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 0);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
     manager.insert(hex_to_bin("00000000000000000000000000000000"), 1, changes);
 
     TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),1);
@@ -187,7 +187,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 2 prefix bits, no suffix
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 2, 0);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 2, 0);
 
     manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
     TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
@@ -198,7 +198,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 1 prefix bit, 1 suffix byte
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 1, 1);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 1);
 
     manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
 
@@ -210,7 +210,7 @@ void lmdb_hash_manager_settings() {
 
   } { // 9 prefix bits, 2 suffix bytes
     make_new_hashdb_dir(hashdb_dir);
-    lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 9, 2);
+    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 9, 2);
 
     manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
     TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
@@ -226,8 +226,8 @@ void lmdb_hash_manager_settings() {
 void lmdb_hash_manager_count() {
   std::pair<bool, std::string> pair;
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_hash_manager_t manager(hashdb_dir, RW_NEW, 28, 3);
-  lmdb_changes_t changes;
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 28, 3);
+  hashdb::lmdb_changes_t changes;
   manager.insert(binary_0, 1494, changes);
   TEST_EQ(manager.find(binary_0), 1370);
   manager.insert(binary_0, 1495, changes);
@@ -245,12 +245,13 @@ void lmdb_hash_data_manager() {
   uint64_t entropy;
   std::string block_label;
   id_offset_pairs_t id_offset_pairs;
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
   id_offset_pairs_t::const_iterator it;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW, 512, 100000);
+  hashdb::lmdb_hash_data_manager_t manager(
+                                    hashdb_dir, hashdb::RW_NEW, 512, 100000);
 
   TEST_EQ(id_offset_pairs.size(), 0);
 
@@ -358,11 +359,11 @@ void lmdb_hash_data_manager() {
 }
 
 void lmdb_hash_data_manager_settings() {
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_hash_data_manager_t manager(hashdb_dir, RW_NEW, 1, 2);
+  hashdb::lmdb_hash_data_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 2);
 
   // initial state
   TEST_EQ(changes.hash_data_data_inserted, 0);
@@ -429,11 +430,11 @@ void lmdb_hash_data_manager_settings() {
 // ************************************************************
 void lmdb_source_id_manager() {
   std::pair<bool, uint64_t> pair;
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_id_manager_t manager(hashdb_dir, RW_NEW);
+  hashdb::lmdb_source_id_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
   pair = manager.find(binary_0);
   TEST_EQ(pair.first, false);
@@ -460,7 +461,7 @@ void lmdb_source_id_manager() {
 // lmdb_source_data_manager
 // ************************************************************
 void lmdb_source_data_manager() {
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
 
   // variables
   std::string file_binary_hash;
@@ -471,7 +472,7 @@ void lmdb_source_data_manager() {
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_data_manager_t manager(hashdb_dir, RW_NEW);
+  hashdb::lmdb_source_data_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
   // no source ID
   found =
@@ -554,12 +555,12 @@ void lmdb_source_name_manager() {
   // variables
   std::pair<bool, uint64_t> pair;
   source_names_t source_names;
-  lmdb_changes_t changes;
+  hashdb::lmdb_changes_t changes;
   bool found;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  lmdb_source_name_manager_t manager(hashdb_dir, RW_NEW);
+  hashdb::lmdb_source_name_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
   // this should assert
   found = manager.find(1, source_names);

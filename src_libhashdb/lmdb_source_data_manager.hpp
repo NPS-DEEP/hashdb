@@ -26,6 +26,9 @@
 
 #ifndef LMDB_SOURCE_DATA_MANAGER_HPP
 #define LMDB_SOURCE_DATA_MANAGER_HPP
+
+//#define DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+
 #include "file_modes.h"
 #include "lmdb.h"
 #include "lmdb_helper.h"
@@ -40,6 +43,9 @@
 #ifdef DEBUG
 #include "to_hex.hpp"
 #endif
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+#include "to_hex.hpp"
+#endif
 
 // no concurrent writes
 #ifdef HAVE_PTHREAD
@@ -47,11 +53,20 @@
 #endif
 #include "mutex_lock.hpp"
 
+namespace hashdb {
+
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+static void print_mdb_val(const std::string& name, const MDB_val& val) {
+  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
+}
+}
+#endif
+
 class lmdb_source_data_manager_t {
 
   private:
   const std::string hashdb_dir;
-  const file_mode_type_t file_mode;
+  const hashdb::file_mode_type_t file_mode;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;                  // mutext
@@ -64,106 +79,9 @@ class lmdb_source_data_manager_t {
   lmdb_source_data_manager_t(const lmdb_source_data_manager_t&);
   lmdb_source_data_manager_t& operator=(const lmdb_source_data_manager_t&);
 
-  // encoder for key=source_id
-  std::string encode_key(const uint64_t source_id) const {
-
-    // allocate space for the encoding
-    size_t max_size = 10;
-
-    uint8_t encoding[max_size];
-    uint8_t* p = encoding;
-
-    // encode each field
-    p = lmdb_helper::encode_uint64_t(source_id, p);
-
-    // return encoding
-    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
-  }
-
-  // decoder for key=source_id
-  void decode_key(const std::string& encoding, uint64_t& source_id) const {
-    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
-    const uint8_t* p = p_start;
-
-    p = lmdb_helper::decode_uint64_t(p, source_id);
-
-    // validate that the decoding was properly consumed
-    if ((size_t)(p - p_start) != encoding.size()) {
-      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
-      assert(0);
-    }
-  }
-
-  // encoder for data=file_binary_hash, filesize, file_type, low_entropy_count
-  std::string encode_data(const std::string& file_binary_hash,
-                          const uint64_t filesize,
-                          const std::string& file_type,
-                          const uint64_t low_entropy_count) const {
-
-    // allocate space for the encoding
-    size_t max_size = file_binary_hash.size() + 10 + 10 +
-                      file_type.size() + 10 + 10;
-
-    uint8_t encoding[max_size];
-    uint8_t* p = encoding;
-
-    // encode each field
-    p = lmdb_helper::encode_string(file_binary_hash, p);
-    p = lmdb_helper::encode_uint64_t(filesize, p);
-    p = lmdb_helper::encode_string(file_type, p);
-    p = lmdb_helper::encode_uint64_t(low_entropy_count, p);
-
-#ifdef DEBUG
-    std::string encoding_string(reinterpret_cast<char*>(encoding), (p-encoding));
-    std::cout << "encoding file_binary_hash "
-              << hashdb::to_hex(file_binary_hash)
-              << " filesize " << filesize
-              << " file_type " << file_type
-              << " low_entropy_count " << low_entropy_count
-              << "\nto binary data "
-              << hashdb::to_hex(encoding_string)
-              << " size " << encoding_string.size() << "\n";
-#endif
-
-    // return encoding
-    return std::string(reinterpret_cast<char*>(encoding), (p-encoding));
-  }
-
-  // decoder for data=file_binary_hash, filesize, file_type, low_entropy_count
-  void decode_data(const std::string& encoding,
-                   std::string& file_binary_hash,
-                   uint64_t& filesize,
-                   std::string& file_type,
-                   uint64_t& low_entropy_count) const {
-    const uint8_t* p_start = reinterpret_cast<const uint8_t*>(encoding.c_str());
-    const uint8_t* p = p_start;
-
-    p = lmdb_helper::decode_string(p, file_binary_hash);
-    p = lmdb_helper::decode_uint64_t(p, filesize);
-    p = lmdb_helper::decode_string(p, file_type);
-    p = lmdb_helper::decode_uint64_t(p, low_entropy_count);
-
-#ifdef DEBUG
-    std::string hex_encoding = hashdb::to_hex(encoding);
-    std::cout << "decoding " << hex_encoding
-              << " size " << encoding.size() << "\n to"
-              << " file_binary_hash "
-              << hashdb::to_hex(file_binary_hash)
-              << " filesize " << filesize
-              << " file_type " << file_type
-              << " low_entropy_count " << low_entropy_count << "\n";
-#endif
-
-    // validate that the decoding was properly consumed
-    if ((size_t)(p - p_start) != encoding.size()) {
-      std::cerr << "decode failure: " << &p << " is not " << &p_start << "\n";
-      assert(0);
-    }
-  }
-
   public:
   lmdb_source_data_manager_t(const std::string& p_hashdb_dir,
-                            const file_mode_type_t p_file_mode) :
+                            const hashdb::file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_source_data_store",
@@ -187,7 +105,7 @@ class lmdb_source_data_manager_t {
               const uint64_t filesize,
               const std::string& file_type,
               const uint64_t low_entropy_count,
-              lmdb_changes_t& changes) {
+              hashdb::lmdb_changes_t& changes) {
 
     MUTEX_LOCK(&M);
 
@@ -195,12 +113,29 @@ class lmdb_source_data_manager_t {
     lmdb_helper::maybe_grow(env);
 
     // get context
-    lmdb_context_t context(env, true, false); // writable, no duplicates
+    hashdb::lmdb_context_t context(env, true, false); // writable, no duplicates
     context.open();
 
     // set key
-    std::string encoding = encode_key(source_id);
-    lmdb_helper::point_to_string(encoding, context.key);
+    uint8_t key_start[10];
+    uint8_t* key_p = key_start;
+    key_p = lmdb_helper::encode_uint64_t(source_id, key_p);
+    context.key.mv_size = key_p - key_start;
+    context.key.mv_data = key_start;
+
+    // set new data
+    uint64_t file_binary_hash_size = file_binary_hash.size();
+    uint64_t file_type_size = file_type.size();
+    uint8_t data[file_binary_hash_size + 10 + 10 + file_type_size + 10 + 10];
+    uint8_t* p = data;
+    p = lmdb_helper::encode_uint64_t(file_binary_hash_size, p);
+    std::memcpy(p, file_binary_hash.c_str(), file_binary_hash_size);
+    p += file_binary_hash_size;
+    p = lmdb_helper::encode_uint64_t(filesize, p);
+    p = lmdb_helper::encode_uint64_t(file_type_size, p);
+    std::memcpy(p, file_type.c_str(), file_type_size);
+    p += file_type_size;
+    p = lmdb_helper::encode_uint64_t(low_entropy_count, p);
 
     // see if source data is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -208,10 +143,13 @@ class lmdb_source_data_manager_t {
 
     if (rc == MDB_NOTFOUND) {
 
-      // perform insert
-      encoding = encode_data(file_binary_hash, filesize, file_type,
-                             low_entropy_count);
-      lmdb_helper::point_to_string(encoding, context.data);
+      // write new data directly
+      context.data.mv_size = p - data;
+      context.data.mv_data = data;
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager insert new key", context.key);
+print_mdb_val("source_data_manager insert new data", context.data);
+#endif
       rc = mdb_put(context.txn, context.dbi,
                    &context.key, &context.data, MDB_NODUPDATA);
 
@@ -222,32 +160,30 @@ class lmdb_source_data_manager_t {
       }
  
       // new source data inserted
-      context.close();
       ++changes.source_data_inserted;
+      context.close();
       MUTEX_UNLOCK(&M);
       return;
 
     } else if (rc == 0) {
-      // already there, note and change if different
-      std::string p_file_binary_hash;
-      uint64_t p_filesize;
-      std::string p_file_type;
-      uint64_t p_low_entropy_count;
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager insert change from key", context.key);
+print_mdb_val("source_data_manager insert change from data", context.data);
+#endif
+      // already there
+      if (context.data.mv_size == (p - data) &&
+          std::memcmp(context.data.mv_data, data, context.data.mv_size) == 0) {
+        // size and data same
+        ++changes.source_data_same;
+      } else {
 
-      encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, p_file_binary_hash, p_filesize, p_file_type,
-                  p_low_entropy_count);
-
-      if (file_binary_hash != p_file_binary_hash ||
-          filesize != p_filesize ||
-          file_type != p_file_type ||
-          low_entropy_count != p_low_entropy_count) {
-        ++changes.source_data_changed;
-
-        // overwrite
-        encoding = encode_data(file_binary_hash, filesize, file_type,
-                               low_entropy_count);
-        lmdb_helper::point_to_string(encoding, context.data);
+        // different so overwrite
+        context.data.mv_size = p - data;
+        context.data.mv_data = data;
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager insert change to key", context.key);
+print_mdb_val("source_data_manager insert change to data", context.data);
+#endif
         rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
 
@@ -256,8 +192,7 @@ class lmdb_source_data_manager_t {
           std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
           assert(0);
         }
-      } else { 
-        ++changes.source_data_same;
+        ++changes.source_data_changed;
       }
 
       // closeure for already there
@@ -282,12 +217,15 @@ class lmdb_source_data_manager_t {
             uint64_t& low_entropy_count) const {
 
     // get context
-    lmdb_context_t context(env, false, false); // not writable, no duplicates
+    hashdb::lmdb_context_t context(env, false, false); // not writable, no duplicates
     context.open();
 
     // set key
-    std::string encoding = encode_key(source_id);
-    lmdb_helper::point_to_string(encoding, context.key);
+    uint8_t key_start[10];
+    uint8_t* key_p = key_start;
+    key_p = lmdb_helper::encode_uint64_t(source_id, key_p);
+    context.key.mv_size = key_p - key_start;
+    context.key.mv_data = key_start;
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -295,13 +233,46 @@ class lmdb_source_data_manager_t {
 
     if (rc == 0) {
       // hash found
-      encoding = lmdb_helper::get_string(context.data);
-      decode_data(encoding, file_binary_hash, filesize, file_type,
-                  low_entropy_count);
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager find key", context.key);
+print_mdb_val("source_data_manager find data", context.data);
+#endif
+      // read data
+      const uint8_t* p = static_cast<uint8_t*>(context.data.mv_data);
+      const uint8_t* const p_stop = p + context.data.mv_size;
+
+      // read file_binary_hash
+      uint64_t file_binary_hash_size;
+      p = lmdb_helper::decode_uint64_t(p, file_binary_hash_size);
+      file_binary_hash = std::string(reinterpret_cast<const char*>(p),
+                            file_binary_hash_size);
+      p += file_binary_hash_size;
+
+      // read filesize
+      p = lmdb_helper::decode_uint64_t(p, filesize);
+
+      // read file_type
+      uint64_t file_type_size;
+      p = lmdb_helper::decode_uint64_t(p, file_type_size);
+      file_type = std::string(reinterpret_cast<const char*>(p),
+                            file_type_size);
+      p += file_type_size;
+
+      // read low_entropy_count
+      p = lmdb_helper::decode_uint64_t(p, low_entropy_count);
+
+      // validate that the decoding was properly consumed
+      if (p != p_stop) {
+        assert(0);
+      }
+
       context.close();
       return true;
 
     } else if (rc == MDB_NOTFOUND) {
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager no find key", context.key);
+#endif
       file_binary_hash = "";
       filesize = 0;
       file_type = "";
@@ -322,18 +293,26 @@ class lmdb_source_data_manager_t {
   std::pair<bool, uint64_t> find_begin() const {
 
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_FIRST);
 
     if (rc == 0) {
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager find_begin key", context.key);
+print_mdb_val("source_data_manager find_begin data", context.data);
+#endif
       // return the key
-      context.close();
+      const uint8_t* p = static_cast<uint8_t*>(context.key.mv_data);
+      const uint8_t* const p_stop = p + context.key.mv_size;
       uint64_t source_id;
-      std::string encoding = lmdb_helper::get_string(context.key);
-      decode_key(encoding, source_id);
+      p = lmdb_helper::decode_uint64_t(p, source_id);
+      if (p != p_stop) {
+        assert(0);
+      }
+      context.close();
       return std::pair<bool, uint64_t>(true, source_id);
 
     } else if (rc == MDB_NOTFOUND) {
@@ -354,12 +333,15 @@ class lmdb_source_data_manager_t {
   std::pair<bool, uint64_t> find_next(const uint64_t last_source_id) const {
 
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
-    // set the cursor to last key
-    std::string encoding = encode_key(last_source_id);
-    lmdb_helper::point_to_string(encoding, context.key);
+    // set the cursor to the last key
+    uint8_t key_start[10];
+    uint8_t* key_p = key_start;
+    key_p = lmdb_helper::encode_uint64_t(last_source_id, key_p);
+    context.key.mv_size = key_p - key_start;
+    context.key.mv_data = key_start;
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
@@ -369,7 +351,7 @@ class lmdb_source_data_manager_t {
       assert(0);
     }
 
-    // move cursor to this hash
+    // move cursor from last hash to this hash
     rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                         MDB_NEXT);
 
@@ -379,9 +361,18 @@ class lmdb_source_data_manager_t {
       return std::pair<bool, uint64_t>(false, 0);
 
     } else if (rc == 0) {
+#ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
+print_mdb_val("source_data_manager find_next key", context.key);
+print_mdb_val("source_data_manager find_next data", context.data);
+#endif
+      // return this key
+      const uint8_t* p = static_cast<uint8_t*>(context.key.mv_data);
+      const uint8_t* const p_stop = p + context.key.mv_size;
       uint64_t source_id;
-      encoding = lmdb_helper::get_string(context.key);
-      decode_key(encoding, source_id);
+      p = lmdb_helper::decode_uint64_t(p, source_id);
+      if (p != p_stop) {
+        assert(0);
+      }
       context.close();
       return std::pair<bool, uint64_t>(true, source_id);
 
@@ -397,6 +388,8 @@ class lmdb_source_data_manager_t {
     return lmdb_helper::size(env);
   }
 };
+
+} // end namespace hashdb
 
 #endif
 

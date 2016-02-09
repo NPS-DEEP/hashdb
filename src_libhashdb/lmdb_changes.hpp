@@ -30,6 +30,8 @@
 #include <sstream>
 #include <iostream>
 
+namespace hashdb {
+
 /**
  * Holds state about changes applied to the hash database.
  */
@@ -172,8 +174,10 @@ class lmdb_changes_t {
   }
 };
 
+} // end namespace hashdb
+
 inline std::ostream& operator<<(std::ostream& os,
-                         const class lmdb_changes_t& changes) {
+                         const class hashdb::lmdb_changes_t& changes) {
   changes.report_changes(os);
   return os;
 }

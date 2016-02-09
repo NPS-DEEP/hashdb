@@ -182,26 +182,8 @@ namespace lmdb_helper {
     return ptr;
   }
 
-  // write string size and then string into encoding, return pointer past
-  // value written.  Destination must be large enough.
-  uint8_t* encode_string(const std::string& text, uint8_t* p) {
-    p = encode_uint64_t(text.size(), p);
-    std::memcpy(p, text.c_str(), text.size());
-    return p + text.size();
-  }
-
-  // read string size and then string, return pointer past value read.
-  // currently, data must be valid or this can break.
-  const uint8_t* decode_string(const uint8_t* p, std::string& text) {
-    uint64_t size;
-    p = decode_uint64_t(p, size);
-    text = std::string(reinterpret_cast<const char*>(p), size);
-    p += size;
-    return p;
-  }
-
   MDB_env* open_env(const std::string& store_dir,
-                           const file_mode_type_t file_mode) {
+                           const hashdb::file_mode_type_t file_mode) {
 
     // create the DB environment
     MDB_env* env;
@@ -214,10 +196,10 @@ namespace lmdb_helper {
     // set flags for open
     unsigned int env_flags;
     switch(file_mode) {
-      case READ_ONLY:
+      case hashdb::READ_ONLY:
         env_flags = MDB_RDONLY;
         break;
-      case RW_NEW:
+      case hashdb::RW_NEW:
         // store directory must not exist yet
         if (access(store_dir.c_str(), F_OK) == 0) {
           std::cerr << "Error: Database '" << store_dir
@@ -244,7 +226,7 @@ namespace lmdb_helper {
         // writemap suppresses checking but improves Windows performance.
         env_flags = MDB_NOMETASYNC | MDB_NOSYNC | MDB_WRITEMAP;
         break;
-      case RW_MODIFY:
+      case hashdb::RW_MODIFY:
         env_flags = MDB_NOMETASYNC | MDB_NOSYNC | MDB_WRITEMAP;
         break;
       default:
@@ -340,15 +322,6 @@ namespace lmdb_helper {
       assert(0);
     }
     return stat.ms_entries;
-  }
-
-  void point_to_string(const std::string& str, MDB_val& val) {
-    val.mv_size = str.size();
-    val.mv_data = static_cast<void*>(const_cast<char*>(str.c_str()));
-  }
-
-  std::string get_string(const MDB_val& val) {
-    return std::string(static_cast<char*>(val.mv_data), val.mv_size);
   }
 }
 

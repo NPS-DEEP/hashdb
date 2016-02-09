@@ -260,7 +260,7 @@ namespace hashdb {
 
           // log
           logger(new logger_t(hashdb_dir, command_string)),
-          changes(new lmdb_changes_t) {
+          changes(new hashdb::lmdb_changes_t) {
 
     // read settings
     hashdb::settings_t settings = private_read_settings(hashdb_dir);

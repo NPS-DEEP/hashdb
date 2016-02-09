@@ -75,10 +75,12 @@ for i in range(1500):
 #endif
 #include "mutex_lock.hpp"
 
+namespace hashdb {
+
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 static void print_mdb_val(const std::string& name, const MDB_val& val) {
-  std::cerr << name << ": "
-            << hashdb::to_hex(lmdb_helper::get_string(val)) << "\n";
+  std::cerr << name << ": " << hashdb::to_hex(std::string(static_cast<char*>(val.mv_data, val.mv_size))) << "\n";
+}
 }
 #endif
 
@@ -88,7 +90,7 @@ class lmdb_hash_manager_t {
 
   private:
   const std::string hashdb_dir;
-  const file_mode_type_t file_mode;
+  const hashdb::file_mode_type_t file_mode;
   const int num_prefix_bytes;
   const uint8_t prefix_mask;
   const int num_suffix_bytes;
@@ -129,7 +131,7 @@ class lmdb_hash_manager_t {
 
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
-                      const file_mode_type_t p_file_mode,
+                      const hashdb::file_mode_type_t p_file_mode,
                       const uint32_t p_hash_prefix_bits,
                       const uint32_t p_hash_suffix_bytes) :
        hashdb_dir(p_hashdb_dir),
@@ -137,7 +139,8 @@ class lmdb_hash_manager_t {
        num_prefix_bytes((p_hash_prefix_bits + 7) / 8),
        prefix_mask(masks[p_hash_prefix_bits % 8]),
        num_suffix_bytes(p_hash_suffix_bytes),
-       env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_store", file_mode)),
+       env(lmdb_helper::open_env(
+                           hashdb_dir + "/lmdb_hash_store", file_mode)),
        M() {
 
     MUTEX_INIT(&M);
@@ -157,7 +160,7 @@ class lmdb_hash_manager_t {
   }
 
   void insert(const std::string& binary_hash, const size_t source_count,
-              lmdb_changes_t& changes) {
+              hashdb::lmdb_changes_t& changes) {
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
@@ -203,7 +206,7 @@ class lmdb_hash_manager_t {
     lmdb_helper::maybe_grow(env);
 
     // get context
-    lmdb_context_t context(env, true, false);
+    hashdb::lmdb_context_t context(env, true, false);
     context.open();
 
     // see if key is already there
@@ -374,7 +377,7 @@ print_mdb_val("hash_manager insert append data", context.data);
     // find
     // ************************************************************
     // get context
-    lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, false);
     context.open();
 
     // see if prefix is already there
@@ -444,6 +447,8 @@ print_mdb_val("hash_manager find data", context.data);
     return lmdb_helper::size(env);
   }
 };
+
+} // end namespace hashdb
 
 #endif
 
