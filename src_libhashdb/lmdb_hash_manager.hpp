@@ -84,9 +84,9 @@ class lmdb_hash_manager_t {
   private:
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
-  const int num_prefix_bytes;
+  const size_t num_prefix_bytes;
   const uint8_t prefix_mask;
-  const int num_suffix_bytes;
+  const size_t num_suffix_bytes;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;                  // mutext
@@ -184,7 +184,7 @@ class lmdb_hash_manager_t {
       memcpy(data, binary_hash.c_str(), hash_size);
     } else {
       // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size -  num_suffix_bytes), num_suffix_bytes);
+      memcpy(data, binary_hash.c_str() + (hash_size - num_suffix_bytes), num_suffix_bytes);
     }
 
     // append count encoding to data
@@ -363,7 +363,7 @@ print_mdb_val("hash_manager insert append data", context.data);
       memcpy(data, binary_hash.c_str(), hash_size);
     } else {
       // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size -  num_suffix_bytes),
+      memcpy(data, binary_hash.c_str() + (hash_size - num_suffix_bytes),
               num_suffix_bytes);
     }
 

@@ -114,8 +114,8 @@ class lmdb_source_data_manager_t {
     context.key.mv_data = key_start;
 
     // set new data
-    uint64_t file_binary_hash_size = file_binary_hash.size();
-    uint64_t file_type_size = file_type.size();
+    const uint64_t file_binary_hash_size = file_binary_hash.size();
+    const uint64_t file_type_size = file_type.size();
     uint8_t data[file_binary_hash_size + 10 + 10 + file_type_size + 10 + 10];
     uint8_t* p = data;
     p = lmdb_helper::encode_uint64_t(file_binary_hash_size, p);
@@ -126,6 +126,7 @@ class lmdb_source_data_manager_t {
     std::memcpy(p, file_type.c_str(), file_type_size);
     p += file_type_size;
     p = lmdb_helper::encode_uint64_t(nonprobative_count, p);
+    const size_t new_data_size = p - data;
 
     // see if source data is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -134,7 +135,7 @@ class lmdb_source_data_manager_t {
     if (rc == MDB_NOTFOUND) {
 
       // write new data directly
-      context.data.mv_size = p - data;
+      context.data.mv_size = new_data_size;
       context.data.mv_data = data;
 #ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
 print_mdb_val("source_data_manager insert new key", context.key);
@@ -161,14 +162,14 @@ print_mdb_val("source_data_manager insert change from key", context.key);
 print_mdb_val("source_data_manager insert change from data", context.data);
 #endif
       // already there
-      if (context.data.mv_size == (p - data) &&
-          std::memcmp(context.data.mv_data, data, context.data.mv_size) == 0) {
+      if (context.data.mv_size == (new_data_size) && (std::memcmp(
+                  context.data.mv_data, data, context.data.mv_size) == 0)) {
         // size and data same
         ++changes.source_data_same;
       } else {
 
         // different so overwrite
-        context.data.mv_size = p - data;
+        context.data.mv_size = new_data_size;
         context.data.mv_data = data;
 #ifdef DEBUG_LMDB_SOURCE_DATA_MANAGER_HPP
 print_mdb_val("source_data_manager insert change to key", context.key);

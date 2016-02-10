@@ -34,12 +34,12 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 AM_LDFLAGS = -static
 
-lmdb_managers_test_CPPFLAGS = \
+AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb \
 	-I${top_srcdir}/rapidjson \
 	-isystem${top_srcdir}/src_libhashdb/liblmdb
 
-lmdb_managers_test_LDADD = ../src_libhashdb/libhashdb.la
+LDADD = ../src_libhashdb/libhashdb.la
 
 clean-local:
 	rm -rf temp_*
