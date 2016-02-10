@@ -317,6 +317,7 @@ print_mdb_val("hash_manager insert append data", context.data);
       // write must work
       if (rc != 0) {
         std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+        std::cerr << "data size: " << context.data.mv_size << "\n";
         assert(0);
       }
 
