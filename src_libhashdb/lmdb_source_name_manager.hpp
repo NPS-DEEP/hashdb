@@ -25,7 +25,7 @@
 #ifndef LMDB_SOURCE_NAME_MANAGER_HPP
 #define LMDB_SOURCE_NAME_MANAGER_HPP
 
-//#define DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
+#define DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -101,145 +101,52 @@ class lmdb_source_name_manager_t {
     lmdb_helper::maybe_grow(env);
 
     // get context
-    hashdb::lmdb_context_t context(env, true, false);
+    hashdb::lmdb_context_t context(env, true, true);
     context.open();
 
-    // set key
+    // set key=source_id
     uint8_t key[10];
-    uint8_t* p = key;
-    p = lmdb_helper::encode_uint64_t(source_id, p);
-    context.key.mv_size = p - key;
+    uint8_t* key_p = key;
+    key_p = lmdb_helper::encode_uint64_t(source_id, key_p);
+    context.key.mv_size = key_p - key;
     context.key.mv_data = key;
 
-    // read the existing hash data record
-    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_SET_KEY);
-
+    // set data=repository_name, filename pair
     size_t repository_name_size = repository_name.size();
     size_t filename_size = filename.size();
+    uint8_t data[repository_name_size + 10 + filename_size + 10];
+    uint8_t* p = data;
+    p = lmdb_helper::encode_uint64_t(repository_name_size, p);
+    std::memcpy(p, repository_name.c_str(), repository_name_size);
+    p += repository_name_size;
+    p = lmdb_helper::encode_uint64_t(filename_size, p);
+    std::memcpy(p, filename.c_str(), filename_size);
+    p += filename_size;
+    context.data.mv_size = p - data;
+    context.data.mv_data = data;
 
-    if (rc == MDB_NOTFOUND) {
-
-      // new set of source names
-      uint8_t new_data[repository_name_size + 10 + filename_size + 10];
-      uint8_t* new_p = new_data;
-      new_p = lmdb_helper::encode_uint64_t(repository_name_size, new_p);
-      std::memcpy(new_p, repository_name.c_str(), repository_name_size);
-      new_p += repository_name_size;
-      new_p = lmdb_helper::encode_uint64_t(filename_size, new_p);
-      std::memcpy(new_p, filename.c_str(), filename_size);
-      new_p += filename_size;
-
-      // insert new source name
-      context.data.mv_size = new_p - new_data;
-      context.data.mv_data = new_data;
+    // write the new source name
 #ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
 print_mdb_val("source_name_manager insert new key", context.key);
 print_mdb_val("source_name_manager insert new data", context.data);
 #endif
+    int rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
 
-      rc = mdb_put(context.txn, context.dbi,
-                   &context.key, &context.data, MDB_NODUPDATA);
-
-      // the write must work
-      if (rc != 0) {
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
-
-      // new hash source inserted
+    if (rc == 0) {
+      // the new name pair went in
       ++changes.source_name_inserted;
       context.close();
       MUTEX_UNLOCK(&M);
       return;
 
-    } else if (rc == 0) {
-      // look for this repository_name, filename pair
-      const uint8_t* const old_p_start =
-                                static_cast<uint8_t*>(context.data.mv_data);
-      const uint8_t* const old_p_end = old_p_start + context.data.mv_size;
-      const uint8_t* old_p = old_p_start;
-      uint8_t* new_data = new uint8_t[context.data.mv_size +
-                           10 + repository_name_size + 10 + filename_size];
-      bool name_present = false;
-      while (old_p < old_p_end) {
-        uint64_t p_repository_name_size;
-        const uint8_t*  rn_p = lmdb_helper::decode_uint64_t(
-                                       old_p, p_repository_name_size);
-        old_p = rn_p + p_repository_name_size;
-        uint64_t p_filename_size;
-        const uint8_t*  fn_p = lmdb_helper::decode_uint64_t(
-                                       old_p, p_filename_size);
-        old_p = fn_p + p_filename_size;
+    } else if (rc == MDB_KEYEXIST) {
+      // the name pair was already there
+      ++changes.source_name_already_present;
+      context.close();
+      MUTEX_UNLOCK(&M);
+      return;
 
-        if (repository_name_size == p_repository_name_size &&
-            filename_size == p_filename_size &&
-            std::memcmp(repository_name.c_str(), rn_p,
-                        repository_name_size) == 0 &&
-            std::memcmp(filename.c_str(), fn_p,
-                        filename_size) == 0) {
-          name_present = true;
-          break;
-        }
-      }
-
-      // read must not pass the data record
-      if (old_p > old_p_end) {
-        assert(0);
-      }
-
-      if (name_present == true) {
-#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-print_mdb_val("source_name_manager insert no change key", context.key);
-print_mdb_val("source_name_manager insert no change data", context.data);
-#endif
-
-        // handle no change: name already present
-        ++changes.source_name_already_present;
-        context.close();
-        delete new_data;
-        MUTEX_UNLOCK(&M);
-        return;
-
-      } else {
-        // handle change: add new name
-        // copy in existing names
-        memcpy(new_data, old_p_start, context.data.mv_size);
-
-        // append new name
-        uint8_t* new_p = new_data + context.data.mv_size;
-        new_p = lmdb_helper::encode_uint64_t(repository_name_size, new_p);
-        std::memcpy(new_p, repository_name.c_str(), repository_name_size);
-        new_p += repository_name_size;
-        new_p = lmdb_helper::encode_uint64_t(filename_size, new_p);
-        std::memcpy(new_p, filename.c_str(), filename_size);
-        new_p += filename_size;
-
-        // point to new_data
-        context.data.mv_size = new_p - new_data;
-        context.data.mv_data = new_data;
-
-        // store the appended names
-#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-print_mdb_val("source_name_manager insert change key", context.key);
-print_mdb_val("source_name_manager insert change data", context.data);
-#endif
-        rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
-
-        // the write must work
-        if (rc != 0) {
-          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-          assert(0);
-        }
-
-        // source name inserted
-        ++changes.source_name_inserted;
-        context.close();
-        delete new_data;
-        MUTEX_UNLOCK(&M);
-        return;
-      }
     } else {
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
@@ -254,69 +161,73 @@ print_mdb_val("source_name_manager insert change data", context.data);
             source_names_t& names) const {
 
     // get context
-    hashdb::lmdb_context_t context(env, false, false);
+    hashdb::lmdb_context_t context(env, false, true);
     context.open();
 
     // set key
     uint8_t key_start[10];
     uint8_t* key_p = key_start;
     key_p = lmdb_helper::encode_uint64_t(source_id, key_p);
-    context.key.mv_size = key_p - key_start;
+    const size_t key_size = key_p - key_start;
+    context.key.mv_size = key_size;
     context.key.mv_data = key_start;
+    context.data.mv_size = 0;
+    context.data.mv_data = NULL;
 
     // set the cursor to this key
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
+#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
+print_mdb_val("source_name_manager find start at key", context.key);
+#endif
 
-    if (rc == 0) {
+    // note if source ID was found
+    bool source_id_found = (rc == 0);
+
+    // read name pairs while data available and key matches
+    names.clear();
+    while (rc == 0 &&
+           context.key.mv_size == key_size &&
+           memcmp(context.key.mv_data, key_start, key_size) == 0) {
 
 #ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
 print_mdb_val("source_name_manager find key", context.key);
 print_mdb_val("source_name_manager find data", context.data);
 #endif
-      // key found
-      names.clear();
+      // read repository_name, filename pair into names
       const uint8_t* p = static_cast<uint8_t*>(context.data.mv_data);
       const uint8_t* const p_stop = p + context.data.mv_size;
-      while (p < p_stop) {
-      
-        uint64_t repository_name_size;
-        const uint8_t* const rn_p = lmdb_helper::decode_uint64_t(
+      uint64_t repository_name_size;
+      const uint8_t* const rn_p = lmdb_helper::decode_uint64_t(
                                            p, repository_name_size);
-        p = rn_p + repository_name_size;
-        uint64_t filename_size;
-        const uint8_t* const fn_p = lmdb_helper::decode_uint64_t(
-                                           p, filename_size);
-        p = fn_p + filename_size;
-        names.insert(source_name_t(
-                std::string(reinterpret_cast<const char*>(rn_p),
-                            repository_name_size),
-                std::string(reinterpret_cast<const char*>(fn_p),
-                            filename_size)));
-      }
+      p = rn_p + repository_name_size;
+      uint64_t filename_size;
+      const uint8_t* const fn_p = lmdb_helper::decode_uint64_t(
+                                         p, filename_size);
+      p = fn_p + filename_size;
+      names.insert(source_name_t(
+              std::string(reinterpret_cast<const char*>(rn_p),
+                          repository_name_size),
+              std::string(reinterpret_cast<const char*>(fn_p),
+                          filename_size)));
 
       // validate that the decoding was properly consumed
       if (p != p_stop) {
         assert(0);
       }
 
-      context.close();
-      return true;
+      // next
+      rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                          MDB_NEXT);
+    }
 
-    } else if (rc == MDB_NOTFOUND) {
-#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-print_mdb_val("source_name_manager find no key", context.key);
-#endif
-      // source ID can be created but not be in the source_name store yet
-      names.clear();
+    if (rc == 0 || rc == MDB_NOTFOUND) {
+      // good, LMDB worked correctly
       context.close();
-      return false;
+      return source_id_found;
 
     } else {
       // invalid rc
-#ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-print_mdb_val("source_name_manager find no key", context.key);
-#endif
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }

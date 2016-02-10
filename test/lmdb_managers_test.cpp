@@ -572,28 +572,53 @@ void lmdb_source_name_manager() {
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_source_name_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
-  // this should assert
+  // no source ID when DB is empty
   found = manager.find(1, source_names);
   TEST_EQ(found, false);
 
-  // insert, find
+  // insert first element
   manager.insert(1, "rn", "fn", changes);
   TEST_EQ(changes.source_name_inserted, 1);
   manager.insert(1, "rn", "fn", changes);
   TEST_EQ(changes.source_name_already_present, 1);
   manager.insert(1, "rn2", "fn2", changes);
   TEST_EQ(changes.source_name_inserted, 2);
+  manager.insert(1, "rn1", "fn1", changes);
+  TEST_EQ(changes.source_name_inserted, 3);
+
+  // insert second element
+  manager.insert(2, "rn11", "fn11", changes);
+  TEST_EQ(changes.source_name_inserted, 4);
+
+  // find first element
   found = manager.find(1, source_names);
   TEST_EQ(found, true);
   source_names_t::const_iterator it = source_names.begin();
+  TEST_EQ(source_names.size(), 3);
   TEST_EQ(it->first, "rn");
   TEST_EQ(it->second, "fn");
+  ++it;
+  TEST_EQ(it->first, "rn1");
+  TEST_EQ(it->second, "fn1");
   ++it;
   TEST_EQ(it->first, "rn2");
   TEST_EQ(it->second, "fn2");
 
+  // find second element
+  found = manager.find(2, source_names);
+  TEST_EQ(found, true);
+  it = source_names.begin();
+  TEST_EQ(source_names.size(), 1);
+  TEST_EQ(it->first, "rn11");
+  TEST_EQ(it->second, "fn11");
+
+  // no source ID when DB is not empty
+  found = manager.find(3, source_names);
+  TEST_EQ(found, false);
+  TEST_EQ(source_names.size(), 0);
+
   // size
-  TEST_EQ(manager.size(), 1);
+  TEST_EQ(manager.size(), 4);
 }
 
 // ************************************************************
