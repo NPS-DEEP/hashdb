@@ -28,13 +28,14 @@
 \Large \hdb v3.0 Timing Analysis
 \end{center}
 
-Graphs show timing for importing and scanning under varying conditions.
+Timing analysis is shown for importing and scanning under varying conditions
+using a 4-core 3.10GHz Intel processor, 8 GiB or RAM, and Fedora 20.
 
 Timing analyses performed:
 \begin{compactitem}
 \item Random hash: Random hashes are imported and scanned using default parameters.
-\item Same hash, diferent source offset: The same hash is imported and scanned, with a maximum duplicates count of 200.
-\item Random hash, small hash key space: Random hashes are imported and scanned, where the key space is 14 bits.  With one million hashes, the average bucket size is $1,000,000 / 2^{14} = 61$.
+\item Same hash, different source offset: The same hash is imported and scanned, with a maximum duplicates count of 100.
+\item Random hash, small hash key space: Random hashes are imported and scanned, where the key space is 9 bits.  With one million hashes, the average bucket size is $1,000,000 / 2^{9} = 1953$.
 \end{compactitem}
 
 \subsubsection* {Random Hash}
@@ -53,7 +54,7 @@ Timing analyses performed:
   \caption*{Scan random hashes.}
 \end{figure}
 
-\subsection* {Same Hash, Different Source Offset}
+\subsubsection* {Same Hash, Different Source Offset}
 
 \begin{figure}[H]
   \center
@@ -85,12 +86,67 @@ Timing analyses performed:
   \caption*{Scan same hashes, different source offset.}
 \end{figure}
 
-Conclusions:
+\subsubsection*{Conclusions}
 \begin{compactitem}
-\item Performance significantly degrades within 200 sources per hash.
-\item Performance degrades when hash values have multiple hash suffixes.
+\item For a small database, random hashes import at about 0.55 seconds
+per 100K and scan at about 0.11 seconds per 100K.
+\item Settings must be used to protect performance.
+Specifically, the number of sources per hash and the number of hash suffixes
+must be controlled.
+The effect of various settings is shown here:
+
+\begin{compactitem}
+\item The following table shows performance when varying the maximum number of
+sources stored for hashes.
+This maximum value is set using the \verb+-m+ option when a database is created.
+
+\vspace{4mm}
+\begin{tabular}{|l|l|l|}
+\hline
+max duplicates & Import (Sec/100K) & Scan (Sec/100K) \\
+\hline
+20 & 0.06 & 0.17 \\
+100 & 0.11 & 0.70 \\
+200 & 0.18 & 1.50 \\
+500 & 0.40 & 4.00 \\
+1000 & 0.75 & 8.50 \\
+\hline
+\end{tabular}
+\vspace{4mm}
+
+These results indicate that the max duplicates might be kept below 200.
+
+\item The following table shows performance when varying the density of
+hash suffixes per hash prefix.
+This value is controlled using the \verb+-t+ tuning option
+when a database is created.
+Import times are time to import 100K random hashes
+after importing 900K random hashes.
+Scan times are time to scan 100K random hashes.
+
+\vspace{4mm}
+\begin{tabular}{|l|l|l|}
+\hline
+max duplicates & Import & Scan \\
+\hline
+18:3 (4) & 0.55 & 0.10 \\
+16:3 (15) & 0.51 & 0.09 \\
+14:3 (61) & 0.51 & 0.09 \\
+12:3 (244) & 0.51 & 0.10 \\
+10:3 (976) & 0.62 & 0.17 \\
+9:3 (1953) & 0.75 & 0.26 \\
+8:3 (3906) & 1.00 & 0.45 \\
+\hline
+\end{tabular}
+\vspace{4mm}
+
+These results indicate that the optimum density may be around 50
+suffixes per prefix and that the maximum suffixes per prefix
+should be kept below 250.
+
 \end{compactitem}
 
+\end{compactitem}
 
 \end{document}
 

@@ -121,7 +121,7 @@ def run_same():
     # add_same
     print("add_same...")
     rm_tempdir("temp_same.hdb")
-    run_hashdb(["create", "-m200", "temp_same.hdb"])
+    run_hashdb(["create", "-m100", "temp_same.hdb"])
     run_hashdb(["add_same", "temp_same.hdb", "1000000"])
     deltas, totals = read_timestamps("temp_same.hdb")
     plot_deltas(deltas, "temp_add_same_delta.pdf")
@@ -138,7 +138,7 @@ def run_key_space():
     # add_random with small key space
     print("add_random small keyspace...")
     rm_tempdir("temp_random_key.hdb")
-    run_hashdb(["create", "temp_random_key.hdb", "-t14:3"])
+    run_hashdb(["create", "temp_random_key.hdb", "-t9:3"])
     run_hashdb(["add_random", "temp_random_key.hdb", "1000000"])
     deltas, totals = read_timestamps("temp_random_key.hdb")
     plot_deltas(deltas, "temp_add_random_key_delta.pdf")
@@ -152,8 +152,7 @@ def run_key_space():
     plot_totals(totals, "temp_scan_random_key_total.pdf")
 
 if __name__=="__main__":
-#    run_random()
-#    run_same()
+    run_random()
+    run_same()
     run_key_space()
-
 
