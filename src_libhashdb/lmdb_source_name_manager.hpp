@@ -25,7 +25,7 @@
 #ifndef LMDB_SOURCE_NAME_MANAGER_HPP
 #define LMDB_SOURCE_NAME_MANAGER_HPP
 
-#define DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
+//#define DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -221,6 +221,7 @@ print_mdb_val("source_name_manager find data", context.data);
                           MDB_NEXT);
     }
 
+    // make sure rc is valid
     if (rc == 0 || rc == MDB_NOTFOUND) {
       // good, LMDB worked correctly
       context.close();

@@ -27,13 +27,35 @@
 
 #include <iostream>
 #include <string>
+#include "lmdb.h"
 #include "to_hex.hpp"
 
 namespace hashdb {
 
-  static void print_mdb_val(const std::string& name, const MDB_val& val) {
+  // print MDB_val size and bytes in hex
+  void print_mdb_val(const std::string& name, const MDB_val& val) {
     std::cerr << name << ": " << hashdb::to_hex(
          std::string(static_cast<char*>(val.mv_data), val.mv_size)) << "\n";
+  }
+
+  // Print LMDB entries.  Leave the cursor at end.
+  void print_whole_mdb(const std::string& name, MDB_cursor* cursor) {
+    std::cerr << "DB walk: " << name << "\n";
+    MDB_val key;
+    MDB_val data;
+    int rc = mdb_cursor_get(cursor, &key, &data, MDB_FIRST);
+
+    while (rc == 0) {
+      print_mdb_val("DB walk key", key);
+      print_mdb_val("DB walk data", data);
+      rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT);
+    }
+    if (rc != MDB_NOTFOUND) {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+    std::cerr << "DB walk: done.\n";
   }
 }
 
