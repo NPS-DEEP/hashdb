@@ -312,7 +312,7 @@ print_mdb_val("hash_manager insert append data", context.data);
                      &context.key, &context.data, MDB_NODUPDATA);
 
       // release new_data resource
-      delete new_data;
+      delete[] new_data;
 
       // write must work
       if (rc != 0) {
