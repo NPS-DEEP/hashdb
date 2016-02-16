@@ -170,7 +170,7 @@ class export_json_t {
       os << "]}\n";
 
       // next
-      progress_tracker.track();
+      progress_tracker.track_hash_data(*id_offset_pairs);
       pair = manager.hash_next(pair.second);
     }
 

@@ -87,6 +87,17 @@ class progress_tracker_t {
     ++index;
   }
 
+  void track_hash_data(const hashdb::id_offset_pairs_t& id_offset_pairs) {
+    // The amount of hash data traversed is calculated from id_offset_pairs
+    // size, which is 1 or size + 1, see hashdb_data store.
+    // This is an inefficient but simple approach to track count
+    const size_t count = (id_offset_pairs.size() == 1) ? 1 :
+                                                id_offset_pairs.size() + 1;
+    for (size_t i=0; i<count; ++i) {
+      track();
+    }
+  }
+
   ~progress_tracker_t() {
     std::stringstream ss;
     if (total > 0) {

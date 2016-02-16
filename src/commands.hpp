@@ -495,7 +495,7 @@ namespace commands {
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track();
+      progress_tracker.track_hash_data(*id_offset_pairs);
     }
 
     // show totals
@@ -563,7 +563,7 @@ namespace commands {
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track();
+      progress_tracker.track_hash_data(*id_offset_pairs);
     }
 
     // say so if nothing was found
@@ -626,7 +626,7 @@ namespace commands {
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track();
+      progress_tracker.track_hash_data(*id_offset_pairs);
     }
     delete id_offset_pairs;
     delete expanded_text;
