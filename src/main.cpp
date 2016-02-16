@@ -422,9 +422,9 @@ void run_command() {
     commands::scan_hash(args[0], args[1], cmd);
 
   // statistics
-  } else if (command == "size") {
+  } else if (command == "sizes") {
     check_params("", 1);
-    commands::size(args[0], cmd);
+    commands::sizes(args[0], cmd);
 
   } else if (command == "sources") {
     check_params("", 1);

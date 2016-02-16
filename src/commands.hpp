@@ -399,8 +399,8 @@ namespace commands {
   // ************************************************************
   // statistics
   // ************************************************************
-  // size
-  static void size(const std::string& hashdb_dir,
+  // sizes
+  static void sizes(const std::string& hashdb_dir,
                    const std::string& cmd) {
 
     // validate hashdb_dir path
