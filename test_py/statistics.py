@@ -4,16 +4,9 @@
 
 import helpers as H
 
-def _setup(json_data):
-    H.rm_tempdir("temp_1.hdb")
-    H.rm_tempfile("temp_1.json")
-    H.hashdb(["create", "temp_1.hdb"])
-    H.make_tempfile("temp_1.json", json_data)
-    H.hashdb(["import_json", "temp_1.hdb", "temp_1.json"])
-
 def test_size():
     # hash stores
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"block_hash":"0011223344556677", "source_offset_pairs":["0000000000000000", 0]}',
 '{"block_hash":"00112233556677", "source_offset_pairs":["0000000000000000", 512]}'])
     expected_answer = [
@@ -23,7 +16,7 @@ def test_size():
     H.lines_equals(expected_answer, returned_answer)
 
     # source stores, no names
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"file_hash":"0011223344556677","filesize":0,"names":[]}'])
     expected_answer = [
 '{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
@@ -32,7 +25,7 @@ def test_size():
     H.lines_equals(expected_answer, returned_answer)
 
     # source stores, names
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"file_hash":"0011223344556677","filesize":0,"names":[{"repository_name":"r1","filename":"f1","repository_name":"r2","filename":"f2"}]}'])
     expected_answer = [
 '{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":1}',
@@ -43,7 +36,7 @@ def test_size():
 def test_sources():
 
     # source stores, no names
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"file_hash":"0011223344556677","filesize":0,"names":[]}'])
     expected_answer = [
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}',
@@ -52,7 +45,7 @@ def test_sources():
     H.lines_equals(expected_answer, returned_answer)
 
     # source stores, two names
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"file_hash":"0011223344556677","filesize":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}'])
     expected_answer = [
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
@@ -61,7 +54,7 @@ def test_sources():
     H.lines_equals(expected_answer, returned_answer)
 
 def test_histogram():
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
 '{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
 '{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])
@@ -81,7 +74,7 @@ def test_duplicates():
     # hash 0... doesn't go in at all.
     # hash 1... has one source with one pair.
     # hash 2... has one source with two pairs.
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
 '{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
 '{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])
@@ -128,7 +121,7 @@ def test_duplicates():
 
 def test_hash_table():
     # note that the first one doesn't go in at all, next goes in once, last goes in twice.
-    _setup([
+    H.make_hashdb("temp_1.hdb", [
 '{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
 '{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
 '{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])

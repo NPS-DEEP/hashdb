@@ -581,10 +581,6 @@ print_mdb_val("hash_data_manager insert check data", context.data);
 print_whole_mdb("hash_data_manager find", context.cursor);
 #endif
 
-//void* zz1 = static_cast<void*>(const_cast<char*>(binary_hash.c_str()));
-//uint8_t* zz2 = static_cast<uint8_t*>(zz1);
-//uint8_t* zz3 = static_cast<uint8_t*>(static_cast<void*>(const_cast<char*>(binary_hash.c_str())));
-
     // set key
     const size_t key_size = binary_hash.size();
     uint8_t* key_start = static_cast<uint8_t*>(

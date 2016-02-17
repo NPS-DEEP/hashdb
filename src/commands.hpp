@@ -29,7 +29,7 @@
 #include "import_json.hpp"
 #include "export_json.hpp"
 #include "scan_hashes.hpp"
-#include "add.hpp"
+#include "adder.hpp"
 #include "hex_helper.hpp"
 //#include "expand_manager.hpp"
 //#include "dfxml_scan_consumer.hpp"
@@ -45,12 +45,10 @@
 #include <algorithm>
 #include <vector>
 
-// return true if exists or was successfully created with same settings,
-// false if not
-static std::pair<bool, std::string> create_if_new(
-                                  const std::string& hashdb_dir,
-                                  const std::string& from_hashdb_dir,
-                                  const std::string& command_string) {
+// leave alone else create using existing settings if new
+void create_if_new(const std::string& hashdb_dir,
+                   const std::string& from_hashdb_dir,
+                   const std::string& command_string) {
 
   std::pair<bool, std::string> pair;
   hashdb::settings_t settings;
@@ -59,20 +57,24 @@ static std::pair<bool, std::string> create_if_new(
   pair = hashdb::read_settings(hashdb_dir, settings);
   if (pair.first == true) {
     // hashdb_dir already exists
-    return pair;
+    return;
   }
 
   // no hashdb_dir, so read from_hashdb_dir settings
   pair = hashdb::read_settings(from_hashdb_dir, settings);
   if (pair.first == false) {
     // bad since from_hashdb_dir is not valid
-    return pair;
+    std::cout << "Error: " << pair.second << "\n";
+    exit(1);
   }
 
   // create hashdb_dir using from_hashdb_dir settings
   pair = hashdb::create_hashdb(hashdb_dir, settings, command_string);
-
-  return pair;
+  if (pair.first == false) {
+    // bad since from_hashdb_dir is not valid
+    std::cout << "Error: " << pair.second << "\n";
+    exit(1);
+  }
 }
 
 // require hashdb_dir else fail
@@ -204,81 +206,118 @@ namespace commands {
   static void add(const std::string& hashdb_dir,
                   const std::string& dest_dir,
                   const std::string& cmd) {
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir);
+    create_if_new(dest_dir, hashdb_dir, cmd);
+
+    // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
     hashdb::import_manager_t manager_b(dest_dir, cmd);
+    adder_t adder(&manager_a, &manager_b);
+
+    // hash data
+    uint64_t entropy;
+    std::string block_label;
+    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+
+    // add data for binary_hash from A to B
     std::pair<bool, std::string> pair = manager_a.hash_begin();
     while (pair.first != false) {
-      // add data for binary_hash from A to B
-      add::add(pair.second, manager_a, manager_b);
+      // add the hash
+      adder.read(pair.second, entropy, block_label, *source_offset_pairs);
+      adder.add(pair.second, entropy, block_label, *source_offset_pairs);
       pair = manager_a.hash_next(pair.second);
     }
   }
 
   // add_multiple
-  static void add_multiple(const std::vector<std::string>& hashdb_dirs,
+  // Flow:
+  //   1) Create an ordered multimap of key=hash, value=producer_t
+  //      where key is the first key from a producer.
+  //   2) Consume elements from the ordered multimap and copy them
+  //      until the producers are depleted.  Do not enque when a producer
+  //      is depleted.  Done when the ordered multimap becomes empty.
+  static void add_multiple(const std::vector<std::string>& p_hashdb_dirs,
                            const std::string& cmd) {
 
-    typedef std::multimap<std::string, hashdb::scan_manager_t*>
-                                                     ordered_producers_t;
-    typedef std::pair<std::string, hashdb::scan_manager_t*>
-                                                     hash_producer_pair_t;
+    std::vector<std::string> hashdb_dirs = p_hashdb_dirs;
 
-    std::string binary_hash;
-    std::pair<bool, std::string> hash_pair;
-    std::pair<std::string, hashdb::scan_manager_t*> hash_producer_pair;
+    // read then strip off dest_dir from end of list
+    const std::string dest_dir = hashdb_dirs.back();
+    hashdb_dirs.pop_back();
 
-    // open the consumer from hashdb_dirs[0]
-    std::vector<std::string>::const_iterator hashdb_dir_it =
-                                                          hashdb_dirs.begin();
-    hashdb::import_manager_t consumer(*hashdb_dir_it, cmd);
+    // validate hashdb directories, maybe make dest_dir
+    for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
+                    it != hashdb_dirs.end(); ++it) {
+      require_hashdb_dir(*it);
+    }
+    create_if_new(dest_dir, hashdb_dirs[0], cmd);
 
-    // the multimap for processing hashes in order from the producers
+    // open the consumer at dest_dir
+    hashdb::import_manager_t consumer(dest_dir, cmd);
+
+    // define the ordered multimap of key=hash, value=producer_t
+    typedef std::pair<hashdb::scan_manager_t*, adder_t*> producer_t;
+    typedef std::pair<std::string, producer_t> ordered_producers_value_t;
+    typedef std::multimap<std::string, producer_t> ordered_producers_t;
+
+    // create the multimap of ordered producers
     ordered_producers_t ordered_producers;
 
-    // a producer
-    hashdb::scan_manager_t* producer;
+    // hash_pair<bool, hash> from a scan_manager read
+    std::pair<bool, std::string> hash_pair;
 
-    // open the producers from hashdb_dirs[1+]
-    while (++hashdb_dir_it != hashdb_dirs.end()) {
-
-      // create a producer
-      producer = new hashdb::scan_manager_t(*hashdb_dir_it);
-
-      // read first hash
+    // open the producers
+    for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
+                    it != hashdb_dirs.end(); ++it) {
+      std::string hashdb_dir = *it;
+      hashdb::scan_manager_t* producer = new hashdb::scan_manager_t(hashdb_dir);
       hash_pair = producer->hash_begin();
       if (hash_pair.first == true) {
-        // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(
-                                          hash_pair.second, producer));
+        // the producer is not empty, so enqueue it
+        // create the adder
+        adder_t* adder = new adder_t(producer, &consumer);
+        ordered_producers.insert(ordered_producers_value_t(hash_pair.second,
+                                      producer_t(producer, adder)));
+
       } else {
         // no hashes for this producer so close it
         delete producer;
       }
     }
+      
+    // hash data used with adder_t
+    uint64_t entropy;
+    std::string block_label;
+    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
 
     // add ordered hashes from producers until all hashes are consumed
     while (ordered_producers.size() != 0) {
-      // get the hash, producer pair for the first hash
+      // get the hash, producer, and adder for the first hash
       ordered_producers_t::iterator it = ordered_producers.begin();
-      binary_hash = it->first;
-      producer = it->second;
+      const std::string binary_hash = it->first;
+      hashdb::scan_manager_t* producer = it->second.first;
+      adder_t* adder = it->second.second;
 
       // add the hash to the consumer
-      add::add(binary_hash, *producer, consumer);
+      adder->read(binary_hash, entropy, block_label, *source_offset_pairs);
+      adder->add(binary_hash, entropy, block_label, *source_offset_pairs);
 
       // remove this hash
       ordered_producers.erase(it);
 
-      // get the next hash
+      // get the next hash from this producer
       hash_pair = producer->hash_next(binary_hash);
 
       if (hash_pair.first) {
-        // hash exists so add the hash, producer pair
-        ordered_producers.insert(hash_producer_pair_t(
-                                          hash_pair.second, producer));
+        // hash exists so add the hash, producer, and adder
+        ordered_producers.insert(ordered_producers_value_t(hash_pair.second,
+                                      producer_t(producer, adder)));
       } else {
         // no hashes for this producer so close it
         delete producer;
+        delete adder;
       }
     }
   }

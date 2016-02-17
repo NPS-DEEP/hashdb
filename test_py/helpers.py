@@ -67,6 +67,7 @@ def _bad_list(a,b):
 def lines_equals(a,b):
     # length differs
     if len(a) != len(b) or len(a) == 0:
+        print("line lengths differ")
         _bad_list(a,b)
     # lines differ
     for item_a, item_b in zip(a, b):
@@ -83,6 +84,8 @@ def rm_tempfile(filename):
         raise ValueError("%s not found." % filename)
     if os.path.exists(filename):
         os.remove(filename)
+    if os.path.exists(filename):
+        raise ValueError("%s not removed." % filename)
  
 def rm_tempdir(dirname):
     if dirname[:5] != "temp_":
@@ -92,6 +95,8 @@ def rm_tempdir(dirname):
     if os.path.exists(dirname):
         # remove existing DB
         shutil.rmtree(dirname, True)
+    if os.path.exists(dirname):
+        raise ValueError("%s not removed." % filename)
 
 def make_tempfile(filename, lines):
     if filename[:5] != "temp_":
@@ -103,4 +108,12 @@ def make_tempfile(filename, lines):
     f = open(filename, 'w')
     for line in lines:
         f.write("%s\n" % line)
+
+# create new temp_1.hdb containing json_data
+def make_hashdb(tempdir, json_data):
+    rm_tempdir(tempdir)
+    rm_tempfile("temp_0.json")
+    hashdb(["create", tempdir])
+    make_tempfile("temp_0.json", json_data)
+    hashdb(["import_json", tempdir, "temp_0.json"])
 
