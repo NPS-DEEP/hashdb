@@ -493,6 +493,11 @@ namespace hashdb {
     }
   }
 
+  size_t scan_manager_t::find_hash_count(
+                                    const std::string& binary_hash) const {
+    return lmdb_hash_data_manager->find_count(binary_hash);
+  }
+
   size_t scan_manager_t::find_approximate_hash_count(
                                     const std::string& binary_hash) const {
     return lmdb_hash_manager->find(binary_hash);

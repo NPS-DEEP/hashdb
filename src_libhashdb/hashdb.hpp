@@ -334,7 +334,20 @@ namespace hashdb {
                    id_offset_pairs_t& id_offset_pairs) const;
 
     /**
+     * Find hash count.  Faster than find_hash.  Accesses the hash
+     * information store.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
+     *   Approximate hash count.
+     */
+    size_t find_hash_count(const std::string& binary_hash) const;
+
+    /**
      * Find approximate hash count.  Faster than find_hash, but can be wrong.
+     * Accesses the hash store.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.

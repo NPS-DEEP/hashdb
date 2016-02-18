@@ -257,6 +257,7 @@ void lmdb_hash_data_manager() {
 
   // binary_0 not there
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), 0);
+  TEST_EQ(manager.find_count(binary_0), 0);
 
   // invalid file offset, count = 0
   TEST_EQ(manager.insert(binary_0, 1, 513, 1, "bl", changes), 0);
@@ -281,6 +282,7 @@ void lmdb_hash_data_manager() {
   it = id_offset_pairs.begin();
   TEST_EQ(it->first, 1);
   TEST_EQ(it->second, 512);
+  TEST_EQ(manager.find_count(binary_0), 1);
 
   // binary_1 not there
   TEST_EQ(manager.find(binary_1, entropy, block_label, id_offset_pairs), 0);
@@ -338,6 +340,7 @@ void lmdb_hash_data_manager() {
   ++it;
   TEST_EQ(it->first, 1);
   TEST_EQ(it->second, 1024);
+  TEST_EQ(manager.find_count(binary_0), 2);
 
   // same hash, new source, different data
   size_t count;
@@ -363,6 +366,7 @@ void lmdb_hash_data_manager() {
   ++it;
   TEST_EQ(it->first, 1);
   TEST_EQ(it->second, 2048);
+  TEST_EQ(manager.find_count(binary_0), 3);
   
   // check iterator
   count = manager.insert(binary_1, 2, 4096, 4, "bl4", changes);
