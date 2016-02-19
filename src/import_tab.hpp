@@ -109,10 +109,8 @@ class import_tab_t {
     }
     uint64_t file_offset = (sector_index - 1) * sector_size;
 
-//zzzzzzzzzzzz delte this
-//    // add source data
-//      manager.insert_source_data(file_binary_hash, 0, "", 0);
-//    }
+    // add source data
+    manager.insert_source_data(file_binary_hash, 0, "", 0);
 
     // add name pair
     manager.insert_source_name(file_binary_hash, repository_name, tab_file);

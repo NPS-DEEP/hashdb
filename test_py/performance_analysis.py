@@ -18,7 +18,9 @@ def test_random():
 '    hash_prefix_inserted: 100',
 '    hash_suffix_inserted: 100',
 '    source_data_inserted: 1',
+'    source_data_same: 1',
 '    source_id_inserted: 1',
+'    source_id_already_present: 101',
 '    source_name_inserted: 1',
 ''])
     H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
@@ -43,7 +45,9 @@ def test_same():
 '    hash_count_changed: 30',
 '    hash_not_changed: 69',
 '    source_data_inserted: 1',
+'    source_data_same: 1',
 '    source_id_inserted: 1',
+'    source_id_already_present: 101',
 '    source_name_inserted: 1',
 ''])
     H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])

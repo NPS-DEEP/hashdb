@@ -10,7 +10,7 @@ def test_size():
 '{"block_hash":"0011223344556677", "source_offset_pairs":["0000000000000000", 0]}',
 '{"block_hash":"00112233556677", "source_offset_pairs":["0000000000000000", 512]}'])
     expected_answer = [
-'{"hash_data_store":2, "hash_store":1, "source_data_store":0, "source_id_store":1, "source_name_store":0}',
+'{"hash_data_store":2, "hash_store":1, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
     returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
@@ -82,8 +82,8 @@ def test_duplicates():
     # zero
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "0"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version: 3.0.0-dev-0',
-'# duplicates-command-Version: 2',
+'# hashdb-Version: ',
+'# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
 'Processing index 4 of 4 completed.',
@@ -92,35 +92,35 @@ def test_duplicates():
     # one
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "1"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version: 3.0.0-dev-0',
-'# duplicates-command-Version: 2',
+'# hashdb-Version: ',
+'# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 1',
-'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
+'1111111111111111	[{"source_list_id":1696784233},{"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"source_offset_pairs":["0000000000000000",0]}]',
 'Processing index 4 of 4 completed.',
 ''])
 
     # two
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "2"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version: 3.0.0-dev-0',
-'# duplicates-command-Version: 2',
+'# hashdb-Version: ',
+'# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 2',
-'2222222222222222	[{"source_list_id":2390350426},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0,1,512]}]',
+'2222222222222222	[{"source_list_id":1696784233},{"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}]',
 '# Processing index 4 of 4 completed.',
 ''])
 
     # three
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "3"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version: 3.0.0-dev-0',
-'# duplicates-command-Version: 2',
+'# hashdb-Version: ',
+'# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
 'Processing index 4 of 4 completed.',
 ''])
 
 def test_hash_table():
-    # note that the first one doesn't go in at all, next goes in once, last goes in twice.
+    # note that the first hash doesn't go in at all, next goes in once, last goes in twice.
     H.make_hashdb("temp_1.hdb", [
 '{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
 '{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
@@ -135,12 +135,11 @@ def test_hash_table():
     # two matches
     returned_answer = H.hashdb(["hash_table", "temp_1.hdb", "0000000000000000"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version: 3.0.0-dev-0',
-'# hash-table-command-Version: 3',
+'# hashdb-Version: ',
+'# hash-table-command-Version: ',
 '# command_line: ../src/hashdb hash_table temp_1.hdb 0000000000000000',
-'1111111111111111	[{"source_list_id":2844319735},{"sources":[{"source_id":1,"file_hash":"","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"id_offset_pairs":[1,0]}]',
-'2222222222222222	[{"source_list_id":2390350426},{"sources":[]},{"id_offset_pairs":[1,0,1,512]}]',
-'2222222222222222	',
+'1111111111111111	[{"source_list_id":1696784233},{"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}]},{"source_offset_pairs":["0000000000000000",0]}]',
+'2222222222222222	[{"source_list_id":1696784233},{"sources":[]},{"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}]',
 '# Processing index 4 of 4 completed.',
 ''])
 

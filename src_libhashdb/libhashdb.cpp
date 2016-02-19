@@ -322,10 +322,17 @@ namespace hashdb {
                           const std::string& file_binary_hash,
                           const std::string& repository_name,
                           const std::string& filename) {
-    const uint64_t source_id = lmdb_source_id_manager->insert(
-                             file_binary_hash, *changes);
+    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
+                                                  file_binary_hash, *changes);
     lmdb_source_name_manager->insert(
-                             source_id, repository_name, filename, *changes);
+                           pair.second, repository_name, filename, *changes);
+
+    // If the source ID is new then add a blank source data record just to keep
+    // from breaking the reverse look-up done in scan_manager_t.
+    if (pair.first == true) {
+      lmdb_source_data_manager->insert(pair.second, file_binary_hash,
+                                       0, "", 0, *changes);
+    }
   }
 
   void import_manager_t::insert_source_data(
@@ -333,9 +340,9 @@ namespace hashdb {
                           const uint64_t filesize,
                           const std::string& file_type,
                           const uint64_t nonprobative_count) {
-    const uint64_t source_id = lmdb_source_id_manager->insert(
-                             file_binary_hash, *changes);
-    lmdb_source_data_manager->insert(source_id, file_binary_hash,
+    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
+                                                  file_binary_hash, *changes);
+    lmdb_source_data_manager->insert(pair.second, file_binary_hash,
                         filesize, file_type, nonprobative_count, *changes);
   }
 
@@ -345,13 +352,20 @@ namespace hashdb {
                           const uint64_t entropy,
                           const std::string& block_label) {
 
-    const uint64_t source_id = lmdb_source_id_manager->insert(
-                             file_binary_hash, *changes);
+    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
+                                                  file_binary_hash, *changes);
 
-    // insert into hash manager and hash data manager
+    // insert hash into hash manager and hash data manager
     const size_t count = lmdb_hash_data_manager->insert(binary_hash,
-                    source_id, file_offset, entropy, block_label, *changes);
+                    pair.second, file_offset, entropy, block_label, *changes);
     lmdb_hash_manager->insert(binary_hash, count, *changes);
+
+    // If the source ID is new then add a blank source data record just to keep
+    // from breaking the reverse look-up done in scan_manager_t.
+    if (pair.first == true) {
+      lmdb_source_data_manager->insert(pair.second, file_binary_hash,
+                                       0, "", 0, *changes);
+    }
   }
 
   std::string import_manager_t::sizes() const {
@@ -484,7 +498,7 @@ namespace hashdb {
       }
 
       // provide pair
-      *ss << "\"" << it->first << "\","
+      *ss << "\"" << hashdb::to_hex(it->first) << "\","
           << it->second;
     }
 
@@ -508,21 +522,23 @@ namespace hashdb {
                std::string& block_label,
                source_offset_pairs_t& source_offset_pairs) const {
 
+    // clear source offset pairs
+    source_offset_pairs.clear();
+
     // first check hash store
     if (lmdb_hash_manager->find(binary_hash) == 0) {
       // hash is not present so return false
       entropy = 0;
       block_label = "";
-      source_offset_pairs.clear();
       return false;
     }
 
-    // hash may be present so use hash data manager
+    // hash may be present so read hash using hash data manager
     hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
     bool hash_found = lmdb_hash_data_manager->find(binary_hash, entropy,
                                               block_label, *id_offset_pairs);
     if (hash_found) {
-      // make space for unused returned variables
+      // make space for unused returned source variables
       std::string file_binary_hash;
       uint64_t filesize;
       std::string file_type;
@@ -537,7 +553,7 @@ namespace hashdb {
                                 it->first, file_binary_hash,
                                 filesize, file_type, nonprobative_count);
 
-        // the source must exist
+        // source_data must have a source_id to match the source_id in hash_data
         if (source_data_found == false) {
           assert(0);
         }
@@ -575,7 +591,6 @@ namespace hashdb {
     // read source_id into pair.second
     std::pair<bool, uint64_t> pair =
                             lmdb_source_id_manager->find(file_binary_hash);
-
     if (pair.first == false) {
       // no source ID for this file_binary_hash
       filesize = 0;
@@ -583,18 +598,20 @@ namespace hashdb {
       nonprobative_count = 0;
       return false;
     } else {
+
       // read source data associated with this source ID
       std::string returned_file_binary_hash;
       bool source_data_found = lmdb_source_data_manager->find(pair.second,
                              returned_file_binary_hash, filesize, file_type,
                              nonprobative_count);
-      // make sure the file binary hash is valid
-      if (source_data_found == false ||
-         file_binary_hash != returned_file_binary_hash) {
+
+      // if source data is found, make sure the file binary hash is right
+      if (source_data_found == true &&
+                         file_binary_hash != returned_file_binary_hash) {
         assert(0);
       }
-      return true;
     }
+    return true;
   }
 
   bool scan_manager_t::find_source_names(const std::string& file_binary_hash,
@@ -604,7 +621,7 @@ namespace hashdb {
     std::pair<bool, uint64_t> pair =
                             lmdb_source_id_manager->find(file_binary_hash);
     if (pair.first == false) {
-      // no source
+      // no source ID for this file_binary_hash
       source_names.clear();
       return false;
     } else {

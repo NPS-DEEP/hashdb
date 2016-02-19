@@ -18,7 +18,7 @@ def test_basic_settings():
 
     # validate settings parameters
     lines = h.read_file(settings1)
-    h.lines_equals(lines, ['{"settings_version":3, "sector_size":2, "block_size":4, "max_id_offset_pairs":100, "hash_prefix_bits":30, "hash_suffix_bytes":10}'])
+    h.lines_equals(lines, ['{"settings_version":3, "sector_size":2, "block_size":4, "max_source_offset_pairs":100, "hash_prefix_bits":30, "hash_suffix_bytes":10}'])
 
 if __name__=="__main__":
     test_basic_settings()

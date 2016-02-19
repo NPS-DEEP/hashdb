@@ -216,17 +216,11 @@ namespace commands {
     hashdb::import_manager_t manager_b(dest_dir, cmd);
     adder_t adder(&manager_a, &manager_b);
 
-    // hash data
-    uint64_t entropy;
-    std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
-
     // add data for binary_hash from A to B
     std::pair<bool, std::string> pair = manager_a.hash_begin();
     while (pair.first != false) {
       // add the hash
-      adder.read(pair.second, entropy, block_label, *source_offset_pairs);
-      adder.add(pair.second, entropy, block_label, *source_offset_pairs);
+      adder.add(pair.second);
       pair = manager_a.hash_next(pair.second);
     }
   }
@@ -287,28 +281,21 @@ namespace commands {
       }
     }
       
-    // hash data used with adder_t
-    uint64_t entropy;
-    std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
-
     // add ordered hashes from producers until all hashes are consumed
     while (ordered_producers.size() != 0) {
       // get the hash, producer, and adder for the first hash
       ordered_producers_t::iterator it = ordered_producers.begin();
-      const std::string binary_hash = it->first;
       hashdb::scan_manager_t* producer = it->second.first;
       adder_t* adder = it->second.second;
 
       // add the hash to the consumer
-      adder->read(binary_hash, entropy, block_label, *source_offset_pairs);
-      adder->add(binary_hash, entropy, block_label, *source_offset_pairs);
+      adder->add(it->first);
 
       // remove this hash
       ordered_producers.erase(it);
 
       // get the next hash from this producer
-      hash_pair = producer->hash_next(binary_hash);
+      hash_pair = producer->hash_next(it->first);
 
       if (hash_pair.first) {
         // hash exists so add the hash, producer, and adder
@@ -494,7 +481,8 @@ namespace commands {
     // space for variables
     uint64_t entropy;
     std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                        new hashdb::source_offset_pairs_t;
 
     // iterate over hashdb and set variables for calculating the histogram
     std::pair<bool, std::string> pair = manager.hash_begin();
@@ -505,8 +493,9 @@ namespace commands {
     }
 
     while (pair.first == true) {
-      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
-      uint64_t count = id_offset_pairs->size();
+      manager.find_hash(pair.second, entropy, block_label,
+                            *source_offset_pairs);
+      uint64_t count = source_offset_pairs->size();
       // update total hashes observed
       total_hashes += count;
       // update total distinct hashes
@@ -534,7 +523,7 @@ namespace commands {
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track_hash_data(*id_offset_pairs);
+      progress_tracker.track_hash_data(*source_offset_pairs);
     }
 
     // show totals
@@ -551,7 +540,7 @@ namespace commands {
                                  hash_histogram_it2->second << "}\n";
     }
     delete hash_histogram;
-    delete id_offset_pairs;
+    delete source_offset_pairs;
   }
 
   // duplicates
@@ -585,15 +574,17 @@ namespace commands {
     // space for variables
     uint64_t entropy;
     std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                     new hashdb::source_offset_pairs_t;
     std::string* expanded_text = new std::string;
 
     // iterate over hashdb and set variables for finding duplicates
     std::pair<bool, std::string> pair = manager.hash_begin();
 
     while (pair.first == true) {
-      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
-      if (id_offset_pairs->size() == number) {
+      manager.find_hash(pair.second, entropy, block_label,
+                                  *source_offset_pairs);
+      if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
         manager.find_expanded_hash(pair.second, *expanded_text);
         std::cout << bin_to_hex(pair.second) << "\t" << *expanded_text << "\n";
@@ -602,7 +593,7 @@ namespace commands {
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track_hash_data(*id_offset_pairs);
+      progress_tracker.track_hash_data(*source_offset_pairs);
     }
 
     // say so if nothing was found
@@ -611,7 +602,7 @@ namespace commands {
       return;
     }
 
-    delete id_offset_pairs;
+    delete source_offset_pairs;
     delete expanded_text;
   }
 
@@ -626,15 +617,20 @@ namespace commands {
     // open DB
     hashdb::scan_manager_t manager(hashdb_dir);
 
-    // look for source ID
-    std::pair<bool, uint64_t> id_pair =
-                          manager.find_source_id(hex_to_bin(hex_file_hash));
+    // source data
+    std::string file_binary_hash = hex_to_bin(hex_file_hash);
+    uint64_t filesize = 0;
+    std::string file_type = "";
+    uint64_t nonprobative_count = 0;
 
-    if (id_pair.first == false) {
+    // see if this source is even present
+    bool has_source_data = manager.find_source_data(file_binary_hash,
+                                filesize, file_type, nonprobative_count);
+    if (has_source_data == false) {
+      // the source is not present
       std::cout << "There is no source with this file hash\n";
       return;
     }
-    uint64_t source_id = id_pair.second;
 
     // print header information
     print_header("hash-table-command-Version: 3", cmd);
@@ -645,29 +641,37 @@ namespace commands {
     // space for variables
     uint64_t entropy;
     std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                       new hashdb::source_offset_pairs_t;
     std::string* expanded_text = new std::string;
 
-    // iterate over hashdb and set variables for finding hashes with
-    // this source ID
+    // look for hashes that belong to this source
+    // get the first hash
     std::pair<bool, std::string> pair = manager.hash_begin();
-
     while (pair.first == true) {
-      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
-      for (hashdb::id_offset_pairs_t::const_iterator it =
-            id_offset_pairs->begin(); it!= id_offset_pairs->end(); ++it) {
-        if (it->first == source_id) {
+
+      // read hash data for the hash
+      manager.find_hash(pair.second, entropy, block_label,
+                                                    *source_offset_pairs);
+
+      // find references to this source
+      for (hashdb::source_offset_pairs_t::const_iterator it =
+                       source_offset_pairs->begin();
+                       it!= source_offset_pairs->end(); ++it) {
+        if (it->first == file_binary_hash) {
+          // the source matches so print the hash and move on
           manager.find_expanded_hash(pair.second, *expanded_text);
           std::cout << bin_to_hex(pair.second) << "\t" << *expanded_text
                     << "\n";
+          break;
         }
       }
 
       // move forward
       pair = manager.hash_next(pair.second);
-      progress_tracker.track_hash_data(*id_offset_pairs);
+      progress_tracker.track_hash_data(*source_offset_pairs);
     }
-    delete id_offset_pairs;
+    delete source_offset_pairs;
     delete expanded_text;
   }
 
@@ -685,6 +689,12 @@ namespace commands {
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
 
+    // get sector size
+    hashdb::settings_t settings;
+    std::pair<bool, std::string> pair =
+                        hashdb::read_settings(hashdb_dir, settings);
+    const uint64_t sector_size = settings.sector_size;
+
     // initialize random seed
     srand (time(NULL));
 
@@ -695,11 +705,10 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // set up the source
-    std::pair<bool, uint64_t> id_pair =
-                       manager.insert_source_id(hex_to_bin("00"));
-    manager.insert_source_name(id_pair.second, "add_random_repository_name",
+    std::string file_binary_hash = hex_to_bin("00");
+    manager.insert_source_name(file_binary_hash, "add_random_repository_name",
                                "add_random_filename");
-    manager.insert_source_data(id_pair.second, hex_to_bin("00"), 0, "", 0);
+    manager.insert_source_data(file_binary_hash, 0, "", 0);
 
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
@@ -708,7 +717,8 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(random_binary_hash(), id_pair.second, 0, 0, "");
+      manager.insert_hash(random_binary_hash(), file_binary_hash,
+                          i*sector_size, 0, "");
     }
   }
 
@@ -779,11 +789,10 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // set up the source
-    std::pair<bool, uint64_t> id_pair =
-                       manager.insert_source_id(hex_to_bin("00"));
-    manager.insert_source_name(id_pair.second, "add_same_repository_name",
+    std::string file_binary_hash = hex_to_bin("00");
+    manager.insert_source_name(file_binary_hash, "add_same_repository_name",
                                "add_same_filename");
-    manager.insert_source_data(id_pair.second, hex_to_bin("00"), 0, "", 0);
+    manager.insert_source_data(file_binary_hash, 0, "", 0);
 
     // hash to use
     std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
@@ -795,7 +804,7 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(binary_hash, id_pair.second, i*sector_size, 0, "");
+      manager.insert_hash(binary_hash, file_binary_hash, i*sector_size, 0, "");
     }
   }
 

@@ -157,17 +157,17 @@ int main(int argc,char **argv) {
 
     const struct option long_options[] = {
       // options
-      {"help",                               no_argument, 0, 'h'},
-      {"Help",                               no_argument, 0, 'H'},
-      {"version",                            no_argument, 0, 'v'},
-      {"Version",                            no_argument, 0, 'V'},
-      {"quiet",                              no_argument, 0, 'q'},
-      {"sector_size",                  required_argument, 0, 's'},
-      {"block_size",                   required_argument, 0, 'b'},
-      {"repository_name",              required_argument, 0, 'r'},
-      {"whitelist_dir",                required_argument, 0, 'w'},
-      {"max_hash_source_offset_pairs", required_argument, 0, 'm'},
-      {"tuning",                       required_argument, 0, 't'},
+      {"help",                          no_argument, 0, 'h'},
+      {"Help",                          no_argument, 0, 'H'},
+      {"version",                       no_argument, 0, 'v'},
+      {"Version",                       no_argument, 0, 'V'},
+      {"quiet",                         no_argument, 0, 'q'},
+      {"sector_size",             required_argument, 0, 's'},
+      {"block_size",              required_argument, 0, 'b'},
+      {"repository_name",         required_argument, 0, 'r'},
+      {"whitelist_dir",           required_argument, 0, 'w'},
+      {"max_source_offset_pairs", required_argument, 0, 'm'},
+      {"tuning",                  required_argument, 0, 't'},
 
       // end
       {0,0,0,0}
@@ -234,9 +234,9 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'm': {	// max source ID file offset pairs
-        has_max_hash_source_offset_pairs = true;
-        settings.max_hash_source_offset_pairs = std::atoi(optarg);
+      case 'm': {	// max source file offset pairs
+        has_max_source_offset_pairs = true;
+        settings.max_source_offset_pairs = std::atoi(optarg);
         break;
       }
 
@@ -259,7 +259,6 @@ int main(int argc,char **argv) {
         exit(1);
     }
   }
-
 
   // parse the remaining tokens that were not consumed by options
   argc -= optind;

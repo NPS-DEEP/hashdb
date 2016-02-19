@@ -85,10 +85,11 @@ class lmdb_source_id_manager_t {
   }
 
   /**
-   * Insert key=file_binary_hash, value=source_id.  Return source_id.
+   * Insert key=file_binary_hash, value=source_id.  Return bool, source_id.
+   * True if new.
    */
-  uint64_t insert(const std::string& file_binary_hash,
-                  hashdb::lmdb_changes_t& changes) {
+  std::pair<bool, uint64_t> insert(const std::string& file_binary_hash,
+                                   hashdb::lmdb_changes_t& changes) {
 
     // require valid file_binary_hash
     if (file_binary_hash.size() == 0) {
@@ -133,7 +134,7 @@ print_mdb_val("source_id_manager insert has data", context.data);
       ++changes.source_id_already_present;
       context.close();
       MUTEX_UNLOCK(&M);
-      return source_id;
+      return std::pair<bool, uint64_t>(false, source_id);
 
     } else if (rc == MDB_NOTFOUND) {
       // generate new source ID as DB size + 1
@@ -161,7 +162,7 @@ print_mdb_val("source_id_manager insert new data", context.data);
       ++changes.source_id_inserted;
       context.close();
       MUTEX_UNLOCK(&M);
-      return source_id;
+      return std::pair<bool, uint64_t>(true, source_id);
 
     } else {
       // invalid rc
@@ -171,7 +172,7 @@ print_mdb_val("source_id_manager insert new data", context.data);
   }
 
   /**
-   * Find source ID else false.
+   * Find source ID else false and 0.
    */
   std::pair<bool, uint64_t> find(const std::string& file_binary_hash) const {
 
@@ -228,7 +229,7 @@ print_mdb_val("source_id_manager find not found key", context.key);
   }
 
   /**
-   * Return first file_binary_hash or "" and false.
+   * Return first file_binary_hash else false and "".
    */
   std::pair<bool, std::string> find_begin() const {
 
