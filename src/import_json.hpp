@@ -91,43 +91,40 @@ class import_json_t {
   void read_source_data(const rapidjson::Document& document,
                         const std::string& line) {
 
-    // file_hash
+    // parse file_hash
     if (!document.HasMember("file_hash") ||
                   !document["file_hash"].IsString()) {
       report_invalid_line("source data file_hash", line);
       return;
     }
-    std::string file_hash = document["file_hash"].GetString();
+    const std::string file_binary_hash = hex_to_bin(
+                                     document["file_hash"].GetString());
 
-    // filesize
+    // parse filesize
     if (!document.HasMember("filesize") ||
                   !document["filesize"].IsUint64()) {
       report_invalid_line("source data filesize", line);
       return;
     }
-    uint64_t filesize = document["filesize"].GetUint64();
+    const uint64_t filesize = document["filesize"].GetUint64();
 
-    // file_type (optional)
+    // parse file_type (optional)
     std::string file_type =
                  (document.HasMember("file_type") &&
                   document["file_type"].IsString()) ?
                      document["file_type"].GetString() : "";
 
-    // nonprobative_count (optional)
+    // parse nonprobative_count (optional)
     uint64_t nonprobative_count =
                  (document.HasMember("nonprobative_count") &&
                   document["nonprobative_count"].IsUint64()) ?
                      document["nonprobative_count"].GetUint64() : 0;
 
-    // get or create source ID
-    std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                hex_to_bin(file_hash));
-
-    // add the block hash
-    manager.insert_source_data(id_pair.second, hex_to_bin(file_hash),
+    // add the source data
+    manager.insert_source_data(file_binary_hash,
                                filesize, file_type, nonprobative_count);
 
-    // names:[]
+    // parse names:[]
     if (!document.HasMember("names") ||
                   !document["names"].IsArray()) {
       report_invalid_line("source data names", line);
@@ -136,7 +133,7 @@ class import_json_t {
     const rapidjson::Value& json_names = document["names"];
     for (rapidjson::SizeType i = 0; i< json_names.Size(); ++i) {
 
-      // repository_name
+      // parse repository_name
       if (!json_names[i].HasMember("repository_name") ||
                     !json_names[i]["repository_name"].IsString()) {
         report_invalid_line("source data repository_name", line);
@@ -145,16 +142,16 @@ class import_json_t {
       std::string repository_name =
                      json_names[i]["repository_name"].GetString();
 
-      // filename
+      // parse filename
       if (!json_names[i].HasMember("filename") ||
                     !json_names[i]["filename"].IsString()) {
         report_invalid_line("source data filename", line);
         return;
       }
-      std::string filename = json_names[i]["filename"].GetString();
+      const std::string filename = json_names[i]["filename"].GetString();
 
       // add the name pair
-      manager.insert_source_name(id_pair.second, repository_name, filename);
+      manager.insert_source_name(file_binary_hash, repository_name, filename);
     }
   }
 
@@ -172,7 +169,8 @@ class import_json_t {
       report_invalid_line("block hash data block_hash", line);
       return;
     }
-    std::string binary_hash = hex_to_bin(document["block_hash"].GetString());
+    const std::string binary_hash = hex_to_bin(
+                                       document["block_hash"].GetString());
 
     // entropy (optional)
     uint64_t entropy =
@@ -201,7 +199,8 @@ class import_json_t {
                             line);
         return;
       }
-      std::string file_binary_hash = hex_to_bin(json_pairs[i].GetString());
+      const std::string file_binary_hash = hex_to_bin(
+                                                 json_pairs[i].GetString());
 
       // file offset
       if (!json_pairs[i+1].IsUint64()) {
@@ -209,14 +208,10 @@ class import_json_t {
                             line);
         return;
       }
-      uint64_t file_offset = json_pairs[i+1].GetUint64();
-
-      // get source ID or new source ID from file hash
-      std::pair<bool, uint64_t> id_pair = manager.insert_source_id(
-                                                        file_binary_hash);
+      const uint64_t file_offset = json_pairs[i+1].GetUint64();
 
       // insert the hash
-      manager.insert_hash(binary_hash, id_pair.second, file_offset,
+      manager.insert_hash(binary_hash, file_binary_hash, file_offset,
                           entropy, block_label);
     }
   }

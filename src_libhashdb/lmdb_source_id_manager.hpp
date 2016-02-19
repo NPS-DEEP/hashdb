@@ -19,8 +19,7 @@
 
 /**
  * \file
- * Manage the LMDB source ID store of key=encoding(source_id),
- * data=file_binary_hash.
+ * Manage the LMDB source ID store of key=file_binary_hash, value=source_id.
  * Threadsafe.
  */
 
@@ -87,10 +86,9 @@ class lmdb_source_id_manager_t {
 
   /**
    * Insert key=file_binary_hash, value=source_id.  Return source_id.
-   * Return false if already there.
    */
-  std::pair<bool, uint64_t> insert(const std::string& file_binary_hash,
-                                   hashdb::lmdb_changes_t& changes) {
+  uint64_t insert(const std::string& file_binary_hash,
+                  hashdb::lmdb_changes_t& changes) {
 
     // require valid file_binary_hash
     if (file_binary_hash.size() == 0) {
@@ -135,7 +133,7 @@ print_mdb_val("source_id_manager insert has data", context.data);
       ++changes.source_id_already_present;
       context.close();
       MUTEX_UNLOCK(&M);
-      return std::pair<bool, uint64_t>(false, source_id);
+      return source_id;
 
     } else if (rc == MDB_NOTFOUND) {
       // generate new source ID as DB size + 1
@@ -163,7 +161,7 @@ print_mdb_val("source_id_manager insert new data", context.data);
       ++changes.source_id_inserted;
       context.close();
       MUTEX_UNLOCK(&M);
-      return std::pair<bool, uint64_t>(true, source_id);
+      return source_id;
 
     } else {
       // invalid rc
@@ -225,6 +223,98 @@ print_mdb_val("source_id_manager find not found key", context.key);
     } else {
       // invalid rc
       std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+  }
+
+  /**
+   * Return first file_binary_hash or "" and false.
+   */
+  std::pair<bool, std::string> find_begin() const {
+
+    // get context
+    hashdb::lmdb_context_t context(env, false, false);
+    context.open();
+
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_FIRST);
+
+    if (rc == 0) {
+#ifdef DEBUG_LMDB_SOURCE_ID_MANAGER_HPP
+print_mdb_val("source_id_manager find_begin key", context.key);
+print_mdb_val("source_id_manager find_begin data", context.data);
+#endif
+      // return the key
+      std::string file_binary_hash = std::string(
+              static_cast<char*>(context.key.mv_data), context.key.mv_size);
+      context.close();
+      return std::pair<bool, std::string>(true, file_binary_hash);
+
+    } else if (rc == MDB_NOTFOUND) {
+      // no hash
+      context.close();
+      return std::pair<bool, std::string>(false, std::string(""));
+
+    } else {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+  }
+
+  /**
+   * Return next hash.  Error if no next.
+   */
+  std::pair<bool, std::string> find_next(
+                        const std::string& last_file_binary_hash) const {
+
+    if (last_file_binary_hash == "") {
+      // program error to ask for next when at end
+      std::cerr << "find_next: already at end\n";
+      assert(0);
+    }
+
+    // get context
+    hashdb::lmdb_context_t context(env, false, false);
+    context.open();
+
+    // set the cursor to last file binary hash
+    context.key.mv_size = last_file_binary_hash.size();
+    context.key.mv_data =
+         static_cast<void*>(const_cast<char*>(last_file_binary_hash.c_str()));
+    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                            MDB_SET_KEY);
+
+    // the last file binary hash must exist
+    if (rc != 0) {
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
+    }
+
+    // move cursor to this file binary hash
+    rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
+                        MDB_NEXT_NODUP);
+
+    if (rc == MDB_NOTFOUND) {
+      // no values for this file binary hash
+      context.close();
+      return std::pair<bool, std::string>(false, std::string(""));
+
+    } else if (rc == 0) {
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("source_id_manager find_next key", context.key);
+print_mdb_val("source_id_manager find_next data", context.data);
+#endif
+
+      // return this file binary hash
+      std::string file_binary_hash = std::string(
+              static_cast<char*>(context.key.mv_data), context.key.mv_size);
+      context.close();
+      return std::pair<bool, std::string>(true, file_binary_hash);
+
+    } else {
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
     }
   }

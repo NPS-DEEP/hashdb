@@ -109,20 +109,17 @@ class import_tab_t {
     }
     uint64_t file_offset = (sector_index - 1) * sector_size;
 
-    // get source ID
-    std::pair<bool, uint64_t> pair = manager.insert_source_id(file_binary_hash);
-    uint64_t source_id = pair.second;
-
-    if (pair.first == true) {
-      // source is new so add data for it
-      manager.insert_source_data(source_id, file_binary_hash, 0, "", 0);
-    }
+//zzzzzzzzzzzz delte this
+//    // add source data
+//      manager.insert_source_data(file_binary_hash, 0, "", 0);
+//    }
 
     // add name pair
-    manager.insert_source_name(source_id, repository_name, tab_file);
+    manager.insert_source_name(file_binary_hash, repository_name, tab_file);
 
     // add block hash
-    manager.insert_hash(block_binary_hash, source_id, file_offset, 0, "");
+    manager.insert_hash(block_binary_hash, file_binary_hash, file_offset,
+                        0, "");
 
     // update progress tracker
     progress_tracker.track();

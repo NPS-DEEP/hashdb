@@ -69,12 +69,12 @@
 
 namespace hashdb {
 
+typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
+typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
+
 class lmdb_hash_data_manager_t {
 
   private:
-  typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
-  typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
-
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
   const uint32_t sector_size;

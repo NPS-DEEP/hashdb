@@ -49,6 +49,8 @@ static const std::string binary_0(hex_to_bin(
                                   "00000000000000000000000000000000"));
 static const std::string binary_1(hex_to_bin(
                                   "00000000000000000000000000000001"));
+static const std::string binary_2(hex_to_bin(
+                                  "00000000000000000000000000000002"));
 static const std::string binary_10(hex_to_bin(
                                   "10000000000000000000000000000000"));
 static const std::string binary_11(hex_to_bin(
@@ -533,10 +535,17 @@ void lmdb_source_id_manager() {
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_source_id_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
+  // iterator when empty
+  pair = manager.find_begin();
+  TEST_EQ(pair.first, false);
+  TEST_EQ(pair.second, "");
+
+  // search when empty
   pair = manager.find(binary_0);
   TEST_EQ(pair.first, false);
   TEST_EQ(pair.second, 0)
 
+  // add items
   pair = manager.insert(binary_0, changes);
   TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(changes.source_id_already_present, 0);
@@ -552,6 +561,23 @@ void lmdb_source_id_manager() {
   pair = manager.find(binary_0);
   TEST_EQ(pair.first, true);
   TEST_EQ(pair.second, 1)
+
+  // iterator
+  pair = manager.insert(binary_2, changes);
+  pair = manager.insert(binary_1, changes);
+  std::pair<bool, uint64_t> pair;
+  pair = manager.find_begin();
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, binary_0);
+  pair = manager.find_next(pair.second);
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, binary_1);
+  pair = manager.find_next(pair.second);
+  TEST_EQ(pair.first, true);
+  TEST_EQ(pair.second, binary_2);
+  pair = manager.find_next(pair.second);
+  TEST_EQ(pair.first, false);
+  TEST_EQ(pair.second, "");
 }
 
 // ************************************************************
@@ -627,18 +653,6 @@ void lmdb_source_data_manager() {
   TEST_EQ(filesize, 22);
   TEST_EQ(file_type, "ft2");
   TEST_EQ(nonprobative_count, 32);
-
-  // iterator
-  std::pair<bool, uint64_t> pair;
-  pair = manager.find_begin();
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, 0);
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, 1);
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, false);
-  TEST_EQ(pair.second, 0);
 
   // size
   TEST_EQ(manager.size(), 2);

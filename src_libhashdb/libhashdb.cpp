@@ -65,70 +65,94 @@
 #include "crc32.h"      // for scan_expanded
 #include "to_hex.hpp"      // for scan_expanded
 
-// helper for producing expanded source for a source ID
-static void provide_source_information(const hashdb::scan_manager_t& manager,
-                                       const uint64_t source_id,
-                                       std::stringstream& ss) {
+namespace hashdb {
 
-  // fields to hold source information
-  std::string file_binary_hash;
-  uint64_t filesize;
-  std::string file_type;
-  uint64_t nonprobative_count;
-  hashdb::source_names_t* source_names(new hashdb::source_names_t);
+  // ************************************************************
+  // private helper functions
+  // ************************************************************
+  // helper for producing expanded source for a source ID
+  static void provide_source_information(const hashdb::scan_manager_t& manager,
+                                         const std::string file_binary_hash,
+                                         std::stringstream& ss) {
 
-  // read source data
-  manager.find_source_data(source_id, file_binary_hash, filesize,
-                           file_type, nonprobative_count);
+    // fields to hold source information
+    uint64_t filesize;
+    std::string file_type;
+    uint64_t nonprobative_count;
+    hashdb::source_names_t* source_names(new hashdb::source_names_t);
 
-  // read source names
-  manager.find_source_names(source_id, *source_names);
+    // read source data
+    manager.find_source_data(file_binary_hash, filesize, file_type,
+                             nonprobative_count);
 
-  // provide source data
-  ss << "{\"source_id\":" << source_id
-     << ",\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
-     << ",\"filesize\":" << filesize
-     << ",\"file_type\":\"" << file_type << "\""
-     << ",\"nonprobative_count\":" << nonprobative_count
-     ;
+    // provide source data
+    ss << "{\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
+       << ",\"filesize\":" << filesize
+       << ",\"file_type\":\"" << file_type << "\""
+       << ",\"nonprobative_count\":" << nonprobative_count
+       ;
 
-  // provide source names
-  ss << ",\"names\":[";
-  int i = 0;
-  hashdb::source_names_t::const_iterator it;
-  for (it = source_names->begin(); it != source_names->end();
-       ++it, ++i) {
+    // read source names
+    manager.find_source_names(file_binary_hash, *source_names);
 
-    // put comma before all but first name pair
-    if (i > 0) {
-      ss << ",";
+    // provide source names
+    ss << ",\"names\":[";
+    int i = 0;
+    hashdb::source_names_t::const_iterator it;
+    for (it = source_names->begin(); it != source_names->end();
+         ++it, ++i) {
+
+      // put comma before all but first name pair
+      if (i > 0) {
+        ss << ",";
+      }
+
+      // provide name pair
+      ss << "{\"repository_name\":\"" << hashdb::escape_json(it->first)
+         << "\",\"filename\":\"" << hashdb::escape_json(it->second)
+         << "\"}";
     }
 
-    // provide name pair
-    ss << "{\"repository_name\":\"" << hashdb::escape_json(it->first)
-       << "\",\"filename\":\"" << hashdb::escape_json(it->second)
-       << "\"}";
+    // close source names list and source data
+    ss << "]}";
+
+    delete source_names;
   }
 
-  // close source names list and source data
-  ss << "]}";
-
-  delete source_names;
-}
-
-// helper: read settings, report and fail on error
-static hashdb::settings_t private_read_settings(const std::string& hashdb_dir) {
-  hashdb::settings_t settings;
-  std::pair<bool, std::string> pair = hashdb::read_settings(
+  // helper: read settings, report and fail on error
+  static hashdb::settings_t private_read_settings(
+                                       const std::string& hashdb_dir) {
+    hashdb::settings_t settings;
+    std::pair<bool, std::string> pair = hashdb::read_settings(
                                                     hashdb_dir, settings);
-  if (pair.first == false) {
-    std::cerr << "Error: hashdb settings file not read.  Aborting.\n";
-    exit(1);
+    if (pair.first == false) {
+      std::cerr << "Error: hashdb settings file not read.  Aborting.\n";
+      exit(1);
+    }
+    return settings;
   }
-  return settings;
-}
 
-namespace hashdb {
+  // this computational complexity is nontrivial
+  static uint32_t calculate_crc(
+                       const hashdb::source_offset_pairs_t& pairs) {
+    std::set<std::string>* source_set = new std::set<std::string>;
+
+    // put source hashes in a sorted set without duplicates
+    for (hashdb::source_offset_pairs_t::const_iterator it = pairs.begin();
+         it != pairs.end(); ++it) {
+      source_set->insert(it->first);
+    }
+
+    // now calculate the CRC for the sources
+    uint32_t crc = 0;
+    for (std::set<std::string>::const_iterator it = source_set->begin();
+                      it != source_set->end(); ++it) {
+      crc = hashdb::crc32(crc, static_cast<uint8_t*>(static_cast<void*>(
+                          const_cast<char*>((*it).c_str()))), it->size());
+    }
+    delete source_set;
+    return crc;
+  }
 
   // ************************************************************
   // version of the hashdb library
@@ -182,9 +206,9 @@ namespace hashdb {
 
     // create new LMDB stores
     lmdb_hash_data_manager_t(hashdb_dir, RW_NEW,
-                       settings.sector_size, settings.max_id_offset_pairs);
+                  settings.sector_size, settings.max_source_offset_pairs);
     lmdb_hash_manager_t(hashdb_dir, RW_NEW,
-                       settings.hash_prefix_bits, settings.hash_suffix_bytes);
+                  settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_id_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
@@ -229,9 +253,9 @@ namespace hashdb {
          settings_version(CURRENT_SETTINGS_VERSION),
          sector_size(512),
          block_size(512),
-         max_id_offset_pairs(100000), // 100,000
-         hash_prefix_bits(28),        // for 2^28
-         hash_suffix_bytes(3) {       // for 2^(3*8)
+         max_source_offset_pairs(100000), // 100,000
+         hash_prefix_bits(28),            // for 2^28
+         hash_suffix_bytes(3) {           // for 2^(3*8)
   }
 
   std::string settings_t::settings_string() const {
@@ -239,7 +263,7 @@ namespace hashdb {
     ss << "{\"settings_version\":" << settings_version
        << ", \"sector_size\":" << sector_size
        << ", \"block_size\":" << block_size
-       << ", \"max_id_offset_pairs\":" << max_id_offset_pairs
+       << ", \"max_source_offset_pairs\":" << max_source_offset_pairs
        << ", \"hash_prefix_bits\":" << hash_prefix_bits
        << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
        << "}";
@@ -266,8 +290,8 @@ namespace hashdb {
     hashdb::settings_t settings = private_read_settings(hashdb_dir);
 
     // open managers
-    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
-            RW_MODIFY, settings.sector_size, settings.max_id_offset_pairs);
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY,
+            settings.sector_size, settings.max_source_offset_pairs);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -276,7 +300,6 @@ namespace hashdb {
                                                               RW_MODIFY);
     lmdb_source_name_manager = new lmdb_source_name_manager_t(hashdb_dir,
                                                               RW_MODIFY);
-
   }
 
   import_manager_t::~import_manager_t() {
@@ -295,33 +318,35 @@ namespace hashdb {
     delete changes;
   }
 
-  std::pair<bool, uint64_t> import_manager_t::insert_source_id(
-                                       const std::string& file_binary_hash) {
-    return lmdb_source_id_manager->insert(file_binary_hash, *changes);
-  }
-
-
-  void import_manager_t::insert_source_name(const uint64_t source_id,
+  void import_manager_t::insert_source_name(
+                          const std::string& file_binary_hash,
                           const std::string& repository_name,
                           const std::string& filename) {
+    const uint64_t source_id = lmdb_source_id_manager->insert(
+                             file_binary_hash, *changes);
     lmdb_source_name_manager->insert(
                              source_id, repository_name, filename, *changes);
   }
 
-  void import_manager_t::insert_source_data(const uint64_t source_id,
+  void import_manager_t::insert_source_data(
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
                           const uint64_t nonprobative_count) {
+    const uint64_t source_id = lmdb_source_id_manager->insert(
+                             file_binary_hash, *changes);
     lmdb_source_data_manager->insert(source_id, file_binary_hash,
                         filesize, file_type, nonprobative_count, *changes);
   }
 
   void import_manager_t::insert_hash(const std::string& binary_hash,
-                        const uint64_t source_id,
-                        const uint64_t file_offset,
-                        const uint64_t entropy,
-                        const std::string& block_label) {
+                          const std::string& file_binary_hash,
+                          const uint64_t file_offset,
+                          const uint64_t entropy,
+                          const std::string& block_label) {
+
+    const uint64_t source_id = lmdb_source_id_manager->insert(
+                             file_binary_hash, *changes);
 
     // insert into hash manager and hash data manager
     const size_t count = lmdb_hash_data_manager->insert(binary_hash,
@@ -353,14 +378,14 @@ namespace hashdb {
 
           // for scan_expanded
           hashes(new std::set<std::string>),
-          source_ids(new std::set<uint64_t>) {
+          sources(new std::set<std::string>) {
 
     // read settings
     hashdb::settings_t settings = private_read_settings(hashdb_dir);
 
     // open managers
-    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
-            READ_ONLY, settings.sector_size, settings.max_id_offset_pairs);
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, READ_ONLY,
+            settings.sector_size, settings.max_source_offset_pairs);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -380,36 +405,39 @@ namespace hashdb {
 
     // for scan_expanded
     delete hashes;
-    delete source_ids;
+    delete sources;
   }
 
   // Example abbreviated syntax:
-  // [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800,
-  // "file_hash":"f7035a...", "names":[{"repository_name":"repository1",
-  // "filename":"filename1"}]}]}, {"id_offset_pairs":[1,0,1,65536]}]
+  // [{"source_list_id":57}, {"sources":[{"file_hash":"f7035a...",
+  // "filesize":800, "names":[{"repository_name":"repository1",
+  // "filename":"filename1"}]}]}, {"source_offset_pairs":
+  // ["a9...",0,"b7...",65536]}]
   bool scan_manager_t::find_expanded_hash(const std::string& binary_hash,
                                           std::string& expanded_text) {
+
+    // clear any existing text
+    expanded_text.clear();
 
     // fields to hold the scan
     uint64_t entropy;
     std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                  new hashdb::source_offset_pairs_t;
 
     // scan
     bool matched = scan_manager_t::find_hash(binary_hash,
-                                  entropy, block_label, *id_offset_pairs);
+                           entropy, block_label, *source_offset_pairs);
 
     // done if no match
     if (matched == false) {
-      expanded_text.clear();
-      delete id_offset_pairs;
+      delete source_offset_pairs;
       return false;
     }
 
     // done if matched before
     if (hashes->find(binary_hash) != hashes->end()) {
-      expanded_text.clear();
-      delete id_offset_pairs;
+      delete source_offset_pairs;
       return true;
     }
 
@@ -421,22 +449,19 @@ namespace hashdb {
     *ss << "[";
 
     // provide JSON object[0]: source_list_id
-    hashdb::id_offset_pairs_t::const_iterator it;
-    uint32_t crc = 0;
-    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
-      crc = hashdb::crc32(crc, reinterpret_cast<const uint8_t*>(&(it->first)),
-                  sizeof(uint64_t));
-    }
+    uint32_t crc = calculate_crc(*source_offset_pairs);
     *ss << "{\"source_list_id\":" << crc << "}";
 
     // provide JSON object[1]: sources with their source data and names list
     *ss << ",{\"sources\":[";
 
     // print any sources that have not been printed yet
-    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
-      if (source_ids->find(it->first) == source_ids->end()) {
-        // remember this source ID to skip it later
-        source_ids->insert(it->first);
+    for (hashdb::source_offset_pairs_t::const_iterator it =
+                      source_offset_pairs->begin();
+                      it != source_offset_pairs->end(); ++it) {
+      if (sources->find(it->first) == sources->end()) {
+        // remember this source to skip it later
+        sources->insert(it->first);
 
         // provide the complete source information for this source ID
         provide_source_information(*this, it->first, *ss);
@@ -446,19 +471,20 @@ namespace hashdb {
     // close JSON object[1]
     *ss << "]}";
 
-    // provide JSON object[2]: id_offset_pairs
-    *ss << ",{\"id_offset_pairs\":[";
+    // provide JSON object[2]: source_offset_pairs
+    *ss << ",{\"source_offset_pairs\":[";
     int i=0;
-    for (it = id_offset_pairs->begin(); it != id_offset_pairs->end();
-          ++it, ++i) {
+    for (hashdb::source_offset_pairs_t::const_iterator it =
+         source_offset_pairs->begin();
+         it != source_offset_pairs->end(); ++it, ++i) {
 
-      // put comma before all but first id_offset pair
+      // put comma before all but first source_offset pair
       if (i > 0) {
         *ss << ",";
       }
 
       // provide pair
-      *ss << it->first << ","
+      *ss << "\"" << it->first << "\","
           << it->second;
     }
 
@@ -471,24 +497,61 @@ namespace hashdb {
     // copy stream
     expanded_text = ss->str();
 
-    delete id_offset_pairs;
+    delete source_offset_pairs;
     delete ss;
     return true;
   }
 
-  bool scan_manager_t::find_hash(const std::string& binary_hash,
-                      uint64_t& entropy,
-                      std::string& block_label,
-                      id_offset_pairs_t& pairs) const {
-    if (lmdb_hash_manager->find(binary_hash) > 0) {
-      // hash may be present so use hash data manager
-      return lmdb_hash_data_manager->find(binary_hash,
-                                          entropy, block_label, pairs);
-    } else {
+  bool scan_manager_t::find_hash(
+               const std::string& binary_hash,
+               uint64_t& entropy,
+               std::string& block_label,
+               source_offset_pairs_t& source_offset_pairs) const {
+
+    // first check hash store
+    if (lmdb_hash_manager->find(binary_hash) == 0) {
       // hash is not present so return false
       entropy = 0;
       block_label = "";
-      pairs.clear();
+      source_offset_pairs.clear();
+      return false;
+    }
+
+    // hash may be present so use hash data manager
+    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
+    bool hash_found = lmdb_hash_data_manager->find(binary_hash, entropy,
+                                              block_label, *id_offset_pairs);
+    if (hash_found) {
+      // make space for unused returned variables
+      std::string file_binary_hash;
+      uint64_t filesize;
+      std::string file_type;
+      uint64_t nonprobative_count;
+
+      // build source_offset_pairs from id_offset_pairs
+      for (hashdb::id_offset_pairs_t::const_iterator it =
+              id_offset_pairs->begin(); it != id_offset_pairs->end(); ++it) {
+
+        // get file_binary_hash from source_id
+        bool source_data_found = lmdb_source_data_manager->find(
+                                it->first, file_binary_hash,
+                                filesize, file_type, nonprobative_count);
+
+        // the source must exist
+        if (source_data_found == false) {
+          assert(0);
+        }
+
+        // add the source
+        source_offset_pairs.insert(hashdb::source_offset_pair_t(
+                                   file_binary_hash, it->second));
+      }
+      delete id_offset_pairs;
+      return true;
+
+    } else {
+      // no action, lmdb_hash_data_manager.find clears out fields
+      delete id_offset_pairs;
       return false;
     }
   }
@@ -503,23 +566,51 @@ namespace hashdb {
     return lmdb_hash_manager->find(binary_hash);
   }
 
-  bool scan_manager_t::find_source_data(const uint64_t source_id,
-                        std::string& file_binary_hash,
+  bool scan_manager_t::find_source_data(
+                        const std::string& file_binary_hash,
                         uint64_t& filesize,
                         std::string& file_type,
                         uint64_t& nonprobative_count) const {
-    return lmdb_source_data_manager->find(source_id,
-                file_binary_hash, filesize, file_type, nonprobative_count);
+
+    // read source_id into pair.second
+    std::pair<bool, uint64_t> pair =
+                            lmdb_source_id_manager->find(file_binary_hash);
+
+    if (pair.first == false) {
+      // no source ID for this file_binary_hash
+      filesize = 0;
+      file_type = "";
+      nonprobative_count = 0;
+      return false;
+    } else {
+      // read source data associated with this source ID
+      std::string returned_file_binary_hash;
+      bool source_data_found = lmdb_source_data_manager->find(pair.second,
+                             returned_file_binary_hash, filesize, file_type,
+                             nonprobative_count);
+      // make sure the file binary hash is valid
+      if (source_data_found == false ||
+         file_binary_hash != returned_file_binary_hash) {
+        assert(0);
+      }
+      return true;
+    }
   }
 
-  bool scan_manager_t::find_source_names(const uint64_t source_id,
+  bool scan_manager_t::find_source_names(const std::string& file_binary_hash,
                          source_names_t& source_names) const {
-    return lmdb_source_name_manager->find(source_id, source_names);
-  }
 
-  std::pair<bool, uint64_t> scan_manager_t::find_source_id(
-                              const std::string& file_binary_hash) const {
-    return lmdb_source_id_manager->find(file_binary_hash);
+    // read source_id into pair.second
+    std::pair<bool, uint64_t> pair =
+                            lmdb_source_id_manager->find(file_binary_hash);
+    if (pair.first == false) {
+      // no source
+      source_names.clear();
+      return false;
+    } else {
+      // source
+      return lmdb_source_name_manager->find(pair.second, source_names);
+    }
   }
 
   std::pair<bool, std::string> scan_manager_t::hash_begin() const {
@@ -531,13 +622,13 @@ namespace hashdb {
     return lmdb_hash_data_manager->find_next(last_binary_hash);
   }
 
-  std::pair<bool, uint64_t> scan_manager_t::source_begin() const {
-    return lmdb_source_data_manager->find_begin();
+  std::pair<bool, std::string> scan_manager_t::source_begin() const {
+    return lmdb_source_id_manager->find_begin();
   }
 
-  std::pair<bool, uint64_t> scan_manager_t::source_next(
-                                   const uint64_t last_source_id) const {
-    return lmdb_source_data_manager->find_next(last_source_id);
+  std::pair<bool, std::string> scan_manager_t::source_next(
+                        const std::string& last_file_binary_hash) const {
+    return lmdb_source_id_manager->find_next(last_file_binary_hash);
   }
 
   std::string scan_manager_t::sizes() const {

@@ -42,9 +42,9 @@ namespace hashdb {
   // ************************************************************
   // typedefs
   // ************************************************************
-  // pair(source_id, file_offset)
-  typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
-  typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
+  // pair(file_binary_hash, file_offset)
+  typedef std::pair<std::string, uint64_t>    source_offset_pair_t;
+  typedef std::set<source_offset_pair_t> source_offset_pairs_t;
 
   // pair(repository_name, filename)
   typedef std::pair<std::string, std::string> source_name_t;
@@ -75,8 +75,8 @@ namespace hashdb {
    *   sector_size - Minimal sector size of data, in bytes.  Blocks must
    *     align to this.
    *   block_size - Size, in bytes, of data blocks.
-   *   max_id_offset_pairs - The maximum number of source ID, source file
-   *     offset pairs to store for a single hash value.
+   *   max_source_offset_pairs - The maximum number of source hash,
+   *     file offset pairs to store for a single hash value.
    *   hash_prefix_bits - The number of hash prefix bits to use as the
    *     key in the optimized hash storage.
    *   hash_suffix_bytes - The number of hash suffix bytes to use as the
@@ -86,7 +86,7 @@ namespace hashdb {
     uint32_t settings_version;
     uint32_t sector_size;
     uint32_t block_size;
-    uint32_t max_id_offset_pairs;
+    uint32_t max_source_offset_pairs;
     uint32_t hash_prefix_bits;
     uint32_t hash_suffix_bytes;
     settings_t();
@@ -186,40 +186,25 @@ namespace hashdb {
     ~import_manager_t();
 
     /**
-     * Set up a source ID for a file binary hash.
-     *
-     * Parameters:
-     *   file_binary_hash - The MD5 hash of the source in binary form.
-     *
-     * Returns pair:
-     *   True if the file binary hash is new else false.
-     *   The source ID, which is new if it is just generated.
-     */
-    std::pair<bool, uint64_t> insert_source_id(
-                                       const std::string& file_binary_hash);
-
-    /**
      * Insert the repository_name, filename pair associated with the
-     * source ID unless already there.
+     * source.
      */
-    void insert_source_name(const uint64_t source_id,
+    void insert_source_name(const std::string& file_binary_hash,
                             const std::string& repository_name,
                             const std::string& filename);
 
 
     /**
-     * Insert or change the source data associated with the source ID.
+     * Insert or change source data.
      *
      * Parameters:
-     *   source_id - The source ID for this source data.
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
      *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
      */
-    void insert_source_data(const uint64_t source_id,
-                            const std::string& file_binary_hash,
+    void insert_source_data(const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
                             const uint64_t nonprobative_count);
@@ -229,7 +214,7 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   source_id - The source ID for this source data.
+     *   file_binary_hash - The MD5 hash of the source in binary form.
      *   file_offset - The byte offset into the file where the hash is
      *     located.
      *   entropy - A numeric entropy value for the associated block.
@@ -237,7 +222,7 @@ namespace hashdb {
      *     no label.
      */
     void insert_hash(const std::string& binary_hash,
-                     const uint64_t source_id,
+                     const std::string& file_binary_hash,
                      const uint64_t file_offset,
                      const uint64_t entropy,
                      const std::string& block_label);
@@ -265,7 +250,7 @@ namespace hashdb {
 
     // support scan_expanded
     std::set<std::string>* hashes;
-    std::set<uint64_t>* source_ids;
+    std::set<std::string>* sources;
 
     public:
     // do not allow copy or assignment
@@ -305,9 +290,10 @@ namespace hashdb {
      *     for the scanned hash has been returned in a previous scan.
      *
      *     Text is in JSON format.  Example abbreviated syntax:
-     *     [{"source_list_id":57}, {"sources":[{"source_id":1, "filesize":800,
-     *     "file_hash":"f7035a...", "names":[{"repository_name":"repository1",
-     *     "filename":"filename1"}]}]}, {"id_offset_pairs":[1,0,1,65536]}]
+     *     [{"source_list_id":57}, {"sources":[{"file_hash":"f7035a...",
+     *     "filesize":800, "names":[{"repository_name":"repository1",
+     *     "filename":"filename1"}]}]}, {"source_offset_pairs":["a7...",0,
+     *     "b9...",65536]}]
      *
      * Returns:
      *   True if the hash is present, false if not.
@@ -323,7 +309,8 @@ namespace hashdb {
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
-     *   id_offset_pairs - Set of pairs of source ID and file offset values.
+     *   source_offset_pairs - Set of pairs of source hash and file
+     *     offset values.
      *
      * Returns:
      *   True if the hash is present, false if not.
@@ -331,7 +318,7 @@ namespace hashdb {
     bool find_hash(const std::string& binary_hash,
                    uint64_t& entropy,
                    std::string& block_label,
-                   id_offset_pairs_t& id_offset_pairs) const;
+                   source_offset_pairs_t& source_offset_pairs) const;
 
     /**
      * Find hash count.  Faster than find_hash.  Accesses the hash
@@ -361,15 +348,13 @@ namespace hashdb {
      * Find source data for the given source ID, false on no source ID.
      *
      * Parameters:
-     *   source_id - The source ID for this source data.
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
      *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
      */
-    bool find_source_data(const uint64_t source_id,
-                          std::string& file_binary_hash,
+    bool find_source_data(const std::string& file_binary_hash,
                           uint64_t& filesize,
                           std::string& file_type,
                           uint64_t& nonprobative_count) const;
@@ -378,25 +363,12 @@ namespace hashdb {
      * Find source names for the given source ID, false on no source ID.
      *
      * Parameters:
-     *   source_id - The source ID for this source data.
+     *   file_binary_hash - The MD5 hash of the source in binary form.
      *   source_names - Set of pairs of repository_name, filename
      *     attributed to this source ID.
      */
-    bool find_source_names(const uint64_t source_id,
+    bool find_source_names(const std::string& file_binary_hash,
                            source_names_t& source_names) const;
-
-    /**
-     * Find the source ID associated with this file binary hash else false.
-     *
-     * Parameters:
-     *   file_binary_hash - The MD5 hash of the source in binary form.
-     *
-     * Returns pair:
-     *   True if a source ID was found for the file binary hash else false.
-     *   The source ID associated with the file binary hash else 0.
-     */
-    std::pair<bool, uint64_t> find_source_id(
-                                const std::string& file_binary_hash) const;
 
     /**
      * Return the first block hash in the database.
@@ -418,21 +390,22 @@ namespace hashdb {
 
 
     /**
-     * Return the first source ID in the database.
+     * Return the first source in the database.
      *
      * Returns pair:
-     *   True if is available, false and 0 if DB is empty.
+     *   True if source is available, false and "" if DB is empty.
      */
-    std::pair<bool, uint64_t> source_begin() const;
+    std::pair<bool, std::string> source_begin() const;
 
     /**
-     * Return the next source ID in the database.  Error if last source ID
+     * Return the next source in the database.  Error if last_file_binary_hash
      *   does not exist.
      *
      * Returns pair:
-     *   True if source ID is available, false and 0 if at end of DB.
+     *   True if source is available, false and "" if at end of DB.
      */
-    std::pair<bool, uint64_t> source_next(const uint64_t last_source_id) const;
+    std::pair<bool, std::string> source_next(
+                            const std::string& last_file_binary_hash) const;
 
     /**
      * Return sizes of LMDB databases in JSON format.

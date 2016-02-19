@@ -87,12 +87,14 @@ class progress_tracker_t {
     ++index;
   }
 
-  void track_hash_data(const hashdb::id_offset_pairs_t& id_offset_pairs) {
-    // The amount of hash data traversed is calculated from id_offset_pairs
-    // size, which is 1 or size + 1, see hashdb_data store.
+  void track_hash_data(
+         const hashdb::source_offset_pairs_t& source_offset_pairs) {
+    // The amount of hash data traversed is calculated from
+    // source_offset_pairs // size, which is 1 or size + 1,
+    // see hashdb_data store.
     // This is an inefficient but simple approach to track count
-    const size_t count = (id_offset_pairs.size() == 1) ? 1 :
-                                                id_offset_pairs.size() + 1;
+    const size_t count = (source_offset_pairs.size() == 1) ? 1 :
+                                        source_offset_pairs.size() + 1;
     for (size_t i=0; i<count; ++i) {
       track();
     }

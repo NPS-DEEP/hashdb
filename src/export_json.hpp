@@ -79,18 +79,17 @@ class export_json_t {
   void write_source_data(std::ostream& os) {
 
     // source fields
-    std::string file_binary_hash;
     uint64_t filesize;
     std::string file_type;
     uint64_t nonprobative_count;
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
-    std::pair<bool, uint64_t> pair = manager.source_begin();
+    std::pair<bool, std::string> pair = manager.source_begin();
     while (pair.first != false) {
       // source data
-      manager.find_source_data(pair.second, file_binary_hash, filesize,
-                               file_type, nonprobative_count);
-      std::string file_hash = bin_to_hex(file_binary_hash);
+      manager.find_source_data(pair.second, filesize, file_type,
+                               nonprobative_count);
+      std::string file_hash = bin_to_hex(pair.second);
       os << "{\"file_hash\":\"" << file_hash
          << "\",\"filesize\":" << filesize
          << ",\"file_type\":\"" << file_type
@@ -130,20 +129,16 @@ class export_json_t {
     // hash fields
     uint64_t entropy;
     std::string block_label;
-    hashdb::id_offset_pairs_t* id_offset_pairs = new hashdb::id_offset_pairs_t;
-
-    // source fields just for file_binary_hash
-    std::string file_binary_hash;
-    uint64_t filesize;
-    std::string file_type;
-    uint64_t nonprobative_count;
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                          new hashdb::source_offset_pairs_t;
 
     std::pair<bool, std::string> pair = manager.hash_begin();
 
     while (pair.first != false) {
 
       // hash data
-      manager.find_hash(pair.second, entropy, block_label, *id_offset_pairs);
+      manager.find_hash(pair.second, entropy, block_label,
+                        *source_offset_pairs);
 
       os << "{\"block_hash\":\"" << bin_to_hex(pair.second)
          << "\",\"entropy\":" << entropy
@@ -151,30 +146,26 @@ class export_json_t {
          << "\",\"source_offset_pairs\":[";
 
       int i=0;
-      hashdb::id_offset_pairs_t::const_iterator it;
-      for (it = id_offset_pairs->begin(); it != id_offset_pairs->end();
+      hashdb::source_offset_pairs_t::const_iterator it;
+      for (it = source_offset_pairs->begin(); it != source_offset_pairs->end();
                                                             ++it, ++i) {
         if (i != 0) {
           // no comma before first pair
           os << ",";
         }
 
-        // get file hash
-        manager.find_source_data(it->first, file_binary_hash, filesize,
-                                 file_type, nonprobative_count);
-
         // source, offset pair
-        os << "\"" << bin_to_hex(file_binary_hash)
+        os << "\"" << bin_to_hex(it->first)
            << "\"," << it->second;
       }
       os << "]}\n";
 
       // next
-      progress_tracker.track_hash_data(*id_offset_pairs);
+      progress_tracker.track_hash_data(*source_offset_pairs);
       pair = manager.hash_next(pair.second);
     }
 
-    delete id_offset_pairs;
+    delete source_offset_pairs;
   }
 
   public:

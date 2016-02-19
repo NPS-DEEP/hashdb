@@ -81,7 +81,7 @@ static bool has_sector_size = false;
 static bool has_block_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
-static bool has_max_id_offset_pairs = false;
+static bool has_max_source_offset_pairs = false;
 static bool has_tuning = false;
 
 // option values
@@ -157,17 +157,17 @@ int main(int argc,char **argv) {
 
     const struct option long_options[] = {
       // options
-      {"help",                      no_argument, 0, 'h'},
-      {"Help",                      no_argument, 0, 'H'},
-      {"version",                   no_argument, 0, 'v'},
-      {"Version",                   no_argument, 0, 'V'},
-      {"quiet",                     no_argument, 0, 'q'},
-      {"sector_size",         required_argument, 0, 's'},
-      {"block_size",          required_argument, 0, 'b'},
-      {"repository_name",     required_argument, 0, 'r'},
-      {"whitelist_dir",       required_argument, 0, 'w'},
-      {"max_id_offset_pairs", required_argument, 0, 'm'},
-      {"tuning",              required_argument, 0, 't'},
+      {"help",                               no_argument, 0, 'h'},
+      {"Help",                               no_argument, 0, 'H'},
+      {"version",                            no_argument, 0, 'v'},
+      {"Version",                            no_argument, 0, 'V'},
+      {"quiet",                              no_argument, 0, 'q'},
+      {"sector_size",                  required_argument, 0, 's'},
+      {"block_size",                   required_argument, 0, 'b'},
+      {"repository_name",              required_argument, 0, 'r'},
+      {"whitelist_dir",                required_argument, 0, 'w'},
+      {"max_hash_source_offset_pairs", required_argument, 0, 'm'},
+      {"tuning",                       required_argument, 0, 't'},
 
       // end
       {0,0,0,0}
@@ -235,8 +235,8 @@ int main(int argc,char **argv) {
       }
 
       case 'm': {	// max source ID file offset pairs
-        has_max_id_offset_pairs = true;
-        settings.max_id_offset_pairs = std::atoi(optarg);
+        has_max_hash_source_offset_pairs = true;
+        settings.max_hash_source_offset_pairs = std::atoi(optarg);
         break;
       }
 
@@ -308,11 +308,13 @@ void check_options(const std::string& options) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_id_offset_pairs && options.find("m") == std::string::npos) {
-    std::cerr << "The -m max_id_offset_pairs option is not allowed for this command.\n";
+  if (has_max_source_offset_pairs && options.find("m") ==
+      std::string::npos) {
+    std::cerr << "The -m max_source_offset_pairs option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_id_offset_pairs && options.find("t") == std::string::npos) {
+  if (has_max_source_offset_pairs && options.find("t") ==
+      std::string::npos) {
     std::cerr << "The -t tuning option is not allowed for this command.\n";
     exit(1);
   }
