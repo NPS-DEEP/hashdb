@@ -57,10 +57,10 @@ def int_equals(a,b):
 def _bad_list(a,b):
     print("a:")
     for line in a:
-        print("'%s'" % line)
+        print("'%s'" % line.strip())
     print("b:")
     for line in b:
-        print("'%s'" % line)
+        print("'%s'" % line.strip())
     raise ValueError("list mismatch")
 
 # length must be the same, but comments may differ
@@ -74,7 +74,7 @@ def lines_equals(a,b):
         if len(item_a) != 0 and len(item_b) != 0 and \
            item_a[0] != '#' and item_b[0] != '#' and \
                                    item_a.strip() != item_b.strip():
-            print("mismatch:\na: '" + item_a + "',\nb:'" + item_b + "'")
+            print("mismatch:\na: '" + item_a.strip() + "',\nb:'" + item_b.strip() + "'")
             _bad_list(a,b)
 
 def rm_tempfile(filename):

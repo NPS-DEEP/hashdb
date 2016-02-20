@@ -284,18 +284,18 @@ namespace commands {
     // add ordered hashes from producers until all hashes are consumed
     while (ordered_producers.size() != 0) {
       // get the hash, producer, and adder for the first hash
-      ordered_producers_t::iterator it = ordered_producers.begin();
+      ordered_producers_t::const_iterator it = ordered_producers.begin();
       hashdb::scan_manager_t* producer = it->second.first;
       adder_t* adder = it->second.second;
 
       // add the hash to the consumer
       adder->add(it->first);
 
-      // remove this hash
-      ordered_producers.erase(it);
-
       // get the next hash from this producer
       hash_pair = producer->hash_next(it->first);
+
+      // remove this hash, producer_t entry
+      ordered_producers.erase(it);
 
       if (hash_pair.first) {
         // hash exists so add the hash, producer, and adder
@@ -314,7 +314,23 @@ namespace commands {
                              const std::string& dest_dir,
                              const std::string& repository_name,
                              const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir);
+    create_if_new(dest_dir, hashdb_dir, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
+    adder_t adder(&manager_a, &manager_b, repository_name);
+
+    // add data for binary_hash from A to B
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+      // add the hash
+      adder.add_repository(pair.second);
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // intersect
@@ -354,7 +370,23 @@ namespace commands {
                                   const std::string& dest_dir,
                                   const std::string& repository_name,
                                   const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir);
+    create_if_new(dest_dir, hashdb_dir, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
+    adder_t adder(&manager_a, &manager_b, repository_name);
+
+    // add data for binary_hash from A to B
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+      // add the hash
+      adder.add_non_repository(pair.second);
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // deduplicate

@@ -6,25 +6,25 @@ import shutil
 import helpers as H
 
 json_db1 = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"temp_1.tab","filename":"temp_1.tab"}]}',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"temp_1.tab","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"temp_1.tab","filename":"temp_1.tab"},{"repository_name":"second_temp_1.tab", "filename":"second_temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2", "filename":"second_temp_1.tab"}]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
 
-json1 = [
+json_out1 = [
 '#', '#',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"second_temp_1.tab","filename":"second_temp_1.tab"},{"repository_name":"temp_1.tab","filename":"temp_1.tab"}]}',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"temp_1.tab","filename":"temp_1.tab"}]}',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"temp_1.tab","filename":"temp_1.tab"}]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
 
 def test_add():
     # create new hashdb
-    H.make_hashdb("temp_1.hdb", json1)
+    H.make_hashdb("temp_1.hdb", json_out1)
     H.rm_tempdir("temp_2.hdb")
 
     # add to new temp_2.hdb
@@ -33,7 +33,7 @@ def test_add():
     # temp_2.hdb should match
     H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
-    H.lines_equals(json2, json1)
+    H.lines_equals(json2, json_out1)
 
     # add to existing temp_2.hdb
     H.hashdb(["add", "temp_1.hdb", "temp_2.hdb"])
@@ -41,7 +41,7 @@ def test_add():
     # temp_2.hdb should match
     H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
-    H.lines_equals(json2, json1)
+    H.lines_equals(json2, json_out1)
 
 def test_add_multiple():
     json_db1 = [
@@ -50,7 +50,7 @@ def test_add_multiple():
     json_db2 = [
 '{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"names":[{"repository_name":"rn2","filename":"fn2"}]}',
 '{"block_hash":"22222222","entropy":202,"block_label":"bl2","source_offset_pairs":["22",1024]}']
-    json3_back = [
+    json3_db3 = [
 '#','#',
 '{"file_hash":"11","filesize":1,"file_type":"ft1","nonprobative_count":111,"names":[{"repository_name":"rn1","filename":"fn1"}]}',
 '{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"names":[{"repository_name":"rn2","filename":"fn2"}]}',
@@ -68,25 +68,44 @@ def test_add_multiple():
 
     # check temp_3.hdb
     H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
-    json3 = H.read_file("temp_3.json")
-    H.lines_equals(json3, json3_back)
+    json_in3 = H.read_file("temp_3.json")
+    H.lines_equals(json_in3, json3_db3)
 
 def test_add_repository():
-    # hash with correct repository name is added
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["add_repository", db1, db2, "r1"])
-    sizes = H.parse_sizes(H.hashdb(["size", db2]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db2, xml1])
-    H.dfxml_hash_equals(repository_name="r1")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_out1)
+    H.rm_tempdir("temp_2.hdb")
+
+    # add to new temp_2.hdb
+    H.hashdb(["add_repository", "temp_1.hdb", "temp_2.hdb", "repository1"])
+
+    # temp_2.hdb should only have hashes and sources with repository1
+    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
+])
+
+    # add to new temp_2.hdb
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_repository", "temp_1.hdb", "temp_2.hdb", "repository2"])
+
+    # temp_2.hdb should only have hashes and sources with repository2
+    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}'
+])
 
 def test_intersect():
     # db1 with a,b and db2 with b,c intersect to db3 with just b
@@ -174,21 +193,44 @@ def test_subtract_hash():
     H.dfxml_hash_equals(byte_run_hashdigest="00")
 
 def test_subtract_repository():
-    # hash with correct repository name is added
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["subtract_repository", db1, db2, "r1"])
-    sizes = H.parse_sizes(H.hashdb(["size", db2]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db2, xml1])
-    H.dfxml_hash_equals(repository_name="r2")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_out1)
+    H.rm_tempdir("temp_2.hdb")
+
+    # add to new temp_2.hdb
+    H.hashdb(["subtract_repository", "temp_1.hdb", "temp_2.hdb", "repository1"])
+
+    # temp_2.hdb should only have hashes and sources with repository2
+    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}'
+])
+
+    # add to new temp_2.hdb
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["subtract_repository", "temp_1.hdb", "temp_2.hdb", "repository2"])
+
+    # temp_2.hdb should only have hashes and sources with repository1
+    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
+])
+
+
+
+
 
 def test_deduplicate():
     # hash with correct repository name is added
