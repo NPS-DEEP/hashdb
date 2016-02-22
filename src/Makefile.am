@@ -31,7 +31,6 @@ hashdb_LDFLAGS = -static
 hashdb_LDADD = ../src_libhashdb/libhashdb.la
 
 HASHDB_INCS = \
-	main.cpp \
 	adder.hpp \
 	adder_set.hpp \
 	commands.hpp \
