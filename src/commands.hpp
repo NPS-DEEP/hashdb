@@ -286,7 +286,7 @@ namespace commands {
     // add ordered hashes from producers until all hashes are consumed
     while (ordered_producers.size() != 0) {
       // get the hash, producer, and adder for the first hash
-      ordered_producers_t::const_iterator it = ordered_producers.begin();
+      ordered_producers_t::iterator it = ordered_producers.begin();
       hashdb::scan_manager_t* producer = it->second.first;
       adder_t* adder = it->second.second;
 
