@@ -56,7 +56,7 @@ namespace hashdb {
     }
 
     // open settings file
-    std::ifstream in(filename);
+    std::ifstream in(filename.c_str());
     if (!in.is_open()) {
         return std::pair<bool, std::string>(false,
                "Unable to open settings file at Path '" + hashdb_dir + ".");
