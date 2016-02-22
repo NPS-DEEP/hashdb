@@ -31,6 +31,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h> // for strerror
+#include <cerrno> // for errno
 #include <fstream>
 #include "hashdb.hpp" // for settings
 #include "rapidjson.h"
@@ -130,7 +131,7 @@ namespace hashdb {
 
     // write the settings
     std::ofstream out;
-    out.open(filename);
+    out.open(filename.c_str());
     if (!out.is_open()) {
       return std::pair<bool, std::string>(false, std::string(strerror(errno)));
     }
