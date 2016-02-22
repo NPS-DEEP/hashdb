@@ -30,6 +30,7 @@
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
+#include <cerrno>
 #include <cstring>
 #include <sstream>
 #include <iostream>

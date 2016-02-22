@@ -31,7 +31,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h> // for strerror
-#include <cerrno> // for errno
+#include <cerrno>
 #include <fstream>
 #include "hashdb.hpp" // for settings
 #include "rapidjson.h"

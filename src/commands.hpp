@@ -38,6 +38,7 @@
 //#include "dfxml_hashdigest_writer.hpp"
 
 // Standard includes
+#include <cerrno>
 #include <cstdlib>
 #include <cstdio>
 #include <string>
