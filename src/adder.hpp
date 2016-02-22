@@ -26,8 +26,6 @@
 #ifndef ADDER_HPP
 #define ADDER_HPP
 
-//#define TEST_ADDER_HPP
-
 #include "../src_libhashdb/hashdb.hpp"
 
 // Standard includes
@@ -39,10 +37,6 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-
-#ifdef TEST_ADDER_HPP
-#include "hex_helper.hpp"
-#endif
 
 typedef std::pair<std::string, uint64_t> source_offset_pair_t;
 typedef std::set<source_offset_pair_t> source_offset_pairs_t;
@@ -170,8 +164,38 @@ class adder_t {
     delete names;
   }
 
+  public:
+  // add A into B
+  adder_t(const hashdb::scan_manager_t* const p_manager_a,
+          hashdb::import_manager_t* const p_manager_b) :
+                  manager_a(p_manager_a),
+                  manager_b(p_manager_b),
+                  processed_sources(new sources_t),
+                  repository_sources(new sources_t),
+                  non_repository_sources(new sources_t),
+                  repository_name("") {
+  }
+
+  // add A into B contingent on repository_name
+  adder_t(const hashdb::scan_manager_t* const p_manager_a,
+          hashdb::import_manager_t* const p_manager_b,
+          const std::string& p_repository_name) :
+                  manager_a(p_manager_a),
+                  manager_b(p_manager_b),
+                  processed_sources(new sources_t),
+                  repository_sources(new sources_t),
+                  non_repository_sources(new sources_t),
+                  repository_name(p_repository_name) {
+  }
+
+  ~adder_t() {
+    delete processed_sources;
+    delete repository_sources;
+    delete non_repository_sources;
+  }
+
   // add hash and source information without reprocessing sources
-  void add_hash(const std::string& binary_hash) {
+  void add(const std::string& binary_hash) {
 
     // hash data
     uint64_t entropy;
@@ -206,41 +230,6 @@ class adder_t {
     }
 
     delete source_offset_pairs;
-  }
-
-  public:
-  adder_t(const hashdb::scan_manager_t* const p_manager_a,
-          hashdb::import_manager_t* const p_manager_b) :
-                  manager_a(p_manager_a),
-                  manager_b(p_manager_b),
-                  processed_sources(new sources_t),
-                  repository_sources(new sources_t),
-                  non_repository_sources(new sources_t),
-                  repository_name("") {
-  }
-
-  adder_t(const hashdb::scan_manager_t* const p_manager_a,
-          hashdb::import_manager_t* const p_manager_b,
-          const std::string& p_repository_name) :
-                  manager_a(p_manager_a),
-                  manager_b(p_manager_b),
-                  processed_sources(new sources_t),
-                  repository_sources(new sources_t),
-                  non_repository_sources(new sources_t),
-                  repository_name(p_repository_name) {
-  }
-
-  ~adder_t() {
-    delete processed_sources;
-    delete repository_sources;
-    delete non_repository_sources;
-  }
-
-  // add
-  void add(const std::string& binary_hash) {
-
-    // add all hash and source information
-    add_hash(binary_hash);
   }
 
   // add hashes and source references when the repository name matches
@@ -339,6 +328,46 @@ class adder_t {
         } else {
           // already processed
         }
+      }
+    }
+
+    delete source_offset_pairs;
+  }
+
+  // add hashes that have only one source reference
+  void deduplicate(const std::string& binary_hash) {
+
+    // hash data
+    uint64_t entropy;
+    std::string block_label;
+    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+
+    // get hash data from A
+    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
+                                          *source_offset_pairs);
+    // hash required
+    if (!found_hash) {
+      // program error
+      assert(0);
+    }
+
+    // process hashes that have exactly one source
+    if (source_offset_pairs->size() == 1) {
+
+      // process the single source offset pair in the hash
+      source_offset_pairs_t::const_iterator it = source_offset_pairs->begin();
+
+      // add hash for source
+      manager_b->insert_hash(binary_hash, it->first, it->second,
+                             entropy, block_label);
+
+      if (processed_sources->find(it->first) == processed_sources->end()) {
+        // add source information
+        add_source_data(it->first);
+        add_source_names(it->first);
+        processed_sources->insert(it->first);
+      } else {
+        // already processed
       }
     }
 

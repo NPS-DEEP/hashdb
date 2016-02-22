@@ -30,6 +30,7 @@
 #include "export_json.hpp"
 #include "scan_hashes.hpp"
 #include "adder.hpp"
+#include "adder_set.hpp"
 #include "hex_helper.hpp"
 //#include "expand_manager.hpp"
 //#include "dfxml_scan_consumer.hpp"
@@ -333,12 +334,36 @@ namespace commands {
     }
   }
 
-  // intersect
+  // intersect A and B into C
   static void intersect(const std::string& hashdb_dir1,
                         const std::string& hashdb_dir2,
                         const std::string& dest_dir,
                         const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir1);
+    require_hashdb_dir(hashdb_dir2);
+    create_if_new(dest_dir, hashdb_dir1, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir1);
+    hashdb::scan_manager_t manager_b(hashdb_dir2);
+    hashdb::import_manager_t manager_c(dest_dir, cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+
+    // iterate A to intersect A and B into C
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+
+      // intersect if hash is in B
+      size_t count = manager_b.find_hash_count(pair.second);
+      if (count > 0) {
+        // intersect
+        adder_set.intersect(pair.second);
+      }
+
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // intersect_hash
@@ -346,7 +371,31 @@ namespace commands {
                              const std::string& hashdb_dir2,
                              const std::string& dest_dir,
                              const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir1);
+    require_hashdb_dir(hashdb_dir2);
+    create_if_new(dest_dir, hashdb_dir1, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir1);
+    hashdb::scan_manager_t manager_b(hashdb_dir2);
+    hashdb::import_manager_t manager_c(dest_dir, cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+
+    // iterate A to intersect_hash A and B into C
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+
+      // intersect if hash is in B
+      size_t count = manager_b.find_hash_count(pair.second);
+      if (count > 0) {
+        // intersect_hash
+        adder_set.intersect_hash(pair.second);
+      }
+
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // subtract
@@ -354,7 +403,27 @@ namespace commands {
                        const std::string& hashdb_dir2,
                        const std::string& dest_dir,
                        const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir1);
+    require_hashdb_dir(hashdb_dir2);
+    create_if_new(dest_dir, hashdb_dir1, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir1);
+    hashdb::scan_manager_t manager_b(hashdb_dir2);
+    hashdb::import_manager_t manager_c(dest_dir, cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+
+    // iterate A to add A to C if A hash and source not in B
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+
+      // add A to C if A hash and source not in B
+      adder_set.subtract(pair.second);
+
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // subtract_hash
@@ -362,7 +431,27 @@ namespace commands {
                             const std::string& hashdb_dir2,
                             const std::string& dest_dir,
                             const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir1);
+    require_hashdb_dir(hashdb_dir2);
+    create_if_new(dest_dir, hashdb_dir1, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir1);
+    hashdb::scan_manager_t manager_b(hashdb_dir2);
+    hashdb::import_manager_t manager_c(dest_dir, cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+
+    // iterate A to add A to C if A hash not in B
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+
+      // add A to C if A hash not in B
+      adder_set.subtract_hash(pair.second);
+
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // subtract_repository
@@ -393,7 +482,23 @@ namespace commands {
   static void deduplicate(const std::string& hashdb_dir,
                           const std::string& dest_dir,
                           const std::string& cmd) {
-    std::cout << "TBD\n";
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir);
+    create_if_new(dest_dir, hashdb_dir, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
+    adder_t adder(&manager_a, &manager_b);
+
+    // add data for binary_hash from A to B
+    std::pair<bool, std::string> pair = manager_a.hash_begin();
+    while (pair.first != false) {
+      // add the hash
+      adder.deduplicate(pair.second);
+      pair = manager_a.hash_next(pair.second);
+    }
   }
 
   // ************************************************************

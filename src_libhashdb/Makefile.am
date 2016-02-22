@@ -49,10 +49,13 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
+	crc32.h \
+	escape_json.hpp \
+	expand_helper.hpp \
 	file_modes.h \
 	hashdb.hpp \
-	hashdb_settings.hpp \
 	libhashdb.cpp \
+	liblmdb.la \
 	lmdb_changes.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_data_manager.hpp \
@@ -63,7 +66,9 @@ LIBHASHDB_INCS = \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
-	print_lmdb_val.hpp
+	print_lmdb_val.hpp \
+	settings_manager.hpp \
+	to_hex.hpp
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS)

@@ -22,6 +22,20 @@ json_out1 = [
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
 
+json_set_db1 = [
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}', \
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}', \
+\
+'{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}', \
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0,"22",0]}']
+
+json_set_db2 = [
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r2","filename":"f2"}]}', \
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}', \
+\
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",0,"22",512,"33",0]}', \
+'{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}']
+
 def test_add():
     # create new hashdb
     H.make_hashdb("temp_1.hdb", json_out1)
@@ -108,89 +122,101 @@ def test_add_repository():
 ])
 
 def test_intersect():
-    # db1 with a,b and db2 with b,c intersect to db3 with just b
-    # using same hash and different repository name
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    shutil.rmtree(db3, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.hashdb(["create", db2])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r3")
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.hashdb(["intersect", db1, db2, db3])
-    sizes = H.parse_sizes(H.hashdb(["size", db3]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db3, xml1])
-    H.dfxml_hash_equals(repository_name="r2")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_set_db1)
+    H.make_hashdb("temp_2.hdb", json_set_db2)
+    H.rm_tempdir("temp_3.hdb")
+
+    # intersect
+    H.hashdb(["intersect", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",0]}'
+])
 
 def test_intersect_hash():
-    # db1 with a,b and db2 with b,c intersect to db3 with just b
-    # using different hash
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    shutil.rmtree(db3, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.hashdb(["create", db2])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00112233445566778899aabbccddeef3")
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.hashdb(["intersect_hash", db1, db2, db3])
-    sizes = H.parse_sizes(H.hashdb(["size", db3]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db3, xml1])
-    H.dfxml_hash_equals(byte_run_hashdigest="00112233445566778899aabbccddeef2")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_set_db1)
+    H.make_hashdb("temp_2.hdb", json_set_db2)
+    H.rm_tempdir("temp_3.hdb")
+
+    # intersect_hash
+    H.hashdb(["intersect_hash", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0,"22",0,"22",512,"33",0]}'
+])
 
 def test_subtract():
-    # db1 - db2 -> db3 where source must match
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    shutil.rmtree(db3, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.hashdb(["create", db2])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["subtract", db1, db2, db3])
-    sizes = H.parse_sizes(H.hashdb(["size", db3]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.hashdb(["export", db3, xml1])
-    H.dfxml_hash_equals(repository_name="r2")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_set_db1)
+    H.make_hashdb("temp_2.hdb", json_set_db2)
+    H.rm_tempdir("temp_3.hdb")
+
+    # db1 - db2
+    H.hashdb(["subtract", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}',
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0]}'
+])
+
+    # db2 - db1
+    H.rm_tempdir("temp_3.hdb")
+    H.hashdb(["subtract", "temp_2.hdb", "temp_1.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",512,"33",0]}',
+'{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}'
+])
 
 def test_subtract_hash():
-    # db1 - db2 -> db3 where hash must match
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    shutil.rmtree(db3, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.hashdb(["create", db2])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db2, "temp_dfxml_hash"])
-    H.hashdb(["subtract_hash", db1, db2, db3])
-    sizes = H.parse_sizes(H.hashdb(["size", db3]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.hashdb(["export", db1, xml1])
-    H.dfxml_hash_equals(byte_run_hashdigest="00")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_set_db1)
+    H.make_hashdb("temp_2.hdb", json_set_db2)
+    H.rm_tempdir("temp_3.hdb")
+
+    # db1 - db2 hash
+    H.hashdb(["subtract_hash", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}'
+])
+
+    # db2 - db1 hash
+    H.rm_tempdir("temp_3.hdb")
+    H.hashdb(["subtract_hash", "temp_2.hdb", "temp_1.hdb", "temp_3.hdb"])
+    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    json3 = H.read_file("temp_3.json")
+    H.lines_equals(json3, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}'
+])
 
 def test_subtract_repository():
     # create new hashdb
@@ -228,28 +254,25 @@ def test_subtract_repository():
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
 ])
 
-
-
-
-
 def test_deduplicate():
-    # hash with correct repository name is added
-    shutil.rmtree(db1, True)
-    shutil.rmtree(db2, True)
-    H.rm_tempfile(xml1)
-    H.hashdb(["create", db1])
-    H.write_temp_dfxml_hash(repository_name="r1")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(repository_name="r2")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.write_temp_dfxml_hash(byte_run_hashdigest="00")
-    H.hashdb(["import", db1, "temp_dfxml_hash"])
-    H.hashdb(["deduplicate", db1, db2])
-    sizes = H.parse_sizes(H.hashdb(["size", db2]))
-    H.int_equals(sizes['hash_store_size'],1)
-    H.int_equals(sizes['source_store_size'],1)
-    H.hashdb(["export", db2, xml1])
-    H.dfxml_hash_equals(byte_run_hashdigest="00")
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_out1)
+    H.rm_tempdir("temp_2.hdb")
+
+    # deduplicate to new temp_2.hdb
+    H.hashdb(["deduplicate", "temp_1.hdb", "temp_2.hdb"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
+])
 
 if __name__=="__main__":
     test_add()

@@ -31,7 +31,18 @@ hashdb_LDFLAGS = -static
 hashdb_LDADD = ../src_libhashdb/libhashdb.la
 
 HASHDB_INCS = \
-	main.cpp
+	main.cpp \
+	adder.hpp \
+	adder_set.hpp \
+	commands.hpp \
+	export_json.hpp \
+	hex_helper.hpp \
+	import_json.hpp \
+	import_tab.hpp \
+	main.cpp \
+	progress_tracker.hpp \
+	scan_hashes.hpp \
+	usage.hpp
 
 hashdb_SOURCES = $(HASHDB_INCS)
 
