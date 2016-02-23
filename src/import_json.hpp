@@ -43,7 +43,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <sstream>
-#include "hashdb.hpp"
+#include "../src_libhashdb/hashdb.hpp"
 #include "progress_tracker.hpp"
 #include "hex_helper.hpp"
 #include <string.h> // for strerror
