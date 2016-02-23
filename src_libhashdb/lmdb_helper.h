@@ -266,17 +266,13 @@ namespace lmdb_helper {
     }
 
     // occasionally sync to prevent long flush delays
-    if (ms.ms_entries % 10000000 == 0) {
-      perform_mdb_env_sync(env);
-/*
-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    if (ms.ms_entries % 10000000 == 10000000 - 1) {
       pthread_t thread;
       int result_code = pthread_create(&thread, NULL, perform_mdb_env_sync,
                             static_cast<void*>(env));
       if (result_code != 0) {
         assert(0);
       }
-*/
     }
 
     // maybe grow the DB
