@@ -231,6 +231,7 @@ print_mdb_val("source_name_manager find data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return false; // for mingw
     }
   }
 

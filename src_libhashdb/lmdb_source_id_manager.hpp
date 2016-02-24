@@ -168,6 +168,7 @@ print_mdb_val("source_id_manager insert new data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, uint64_t>(false, 0); // for mingw
     }
   }
 
@@ -225,6 +226,7 @@ print_mdb_val("source_id_manager find not found key", context.key);
       // invalid rc
       std::cerr << "LMDB find error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, uint64_t>(false, 0); // for mingw
     }
   }
 
@@ -260,6 +262,7 @@ print_mdb_val("source_id_manager find_begin data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, std::string>(false, std::string("")); // for mingw
     }
   }
 
@@ -317,6 +320,7 @@ print_mdb_val("source_id_manager find_next data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, std::string>(false, std::string("")); // for mingw
     }
   }
 

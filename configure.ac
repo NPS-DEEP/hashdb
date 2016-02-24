@@ -184,6 +184,11 @@ AC_SYS_POSIX_TERMIOS
 
 ################################################################
 ## OpenSSL Support is required for md5 hash
+
+if test  x"$mingw" = x"yes";  then
+  AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
+fi
+
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
 AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
@@ -196,6 +201,10 @@ AC_CHECK_FUNCS([EVP_get_digestbyname],,
 if test  x"$mingw" != x"yes";  then
   AC_CHECK_FUNCS([mmap])
   AC_CHECK_HEADERS([sys/mman.h],,[AC_MSG_ERROR([mmap support required])])
+fi
+
+if test  x"$mingw" = x"yes";  then
+  AC_CHECK_LIB([ntdll],[NtClose])
 fi
 
 #AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])

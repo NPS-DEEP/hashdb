@@ -433,6 +433,7 @@ print_mdb_val("hash_manager find data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return 0; // for mingw
     }
   }
 

@@ -275,6 +275,7 @@ print_mdb_val("source_data_manager no find key", context.key);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return false; // for mingw
     }
   }
 

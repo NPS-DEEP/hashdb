@@ -49,7 +49,9 @@
 #include <time.h>       // for timestamp
 #include <sys/types.h>  // for timestamp
 #include <sys/time.h>   // for timestamp
+#ifdef HAVE_PWD_H
 #include <pwd.h>        // for print_environment
+#endif
 #include <unistd.h>     // for print_environment
 #include <iostream>     // for print_environment
 #include "file_modes.h"

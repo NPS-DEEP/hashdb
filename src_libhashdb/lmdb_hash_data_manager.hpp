@@ -554,6 +554,7 @@ print_mdb_val("hash_data_manager insert check data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return 0; // for mingw
     }
   }
 
@@ -680,7 +681,10 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return false; // for mingw
     }
+    assert(0); // for mingw
+    return false; // for mingw
   }
 
   /**
@@ -740,6 +744,7 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return 0; // for mingw
     }
   }
 
@@ -775,6 +780,7 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, std::string>(false, std::string("")); // for mingw
     }
   }
 
@@ -832,6 +838,7 @@ print_mdb_val("hash_data_manager find_next data", context.data);
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
+      return std::pair<bool, std::string>(false, std::string("")); // for mingw
     }
   }
 
