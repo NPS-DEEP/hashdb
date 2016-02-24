@@ -35,23 +35,22 @@ def test_scan():
     H.make_tempfile("temp_1.txt", hash_file)
 
     returned_answer = H.hashdb(["scan", "temp_1.hdb", "temp_1.txt"])
-    expected_answer = [ \
-
-'# command: ', \
-'# hashdb-Version: ', \
-'#', \
-'#', \
-'# marker 1', \
-'# marker 2', \
-'fp1	2222222222222222	[{"source_list_id":1303964917},{"sources":[{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","nonprobative_count":6,"names":[{"repository_name":"r3","filename":"f3"}]}]},{"source_offset_pairs":["1111111111111111",4096]}]', \
-'# marker 3', \
-'fp2	2222222222222222	', \
-'fp3	8899aabbccddeeff	[{"source_list_id":36745675},{"sources":[{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","nonprobative_count":4,"names":[{"repository_name":"r2","filename":"f2"}]}{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}]},{"source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}]', \
-'fp4	ffffffffffffffff	[{"source_list_id":2343118327},{"sources":[]},{"source_offset_pairs":["0011223344556677",1024]}]', \
-'# marker4', \
-'unexpected hex character in \'invalid_hash_value\'', \
-'# marker5', \
-'# scan completed.', \
+    expected_answer = [
+'# command: ',
+'# hashdb-Version: ',
+'#',
+'#',
+'# marker 1',
+'# marker 2',
+'fp1	2222222222222222	{"entropy":7,"block_label":"bl1","source_list_id":1303964917,"sources":[{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","nonprobative_count":6,"names":[{"repository_name":"r3","filename":"f3"}]}],"source_offset_pairs":["1111111111111111",4096]}',
+'# marker 3',
+'fp2	2222222222222222',
+'fp3	8899aabbccddeeff	{"entropy":8,"block_label":"bl2","source_list_id":36745675,"sources":[{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","nonprobative_count":4,"names":[{"repository_name":"r2","filename":"f2"}]}{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}],"source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'fp4	ffffffffffffffff	{"entropy":9,"block_label":"bl3","source_list_id":2343118327,"sources":[],"source_offset_pairs":["0011223344556677",1024]}',
+'# marker4',
+'unexpected hex character in \'invalid_hash_value\'',
+'# marker5',
+'# scan completed.',
 '']
 
     H.lines_equals(returned_answer, expected_answer)
@@ -65,10 +64,9 @@ def test_scan_hash():
 
     # test individual hash, hash present
     returned_answer = H.hashdb(["scan_hash", "temp_1.hdb", "ffffffffffffffff"])
-    H.lines_equals(returned_answer, [ \
-'[{"source_list_id":2343118327},{"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}]},{"source_offset_pairs":["0011223344556677",1024]}]',
+    H.lines_equals(returned_answer, [
+'{"entropy":9,"block_label":"bl3","source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}],"source_offset_pairs":["0011223344556677",1024]}',
 ''])
-
     # test individual hash, hash not present
     returned_answer = H.hashdb(["scan_hash", "temp_1.hdb", "0000000000000000"])
     H.lines_equals(returned_answer, [

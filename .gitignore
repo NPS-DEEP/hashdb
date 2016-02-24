@@ -48,7 +48,7 @@ missing
 src/Makefile
 stamp-h
 stamp-h1
-win32
+build
 win64
 *.exe
 *.pdf

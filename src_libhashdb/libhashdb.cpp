@@ -67,6 +67,17 @@
 #include "crc32.h"      // for scan_expanded
 #include "to_hex.hpp"      // for scan_expanded
 
+// ************************************************************
+// version of the hashdb library
+// ************************************************************
+/**
+ * Version of the hashdb library, same as hashdb::version.
+ */
+extern "C"
+const char* hashdb_version() {
+  return PACKAGE_VERSION;
+}
+
 namespace hashdb {
 
   // ************************************************************
@@ -163,7 +174,7 @@ namespace hashdb {
    * Version of the hashdb library.
    */
   extern "C"
-  const char* hashdb_version() {
+  const char* version() {
     return PACKAGE_VERSION;
   }
 
@@ -425,10 +436,22 @@ namespace hashdb {
   }
 
   // Example abbreviated syntax:
-  // [{"source_list_id":57}, {"sources":[{"file_hash":"f7035a...",
-  // "filesize":800, "names":[{"repository_name":"repository1",
-  // "filename":"filename1"}]}]}, {"source_offset_pairs":
-  // ["a9...",0,"b7...",65536]}]
+  // {
+  //   "entropy": 8,
+  //   "block_label": "W",
+  //   "source_list_id": 57,
+  //   "sources": [{
+  //     "file_hash": "f7035a...",
+  //     "filesize": 800,
+  //     "file_type": "exe",
+  //     "nonprobative_count": 2,
+  //     "names": [{
+  //       "repository_name": "repository1",
+  //       "filename": "filename1"
+  //     }]
+  //   }],
+  //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+  // }
   bool scan_manager_t::find_expanded_hash(const std::string& binary_hash,
                                           std::string& expanded_text) {
 
@@ -462,14 +485,20 @@ namespace hashdb {
 
     // prepare JSON
     std::stringstream *ss = new std::stringstream;
-    *ss << "[";
+    *ss << "{";
 
-    // provide JSON object[0]: source_list_id
+    // entropy
+    *ss << "\"entropy\":" << entropy;
+
+    // block_label
+    *ss << ",\"block_label\":\"" << hashdb::escape_json(block_label) << "\"";
+
+    // source_list_id
     uint32_t crc = calculate_crc(*source_offset_pairs);
-    *ss << "{\"source_list_id\":" << crc << "}";
+    *ss << ",\"source_list_id\":" << crc;
 
     // provide JSON object[1]: sources with their source data and names list
-    *ss << ",{\"sources\":[";
+    *ss << ",\"sources\":[";
 
     // print any sources that have not been printed yet
     for (hashdb::source_offset_pairs_t::const_iterator it =
@@ -484,11 +513,11 @@ namespace hashdb {
       }
     }
 
-    // close JSON object[1]
-    *ss << "]}";
+    // close sources
+    *ss << "]";
 
-    // provide JSON object[2]: source_offset_pairs
-    *ss << ",{\"source_offset_pairs\":[";
+    // source_offset_pairs
+    *ss << ",\"source_offset_pairs\":[";
     int i=0;
     for (hashdb::source_offset_pairs_t::const_iterator it =
          source_offset_pairs->begin();
@@ -504,11 +533,11 @@ namespace hashdb {
           << it->second;
     }
 
-    // close JSON object[2]
-    *ss << "]}";
+    // close source offset pairs
+    *ss << "]";
  
     // close JSON
-    *ss << "]";
+    *ss << "}";
 
     // copy stream
     expanded_text = ss->str();

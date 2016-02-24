@@ -51,7 +51,6 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 LIBHASHDB_INCS = \
 	crc32.h \
 	escape_json.hpp \
-	expand_helper.hpp \
 	file_modes.h \
 	hashdb.hpp \
 	libhashdb.cpp \

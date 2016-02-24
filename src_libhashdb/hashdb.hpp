@@ -30,6 +30,15 @@
 #include <stdint.h>
 #include <sys/time.h>   // timeval for timestamp
 
+// ************************************************************
+// version of the hashdb library
+// ************************************************************
+/**
+ * Version of the hashdb library, same as hashdb::version.
+ */
+extern "C"
+const char* hashdb_version();
+
 namespace hashdb {
   class lmdb_hash_data_manager_t;
   class lmdb_hash_manager_t;
@@ -290,10 +299,23 @@ namespace hashdb {
      *     for the scanned hash has been returned in a previous scan.
      *
      *     Text is in JSON format.  Example abbreviated syntax:
-     *     [{"source_list_id":57}, {"sources":[{"file_hash":"f7035a...",
-     *     "filesize":800, "names":[{"repository_name":"repository1",
-     *     "filename":"filename1"}]}]}, {"source_offset_pairs":["a7...",0,
-     *     "b9...",65536]}]
+     * 
+     * {
+     *   "entropy": 8,
+     *   "block_label": "W",
+     *   "source_list_id": 57,
+     *   "sources": [{
+     *     "file_hash": "f7035a...",
+     *     "filesize": 800,
+     *     "file_type": "exe",
+     *     "nonprobative_count": 2,
+     *     "names": [{
+     *       "repository_name": "repository1",
+     *       "filename": "filename1"
+     *     }]
+     *   }],
+     *   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+     * }
      *
      * Returns:
      *   True if the hash is present, false if not.
