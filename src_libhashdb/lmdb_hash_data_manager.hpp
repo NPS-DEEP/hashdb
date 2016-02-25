@@ -58,7 +58,7 @@
 #include <string>
 #include <set>
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-#include "print_lmdb_val.hpp"
+#include "lmdb_print_val.hpp"
 #endif
 
 // no concurrent writes

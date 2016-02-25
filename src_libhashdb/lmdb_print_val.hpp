@@ -22,8 +22,8 @@
  * print LMDB val fields for diagnostics.
  */
 
-#ifndef PRINT_LMDB_VAL_HPP
-#define PRINT_LMDB_VAL_HPP
+#ifndef LMDB_PRINT_VAL_HPP
+#define LMDB_PRINT_VAL_HPP
 
 #include <iostream>
 #include <string>

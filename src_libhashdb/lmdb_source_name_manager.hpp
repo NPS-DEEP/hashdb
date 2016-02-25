@@ -38,7 +38,7 @@
 #include <iostream>
 #include <string>
 #ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
-#include "print_lmdb_val.hpp"
+#include "lmdb_print_val.hpp"
 #endif
 
 // no concurrent writes

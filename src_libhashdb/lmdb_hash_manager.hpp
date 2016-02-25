@@ -66,7 +66,7 @@ for i in range(1500):
 #include <string>
 #include <set>
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
-#include "print_lmdb_val.hpp"
+#include "lmdb_print_val.hpp"
 #endif
 
 // no concurrent writes

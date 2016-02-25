@@ -60,12 +60,12 @@ LIBHASHDB_INCS = \
 	lmdb_hash_data_manager.hpp \
 	lmdb_hash_manager.hpp \
 	lmdb_helper.h \
+	lmdb_print_val.hpp \
 	lmdb_source_data_manager.hpp \
 	lmdb_source_id_manager.hpp \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
-	print_lmdb_val.hpp \
 	settings_manager.hpp \
 	to_hex.hpp
 
