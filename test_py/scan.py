@@ -5,12 +5,12 @@
 import helpers as H
 
 json_data = ["#","#", \
-'{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}',
-'{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","nonprobative_count":4,"names":[{"repository_name":"r2","filename":"f2"}]}',
-'{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","nonprobative_count":6,"names":[{"repository_name":"r3","filename":"f3"}]}',
-'{"block_hash":"2222222222222222","low_entropy_label":"le1","entropy":7,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
-'{"block_hash":"8899aabbccddeeff","low_entropy_label":"le2","entropy":8,"block_label":"bl2","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
-'{"block_hash":"ffffffffffffffff","low_entropy_label":"le3","entropy":9,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
+'{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","nonprobative_count":2,"name_pairs":["r1","f1"]}',
+'{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","nonprobative_count":4,"name_pairs":["r2","f2"]}',
+'{"file_hash":"1111111111111111","filesize":5,"file_type":"ftc","nonprobative_count":6,"name_pairs":["r3","f3"]}',
+'{"block_hash":"2222222222222222","entropy":7,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"8899aabbccddeeff","entropy":8,"block_label":"bl2","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
+'{"block_hash":"ffffffffffffffff","entropy":9,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
 
 def test_scan():
     H.rm_tempdir("temp_1.hdb")
@@ -18,6 +18,7 @@ def test_scan():
     H.hashdb(["create", "temp_1.hdb"])
     H.make_tempfile("temp_1.json", json_data)
     H.hashdb(["import_json", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export_json", "temp_1.hdb", "temp_1zzzz.json"])
 
     # test values: not present, valid, valid repeat, valid, valid, not valid
     hash_file = ["#","#", \

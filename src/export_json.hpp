@@ -24,8 +24,8 @@
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "nonprobative_count":4, "names":[{"repository_name":"repository1",
- *   "filename":"filename1"}]}
+ *   "nonprobative_count":4, "name_pairs":["repository1","filename1",
+ *   "repo2","f2"]
  *
  * Block hash data:
  *   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
@@ -72,10 +72,18 @@ class export_json_t {
         manager(hashdb_dir) {
   }
 
+  // return rapidjson::Value type from a std::string
+  rapidjson::Value v(const std::string& s,
+                     rapidjson::Document::AllocatorType& allocator) {
+    rapidjson::Value v;
+    v.SetString(s.c_str(), s.size(), allocator);
+    return v;
+  }
+
   // Source data:
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //   "nonprobative_count":4, "names":[{"repository_name":"repository1",
-  //   "filename":"filename1"}]}
+  //   "nonprobative_count":4, "name_pairs":["repository1","filename1",
+  //   "repo2","f2"]
   void write_source_data(std::ostream& os) {
 
     // source fields
@@ -86,31 +94,44 @@ class export_json_t {
 
     std::pair<bool, std::string> pair = manager.source_begin();
     while (pair.first != false) {
-      // source data
+
+      // get source data
       manager.find_source_data(pair.second, filesize, file_type,
                                nonprobative_count);
-      std::string file_hash = bin_to_hex(pair.second);
-      os << "{\"file_hash\":\"" << file_hash
-         << "\",\"filesize\":" << filesize
-         << ",\"file_type\":\"" << file_type
-         << "\",\"nonprobative_count\":" << nonprobative_count
-         ;
 
-      // source names
+      // prepare JSON
+      rapidjson::Document json_doc;
+      rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+      json_doc.SetObject();
+
+      // set source data
+      std::string file_hash = bin_to_hex(pair.second);
+      json_doc.AddMember("file_hash", v(file_hash, allocator), allocator);
+      json_doc.AddMember("filesize", filesize, allocator);
+      json_doc.AddMember("file_type", v(file_type, allocator), allocator);
+      json_doc.AddMember("nonprobative_count", nonprobative_count, allocator);
+
+      // get source names
       manager.find_source_names(pair.second, *source_names);
+
+      // name_pairs object
+      rapidjson::Value json_name_pairs(rapidjson::kArrayType);
+
+      // provide names
       hashdb::source_names_t::const_iterator it;
-      int i=0;
-      os << ",\"names\":[";
-      for (it = source_names->begin(); it != source_names->end(); ++it, ++i) {
-        if (i != 0) {
-          // no comma before first pair
-          os << ",";
-        }
-        os << "{\"repository_name\":\"" << it->first
-           << "\",\"filename\":\"" << it->second
-           << "\"}";
+      for (it = source_names->begin(); it != source_names->end(); ++it) {
+        // repository name
+        json_name_pairs.PushBack(v(it->first, allocator), allocator);
+        // filename
+        json_name_pairs.PushBack(v(it->second, allocator), allocator);
       }
-      os << "]}\n";
+      json_doc.AddMember("name_pairs", json_name_pairs, allocator);
+
+      // write JSON text
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      json_doc.Accept(writer);
+      os << strbuf.GetString() << "\n";
 
       // next
       pair = manager.source_next(pair.second);
@@ -120,8 +141,8 @@ class export_json_t {
   }
 
   // Block hash data:
-  //   {"block_hash":"a7df...", "entropy":8,
-  //   "block_label":"W", "source_offset_pairs":["b9e7...", 4096]}
+  //   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
+  //   "source_offset_pairs":["b9e7...", 4096]}
   void write_block_hash_data(const std::string& cmd, std::ostream& os) {
 
     progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
@@ -133,32 +154,42 @@ class export_json_t {
                                           new hashdb::source_offset_pairs_t;
 
     std::pair<bool, std::string> pair = manager.hash_begin();
-
     while (pair.first != false) {
 
-      // hash data
+      // get hash data
       manager.find_hash(pair.second, entropy, block_label,
                         *source_offset_pairs);
 
-      os << "{\"block_hash\":\"" << bin_to_hex(pair.second)
-         << "\",\"entropy\":" << entropy
-         << ",\"block_label\":\"" << block_label
-         << "\",\"source_offset_pairs\":[";
+      // prepare JSON
+      rapidjson::Document json_doc;
+      rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+      json_doc.SetObject();
 
-      int i=0;
-      hashdb::source_offset_pairs_t::const_iterator it;
-      for (it = source_offset_pairs->begin(); it != source_offset_pairs->end();
-                                                            ++it, ++i) {
-        if (i != 0) {
-          // no comma before first pair
-          os << ",";
-        }
+      // set hash data
+      std::string block_hash = bin_to_hex(pair.second);
+      json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
+      json_doc.AddMember("entropy", entropy, allocator);
+      json_doc.AddMember("block_label", v(block_label, allocator), allocator);
 
-        // source, offset pair
-        os << "\"" << bin_to_hex(it->first)
-           << "\"," << it->second;
+      // source_offset_pairs
+      rapidjson::Value json_pairs(rapidjson::kArrayType);
+
+      for (hashdb::source_offset_pairs_t::const_iterator it =
+           source_offset_pairs->begin();
+           it != source_offset_pairs->end(); ++it) {
+
+        // file hash
+        json_pairs.PushBack(v(bin_to_hex(it->first), allocator), allocator);
+        // file offset
+        json_pairs.PushBack(it->second, allocator);
       }
-      os << "]}\n";
+      json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
+
+      // write JSON text
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      json_doc.Accept(writer);
+      os << strbuf.GetString() << "\n";
 
       // next
       progress_tracker.track_hash_data(*source_offset_pairs);
@@ -175,7 +206,7 @@ class export_json_t {
                     const std::string& cmd,
                     std::ostream& os) {
 
-    // create the writer
+    // create the JSON formatter
     export_json_t writer(p_hashdb_dir);
 
     // write cmd
@@ -192,7 +223,7 @@ class export_json_t {
   // just print sources to stdout
   static void print_sources(const std::string& p_hashdb_dir) {
 
-    // create the printer
+    // create the JSON formatter
     export_json_t export_json(p_hashdb_dir);
 
     // write source data

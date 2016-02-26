@@ -15,40 +15,40 @@ def test_size():
     returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
-    # source stores, no names
+    # source stores, no name_pairs
     H.make_hashdb("temp_1.hdb", [
-'{"file_hash":"0011223344556677","filesize":0,"names":[]}'])
+'{"file_hash":"0011223344556677","filesize":0,"name_pairs":[]}'])
     expected_answer = [
 '{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
     returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
-    # source stores, names
+    # source stores, name_pairs
     H.make_hashdb("temp_1.hdb", [
-'{"file_hash":"0011223344556677","filesize":0,"names":[{"repository_name":"r1","filename":"f1","repository_name":"r2","filename":"f2"}]}'])
+'{"file_hash":"0011223344556677","filesize":0,"name_pairs":["r1","f1","r2","f2"]}'])
     expected_answer = [
-'{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":1}',
+'{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":2}',
 '']
     returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
 def test_sources():
 
-    # source stores, no names
+    # source stores, no name_pairs
     H.make_hashdb("temp_1.hdb", [
-'{"file_hash":"0011223344556677","filesize":0,"names":[]}'])
+'{"file_hash":"0011223344556677","filesize":0,"name_pairs":[]}'])
     expected_answer = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}',
 '']
     returned_answer = H.hashdb(["sources", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
-    # source stores, two names
+    # source stores, two name_pairs
     H.make_hashdb("temp_1.hdb", [
-'{"file_hash":"0011223344556677","filesize":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}'])
+'{"file_hash":"0011223344556677","filesize":0,"name_pairs":["r1","f1","r2","f2"]}'])
     expected_answer = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["r1","f1","r2","f2"]}',
 '']
     returned_answer = H.hashdb(["sources", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)

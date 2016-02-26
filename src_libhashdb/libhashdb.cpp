@@ -120,7 +120,7 @@ namespace hashdb {
     // read source names
     manager.find_source_names(file_binary_hash, *source_names);
 
-    // name_pairss object
+    // name_pairs object
     rapidjson::Value json_name_pairs(rapidjson::kArrayType);
 
     // provide names

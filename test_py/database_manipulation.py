@@ -6,32 +6,32 @@ import shutil
 import helpers as H
 
 json_db1 = [
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2", "filename":"second_temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2", "second_temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
 
 json_out1 = [
 '#', '#',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2","second_temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
 
 json_set_db1 = [
-'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}', \
-'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"}]}', \
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"name_pairs":["r1","f1"]}', \
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"name_pairs":["r1","f1"]}', \
 \
 '{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}', \
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0,"22",0]}']
 
 json_set_db2 = [
-'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r2","filename":"f2"}]}', \
-'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}', \
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"name_pairs":["r2","f2"]}', \
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"name_pairs":["r2","f2"]}', \
 \
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",0,"22",512,"33",0]}', \
 '{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}']
@@ -59,15 +59,15 @@ def test_add():
 
 def test_add_multiple():
     json_db1 = [
-'{"file_hash":"11","filesize":1,"file_type":"ft1","nonprobative_count":111,"names":[{"repository_name":"rn1","filename":"fn1"}]}',
+'{"file_hash":"11","filesize":1,"file_type":"ft1","nonprobative_count":111,"name_pairs":["rn1","fn1"]}',
 '{"block_hash":"11111111","entropy":101,"block_label":"bl1","source_offset_pairs":["11",1024]}']
     json_db2 = [
-'{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"names":[{"repository_name":"rn2","filename":"fn2"}]}',
+'{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"name_pairs":["rn2","fn2"]}',
 '{"block_hash":"22222222","entropy":202,"block_label":"bl2","source_offset_pairs":["22",1024]}']
     json3_db3 = [
 '#','#',
-'{"file_hash":"11","filesize":1,"file_type":"ft1","nonprobative_count":111,"names":[{"repository_name":"rn1","filename":"fn1"}]}',
-'{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"names":[{"repository_name":"rn2","filename":"fn2"}]}',
+'{"file_hash":"11","filesize":1,"file_type":"ft1","nonprobative_count":111,"name_pairs":["rn1","fn1"]}',
+'{"file_hash":"22","filesize":2,"file_type":"ft2","nonprobative_count":222,"name_pairs":["rn2","fn2"]}',
 '{"block_hash":"11111111","entropy":101,"block_label":"bl1","source_offset_pairs":["11",1024]}',
 '{"block_hash":"22222222","entropy":202,"block_label":"bl2","source_offset_pairs":["22",1024]}']
 
@@ -99,9 +99,9 @@ def test_add_repository():
     H.lines_equals(json2, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
@@ -117,7 +117,7 @@ def test_add_repository():
     H.lines_equals(json2, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository2","second_temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}'
 ])
 
@@ -134,7 +134,7 @@ def test_intersect():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"name_pairs":["r1","f1","r2","f2"]}',
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",0]}'
 ])
 
@@ -151,9 +151,9 @@ def test_intersect_hash():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
-'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
-'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"name_pairs":["r1","f1"]}',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"name_pairs":["r1","f1","r2","f2"]}',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"name_pairs":["r2","f2"]}',
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0,"22",0,"22",512,"33",0]}'
 ])
 
@@ -170,7 +170,7 @@ def test_subtract():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"name_pairs":["r1","f1"]}',
 '{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}',
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["11",0]}'
 ])
@@ -183,8 +183,8 @@ def test_subtract():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"names":[{"repository_name":"r1","filename":"f1"},{"repository_name":"r2","filename":"f2"}]}',
-'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"22","filesize":2,"file_type":"B","nonprobative_count":2,"name_pairs":["r1","f1","r2","f2"]}',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"name_pairs":["r2","f2"]}',
 '{"block_hash":"2222222222222222","entropy":2,"block_label":"bl2","source_offset_pairs":["22",512,"33",0]}',
 '{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}'
 ])
@@ -202,7 +202,7 @@ def test_subtract_hash():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"names":[{"repository_name":"r1","filename":"f1"}]}',
+'{"file_hash":"11","filesize":1,"file_type":"A","nonprobative_count":1,"name_pairs":["r1","f1"]}',
 '{"block_hash":"1111111111111111","entropy":1,"block_label":"bl1","source_offset_pairs":["11",4096]}'
 ])
 
@@ -214,7 +214,7 @@ def test_subtract_hash():
     H.lines_equals(json3, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"names":[{"repository_name":"r2","filename":"f2"}]}',
+'{"file_hash":"33","filesize":3,"file_type":"C","nonprobative_count":3,"name_pairs":["r2","f2"]}',
 '{"block_hash":"3333333333333333","entropy":3,"block_label":"bl3","source_offset_pairs":["33",4096]}'
 ])
 
@@ -232,7 +232,7 @@ def test_subtract_repository():
     H.lines_equals(json2, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository2","second_temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}'
 ])
 
@@ -246,9 +246,9 @@ def test_subtract_repository():
     H.lines_equals(json2, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
@@ -268,8 +268,8 @@ def test_deduplicate():
     H.lines_equals(json2, [
 '# command: ',
 '# hashdb-Version: ',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"}]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"names":[{"repository_name":"repository1","filename":"temp_1.tab"},{"repository_name":"repository2","filename":"second_temp_1.tab"}]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2","second_temp_1.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
 ])

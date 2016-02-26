@@ -24,9 +24,8 @@
  *
  * Source data:
  *   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
- *   "nonprobative_count":4, "names":[{"repository_name":"repository1",
- *   "filename":"filename1"}]}
- *
+ *   "nonprobative_count":4, "name_pairs":["repository1","filename1",
+ *   "repo2","f2"]
  * Block hash data:
  *   {"block_hash":"a7df...", "entropy":8, "block_label":"W",
  *   "source_offset_pairs":["b9e7...", 4096]}
@@ -86,8 +85,8 @@ class import_json_t {
 
   // Source data:
   //   {"file_hash":"b9e7...", "filesize":8000, "file_type":"exe",
-  //   "nonprobative_count":4, "names":[{"repository_name":"repository1",
-  //   "filename":"filename1"}]}
+  //   "nonprobative_count":4, "name_pairs":["repository1","filename1",
+  //   "repo2","f2"]
   void read_source_data(const rapidjson::Document& document,
                         const std::string& line) {
 
@@ -124,31 +123,28 @@ class import_json_t {
     manager.insert_source_data(file_binary_hash,
                                filesize, file_type, nonprobative_count);
 
-    // parse names:[]
-    if (!document.HasMember("names") ||
-                  !document["names"].IsArray()) {
-      report_invalid_line("source data names", line);
+    // parse name_pairs:[]
+    if (!document.HasMember("name_pairs") ||
+                  !document["name_pairs"].IsArray()) {
+      report_invalid_line("source data name_pairs", line);
       return;
     }
-    const rapidjson::Value& json_names = document["names"];
-    for (rapidjson::SizeType i = 0; i< json_names.Size(); ++i) {
+    const rapidjson::Value& json_names = document["name_pairs"];
+    for (rapidjson::SizeType i = 0; i< json_names.Size(); i+=2) {
 
       // parse repository_name
-      if (!json_names[i].HasMember("repository_name") ||
-                    !json_names[i]["repository_name"].IsString()) {
-        report_invalid_line("source data repository_name", line);
+      if (!json_names[i].IsString()) {
+        report_invalid_line("source data repository name", line);
         return;
       }
-      std::string repository_name =
-                     json_names[i]["repository_name"].GetString();
+      std::string repository_name = json_names[i].GetString();
 
       // parse filename
-      if (!json_names[i].HasMember("filename") ||
-                    !json_names[i]["filename"].IsString()) {
+      if (!json_names[i+1].IsString()) {
         report_invalid_line("source data filename", line);
         return;
       }
-      const std::string filename = json_names[i]["filename"].GetString();
+      const std::string filename = json_names[i+1].GetString();
 
       // add the name pair
       manager.insert_source_name(file_binary_hash, repository_name, filename);
