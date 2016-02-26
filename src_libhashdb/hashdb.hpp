@@ -298,7 +298,7 @@ namespace hashdb {
      *   expanded_text - Text about matched sources, or blank if text
      *     for the scanned hash has been returned in a previous scan.
      *
-     *     Text is in JSON format.  Example abbreviated syntax:
+     *     Text is in JSON format.  Example syntax:
      * 
      * {
      *   "entropy": 8,
@@ -309,10 +309,7 @@ namespace hashdb {
      *     "filesize": 800,
      *     "file_type": "exe",
      *     "nonprobative_count": 2,
-     *     "names": [{
-     *       "repository_name": "repository1",
-     *       "filename": "filename1"
-     *     }]
+     *     "names": ["repository1", "filename1", "repo2", "f2"]
      *   }],
      *   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
      * }

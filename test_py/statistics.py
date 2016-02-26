@@ -95,7 +95,7 @@ def test_duplicates():
 '# hashdb-Version: ',
 '# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 1',
-'1111111111111111	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}],"source_offset_pairs":["0000000000000000",0]}',
+'1111111111111111	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0]}',
 'Processing index 4 of 4 completed.',
 ''])
 
@@ -105,7 +105,7 @@ def test_duplicates():
 '# hashdb-Version: ',
 '# duplicates-command-Version: ',
 '# command_line: ../src/hashdb duplicates temp_1.hdb 2',
-'2222222222222222	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}],"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}',
+'2222222222222222	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}',
 '# Processing index 4 of 4 completed.',
 ''])
 
@@ -138,7 +138,7 @@ def test_hash_table():
 '# hashdb-Version: ',
 '# hash-table-command-Version: ',
 '# command_line: ../src/hashdb hash_table temp_1.hdb 0000000000000000',
-'1111111111111111	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"names":[]}],"source_offset_pairs":["0000000000000000",0]}',
+'1111111111111111	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0]}',
 '2222222222222222	{"entropy":0,"block_label":"","source_list_id":1696784233,"sources":[],"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}',
 '# Processing index 4 of 4 completed.',
 ''])

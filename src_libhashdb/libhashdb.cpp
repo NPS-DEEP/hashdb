@@ -63,7 +63,7 @@
 #include "lmdb_source_name_manager.hpp"
 #include "logger.hpp"
 #include "lmdb_changes.hpp"
-#include "escape_json.hpp"
+#include "rapidjson.h"
 #include "crc32.h"      // for scan_expanded
 #include "to_hex.hpp"      // for scan_expanded
 
@@ -83,10 +83,20 @@ namespace hashdb {
   // ************************************************************
   // private helper functions
   // ************************************************************
+  // return rapidjson::Value type from a std::string
+  static rapidjson::Value v(const std::string& s,
+                            rapidjson::Document::AllocatorType& allocator) {
+    rapidjson::Value v;
+    v.SetString(s.c_str(), s.size(), allocator);
+    return v;
+  }
+
   // helper for producing expanded source for a source ID
-  static void provide_source_information(const hashdb::scan_manager_t& manager,
-                                         const std::string file_binary_hash,
-                                         std::stringstream& ss) {
+  static void provide_source_information(
+                        const hashdb::scan_manager_t& manager,
+                        const std::string file_binary_hash,
+                        rapidjson::Document::AllocatorType& allocator,
+                        rapidjson::Value& json_source) {
 
     // fields to hold source information
     uint64_t filesize;
@@ -99,35 +109,29 @@ namespace hashdb {
                              nonprobative_count);
 
     // provide source data
-    ss << "{\"file_hash\":\"" << hashdb::to_hex(file_binary_hash) << "\""
-       << ",\"filesize\":" << filesize
-       << ",\"file_type\":\"" << file_type << "\""
-       << ",\"nonprobative_count\":" << nonprobative_count
-       ;
+    const std::string hex_hash = hashdb::to_hex(file_binary_hash);
+
+    // value for strings
+    json_source.AddMember("file_hash", v(hex_hash, allocator), allocator);
+    json_source.AddMember("filesize", filesize, allocator);
+    json_source.AddMember("file_type", v(file_type, allocator), allocator);
+    json_source.AddMember("nonprobative_count", nonprobative_count, allocator);
 
     // read source names
     manager.find_source_names(file_binary_hash, *source_names);
 
-    // provide source names
-    ss << ",\"names\":[";
-    int i = 0;
+    // name_pairss object
+    rapidjson::Value json_name_pairs(rapidjson::kArrayType);
+
+    // provide names
     hashdb::source_names_t::const_iterator it;
-    for (it = source_names->begin(); it != source_names->end();
-         ++it, ++i) {
-
-      // put comma before all but first name pair
-      if (i > 0) {
-        ss << ",";
-      }
-
-      // provide name pair
-      ss << "{\"repository_name\":\"" << hashdb::escape_json(it->first)
-         << "\",\"filename\":\"" << hashdb::escape_json(it->second)
-         << "\"}";
+    for (it = source_names->begin(); it != source_names->end(); ++it) {
+      // repository name
+      json_name_pairs.PushBack(v(it->first, allocator), allocator);
+      // filename
+      json_name_pairs.PushBack(v(it->second, allocator), allocator);
     }
-
-    // close source names list and source data
-    ss << "]}";
+    json_source.AddMember("name_pairs", json_name_pairs, allocator);
 
     delete source_names;
   }
@@ -445,10 +449,7 @@ namespace hashdb {
   //     "filesize": 800,
   //     "file_type": "exe",
   //     "nonprobative_count": 2,
-  //     "names": [{
-  //       "repository_name": "repository1",
-  //       "filename": "filename1"
-  //     }]
+  //     "name_pairs": ["r1", "f1", "r2", "f2]
   //   }],
   //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
   // }
@@ -484,23 +485,24 @@ namespace hashdb {
     hashes->insert(binary_hash);
 
     // prepare JSON
-    std::stringstream *ss = new std::stringstream;
-    *ss << "{";
+    rapidjson::Document json_doc;
+    rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+    json_doc.SetObject();
 
     // entropy
-    *ss << "\"entropy\":" << entropy;
+    json_doc.AddMember("entropy", entropy, allocator);
 
     // block_label
-    *ss << ",\"block_label\":\"" << hashdb::escape_json(block_label) << "\"";
+    json_doc.AddMember("block_label", v(block_label, allocator), allocator);
 
     // source_list_id
     uint32_t crc = calculate_crc(*source_offset_pairs);
-    *ss << ",\"source_list_id\":" << crc;
+    json_doc.AddMember("source_list_id", crc, allocator);
 
-    // provide JSON object[1]: sources with their source data and names list
-    *ss << ",\"sources\":[";
+    // sources array
+    rapidjson::Value json_sources(rapidjson::kArrayType);
 
-    // print any sources that have not been printed yet
+    // put in any sources that have not been put in yet
     for (hashdb::source_offset_pairs_t::const_iterator it =
                       source_offset_pairs->begin();
                       it != source_offset_pairs->end(); ++it) {
@@ -508,42 +510,37 @@ namespace hashdb {
         // remember this source to skip it later
         sources->insert(it->first);
 
-        // provide the complete source information for this source ID
-        provide_source_information(*this, it->first, *ss);
+        // provide the complete source information for this source
+        // a json_source object for the json_sources array
+        rapidjson::Value json_source(rapidjson::kObjectType);
+        provide_source_information(*this, it->first, allocator, json_source);
+        json_sources.PushBack(json_source, allocator);
       }
     }
-
-    // close sources
-    *ss << "]";
+    json_doc.AddMember("sources", json_sources, allocator);
 
     // source_offset_pairs
-    *ss << ",\"source_offset_pairs\":[";
-    int i=0;
+    rapidjson::Value json_pairs(rapidjson::kArrayType);
+
     for (hashdb::source_offset_pairs_t::const_iterator it =
          source_offset_pairs->begin();
-         it != source_offset_pairs->end(); ++it, ++i) {
+         it != source_offset_pairs->end(); ++it) {
 
-      // put comma before all but first source_offset pair
-      if (i > 0) {
-        *ss << ",";
-      }
-
-      // provide pair
-      *ss << "\"" << hashdb::to_hex(it->first) << "\","
-          << it->second;
+      // file hash
+      json_pairs.PushBack(v(hashdb::to_hex(it->first), allocator), allocator);
+      // file offset
+      json_pairs.PushBack(it->second, allocator);
     }
 
-    // close source offset pairs
-    *ss << "]";
- 
-    // close JSON
-    *ss << "}";
+    json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
 
-    // copy stream
-    expanded_text = ss->str();
+    // copy JSON text
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    json_doc.Accept(writer);
+    expanded_text = strbuf.GetString();
 
     delete source_offset_pairs;
-    delete ss;
     return true;
   }
 
@@ -744,12 +741,20 @@ namespace hashdb {
     snprintf(total_time, 16, "%d.%06d", (int)t.tv_sec, (int)t.tv_usec);
 
     // return the named timestamp
-    std::stringstream ss;
-    ss << "{\"name\":\"" << hashdb::escape_json(name) << "\""
-       << ", \"delta\":" << delta
-       << ", \"total\":" << total_time << "}"
-       ;
-    return ss.str();
+    // prepare JSON
+    rapidjson::Document json_doc;
+    rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+    json_doc.SetObject();
+    json_doc.AddMember("name", v(name, allocator), allocator);
+    json_doc.AddMember("delta", v(std::string(delta), allocator), allocator);
+    json_doc.AddMember("total", v(std::string(total_time), allocator),
+                                                                  allocator);
+
+    // copy JSON text
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    json_doc.Accept(writer);
+    return strbuf.GetString();
   }
 }
 
