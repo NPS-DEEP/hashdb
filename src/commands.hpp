@@ -479,8 +479,8 @@ namespace commands {
     }
   }
 
-  // deduplicate
-  static void deduplicate(const std::string& hashdb_dir,
+  // copy_unique
+  static void copy_unique(const std::string& hashdb_dir,
                           const std::string& dest_dir,
                           const std::string& cmd) {
 
@@ -497,7 +497,7 @@ namespace commands {
     std::pair<bool, std::string> pair = manager_a.hash_begin();
     while (pair.first != false) {
       // add the hash
-      adder.deduplicate(pair.second);
+      adder.copy_unique(pair.second);
       pair = manager_a.hash_next(pair.second);
     }
   }

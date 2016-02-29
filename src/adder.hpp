@@ -335,7 +335,7 @@ class adder_t {
   }
 
   // add hashes that have only one source reference
-  void deduplicate(const std::string& binary_hash) {
+  void copy_unique(const std::string& binary_hash) {
 
     // hash data
     uint64_t entropy;

@@ -409,9 +409,9 @@ void run_command() {
     check_params("", 3);
     commands::subtract_repository(args[0], args[1], args[2], cmd);
 
-  } else if (command == "deduplicate") {
+  } else if (command == "copy_unique") {
     check_params("", 2);
-    commands::deduplicate(args[0], args[1], cmd);
+    commands::copy_unique(args[0], args[1], cmd);
 
   // scan
   } else if (command == "scan") {

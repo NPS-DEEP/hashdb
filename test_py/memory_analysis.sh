@@ -4,7 +4,8 @@
 # ==25086== All heap blocks were freed -- no leaks are possible
 # ==25086== ERROR SUMMARY: 0 errors from 0 contexts
 
-RUN="valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=../test/vg.supp ../src/hashdb"
+#RUN="valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=../test/vg.supp ../src/hashdb"
+RUN="valgrind --tool=memcheck --leak-check=full --show-reachable=yes --suppressions=../test/vg.supp src/hashdb"
 
 # clear previous run
 rm -rf temp_vg*
@@ -27,7 +28,7 @@ $RUN intersect_hash temp_vg.hdb temp_vg2.hdb temp_vg3.hdb 2>> temp_vg.out
 $RUN subtract temp_vg.hdb temp_vg2.hdb temp_vg3.hdb 2>> temp_vg.out
 $RUN subtract_hash temp_vg.hdb temp_vg2.hdb temp_vg3.hdb 2>> temp_vg.out
 $RUN subtract_repository temp_vg.hdb temp_vg2.hdb "repository1" 2>> temp_vg.out
-$RUN deduplicate temp_vg.hdb temp_vg2.hdb 2>> temp_vg.out
+$RUN copy_unique temp_vg.hdb temp_vg2.hdb 2>> temp_vg.out
 
 # Scan
 echo "forensic_path1	99aabbccddeeff" > temp_vg_hashes.txt

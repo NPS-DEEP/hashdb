@@ -254,13 +254,13 @@ def test_subtract_repository():
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
 ])
 
-def test_deduplicate():
+def test_copy_unique():
     # create new hashdb
     H.make_hashdb("temp_1.hdb", json_out1)
     H.rm_tempdir("temp_2.hdb")
 
-    # deduplicate to new temp_2.hdb
-    H.hashdb(["deduplicate", "temp_1.hdb", "temp_2.hdb"])
+    # copy_unique to new temp_2.hdb
+    H.hashdb(["copy_unique", "temp_1.hdb", "temp_2.hdb"])
 
     # temp_2.hdb should match
     H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
@@ -283,6 +283,6 @@ if __name__=="__main__":
     test_subtract()
     test_subtract_hash()
     test_subtract_repository()
-    test_deduplicate()
+    test_copy_unique()
     print("Test Done.")
 
