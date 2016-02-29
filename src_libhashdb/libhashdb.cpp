@@ -86,9 +86,9 @@ namespace hashdb {
   // return rapidjson::Value type from a std::string
   static rapidjson::Value v(const std::string& s,
                             rapidjson::Document::AllocatorType& allocator) {
-    rapidjson::Value v;
-    v.SetString(s.c_str(), s.size(), allocator);
-    return v;
+    rapidjson::Value value;
+    value.SetString(s.c_str(), s.size(), allocator);
+    return value;
   }
 
   // helper for producing expanded source for a source ID

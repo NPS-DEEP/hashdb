@@ -75,9 +75,9 @@ class export_json_t {
   // return rapidjson::Value type from a std::string
   rapidjson::Value v(const std::string& s,
                      rapidjson::Document::AllocatorType& allocator) {
-    rapidjson::Value v;
-    v.SetString(s.c_str(), s.size(), allocator);
-    return v;
+    rapidjson::Value value;
+    value.SetString(s.c_str(), s.size(), allocator);
+    return value;
   }
 
   // Source data:
