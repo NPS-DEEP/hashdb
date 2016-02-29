@@ -1,6 +1,6 @@
 /* mdb_load.c - memory-mapped database load tool */
 /*
- * Copyright 2011-2016 Howard Chu, Symas Corp.
+ * Copyright 2011-2015 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,6 @@ static MDB_val kbuf, dbuf;
 #define Z	"I"
 #else
 #define Z	"z"
-#endif
-#ifdef MDB_VL32
-#ifdef _WIN32
-#define	Y	"I64"
-#else
-#define	Y	"ll"
-#endif
-#else
-#define Y	Z
 #endif
 
 #define STRLENOF(s)	(sizeof(s)-1)
@@ -121,7 +112,7 @@ static void readhdr(void)
 			int i;
 			ptr = memchr(dbuf.mv_data, '\n', dbuf.mv_size);
 			if (ptr) *ptr = '\0';
-			i = sscanf((char *)dbuf.mv_data+STRLENOF("mapsize="), "%" Y "u", &info.me_mapsize);
+			i = sscanf((char *)dbuf.mv_data+STRLENOF("mapsize="), "%" Z "u", &info.me_mapsize);
 			if (i != 1) {
 				fprintf(stderr, "%s: line %" Z "d: invalid mapsize %s\n",
 					prog, lineno, (char *)dbuf.mv_data+STRLENOF("mapsize="));
@@ -285,7 +276,7 @@ badend:
 
 static void usage(void)
 {
-	fprintf(stderr, "usage: %s [-V] [-f input] [-n] [-s name] [-N] [-T] dbpath\n", prog);
+	fprintf(stderr, "usage: %s dbpath [-V] [-f input] [-n] [-s name] [-N] [-T]\n", prog);
 	exit(EXIT_FAILURE);
 }
 
@@ -336,7 +327,7 @@ int main(int argc, char *argv[])
 			putflags = MDB_NOOVERWRITE|MDB_NODUPDATA;
 			break;
 		case 'T':
-			mode |= NOHDR | PRINT;
+			mode |= NOHDR;
 			break;
 		default:
 			usage();
@@ -409,22 +400,20 @@ int main(int argc, char *argv[])
 
 		while(1) {
 			rc = readline(&key, &kbuf);
-			if (rc)  /* rc == EOF */
+			if (rc == EOF)
 				break;
+			if (rc)
+				goto txn_abort;
 
 			rc = readline(&data, &dbuf);
-			if (rc) {
-				fprintf(stderr, "%s: line %" Z "d: failed to read key value\n", prog, lineno);
+			if (rc)
 				goto txn_abort;
-			}
-
+			
 			rc = mdb_cursor_put(mc, &key, &data, putflags);
 			if (rc == MDB_KEYEXIST && putflags)
 				continue;
-			if (rc) {
-				fprintf(stderr, "mdb_cursor_put failed, error %d %s\n", rc, mdb_strerror(rc));
+			if (rc)
 				goto txn_abort;
-			}
 			batch++;
 			if (batch == 100) {
 				rc = mdb_txn_commit(txn);

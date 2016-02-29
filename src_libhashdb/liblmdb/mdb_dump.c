@@ -1,6 +1,6 @@
 /* mdb_dump.c - memory-mapped database dump tool */
 /*
- * Copyright 2011-2016 Howard Chu, Symas Corp.
+ * Copyright 2011-2015 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,15 +24,6 @@
 #define Z	"I"
 #else
 #define Z	"z"
-#endif
-#ifdef MDB_VL32
-#ifdef _WIN32
-#define	Y	"I64"
-#else
-#define	Y	"ll"
-#endif
-#else
-#define Y	Z
 #endif
 
 #define PRINT	1
@@ -124,7 +115,7 @@ static int dumpit(MDB_txn *txn, MDB_dbi dbi, char *name)
 	if (name)
 		printf("database=%s\n", name);
 	printf("type=btree\n");
-	printf("mapsize=%" Y "u\n", info.me_mapsize);
+	printf("mapsize=%" Z "u\n", info.me_mapsize);
 	if (info.me_mapaddr)
 		printf("mapaddr=%p\n", info.me_mapaddr);
 	printf("maxreaders=%u\n", info.me_maxreaders);
@@ -164,7 +155,7 @@ static int dumpit(MDB_txn *txn, MDB_dbi dbi, char *name)
 
 static void usage(char *prog)
 {
-	fprintf(stderr, "usage: %s [-V] [-f output] [-l] [-n] [-p] [-a|-s subdb] dbpath\n", prog);
+	fprintf(stderr, "usage: %s dbpath [-V] [-f output] [-l] [-n] [-p] [-a|-s subdb]\n", prog);
 	exit(EXIT_FAILURE);
 }
 

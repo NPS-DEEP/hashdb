@@ -203,10 +203,6 @@ if test  x"$mingw" != x"yes";  then
   AC_CHECK_HEADERS([sys/mman.h],,[AC_MSG_ERROR([mmap support required])])
 fi
 
-if test  x"$mingw" = x"yes";  then
-  AC_CHECK_LIB([ntdll],[NtClose])
-fi
-
 #AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])
 #AC_CHECK_HEADERS([err.h sys/mman.h sys/resource.h unistd.h],,[AC_MSG_WARN([Not all requested headers are available: err.h, sys/mman.h, ...])])
 #PTHREAD: AC_CHECK_HEADERS([pthread.h],,[AC_MSG_ERROR([pthread headers are required])])
