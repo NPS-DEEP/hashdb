@@ -267,7 +267,7 @@ namespace hashdb {
   // settings
   // ************************************************************
   settings_t::settings_t() :
-         settings_version(CURRENT_SETTINGS_VERSION),
+         settings_version(settings_t::CURRENT_SETTINGS_VERSION),
          sector_size(512),
          block_size(512),
          max_source_offset_pairs(100000), // 100,000

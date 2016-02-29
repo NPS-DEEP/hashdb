@@ -18,7 +18,6 @@ def test_scan():
     H.hashdb(["create", "temp_1.hdb"])
     H.make_tempfile("temp_1.json", json_data)
     H.hashdb(["import_json", "temp_1.hdb", "temp_1.json"])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_1zzzz.json"])
 
     # test values: not present, valid, valid repeat, valid, valid, not valid
     hash_file = ["#","#", \

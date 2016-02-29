@@ -72,11 +72,6 @@ namespace hashdb {
   // settings
   // ************************************************************
   /**
-   * The current version of the hashdb data store.
-   */
-  const uint32_t CURRENT_SETTINGS_VERSION = 3;
-
-  /**
    * Provides hashdb settings.
    *
    * Attributes:
@@ -92,6 +87,7 @@ namespace hashdb {
    *     value in the optimized hash storage.
    */
   struct settings_t {
+    static const uint32_t CURRENT_SETTINGS_VERSION = 3;
     uint32_t settings_version;
     uint32_t sector_size;
     uint32_t block_size;

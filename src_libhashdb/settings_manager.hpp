@@ -101,7 +101,8 @@ namespace hashdb {
     settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
 
     // settings version must be compatible
-    if (settings.settings_version < hashdb::CURRENT_SETTINGS_VERSION) {
+    if (settings.settings_version <
+                             hashdb::settings_t::CURRENT_SETTINGS_VERSION) {
       return std::pair<bool, std::string>(false, "The hashdb at path '"
                                      + hashdb_dir + "' is not compatible.");
     }
