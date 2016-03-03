@@ -156,7 +156,6 @@ void lmdb_hash_manager_read() {
 // Also: enable the DEBUG flag in lmdb_helper.h and observe proper compressed
 // encodings.
 void lmdb_hash_manager_settings() {
-  std::pair<bool, std::string> pair;
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_changes_t changes;
 
@@ -226,7 +225,6 @@ void lmdb_hash_manager_settings() {
 
 // test corner-case values for count
 void lmdb_hash_manager_count() {
-  std::pair<bool, std::string> pair;
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 28, 3);
   hashdb::lmdb_changes_t changes;
@@ -243,7 +241,6 @@ void lmdb_hash_manager_count() {
 void lmdb_hash_data_manager() {
 
   // variables
-  std::pair<bool, std::string> settings_pair;
   uint64_t entropy;
   std::string block_label;
   id_offset_pairs_t id_offset_pairs;
@@ -374,16 +371,17 @@ void lmdb_hash_data_manager() {
   count = manager.insert(binary_1, 2, 4096, 4, "bl4", changes);
   TEST_EQ(count, 1);
   TEST_EQ(changes.hash_data_data_inserted, 2);
-  std::pair<bool, std::string> pair;
-  pair = manager.find_begin();
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, binary_0)
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, binary_1)
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, false);
-  TEST_EQ(pair.second, "")
+  std::string binary_hash;
+  bool did_find;
+  did_find = manager.find_begin(binary_hash);
+  TEST_EQ(did_find, true);
+  TEST_EQ(binary_hash, binary_0)
+  did_find = manager.find_next(binary_hash, binary_hash);
+  TEST_EQ(did_find, true);
+  TEST_EQ(binary_hash, binary_1)
+  did_find = manager.find_next(binary_hash, binary_hash);
+  TEST_EQ(did_find, false);
+  TEST_EQ(binary_hash, "")
 
   // size
   TEST_EQ(manager.size(), 5);
@@ -529,58 +527,60 @@ void lmdb_hash_data_manager_settings2() {
 // ************************************************************
 void lmdb_source_id_manager() {
   // resources
-  std::pair<bool, uint64_t> id_pair;
-  std::pair<bool, std::string> pair;
   hashdb::lmdb_changes_t changes;
+  bool did_find;
+  bool did_insert;
+  uint64_t source_id;
+  std::string file_binary_hash;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_source_id_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
   // iterator when empty
-  pair = manager.find_begin();
-  TEST_EQ(pair.first, false);
-  TEST_EQ(pair.second, "");
+  did_find = manager.find_begin(file_binary_hash);
+  TEST_EQ(did_find, false);
+  TEST_EQ(file_binary_hash, "");
 
   // search when empty
-  id_pair = manager.find(binary_0);
-  TEST_EQ(id_pair.first, false);
-  TEST_EQ(id_pair.second, 0)
+  did_find = manager.find(binary_0, source_id);
+  TEST_EQ(did_find, false);
+  TEST_EQ(source_id, 0)
 
   // add items
-  id_pair = manager.insert(binary_0, changes);
-  TEST_EQ(id_pair.first, true);
-  TEST_EQ(id_pair.second, 1);
+  did_insert = manager.insert(binary_0, changes, source_id);
+  TEST_EQ(did_insert, true);
+  TEST_EQ(source_id, 1);
   TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(changes.source_id_already_present, 0);
 
-  id_pair = manager.insert(binary_0, changes);
-  TEST_EQ(id_pair.first, false);
-  TEST_EQ(id_pair.second, 1);
+  did_insert = manager.insert(binary_0, changes, source_id);
+  TEST_EQ(did_insert, false);
+  TEST_EQ(source_id, 1);
   TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(changes.source_id_already_present, 1);
 
-  id_pair = manager.find(binary_0);
-  TEST_EQ(id_pair.first, true);
-  TEST_EQ(id_pair.second, 1)
+  did_find = manager.find(binary_0, source_id);
+  TEST_EQ(did_find, true);
+  TEST_EQ(source_id, 1)
 
   // iterator
-  id_pair = manager.insert(binary_2, changes);
-  TEST_EQ(id_pair.second, 2);
-  id_pair = manager.insert(binary_1, changes);
-  TEST_EQ(id_pair.second, 3);
-  pair = manager.find_begin();
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, binary_0);
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, binary_1);
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, true);
-  TEST_EQ(pair.second, binary_2);
-  pair = manager.find_next(pair.second);
-  TEST_EQ(pair.first, false);
-  TEST_EQ(pair.second, "");
+  did_insert = manager.insert(binary_2, changes, source_id);
+  TEST_EQ(source_id, 2);
+  did_insert = manager.insert(binary_1, changes, source_id);
+  TEST_EQ(source_id, 3);
+  did_find = manager.find_begin(file_binary_hash);
+  TEST_EQ(did_find, true);
+  TEST_EQ(file_binary_hash, binary_0);
+  did_find = manager.find_next(file_binary_hash, file_binary_hash);
+  TEST_EQ(did_find, true);
+  TEST_EQ(file_binary_hash, binary_1);
+  did_find = manager.find_next(file_binary_hash, file_binary_hash);
+  TEST_EQ(did_find, true);
+  TEST_EQ(file_binary_hash, binary_2);
+  did_find = manager.find_next(file_binary_hash, file_binary_hash);
+  TEST_EQ(did_find, false);
+  TEST_EQ(file_binary_hash, "");
 }
 
 // ************************************************************
@@ -667,7 +667,6 @@ void lmdb_source_data_manager() {
 void lmdb_source_name_manager() {
 
   // variables
-  std::pair<bool, uint64_t> pair;
   source_names_t source_names;
   hashdb::lmdb_changes_t changes;
   bool found;

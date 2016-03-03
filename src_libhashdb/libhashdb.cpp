@@ -140,10 +140,11 @@ namespace hashdb {
   static hashdb::settings_t private_read_settings(
                                        const std::string& hashdb_dir) {
     hashdb::settings_t settings;
-    std::pair<bool, std::string> pair = hashdb::read_settings(
-                                                    hashdb_dir, settings);
-    if (pair.first == false) {
-      std::cerr << "Error: hashdb settings file not read.  Aborting.\n";
+    std::string error_message;
+    bool did_read = hashdb::read_settings(hashdb_dir, settings, error_message);
+    if (did_read == false) {
+      std::cerr << "Error: hashdb settings file not read:\n"
+                << error_message << "\nAborting.\n";
       exit(1);
     }
     return settings;
@@ -190,15 +191,15 @@ namespace hashdb {
    * The current implementation may abort if something worse than a simple
    * path problem happens.
    */
-  std::pair<bool, std::string> create_hashdb(
-                     const std::string& hashdb_dir,
+  bool create_hashdb(const std::string& hashdb_dir,
                      const hashdb::settings_t& settings,
-                     const std::string& command_string) {
+                     const std::string& command_string,
+                     std::string& error_message) {
 
     // path must be empty
     if (access(hashdb_dir.c_str(), F_OK) == 0) {
-      return std::pair<bool, std::string>(false, "Path '"
-                       + hashdb_dir + "' already exists.");
+      error_message = "Path '" + hashdb_dir + "' already exists.";
+      return false;
     }
 
     // create the new hashdb directory
@@ -209,16 +210,16 @@ namespace hashdb {
     status = mkdir(hashdb_dir.c_str(),0777);
 #endif
     if (status != 0) {
-      return std::pair<bool, std::string>(false,
-                       "Unable to create new hashdb database at path '"
-                       + hashdb_dir + "'.");
+      error_message = "Unable to create new hashdb database at path '"
+                     + hashdb_dir + "'.";
+      return false;
     }
 
     // create the settings file
-    std::pair<bool, std::string> pair =
-                hashdb::write_settings(hashdb_dir, settings);
-    if (pair.first == false) {
-      return pair;
+    bool did_write = hashdb::write_settings(hashdb_dir, settings,
+                                            error_message);
+    if (did_write == false) {
+      return false;
     }
 
     // create new LMDB stores
@@ -233,7 +234,8 @@ namespace hashdb {
     // create the log
     logger_t(hashdb_dir, command_string);
 
-    return std::pair<bool, std::string>(true, "");
+    error_message = "";
+    return true;
   }
 
   /**
@@ -339,16 +341,17 @@ namespace hashdb {
                           const std::string& file_binary_hash,
                           const std::string& repository_name,
                           const std::string& filename) {
-    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
-                                                  file_binary_hash, *changes);
-    lmdb_source_name_manager->insert(
-                           pair.second, repository_name, filename, *changes);
+    uint64_t source_id;
+    bool new_id = lmdb_source_id_manager->insert(file_binary_hash, *changes,
+                                                 source_id);
+    lmdb_source_name_manager->insert(source_id, repository_name, filename,
+                                     *changes);
 
     // If the source ID is new then add a blank source data record just to keep
     // from breaking the reverse look-up done in scan_manager_t.
-    if (pair.first == true) {
-      lmdb_source_data_manager->insert(pair.second, file_binary_hash,
-                                       0, "", 0, *changes);
+    if (new_id == true) {
+      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0,
+                                       *changes);
     }
   }
 
@@ -357,9 +360,9 @@ namespace hashdb {
                           const uint64_t filesize,
                           const std::string& file_type,
                           const uint64_t nonprobative_count) {
-    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
-                                                  file_binary_hash, *changes);
-    lmdb_source_data_manager->insert(pair.second, file_binary_hash,
+    uint64_t source_id;
+    lmdb_source_id_manager->insert(file_binary_hash, *changes, source_id);
+    lmdb_source_data_manager->insert(source_id, file_binary_hash,
                         filesize, file_type, nonprobative_count, *changes);
   }
 
@@ -369,19 +372,20 @@ namespace hashdb {
                           const uint64_t entropy,
                           const std::string& block_label) {
 
-    const std::pair<bool, uint64_t> pair = lmdb_source_id_manager->insert(
-                                                  file_binary_hash, *changes);
+    uint64_t source_id;
+    bool new_id = lmdb_source_id_manager->insert(file_binary_hash, *changes,
+                                                 source_id);
 
     // insert hash into hash manager and hash data manager
     const size_t count = lmdb_hash_data_manager->insert(binary_hash,
-                    pair.second, file_offset, entropy, block_label, *changes);
+                    source_id, file_offset, entropy, block_label, *changes);
     lmdb_hash_manager->insert(binary_hash, count, *changes);
 
     // If the source ID is new then add a blank source data record just to keep
     // from breaking the reverse look-up done in scan_manager_t.
-    if (pair.first == true) {
-      lmdb_source_data_manager->insert(pair.second, file_binary_hash,
-                                       0, "", 0, *changes);
+    if (new_id == true) {
+      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0,
+                                       *changes);
     }
   }
 
@@ -616,10 +620,10 @@ namespace hashdb {
                         std::string& file_type,
                         uint64_t& nonprobative_count) const {
 
-    // read source_id into pair.second
-    std::pair<bool, uint64_t> pair =
-                            lmdb_source_id_manager->find(file_binary_hash);
-    if (pair.first == false) {
+    // read source_id
+    uint64_t source_id;
+    bool has_id = lmdb_source_id_manager->find(file_binary_hash, source_id);
+    if (has_id == false) {
       // no source ID for this file_binary_hash
       filesize = 0;
       file_type = "";
@@ -629,7 +633,7 @@ namespace hashdb {
 
       // read source data associated with this source ID
       std::string returned_file_binary_hash;
-      bool source_data_found = lmdb_source_data_manager->find(pair.second,
+      bool source_data_found = lmdb_source_data_manager->find(source_id,
                              returned_file_binary_hash, filesize, file_type,
                              nonprobative_count);
 
@@ -645,35 +649,36 @@ namespace hashdb {
   bool scan_manager_t::find_source_names(const std::string& file_binary_hash,
                          source_names_t& source_names) const {
 
-    // read source_id into pair.second
-    std::pair<bool, uint64_t> pair =
-                            lmdb_source_id_manager->find(file_binary_hash);
-    if (pair.first == false) {
+    // read source_id
+    uint64_t source_id;
+    bool has_id = lmdb_source_id_manager->find(file_binary_hash, source_id);
+    if (has_id == false) {
       // no source ID for this file_binary_hash
       source_names.clear();
       return false;
     } else {
       // source
-      return lmdb_source_name_manager->find(pair.second, source_names);
+      return lmdb_source_name_manager->find(source_id, source_names);
     }
   }
 
-  std::pair<bool, std::string> scan_manager_t::hash_begin() const {
-    return lmdb_hash_data_manager->find_begin();
+  bool scan_manager_t::hash_begin(std::string& binary_hash) const {
+    return lmdb_hash_data_manager->find_begin(binary_hash);
   }
 
-  std::pair<bool, std::string> scan_manager_t::hash_next(
-                        const std::string& last_binary_hash) const {
-    return lmdb_hash_data_manager->find_next(last_binary_hash);
+  bool scan_manager_t::hash_next(const std::string& last_binary_hash,
+                                 std::string& binary_hash) const {
+    return lmdb_hash_data_manager->find_next(last_binary_hash, binary_hash);
   }
 
-  std::pair<bool, std::string> scan_manager_t::source_begin() const {
-    return lmdb_source_id_manager->find_begin();
+  bool scan_manager_t::source_begin(std::string& file_binary_hash) const {
+    return lmdb_source_id_manager->find_begin(file_binary_hash);
   }
 
-  std::pair<bool, std::string> scan_manager_t::source_next(
-                        const std::string& last_file_binary_hash) const {
-    return lmdb_source_id_manager->find_next(last_file_binary_hash);
+  bool scan_manager_t::source_next(const std::string& last_file_binary_hash,
+                                   std::string& file_binary_hash) const {
+    return lmdb_source_id_manager->find_next(last_file_binary_hash,
+                                             file_binary_hash);
   }
 
   std::string scan_manager_t::sizes() const {

@@ -112,14 +112,15 @@ namespace hashdb {
    *     exist yet.
    *   settings - The hashdb settings.
    *   command_string - String to put into the new hashdb log.
+   *   error_message - Error if request fails.
    *
    * Returns tuple:
    *   True and "" if creation was successful, false and reason if not.
    */
-  std::pair<bool, std::string> create_hashdb(
-                     const std::string& hashdb_dir,
+  bool create_hashdb(const std::string& hashdb_dir,
                      const hashdb::settings_t& settings,
-                     const std::string& command_string);
+                     const std::string& command_string,
+                     std::string& error_message);
 
   /**
    * Return hashdb settings else false and reason.
@@ -129,13 +130,14 @@ namespace hashdb {
    * Parameters:
    *   hashdb_dir - Path to the database to obtain the settings of.
    *   settings - The hashdb settings.
+   *   error_message - Error if request fails.
    *
    * Returns tuple:
    *   True and "" if settings were retrieved, false and reason if not.
    */
-  std::pair<bool, std::string> read_settings(
-                     const std::string& hashdb_dir,
-                     hashdb::settings_t& settings);
+  bool read_settings(const std::string& hashdb_dir,
+                     hashdb::settings_t& settings,
+                     std::string& error_message);
 
   /**
    * Print environment information to the stream.  Specifically, print
@@ -388,39 +390,53 @@ namespace hashdb {
     /**
      * Return the first block hash in the database.
      *
-     * Returns pair:
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
      *   True if a first hash is available, false and "" if DB is empty.
      */
-    std::pair<bool, std::string> hash_begin() const;
+    bool hash_begin(std::string& binary_hash) const;
 
     /**
      * Return the next block hash in the database.  Error if last hash
      *   does not exist.
      *
-     * Returns pair:
+     * Parameters:
+     *   last_binary_hash - The previous block hash in binary form.
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
      *   True if hash is available, false and "" if at end of DB.
      */
-    std::pair<bool, std::string> hash_next(
-                          const std::string& last_binary_hash) const;
+    bool hash_next(const std::string& last_binary_hash,
+                   std::string& binary_hash) const;
 
 
     /**
      * Return the first source in the database.
      *
-     * Returns pair:
+     * Parameters:
+     *   file_binary_hash - The source file hash in binary form.
+     *
+     * Returns:
      *   True if source is available, false and "" if DB is empty.
      */
-    std::pair<bool, std::string> source_begin() const;
+    bool source_begin(std::string& file_binary_hash) const;
 
     /**
      * Return the next source in the database.  Error if last_file_binary_hash
      *   does not exist.
      *
-     * Returns pair:
+     * Parameters:
+     *   last_file_binary_hash - The previous source file hash in binary form.
+     *   file_binary_hash - The source file hash in binary form.
+     *
+     * Returns:
      *   True if source is available, false and "" if at end of DB.
      */
-    std::pair<bool, std::string> source_next(
-                            const std::string& last_file_binary_hash) const;
+    bool source_next(const std::string& last_file_binary_hash,
+                     std::string& file_binary_hash) const;
 
     /**
      * Return sizes of LMDB databases in JSON format.

@@ -92,11 +92,12 @@ class export_json_t {
     uint64_t nonprobative_count;
     hashdb::source_names_t* source_names = new hashdb::source_names_t;
 
-    std::pair<bool, std::string> pair = manager.source_begin();
-    while (pair.first != false) {
+    std::string file_binary_hash;
+    bool has_source = manager.source_begin(file_binary_hash);
+    while (has_source == true) {
 
       // get source data
-      manager.find_source_data(pair.second, filesize, file_type,
+      manager.find_source_data(file_binary_hash, filesize, file_type,
                                nonprobative_count);
 
       // prepare JSON
@@ -105,14 +106,14 @@ class export_json_t {
       json_doc.SetObject();
 
       // set source data
-      std::string file_hash = bin_to_hex(pair.second);
+      std::string file_hash = bin_to_hex(file_binary_hash);
       json_doc.AddMember("file_hash", v(file_hash, allocator), allocator);
       json_doc.AddMember("filesize", filesize, allocator);
       json_doc.AddMember("file_type", v(file_type, allocator), allocator);
       json_doc.AddMember("nonprobative_count", nonprobative_count, allocator);
 
       // get source names
-      manager.find_source_names(pair.second, *source_names);
+      manager.find_source_names(file_binary_hash, *source_names);
 
       // name_pairs object
       rapidjson::Value json_name_pairs(rapidjson::kArrayType);
@@ -134,7 +135,7 @@ class export_json_t {
       os << strbuf.GetString() << "\n";
 
       // next
-      pair = manager.source_next(pair.second);
+      has_source = manager.source_next(file_binary_hash, file_binary_hash);
     }
 
     delete source_names;
@@ -153,11 +154,12 @@ class export_json_t {
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                           new hashdb::source_offset_pairs_t;
 
-    std::pair<bool, std::string> pair = manager.hash_begin();
-    while (pair.first != false) {
+    std::string binary_hash;
+    bool has_hash = manager.hash_begin(binary_hash);
+    while (has_hash) {
 
       // get hash data
-      manager.find_hash(pair.second, entropy, block_label,
+      manager.find_hash(binary_hash, entropy, block_label,
                         *source_offset_pairs);
 
       // prepare JSON
@@ -166,7 +168,7 @@ class export_json_t {
       json_doc.SetObject();
 
       // set hash data
-      std::string block_hash = bin_to_hex(pair.second);
+      std::string block_hash = bin_to_hex(binary_hash);
       json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
       json_doc.AddMember("entropy", entropy, allocator);
       json_doc.AddMember("block_label", v(block_label, allocator), allocator);
@@ -193,7 +195,7 @@ class export_json_t {
 
       // next
       progress_tracker.track_hash_data(*source_offset_pairs);
-      pair = manager.hash_next(pair.second);
+      has_hash = manager.hash_next(binary_hash, binary_hash);
     }
 
     delete source_offset_pairs;

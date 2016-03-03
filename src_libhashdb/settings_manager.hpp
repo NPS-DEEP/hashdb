@@ -40,27 +40,29 @@
 
 namespace hashdb {
 
-  std::pair<bool, std::string> read_settings(
-               const std::string& hashdb_dir, hashdb::settings_t& settings) {
+  bool read_settings(const std::string& hashdb_dir,
+                     hashdb::settings_t& settings,
+                     std::string& error_message) {
 
     // path must exist
     if (access(hashdb_dir.c_str(), F_OK) != 0) {
-      return std::pair<bool, std::string>(false, "No hashdb at path '"
-                       + hashdb_dir + "'.");
+      error_message = "No hashdb at path '" + hashdb_dir + "'.";
+      return false;
     }
 
     // settings file must exist
     std::string filename = hashdb_dir + "/settings.json";
     if (access(filename.c_str(), F_OK) != 0) {
-        return std::pair<bool, std::string>(false, "Path '"
-                     + hashdb_dir + "' is not a hashdb database.");
+      error_message = "Path '" + hashdb_dir + "' is not a hashdb database.";
+      return false;
     }
 
     // open settings file
     std::ifstream in(filename.c_str());
     if (!in.is_open()) {
-        return std::pair<bool, std::string>(false,
-               "Unable to open settings file at Path '" + hashdb_dir + ".");
+      error_message = "Unable to open settings file at Path '" +
+                      hashdb_dir + "'.";
+      return false;
     }
 
     // find and read the first line of content
@@ -74,21 +76,21 @@ namespace hashdb {
     in.close();
     if (line.size() == 0) {
       // no first line
-      return std::pair<bool, std::string>(false,
-                      "Empty settings file at path '" + hashdb_dir + "'.");
+      error_message = "Empty settings file at path '" + hashdb_dir + "'.";
+      return false;
     }
 
     // parse settings into a JSON DOM document
     rapidjson::Document document;
     if (document.Parse(line.c_str()).HasParseError()) {
 
-      return std::pair<bool, std::string>(false,
-                      "Invalid settings file at path '" + hashdb_dir + "'.");
+      error_message = "Invalid settings file at path '" + hashdb_dir + "'.";
+      return false;
     }
     if (!document.IsObject()) {
-      return std::pair<bool, std::string>(false,
-                      "Invalid JSON in settings file at path '" +
-                      hashdb_dir + "'.");
+      error_message = "Invalid JSON in settings file at path '" +
+                      hashdb_dir + "'.";
+      return false;
     }
 
     // parse the values
@@ -103,17 +105,19 @@ namespace hashdb {
     // settings version must be compatible
     if (settings.settings_version <
                              hashdb::settings_t::CURRENT_SETTINGS_VERSION) {
-      return std::pair<bool, std::string>(false, "The hashdb at path '"
-                                     + hashdb_dir + "' is not compatible.");
+      error_message = "The hashdb at path '" + hashdb_dir + 
+                      "' is not compatible.";
     }
 
     // accept the read
-    return std::pair<bool, std::string>(true, "");
+    error_message = "";
+    return true;
   }
 
 
-  static std::pair<bool, std::string> write_settings(
-          const std::string& hashdb_dir, const hashdb::settings_t& settings) {
+  static bool write_settings(const std::string& hashdb_dir,
+                             const hashdb::settings_t& settings,
+                             std::string& error_message) {
 
     // calculate the settings filename
     std::string filename = hashdb_dir + "/settings.json";
@@ -134,13 +138,15 @@ namespace hashdb {
     std::ofstream out;
     out.open(filename.c_str());
     if (!out.is_open()) {
-      return std::pair<bool, std::string>(false, std::string(strerror(errno)));
+      error_message = std::string(strerror(errno));
+      return false;
     }
 
     out << settings.settings_string() << "\n";
     out.close();
 
-    return std::pair<bool, std::string>(true, "");
+    error_message = "";
+    return true;
   }
 }
 

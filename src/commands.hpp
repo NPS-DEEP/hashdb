@@ -52,40 +52,43 @@ void create_if_new(const std::string& hashdb_dir,
                    const std::string& from_hashdb_dir,
                    const std::string& command_string) {
 
-  std::pair<bool, std::string> pair;
+  bool is_success;
+  std::string error_message;
   hashdb::settings_t settings;
 
   // try to read hashdb_dir settings
-  pair = hashdb::read_settings(hashdb_dir, settings);
-  if (pair.first == true) {
+  is_success = hashdb::read_settings(hashdb_dir, settings, error_message);
+  if (is_success) {
     // hashdb_dir already exists
     return;
   }
 
   // no hashdb_dir, so read from_hashdb_dir settings
-  pair = hashdb::read_settings(from_hashdb_dir, settings);
-  if (pair.first == false) {
+  is_success = hashdb::read_settings(from_hashdb_dir, settings, error_message);
+  if (!is_success) {
     // bad since from_hashdb_dir is not valid
-    std::cout << "Error: " << pair.second << "\n";
+    std::cout << "Error: " << error_message << "\n";
     exit(1);
   }
 
   // create hashdb_dir using from_hashdb_dir settings
-  pair = hashdb::create_hashdb(hashdb_dir, settings, command_string);
-  if (pair.first == false) {
+  is_success = hashdb::create_hashdb(hashdb_dir, settings, command_string,
+                                                              error_message);
+  if (!is_success) {
     // bad since from_hashdb_dir is not valid
-    std::cout << "Error: " << pair.second << "\n";
+    std::cout << "Error: " << error_message << "\n";
     exit(1);
   }
 }
 
 // require hashdb_dir else fail
 static void require_hashdb_dir(const std::string& hashdb_dir) {
-  std::pair<bool, std::string> pair;
+  bool is_success;
+  std::string error_message;
   hashdb::settings_t settings;
-  pair = hashdb::read_settings(hashdb_dir, settings);
-  if (pair.first == false) {
-    std::cout << "Error: " << pair.second << "\n";
+  is_success = hashdb::read_settings(hashdb_dir, settings, error_message);
+  if (!is_success) {
+    std::cout << "Error: " << error_message << "\n";
     exit(1);
   }
 }
@@ -106,13 +109,15 @@ namespace commands {
               const hashdb::settings_t& settings,
               const std::string& cmd) {
 
-    std::pair<bool, std::string> pair = hashdb::create_hashdb(
-                                             hashdb_dir, settings, cmd);
+    bool is_success;
+    std::string error_message;
+    is_success = hashdb::create_hashdb(hashdb_dir, settings, cmd,
+                                                    error_message);
 
-    if (pair.first == true) {
+    if (is_success) {
       std::cout << "New database created.\n";
     } else {
-      std::cout << "Error: " << pair.second << "\n";
+      std::cout << "Error: " << error_message << "\n";
     }
   }
 
@@ -219,11 +224,13 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b);
 
     // add data for binary_hash from A to B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
       // add the hash
-      adder.add(pair.second);
-      pair = manager_a.hash_next(pair.second);
+      adder.add(binary_hash);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -261,20 +268,19 @@ namespace commands {
     // create the multimap of ordered producers
     ordered_producers_t ordered_producers;
 
-    // hash_pair<bool, hash> from a scan_manager read
-    std::pair<bool, std::string> hash_pair;
-
     // open the producers
     for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
                     it != hashdb_dirs.end(); ++it) {
       std::string hashdb_dir = *it;
       hashdb::scan_manager_t* producer = new hashdb::scan_manager_t(hashdb_dir);
-      hash_pair = producer->hash_begin();
-      if (hash_pair.first == true) {
+      bool has_hash;
+      std::string binary_hash;
+      has_hash = producer->hash_begin(binary_hash);
+      if (has_hash) {
         // the producer is not empty, so enqueue it
         // create the adder
         adder_t* adder = new adder_t(producer, &consumer);
-        ordered_producers.insert(ordered_producers_value_t(hash_pair.second,
+        ordered_producers.insert(ordered_producers_value_t(binary_hash,
                                       producer_t(producer, adder)));
 
       } else {
@@ -294,14 +300,16 @@ namespace commands {
       adder->add(it->first);
 
       // get the next hash from this producer
-      hash_pair = producer->hash_next(it->first);
+      bool has_hash;
+      std::string binary_hash;
+      has_hash = producer->hash_next(it->first, binary_hash);
 
       // remove this hash, producer_t entry
       ordered_producers.erase(it);
 
-      if (hash_pair.first) {
+      if (has_hash) {
         // hash exists so add the hash, producer, and adder
-        ordered_producers.insert(ordered_producers_value_t(hash_pair.second,
+        ordered_producers.insert(ordered_producers_value_t(binary_hash,
                                       producer_t(producer, adder)));
       } else {
         // no hashes for this producer so close it
@@ -327,11 +335,13 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
       // add the hash
-      adder.add_repository(pair.second);
-      pair = manager_a.hash_next(pair.second);
+      adder.add_repository(binary_hash);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -353,17 +363,19 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to intersect A and B into C
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
 
       // intersect if hash is in B
-      size_t count = manager_b.find_hash_count(pair.second);
+      size_t count = manager_b.find_hash_count(binary_hash);
       if (count > 0) {
         // intersect
-        adder_set.intersect(pair.second);
+        adder_set.intersect(binary_hash);
       }
 
-      pair = manager_a.hash_next(pair.second);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -385,17 +397,19 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to intersect_hash A and B into C
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
 
       // intersect if hash is in B
-      size_t count = manager_b.find_hash_count(pair.second);
+      size_t count = manager_b.find_hash_count(binary_hash);
       if (count > 0) {
         // intersect_hash
-        adder_set.intersect_hash(pair.second);
+        adder_set.intersect_hash(binary_hash);
       }
 
-      pair = manager_a.hash_next(pair.second);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -417,13 +431,15 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to add A to C if A hash and source not in B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
 
       // add A to C if A hash and source not in B
-      adder_set.subtract(pair.second);
+      adder_set.subtract(binary_hash);
 
-      pair = manager_a.hash_next(pair.second);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -445,13 +461,15 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to add A to C if A hash not in B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
 
       // add A to C if A hash not in B
-      adder_set.subtract_hash(pair.second);
+      adder_set.subtract_hash(binary_hash);
 
-      pair = manager_a.hash_next(pair.second);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -471,11 +489,13 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
       // add the hash
-      adder.add_non_repository(pair.second);
-      pair = manager_a.hash_next(pair.second);
+      adder.add_non_repository(binary_hash);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -494,11 +514,13 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b);
 
     // add data for binary_hash from A to B
-    std::pair<bool, std::string> pair = manager_a.hash_begin();
-    while (pair.first != false) {
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager_a.hash_begin(binary_hash);
+    while (has_hash) {
       // add the hash
-      adder.copy_unique(pair.second);
-      pair = manager_a.hash_next(pair.second);
+      adder.copy_unique(binary_hash);
+      has_hash = manager_a.hash_next(binary_hash, binary_hash);
     }
   }
 
@@ -623,15 +645,17 @@ namespace commands {
                                         new hashdb::source_offset_pairs_t;
 
     // iterate over hashdb and set variables for calculating the histogram
-    std::pair<bool, std::string> pair = manager.hash_begin();
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager.hash_begin(binary_hash);
 
     // note if the DB is empty
-    if (pair.first == false) {
+    if (has_hash == false) {
       std::cout << "The map is empty.\n";
     }
 
-    while (pair.first == true) {
-      manager.find_hash(pair.second, entropy, block_label,
+    while (has_hash) {
+      manager.find_hash(binary_hash, entropy, block_label,
                             *source_offset_pairs);
       uint64_t count = source_offset_pairs->size();
       // update total hashes observed
@@ -660,7 +684,7 @@ namespace commands {
       }
 
       // move forward
-      pair = manager.hash_next(pair.second);
+      has_hash = manager.hash_next(binary_hash, binary_hash);
       progress_tracker.track_hash_data(*source_offset_pairs);
     }
 
@@ -717,20 +741,22 @@ namespace commands {
     std::string* expanded_text = new std::string;
 
     // iterate over hashdb and set variables for finding duplicates
-    std::pair<bool, std::string> pair = manager.hash_begin();
+    bool has_hash;
+    std::string binary_hash;
+    has_hash = manager.hash_begin(binary_hash);
 
-    while (pair.first == true) {
-      manager.find_hash(pair.second, entropy, block_label,
+    while (has_hash) {
+      manager.find_hash(binary_hash, entropy, block_label,
                                   *source_offset_pairs);
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
-        manager.find_expanded_hash(pair.second, *expanded_text);
-        std::cout << bin_to_hex(pair.second) << "\t" << *expanded_text << "\n";
+        manager.find_expanded_hash(binary_hash, *expanded_text);
+        std::cout << bin_to_hex(binary_hash) << "\t" << *expanded_text << "\n";
         any_found = true;
       }
 
       // move forward
-      pair = manager.hash_next(pair.second);
+      has_hash = manager.hash_next(binary_hash, binary_hash);
       progress_tracker.track_hash_data(*source_offset_pairs);
     }
 
@@ -785,11 +811,14 @@ namespace commands {
 
     // look for hashes that belong to this source
     // get the first hash
-    std::pair<bool, std::string> pair = manager.hash_begin();
-    while (pair.first == true) {
+    bool has_hash;
+    std::string binary_hash;
+
+    has_hash = manager.hash_begin(binary_hash);
+    while (has_hash) {
 
       // read hash data for the hash
-      manager.find_hash(pair.second, entropy, block_label,
+      manager.find_hash(binary_hash, entropy, block_label,
                                                     *source_offset_pairs);
 
       // find references to this source
@@ -798,15 +827,15 @@ namespace commands {
                        it!= source_offset_pairs->end(); ++it) {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
-          manager.find_expanded_hash(pair.second, *expanded_text);
-          std::cout << bin_to_hex(pair.second) << "\t" << *expanded_text
+          manager.find_expanded_hash(binary_hash, *expanded_text);
+          std::cout << bin_to_hex(binary_hash) << "\t" << *expanded_text
                     << "\n";
           break;
         }
       }
 
       // move forward
-      pair = manager.hash_next(pair.second);
+      has_hash = manager.hash_next(binary_hash, binary_hash);
       progress_tracker.track_hash_data(*source_offset_pairs);
     }
     delete source_offset_pairs;
@@ -829,8 +858,14 @@ namespace commands {
 
     // get sector size
     hashdb::settings_t settings;
-    std::pair<bool, std::string> pair =
-                        hashdb::read_settings(hashdb_dir, settings);
+    std::string error_message;
+    bool is_success = hashdb::read_settings(hashdb_dir, settings,
+                                            error_message);
+    if (!is_success) {
+      std::cout << "Error: " << error_message << "\n";
+      exit(1);
+    }
+
     const uint64_t sector_size = settings.sector_size;
 
     // initialize random seed
@@ -916,8 +951,14 @@ namespace commands {
 
     // get sector size
     hashdb::settings_t settings;
-    std::pair<bool, std::string> pair =
-                        hashdb::read_settings(hashdb_dir, settings);
+    std::string error_message;
+    bool is_success = hashdb::read_settings(hashdb_dir, settings,
+                                            error_message);
+    if (!is_success) {
+      std::cout << "Error: " << error_message << "\n";
+      exit(1);
+    }
+
     const uint64_t sector_size = settings.sector_size;
 
     // open manager
