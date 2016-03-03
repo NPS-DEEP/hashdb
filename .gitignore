@@ -70,6 +70,7 @@ space
 # python
 __pycache__
 *.pyc
+py-compile
 
 # test data copied from .in files
 src/test/explain_be_in.txt

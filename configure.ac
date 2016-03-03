@@ -24,8 +24,9 @@ AC_CONFIG_FILES([Makefile
                  test/Makefile
                  test_py/Makefile
                  man/Makefile
-                 doc/Makefile
-                 python/Makefile])
+                 doc/Makefile])
+
+#                 python_bindings/Makefile
 
 # define CC and CXX as desired for alternate compilers
 # for example "./configure CC=clang CXX=clang++"
@@ -36,10 +37,9 @@ AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_PREFIX_PROGRAM(hashdb)
 AC_PROG_CC
-AM_PROG_CC_C_O                  dnl allow per-produce flags
 AC_PROG_CXX
 AC_PROG_INSTALL
-#AC_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 LT_INIT([win32-dll])
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
@@ -51,7 +51,19 @@ AX_CXX_COMPILE_STDCXX_11(noext, optional)
 # Endian check is required for MD5 implementation
 AC_C_BIGENDIAN
 
-##
+################################################################
+## Includes
+m4_include([m4/hashdb_mingw_support.m4])
+m4_include([m4/slg_searchdirs.m4])
+m4_include([m4/hashdb_cflags.m4])
+## for SWIG
+#m4_include([m4/ax_python_devel.m4])
+#m4_include([m4/ax_pkg_swig.m4])
+#m4_include([m4/ax_swig_enable_cxxx.m4])
+#m4_include([m4/ax_swig_multi_module_support.m4])
+#m4_include([m4/ax_swig_python.m4])
+
+################################################################
 ## NSIS Windows Installer
 AC_CHECK_PROG(has_nsis, makensis, true, false)
 if test x"$has_nsis" == "xfalse" ; then
@@ -59,15 +71,20 @@ if test x"$has_nsis" == "xfalse" ; then
 fi
 
 ################################################################
-## Includes
-m4_include([m4/hashdb_mingw_support.m4])
-m4_include([m4/slg_searchdirs.m4])
-m4_include([m4/hashdb_cflags.m4])
+## python 3 for tests
+AM_PATH_PYTHON([3.0.0],, [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
 
 ################################################################
-## python 3 for tests
-AM_PATH_PYTHON([3.0],, [:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
+## Python bindings using SWIG
+## ref. ax_pkg_swig.m4
+## zzzzzzzzzzzzzzzzzzzzzzzz will Python 2.7 be compatible with the above?
+#AC_DISABLE_STATIC
+#AX_PYTHON_DEVEL([2.7.5])
+#AX_PKG_SWIG(2.0.11, [], [ AC_MSG_ERROR([SWIG is required to build Python bindings]) ])
+#AX_SWIG_ENABLE_CXX
+#AX_SWIG_MULTI_MODULE_SUPPORT
+#AX_SWIG_PYTHON
 
 ################################################################
 ## mcheck support

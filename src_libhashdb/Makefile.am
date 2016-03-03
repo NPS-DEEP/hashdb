@@ -38,9 +38,11 @@ liblmdb_la_CFLAGS = \
 	-pthread -O3 -g \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
-liblmdb_la_LDFLAGS = -static -PIC
+#zzliblmdb_la_LDFLAGS = -static -PIC
+liblmdb_la_LDFLAGS = -PIC
 
-libhashdb_la_LDFLAGS = -static -PIC -avoid-version
+#zzlibhashdb_la_LDFLAGS = -static -PIC -avoid-version
+libhashdb_la_LDFLAGS = -PIC -avoid-version
 
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
