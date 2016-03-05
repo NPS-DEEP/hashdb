@@ -114,7 +114,7 @@ namespace hashdb {
    *   command_string - String to put into the new hashdb log.
    *   error_message - Error if request fails.
    *
-   * Returns tuple:
+   * Returns:
    *   True and "" if creation was successful, false and reason if not.
    */
   bool create_hashdb(const std::string& hashdb_dir,
@@ -132,7 +132,7 @@ namespace hashdb {
    *   settings - The hashdb settings.
    *   error_message - Error if request fails.
    *
-   * Returns tuple:
+   * Returns:
    *   True and "" if settings were retrieved, false and reason if not.
    */
   bool read_settings(const std::string& hashdb_dir,
@@ -183,6 +183,7 @@ namespace hashdb {
      *
      * Parameters:
      *   hashdb_dir - Path to the hashdb data store to import into.
+     *   command_string - String to put into the new hashdb log.
      */
     import_manager_t(const std::string& hashdb_dir,
                      const std::string& command_string);
