@@ -82,14 +82,13 @@ class scan_hashes_t {
     }
 
     // scan
-    std::string* expanded_text = new std::string;
-    bool found = manager.find_expanded_hash(block_binary_hash, *expanded_text);
+    std::string expanded_text;
+    bool found = manager.find_expanded_hash(block_binary_hash, expanded_text);
     if (found == true) {
       std::cout << forensic_path << "\t"
                 << block_hashdigest_string << "\t"
-                << *expanded_text << std::endl;
+                << expanded_text << std::endl;
     }
-    delete expanded_text;
   }
  
   scan_hashes_t(const std::string& p_hashdb_dir,

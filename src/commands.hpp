@@ -571,15 +571,14 @@ namespace commands {
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
     // scan
-    std::string* expanded_text = new std::string;
-    bool found = scan_manager.find_expanded_hash(binary_hash, *expanded_text);
+    std::string expanded_text;
+    bool found = scan_manager.find_expanded_hash(binary_hash, expanded_text);
 
     if (found == true) {
-      std::cout << *expanded_text << std::endl;
+      std::cout << expanded_text << std::endl;
     } else {
       std::cout << "Hash not found for '" << hex_block_hash << "'\n";
     }
-    delete expanded_text;
   }
 
   // ************************************************************
@@ -738,7 +737,7 @@ namespace commands {
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                      new hashdb::source_offset_pairs_t;
-    std::string* expanded_text = new std::string;
+    std::string expanded_text;
 
     // iterate over hashdb and set variables for finding duplicates
     bool has_hash;
@@ -750,8 +749,8 @@ namespace commands {
                                   *source_offset_pairs);
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
-        manager.find_expanded_hash(binary_hash, *expanded_text);
-        std::cout << bin_to_hex(binary_hash) << "\t" << *expanded_text << "\n";
+        manager.find_expanded_hash(binary_hash, expanded_text);
+        std::cout << bin_to_hex(binary_hash) << "\t" << expanded_text << "\n";
         any_found = true;
       }
 
@@ -767,7 +766,6 @@ namespace commands {
     }
 
     delete source_offset_pairs;
-    delete expanded_text;
   }
 
   // hash_table
@@ -807,7 +805,7 @@ namespace commands {
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                        new hashdb::source_offset_pairs_t;
-    std::string* expanded_text = new std::string;
+    std::string expanded_text;
 
     // look for hashes that belong to this source
     // get the first hash
@@ -827,8 +825,8 @@ namespace commands {
                        it!= source_offset_pairs->end(); ++it) {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
-          manager.find_expanded_hash(binary_hash, *expanded_text);
-          std::cout << bin_to_hex(binary_hash) << "\t" << *expanded_text
+          manager.find_expanded_hash(binary_hash, expanded_text);
+          std::cout << bin_to_hex(binary_hash) << "\t" << expanded_text
                     << "\n";
           break;
         }
@@ -839,7 +837,6 @@ namespace commands {
       progress_tracker.track_hash_data(*source_offset_pairs);
     }
     delete source_offset_pairs;
-    delete expanded_text;
   }
 
   // ************************************************************
@@ -916,25 +913,23 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // space for match
-    std::string* expanded_text = new std::string;
+    std::string expanded_text;
 
     // scan random hashes where hash values are unlikely to match
     for (uint64_t i=1; i<=count; ++i) {
       std::string binary_hash = random_binary_hash();
 
-      bool found = manager.find_expanded_hash(binary_hash, *expanded_text);
+      bool found = manager.find_expanded_hash(binary_hash, expanded_text);
 
       if (found) {
         std::cout << "Match found, hash "
                   << bin_to_hex(binary_hash)
-                  << ": " << *expanded_text << "\n";
+                  << ": " << expanded_text << "\n";
       }
 
       // update progress tracker
       progress_tracker.track();
     }
-
-    delete expanded_text;
   }
 
   // add_same
@@ -1005,14 +1000,14 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // space for match
-    std::string* expanded_text = new std::string;
+    std::string expanded_text;
 
     // hash to use
     std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
 
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
-      bool found = manager.find_expanded_hash(binary_hash, *expanded_text);
+      bool found = manager.find_expanded_hash(binary_hash, expanded_text);
 
       if (!found) {
         std::cout << "Match not found, hash "
@@ -1023,8 +1018,6 @@ namespace commands {
       // update progress tracker
       progress_tracker.track();
     }
-
-    delete expanded_text;
   }
 }
 
