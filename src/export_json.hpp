@@ -146,7 +146,7 @@ class export_json_t {
   //   "source_offset_pairs":["b9e7...", 4096]}
   void write_block_hash_data(const std::string& cmd, std::ostream& os) {
 
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // hash fields
     uint64_t entropy;

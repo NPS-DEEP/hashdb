@@ -625,7 +625,7 @@ namespace commands {
     print_header("histogram-command-Version: 2", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // total number of hashes in the database
     uint64_t total_hashes = 0;
@@ -719,7 +719,7 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // there is nothing to report if the map is empty
-    if (manager.size() == 0) {
+    if (manager.size_hashes() == 0) {
       std::cout << "The map is empty.\n";
       return;
     }
@@ -728,7 +728,7 @@ namespace commands {
     print_header("duplicates-command-Version: 2", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     bool any_found = false;
 
@@ -798,7 +798,7 @@ namespace commands {
     print_header("hash-table-command-Version: 3", cmd);
 
     // start progress tracker
-    progress_tracker_t progress_tracker(hashdb_dir, manager.size(), cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // space for variables
     uint64_t entropy;

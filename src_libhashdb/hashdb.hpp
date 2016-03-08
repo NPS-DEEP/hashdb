@@ -320,7 +320,7 @@ namespace hashdb {
                             std::string& expanded_text);
 
     /**
-     * Find hash.
+     * Find hash, return pairs in object.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
@@ -337,6 +337,25 @@ namespace hashdb {
                    uint64_t& entropy,
                    std::string& block_label,
                    source_offset_pairs_t& source_offset_pairs) const;
+
+    /**
+     * Find hash, return pairs in JSON string.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *   entropy - A numeric entropy value for the associated block.
+     *   block_label - Text indicating the type of the block or "" for
+     *     no label.
+     *   source_offset_pairs_string - Set of pairs of source hash and file
+     *     offset values as a JSON string.
+     *
+     * Returns:
+     *   True if the hash is present, false if not.
+     */
+    bool find_hash(const std::string& binary_hash,
+                   uint64_t& entropy,
+                   std::string& block_label,
+                   std::string& source_offset_pairs_string) const;
 
     /**
      * Find hash count.  Faster than find_hash.  Accesses the hash
@@ -445,9 +464,14 @@ namespace hashdb {
     std::string sizes() const;
 
     /**
-     * Return the number of unique hashes in the database.
+     * Return the number of hashes.
      */
-    size_t size() const;
+    size_t size_hashes() const;
+
+    /**
+     * Return the number of sources.
+     */
+    size_t size_sources() const;
   };
 
   // ************************************************************

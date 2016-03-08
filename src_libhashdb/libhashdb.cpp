@@ -83,7 +83,7 @@ namespace hashdb {
   // ************************************************************
   // private helper functions
   // ************************************************************
-  // return rapidjson::Value type from a std::string
+  // obtain rapidjson::Value type from a std::string
   static rapidjson::Value v(const std::string& s,
                             rapidjson::Document::AllocatorType& allocator) {
     rapidjson::Value value;
@@ -548,6 +548,7 @@ namespace hashdb {
     return true;
   }
 
+  // find hash, return pairs as source_offset_pairs_t
   bool scan_manager_t::find_hash(
                const std::string& binary_hash,
                uint64_t& entropy,
@@ -604,6 +605,52 @@ namespace hashdb {
     }
   }
 
+  // find hash, return pairs as JSON string
+  bool scan_manager_t::find_hash(
+               const std::string& binary_hash,
+               uint64_t& entropy,
+               std::string& block_label,
+               std::string& source_offset_pairs_string) const {
+    
+    hashdb::source_offset_pairs_t* source_offset_pairs =
+                                        new hashdb::source_offset_pairs_t;
+    bool found_hash = find_hash(binary_hash, entropy, block_label,
+                                *source_offset_pairs);
+
+    if (found_hash) {
+
+      // prepare JSON for sources array
+      rapidjson::Document json_doc;
+      rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+      json_doc.SetArray();
+
+      // put in source offset pairs
+      for (hashdb::source_offset_pairs_t::const_iterator it =
+           source_offset_pairs->begin();
+           it != source_offset_pairs->end(); ++it) {
+
+        // file hash
+        json_doc.PushBack(v(hashdb::to_hex(it->first), allocator), allocator);
+        // file offset
+        json_doc.PushBack(it->second, allocator);
+      }
+
+      // copy JSON text into source_offset_pairs_string
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      json_doc.Accept(writer);
+      source_offset_pairs_string = strbuf.GetString();
+
+    } else {
+      // clear the source offset pairs string
+      source_offset_pairs_string = "";
+    }
+
+    delete source_offset_pairs;
+    return found_hash;
+  }
+
+  // find hash count
   size_t scan_manager_t::find_hash_count(
                                     const std::string& binary_hash) const {
     return lmdb_hash_data_manager->find_count(binary_hash);
@@ -692,8 +739,12 @@ namespace hashdb {
     return ss.str();
   }
 
-  size_t scan_manager_t::size() const {
+  size_t scan_manager_t::size_hashes() const {
     return lmdb_hash_data_manager->size();
+  }
+
+  size_t scan_manager_t::size_sources() const {
+    return lmdb_source_id_manager->size();
   }
 
   // ************************************************************
