@@ -141,9 +141,8 @@ namespace hashdb {
   static hashdb::settings_t private_read_settings(
                                        const std::string& hashdb_dir) {
     hashdb::settings_t settings;
-    std::string error_message;
-    bool did_read = hashdb::read_settings(hashdb_dir, settings, error_message);
-    if (did_read == false) {
+    std::string error_message = hashdb::read_settings(hashdb_dir, settings);
+    if (error_message.size() != 0) {
       std::cerr << "Error: hashdb settings file not read:\n"
                 << error_message << "\nAborting.\n";
       exit(1);
@@ -188,19 +187,17 @@ namespace hashdb {
   // misc support interfaces
   // ************************************************************
   /**
-   * Return true and "" if hashdb is created, false and reason if not.
+   * Return "" if hashdb is created else reason if not.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
    */
-  bool create_hashdb(const std::string& hashdb_dir,
-                     const hashdb::settings_t& settings,
-                     const std::string& command_string,
-                     std::string& error_message) {
+  std::string create_hashdb(const std::string& hashdb_dir,
+                            const hashdb::settings_t& settings,
+                            const std::string& command_string) {
 
     // path must be empty
     if (access(hashdb_dir.c_str(), F_OK) == 0) {
-      error_message = "Path '" + hashdb_dir + "' already exists.";
-      return false;
+      return "Path '" + hashdb_dir + "' already exists.";
     }
 
     // create the new hashdb directory
@@ -211,16 +208,14 @@ namespace hashdb {
     status = mkdir(hashdb_dir.c_str(),0777);
 #endif
     if (status != 0) {
-      error_message = "Unable to create new hashdb database at path '"
+      return "Unable to create new hashdb database at path '"
                      + hashdb_dir + "'.";
-      return false;
     }
 
     // create the settings file
-    bool did_write = hashdb::write_settings(hashdb_dir, settings,
-                                            error_message);
-    if (did_write == false) {
-      return false;
+    std::string error_message = hashdb::write_settings(hashdb_dir, settings);
+    if (error_message.size() != 0) {
+      return error_message;
     }
 
     // create new LMDB stores
@@ -235,8 +230,7 @@ namespace hashdb {
     // create the log
     logger_t(hashdb_dir, command_string);
 
-    error_message = "";
-    return true;
+    return "";
   }
 
   /**
@@ -391,23 +385,20 @@ namespace hashdb {
   }
 
   // insert JSON hash if valid
-  bool import_manager_t::insert_hash_json(
-                          const std::string& json_hash_string,
-                          std::string& error_message) {
+  std::string import_manager_t::insert_hash_json(
+                          const std::string& json_hash_string) {
 
     // open input as a JSON DOM document
     rapidjson::Document document;
     if (document.Parse(json_hash_string.c_str()).HasParseError() ||
         !document.IsObject()) {
-      error_message = "Invalid JSON syntax";
-      return false;
+      return "Invalid JSON syntax";
     }
 
     // block_hash
     if (!document.HasMember("block_hash") ||
                   !document["block_hash"].IsString()) {
-      error_message = "Invalid block_hash field";
-      return false;
+      return "Invalid block_hash field";
     }
     const std::string binary_hash = hashdb::hex_to_bin(
                                        document["block_hash"].GetString());
@@ -418,8 +409,7 @@ namespace hashdb {
       if (document["entropy"].IsUint64()) {
         entropy = document["entropy"].GetUint64();
       } else {
-        error_message = "Invalid entropy field";
-        return false;
+        return "Invalid entropy field";
       }
     }
 
@@ -429,16 +419,14 @@ namespace hashdb {
       if (document["block_label"].IsString()) {
         block_label = document["block_label"].GetString();
       } else {
-        error_message = "Invalid block_label field";
-        return false;
+        return "Invalid block_label field";
       }
     }
 
     // source_offset_pairs:[]
     if (!document.HasMember("source_offset_pairs") ||
                   !document["source_offset_pairs"].IsArray()) {
-      error_message = "Invalid source_offset_pairs field";
-      return false;
+      return "Invalid source_offset_pairs field";
     }
     const rapidjson::Value& json_pairs = document["source_offset_pairs"];
     hashdb::source_offset_pairs_t* pairs = new hashdb::source_offset_pairs_t;
@@ -446,18 +434,16 @@ namespace hashdb {
 
       // source hash
       if (!json_pairs[i].IsString()) {
-        error_message = "Invalid source hash in source_offset_pair";
         delete pairs;
-        return false;
+        return "Invalid source hash in source_offset_pair";
       }
       const std::string file_binary_hash = hashdb::hex_to_bin(
                                                  json_pairs[i].GetString());
 
       // file offset
       if (!json_pairs[i+1].IsUint64()) {
-        error_message = "Invalid file offset in source_offset_pair";
         delete pairs;
-        return false;
+        return "Invalid file offset in source_offset_pair";
       }
       const uint64_t file_offset = json_pairs[i+1].GetUint64();
 
@@ -473,28 +459,24 @@ namespace hashdb {
     }
 
     delete pairs;
-    error_message = "";
-    return true;
+    return "";
   }
 
   // insert json source if valid
-  bool import_manager_t::insert_source_json(
-                          const std::string& json_source_string,
-                          std::string& error_message) {
+  std::string import_manager_t::insert_source_json(
+                          const std::string& json_source_string) {
 
     // open input as a JSON DOM document
     rapidjson::Document document;
     if (document.Parse(json_source_string.c_str()).HasParseError() ||
         !document.IsObject()) {
-      error_message = "Invalid JSON syntax";
-      return false;
+      return "Invalid JSON syntax";
     }
 
     // parse file_hash
     if (!document.HasMember("file_hash") ||
                   !document["file_hash"].IsString()) {
-      error_message = "Invalid file_hash field";
-      return false;
+      return "Invalid file_hash field";
     }
     const std::string file_binary_hash = hashdb::hex_to_bin(
                                      document["file_hash"].GetString());
@@ -502,8 +484,7 @@ namespace hashdb {
     // parse filesize
     if (!document.HasMember("filesize") ||
                   !document["filesize"].IsUint64()) {
-      error_message = "Invalid filesize field";
-      return false;
+      return "Invalid filesize field";
     }
     const uint64_t filesize = document["filesize"].GetUint64();
 
@@ -517,8 +498,7 @@ namespace hashdb {
       if (document["file_type"].IsString()) {
         file_type = document["file_type"].GetString();
       } else {
-        error_message = "Invalid file_type field";
-        return false;
+        return "Invalid file_type field";
       }
     }
 
@@ -528,16 +508,14 @@ namespace hashdb {
       if (document["nonprobative_count"].IsUint64()) {
         nonprobative_count = document["nonprobative_count"].GetUint64();
       } else {
-        error_message = "Invalid nonprobative_count field";
-        return false;
+        return "Invalid nonprobative_count field";
       }
     }
 
     // parse name_pairs:[]
     if (!document.HasMember("name_pairs") ||
                   !document["name_pairs"].IsArray()) {
-      error_message = "Invalid name_pairs field";
-      return false;
+      return "Invalid name_pairs field";
     }
     const rapidjson::Value& json_names = document["name_pairs"];
     hashdb::source_names_t* names = new hashdb::source_names_t;
@@ -545,17 +523,15 @@ namespace hashdb {
 
       // parse repository name
       if (!json_names[i].IsString()) {
-        error_message = "Invalid repository name in name_pairs field";
         delete names;
-        return false;
+        return "Invalid repository name in name_pairs field";
       }
       const std::string repository_name = json_names[i].GetString();
 
       // parse filename
       if (!json_names[i+1].IsString()) {
-        error_message = "Invalid filename in name_pairs field";
         delete names;
-        return false;
+        return "Invalid filename in name_pairs field";
       }
       const std::string filename = json_names[i+1].GetString();
 
@@ -572,8 +548,7 @@ namespace hashdb {
     }
 
     delete names;
-    error_message = "";
-    return true;
+    return "";
   }
 
   std::string import_manager_t::sizes() const {
@@ -630,6 +605,8 @@ namespace hashdb {
     delete sources;
   }
 
+  // may return [] if cached else "" if no hash.
+  //
   // Example abbreviated syntax:
   // {
   //   "entropy": 8,
@@ -644,11 +621,8 @@ namespace hashdb {
   //   }],
   //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
   // }
-  bool scan_manager_t::find_expanded_hash(const std::string& binary_hash,
-                                          std::string& expanded_text) {
-
-    // clear any existing text
-    expanded_text.clear();
+  std::string scan_manager_t::find_expanded_hash(
+                                        const std::string& binary_hash) {
 
     // fields to hold the scan
     uint64_t entropy;
@@ -663,13 +637,13 @@ namespace hashdb {
     // done if no match
     if (matched == false) {
       delete source_offset_pairs;
-      return false;
+      return "";
     }
 
     // done if matched before
     if (hashes->find(binary_hash) != hashes->end()) {
       delete source_offset_pairs;
-      return true;
+      return "{}";
     }
 
     // remember this hash match to skip it later
@@ -723,17 +697,15 @@ namespace hashdb {
       // file offset
       json_pairs.PushBack(it->second, allocator);
     }
+    delete source_offset_pairs;
 
     json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
 
-    // copy JSON text
+    // return JSON text
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
     json_doc.Accept(writer);
-    expanded_text = strbuf.GetString();
-
-    delete source_offset_pairs;
-    return true;
+    return strbuf.GetString();
   }
 
   // find hash, return pairs as source_offset_pairs_t
@@ -794,9 +766,8 @@ namespace hashdb {
   }
 
   // find hash, return result as JSON string
-  bool scan_manager_t::find_hash_json(
-               const std::string& binary_hash,
-               std::string& json_hash_string) const {
+  std::string scan_manager_t::find_hash_json(
+               const std::string& binary_hash) const {
 
     // hash fields
     uint64_t entropy;
@@ -808,6 +779,7 @@ namespace hashdb {
     bool found_hash = find_hash(binary_hash, entropy, block_label,
                                 *source_offset_pairs);
 
+    std::string json_hash_string;
     if (found_hash) {
 
       // prepare JSON
@@ -847,7 +819,7 @@ namespace hashdb {
     }
 
     delete source_offset_pairs;
-    return found_hash;
+    return json_hash_string;
   }
 
   // find hash count
@@ -910,9 +882,8 @@ namespace hashdb {
   }
 
   // find source, return result as JSON string
-  bool scan_manager_t::find_source_json(
-                               const std::string& file_binary_hash,
-                               std::string& json_source_string) const {
+  std::string scan_manager_t::find_source_json(
+                               const std::string& file_binary_hash) const {
 
     // source fields
     uint64_t filesize;
@@ -928,7 +899,7 @@ namespace hashdb {
     bool has_source = find_source_data(file_binary_hash, filesize,
                                        file_type, nonprobative_count);
     if (!has_source) {
-      return false;
+      return "";
     }
 
     // source found
@@ -964,9 +935,7 @@ namespace hashdb {
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
     json_doc.Accept(writer);
-    json_source_string = strbuf.GetString();
-
-    return true;
+    return strbuf.GetString();
   }
 
   bool scan_manager_t::hash_begin(std::string& binary_hash) const {

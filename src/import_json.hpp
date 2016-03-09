@@ -106,15 +106,14 @@ class import_json_t {
       }
 
       // import JSON
-      std::string error_message;
       if (document.HasMember("file_hash")) {
-        bool did_insert = manager.insert_source_json(line, error_message);
-        if (!did_insert) {
+        std::string error_message = manager.insert_source_json(line);
+        if (error_message.size() != 0) {
           report_invalid_line(error_message, line);
         }
       } else if (document.HasMember("block_hash")) {
-        bool did_insert = manager.insert_hash_json(line, error_message);
-        if (!did_insert) {
+        std::string error_message = manager.insert_hash_json(line);
+        if (error_message.size() != 0) {
           report_invalid_line(error_message, line);
         }
       } else {

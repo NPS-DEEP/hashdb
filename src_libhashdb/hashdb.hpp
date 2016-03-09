@@ -112,32 +112,28 @@ namespace hashdb {
    *     exist yet.
    *   settings - The hashdb settings.
    *   command_string - String to put into the new hashdb log.
-   *   error_message - Error if request fails.
    *
    * Returns:
-   *   True and "" if creation was successful, false and reason if not.
+   *   "" if successful else reason if not.
    */
-  bool create_hashdb(const std::string& hashdb_dir,
-                     const hashdb::settings_t& settings,
-                     const std::string& command_string,
-                     std::string& error_message);
+  std::string create_hashdb(const std::string& hashdb_dir,
+                            const hashdb::settings_t& settings,
+                            const std::string& command_string);
 
   /**
-   * Return hashdb settings else false and reason.
+   * Return hashdb settings else reason for failure.
    * The current implementation may abort if something worse than a simple
    * path problem happens.
    *
    * Parameters:
    *   hashdb_dir - Path to the database to obtain the settings of.
    *   settings - The hashdb settings.
-   *   error_message - Error if request fails.
    *
    * Returns:
    *   True and "" if settings were retrieved, false and reason if not.
    */
-  bool read_settings(const std::string& hashdb_dir,
-                     hashdb::settings_t& settings,
-                     std::string& error_message);
+  std::string read_settings(const std::string& hashdb_dir,
+                            hashdb::settings_t& settings);
 
   /**
    * Print environment information to the stream.  Specifically, print
@@ -259,13 +255,10 @@ namespace hashdb {
      *      "source_offset_pairs": ["b9e7...", 4096]
      *    }
      *
-     *   error_message - Error if request fails.
-     *
      * Returns:
-     *   True if the hash is present, false and "" if not.
+     *   "" else error message if JSON is invalid.
      */
-    bool insert_hash_json(const std::string& json_hash_string,
-                          std::string& error_message);
+    std::string insert_hash_json(const std::string& json_hash_string);
 
     /**
      * Insert source information from JSON record.
@@ -281,13 +274,10 @@ namespace hashdb {
      *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
      *       }
      *
-     *   error_message - Error if request fails.
-     *
      * Returns:
-     *   True if the hash is present, false and "" if not.
+     *   "" else error message if JSON is invalid.
      */
-    bool insert_source_json(const std::string& json_source_string,
-                            std::string& error_message);
+    std::string insert_source_json(const std::string& json_source_string);
 
     /**
      * Returns sizes of LMDB databases in the data store.
@@ -370,8 +360,7 @@ namespace hashdb {
      * Returns:
      *   True if the hash is present, false if not.
      */
-    bool find_expanded_hash(const std::string& binary_hash,
-                            std::string& expanded_text);
+    std::string find_expanded_hash(const std::string& binary_hash);
 
     /**
      * Find hash, return pairs in object.
@@ -393,7 +382,7 @@ namespace hashdb {
                    source_offset_pairs_t& source_offset_pairs) const;
 
     /**
-     * Find hash, return JSON string else false and "".
+     * Find hash, return JSON string else "" if not there.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
@@ -407,13 +396,12 @@ namespace hashdb {
      *    }
      *
      * Returns:
-     *   True if the hash is present, false and "" if not.
+     *   JSON text if hash is present, false and "" if not.
      */
-    bool find_hash_json(const std::string& binary_hash,
-                        std::string& json_hash_string) const;
+    std::string find_hash_json(const std::string& binary_hash) const;
 
     /**
-     * Find source, return JSON string else false and "".
+     * Find source, return JSON string else "" if not there.
      *
      * Parameters:
      *   file_binary_hash - The file hash in binary form.
@@ -428,10 +416,9 @@ namespace hashdb {
      *       }
      *
      * Returns:
-     *   True if the source is present, false and "" if not.
+     *   JSON text if source is present, false and "" if not.
      */
-    bool find_source_json(const std::string& json_source_string,
-                          std::string& error_message) const;
+    std::string find_source_json(const std::string& json_source_string) const;
 
     /**
      * Find hash count.  Faster than find_hash.  Accesses the hash

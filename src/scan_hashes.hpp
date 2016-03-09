@@ -81,9 +81,8 @@ class scan_hashes_t {
     }
 
     // scan
-    std::string expanded_text;
-    bool found = manager.find_expanded_hash(block_binary_hash, expanded_text);
-    if (found == true) {
+    std::string expanded_text = manager.find_expanded_hash(block_binary_hash);
+    if (expanded_text.size() != 0) {
       std::cout << forensic_path << "\t"
                 << block_hashdigest_string << "\t"
                 << expanded_text << std::endl;

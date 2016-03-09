@@ -90,12 +90,11 @@ class export_json_t {
     while (has_source == true) {
 
       // get source data
-      std::string json_source_string;
-      bool has_json = manager.find_source_json(file_binary_hash,
-                                               json_source_string);
+      std::string json_source_string = manager.find_source_json(
+                                                       file_binary_hash);
 
       // program error
-      if (!has_json) {
+      if (json_source_string.size() == 0) {
         assert(0);
       }
 
@@ -118,11 +117,10 @@ class export_json_t {
     while (has_hash) {
 
       // get hash data
-      std::string json_hash_string;
-      bool has_json = manager.find_hash_json(binary_hash, json_hash_string);
+      std::string json_hash_string = manager.find_hash_json(binary_hash);
 
       // program error
-      if (!has_json) {
+      if (json_hash_string.size() == 0) {
         assert(0);
       }
 

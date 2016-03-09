@@ -51,29 +51,27 @@ void create_if_new(const std::string& hashdb_dir,
                    const std::string& from_hashdb_dir,
                    const std::string& command_string) {
 
-  bool is_success;
   std::string error_message;
   hashdb::settings_t settings;
 
   // try to read hashdb_dir settings
-  is_success = hashdb::read_settings(hashdb_dir, settings, error_message);
-  if (is_success) {
+  error_message = hashdb::read_settings(hashdb_dir, settings);
+  if (error_message.size() == 0) {
     // hashdb_dir already exists
     return;
   }
 
   // no hashdb_dir, so read from_hashdb_dir settings
-  is_success = hashdb::read_settings(from_hashdb_dir, settings, error_message);
-  if (!is_success) {
+  error_message = hashdb::read_settings(from_hashdb_dir, settings);
+  if (error_message.size() != 0) {
     // bad since from_hashdb_dir is not valid
     std::cout << "Error: " << error_message << "\n";
     exit(1);
   }
 
   // create hashdb_dir using from_hashdb_dir settings
-  is_success = hashdb::create_hashdb(hashdb_dir, settings, command_string,
-                                                              error_message);
-  if (!is_success) {
+  error_message = hashdb::create_hashdb(hashdb_dir, settings, command_string);
+  if (error_message.size() != 0) {
     // bad since from_hashdb_dir is not valid
     std::cout << "Error: " << error_message << "\n";
     exit(1);
@@ -82,11 +80,10 @@ void create_if_new(const std::string& hashdb_dir,
 
 // require hashdb_dir else fail
 static void require_hashdb_dir(const std::string& hashdb_dir) {
-  bool is_success;
   std::string error_message;
   hashdb::settings_t settings;
-  is_success = hashdb::read_settings(hashdb_dir, settings, error_message);
-  if (!is_success) {
+  error_message = hashdb::read_settings(hashdb_dir, settings);
+  if (error_message.size() != 0) {
     std::cout << "Error: " << error_message << "\n";
     exit(1);
   }
@@ -121,12 +118,10 @@ namespace commands {
               const hashdb::settings_t& settings,
               const std::string& cmd) {
 
-    bool is_success;
     std::string error_message;
-    is_success = hashdb::create_hashdb(hashdb_dir, settings, cmd,
-                                                    error_message);
+    error_message = hashdb::create_hashdb(hashdb_dir, settings, cmd);
 
-    if (is_success) {
+  if (error_message.size() == 0) {
       std::cout << "New database created.\n";
     } else {
       std::cout << "Error: " << error_message << "\n";
@@ -583,10 +578,9 @@ namespace commands {
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
     // scan
-    std::string expanded_text;
-    bool found = scan_manager.find_expanded_hash(binary_hash, expanded_text);
+    std::string expanded_text = scan_manager.find_expanded_hash(binary_hash);
 
-    if (found == true) {
+    if (expanded_text.size() != 0) {
       std::cout << expanded_text << std::endl;
     } else {
       std::cout << "Hash not found for '" << hex_block_hash << "'\n";
@@ -749,7 +743,6 @@ namespace commands {
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                      new hashdb::source_offset_pairs_t;
-    std::string expanded_text;
 
     // iterate over hashdb and set variables for finding duplicates
     bool has_hash;
@@ -761,7 +754,7 @@ namespace commands {
                                   *source_offset_pairs);
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
-        manager.find_expanded_hash(binary_hash, expanded_text);
+        std::string expanded_text = manager.find_expanded_hash(binary_hash);
         std::cout << hashdb::bin_to_hex(binary_hash) << "\t"
                   << expanded_text << "\n";
         any_found = true;
@@ -818,7 +811,6 @@ namespace commands {
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                        new hashdb::source_offset_pairs_t;
-    std::string expanded_text;
 
     // look for hashes that belong to this source
     // get the first hash
@@ -838,7 +830,7 @@ namespace commands {
                        it!= source_offset_pairs->end(); ++it) {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
-          manager.find_expanded_hash(binary_hash, expanded_text);
+          std::string expanded_text = manager.find_expanded_hash(binary_hash);
           std::cout << hashdb::bin_to_hex(binary_hash) << "\t" << expanded_text
                     << "\n";
           break;
@@ -868,10 +860,8 @@ namespace commands {
 
     // get sector size
     hashdb::settings_t settings;
-    std::string error_message;
-    bool is_success = hashdb::read_settings(hashdb_dir, settings,
-                                            error_message);
-    if (!is_success) {
+    std::string error_message = hashdb::read_settings(hashdb_dir, settings);
+    if (error_message.size() != 0) {
       std::cout << "Error: " << error_message << "\n";
       exit(1);
     }
@@ -925,16 +915,13 @@ namespace commands {
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
-    // space for match
-    std::string expanded_text;
-
     // scan random hashes where hash values are unlikely to match
     for (uint64_t i=1; i<=count; ++i) {
       std::string binary_hash = random_binary_hash();
 
-      bool found = manager.find_expanded_hash(binary_hash, expanded_text);
+      std::string expanded_text = manager.find_expanded_hash(binary_hash);
 
-      if (found) {
+      if (expanded_text.size() != 0) {
         std::cout << "Match found, hash "
                   << hashdb::bin_to_hex(binary_hash)
                   << ": " << expanded_text << "\n";
@@ -959,10 +946,8 @@ namespace commands {
 
     // get sector size
     hashdb::settings_t settings;
-    std::string error_message;
-    bool is_success = hashdb::read_settings(hashdb_dir, settings,
-                                            error_message);
-    if (!is_success) {
+    std::string error_message = hashdb::read_settings(hashdb_dir, settings);
+    if (error_message.size() != 0) {
       std::cout << "Error: " << error_message << "\n";
       exit(1);
     }
@@ -1013,18 +998,15 @@ namespace commands {
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
-    // space for match
-    std::string expanded_text;
-
     // hash to use
     std::string binary_hash =
                hashdb::hex_to_bin("8000000000000000000000000000000000");
 
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
-      bool found = manager.find_expanded_hash(binary_hash, expanded_text);
+      std::string expanded_text = manager.find_expanded_hash(binary_hash);
 
-      if (!found) {
+      if (expanded_text.size() == 0) {
         std::cout << "Match not found, hash "
                   << hashdb::bin_to_hex(binary_hash)
                   << ": " << expanded_text << "\n";
