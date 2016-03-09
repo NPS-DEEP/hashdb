@@ -749,9 +749,9 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
   }
 
   /**
-   * Return first hash else "" and false.
+   * Return first hash else "".
    */
-  bool find_begin(std::string& binary_hash) const {
+  std::string first_hash() const {
 
     // get context
     hashdb::lmdb_context_t context(env, false, true);
@@ -766,33 +766,30 @@ print_mdb_val("hash_data_manager find_begin key", context.key);
 print_mdb_val("hash_data_manager find_begin data", context.data);
 #endif
       // return the key
-      binary_hash = std::string(static_cast<char*>(context.key.mv_data),
-                                                     context.key.mv_size);
+      std::string binary_hash = std::string(
+                static_cast<char*>(context.key.mv_data), context.key.mv_size);
       context.close();
-      return true;
+      return binary_hash;
 
     } else if (rc == MDB_NOTFOUND) {
       // no hash
       context.close();
-      binary_hash = "";
-      return false;
+      return "";
 
     } else {
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
-      binary_hash = "";
-      return false; // for mingw
+      return ""; // for mingw
     }
   }
 
   /**
-   * Return next hash else "" and false.  Error if no next.
+   * Return next hash else "".  Error if no next.
    */
-  bool find_next(const std::string& last_binary_hash,
-                 std::string& binary_hash) const {
+  std::string next_hash(const std::string& binary_hash) const {
 
-    if (last_binary_hash == "") {
+    if (binary_hash == "") {
       // program error to ask for next when at end
       std::cerr << "find_next: already at end\n";
       assert(0);
@@ -803,9 +800,9 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
     context.open();
 
     // set the cursor to last hash
-    context.key.mv_size = last_binary_hash.size();
+    context.key.mv_size = binary_hash.size();
     context.key.mv_data =
-             static_cast<void*>(const_cast<char*>(last_binary_hash.c_str()));
+             static_cast<void*>(const_cast<char*>(binary_hash.c_str()));
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
@@ -822,8 +819,7 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
     if (rc == MDB_NOTFOUND) {
       // no values for this hash
       context.close();
-      binary_hash = "";
-      return false;
+      return "";
 
     } else if (rc == 0) {
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
@@ -831,18 +827,17 @@ print_mdb_val("hash_data_manager find_next key", context.key);
 print_mdb_val("hash_data_manager find_next data", context.data);
 #endif
 
-      // return this hash
-      binary_hash = std::string(static_cast<char*>(context.key.mv_data),
-                                                        context.key.mv_size);
+      // return the next hash
+      std::string next_binary_hash = std::string(
+               static_cast<char*>(context.key.mv_data), context.key.mv_size);
       context.close();
-      return true;
+      return next_binary_hash;
 
     } else {
       // invalid rc
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);
-      binary_hash = "";
-      return false;
+      return "";
     }
   }
 

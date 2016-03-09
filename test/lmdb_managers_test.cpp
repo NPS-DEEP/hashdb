@@ -370,16 +370,11 @@ void lmdb_hash_data_manager() {
   count = manager.insert(binary_1, 2, 4096, 4, "bl4", changes);
   TEST_EQ(count, 1);
   TEST_EQ(changes.hash_data_data_inserted, 2);
-  std::string binary_hash;
-  bool did_find;
-  did_find = manager.find_begin(binary_hash);
-  TEST_EQ(did_find, true);
+  std::string binary_hash = manager.first_hash();
   TEST_EQ(binary_hash, binary_0)
-  did_find = manager.find_next(binary_hash, binary_hash);
-  TEST_EQ(did_find, true);
+  binary_hash = manager.next_hash(binary_hash);
   TEST_EQ(binary_hash, binary_1)
-  did_find = manager.find_next(binary_hash, binary_hash);
-  TEST_EQ(did_find, false);
+  binary_hash = manager.next_hash(binary_hash);
   TEST_EQ(binary_hash, "")
 
   // size
@@ -537,8 +532,7 @@ void lmdb_source_id_manager() {
   hashdb::lmdb_source_id_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 
   // iterator when empty
-  did_find = manager.find_begin(file_binary_hash);
-  TEST_EQ(did_find, false);
+  file_binary_hash = manager.first_source();
   TEST_EQ(file_binary_hash, "");
 
   // search when empty
@@ -568,17 +562,13 @@ void lmdb_source_id_manager() {
   TEST_EQ(source_id, 2);
   did_insert = manager.insert(binary_1, changes, source_id);
   TEST_EQ(source_id, 3);
-  did_find = manager.find_begin(file_binary_hash);
-  TEST_EQ(did_find, true);
+  file_binary_hash = manager.first_source();
   TEST_EQ(file_binary_hash, binary_0);
-  did_find = manager.find_next(file_binary_hash, file_binary_hash);
-  TEST_EQ(did_find, true);
+  file_binary_hash = manager.next_source(file_binary_hash);
   TEST_EQ(file_binary_hash, binary_1);
-  did_find = manager.find_next(file_binary_hash, file_binary_hash);
-  TEST_EQ(did_find, true);
+  file_binary_hash = manager.next_source(file_binary_hash);
   TEST_EQ(file_binary_hash, binary_2);
-  did_find = manager.find_next(file_binary_hash, file_binary_hash);
-  TEST_EQ(did_find, false);
+  file_binary_hash = manager.next_source(file_binary_hash);
   TEST_EQ(file_binary_hash, "");
 }
 

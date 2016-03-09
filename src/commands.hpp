@@ -231,13 +231,11 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b);
 
     // add data for binary_hash from A to B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
       // add the hash
       adder.add(binary_hash);
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -280,10 +278,8 @@ namespace commands {
                     it != hashdb_dirs.end(); ++it) {
       std::string hashdb_dir = *it;
       hashdb::scan_manager_t* producer = new hashdb::scan_manager_t(hashdb_dir);
-      bool has_hash;
-      std::string binary_hash;
-      has_hash = producer->hash_begin(binary_hash);
-      if (has_hash) {
+      std::string binary_hash = producer->first_hash();
+      if (binary_hash.size() != 0) {
         // the producer is not empty, so enqueue it
         // create the adder
         adder_t* adder = new adder_t(producer, &consumer);
@@ -307,14 +303,12 @@ namespace commands {
       adder->add(it->first);
 
       // get the next hash from this producer
-      bool has_hash;
-      std::string binary_hash;
-      has_hash = producer->hash_next(it->first, binary_hash);
+      std::string binary_hash = producer->next_hash(it->first);
 
       // remove this hash, producer_t entry
       ordered_producers.erase(it);
 
-      if (has_hash) {
+      if (binary_hash.size() != 0) {
         // hash exists so add the hash, producer, and adder
         ordered_producers.insert(ordered_producers_value_t(binary_hash,
                                       producer_t(producer, adder)));
@@ -342,13 +336,11 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
       // add the hash
       adder.add_repository(binary_hash);
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -370,10 +362,8 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to intersect A and B into C
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
 
       // intersect if hash is in B
       size_t count = manager_b.find_hash_count(binary_hash);
@@ -382,7 +372,7 @@ namespace commands {
         adder_set.intersect(binary_hash);
       }
 
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -404,10 +394,8 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to intersect_hash A and B into C
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
 
       // intersect if hash is in B
       size_t count = manager_b.find_hash_count(binary_hash);
@@ -416,7 +404,7 @@ namespace commands {
         adder_set.intersect_hash(binary_hash);
       }
 
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -438,15 +426,13 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to add A to C if A hash and source not in B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
 
       // add A to C if A hash and source not in B
       adder_set.subtract(binary_hash);
 
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -468,15 +454,13 @@ namespace commands {
     adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
 
     // iterate A to add A to C if A hash not in B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
 
       // add A to C if A hash not in B
       adder_set.subtract_hash(binary_hash);
 
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -496,13 +480,11 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
       // add the hash
       adder.add_non_repository(binary_hash);
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -521,13 +503,11 @@ namespace commands {
     adder_t adder(&manager_a, &manager_b);
 
     // add data for binary_hash from A to B
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager_a.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
       // add the hash
       adder.copy_unique(binary_hash);
-      has_hash = manager_a.hash_next(binary_hash, binary_hash);
+      binary_hash = manager_a.next_hash(binary_hash);
     }
   }
 
@@ -650,16 +630,14 @@ namespace commands {
                                         new hashdb::source_offset_pairs_t;
 
     // iterate over hashdb and set variables for calculating the histogram
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager.hash_begin(binary_hash);
+    std::string binary_hash = manager.first_hash();
 
     // note if the DB is empty
-    if (has_hash == false) {
+    if (binary_hash.size() == 0) {
       std::cout << "The map is empty.\n";
     }
 
-    while (has_hash) {
+    while (binary_hash.size() != 0) {
       manager.find_hash(binary_hash, entropy, block_label,
                             *source_offset_pairs);
       uint64_t count = source_offset_pairs->size();
@@ -689,7 +667,7 @@ namespace commands {
       }
 
       // move forward
-      has_hash = manager.hash_next(binary_hash, binary_hash);
+      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
     }
 
@@ -745,11 +723,9 @@ namespace commands {
                                      new hashdb::source_offset_pairs_t;
 
     // iterate over hashdb and set variables for finding duplicates
-    bool has_hash;
-    std::string binary_hash;
-    has_hash = manager.hash_begin(binary_hash);
+    std::string binary_hash = manager.first_hash();
 
-    while (has_hash) {
+    while (binary_hash.size() != 0) {
       manager.find_hash(binary_hash, entropy, block_label,
                                   *source_offset_pairs);
       if (source_offset_pairs->size() == number) {
@@ -761,7 +737,7 @@ namespace commands {
       }
 
       // move forward
-      has_hash = manager.hash_next(binary_hash, binary_hash);
+      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
     }
 
@@ -814,11 +790,8 @@ namespace commands {
 
     // look for hashes that belong to this source
     // get the first hash
-    bool has_hash;
-    std::string binary_hash;
-
-    has_hash = manager.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager.first_hash();
+    while (binary_hash.size() != 0) {
 
       // read hash data for the hash
       manager.find_hash(binary_hash, entropy, block_label,
@@ -838,7 +811,7 @@ namespace commands {
       }
 
       // move forward
-      has_hash = manager.hash_next(binary_hash, binary_hash);
+      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
     }
     delete source_offset_pairs;

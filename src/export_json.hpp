@@ -85,9 +85,8 @@ class export_json_t {
   //   "repo2","f2"]
   void write_source_data(std::ostream& os) {
 
-    std::string file_binary_hash;
-    bool has_source = manager.source_begin(file_binary_hash);
-    while (has_source == true) {
+    std::string file_binary_hash = manager.first_source();
+    while (file_binary_hash.size() != 0) {
 
       // get source data
       std::string json_source_string = manager.find_source_json(
@@ -101,7 +100,7 @@ class export_json_t {
       os << json_source_string << "\n";
 
       // next
-      has_source = manager.source_next(file_binary_hash, file_binary_hash);
+      file_binary_hash = manager.next_source(file_binary_hash);
     }
   }
 
@@ -112,9 +111,8 @@ class export_json_t {
 
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
-    std::string binary_hash;
-    bool has_hash = manager.hash_begin(binary_hash);
-    while (has_hash) {
+    std::string binary_hash = manager.first_hash();
+    while (binary_hash.size() != 0) {
 
       // get hash data
       std::string json_hash_string = manager.find_hash_json(binary_hash);
@@ -128,7 +126,7 @@ class export_json_t {
 
       // next
       progress_tracker.track_hash_data(manager.find_hash_count(binary_hash));
-      has_hash = manager.hash_next(binary_hash, binary_hash);
+      binary_hash = manager.next_hash(binary_hash);
     }
   }
 

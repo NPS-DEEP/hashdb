@@ -938,23 +938,21 @@ namespace hashdb {
     return strbuf.GetString();
   }
 
-  bool scan_manager_t::hash_begin(std::string& binary_hash) const {
-    return lmdb_hash_data_manager->find_begin(binary_hash);
+  std::string scan_manager_t::first_hash() const {
+    return lmdb_hash_data_manager->first_hash();
   }
 
-  bool scan_manager_t::hash_next(const std::string& last_binary_hash,
-                                 std::string& binary_hash) const {
-    return lmdb_hash_data_manager->find_next(last_binary_hash, binary_hash);
+  std::string scan_manager_t::next_hash(const std::string& binary_hash) const {
+    return lmdb_hash_data_manager->next_hash(binary_hash);
   }
 
-  bool scan_manager_t::source_begin(std::string& file_binary_hash) const {
-    return lmdb_source_id_manager->find_begin(file_binary_hash);
+  std::string scan_manager_t::first_source() const {
+    return lmdb_source_id_manager->first_source();
   }
 
-  bool scan_manager_t::source_next(const std::string& last_file_binary_hash,
-                                   std::string& file_binary_hash) const {
-    return lmdb_source_id_manager->find_next(last_file_binary_hash,
-                                             file_binary_hash);
+  std::string scan_manager_t::next_source(
+                                 const std::string& file_binary_hash) const {
+    return lmdb_source_id_manager->next_source(file_binary_hash);
   }
 
   std::string scan_manager_t::sizes() const {

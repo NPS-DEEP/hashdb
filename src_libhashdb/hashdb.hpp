@@ -473,13 +473,10 @@ namespace hashdb {
     /**
      * Return the first block hash in the database.
      *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *
      * Returns:
-     *   True if a first hash is available, false and "" if DB is empty.
+     *   binary_hash if a first hash is available else "" if DB is empty.
      */
-    bool hash_begin(std::string& binary_hash) const;
+    std::string first_hash() const;
 
     /**
      * Return the next block hash in the database.  Error if last hash
@@ -487,25 +484,20 @@ namespace hashdb {
      *
      * Parameters:
      *   last_binary_hash - The previous block hash in binary form.
-     *   binary_hash - The block hash in binary form.
      *
      * Returns:
-     *   True if hash is available, false and "" if at end of DB.
+     *   binary_hash if a next hash is available else "" if at end.
      */
-    bool hash_next(const std::string& last_binary_hash,
-                   std::string& binary_hash) const;
-
+    std::string next_hash(const std::string& binary_hash) const;
 
     /**
-     * Return the first source in the database.
-     *
-     * Parameters:
-     *   file_binary_hash - The source file hash in binary form.
+     * Return the file_binary_hash of the first source in the database.
      *
      * Returns:
-     *   True if source is available, false and "" if DB is empty.
+     *   file_binary_hash if a first source is available else "" if DB
+     *   is empty.
      */
-    bool source_begin(std::string& file_binary_hash) const;
+    std::string first_source() const;
 
     /**
      * Return the next source in the database.  Error if last_file_binary_hash
@@ -513,13 +505,11 @@ namespace hashdb {
      *
      * Parameters:
      *   last_file_binary_hash - The previous source file hash in binary form.
-     *   file_binary_hash - The source file hash in binary form.
      *
      * Returns:
-     *   True if source is available, false and "" if at end of DB.
+     *   file_binary_hash if a next source is available else "" if at end.
      */
-    bool source_next(const std::string& last_file_binary_hash,
-                     std::string& file_binary_hash) const;
+    std::string next_source(const std::string& file_binary_hash) const;
 
     /**
      * Return sizes of LMDB databases in JSON format.
