@@ -32,7 +32,6 @@
 #include <sstream>
 #include "../src_libhashdb/hashdb.hpp"
 #include "progress_tracker.hpp"
-#include "hex_helper.hpp"
 
 class scan_hashes_t {
   private:
@@ -74,7 +73,7 @@ class scan_hashes_t {
 
     // get block hash
     std::string block_hashdigest_string = line.substr(tab_index1+1);
-    std::string block_binary_hash = hex_to_bin(block_hashdigest_string);
+    std::string block_binary_hash = hashdb::hex_to_bin(block_hashdigest_string);
     if (block_binary_hash == "") {
       std::cerr << "Invalid block hash on line " << line_number
                 << ": '" << line << "'\n";

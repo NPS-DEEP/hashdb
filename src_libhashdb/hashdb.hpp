@@ -146,6 +146,17 @@ namespace hashdb {
    */
   void print_environment(const std::string& command_line, std::ostream& os);
 
+  /**
+   * Return binary string or empty if hexdigest length is not even
+   * or has any invalid digits.
+   */
+  std::string hex_to_bin(const std::string& hex_string);
+
+  /**
+   * Return hexadecimal representation of the binary string.
+   */
+  std::string bin_to_hex(const std::string& binary_hash);
+
   // ************************************************************
   // import
   // ************************************************************
@@ -234,6 +245,49 @@ namespace hashdb {
                      const uint64_t file_offset,
                      const uint64_t entropy,
                      const std::string& block_label);
+
+    /**
+     * Insert hash information from JSON record.
+     *
+     * Parameters:
+     *   json_hash_string - Hash text in JSON format.  Example syntax:
+     *
+     *    {
+     *      "block_hash": "a7df...",
+     *      "entropy": 8,
+     *      "block_label": "W",
+     *      "source_offset_pairs": ["b9e7...", 4096]
+     *    }
+     *
+     *   error_message - Error if request fails.
+     *
+     * Returns:
+     *   True if the hash is present, false and "" if not.
+     */
+    bool insert_hash_json(const std::string& json_hash_string,
+                          std::string& error_message);
+
+    /**
+     * Insert source information from JSON record.
+     *
+     * Parameters:
+     *   json_source_string - Source text in JSON format.  Example syntax:
+     *
+     *     {
+     *       "file_hash": "b9e7...",
+     *       "filesize": 8000,
+     *       "file_type": "exe",
+     *       "nonprobative_count": 4,
+     *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
+     *       }
+     *
+     *   error_message - Error if request fails.
+     *
+     * Returns:
+     *   True if the hash is present, false and "" if not.
+     */
+    bool insert_source_json(const std::string& json_source_string,
+                            std::string& error_message);
 
     /**
      * Returns sizes of LMDB databases in the data store.
@@ -339,23 +393,45 @@ namespace hashdb {
                    source_offset_pairs_t& source_offset_pairs) const;
 
     /**
-     * Find hash, return pairs in JSON string.
+     * Find hash, return JSON string else false and "".
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   entropy - A numeric entropy value for the associated block.
-     *   block_label - Text indicating the type of the block or "" for
-     *     no label.
-     *   source_offset_pairs_string - Set of pairs of source hash and file
-     *     offset values as a JSON string.
+     *   json_hash_string - Hash text in JSON format.  Example syntax:
+     *
+     *    {
+     *      "block_hash": "a7df...",
+     *      "entropy": 8,
+     *      "block_label": "W",
+     *      "source_offset_pairs": ["b9e7...", 4096]
+     *    }
      *
      * Returns:
-     *   True if the hash is present, false if not.
+     *   True if the hash is present, false and "" if not.
      */
-    bool find_hash(const std::string& binary_hash,
-                   uint64_t& entropy,
-                   std::string& block_label,
-                   std::string& source_offset_pairs_string) const;
+    bool find_hash_json(const std::string& binary_hash,
+                        std::string& json_hash_strnig) const;
+
+    /**
+     * Find source, return JSON string else false and "".
+     *
+     * Parameters:
+     *   file_binary_hash - The file hash in binary form.
+     *   json_source_string - Source text in JSON format.  Example syntax:
+     *
+     *     {
+     *       "file_hash": "b9e7...",
+     *       "filesize": 8000,
+     *       "file_type": "exe",
+     *       "nonprobative_count": 4,
+     *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
+     *       }
+     *
+     * Returns:
+     *   True if the source is present, false and "" if not.
+     */
+    bool find_source_json(const std::string& json_source_string,
+                          std::string& error_message) const;
 
     /**
      * Find hash count.  Faster than find_hash.  Accesses the hash

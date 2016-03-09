@@ -45,7 +45,6 @@
 #include <sstream>
 #include "../src_libhashdb/hashdb.hpp"
 #include "progress_tracker.hpp"
-#include "hex_helper.hpp"
 #include <string.h> // for strerror
 #include <fstream>
 #include "rapidjson.h"
@@ -86,59 +85,25 @@ class export_json_t {
   //   "repo2","f2"]
   void write_source_data(std::ostream& os) {
 
-    // source fields
-    uint64_t filesize;
-    std::string file_type;
-    uint64_t nonprobative_count;
-    hashdb::source_names_t* source_names = new hashdb::source_names_t;
-
     std::string file_binary_hash;
     bool has_source = manager.source_begin(file_binary_hash);
     while (has_source == true) {
 
       // get source data
-      manager.find_source_data(file_binary_hash, filesize, file_type,
-                               nonprobative_count);
+      std::string json_source_string;
+      bool has_json = manager.find_source_json(file_binary_hash,
+                                               json_source_string);
 
-      // prepare JSON
-      rapidjson::Document json_doc;
-      rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
-      json_doc.SetObject();
-
-      // set source data
-      std::string file_hash = bin_to_hex(file_binary_hash);
-      json_doc.AddMember("file_hash", v(file_hash, allocator), allocator);
-      json_doc.AddMember("filesize", filesize, allocator);
-      json_doc.AddMember("file_type", v(file_type, allocator), allocator);
-      json_doc.AddMember("nonprobative_count", nonprobative_count, allocator);
-
-      // get source names
-      manager.find_source_names(file_binary_hash, *source_names);
-
-      // name_pairs object
-      rapidjson::Value json_name_pairs(rapidjson::kArrayType);
-
-      // provide names
-      hashdb::source_names_t::const_iterator it;
-      for (it = source_names->begin(); it != source_names->end(); ++it) {
-        // repository name
-        json_name_pairs.PushBack(v(it->first, allocator), allocator);
-        // filename
-        json_name_pairs.PushBack(v(it->second, allocator), allocator);
+      // program error
+      if (!has_json) {
+        assert(0);
       }
-      json_doc.AddMember("name_pairs", json_name_pairs, allocator);
 
-      // write JSON text
-      rapidjson::StringBuffer strbuf;
-      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-      json_doc.Accept(writer);
-      os << strbuf.GetString() << "\n";
+      os << json_source_string << "\n";
 
       // next
       has_source = manager.source_next(file_binary_hash, file_binary_hash);
     }
-
-    delete source_names;
   }
 
   // Block hash data:
@@ -148,57 +113,25 @@ class export_json_t {
 
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
-    // hash fields
-    uint64_t entropy;
-    std::string block_label;
-    hashdb::source_offset_pairs_t* source_offset_pairs =
-                                          new hashdb::source_offset_pairs_t;
-
     std::string binary_hash;
     bool has_hash = manager.hash_begin(binary_hash);
     while (has_hash) {
 
       // get hash data
-      manager.find_hash(binary_hash, entropy, block_label,
-                        *source_offset_pairs);
+      std::string json_hash_string;
+      bool has_json = manager.find_hash_json(binary_hash, json_hash_string);
 
-      // prepare JSON
-      rapidjson::Document json_doc;
-      rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
-      json_doc.SetObject();
-
-      // set hash data
-      std::string block_hash = bin_to_hex(binary_hash);
-      json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
-      json_doc.AddMember("entropy", entropy, allocator);
-      json_doc.AddMember("block_label", v(block_label, allocator), allocator);
-
-      // source_offset_pairs
-      rapidjson::Value json_pairs(rapidjson::kArrayType);
-
-      for (hashdb::source_offset_pairs_t::const_iterator it =
-           source_offset_pairs->begin();
-           it != source_offset_pairs->end(); ++it) {
-
-        // file hash
-        json_pairs.PushBack(v(bin_to_hex(it->first), allocator), allocator);
-        // file offset
-        json_pairs.PushBack(it->second, allocator);
+      // program error
+      if (!has_json) {
+        assert(0);
       }
-      json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
 
-      // write JSON text
-      rapidjson::StringBuffer strbuf;
-      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-      json_doc.Accept(writer);
-      os << strbuf.GetString() << "\n";
+      os << json_hash_string << "\n";
 
       // next
-      progress_tracker.track_hash_data(*source_offset_pairs);
+      progress_tracker.track_hash_data(manager.find_hash_count(binary_hash));
       has_hash = manager.hash_next(binary_hash, binary_hash);
     }
-
-    delete source_offset_pairs;
   }
 
   public:

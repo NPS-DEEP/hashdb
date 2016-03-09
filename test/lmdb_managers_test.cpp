@@ -35,7 +35,6 @@
 #include "lmdb_helper.h"
 #include "lmdb_changes.hpp"
 #include "../src_libhashdb/hashdb.hpp"
-#include "../src/hex_helper.hpp"
 #include "directory_helper.hpp"
 
 typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
@@ -45,25 +44,25 @@ typedef std::pair<std::string, std::string> source_name_t;
 typedef std::set<source_name_t>             source_names_t;
 
 static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
-static const std::string binary_0(hex_to_bin(
+static const std::string binary_0(hashdb::hex_to_bin(
                                   "00000000000000000000000000000000"));
-static const std::string binary_1(hex_to_bin(
+static const std::string binary_1(hashdb::hex_to_bin(
                                   "00000000000000000000000000000001"));
-static const std::string binary_2(hex_to_bin(
+static const std::string binary_2(hashdb::hex_to_bin(
                                   "00000000000000000000000000000002"));
-static const std::string binary_10(hex_to_bin(
+static const std::string binary_10(hashdb::hex_to_bin(
                                   "10000000000000000000000000000000"));
-static const std::string binary_11(hex_to_bin(
+static const std::string binary_11(hashdb::hex_to_bin(
                                   "10000000000000000000000000000001"));
-static const std::string binary_12(hex_to_bin(
+static const std::string binary_12(hashdb::hex_to_bin(
                                   "10000000000000000000000000000002"));
-static const std::string binary_13(hex_to_bin(
+static const std::string binary_13(hashdb::hex_to_bin(
                                   "10000000000000000000000000000003"));
-static const std::string binary_14(hex_to_bin(
+static const std::string binary_14(hashdb::hex_to_bin(
                                   "10000000000000000000000000000004"));
-static const std::string binary_15(hex_to_bin(
+static const std::string binary_15(hashdb::hex_to_bin(
                                   "10000000000000000000000000000005"));
-static const std::string binary_26(hex_to_bin(
+static const std::string binary_26(hashdb::hex_to_bin(
                                   "20000000000000000000000000000006"));
 
 void make_new_hashdb_dir(std::string p_hashdb_dir) {
@@ -163,63 +162,63 @@ void lmdb_hash_manager_settings() {
   } { // 1 prefix bit, no suffix
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
-    manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
+    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
 
-    TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hex_to_bin("7fffffffffffffffffffffffffffffff")),0);
-    TEST_EQ(manager.find(hex_to_bin("80000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("7fffffffffffffffffffffffffffffff")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
 
   } { // demonstrate that the db is cleared
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
     TEST_EQ(manager.size(), 0);
-    TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
 
   } { // 1 prefix bit, no suffix, demonstrate adding 0 instead of 1
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
-    manager.insert(hex_to_bin("00000000000000000000000000000000"), 1, changes);
+    manager.insert(hashdb::hex_to_bin("00000000000000000000000000000000"), 1, changes);
 
-    TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hex_to_bin("80000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hex_to_bin("7fffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("8fffffffffffffffffffffffffffffff")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("7fffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("8fffffffffffffffffffffffffffffff")),0);
 
   } { // 2 prefix bits, no suffix
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 2, 0);
 
-    manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-    TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("cfffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("c0000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hex_to_bin("40000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hex_to_bin("80000000000000000000000000000000")),0);
+    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("cfffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("c0000000000000000000000000000000")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("40000000000000000000000000000000")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),0);
 
   } { // 1 prefix bit, 1 suffix byte
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 1);
 
-    manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
+    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
 
-    TEST_EQ(manager.find(hex_to_bin("00000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("800000000000000000000000000000ff")),1);
-    TEST_EQ(manager.find(hex_to_bin("700000000000000000000000000000ff")),0);
-    TEST_EQ(manager.find(hex_to_bin("800000000000000000000000000000fe")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("800000000000000000000000000000ff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("700000000000000000000000000000ff")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("800000000000000000000000000000fe")),0);
 
   } { // 9 prefix bits, 2 suffix bytes
     make_new_hashdb_dir(hashdb_dir);
     hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 9, 2);
 
-    manager.insert(hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-    TEST_EQ(manager.find(hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("ffff000000000000000000000000ffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("ff80000000000000000000000000ffff")),1);
-    TEST_EQ(manager.find(hex_to_bin("ff00000000000000000000000000ffff")),0);
-    TEST_EQ(manager.find(hex_to_bin("ff800000000000000000000000007fff")),0);
-    TEST_EQ(manager.find(hex_to_bin("ff80000000000000000000000000ff7f")),0);
+    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ffff000000000000000000000000ffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ff80000000000000000000000000ffff")),1);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ff00000000000000000000000000ffff")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ff800000000000000000000000007fff")),0);
+    TEST_EQ(manager.find(hashdb::hex_to_bin("ff80000000000000000000000000ff7f")),0);
   }
 }
 

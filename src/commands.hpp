@@ -31,7 +31,6 @@
 #include "scan_hashes.hpp"
 #include "adder.hpp"
 #include "adder_set.hpp"
-#include "hex_helper.hpp"
 //#include "expand_manager.hpp"
 //#include "dfxml_scan_consumer.hpp"
 //#include "dfxml_scan_expanded_consumer.hpp"
@@ -98,6 +97,19 @@ static void print_header(const std::string& command_id,
   std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
             << "# " << command_id << "\n"
             << "# command_line: " << cmd << "\n";
+}
+
+// helper
+/**
+ * Return 16 bytes of random hash.
+ */
+std::string random_binary_hash() {
+  char hash[16];
+  for (size_t i=0; i<16; i++) {
+    // note: uint32_t not used because windows rand only uses 15 bits.
+    hash[i]=(static_cast<char>(rand()));
+  }
+  return std::string(hash, 16);
 }
 
 namespace commands {
@@ -559,7 +571,7 @@ namespace commands {
     require_hashdb_dir(hashdb_dir);
 
     // get the binary hash
-    std::string binary_hash = hex_to_bin(hex_block_hash);
+    std::string binary_hash = hashdb::hex_to_bin(hex_block_hash);
 
     // reject invalid input
     if (binary_hash == "") {
@@ -684,7 +696,7 @@ namespace commands {
 
       // move forward
       has_hash = manager.hash_next(binary_hash, binary_hash);
-      progress_tracker.track_hash_data(*source_offset_pairs);
+      progress_tracker.track_hash_data(source_offset_pairs->size());
     }
 
     // show totals
@@ -750,13 +762,14 @@ namespace commands {
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
         manager.find_expanded_hash(binary_hash, expanded_text);
-        std::cout << bin_to_hex(binary_hash) << "\t" << expanded_text << "\n";
+        std::cout << hashdb::bin_to_hex(binary_hash) << "\t"
+                  << expanded_text << "\n";
         any_found = true;
       }
 
       // move forward
       has_hash = manager.hash_next(binary_hash, binary_hash);
-      progress_tracker.track_hash_data(*source_offset_pairs);
+      progress_tracker.track_hash_data(source_offset_pairs->size());
     }
 
     // say so if nothing was found
@@ -780,7 +793,7 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // source data
-    std::string file_binary_hash = hex_to_bin(hex_file_hash);
+    std::string file_binary_hash = hashdb::hex_to_bin(hex_file_hash);
     uint64_t filesize = 0;
     std::string file_type = "";
     uint64_t nonprobative_count = 0;
@@ -826,7 +839,7 @@ namespace commands {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
           manager.find_expanded_hash(binary_hash, expanded_text);
-          std::cout << bin_to_hex(binary_hash) << "\t" << expanded_text
+          std::cout << hashdb::bin_to_hex(binary_hash) << "\t" << expanded_text
                     << "\n";
           break;
         }
@@ -834,7 +847,7 @@ namespace commands {
 
       // move forward
       has_hash = manager.hash_next(binary_hash, binary_hash);
-      progress_tracker.track_hash_data(*source_offset_pairs);
+      progress_tracker.track_hash_data(source_offset_pairs->size());
     }
     delete source_offset_pairs;
   }
@@ -875,7 +888,7 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // set up the source
-    std::string file_binary_hash = hex_to_bin("00");
+    std::string file_binary_hash = hashdb::hex_to_bin("00");
     manager.insert_source_name(file_binary_hash, "add_random_repository_name",
                                "add_random_filename");
     manager.insert_source_data(file_binary_hash, 0, "", 0);
@@ -923,7 +936,7 @@ namespace commands {
 
       if (found) {
         std::cout << "Match found, hash "
-                  << bin_to_hex(binary_hash)
+                  << hashdb::bin_to_hex(binary_hash)
                   << ": " << expanded_text << "\n";
       }
 
@@ -963,13 +976,14 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, count, cmd);
 
     // set up the source
-    std::string file_binary_hash = hex_to_bin("00");
+    std::string file_binary_hash = hashdb::hex_to_bin("00");
     manager.insert_source_name(file_binary_hash, "add_same_repository_name",
                                "add_same_filename");
     manager.insert_source_data(file_binary_hash, 0, "", 0);
 
     // hash to use
-    std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
+    std::string binary_hash =
+                hashdb::hex_to_bin("8000000000000000000000000000000000");
 
     // insert count same hshes into the database
     for (uint64_t i=0; i<count; i++) {
@@ -1003,7 +1017,8 @@ namespace commands {
     std::string expanded_text;
 
     // hash to use
-    std::string binary_hash = hex_to_bin("8000000000000000000000000000000000");
+    std::string binary_hash =
+               hashdb::hex_to_bin("8000000000000000000000000000000000");
 
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
@@ -1011,7 +1026,7 @@ namespace commands {
 
       if (!found) {
         std::cout << "Match not found, hash "
-                  << bin_to_hex(binary_hash)
+                  << hashdb::bin_to_hex(binary_hash)
                   << ": " << expanded_text << "\n";
       }
 

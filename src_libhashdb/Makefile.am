@@ -38,10 +38,9 @@ liblmdb_la_CFLAGS = \
 	-pthread -O3 -g \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
-#zzliblmdb_la_LDFLAGS = -static -PIC
+
 liblmdb_la_LDFLAGS = -PIC
 
-#zzlibhashdb_la_LDFLAGS = -static -PIC -avoid-version
 libhashdb_la_LDFLAGS = -PIC -avoid-version
 
 AM_CPPFLAGS = \
@@ -54,6 +53,7 @@ LIBHASHDB_INCS = \
 	crc32.h \
 	file_modes.h \
 	hashdb.hpp \
+	hex_helper.cpp \
 	libhashdb.cpp \
 	liblmdb.la \
 	lmdb_changes.hpp \
@@ -67,8 +67,7 @@ LIBHASHDB_INCS = \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
-	settings_manager.hpp \
-	to_hex.hpp
+	settings_manager.hpp
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS)

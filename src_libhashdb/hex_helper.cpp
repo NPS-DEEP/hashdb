@@ -19,24 +19,29 @@
 
 /**
  * \file
- * Create a new hashdb.
+ * hex conversion code for the hashdb library.
  */
 
-#ifndef HEX_HELPER_HPP
-#define HEX_HELPER_HPP
+#include <config.h>
+#include <string>
+#include <cassert>
+#include <iostream>
+#include <sstream>
+#include "hashdb.hpp"
 
-#include<cassert>
+namespace hashdb {
+
 
 /**
  * Return binary string or empty if hexdigest length is not even
  * or has any invalid digits.
  */
-static std::string hex_to_bin(const std::string& hex_string) {
+std::string hex_to_bin(const std::string& hex_string) {
 
   size_t size = hex_string.size();
   // size must be even
   if (size%2 != 0) {
-    std::cout << "hex input not aligned on even boundary in '"
+    std::cerr << "hex_to_bin: hex input not aligned on even boundary in '"
               << hex_string << "'\n";
     return "";
   }
@@ -54,8 +59,8 @@ static std::string hex_to_bin(const std::string& hex_string) {
     else if(c0>='a' && c0<='f') d0 = c0-'a'+10;
     else if(c0>='A' && c0<='F') d0 = c0-'A'+10;
     else {
-      std::cout << "unexpected hex character in '"
-              << hex_string << "'\n";
+      std::cerr << "hex_to_bin: unexpected hex character in '"
+                << hex_string << "'\n";
       return "";
     }
 
@@ -63,8 +68,8 @@ static std::string hex_to_bin(const std::string& hex_string) {
     else if(c1>='a' && c1<='f') d1 = c1-'a'+10;
     else if(c1>='A' && c1<='F') d1 = c1-'A'+10;
     else {
-      std::cout << "unexpected hex character in '"
-              << hex_string << "'\n";
+      std::cerr << "hex_to_bin: unexpected hex character in '"
+                << hex_string << "'\n";
       return "";
     }
 
@@ -73,7 +78,7 @@ static std::string hex_to_bin(const std::string& hex_string) {
   return std::string(reinterpret_cast<char*>(bin), j);
 }
 
-static inline uint8_t tohex(uint8_t c) {
+inline uint8_t tohex(uint8_t c) {
   switch(c) {
     case 0 : return '0'; break;
     case 1 : return '1'; break;
@@ -109,18 +114,5 @@ std::string bin_to_hex(const std::string& binary_hash) {
   }
   return ss.str();
 }
-
-/**
- * Return 16 bytes of random hash.
- */
-std::string random_binary_hash() {
-  char hash[16];
-  for (size_t i=0; i<16; i++) {
-    // note: uint32_t not used because windows rand only uses 15 bits.
-    hash[i]=(static_cast<char>(rand()));
-  }
-  return std::string(hash, 16);
-}
-
-#endif
+} // end namespace hashdb
 
