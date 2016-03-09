@@ -410,7 +410,7 @@ namespace hashdb {
      *   True if the hash is present, false and "" if not.
      */
     bool find_hash_json(const std::string& binary_hash,
-                        std::string& json_hash_strnig) const;
+                        std::string& json_hash_string) const;
 
     /**
      * Find source, return JSON string else false and "".
