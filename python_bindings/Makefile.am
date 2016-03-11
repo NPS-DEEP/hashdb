@@ -22,27 +22,32 @@
 # http://realmike.org/blog/2010/07/18/building-swig-python-extensions-on-gnulinux/
 # https://github.com/roryyorke/swig-python-autotools-example/blob/master/Makefile.am
 
-# put built sources in the build tree
-BUILT_SOURCES = $(builddir)/hashdb.py $(builddir)/hashdb_wrap.c
+## the hashdb_wrap.cpp source and also hashdb.py that will be generated
+BUILT_SOURCES = hashdb_wrap.cpp
 
-# recipe for example.py and example_wrap.c
-$(builddir)/example.py $(builddir)/example_wrap.c: hashdb.i
+# recipe for example_wrap.c
+# note that SWIG creates example_wrap.c and example.py
+hashdb_wrap.cpp: hashdb.i \
+               ../src_libhashdb/hashdb.hpp \
+               ../src_libhashdb/libhashdb.la
+	echo new3 AX_SWIG_PYTHON_OPT is $(AX_SWIG_PYTON_OPT)
 	$(SWIG) $(AX_SWIG_PYTHON_OPT) -o $@ $<
 
-# install
+# install hashdb.py
 python_PYTHON = $(builddir)/hashdb.py
-
-# The Python module
-pyexec_LTLIBRARIES = _hashdb.la
-
-# The Python module is composed of generated files
-_hashdb_la_SOURCES = $(builddir)/hashdb_wrap.c ../src_libhashdb/hashdb.hpp \
-                     hashdb.i
 
 # module, so no lib prefix
 _hashdb_la_LDFLAGS = -module ${PYTHON_LDFLAGS}
 
-# link libhashdb
+# install _hashdb.la
+pyexec_LTLIBRARIES = _hashdb.la
+
+# the files that _hashdb.la depends on
+_hashdb_la_SOURCES = hashdb_wrap.cpp hashdb.i
+
+# _hashdb.la requires relocatable hashdb library libhashdb.so
 _hashdb_la_LIBADD = ../src_libhashdb/libhashdb.la
 
+# c++ flags for compiling _hashdb.la
 _hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS}
+

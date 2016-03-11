@@ -22,11 +22,11 @@ AC_CONFIG_FILES([Makefile
                  rapidjson/Makefile
                  src/Makefile
                  test/Makefile
+                 python_bindings/Makefile
                  test_py/Makefile
                  man/Makefile
                  doc/Makefile])
 
-#                 python_bindings/Makefile
 
 # define CC and CXX as desired for alternate compilers
 # for example "./configure CC=clang CXX=clang++"
@@ -56,12 +56,18 @@ AC_C_BIGENDIAN
 m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/hashdb_cflags.m4])
+
+################################################################
+## establish default Python for tests and for SWIG
+AM_PATH_PYTHON([2.7],, [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+
 ## for SWIG
-#m4_include([m4/ax_python_devel.m4])
-#m4_include([m4/ax_pkg_swig.m4])
-#m4_include([m4/ax_swig_enable_cxxx.m4])
-#m4_include([m4/ax_swig_multi_module_support.m4])
-#m4_include([m4/ax_swig_python.m4])
+m4_include([m4/ax_python_devel.m4])
+m4_include([m4/ax_pkg_swig.m4])
+m4_include([m4/ax_swig_enable_cxxx.m4])
+#m4_include([m4/azxz_swig_multi_module_support.m4])
+m4_include([m4/ax_swig_python.m4])
 
 ################################################################
 ## NSIS Windows Installer
@@ -71,20 +77,15 @@ if test x"$has_nsis" == "xfalse" ; then
 fi
 
 ################################################################
-## python 3 for tests
-AM_PATH_PYTHON([3.0.0],, [:])
-AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
-
-################################################################
 ## Python bindings using SWIG
 ## ref. ax_pkg_swig.m4
 ## zzzzzzzzzzzzzzzzzzzzzzzz will Python 2.7 be compatible with the above?
-#AC_DISABLE_STATIC
-#AX_PYTHON_DEVEL([2.7.5])
-#AX_PKG_SWIG(2.0.11, [], [ AC_MSG_ERROR([SWIG is required to build Python bindings]) ])
-#AX_SWIG_ENABLE_CXX
-#AX_SWIG_MULTI_MODULE_SUPPORT
-#AX_SWIG_PYTHON
+AC_DISABLE_STATIC
+#zzAX_PYTHON_DEVEL([2.7.5])
+AX_PKG_SWIG(2.0.11, [], [ AC_MSG_ERROR([SWIG is required to build Python bindings]) ])
+AX_SWIG_ENABLE_CXX
+AX_SWIG_MULTI_MODULE_SUPPORT
+AX_SWIG_PYTHON
 
 ################################################################
 ## mcheck support
@@ -358,6 +359,12 @@ AC_MSG_NOTICE([  LIBS:             $LIBS])
 AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
 AC_MSG_NOTICE([  HASHDB_CFLAGS:    $HASHDB_CFLAGS])
 AC_MSG_NOTICE([  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS])
+
+AC_MSG_NOTICE([  PYTHON_VERSION:   $PYTHON_VERSION])
+AC_MSG_NOTICE([  PYTHON_CPPFLAGS:  $PYTHON_CPPFLAGS])
+AC_MSG_NOTICE([  PYTHON_LIBS:      $PYTHON_LIBS])
+#AC_MSG_NOTICE([  PYTHON_EXTRA_LIBS:    $PYTHON_EXTRA_LIBS])
+#AC_MSG_NOTICE([  PYTHON_EXTRA_LDFLAGS: $PYTHON_LDFLAGS])
 
 AC_OUTPUT
 
