@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <string>
+#include <cassert>
 #include "lmdb.h"
 #include "hex_helper.hpp"
 

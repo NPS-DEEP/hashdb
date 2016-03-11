@@ -30,7 +30,6 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
-#include <cassert>
 #include "hashdb.hpp" // for timestamp_t
 
 namespace hashdb {

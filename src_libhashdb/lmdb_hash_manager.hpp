@@ -65,6 +65,7 @@ for i in range(1500):
 #include <iostream>
 #include <string>
 #include <set>
+#include <cassert>
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 #include "lmdb_print_val.hpp"
 #endif
@@ -157,8 +158,8 @@ class lmdb_hash_manager_t {
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the binary_hash value provided to insert is empty.\n";
+      return;
     }
 
     // ************************************************************

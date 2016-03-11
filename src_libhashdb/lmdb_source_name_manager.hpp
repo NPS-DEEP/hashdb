@@ -37,6 +37,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <cassert>
 #ifdef DEBUG_LMDB_SOURCE_NAME_MANAGER_HPP
 #include "lmdb_print_val.hpp"
 #endif

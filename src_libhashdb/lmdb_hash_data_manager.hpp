@@ -57,6 +57,7 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <cassert>
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 #include "lmdb_print_val.hpp"
 #endif
@@ -143,13 +144,12 @@ class lmdb_hash_data_manager_t {
     // store data at new key
     context.data.mv_size = p - data;
     context.data.mv_data = data;
-    int rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
-
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager put_type1 key", context.key);
 print_mdb_val("hash_data_manager put_type1 data", context.data);
 #endif
+    int rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
     return rc;
   }
 
@@ -212,12 +212,12 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
     // store data at new key
     context.data.mv_size = p - data;
     context.data.mv_data = data;
-    int rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager put_type2 key", context.key);
 print_mdb_val("hash_data_manager put_type2 data", context.data);
 #endif
+    int rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
 
     return rc;
   }
@@ -359,8 +359,8 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the binary_hash value provided to insert is empty.\n";
+      return 0;
     }
 
     // reject invalid file_offset
@@ -571,8 +571,8 @@ print_mdb_val("hash_data_manager insert check data", context.data);
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the binary_hash value provided to find is empty.\n";
+      return 0;
     }
 
     // get context
@@ -694,8 +694,8 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
 
     // require valid binary_hash
     if (binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the binary_hash value provided to find_count is empty.\n";
+      return 0;
     }
 
     // get context
@@ -791,8 +791,8 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
 
     if (binary_hash == "") {
       // program error to ask for next when at end
-      std::cerr << "find_next: already at end\n";
-      assert(0);
+      std::cerr << "Usage error: the binary_hash value provided to next_hash is empty.\n";
+      return "";
     }
 
     // get context
@@ -807,6 +807,13 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
                             MDB_SET_KEY);
 
     // the last hash must exist
+    if (rc == MDB_NOTFOUND) {
+      std::cerr << "Usage error: the binary_hash value provided to next_hash does not exist.\n";
+      context.close();
+      return "";
+    }
+
+    // the attempt to access the last hash must work
     if (rc != 0) {
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);

@@ -38,6 +38,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <cassert>
 #ifdef DEBUG_LMDB_SOURCE_ID_MANAGER_HPP
 #include "print_mdb_val.hpp"
 #endif
@@ -93,8 +94,8 @@ class lmdb_source_id_manager_t {
 
     // require valid file_binary_hash
     if (file_binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the file_binary_hash value provided to insert is empty.\n";
+      return false;
     }
 
     MUTEX_LOCK(&M);
@@ -179,8 +180,8 @@ print_mdb_val("source_id_manager insert new data", context.data);
 
     // require valid file_binary_hash
     if (file_binary_hash.size() == 0) {
-      std::cerr << "empty key\n";
-      assert(0);
+      std::cerr << "Usage error: the file_binary_hash value provided to find is empty.\n";
+      return false;
     }
 
     // get context
@@ -274,8 +275,8 @@ print_mdb_val("source_id_manager find_begin data", context.data);
 
     if (file_binary_hash == "") {
       // program error to ask for next when at end
-      std::cerr << "find_next: already at end\n";
-      assert(0);
+      std::cerr << "Usage error: the file_binary_hash value provided to next_source is empty.\n";
+      return "";
     }
 
     // get context
@@ -290,6 +291,13 @@ print_mdb_val("source_id_manager find_begin data", context.data);
                             MDB_SET_KEY);
 
     // the last file binary hash must exist
+    if (rc == MDB_NOTFOUND) {
+      std::cerr << "Usage error: the file_binary_hash value provided to next_source does not exist.\n";
+      context.close();
+      return "";
+    }
+
+    // the attempt to read the last file binary hash must work
     if (rc != 0) {
       std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
       assert(0);

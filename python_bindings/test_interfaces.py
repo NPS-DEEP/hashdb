@@ -21,7 +21,6 @@ def int_equals(a,b):
 
 # Support functions
 # Support function: Version
-print("Version: %s" % hashdb.version())
 str_equals(hashdb.version()[:2], "3.")
 
 # Support function: Create new temp_1.hdb

@@ -30,7 +30,6 @@ BUILT_SOURCES = hashdb_wrap.cpp
 hashdb_wrap.cpp: hashdb.i \
                ../src_libhashdb/hashdb.hpp \
                ../src_libhashdb/libhashdb.la
-	echo new3 AX_SWIG_PYTHON_OPT is $(AX_SWIG_PYTON_OPT)
 	$(SWIG) $(AX_SWIG_PYTHON_OPT) -o $@ $<
 
 # install hashdb.py
@@ -49,7 +48,7 @@ _hashdb_la_SOURCES = hashdb_wrap.cpp hashdb.i
 _hashdb_la_LIBADD = ../src_libhashdb/libhashdb.la
 
 # c++ flags for compiling _hashdb.la
-_hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS}
+_hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS} -Wno-deprecated-register
 
 
 # for testing
