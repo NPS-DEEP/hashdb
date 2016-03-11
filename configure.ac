@@ -41,6 +41,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 LT_INIT([win32-dll])
+AC_DISABLE_STATIC
 
 # use C++11 mode if available; HAVE_CXX11 is defined in config.h if so.  Don't
 # use the GNU C++11 extensions for portability's sake (noext).
@@ -61,12 +62,14 @@ m4_include([m4/hashdb_cflags.m4])
 ## establish default Python for tests and for SWIG
 AM_PATH_PYTHON([2.7],, [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+if test "$PYTHON" == : ; then
+  AC_MSG_NOTICE([Python is not available.])
+fi
 
 ## for SWIG
 m4_include([m4/ax_python_devel.m4])
 m4_include([m4/ax_pkg_swig.m4])
 m4_include([m4/ax_swig_enable_cxxx.m4])
-#m4_include([m4/azxz_swig_multi_module_support.m4])
 m4_include([m4/ax_swig_python.m4])
 
 ################################################################
@@ -78,14 +81,11 @@ fi
 
 ################################################################
 ## Python bindings using SWIG
-## ref. ax_pkg_swig.m4
-## zzzzzzzzzzzzzzzzzzzzzzzz will Python 2.7 be compatible with the above?
-AC_DISABLE_STATIC
-#zzAX_PYTHON_DEVEL([2.7.5])
-AX_PKG_SWIG(2.0.11, [], [ AC_MSG_ERROR([SWIG is required to build Python bindings]) ])
+AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
 AX_SWIG_ENABLE_CXX
-AX_SWIG_MULTI_MODULE_SUPPORT
+#AX_SWIG_MULTI_MODULE_SUPPORT
 AX_SWIG_PYTHON
+AM_CONDITIONAL(HAVE_SWIG, [test "$PYTHON" != : -a -n "$SWIG"])
 
 ################################################################
 ## mcheck support

@@ -51,3 +51,12 @@ _hashdb_la_LIBADD = ../src_libhashdb/libhashdb.la
 # c++ flags for compiling _hashdb.la
 _hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS}
 
+
+# for testing
+AM_TESTS_ENVIRONMENT = export PYTHONPATH='.:.libs';
+testfile = test_interfaces.py
+EXTRA_DIST = $(testfile)
+TESTS = $(testfile)
+clean-local:
+	rm -rf temp_*
+

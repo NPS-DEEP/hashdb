@@ -3,7 +3,16 @@ ACLOCAL_AMFLAGS = -I m4
 SRC_WIN = src_win
 include src_win/Makefile
 
-SUBDIRS = src_libhashdb src rapidjson test python_bindings test_py man doc
+if HAVE_PYTHON
+TEST_PY_DIR = test_py
+endif
+
+if HAVE_SWIG
+PYTHON_BINDINGS_DIR = python_bindings
+endif
+
+SUBDIRS = src_libhashdb src rapidjson test $(TEST_PY_DIR) \
+          $(PYTHON_BINDINGS_DIR) man doc
 
 SRC_WIN_DIST = \
 	src_win/build_installer.nsi \

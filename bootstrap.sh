@@ -14,4 +14,4 @@ else
     automake --add-missing --copy
     autoreconf -f
 fi
-echo be sure to run ./configure
+echo be sure to run ../configure

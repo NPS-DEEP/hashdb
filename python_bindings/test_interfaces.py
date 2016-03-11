@@ -1,73 +1,88 @@
 #!/usr/bin/env python
-# Note: test set currently tests by inspection or failure.
+
+# To run this test in place but outside the "make check" test harness:
+#   1) type: export PYTHONPATH='.:.libs'
+#   2) type: ../../python_bindings/test_interfaces.py
 
 import hashdb
 import shutil
-print("Begin")
+
+# require equality, adapted from ../test_py/helpers.py
+def str_equals(a,b):
+    if a != b:
+        raise ValueError("'%s' not equal to '%s'" % (a,b))
+def bool_equals(a,b):
+    if a != b:
+        raise ValueError(a + " not equal to " + b)
+def int_equals(a,b):
+    if a != b:
+        raise ValueError(str(a) + " not equal to " + str(b))
+
 
 # Support functions
 # Support function: Version
 print("Version: %s" % hashdb.version())
+str_equals(hashdb.version()[:2], "3.")
 
-# Support function: Create new zz.hdb
-hashdb_dir="zz.hdb"
-shutil.rmtree(hashdb_dir, True)
+# Support function: Create new temp_1.hdb
+shutil.rmtree("temp_1.hdb", True)
 cmd="my command string"
 settings = hashdb.settings_t()
-error_message = hashdb.create_hashdb(hashdb_dir, settings, cmd)
-if len(error_message) == 0:
-    print("Created .'%s'" % error_message)
-else:
-    print("Error: %s" % error_message)
+str_equals(hashdb.create_hashdb("temp_1.hdb", settings, cmd), "")
 
 # Support function: read settings
-hashdb_dir="zz.hdb"
-error_message = hashdb.read_settings(hashdb_dir, settings)
-if len(error_message) == 0:
-    print settings.max_source_offset_pairs
-else:
-    print("Error reading settings: %s" % error_message)
+str_equals(hashdb.read_settings("temp_1.hdb", settings), "")
 
 # Support function: test conversion to binary and back
 binary_string = hashdb.hex_to_bin("0000000000000000")
-print("binary string: '%s'" % binary_string)
 hex_string = hashdb.bin_to_hex(binary_string)
-print("hex to bin and back: '%s'" % hex_string)
+str_equals(hex_string, "0000000000000000")
 
 # import
-import_manager = hashdb.import_manager_t(hashdb_dir, "insert test data")
+import_manager = hashdb.import_manager_t("temp_1.hdb", "insert test data")
 import_manager.insert_source_name("hhhhhhhh", "rn1", "fn1")
 import_manager.insert_source_name("hhhhhhhh", "rn2", "fn2")
 import_manager.insert_source_data("hhhhhhhh", 100, "ft1", 1)
 import_manager.insert_hash("hhhhhhhh","gggggggg", 512, 2, "block label")
 import_manager.insert_hash_json('{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
 import_manager.insert_source_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]')
+str_equals(import_manager.sizes(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
 
 # scan
-scan_manager = hashdb.scan_manager_t(hashdb_dir)
+scan_manager = hashdb.scan_manager_t("temp_1.hdb")
 expanded_hash = scan_manager.find_expanded_hash("hhhhhhhh")
-print("expanded hash: %s" % expanded_hash)
+str_equals(expanded_hash, '{"entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}')
+
 json_hash_string = scan_manager.find_hash_json("hhhhhhhh")
-print("json hash string: %s" % json_hash_string)
-print("approximate hash count: %s" %
-                     scan_manager.find_approximate_hash_count("hhhhhhhh"))
-print("hash count: %s" % scan_manager.find_hash_count("hhhhhhhh"))
-print("find_source_json: %s" % scan_manager.find_source_json("gggggggg"))
+str_equals(json_hash_string, '{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
+
+int_equals(scan_manager.find_approximate_hash_count("hhhhhhhh"), 1)
+
+int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
+
+str_equals(scan_manager.find_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}')
 
 first_binary_hash = scan_manager.first_hash()
-print("first_binary_hash %s" % first_binary_hash)
-print("first_binary_hash %s" % first_binary_hash)
-print("next binary hash '%s'" % scan_manager.next_hash(first_binary_hash))
+str_equals(hashdb.bin_to_hex(first_binary_hash), "6868686868686868")
 
-first_file_binary_hash = scan_manager.first_hash()
-print("first_file_binary_hash %s" % first_file_binary_hash)
-print("first_file_binary_hash %s" % hashdb.bin_to_hex(first_file_binary_hash))
-print("next file_binary hash '%s'" %
-                     scan_manager.next_hash(first_file_binary_hash))
+next_binary_hash = scan_manager.next_hash(first_binary_hash)
+str_equals(hashdb.bin_to_hex(next_binary_hash), "")
 
-print("sizes: %s" % scan_manager.sizes())
-print("hash size: %s" % scan_manager.size_hashes())
-print("source size: %s" % scan_manager.size_sources())
+## next after end is invalid and currently calls assert which is extreme.
+#next_binary_hash = scan_manager.next_hash(next_binary_hash)
+
+first_binary_source = scan_manager.first_source()
+str_equals(hashdb.bin_to_hex(first_binary_source), "6767676767676767")
+
+next_binary_source = scan_manager.next_source(first_binary_source)
+str_equals(hashdb.bin_to_hex(next_binary_source), "6868686868686868")
+
+next_binary_source = scan_manager.next_source(next_binary_source)
+str_equals(hashdb.bin_to_hex(next_binary_source), "")
+
+str_equals(scan_manager.sizes(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
+int_equals(scan_manager.size_hashes(), 1)
+int_equals(scan_manager.size_sources(), 2)
 
 # Settings
 settings.sector_size = 1
@@ -75,10 +90,10 @@ settings.block_size = 2
 settings.max_source_offset_pairs = 3
 settings.hash_prefix_bits = 4
 settings.hash_suffix_bytes = 5
-print("Settings: %s" % settings.settings_string())
+str_equals(settings.settings_string(), '{"settings_version":3, "sector_size":1, "block_size":2, "max_source_offset_pairs":3, "hash_prefix_bits":4, "hash_suffix_bytes":5}')
 
 # Timestamp
 ts = hashdb.timestamp_t()
-print("timestamp1: %s" % ts.stamp("time1"))
-print("timestamp2: %s" % ts.stamp("time2"))
+str_equals(ts.stamp("time1")[:15], '{"name":"time1"')
+str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 
