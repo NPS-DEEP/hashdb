@@ -59,7 +59,7 @@ class logger_t {
     // open append, fatal if unable to open
     os.open(filename.c_str(), std::fstream::app);
     if (!os.is_open()) {
-      std::cout << "Cannot open log file " << filename
+      std::cerr << "Cannot open log file " << filename
                 << ": " << strerror(errno) << "\nAborting.\n";
       exit(1);
     }
@@ -68,7 +68,7 @@ class logger_t {
     hashdb::print_environment(command_line, os);
 
     // log start
-    os << timestamp.stamp("begin");
+    os << timestamp.stamp("begin") << "\n";
   }
 
   // log
@@ -78,7 +78,7 @@ class logger_t {
 
   // timestamp
   void add_timestamp(const std::string& name) {
-    os << timestamp.stamp(name);
+    os << timestamp.stamp(name) << "\n";
   }
 
   // settings

@@ -377,6 +377,14 @@ void lmdb_hash_data_manager() {
   binary_hash = manager.next_hash(binary_hash);
   TEST_EQ(binary_hash, "")
 
+  // allow empty request
+  binary_hash = manager.next_hash(binary_hash);
+  TEST_EQ(binary_hash, "")
+
+  // allow invalid request
+  binary_hash = manager.next_hash(binary_26);
+  TEST_EQ(binary_hash, "")
+
   // size
   TEST_EQ(manager.size(), 5);
 }
@@ -570,6 +578,15 @@ void lmdb_source_id_manager() {
   TEST_EQ(file_binary_hash, binary_2);
   file_binary_hash = manager.next_source(file_binary_hash);
   TEST_EQ(file_binary_hash, "");
+
+  // allow empty request
+  file_binary_hash = manager.next_source(file_binary_hash);
+  TEST_EQ(file_binary_hash, "")
+
+  // allow invalid request
+  file_binary_hash = manager.next_source(binary_26);
+  TEST_EQ(file_binary_hash, "")
+
 }
 
 // ************************************************************

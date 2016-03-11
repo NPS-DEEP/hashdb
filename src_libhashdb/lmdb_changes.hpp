@@ -89,67 +89,67 @@ class lmdb_changes_t {
 
   void report_changes(std::ostream& os) const {
 
-    os << "hashdb changes:\n";
+    os << "# hashdb changes:\n";
     // log changes
     if (hash_data_data_inserted) {
-      os << "    hash_data_data_inserted: " << hash_data_data_inserted << "\n";
+      os << "#     hash_data_data_inserted: " << hash_data_data_inserted << "\n";
     }
     if (hash_data_data_changed) {
-      os << "    hash_data_data_changed: "
+      os << "#     hash_data_data_changed: "
          << hash_data_data_changed << "\n";
     }
     if (hash_data_data_same) {
-      os << "    hash_data_data_same: "
+      os << "#     hash_data_data_same: "
          << hash_data_data_same << "\n";
     }
     if (hash_data_source_inserted) {
-      os << "    hash_data_source_inserted: "
+      os << "#     hash_data_source_inserted: "
          << hash_data_source_inserted<< "\n";
     }
     if (hash_data_source_already_present) {
-      os << "    hash_data_source_already_present: "
+      os << "#     hash_data_source_already_present: "
          << hash_data_source_already_present<< "\n";
     }
     if (hash_data_source_at_max) {
-      os << "    hash_data_source_at_max: "
+      os << "#     hash_data_source_at_max: "
          << hash_data_source_at_max<< "\n";
     }
     if (hash_data_invalid_file_offset) {
-      os << "    hash_data_invalid_file_offset: "
+      os << "#     hash_data_invalid_file_offset: "
          << hash_data_invalid_file_offset<< "\n";
     }
     if (hash_prefix_inserted) {
-      os << "    hash_prefix_inserted: " << hash_prefix_inserted<< "\n";
+      os << "#     hash_prefix_inserted: " << hash_prefix_inserted<< "\n";
     }
     if (hash_suffix_inserted) {
-      os << "    hash_suffix_inserted: " << hash_suffix_inserted<< "\n";
+      os << "#     hash_suffix_inserted: " << hash_suffix_inserted<< "\n";
     }
     if (hash_count_changed) {
-      os << "    hash_count_changed: " << hash_count_changed<< "\n";
+      os << "#     hash_count_changed: " << hash_count_changed<< "\n";
     }
     if (hash_not_changed) {
-      os << "    hash_not_changed: " << hash_not_changed<< "\n";
+      os << "#     hash_not_changed: " << hash_not_changed<< "\n";
     }
     if (source_data_inserted) {
-      os << "    source_data_inserted: " << source_data_inserted << "\n";
+      os << "#     source_data_inserted: " << source_data_inserted << "\n";
     }
     if (source_data_changed) {
-      os << "    source_data_changed: " << source_data_changed<< "\n";
+      os << "#     source_data_changed: " << source_data_changed<< "\n";
     }
     if (source_data_same) {
-      os << "    source_data_same: " << source_data_same << "\n";
+      os << "#     source_data_same: " << source_data_same << "\n";
     }
     if (source_id_inserted) {
-      os << "    source_id_inserted: " << source_id_inserted << "\n";
+      os << "#     source_id_inserted: " << source_id_inserted << "\n";
     }
     if (source_id_already_present) {
-      os << "    source_id_already_present: " << source_id_already_present << "\n";
+      os << "#     source_id_already_present: " << source_id_already_present << "\n";
     }
     if (source_name_inserted) {
-      os << "    source_name_inserted: " << source_name_inserted << "\n";
+      os << "#     source_name_inserted: " << source_name_inserted << "\n";
     }
     if (source_name_already_present) {
-      os << "    source_name_already_present: " << source_name_already_present << "\n";
+      os << "#     source_name_already_present: " << source_name_already_present << "\n";
     }
     if (hash_data_data_inserted == 0 &&
         hash_data_data_changed == 0 &&
