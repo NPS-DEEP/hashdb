@@ -21,6 +21,7 @@ AC_CONFIG_FILES([Makefile
                  src_libhashdb/Makefile
                  rapidjson/Makefile
                  src/Makefile
+                 src_win/Makefile
                  test/Makefile
                  python_bindings/Makefile
                  test_py/Makefile
@@ -81,11 +82,17 @@ fi
 
 ################################################################
 ## Python bindings using SWIG
-AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
-AX_SWIG_ENABLE_CXX
-#AX_SWIG_MULTI_MODULE_SUPPORT
-AX_SWIG_PYTHON
-AM_CONDITIONAL(HAVE_SWIG, [test "$PYTHON" != : -a -n "$SWIG"])
+if test  x"$mingw" = x"yes";  then
+  ## cross-compile from Fedora to Windows is hardcoded
+  AC_MSG_NOTICE([SWIG usage with mingw is hardcoded.])
+  AM_CONDITIONAL(HAVE_SWIG, [0])
+else
+  ## prepare as required by your system
+  AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
+  AX_SWIG_ENABLE_CXX
+  AX_SWIG_PYTHON
+  AM_CONDITIONAL(HAVE_SWIG, [test "$PYTHON" != : -a -n "$SWIG"])
+fi
 
 ################################################################
 ## mcheck support

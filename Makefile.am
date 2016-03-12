@@ -1,8 +1,3 @@
-ACLOCAL_AMFLAGS = -I m4
-
-SRC_WIN = src_win
-include src_win/Makefile
-
 if HAVE_PYTHON
 TEST_PY_DIR = test_py
 endif
@@ -11,7 +6,7 @@ if HAVE_SWIG
 PYTHON_BINDINGS_DIR = python_bindings
 endif
 
-SUBDIRS = src_libhashdb src rapidjson test $(TEST_PY_DIR) \
+SUBDIRS = src_libhashdb src src_win rapidjson test $(TEST_PY_DIR) \
           $(PYTHON_BINDINGS_DIR) man doc
 
 SRC_WIN_DIST = \
@@ -87,5 +82,5 @@ clean-local:
 	rm -rf $(distdir).tar.gz
 	rm -rf $(distdir).zip
 
-.PHONY: exels execlean win64 windist
+.PHONY: win
 
