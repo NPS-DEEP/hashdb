@@ -27,6 +27,10 @@ INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
 installer: $(INSTALLER)
 
-$(INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
-	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
-	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
+#$(INSTALLER): _hashdb.dll build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
+#	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
+#	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
+#
+#_hashdb.dll: libpython27.a
+#	@echo NEED to build libpython27.a
+

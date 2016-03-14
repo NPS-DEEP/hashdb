@@ -257,10 +257,12 @@ AC_SEARCH_LIBS([uset_close], [sicuuc])
 AC_CHECK_LIB([sicuuc],[main])
 #AC_CHECK_HEADER([lightgrep/api.h])
 #AC_CHECK_LIB([lightgrep], [lg_create_pattern])
-AC_CHECK_HEADERS([regex.h tre/tre.h])
-AC_CHECK_LIB([regex],[regcomp])
-AC_CHECK_LIB([tre],[tre_regcomp])
-AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
+
+# zzz NO regex or tre
+#AC_CHECK_HEADERS([regex.h tre/tre.h])
+#AC_CHECK_LIB([regex],[regcomp])
+#AC_CHECK_LIB([tre],[tre_regcomp])
+#AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 ################################################################
 ## support required by hashdb_environment.hpp
