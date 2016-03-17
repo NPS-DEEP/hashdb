@@ -13,16 +13,21 @@ PDFDOCS = hashdbUsersManual.pdf
 
 EXES = hashdb.exe
 
-HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
+HASHDBVERSION=`grep ^AC_INIT $(top_srcdir)/configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
 
 UNVERSIONED_INSTALLER = hashdb-windowsinstaler.exe
 INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
 all: $(UNVERSIONED_INSTALLER)
 
-$(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS) \
-                          $(EXES)
+# copy .nsi scripts to builddir since NSIS likes to work from the .nsi directory
+$(UNVERSIONED_INSTALLER): $(builddir)/build_installer.nsi \
+                          $(builddir)/EnvVarUpdate.nsi \
+                          $(PDFDOCS) $(EXES)
+	cp ../../src_win/build_installer.nsi .
+	cp ../../src_win/EnvVarUpdate.nsi .
 	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
+	rm build_installer.nsi EnvVarUpdate.nsi
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 
 hashdb.exe:

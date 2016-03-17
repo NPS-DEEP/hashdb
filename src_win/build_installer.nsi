@@ -24,9 +24,9 @@
 
 # These will be displayed by the "Click here for support information" link in "Add/Remove Programs"
 # It is possible to use "mailto:" links here to open the email client
-!define HELPURL "//https://github.com/simsong/hashdb" # "Support Information" link
-!define UPDATEURL "//https://github.com/simsong/hashdb" # "Product Updates" link
-!define ABOUTURL "//https://github.com/simsong/hashdb" # "Publisher" link
+!define HELPURL "//https://github.com/NPS-DEEP/hashdb" # "Support Information" link
+!define UPDATEURL "//https://github.com/NPS-DEEP/hashdb" # "Product Updates" link
+!define ABOUTURL "//https://github.com/NPS-DEEP/hashdb" # "Publisher" link
 
 SetCompressor lzma
  
