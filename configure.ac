@@ -80,7 +80,6 @@ esac
 
 ## if using mingw then require NSIS and set HAVE_MINGW to build src_win/
 AM_CONDITIONAL(HAVE_MINGW, [test x"$mingw" = x"yes"])
-#AM_CONDITIONAL(HAVE_SWIG, [0])
 
 has_swig="no"
 if test x"$mingw" != x"yes" ; then
@@ -96,30 +95,6 @@ if test x"$mingw" != x"yes" ; then
 else
   AM_CONDITIONAL(HAVE_SWIG, [test xno=xyes])
 fi
-
-#AM_COND_IF(HAVE_MINGW, [
-#
-#  ## SWIG isn't working with mingw
-#  AM_CONDITIONAL(HAVE_SWIG, [0])
-#
-#  ## mingw so require NSIS Windows Installer
-#  AC_CHECK_PROG(has_nsis, makensis, true, false)
-#  if test x"$has_nsis" == "xfalse" ; then
-#    AC_MSG_ERROR([nsis is required for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
-#  fi
-#],[
-#
-#  ## not mingw so try to use SWIG
-#  m4_include([m4/ax_python_devel.m4])
-#  m4_include([m4/ax_pkg_swig.m4])
-#  m4_include([m4/ax_swig_enable_cxxx.m4])
-#  m4_include([m4/ax_swig_python.m4])
-#
-#  AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
-#  AM_CONDITIONAL(HAVE_SWIG, [test x"$mingw" != x"yes" -a "$PYTHON" != : -a -n "$SWIG"])
-#  AX_SWIG_ENABLE_CXX
-#  AX_SWIG_PYTHON
-#])
 
 ################################################################
 

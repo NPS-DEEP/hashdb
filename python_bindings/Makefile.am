@@ -57,5 +57,6 @@ testfile = test_interfaces.py
 EXTRA_DIST = $(testfile)
 TESTS = $(testfile)
 clean-local:
+	rm hashdb.py hashdb_wrap.cpp
 	rm -rf temp_*
 
