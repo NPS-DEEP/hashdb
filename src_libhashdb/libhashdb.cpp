@@ -384,171 +384,164 @@ namespace hashdb {
     }
   }
 
-  // insert JSON hash if valid
-  std::string import_manager_t::insert_hash_json(
-                          const std::string& json_hash_string) {
+  // insert JSON hash or source, return "" or error
+  std::string import_manager_t::insert_json(
+                          const std::string& json_string) {
 
     // open input as a JSON DOM document
     rapidjson::Document document;
-    if (document.Parse(json_hash_string.c_str()).HasParseError() ||
+    if (document.Parse(json_string.c_str()).HasParseError() ||
         !document.IsObject()) {
       return "Invalid JSON syntax";
     }
 
     // block_hash
-    if (!document.HasMember("block_hash") ||
-                  !document["block_hash"].IsString()) {
-      return "Invalid block_hash field";
-    }
-    const std::string binary_hash = hashdb::hex_to_bin(
-                                       document["block_hash"].GetString());
+    if (document.HasMember("block_hash")) {
 
-    // entropy (optional)
-    uint64_t entropy = 0;
-    if (document.HasMember("entropy")) {
-      if (document["entropy"].IsUint64()) {
-        entropy = document["entropy"].GetUint64();
-      } else {
-        return "Invalid entropy field";
+      // block_hash
+      if (!document.HasMember("block_hash") ||
+                    !document["block_hash"].IsString()) {
+        return "Invalid block_hash field";
       }
-    }
+      const std::string binary_hash = hashdb::hex_to_bin(
+                                         document["block_hash"].GetString());
 
-    // block_label (optional)
-    std::string block_label = "";
-    if (document.HasMember("block_label")) {
-      if (document["block_label"].IsString()) {
-        block_label = document["block_label"].GetString();
-      } else {
-        return "Invalid block_label field";
+      // entropy (optional)
+      uint64_t entropy = 0;
+      if (document.HasMember("entropy")) {
+        if (document["entropy"].IsUint64()) {
+          entropy = document["entropy"].GetUint64();
+        } else {
+          return "Invalid entropy field";
+        }
       }
-    }
 
-    // source_offset_pairs:[]
-    if (!document.HasMember("source_offset_pairs") ||
-                  !document["source_offset_pairs"].IsArray()) {
-      return "Invalid source_offset_pairs field";
-    }
-    const rapidjson::Value& json_pairs = document["source_offset_pairs"];
-    hashdb::source_offset_pairs_t* pairs = new hashdb::source_offset_pairs_t;
-    for (rapidjson::SizeType i = 0; i+1 < json_pairs.Size(); i+=2) {
-
-      // source hash
-      if (!json_pairs[i].IsString()) {
-        delete pairs;
-        return "Invalid source hash in source_offset_pair";
+      // block_label (optional)
+      std::string block_label = "";
+      if (document.HasMember("block_label")) {
+        if (document["block_label"].IsString()) {
+          block_label = document["block_label"].GetString();
+        } else {
+          return "Invalid block_label field";
+        }
       }
-      const std::string file_binary_hash = hashdb::hex_to_bin(
+
+      // source_offset_pairs:[]
+      if (!document.HasMember("source_offset_pairs") ||
+                    !document["source_offset_pairs"].IsArray()) {
+        return "Invalid source_offset_pairs field";
+      }
+      const rapidjson::Value& json_pairs = document["source_offset_pairs"];
+      hashdb::source_offset_pairs_t* pairs = new hashdb::source_offset_pairs_t;
+      for (rapidjson::SizeType i = 0; i+1 < json_pairs.Size(); i+=2) {
+
+        // source hash
+        if (!json_pairs[i].IsString()) {
+          delete pairs;
+          return "Invalid source hash in source_offset_pair";
+        }
+        const std::string file_binary_hash = hashdb::hex_to_bin(
                                                  json_pairs[i].GetString());
 
-      // file offset
-      if (!json_pairs[i+1].IsUint64()) {
-        delete pairs;
-        return "Invalid file offset in source_offset_pair";
+        // file offset
+        if (!json_pairs[i+1].IsUint64()) {
+          delete pairs;
+          return "Invalid file offset in source_offset_pair";
+        }
+        const uint64_t file_offset = json_pairs[i+1].GetUint64();
+
+        // add pair
+        pairs->insert(hashdb::source_offset_pair_t(
+                                             file_binary_hash, file_offset));
       }
-      const uint64_t file_offset = json_pairs[i+1].GetUint64();
 
-      // add pair
-      pairs->insert(hashdb::source_offset_pair_t(
-                                           file_binary_hash, file_offset));
-    }
-
-    // everything worked so insert the hash for each source, offset pair
-    for (hashdb::source_offset_pairs_t::const_iterator it = pairs->begin();
-         it != pairs->end(); ++it) {
-      insert_hash(binary_hash, it->first, it->second, entropy, block_label);
-    }
-
-    delete pairs;
-    return "";
-  }
-
-  // insert json source if valid
-  std::string import_manager_t::insert_source_json(
-                          const std::string& json_source_string) {
-
-    // open input as a JSON DOM document
-    rapidjson::Document document;
-    if (document.Parse(json_source_string.c_str()).HasParseError() ||
-        !document.IsObject()) {
-      return "Invalid JSON syntax";
-    }
-
-    // parse file_hash
-    if (!document.HasMember("file_hash") ||
-                  !document["file_hash"].IsString()) {
-      return "Invalid file_hash field";
-    }
-    const std::string file_binary_hash = hashdb::hex_to_bin(
-                                     document["file_hash"].GetString());
-
-    // parse filesize
-    if (!document.HasMember("filesize") ||
-                  !document["filesize"].IsUint64()) {
-      return "Invalid filesize field";
-    }
-    const uint64_t filesize = document["filesize"].GetUint64();
-
-                 (document.HasMember("file_type") &&
-                  document["file_type"].IsString()) ?
-                     document["file_type"].GetString() : "";
-
-    // parse file_type (optional)
-    std::string file_type = "";
-    if (document.HasMember("file_type")) {
-      if (document["file_type"].IsString()) {
-        file_type = document["file_type"].GetString();
-      } else {
-        return "Invalid file_type field";
+      // everything worked so insert the hash for each source, offset pair
+      for (hashdb::source_offset_pairs_t::const_iterator it = pairs->begin();
+           it != pairs->end(); ++it) {
+        insert_hash(binary_hash, it->first, it->second, entropy, block_label);
       }
-    }
 
-    // nonprobative_count (optional)
-    uint64_t nonprobative_count = 0;
-    if (document.HasMember("nonprobative_count")) {
-      if (document["nonprobative_count"].IsUint64()) {
-        nonprobative_count = document["nonprobative_count"].GetUint64();
-      } else {
-        return "Invalid nonprobative_count field";
+      delete pairs;
+      return "";
+
+    } else if (document.HasMember("file_hash")) {
+
+      // parse file_hash
+      if (!document.HasMember("file_hash") ||
+                    !document["file_hash"].IsString()) {
+        return "Invalid file_hash field";
       }
-    }
+      const std::string file_binary_hash = hashdb::hex_to_bin(
+                                       document["file_hash"].GetString());
 
-    // parse name_pairs:[]
-    if (!document.HasMember("name_pairs") ||
-                  !document["name_pairs"].IsArray()) {
-      return "Invalid name_pairs field";
-    }
-    const rapidjson::Value& json_names = document["name_pairs"];
-    hashdb::source_names_t* names = new hashdb::source_names_t;
-    for (rapidjson::SizeType i = 0; i< json_names.Size(); i+=2) {
-
-      // parse repository name
-      if (!json_names[i].IsString()) {
-        delete names;
-        return "Invalid repository name in name_pairs field";
+      // parse filesize
+      if (!document.HasMember("filesize") ||
+                    !document["filesize"].IsUint64()) {
+        return "Invalid filesize field";
       }
-      const std::string repository_name = json_names[i].GetString();
+      const uint64_t filesize = document["filesize"].GetUint64();
 
-      // parse filename
-      if (!json_names[i+1].IsString()) {
-        delete names;
-        return "Invalid filename in name_pairs field";
+      // parse file_type (optional)
+      std::string file_type = "";
+      if (document.HasMember("file_type")) {
+        if (document["file_type"].IsString()) {
+          file_type = document["file_type"].GetString();
+        } else {
+          return "Invalid file_type field";
+        }
       }
-      const std::string filename = json_names[i+1].GetString();
 
-      // add repository name, filename pair
-      names->insert(hashdb::source_name_t(repository_name, filename));
+      // nonprobative_count (optional)
+      uint64_t nonprobative_count = 0;
+      if (document.HasMember("nonprobative_count")) {
+        if (document["nonprobative_count"].IsUint64()) {
+          nonprobative_count = document["nonprobative_count"].GetUint64();
+        } else {
+          return "Invalid nonprobative_count field";
+        }
+      }
+
+      // parse name_pairs:[]
+      if (!document.HasMember("name_pairs") ||
+                    !document["name_pairs"].IsArray()) {
+        return "Invalid name_pairs field";
+      }
+      const rapidjson::Value& json_names = document["name_pairs"];
+      hashdb::source_names_t* names = new hashdb::source_names_t;
+      for (rapidjson::SizeType i = 0; i< json_names.Size(); i+=2) {
+
+        // parse repository name
+        if (!json_names[i].IsString()) {
+          delete names;
+          return "Invalid repository name in name_pairs field";
+        }
+        const std::string repository_name = json_names[i].GetString();
+
+        // parse filename
+        if (!json_names[i+1].IsString()) {
+          delete names;
+          return "Invalid filename in name_pairs field";
+        }
+        const std::string filename = json_names[i+1].GetString();
+
+        // add repository name, filename pair
+        names->insert(hashdb::source_name_t(repository_name, filename));
+      }
+
+      // everything worked so insert the source data and source names
+      insert_source_data(file_binary_hash,
+                         filesize, file_type, nonprobative_count);
+      for (hashdb::source_names_t::const_iterator it = names->begin();
+           it != names->end(); ++it) {
+        insert_source_name(file_binary_hash, it->first, it->second);
+      }
+
+      delete names;
+      return "";
+
+    } else {
+      return "A block_hash or file_hash field is required";
     }
-
-    // everything worked so insert the source data and source names
-    insert_source_data(file_binary_hash,
-                       filesize, file_type, nonprobative_count);
-    for (hashdb::source_names_t::const_iterator it = names->begin();
-         it != names->end(); ++it) {
-      insert_source_name(file_binary_hash, it->first, it->second);
-    }
-
-    delete names;
-    return "";
   }
 
   std::string import_manager_t::sizes() const {

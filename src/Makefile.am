@@ -21,8 +21,6 @@
 
 bin_PROGRAMS = hashdb
 
-AM_CPPFLAGS = -I${top_srcdir}/rapidjson
-
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
@@ -35,7 +33,6 @@ HASHDB_INCS = \
 	adder_set.hpp \
 	commands.hpp \
 	export_json.hpp \
-	hex_helper.hpp \
 	import_json.hpp \
 	import_tab.hpp \
 	main.cpp \

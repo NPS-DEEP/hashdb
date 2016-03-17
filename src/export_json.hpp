@@ -42,14 +42,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <cassert>
 #include <sstream>
 #include "../src_libhashdb/hashdb.hpp"
 #include "progress_tracker.hpp"
 #include <string.h> // for strerror
 #include <fstream>
-#include "rapidjson.h"
-#include "writer.h"
-#include "document.h"
 
 class export_json_t {
   private:
@@ -69,14 +67,6 @@ class export_json_t {
   export_json_t(const std::string& p_hashdb_dir) :
         hashdb_dir(p_hashdb_dir),
         manager(hashdb_dir) {
-  }
-
-  // return rapidjson::Value type from a std::string
-  rapidjson::Value v(const std::string& s,
-                     rapidjson::Document::AllocatorType& allocator) {
-    rapidjson::Value value;
-    value.SetString(s.c_str(), s.size(), allocator);
-    return value;
   }
 
   // Source data:

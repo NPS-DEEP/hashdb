@@ -9,22 +9,13 @@ AC_PREREQ(2.57)
 AC_INIT(hashdb, 3.0.0-dev-0, github.com/NPS-DEEP/hashdb/issues)
 AC_CONFIG_MACRO_DIR(m4)
 
-# NOTE 1 - src/test/Makefile is referenced so the test/Makefile is created,
-#          but it is not listed as a SUBDIR for Makefile.am so that it is
-#          not automatically built.  Compile manually there for testing.
-#
-# NOTE 2 - src_win/Makefile is not automatically generated. This is necessary
-#          so that it can be run even after a 'make distclean' is done
-#
-
 AC_CONFIG_FILES([Makefile
                  src_libhashdb/Makefile
-                 rapidjson/Makefile
                  src/Makefile
                  src_win/Makefile
                  test/Makefile
-                 python_bindings/Makefile
                  test_py/Makefile
+                 python_bindings/Makefile
                  man/Makefile
                  doc/Makefile])
 
@@ -55,7 +46,6 @@ AC_C_BIGENDIAN
 
 ################################################################
 ## Includes
-m4_include([m4/hashdb_mingw_support.m4])
 m4_include([m4/slg_searchdirs.m4])
 m4_include([m4/hashdb_cflags.m4])
 
@@ -67,32 +57,71 @@ if test "$PYTHON" == : ; then
   AC_MSG_NOTICE([Python is not available.])
 fi
 
-## for SWIG
-m4_include([m4/ax_python_devel.m4])
-m4_include([m4/ax_pkg_swig.m4])
-m4_include([m4/ax_swig_enable_cxxx.m4])
-m4_include([m4/ax_swig_python.m4])
-
 ################################################################
-## NSIS Windows Installer
-AC_CHECK_PROG(has_nsis, makensis, true, false)
-if test x"$has_nsis" == "xfalse" ; then
-  AC_MSG_NOTICE([nsis is not available for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
-fi
+## MinGW
+## Note: may need work
+mingw="no"
+case $host in
+  *-*-*linux*-*)
+     AC_DEFINE([__LINUX__],1,[Linux operating system functions])
+     ;;
 
-################################################################
-## Python bindings using SWIG
-if test  x"$mingw" = x"yes";  then
-  ## cross-compile from Fedora to Windows is hardcoded
-  AC_MSG_NOTICE([SWIG usage with mingw is hardcoded.])
-  AM_CONDITIONAL(HAVE_SWIG, [0])
-else
-  ## prepare as required by your system
-  AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
+  *mingw*)
+     LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"
+     CPPFLAGS="-D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
+     CPPFLAGS="$CPPFLAGS --static "
+     CFLAGS="$CFLAGS --static -static-libgcc -static-libstdc++"
+     CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
+     CXXFLAGS="$CXXFLAGS --static -static-libgcc -static-libstdc++"
+     LDFLAGS="$LDFLAGS --static"
+     mingw="yes"
+     ;;
+esac
+
+## if using mingw then require NSIS and set HAVE_MINGW to build src_win/
+AM_CONDITIONAL(HAVE_MINGW, [test x"$mingw" = x"yes"])
+#AM_CONDITIONAL(HAVE_SWIG, [0])
+
+has_swig="no"
+if test x"$mingw" != x"yes" ; then
+  # not mingw so try to load SWIG
+  m4_include([m4/ax_pkg_swig.m4])
+  AX_PKG_SWIG(2.0.11, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
+  AM_CONDITIONAL(HAVE_SWIG, [test x$has_swig=x"yes"])
+  m4_include([m4/ax_python_devel.m4])
+  m4_include([m4/ax_swig_enable_cxxx.m4])
+  m4_include([m4/ax_swig_python.m4])
   AX_SWIG_ENABLE_CXX
   AX_SWIG_PYTHON
-  AM_CONDITIONAL(HAVE_SWIG, [test "$PYTHON" != : -a -n "$SWIG"])
+else
+  AM_CONDITIONAL(HAVE_SWIG, [test xno=xyes])
 fi
+
+#AM_COND_IF(HAVE_MINGW, [
+#
+#  ## SWIG isn't working with mingw
+#  AM_CONDITIONAL(HAVE_SWIG, [0])
+#
+#  ## mingw so require NSIS Windows Installer
+#  AC_CHECK_PROG(has_nsis, makensis, true, false)
+#  if test x"$has_nsis" == "xfalse" ; then
+#    AC_MSG_ERROR([nsis is required for creating the Windows installer.  Try 'apt-get install mingw32-nsis' or 'yum install mingw32-nsis' or 'port install mingw32-nsis' or whatever package manager you happen to be using....])
+#  fi
+#],[
+#
+#  ## not mingw so try to use SWIG
+#  m4_include([m4/ax_python_devel.m4])
+#  m4_include([m4/ax_pkg_swig.m4])
+#  m4_include([m4/ax_swig_enable_cxxx.m4])
+#  m4_include([m4/ax_swig_python.m4])
+#
+#  AX_PKG_SWIG(2.0.11, [], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
+#  AM_CONDITIONAL(HAVE_SWIG, [test x"$mingw" != x"yes" -a "$PYTHON" != : -a -n "$SWIG"])
+#  AX_SWIG_ENABLE_CXX
+#  AX_SWIG_PYTHON
+#])
+
+################################################################
 
 ################################################################
 ## mcheck support
@@ -132,13 +161,14 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 # PTHREAD support
 # With special nods to compiling under mingw
 
-case $host in 
+case $host in
  *mingw*)
   AC_MSG_NOTICE([mingw pthreads support])
   CFLAGS="$CFLAGS -mthreads -pthread "
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads -pthread "
   LDFLAGS="$LDFLAGS -mthreads -pthread "
+#  LDFLAGS="$LDFLAGS -mthreads -pthread -Wl,--no-undefined "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
  ;;
  *)
@@ -165,7 +195,7 @@ AC_CHECK_LIB([pthreadGC2],[pthread_create])
 ##
 ## Multithreading stuff
 
-# On mingw, be sure to use the static version and be sure we are using mthread option
+# On mingw, be sure we are using mthread option
 # (which should be a no-op on later version of G++ anyway)
 
 AC_CHECK_FUNCS([pthread_win32_process_attach_np pthread_win32_process_detach_np pthread_win32_thread_attach_np pthread_win32_thread_detach_np ])
@@ -193,7 +223,7 @@ AC_SYS_POSIX_TERMIOS
 #fi
 #
 #if test "${with_opt}" = "no" ; then
-#  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+#  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
 #  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
 #else
 #  # If we are not stripping the optimizer, add fortify source
@@ -202,7 +232,7 @@ AC_SYS_POSIX_TERMIOS
 #
 #  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
 #  if test "${with_o3}" != "no" ; then
-#      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+#      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
 #      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
 #  fi
 #fi
@@ -341,7 +371,7 @@ if test x"${AFF_NOOPT}" != "x" ; then
 fi
 
 if test "${with_opt}" = "no" ; then
-  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting! 
+  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
   CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
 else
   # If we are not stripping the optimizer, add fortify source
@@ -350,7 +380,7 @@ else
 
   # and increase optimizer from -O2 to -O3 if not explicitly forbidden
   if test "${with_o3}" != "no" ; then
-      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting! 
+      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
       CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
   fi
 fi
@@ -370,8 +400,8 @@ AC_MSG_NOTICE([  HASHDB_CFLAGS:    $HASHDB_CFLAGS])
 AC_MSG_NOTICE([  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS])
 
 AC_MSG_NOTICE([  PYTHON_VERSION:   $PYTHON_VERSION])
-AC_MSG_NOTICE([  PYTHON_CPPFLAGS:  $PYTHON_CPPFLAGS])
-AC_MSG_NOTICE([  PYTHON_LIBS:      $PYTHON_LIBS])
+#AC_MSG_NOTICE([  PYTHON_CPPFLAGS:  $PYTHON_CPPFLAGS])
+#AC_MSG_NOTICE([  PYTHON_LIBS:      $PYTHON_LIBS])
 #AC_MSG_NOTICE([  PYTHON_EXTRA_LIBS:    $PYTHON_EXTRA_LIBS])
 #AC_MSG_NOTICE([  PYTHON_EXTRA_LDFLAGS: $PYTHON_LDFLAGS])
 

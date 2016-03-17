@@ -243,41 +243,32 @@ namespace hashdb {
                      const std::string& block_label);
 
     /**
-     * Insert hash information from JSON record.
+     * Insert hash or source information from JSON record.
      *
      * Parameters:
-     *   json_hash_string - Hash text in JSON format.  Example syntax:
+     *   json_string - Hash or source text in JSON format.
      *
-     *    {
-     *      "block_hash": "a7df...",
-     *      "entropy": 8,
-     *      "block_label": "W",
-     *      "source_offset_pairs": ["b9e7...", 4096]
-     *    }
+     *   Example hash syntax:
+     *     {
+     *       "block_hash": "a7df...",
+     *       "entropy": 8,
+     *       "block_label": "W",
+     *       "source_offset_pairs": ["b9e7...", 4096]
+     *     }
      *
-     * Returns:
-     *   "" else error message if JSON is invalid.
-     */
-    std::string insert_hash_json(const std::string& json_hash_string);
-
-    /**
-     * Insert source information from JSON record.
-     *
-     * Parameters:
-     *   json_source_string - Source text in JSON format.  Example syntax:
-     *
+     *   Example source syntax:
      *     {
      *       "file_hash": "b9e7...",
      *       "filesize": 8000,
      *       "file_type": "exe",
      *       "nonprobative_count": 4,
      *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
-     *       }
+     *     }
      *
      * Returns:
      *   "" else error message if JSON is invalid.
      */
-    std::string insert_source_json(const std::string& json_source_string);
+    std::string insert_json(const std::string& json_string);
 
     /**
      * Returns sizes of LMDB databases in the data store.

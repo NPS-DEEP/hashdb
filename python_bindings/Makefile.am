@@ -25,8 +25,8 @@
 ## the hashdb_wrap.cpp source and also hashdb.py that will be generated
 BUILT_SOURCES = hashdb_wrap.cpp
 
-# recipe for example_wrap.c
-# note that SWIG creates example_wrap.c and example.py
+# recipe for hashdb_wrap.c
+# note that SWIG creates hashdb_wrap.c and hashdb.py
 hashdb_wrap.cpp: hashdb.i \
                ../src_libhashdb/hashdb.hpp \
                ../src_libhashdb/libhashdb.la

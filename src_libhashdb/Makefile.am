@@ -19,6 +19,41 @@
 
 # This file assists in building the hashdb_manager tool.
 
+EXTRA_DIST = \
+	liblmdb/COPYRIGHT \
+	liblmdb/LICENSE \
+	rapidjson/allocators.h \
+	rapidjson/document.h \
+	rapidjson/encodedstream.h \
+	rapidjson/encodings.h \
+	rapidjson/error/en.h \
+	rapidjson/error/error.h \
+	rapidjson/filereadstream.h \
+	rapidjson/filewritestream.h \
+	rapidjson/internal/strfunc.h \
+	rapidjson/internal/ieee754.h \
+	rapidjson/internal/strtod.h \
+	rapidjson/internal/pow10.h \
+	rapidjson/internal/dtoa.h \
+	rapidjson/internal/swap.h \
+	rapidjson/internal/itoa.h \
+	rapidjson/internal/meta.h \
+	rapidjson/internal/diyfp.h \
+	rapidjson/internal/biginteger.h \
+	rapidjson/internal/stack.h \
+	rapidjson/license.txt \
+	rapidjson/memorybuffer.h \
+	rapidjson/memorystream.h \
+	rapidjson/msinttypes/inttypes.h \
+	rapidjson/msinttypes/stdint.h \
+	rapidjson/pointer.h \
+	rapidjson/prettywriter.h \
+	rapidjson/rapidjson.h \
+	rapidjson/reader.h \
+	rapidjson/README \
+	rapidjson/stringbuffer.h \
+	rapidjson/writer.h
+
 LMDB_INCS = \
 	liblmdb/lmdb.h \
 	liblmdb/mdb.c \
@@ -30,22 +65,19 @@ libhashdb_la_LIBADD = liblmdb.la
 noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
-EXTRA_DIST = \
-	liblmdb/COPYRIGHT \
-	liblmdb/LICENSE
-
 liblmdb_la_CFLAGS = \
 	-pthread -O3 -g \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
 
-liblmdb_la_LDFLAGS = -PIC
+liblmdb_la_LDFLAGS = -PIC -static
 
-libhashdb_la_LDFLAGS = -PIC -avoid-version
+#libhashdb_la_LDFLAGS = -PIC -avoid-version -no-undefined
+libhashdb_la_LDFLAGS = -PIC -avoid-version -static
 
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
-	-I${top_srcdir}/rapidjson
+	-I${top_srcdir}/src_libhashdb/rapidjson
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 

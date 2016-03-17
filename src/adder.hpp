@@ -31,6 +31,7 @@
 // Standard includes
 #include <cstdlib>
 #include <cstdio>
+#include <cassert>
 #include <string>
 #include <sstream>
 #include <iostream>

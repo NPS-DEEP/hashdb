@@ -1,17 +1,7 @@
 # To cross-compile Windows executables and build the Windows installer:
 #   1) Make sure MinGW is configured, see
 #      bulk_extractor/src_win/CONFIGURE_F20.sh configure script
-#   2) Make sure the Windows configuration is built at hashdb/win64:
-#      mkdir win64; cd win64; mingw64-configure; make
-#   3) Now build the Windows installer from this directory:
-#      make installer
-#
-# 1) Run the latest bulk_extractor/src_win/CONFIGURE_F20.sh configure script
-# to set up Fedora with the mingw environment required for cross-compiling
-# to Windows.  Please obtain the CONFIGURE_F20.sh script from
-# http://github.com/simsong/bulk_extractor.
-#
-# 2) type "make" to build the Windows installer.
+#   2) Make sure NSIS is installed.
 
 EXTRA_DIST = \
 	build_installer.nsi \
@@ -21,16 +11,56 @@ EXTRA_DIST = \
 
 PDFDOCS = hashdbUsersManual.pdf
 
+EXES = hashdb.exe
+
 HASHDBVERSION=`grep ^AC_INIT ../configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
 
+UNVERSIONED_INSTALLER = hashdb-windowsinstaler.exe
 INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
-installer: $(INSTALLER)
+all: $(UNVERSIONED_INSTALLER)
 
-#$(INSTALLER): _hashdb.dll build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS)
-#	@echo Making hashdb version $(HASHDBVERSION) Windows Installer
-#	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
-#
-#_hashdb.dll: libpython27.a
-#	@echo NEED to build libpython27.a
+$(UNVERSIONED_INSTALLER): build_installer.nsi EnvVarUpdate.nsi $(PDFDOCS) \
+                          $(EXES)
+	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
+	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
+
+hashdb.exe:
+	cp ../src/hashdb.exe .
+
+hashdbUsersManual.pdf:
+	echo TBD > hashdbUsersManual.pdf
+
+windist:
+	rm -rf $(distdir).zip
+	mkdir $(distdir)
+	@echo
+	cp win64/hashdb64.exe $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Creating ZIP archive
+	@echo 
+	zip -r9 $(distdir).zip $(distdir)
+	@echo ====================================
+	@echo 
+	@echo Adding text files to $(distdir).zip 
+	@echo 
+	cp COPYING		$(distdir)/COPYING.txt
+	md5deep -r  $(distdir) > md5list.txt
+	md5deep -rd $(distdir) > md5list.xml
+	mv md5list.txt md5list.xml $(distdir)
+	zip --to-crlf $(distdir).zip $(distdir)/*.txt $(distdir)/*.xml
+
+	rm -rf $(distdir)
+	@echo "***********************"
+	@echo "*** WINDIST IS MADE ***"
+	@echo "***********************"
+	@echo ""
+	ls -l $(distdir).*
+	@echo ""
+	@unzip -l $(distdir).zip
+
+clean-local:
+	rm -rf hashdb.exe hashdbUsersManual.pdf \
+               $(INSTALLER) $(UNVERSIONED_INSTALLER)
 

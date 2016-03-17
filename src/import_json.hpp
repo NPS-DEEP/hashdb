@@ -46,9 +46,6 @@
 #include "progress_tracker.hpp"
 #include <string.h> // for strerror
 #include <fstream>
-#include "rapidjson.h"
-#include "writer.h"
-#include "document.h"
 
 class import_json_t {
   private:
@@ -97,27 +94,10 @@ class import_json_t {
         continue;
       }
 
-      // open the line as a JSON DOM document
-      rapidjson::Document document;
-      if (document.Parse(line.c_str()).HasParseError() ||
-          !document.IsObject()) {
-        report_invalid_line("DOM parse error", line);
-        continue;
-      }
-
       // import JSON
-      if (document.HasMember("file_hash")) {
-        std::string error_message = manager.insert_source_json(line);
-        if (error_message.size() != 0) {
-          report_invalid_line(error_message, line);
-        }
-      } else if (document.HasMember("block_hash")) {
-        std::string error_message = manager.insert_hash_json(line);
-        if (error_message.size() != 0) {
-          report_invalid_line(error_message, line);
-        }
-      } else {
-        report_invalid_line("no file_hash or block_hash", line);
+      std::string error_message = manager.insert_json(line);
+      if (error_message.size() != 0) {
+        report_invalid_line(error_message, line);
       }
     }
   }
