@@ -28,6 +28,8 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 hashdb_LDADD = ../src_libhashdb/libhashdb.la
 
+hashdb_LDFLAGS = -static
+
 HASHDB_INCS = \
 	adder.hpp \
 	adder_set.hpp \

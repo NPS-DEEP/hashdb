@@ -70,13 +70,9 @@ liblmdb_la_CFLAGS = \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
 
-#liblmdb_la_LDFLAGS = -PIC -static
-#liblmdb_la_LDFLAGS = -PIC
+liblmdb_la_LDFLAGS = -PIC
 
-#libhashdb_la_LDFLAGS = -PIC -avoid-version -no-undefined
-#libhashdb_la_LDFLAGS = -PIC -avoid-version -static
-#libhashdb_la_LDFLAGS = -PIC -avoid-version
-libhashdb_la_LDFLAGS = -avoid-version
+libhashdb_la_LDFLAGS = -PIC -avoid-version
 
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
