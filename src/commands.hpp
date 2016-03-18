@@ -131,12 +131,12 @@ namespace commands {
   // ************************************************************
   // import/export
   // ************************************************************
-  // import
-  static void import(const std::string& hashdb_dir,
-                     const std::string& import_dir,
-                     const std::string& repository_name,
-                     const std::string& whitelist_dir,
-                     const std::string& cmd) {
+  // import recursively from path
+  static void import_dir(const std::string& hashdb_dir,
+                         const std::string& import_dir,
+                         const std::string& repository_name,
+                         const std::string& whitelist_dir,
+                         const std::string& cmd) {
     // import_dir.hpp
     std::cout << "TBD\n";
   }
@@ -165,7 +165,7 @@ namespace commands {
     std::cout << "import_tab completed.\n";
   }
 
-  // import_json
+  // import json
   static void import_json(const std::string& hashdb_dir,
                           const std::string& json_file,
                           const std::string& cmd) {
@@ -186,10 +186,10 @@ namespace commands {
 
     // done
     in.close();
-    std::cout << "import_json completed.\n";
+    std::cout << "import completed.\n";
   }
 
-  // export_json
+  // export json
   static void export_json(const std::string& hashdb_dir,
                           const std::string& json_file,
                           const std::string& cmd) {
@@ -210,7 +210,7 @@ namespace commands {
 
     // done
     out.close();
-    std::cout << "export_json completed.\n";
+    std::cout << "export completed.\n";
   }
 
   // ************************************************************

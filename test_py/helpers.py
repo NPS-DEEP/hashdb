@@ -115,5 +115,5 @@ def make_hashdb(tempdir, json_data):
     rm_tempfile("temp_0.json")
     hashdb(["create", tempdir])
     make_tempfile("temp_0.json", json_data)
-    hashdb(["import_json", tempdir, "temp_0.json"])
+    hashdb(["import", tempdir, "temp_0.json"])
 

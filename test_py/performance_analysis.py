@@ -23,7 +23,7 @@ def test_random():
 '    source_id_already_present: 101',
 '    source_name_inserted: 1',
 ''])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     lines = H.hashdb(["scan_random", "temp_1.hdb", "100"])
     H.lines_equals(lines, [
@@ -50,7 +50,7 @@ def test_same():
 '    source_id_already_present: 101',
 '    source_name_inserted: 1',
 ''])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     lines = H.hashdb(["scan_same", "temp_1.hdb", "100"])
     H.lines_equals(lines, [

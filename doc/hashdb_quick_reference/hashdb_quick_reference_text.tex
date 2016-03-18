@@ -15,13 +15,13 @@ Create a new hash database \\
 \\
 \textbf{Import/Export} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em\texttt{import [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <import directory>} &
+\hangindent=2em\texttt{import\_dir [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <import directory>} &
 Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits \\
 \hangindent=2em\texttt{import\_tab [-r <repository name>] <hashdb.hdb> <tab.txt>} &
 Import from tab file into hash database \\
-\hangindent=2em\texttt{import\_json <hashdb.hdb> <hashdb.json>} &
+\hangindent=2em\texttt{import <hashdb.hdb> <hashdb.json>} &
 Import JSON format data into hash database \\
-\hangindent=2em\texttt{export\_json <hashdb.hdb> <hashdb.json>} &
+\hangindent=2em\texttt{export <hashdb.hdb> <hashdb.json>} &
 Export hash database data in JSON format \\
 \end{tabular}
 \\

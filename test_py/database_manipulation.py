@@ -45,7 +45,7 @@ def test_add():
     H.hashdb(["add", "temp_1.hdb", "temp_2.hdb"])
 
     # temp_2.hdb should match
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, json_out1)
 
@@ -53,7 +53,7 @@ def test_add():
     H.hashdb(["add", "temp_1.hdb", "temp_2.hdb"])
 
     # temp_2.hdb should match
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, json_out1)
 
@@ -81,7 +81,7 @@ def test_add_multiple():
     H.hashdb(["add_multiple", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
 
     # check temp_3.hdb
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json_in3 = H.read_file("temp_3.json")
     H.lines_equals(json_in3, json3_db3)
 
@@ -94,7 +94,7 @@ def test_add_repository():
     H.hashdb(["add_repository", "temp_1.hdb", "temp_2.hdb", "repository1"])
 
     # temp_2.hdb should only have hashes and sources with repository1
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, [
 '# command: ',
@@ -112,7 +112,7 @@ def test_add_repository():
     H.hashdb(["add_repository", "temp_1.hdb", "temp_2.hdb", "repository2"])
 
     # temp_2.hdb should only have hashes and sources with repository2
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, [
 '# command: ',
@@ -129,7 +129,7 @@ def test_intersect():
 
     # intersect
     H.hashdb(["intersect", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -146,7 +146,7 @@ def test_intersect_hash():
 
     # intersect_hash
     H.hashdb(["intersect_hash", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -165,7 +165,7 @@ def test_subtract():
 
     # db1 - db2
     H.hashdb(["subtract", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -178,7 +178,7 @@ def test_subtract():
     # db2 - db1
     H.rm_tempdir("temp_3.hdb")
     H.hashdb(["subtract", "temp_2.hdb", "temp_1.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -197,7 +197,7 @@ def test_subtract_hash():
 
     # db1 - db2 hash
     H.hashdb(["subtract_hash", "temp_1.hdb", "temp_2.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -209,7 +209,7 @@ def test_subtract_hash():
     # db2 - db1 hash
     H.rm_tempdir("temp_3.hdb")
     H.hashdb(["subtract_hash", "temp_2.hdb", "temp_1.hdb", "temp_3.hdb"])
-    H.hashdb(["export_json", "temp_3.hdb", "temp_3.json"])
+    H.hashdb(["export", "temp_3.hdb", "temp_3.json"])
     json3 = H.read_file("temp_3.json")
     H.lines_equals(json3, [
 '# command: ',
@@ -227,7 +227,7 @@ def test_subtract_repository():
     H.hashdb(["subtract_repository", "temp_1.hdb", "temp_2.hdb", "repository1"])
 
     # temp_2.hdb should only have hashes and sources with repository2
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, [
 '# command: ',
@@ -241,7 +241,7 @@ def test_subtract_repository():
     H.hashdb(["subtract_repository", "temp_1.hdb", "temp_2.hdb", "repository2"])
 
     # temp_2.hdb should only have hashes and sources with repository1
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, [
 '# command: ',
@@ -263,7 +263,7 @@ def test_copy_unique():
     H.hashdb(["copy_unique", "temp_1.hdb", "temp_2.hdb"])
 
     # temp_2.hdb should match
-    H.hashdb(["export_json", "temp_2.hdb", "temp_2.json"])
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
     json2 = H.read_file("temp_2.json")
     H.lines_equals(json2, [
 '# command: ',

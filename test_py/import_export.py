@@ -18,7 +18,7 @@ def test_import_tab1():
           "1111111111111111	2222222222222222	9",
           "1111111111111111	2222222222222222	9"])
     H.hashdb(["import_tab", "temp_1.hdb", "temp_1.tab"])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     returned_answer = H.read_file("temp_1.json")
     expected_answer = ["#","#", \
@@ -40,7 +40,7 @@ def test_import_tab2():
           "# <file hexdigest> <tab> <block hash> <tab> <index>",
           "0011223344556677	8899aabbccddeeff	1"])
     H.hashdb(["import_tab", "-rr", "temp_1.hdb", "temp_1.tab"])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     returned_answer = H.read_file("temp_1.json")
     expected_answer = ["#","#", \
@@ -65,8 +65,8 @@ def test_import_json():
 
     H.make_tempfile("temp_1.json", expected_answer)
     H.hashdb(["create", "temp_1.hdb"])
-    H.hashdb(["import_json", "temp_1.hdb", "temp_1.json"])
-    H.hashdb(["export_json", "temp_1.hdb", "temp_2.json"])
+    H.hashdb(["import", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export", "temp_1.hdb", "temp_2.json"])
 
     returned_answer = H.read_file("temp_2.json")
     H.lines_equals(returned_answer, expected_answer)

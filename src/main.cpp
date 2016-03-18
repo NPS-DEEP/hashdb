@@ -349,12 +349,12 @@ void run_command() {
     commands::create(args[0], settings, cmd);
 
   // import
-  } else if (command == "import") {
+  } else if (command == "import_dir") {
     check_params("rwn", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::import(args[0], args[1], repository_name, whitelist_dir, cmd);
+    commands::import_dir(args[0], args[1], repository_name, whitelist_dir, cmd);
 
   } else if (command == "import_tab") {
     check_params("r", 2);
@@ -363,11 +363,11 @@ void run_command() {
     }
     commands::import_tab(args[0], args[1], repository_name, cmd);
 
-  } else if (command == "import_json") {
+  } else if (command == "import") {
     check_params("", 2);
     commands::import_json(args[0], args[1], cmd);
 
-  } else if (command == "export_json") {
+  } else if (command == "export") {
     check_params("", 2);
     commands::export_json(args[0], args[1], cmd);
 
