@@ -81,20 +81,19 @@ esac
 ## if using mingw then require NSIS and set HAVE_MINGW to build src_win/
 AM_CONDITIONAL(HAVE_MINGW, [test x"$mingw" = x"yes"])
 
+## SWIG
 has_swig="no"
 if test x"$mingw" != x"yes" ; then
   # not mingw so try to load SWIG
   m4_include([m4/ax_pkg_swig.m4])
-  AX_PKG_SWIG(2.0.11, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
-  AM_CONDITIONAL(HAVE_SWIG, [test x$has_swig=x"yes"])
   m4_include([m4/ax_python_devel.m4])
   m4_include([m4/ax_swig_enable_cxxx.m4])
   m4_include([m4/ax_swig_python.m4])
-  AX_SWIG_ENABLE_CXX
+  AX_PKG_SWIG(2.0.11, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
   AX_SWIG_PYTHON
-else
-  AM_CONDITIONAL(HAVE_SWIG, [test xno=xyes])
+  AX_SWIG_ENABLE_CXX
 fi
+AM_CONDITIONAL(HAVE_SWIG, [test x"$has_swig" = x"yes"])
 
 ################################################################
 
