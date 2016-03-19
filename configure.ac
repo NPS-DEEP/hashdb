@@ -82,16 +82,20 @@ esac
 AM_CONDITIONAL(HAVE_MINGW, [test x"$mingw" = x"yes"])
 
 ## SWIG
+AC_ARG_ENABLE(SWIG_Python, [AS_HELP_STRING([--disable-SWIG_Python],
+              [disable generating Python bindings])],
+              use_SWIG_Python=no, use_SWIG_Python=yes)
 has_swig="no"
-if test x"$mingw" != x"yes" ; then
-  # not mingw so try to load SWIG
+if test x"$mingw" != x"yes" -a x"$use_SWIG_Python" = x"yes" ; then
+  # not mingw and want SWIG so try to load SWIG
   m4_include([m4/ax_pkg_swig.m4])
-  m4_include([m4/ax_python_devel.m4])
-  m4_include([m4/ax_swig_enable_cxxx.m4])
-  m4_include([m4/ax_swig_python.m4])
   AX_PKG_SWIG(2.0.11, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
-  AX_SWIG_PYTHON
-  AX_SWIG_ENABLE_CXX
+  if test x"has_swig"=x"yes" ; then
+    m4_include([m4/ax_python_devel.m4])
+    m4_include([m4/ax_swig_enable_cxxx.m4])
+    m4_include([m4/ax_swig_python.m4])
+    AX_SWIG_PYTHON
+    AX_SWIG_ENABLE_CXX
 fi
 AM_CONDITIONAL(HAVE_SWIG, [test x"$has_swig" = x"yes"])
 
