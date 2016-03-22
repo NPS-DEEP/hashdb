@@ -1,0 +1,13 @@
+   -S hashdb_mode=none    Operational mode [none|import|scan]
+        none    - The scanner is active but performs no action.
+        import  - Import block hashes.
+        scan    - Scan for matching block hashes. (hashdb)
+   -S hashdb_block_size=512    Selects the block size to hash, in bytes. (hashdb)
+   -S hashdb_sector_size=512    Selects the sector size.  Scans and imports along
+      sector boundaries. (hashdb)
+   -S hashdb_scan_path=your_hashdb_directory    File path to a hash database to scan against.
+      Valid only in scan mode. (hashdb)
+   -S hashdb_repository_name=default_repository    Sets the repository name to
+      attribute the import to.  Valid only in import mode. (hashdb)
+   -S hashdb_max_feature_file_lines=0    The maximum number of features lines to record
+      or 0 for no limit.  Valid only in scan mode. (hashdb)

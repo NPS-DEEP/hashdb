@@ -1,0 +1,249 @@
+
+hashdb Version 3.0.0-dev-0
+Usage: hashdb [-h|--help] [-v|-V|--version] [-q|--quiet]
+              [options] <command> [<args>]
+
+  -h, --help         print this message
+  -v, -V, --version, --Version    print version number
+  -q, --quiet        quiet mode
+
+hashdb supports the following commands:
+
+New database:
+  create [options] <hashdb>
+    Create a new <hashdb> hash database.
+
+    Options:
+    -b, --block_size=<block size>
+      <block size>, in bytes, or use 0 for no restriction
+      (default 512)
+    -s, --sector_size=<n>
+      <sector_size>, in bytes, or 1 for any alignment (default 512)
+    -m, --max_source_offset_pairs=<max>
+      The maximum number of source, file offset references to
+      store for a hash (default 100000)
+    -t, --tuning=<hash prefix bits:hash suffix bytes>
+      The number of hash prefix bits and suffix bytes to use for
+      optimizing hash storage (default 28:3)
+
+    Parameters:
+    <hashdb>   the file path to the new hash database to create
+
+Import/Export:
+  import [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>
+         <import directory>
+    Import hashes recursively from <import directory> into hash database
+      <hashdb>.
+
+    Options:
+    -r, --repository_name=<repository name>
+      The repository name to use for the set of hashes being imported.
+      (default is "repository_" followed by the <import directory> path).
+    -w, --whitelist_dir
+      The path to a whitelist hash database.  Hashes matching this database
+      will be marked with a whitelist entropy flag.
+
+    Parameters:
+    <import dir>   the directory to recursively import from
+    <hashdb>       the hash database to insert the imported hashes into
+
+  import_tab [-r <repository name>] [-s <sector size>] <hashdb> <tab file>
+    Import hashes from file <tab file> into hash database <hashdb>.
+
+    Options:
+    -r, --repository_name=<repository name>
+      The repository name to use for the set of hashes being imported.
+      (default is "repository_" followed by the <import directory> path).
+    -w, --whitelist_dir
+      The path to a whitelist hash database.  Hashes matching this database
+      will not be imported.
+
+    Parameters:
+    <hashdb>       the hash database to insert the imported hashes into
+    <NIST file>    the NIST file to import hashes from
+
+  import_json <hashdb> <json file>
+    Import hashes from file <json file> into hash database <hashdb>.
+
+    Parameters:
+    <hashdb>       the hash database to insert the imported hashes into
+    <json file>    the JSON file to import hashes from
+
+  export_json <hashdb> <json file>
+    Export hashes from hash database <hashdb> into file <json file>.
+
+    Parameters:
+    <hashdb>       the hash database to export
+    <json file>    the JSON file to export the hash database into.
+
+Database manipulation:
+  add <source hashdb> <destination hashdb>
+    Copy hashes from the <source hashdb> to the <destination hashdb>.
+
+    Parameters:
+    <source hashdb>       the source hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+
+  add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Perform a union add of <source hashdb 1> and <source hashdb 2>
+    into the <destination hashdb>.
+
+    Parameters:
+    <source hashdb 1>     a hash database to copy hashes from
+    <source hashdb 2>     a second hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+
+  add_repository <source hashdb> <destination hashdb> <repository name>
+    Copy hashes from the <source hashdb> to the <destination hashdb>
+    when the <repository name> matches.
+
+    Parameters:
+    <source hashdb>       the source hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+    <repository name>     the repository name to match when adding hashes
+
+  intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes that are common to both <source hashdb 1> and
+    <source hashdb 2> into <destination hashdb>.  Hashes and their sources
+    must match.
+
+    Parameters:
+    <source hashdb 1>     a hash databases to copy the intersection of
+    <source hashdb 2>     a second hash databases to copy the intersection of
+    <destination hashdb>  the destination hash database to copy the
+                          intersection of exact matches into
+
+  intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes that are common to both <source hashdb 1> and
+    <source hashdb 2> into <destination hashdb>.  Hashes match when hash
+    values match, even if their associated source repository name and
+    filename do not match.
+
+    Parameters:
+    <source hashdb 1>     a hash databases to copy the intersection of
+    <source hashdb 2>     a second hash databases to copy the intersection of
+    <destination hashdb>  the destination hash database to copy the
+                          intersection of hashes into
+
+  subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
+    into <destination hashdb>.  Hashes and their sources must match.
+
+    Parameters:
+    <source hashdb 1>     the hash database containing hash values to be
+                          added if they are not also in the other database
+    <source hashdb 2>     the hash database containing the hash values that
+                          will not be added
+    <destination hashdb>  the hash database to add the difference of the
+                          exact matches into
+
+  subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+    Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
+    into <destination hashdb>.  Hashes match when hash values match, even if
+    their associated source repository name and filename do not match.
+
+    Parameters:
+    <source hashdb 1>     the hash database containing hash values to be
+                          added if they are not also in the other database
+    <source hashdb 2>     the hash database containing the hash values that
+                          will not be added
+    <destination hashdb>  the hash database to add the difference of the
+                          hashes into
+
+  subtract_repository <source hashdb> <destination hashdb> <repository name>
+    Copy hashes from the <source hashdb> to the <destination hashdb>
+    when the <repository name> does not match.
+
+    Parameters:
+    <source hashdb>       the source hash database to copy hashes from
+    <destination hashdb>  the destination hash database to copy hashes into
+    <repository name>     the repository name to exclude when adding hashes
+
+  copy_unique <source hashdb> <destination hashdb>
+    Copy the hashes that have only one source reference from <source hashdb>
+    to <destination hashdb>.
+
+    Parameters:
+    <source hashdb>       the hash database to copy hashes from when source
+                          hashes have exactly one reference
+    <destination hashdb>  the hash database to copy hashes to when source
+                          hashes have exactly one reference
+
+Scan:
+  scan_hash <hashdb> <hex block hash>
+    Scan hash database <hashdb> for the specified <hash value> and print
+    out matches.
+
+    Parameters:
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <hex block hash>  the hash value to scan for
+
+Statistics:
+  sizes <hashdb>
+    Print sizes of database tables inside the given <hashdb> database.
+
+    Parameters:
+    <hashdb>       the hash database to print size information for
+
+  sources <hashdb>
+    Print source information indicating where the hashes in the <hashdb>
+    came from.
+
+    Parameters:
+    <hashdb>       the hash database to print all the repository name,
+                   filename source information for
+
+  histogram <hashdb>
+    Print the histogram of hashes for the given <hashdb> database.
+
+    Parameters:
+    <hashdb>       the hash database to print the histogram of hashes for
+
+  duplicates <hashdb> <number>
+    Print the hashes in the given <hashdb> database that are sourced the
+    given <number> of times.
+
+    Parameters:
+    <hashdb>       the hash database to print duplicate hashes about
+    <number>       the requested number of duplicate hashes
+
+  hash_table <hashdb> <hex file hash>
+    Print hashes from the given <hashdb> database that are associated with
+    the <source_id> source index.
+
+    Parameters:
+    <hashdb>              the hash database to print hashes from
+    <hex file hash>       the file hash of the source to print hashes for
+
+Performance analysis:
+  add_random <hashdb> <hex file hash> <count>
+    Add <count> randomly generated hashes into hash database <hashdb>.
+    Write performance data in the database's log.txt file.
+
+    Options:
+    -r, --repository=<repository name>
+      The repository name to use for the set of hashes being added.
+      (default is "repository_add_random").
+
+    Parameters:
+    <hashdb>       the hash database to add randomly generated hashes into
+    <hex file hash>the file hash of the source to print hashes for
+    <count>        the number of randomly generated hashes to add
+
+  scan_random <hashdb> <count>
+    Scan for random hashes in the <hashdb> database.  Writes performance
+    in the database's log.txt file.
+
+    Parameters:
+    <hashdb>       the hash database to scan
+    <count>        the number of randomly generated hashes to scan for
+
+bulk_extractor hashdb scanner:
+  bulk_extractor -e hashdb -S hashdb_mode=import -o outdir1 my_image1
+    Imports hashes from my_image1 to outdir1/hashdb.hdb
+
+  bulk_extractor -e hashdb -S hashdb_mode=scan
+                 -S hashdb_scan_path_or_socket=outdir1/hashdb.hdb
+                 -o outdir2 my_image2
+    Scans hashes from my_image2 against hashes in outdir1/hashdb.hdb
