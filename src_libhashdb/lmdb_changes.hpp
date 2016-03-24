@@ -45,7 +45,6 @@ class lmdb_changes_t {
   size_t hash_data_source_inserted;
   size_t hash_data_source_already_present;
   size_t hash_data_source_at_max;
-  size_t hash_data_invalid_file_offset;
 
   // hash
   size_t hash_prefix_inserted;
@@ -73,7 +72,6 @@ class lmdb_changes_t {
             hash_data_source_inserted(0),
             hash_data_source_already_present(0),
             hash_data_source_at_max(0),
-            hash_data_invalid_file_offset(0),
             hash_prefix_inserted(0),
             hash_suffix_inserted(0),
             hash_count_changed(0),
@@ -114,10 +112,6 @@ class lmdb_changes_t {
       os << "#     hash_data_source_at_max: "
          << hash_data_source_at_max<< "\n";
     }
-    if (hash_data_invalid_file_offset) {
-      os << "#     hash_data_invalid_file_offset: "
-         << hash_data_invalid_file_offset<< "\n";
-    }
     if (hash_prefix_inserted) {
       os << "#     hash_prefix_inserted: " << hash_prefix_inserted<< "\n";
     }
@@ -157,7 +151,6 @@ class lmdb_changes_t {
         hash_data_source_inserted == 0 &&
         hash_data_source_already_present == 0 &&
         hash_data_source_at_max == 0 &&
-        hash_data_invalid_file_offset == 0 &&
         hash_prefix_inserted == 0 &&
         hash_suffix_inserted == 0 &&
         hash_count_changed == 0 &&

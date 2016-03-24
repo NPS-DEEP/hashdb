@@ -365,7 +365,9 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
 
     // reject invalid file_offset
     if (file_offset % sector_size != 0) {
-      ++changes.hash_data_invalid_file_offset;
+      std::cerr << "Usage error: file offset " << file_offset
+                << " does not fit evenly along sector size " << sector_size
+                << ".\n";
       return 0;
     }
 

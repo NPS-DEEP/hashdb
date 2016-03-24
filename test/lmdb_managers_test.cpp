@@ -257,7 +257,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), 0);
   TEST_EQ(manager.find_count(binary_0), 0);
 
-  // invalid file offset, count = 0
+  // invalid file offset
   TEST_EQ(manager.insert(binary_0, 1, 513, 1, "bl", changes), 0);
   TEST_EQ(changes.hash_data_data_inserted, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
@@ -265,7 +265,6 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_inserted, 0);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 1);
 
   // insert binary_0
   TEST_EQ(manager.insert(binary_0, 1, 512, 1, "bl", changes), 1);
@@ -293,7 +292,6 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 1);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 1);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
   TEST_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
@@ -310,7 +308,6 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 1);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
   TEST_EQ(entropy, 2);
   TEST_EQ(block_label, "bl2");
@@ -327,7 +324,6 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_inserted, 2);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 1);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
   TEST_EQ(entropy, 2);
   TEST_EQ(block_label, "bl2");
@@ -350,7 +346,6 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_inserted, 3);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 1);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
   TEST_EQ(entropy, 3);
   TEST_EQ(block_label, "bl33");
@@ -403,7 +398,6 @@ void lmdb_hash_data_manager_settings1() {
   TEST_EQ(changes.hash_data_source_inserted, 0);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add hash data
   TEST_EQ(manager.insert(binary_0, 1, 1, 1, "bl", changes), 1);
@@ -413,7 +407,6 @@ void lmdb_hash_data_manager_settings1() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, same hash data, same source
   TEST_EQ(manager.insert(binary_0, 1, 1, 1, "bl", changes), 1);
@@ -423,7 +416,6 @@ void lmdb_hash_data_manager_settings1() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 1);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, same hash data, different source at max
   TEST_EQ(manager.insert(binary_0, 1, 2, 1, "bl", changes), 1);
@@ -433,7 +425,6 @@ void lmdb_hash_data_manager_settings1() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 2);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, different hash data, different source at max
   size_t count = manager.insert(binary_0, 1, 3, 12, "bl2", changes);
@@ -444,7 +435,6 @@ void lmdb_hash_data_manager_settings1() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 3);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 }
 
 void lmdb_hash_data_manager_settings2() {
@@ -461,7 +451,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 0);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add hash data and source
   TEST_EQ(manager.insert(binary_0, 1, 1, 10, "bl", changes), 1);
@@ -471,7 +460,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 0);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, same hash data, same source
   TEST_EQ(manager.insert(binary_0, 1, 1, 10, "bl", changes), 1);
@@ -481,7 +469,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 1);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, different hash data, same source
   TEST_EQ(manager.insert(binary_0, 1, 1, 12, "bl2", changes), 1);
@@ -491,7 +478,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 1);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, same hash data, different source
   TEST_EQ(manager.insert(binary_0, 1, 2, 12, "bl2", changes), 2);
@@ -501,7 +487,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 2);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, same hash data, different source above max
   TEST_EQ(manager.insert(binary_0, 1, 3, 12, "bl2", changes), 2);
@@ -511,7 +496,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 2);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 1);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 
   // add same hash, different hash data, different source above max
   TEST_EQ(manager.insert(binary_0, 1, 3, 13, "bl33", changes), 2);
@@ -521,7 +505,6 @@ void lmdb_hash_data_manager_settings2() {
   TEST_EQ(changes.hash_data_source_inserted, 2);
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 2);
-  TEST_EQ(changes.hash_data_invalid_file_offset, 0);
 }
 
 // ************************************************************
