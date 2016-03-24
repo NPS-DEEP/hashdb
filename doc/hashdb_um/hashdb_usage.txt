@@ -1,4 +1,3 @@
-
 hashdb Version 3.0.0-dev-0
 Usage: hashdb [-h|--help] [-v|-V|--version] [-q|--quiet]
               [options] <command> [<args>]
@@ -30,7 +29,7 @@ New database:
     <hashdb>   the file path to the new hash database to create
 
 Import/Export:
-  import [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>
+  import_dir [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>
          <import directory>
     Import hashes recursively from <import directory> into hash database
       <hashdb>.
@@ -62,14 +61,14 @@ Import/Export:
     <hashdb>       the hash database to insert the imported hashes into
     <NIST file>    the NIST file to import hashes from
 
-  import_json <hashdb> <json file>
+  import <hashdb> <json file>
     Import hashes from file <json file> into hash database <hashdb>.
 
     Parameters:
     <hashdb>       the hash database to insert the imported hashes into
     <json file>    the JSON file to import hashes from
 
-  export_json <hashdb> <json file>
+  export <hashdb> <json file>
     Export hashes from hash database <hashdb> into file <json file>.
 
     Parameters:
