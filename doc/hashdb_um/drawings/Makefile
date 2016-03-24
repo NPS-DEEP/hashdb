@@ -1,5 +1,4 @@
 drawings = \
-	forensic_path.pdf \
 	hashdb_system_overview.pdf \
 	sector_boundaries.pdf
 

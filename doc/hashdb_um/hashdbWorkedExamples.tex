@@ -1,6 +1,6 @@
 
 \section{Worked Example: Finding Similarity Between Disk Images}
-The worked example provided is intended to further illustrate how to use \hash to answer specific questions and perform specific tasks.  This example uses a publicly available dataset and can be replicated by readers of this manual.  In this example, we walk through the process of using \hash (and \bulk) to find the similarities between two separate disk images. We generate a hash database of block hashes from each media image and then obtain common block hashes by taking the intersection of the two databases.\\
+The worked example provided is intended to further illustrate how to use \hdb to answer specific questions and perform specific tasks.  This example uses a publicly available dataset and can be replicated by readers of this manual.  In this example, we walk through the process of using \hdb (and \bulk) to find the similarities between two separate disk images. We generate a hash database of block hashes from each media image and then obtain common block hashes by taking the intersection of the two databases.\\
 
 First, we download two files to use for comparison. The disk images are called \texttt{jo-favorites} \texttt{-usb-2009-12-11.E01} and \texttt{jo-work-usb-2009-12-11.E01}. Both files are available at \url{http://digitalcorpora.org/corp/nps/scenarios/2009-m57-patents/drives-redacted/}. Specifically with this example, we will be comparing the contents of two fictional USB drives.\\
 
@@ -102,7 +102,7 @@ Next we create database \textit{intersection.hdb} with values that are common be
 \verbbf{hashdb intersect workOutput/hashdb.hdb favoritesOutput/hashdb.hdb intersection.hdb}
 \end{Verbatim}
 
-\hash prints the following indicating that 32 hashes were inserted successfully and 8 hashes were not inserted because they were considered to be duplicate elements (same hash and same source information):
+\hdb prints the following indicating that 32 hashes were inserted successfully and 8 hashes were not inserted because they were considered to be duplicate elements (same hash and same source information):
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]

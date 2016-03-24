@@ -21,6 +21,7 @@
 
 %define macros for commonly used terms that require special formatting
 \newcommand \hdb {\textit{hashdb}\xspace}
+\newcommand \sscope {\textit{SectorScope}\xspace}
 \newcommand \bulk {\textbf{bulk\_extractor}\xspace}
 \newcommand \mdd {\textbf{md5deep}\xspace}
 \newcommand \fiwalk {\textbf{fiwalk}\xspace}
@@ -130,17 +131,6 @@ This command, if executed successfully, will print statistics about hash values 
 \begin{itemize}
 \item Creating hash databases of MD5 block hashes, as opposed to file hashes.
 \item Importing block hash values.
-\begin{comment}
-\item Importing block hash values in several ways:
-  \begin{itemize}
-  \item Using the \hdb \verb+import+ command.
-  \item Using the \bulk \hdb scanner import function.
-  \item Using the \hdb library through the Python or C++ interface.
-  \item Importing from correctly formatted JSON data.
-  \item Importing from another database.
-\end{itemize}
-\end{comment}
-
 \item Scanning the hash database for matching hash values.
 \item Providing the source information for hash values. 
 \end{itemize}
@@ -176,10 +166,15 @@ The first character on the line is the terminal prompt, and should not be typed.
 
 
 \section{How \hdb Works}
-The \hdb tool provides capabilities to create, edit, access and search databases of cryptographic hashes created from hash blocks. The cryptographic hashes are imported into a database from DFXML files created by other programs (which could include \textbf{md5deep}) or exported from another \hdb database. \hdb databases can also be populated using \bulk and the \textit{hashdb} scanner. Once a databases is created, \hdb provides users with the capability to scan the database for matching hash values and identify matching content. Hash databases can also be exported, added to, subtracted from and shared.\\
+The \hdb tool provides capabilities to create, edit, access and search databases of cryptographic hashes created from hash blocks. The cryptographic hashes are imported into a database from a directory, another database, \textbf{bulk\_extractor} or JSON data, or trough the \hdb API.
+Once a databases is created, \hdb provides users with the capability to scan the database for matching hash values and identify matching content. Hash databases can also be exported, added to, subtracted from and shared.\\
 
 
-Figure \ref{fig:overviewFigure} provides an overview of the capabilities included with the \hdb tool. \hdb populates databases from DFXML files created by other programs. The sources of those files can be virtually any type of raw digital media including black list files and disk images. Users can also add or remove data from the database after it is created. Once the database is populated, \hdb can export content from the database in DFXML format. It also provides an API that can be used by third party tools (as it is used in the \bulk program) to create, populate and access hash databases. Finally, \hdb allows users to scan the hash database for matching hash values.\\
+Figure \ref{fig:overviewFigure} provides an overview of the capabilities included with the \hdb tool. \hdb populates databases from whitelist source files
+or other media provided in JSON format or through the API.
+Users can also add or remove data from the database after it is created.
+Once the database is populated, \hdb can export content from the database in JSON format. It also provides an API that can be used by third party tools (as it is used in the \bulk program) to create, populate and access hash databases. Finally, \hdb allows users to scan the hash database for matching hash values.\\
+
 \begin{figure}
 	\center
 	\includegraphics[scale=.45]{drawings/hashdb_system_overview}
@@ -187,148 +182,98 @@ Figure \ref{fig:overviewFigure} provides an overview of the capabilities include
 	\label{fig:overviewFigure}
 \end{figure}
 
+\subsection{Blacklist Data}
+Blacklist data is the data we scan against to determine whether forensic data
+contains probative artifact.
+We build a hash database of blacklist data by importing block hashes
+from blacklist files, copying from other hash databases,
+or importing from other sources using data prepared in JSON format.
+
+\subsection{Forensic Data}
+Forensic data is the data we scan to see if it contains artifact matching
+that in our hash database.
+Note that just having matches is not sufficiently probative.
+Some matches are common to many files.
+\hdb tracks entropy and data information to automate the process
+of eliminating many false positives.
+Direct analysis such as that provided by the \sscope tool
+may be used to see the exact content at that location.
+\sscope is available at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}.
+
 \subsection{Hash Blocks}
 \label{HashBlocks}
-\hdb relies on block hashing rather than file hashing. A hash block is a contiguous sequence of bytes, typically 4KiB in size. Tools using block hashing calculate cryptographic hashes from hash blocks, along with information about where the hash blocks are sourced from. To increase the probability of finding matching hashes in sector-based disk images, hashes are generated at each sector boundary. Figure \ref{fig:sectorboundaries} illustrates cryptographic hashes generated from 4KiB hash blocks aligned on 512 byte sector boundaries. Block size is selectable in tools such as \textbf{md5deep}. In our work, we use a block size of 4KiB.\\
+\hdb works by matching blocks.
+\hdb is different from tools that match files because it can find matches
+even when part of a file is missing or changed.
+\hdb stores and scans for hashes created from contiguous blocks of data.
+We call the size of the block hashed the \textit{block size}.
+\hdb stores and scans for hashes aligned along sector boundaries.
+We call this alignment the \textit{sector size}.
+Although larger values take up more space, we have found that the smallest
+granularity used by file systems and storage devices is 512 bytes,
+so this is the default value for both.
 
-\begin{figure}
-	\center
-	\includegraphics[scale=1.1]{drawings/sector_boundaries}
-	\caption{Hashes generated over overlapping sector boundaries. 4K lines represent the hash blocks.}
-	\label{fig:sectorboundaries}
-\end{figure}
+\subsection{Building a \hdb Database}
+There are several ways to populate a database:
 
-
-
-\subsection{DFXML}
-\label{createDFXML}
-\hdb can be used to populate hash databases by importing block hashes from DFXML files.
-DFXML is an XML language designed to represent a wide range of forensic information and forensic processing results. It allows the sharing of structured information between independent tools and organizations \cite{dfxmlpaper}.\\
-
-Note that \hdb does not require DFXML files to import hashes.
-The \bulk \hdb scanner can import hashes directly into a new hash database,
-see \textbf{\autoref{ImportingAndScanning}} for importing using the \bulk \hdb scanner.
-Also, third party tools can be created for importing hashes
-directly into a hash database by interfacing with the \hdb library API,
-see \textbf{\autoref{usingSection}}.
-
-\subsubsection{Creating a DFXML file using \textbf{md5deep}}
-
-The \textbf{md5deep} tool creates cryptographic hashes from hash blocks and produces DFXML files. Listing \ref{md5excerpt} shows an excerpt of the DFXML file created by \textbf{md5deep}. The portion of the file of interest to \hdb is contained in the ``byte\_run'' tag. The ``file\_offset'' attribute is the number of bytes into the file where the cryptographic block hash was calculated. The  ``len'' attribute indicates the size of the block.  The ``hashdigest'' tag identifies that hash algorithm (MD5) and the long hexadecimal hash value. The ``filename'' tag indicates the filename to which the hashes can be attributed. \\
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption=Excerpt of a DFXML report file showing the MD5 output, label=md5excerpt]
-  <fileobject>
-    <filename>/home/bdallen/demo/mock_video.mp4</filename>
-    <filesize>10630146</filesize>
-    <ctime>2014-01-30T20:20:39Z</ctime>
-    <mtime>2014-01-30T19:04:59Z</mtime>
-    <atime>2014-01-30T20:04:52Z</atime>
-    <byte_run file_offset='0' len='4096'>   
-      <hashdigest type='MD5'>63641a3c008a3d26a192c778dd088868</hashdigest>
-    </byte_run>
-    <byte_run file_offset='4096' len='4096'>   
-      <hashdigest type='MD5'>c7dd2354e223c10856469e27686b8c6b</hashdigest>
-    </byte_run>
-    <byte_run file_offset='8192' len='4096'>   
-      <hashdigest type='MD5'>ff540fda05d008ccebf2cca2ec71571d</hashdigest>
-    </byte_run>
-    <byte_run file_offset='12288' len='4096'>   
-      <hashdigest type='MD5'>d3de47d704e85e0f61a91876236593d3</hashdigest>
-
-...
-
-    <byte_run file_offset='10625024' len='4096'>   
-      <hashdigest type='MD5'>d2d958b44c481cc41b0121b3b4afae85</hashdigest>
-    </byte_run>
-    <byte_run file_offset='10629120' len='1026'>   
-      <hashdigest type='MD5'>4640564a8655d3b201a85b4a76411b00</hashdigest>
-    </byte_run>
-    <hashdigest type='MD5'>a003483521c181d26e66dc09740e939d</hashdigest>
-  </fileobject>
-
-\end{lstlisting}  
-
-Users may create DFXML files to import hashes from by using the
-\textbf{md5deep} tool.
-\textbf{md5deep} is available at \url{http://md5deep.sourceforge.net}.
-For additional instructions on downloading and installing
-\textbf{md5deep}, go to \url{http://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
-
-Choose a file or directory to use as the source of data for the hash file output. For this manual, we use the file \texttt{mock\_video.mp4} available at \url{http://digitalcorpora.org/downloads/hashdb/demo/}. Then, run \textbf{md5deep} with the following command:\\
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{md5deep -p 4096 -d mock_video.mp4 > mock_video.xml}
-\end{Verbatim}
-The above command specifies:
 \begin{itemize}
-\item a block size of 4096 bytes (\textbf{-p} option) 
-\item that the hash output will be written to a DFXML file (\textbf{-d} option)
-\item to write the output to the file \texttt{mock\_video.xml}. The  $>$ symbol specification writes the output into the file 
-\end{itemize}
- The file \texttt{mock\_video.xml} will be used in the next step to create the hash database. However, any DFXML file containing block hash values can be used in \hdb.\\
-
-Note, for this example we are using only one file to populate the DFXML. However, users will typically be creating a block hash file from thousands of files in hundred of directories. To create a block hash file that recursively includes all files and directories contained within a directory, use the command \textbf{mdf5deep -r $<$directoryname$>$} along with the other options specified above.
-
-\subsubsection{Creating a DFXML file using \textbf{fiwalk}}
-The \textbf{fiwalk} tool can create block hashes of files in filesystems
-in an image,
-see \url{http://www.forensicswiki.org/wiki/Fiwalk}.
-\textbf{fiwalk} is part of The Sleuth Kit\textregistered\xspace (TSK),
-available from \url{https://github.com/sleuthkit/sleuthkit}. \\
-
-For example run \textbf{fiwalk} with the following command:\\
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{fiwalk -x -S 4096 my_image.E01 > my_image.xml}
-\end{Verbatim}
-The above command specifies:
-\begin{itemize}
-\item Send output to stdout \textbf{-x} option.
-\item Perform sector hashes every 4096 bytes \textbf{-s} option.
-\item Perform sector hashes on the file system in the \texttt{my\_image.E01} image.
-\item Direct output to file \texttt{my\_image.xml}.
+\item Using the \hdb \verb+import+ command.
+\item Importing from correctly formatted JSON data.
+\item Importing from another database.
+\item Using the \bulk \hdb scanner import function.
+\item Using the \hdb library through the Python or C++ interface.
 \end{itemize}
 
-\subsubsection{Creating a DFXML file using \textbf{hashdb}}
-The \texttt{export} command of the \textbf{hashdb} tool writes out the block hashes in a hash database along with their source information. \\
+A database may contain blacklist hashes from multiple source domains,
+where a domain is called a \textit{repository}.
+Also, multiple source files can actually be the same source.
+To manage this, \hdb tracks sources by source hash,
+and a source hash can be referred to by multiple filenames and repository names.
 
-For example run \textbf{hashdb} with the following command:\\
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
-\end{Verbatim}
-The above command specifies to export hashes and their source information from hash databse \texttt{mock\_video.hdb} to DFXML file \texttt{demoVideoHashes.xml}.
+\subsection{Scanning}
+There are multiple ways users can scan for matches in a block hash database:
+
+\begin{itemize}
+\item Using one of the \hdb tool scan commands to scan from a media image,
+list, stream, or specific hash.
+\item Using one of the \hdb API scan interfaces to scan at a particular
+level of detail.
+\item Using the \bulk \hdb scanner Scan function.
+\end{itemize}
 
 \subsection{Contents of a Hash Database}
 Each \hdb database is contained in a directory called \textit{$<$databasename$>$.hdb} and contains a number of files. These files are:
 \begin{verbatim}
-bloom_filter
-history.xml
+lmdb_hash_data_store/data.mdb
+lmdb_hash_data_store/lock.mdb
 lmdb_hash_store/data.mdb
 lmdb_hash_store/lock.mdb
-lmdb_name_store/data.mdb
-lmdb_name_store/lock.mdb
-lmdb_source_store/data.mdb
-lmdb_source_store/lock.mdb
-log.xml
-_old_history.xml
-settings.xml
+lmdb_source_data_store/data.mdb
+lmdb_source_data_store/lock.mdb
+lmdb_source_id_store/data.mdb
+lmdb_source_id_store/lock.mdb
+lmdb_source_name_store/data.mdb
+lmdb_source_name_store/lock.mdb
+log.txt
+settings.json
 \end{verbatim}
 
-These files include XML files containing configuration settings and logs, a Bloom filter file used for improving the speed of hash lookups, binary files containing stored hashes from multiple sources and binary files that allow lookup of hash source names. Of these files, the history, settings, and log files may be of interest to the user:
+These files include several data store directories and files, a settings file, and a log file.
+Each is described briefly:
+
 \begin{itemize}
-\item \texttt{log.xml} \\
+\item Data store files \\
+The data store files encode all the block hashes, source files, and related information that are in the database.
+
+
+\item \texttt{log.txt} \\
 Every time a command is run that changes the content of the database, this file is replaced with a log of the run.
 The log includes the command name, information about \hdb including the command typed and how \hdb was compiled, information about the operating system \hdb was just run on, timestamps indicating how much time the command took, and the specific \hdb changes applied, described in more detail in \textbf{\autoref{Running}}.
-\item \texttt{history.xml} \\
-The purpose of this file is to provide full attribution for a database.
-Every \hdb command executed that changes the state of the database
-is logged into the \texttt{log.xml} file and is appended to the \texttt{history.xml} file.
-For \hdb commands that involve manipulations from another database
-(or from two databases, as is the case with the \texttt{add\_multiple} command),
-the history file of those databases are also appended.
-It can be difficult to follow the \texttt{history.xml} file because of its XML format, but it provides full attribution nonetheless.
-\item \texttt{settings.xml} \\
+\item \texttt{settings.json} \\
 This file contains the settings requested by the user when the block hash database was created, see \hdb settings and Bloom filter settings options.
-This file also contains internal \hdb configuration and versioning information that is specific to how the \hdb tool was compiled.
+This file also contains internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb.
 \end{itemize}
+
 
 
 
@@ -341,26 +286,6 @@ This file also contains internal \hdb configuration and versioning information t
 
 \bulk has multiple scanners that extract features. One particular scanner, the \textit{hashdb} scanner links the full set of \bulk capabilities directly to the \hdb tool. The \textit{hashdb} scanner uses the \hdb API to create and import data into hash databases  directly from the data processed by \bulk. The scanner also can be run with a hash database as input (again using the \hdb API) will scan the data processed by \bulk for matching hash values.\\
 
-\subsubsection{Forensic Path}
-The \bulk program introduced the concept of the ``forensic path''. The forensic path is a description of the origination of a piece of data. It might come from, for example, a flat file, a data stream, or a decompression of some type of data. Consider an HTTP stream that contains a GZIP-compressed email as shown in Figure ~\ref{fig:forensicPath}. A series of \bulk scanners will first find the ZLIB compressed regions in the HTTP stream that contain the email, decompress them, and then find the features in that email which may include email addresses, names and phone numbers. Using this method, \bulk can find email addresses in compressed data. The forensic path for the email addresses found indicate that it originated in an email, that was GZIP compressed and found in an HTTP stream. The forensic path of the email addresses features found might be represented as shown in the example feature file in Listing \ref{forensicPathExcerpt}. It is worth nothing that the \textit{hashdb} scanner can recognize a matching block embedded in part of another file. No other existing digital forensic tool can do this; other tools find only completely unembedded files.\\
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption=Forensic Path of email address features found in \bulk, label=forensicPathExcerpt]
-11052168704-GZIP-3437  live.com  eMn='domexuser@live.com';var  srf_sDispM
-11052168704-GZIP-3475  live.com  pMn='domexuser@live.com';var  srf_sDreCk
-11052168704-GZIP-3512  live.com  eCk='domexuser@live.com';var  srf_sFT='<
-\end{lstlisting}
-
-
-\begin{figure}
-	\center
-	\includegraphics[scale=.55]{drawings/forensic_path}
-	\caption{Forensic path of features found in email lead back to HTTP Stream}
-	\label{fig:forensicPath}
-\end{figure}
-
-
-%\section{Running \hdb}
-%\hdb is a command line tool that can be run on Linux, MacOS or Windows systems. Here we describe the installation procedures for those system as well as the basic commands used to run the tool, including creating and maintaining a database and scanning media for hash values.
 
 \section{Installation Guide}
 \hdb is a command line tool that can be run on Linux, MacOS or Windows systems. Here we describe the installation procedures for those systems.
@@ -440,25 +365,20 @@ When the installer file is executed, the installation will begin and show a dial
 
 \subsubsection{\bulk}
 The \bulk \hdb scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
-This scanner is included in \bulk version 1.4.5 or later. For detailed instructions on downloading and installing \bulk, please refer to the Users Manual found at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf}. Note: \hdb must be installed first for \bulk to build properly with \hdb. \bulk will automatically install the \textit{hashdb} scanner but only if the \hdb library has been installed. Otherwise, \bulk will build without the \textit{hashdb} scanner. To check that the \textit{hashdb} scanner is enabled, observe that is enabled in the output of running \texttt{./configure} or type {bulk\_extractor -h} and look for \textit{hashdb} setting options.\\
+\hdb requires a newer build of \bulk.
+Please see the \hdb Wiki page at \url{https://github.com/NPS-DEEP/hashdb/wiki}
+for information on obtaining a compatible version of \bulk.
 
-\subsubsection{\mdd}
-The \mdd tool creates block hashes from files and directories that \hdb can import.
-\mdd is available at
-\url{https://github.com/jessek/hashdeep/releases/tag/release-4.4}.
-Additional platform-specific installation structions are provided at
-\url{https://github.com/simsong/hashdb/wiki/Installing-md5deep}.\\
+\subsubsection{\sscope}
+The \sscope tool provides a GUI for analyzing data associated with hash matches found by \hdb.
+\sscope also provides an Autopsy plug-in module for running \hdb and \sscope from within the Autopsy framework.
+Please see the \sscope Wiki page at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}
+for information on downloading and using \sscope.
 
-\subsubsection{\fiwalk}
-The \fiwalk tool creates block hashes from files and directories in images that \hdb can import.
-Please see \url{http://www.forensicswiki.org/wiki/Fiwalk}.
-\textbf{fiwalk} is part of The Sleuth Kit\textregistered\xspace (TSK),
-available from \url{https://github.com/sleuthkit/sleuthkit}. \\
-
-\section {Running \hdb}
+\section {Running the \hdb Tool}
 \label{Running}
 The core capabilities provided by \hdb involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hdb users need to start by building a database (if an existing database is not available for use).
-Users then import hashes using a DFXML file or by using the \bulk \hdb scaner, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
+Users then import hashes using \hdb commands, the \hdb \bulk scanner, or the \hdb API, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
 Users then scan for hashes that match.
 Additional commands are provided to support statistical analysis, performance tuning and performance analysis.\\
 
@@ -466,25 +386,6 @@ This section describes \hdb commands, along with examples, for performing these 
 For more examples of command usage, please see \textbf{\autoref{UseCases}}.
 For a \hdb quick reference summary, please see \textbf{\autoref{QuickReference}}
 or \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
-
-\subsection{General Usage}
-Some options apply generically to multiple commands,
-see Table \ref{tab:general}.\\
-
-\begin{table}[!ht]
-\centering
-\caption{Options for General Usage}
-\label{tab:general}
-\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
-\hline \hline
-\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
-\hline
-\textbf{\texttt{-q}} & \verb+--quiet+ & Requests quiet mode for commands that print progress status\\
-\hline
-\end{tabular}
-\end{table}
-
-Option \textbf{\texttt{-q}} suppresses progress output for commands that print progress.\\
 
 \subsection{Creating a Hash Database}
 A hash database must be created before hashes can be added to it.
@@ -497,12 +398,12 @@ The command to create a hash database is shown in Table \ref{tab:createDatabase}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-p <hash block size>]+ \verb+[-m<maximum duplicates>]+ \verb+[-a <byte alignment>]+ \verb+[-t <hash truncation>]+ \verb+[--bloom <state>] [--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+hashdb.hdb+ & Creates a new hash database with the given configuration parameters.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+[-b <sector size>]+ \verb+[-m <max ID offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
 \hline
 \end{tabular}
 \end{table}
 
-Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional parameters that can be used to specify database settings.\\
+Table \ref{tab:hashDBSettings} shows the configurable database settings.\\
 
 \begin{table}[!ht]
 \centering
@@ -512,98 +413,65 @@ Tables \ref{tab:hashDBSettings} and \ref{tab:bloomSettings} show the optional pa
 \hline \hline
 \textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
 \hline
-\textbf{\texttt{-p}} & \verb+--hash_block_size=+\textit{hash\_block\_size} & Specifies the block size (hash\_block\_size) in bytes used to generate the hashes that will be stored in the database. Default is 4096 bytes.  \\
+\textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored in the database. Default is 512 bytes.  \\
 \hline
-\textbf{\texttt{-m}} & \verb+--max_duplicates=+\textit{maximum} & Specifies the maximum number of hash duplicates allowed. 0 value indicates there is no limit. Default is 0.\\
+\textbf{\texttt{-s}} & \verb+--sector_size=+\textit{sector\_size} & Specifies the sector size in bytes used to calculate hashes along. Default is 512 bytes.  \\
 \hline
-\textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{alginment} & Specifies the minimum byte alignment granularity.  This optimization parameter allows the database to be slightly smaller.  Default is 512 bytes.\\
+\textbf{\texttt{-m}} & \verb+--max_source_offset_pairs=+\textit{max source offset pairs} & Specifies the maximum number of source, source offset pairs allowed. 0 value indicates there is no limit. Default is 0.\\
 \hline
-\textbf{\texttt{-t}} & \verb+--hash_truncation=+\textit{truncation} & Truncates the hash stored to this length, in bytes.  This optimization parameter allows the database to be smaller.  Default is 0 for no truncation.\\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[!ht]
-\centering
-\caption{Bloom Filter Settings}
-\label{tab:bloomSettings}
-\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
-\hline \hline
-\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
-\hline
-\textbf{\texttt{-A}} & \verb+--bloom=+\textit{enabled}|\textit{disabled} & Enables or disables the Bloom filter.\\
-\hline
-\textbf{\texttt{-B}} & \verb+--bloom_n=+\textit{n} & Configures Bloom filter to work well for a database of (n) hashes.\\
-\hline
-\textbf{\texttt{-C}} & \verb+--bloom_kM=+\textit{k}:\textit{M} & Available for advanced or experimental use.  Configures Bloom filter with (k) hash functions and (M) bits per hash.\\
+\textbf{\texttt{-t}} & \verb+--tuning=+\textit{prefix bits:suffix bytes} & Specifies the number of prefix bits and suffix bytes to use for compacting the database.\\
 \hline
 \end{tabular}
 \end{table}
 
-\textbf{Hash Block Size}\\
-This setting specifies the hash block size used to generate hashes.
-The hash block size must be greater than or equal to the sector size of 512,
-and must be divisible by 512 in order to be byte aligned, as discussed
-in \textbf{\autoref{HashBlocks}}.\\
 
-\textbf{Maximum Duplicates}\\
-This setting specifies the maximum number of duplicates of a hash value
-that \hdb may put into the database.
-A default value of 0 means unlimited, but this may be unreasonable.
-For example if a block is repeated many times and is thus not interesting,
-limit storing its duplicates using this setting.\\
 
-\textbf{Byte Alignment}\\
-This setting specifies the byte alignment granularity.  All file offsets must be divisible by the byte alignment.  Use 1 for no granularity.  Using 512 instead of 1 saves about a byte per hash record in the database.\\
+\textbf{Block size}\\
+The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
 
-\textbf{Hash Truncation}\\
-This setting truncates the hash stored to this length, in bytes.  By using hash truncation, hash records can be shorter than the typical length of 16 bytes for MD5 hashes.  Beware that truncating hash values increase the probability of hash collisions.  Occasional hash collisions may be acceptable.  Values as low as 6 bytes may be acceptable.\\
-When hash truncation is in use:
-\begin{itemize}
-\item When scanning for a hash, the value scanned for is truncated before the scan is performed.
-\item When truncating hashes being imported, the truncated hash value is stored in the Bloom filter, with zeros extending the hash to make it 16 bytes long.  This may result in early saturation of the Bloom filter.  To improve performance, try using the \verb+--bloom_kM+ Bloom filter setting with a $k$ value of 1.
-\end{itemize}
+\textbf{Sector size}\\
+The resolution of sectors that may reside on media. The operating system and/or storage device will align data on sector boundaries. Block hashes are calculated on aligned sector boundaries. The default is 512.\\
 
-\textbf{Bloom}\\
-This setting controls whether the Bloom filter will be enabled or disabled. \\
+\textbf{Max ID offset pairs}\\
+The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
 
-\textbf{Bloom\_n}\\
-This setting controls the size of the Bloom filter by using the number of hashes expected in the database as input. \\
+\textbf{Hash prefix bits}\\
+The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.\\
 
-\textbf{Bloom\_kM}\\
-This setting directly controls the number of hash functions and the number of bits per hash to use in the Bloom filter and is only recommended for experimentation.  We recommend using \verb+bloom_n+ instead.\\
+\textbf{hash suffix bytes}\\
+The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
 
 \textbf{Example}\\
 To create an (empty) hash database named \textbf{\texttt{mock\_video.hdb}}, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb create mock_video.hdb}
 \end{Verbatim}
-The above command will create a database with all of the default hash database settings. Most users will not need to change those settings. Our DFXML file was created with a default block size of 4096 bytes.
+The above command will create a database with all of the default hash database settings. Most users will not need to change these settings.
 Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create --max\_duplicates=20 mock_video.hdb}
+\verbbf{hashdb create --max\_source\_offset\_pairs=20 mock_video.hdb}
 \verbbf{hashdb create -m 20 mock_video.hdb}
 \end{Verbatim}
-The above two commands produce identical results, creating the database \texttt{mock\_video.hdb} that will accept a maximum of 20 hash duplicates.\\
+The above two commands produce identical results, creating the database \texttt{mock\_video.hdb} that will accept a maximum of 20 source, offset pairs per hash.\\
 
 \subsection{Importing and Exporting}
-Hash databases may be imported from and exported to files in DFXML format
-and may be imported from text files containing tabbed hash data.
-A hash database must be created first before it may be imported into.
+Hash databases may be imported to in several ways, and may be exported in JSON format.
 Commands to import and export hashes are shown in Table \ref{tab:importExport}.\\
 \begin{table}[!ht]
 \centering
-\caption{Commands for Importing and Exporting between DFXML Files and Hash Databases}
+\caption{Commands for Importing into and Exporting Hash Databases}
 \label{tab:importExport}
 \begin{tabular}{|p{2.5 cm}|p{7 cm}|p{4 cm}|}
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{import} & \verb+import [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the DFXML file into the hash database. Command can optionally include a specific repository name to use for the set of hashes being imported.\\
+\textbf{import\_dir} & \verb+import_dir [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+<hashdb.hdb>+ \verb+<import directory>+& Imports hashes from files under the import directory.\\
 \hline
-\textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<DFXML file> <hashdb>+& Imports values from the tab-dileneated file into the hash database. Options allow using a specific repository name and defining an alternate sector size for the set of hashes being imported.\\
+\textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database.\\
 \hline
-\textbf{export} & \verb+export <hashdb.hdb> <DFXML file.xml>+ & Exports hash database to the DFXML file\\
+\textbf{import} & \verb+import <hashdb.hdb>+ \verb+<hashdb.json>+& Imports values from the JSON file into the hash database.\\
+\hline
+\textbf{export} & \verb+export <hashdb.hdb>+ \verb+<hashdb.json>+& Exports the hash database to the JSON file\\
 \hline
 \end{tabular}
 \end{table}
@@ -623,26 +491,27 @@ file1	f58a09656658c6b41e244b4a6091592c	3
 \end{lstlisting}
 
 
-Using the DFXML file created in the previous section, type the following command:
+To import block hashes from a directory of blacklist sources, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import -r mock_video_repository mock_video.xml mock_video.hdb}
+\verbbf{hashdb import_dir -r mock_video_repository mock_video.hdb mock_video_dir}
 \end{Verbatim}
 In the above command the option \textbf{-r} is used along with the repository name \texttt{mock\_video\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. Hash blocks contained in one database often originate from many different sources and the fileme may be the same. For example, if we add two separate but similar databases with partial overlap to a database, this will result in some duplicate hashes from multiple sources with the same filename. The repository name can be used with those duplicates to allow users to track all hashes back to their original sources. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{import} command in the above example imports the contents of \texttt{mock\_video.xml} into the database \texttt{mock\_video.hdb}. \hdb prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
+The \textbf{import} command in the above example imports block hashes from files in the \texttt{mock\_video\_dir} directory into the database \texttt{mock\_video.hdb}. \hdb prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
 
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-hashdb changes (insert):
-    hashes inserted: 2595
+zzz replace with correct data
+#    hashes inserted: 2595
 \end{Verbatim}
 \endgroup
-The database \texttt{\textbf{mock\_video.hdb}} now holds 2595 hash values.
+The database \texttt{\textbf{mock\_video.hdb}} now contains these block hashes.
 
-The file \texttt{log.xml} shows that a set of hash blocks have just been inserted. Listing \ref{logexcerpt} shows the excerpt of the log file that tracks this statistic.
+The file \texttt{log.txt} shows that a set of hash blocks have just been inserted. Listing \ref{logexcerpt} shows the excerpt of the log file that tracks this statistic.
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Excerpt of the \texttt{log.xml} indicating hash blocks were inserted, label=logexcerpt]
+zzz replace with correct data
 ...   
    <repository_name>mock_video_repository</repository_name>
     <timestamp name='begin import' delta='0.024016' total='0.024016'/>
@@ -652,7 +521,7 @@ The file \texttt{log.xml} shows that a set of hash blocks have just been inserte
     </hashdb_changes>
 ...
 \end{lstlisting}
-Users will prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
+Users may prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb size mock_video.hdb}
 \end{Verbatim}
