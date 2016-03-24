@@ -528,7 +528,7 @@ Users may prefer to run statistical commands such as this to get information abo
 
 \subsection{Database Manipulation}
 \label{DatabaseManipulation}
-Databases may need to be merged together or common hash values may need to be subtracted out in order for them to be more suitable for scanning against.
+Databases may need to be merged together or common hash values may need to be subtracted out in order to produce a specific set of blacklist data to scan against.
 Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
 Destination databases are created if they do not exist yet.
 
@@ -542,28 +542,29 @@ Destination databases are created if they do not exist yet.
 \hline
 \textbf{add} & \verb+add <source db>+ \verb+<destination db>+ & Copies all of the hashes from \textit{source db} to \textit{destination db}\\
 \hline
-\textbf{add\_multiple} &  \verb+add_multiple <source db1>+ \verb+<source db2> <destination db>+ & Performs the union of \textit{source db1} and \textit{source db2} and copies all of the hash values from the union into \textit{destination db}\\
+\textbf{add\_multiple} &  \verb+add_multiple <source db1>+ \verb+<source db2>+ \verb+...+ \verb+<destination db>+ & Adds databases \textit{source db1}, \textit{source db2}, etc.\ to \textit{destination db}\\
 \hline
-\textbf{add\_repository} & \verb+add_repository <source db1>+ \verb+<destination db2>+ \verb+<repository namedb>+ & Adds \textit{source db1} to \textit{destination db2} but only when the repository name matches\\
+\textbf{add\_repository} & \verb+add_repository <source db1>+ \verb+<destination db2>+ \verb+<repository name>+ & Adds \textit{source db1} to \textit{destination db2} but only when the repository name matches\\
 \hline
 \textbf{intersect} & \verb+intersect <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} where sources match\\
 \hline
-\textbf{intersect\_hash} & \verb+intersect_hash <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} even when source repository name and filename do not match\\
+\textbf{intersect\_hash} & \verb+intersect_hash <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} even if their sources are different.\\
 \hline
 \textbf{subtract} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} where sources match\\
 \hline
-\textbf{subtract\_hash} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} even when source repository name and filename do not match\\
+\textbf{subtract\_hash} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} even if their sources are different.\\
 \hline
 \textbf{subtract \_repository} & \verb+subtract_repository+ \verb+<source db1>+ \verb+<destination db2>+ \verb+<repository namedb>+ & Adds \textit{source db1} to \textit{destination db2} unless the repository name matches\\
 \hline
-\textbf{deduplicate} & \verb+deduplicate <source db>+ \verb+<destination db>+ &   Copies all non-duplicate hash values from \textit{source db} into \textit{destination db}\\
+\textbf{deduplicate} & \verb+deduplicate <source db>+ \verb+<destination db>+ &   Copies hash values that have only one source, offset pair associated with them from \textit{source db} into \textit{destination db}\\
 \hline
 \end{tabular}
 \end{table}
 
 \subsubsection{Tracking Changes in Hash Databases}
-Statistics about hash database changes are reported on the console and to the log file and history file inside the hash database.
-These statistics show the number of hashes inserted into a database as a result of a command, and also show the number of hashes not removed because specific conditions were not met.
+Statistics about hash database changes are reported on the console and to the log file inside the hash database.
+These statistics show specific changes made to stores within the hash database
+and also changes not made because conditions were not met.
 These statistics are shown in Table \ref{tab:changeStatistics}.
 \begin{table}[!ht]
 
@@ -574,34 +575,56 @@ These statistics are shown in Table \ref{tab:changeStatistics}.
 \hline \hline
 \textbf{Statistic} & \textbf{Meaning} \\
 \hline
-\verb+hashes_inserted+ &  Number of hashes inserted.\\
+
+% hash_data
+\verb+hash_data_data_inserted+ &  Number of hash data records inserted.\\
 \hline
-\verb+hashes_not_inserted_+ \verb+invalid_byte_alignment+ &  Number of hashes not inserted because the file offset was not byte aligned.
-If the database expects a byte alignment of 512 and the \hdb user
-tries to add a hash at byte 80, \hdb will detect that 80 does not fall on
-a 512 byte boundary (80 mod 512 $\ne$ 0).\\
+\verb+hash_data_data_changed+ &  Number of hash data records changed.\\
 \hline
-\verb+hashes_not_inserted_+ \verb+exceeds_max_duplicates+ & Number of hashes not inserted because they exceed the max duplicates value. For example, user sets max duplicates with \texttt{-m 20} and the run attempts to import 30 hashdigests calculated from 30 NULL blocks of input, so we see 20 max duplicates.\\
+\verb+hash_data_data_same+ &  Number of hash data records provided but same.\\
 \hline
-\verb+hashes_not_inserted_+ \verb+duplicate_element+ & Number of hashes not inserted because they are duplicate elements. The user attempts to import a hash where the hash value, repository name, filename, and its file offset
-are all the same.\\
+\verb+hash_data_source_inserted+ &  Number of hash data source, offset pairs inserted.\\
 \hline
-% note: manipulation commands do not remove hashes, they copy them.
-%\verb+hashes_removed+ & Number of hashes removed.\\
-%\hline
-%\verb+hashes_not_removed_+ \verb+invalid_byte_alignment+ &  Number of hashes not removed because the file offset was not byte aligned.\\
-%\hline
-%\verb+hashes_not_removed_+ \verb+no_hash+ &  Number of hashes not removed because the hash blocks requested for removal did not exist in the database.\\
-%\hline
-%\verb+hashes_not_removed_+ \verb+no_element+ &  Number of hashes not removed because the hashes, specifically identified by 
-%hash value, repository name, filename, and its file offset do not exist in the database, indicating a possible mistake in database management.\\
-%\hline
+\verb+hash_data_source_already_+ \verb+present+ &  Number of hash data source, offset pairs provided but same\\
+\hline
+\verb+hash_data_source_at_max+ &  Number of hash data source, offset pairs dropped because of max pair limit.\\
+\hline
+
+% hash
+\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted.\\
+\hline
+\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted.\\
+\hline
+\verb+hash_count_changed+ &  Number of hash count changes were applied.\\
+\hline
+\verb+hash_not_changed+ &  Number of hash and count values provided but same.\\
+\hline
+
+% source data
+\verb+source_data_inserted+ &  Number of source data records inserted.\\
+\hline
+\verb+source_data_changed+ &  Number of source data records changed.\\
+\hline
+\verb+source_data_same+ &  Number of source data records provided but same.\\
+\hline
+
+% source_id
+\verb+source_id_inserted+ &  Number of source ID records inserted.\\
+\hline
+\verb+source_id_already_present+ &  Number of source ID records provided but already present.\\
+\hline
+
+% source_name
+\verb+source_name_inserted+ &  Number of source names inserted.\\
+\hline
+\verb+source_name_already_+ \verb+present+ &  Number of source names provided but already present.\\
+\hline
 \end{tabular}
 \end{table}
 
 \subsection{Scan Services}
 \label{ScanServices}
-\hdb can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content. To scan media for hash values, run using the \bulk \textit{hashdb} scanner on a media image file and provide a hash database created by \hdb as input.
+\hdb can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content.
 Scan services are shown in Table \ref{tab:scanServices}. \\
 
 \begin{table}[!ht]
@@ -623,50 +646,26 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \end{tabular}
 \end{table}
 
-First, identify the media that you would like to scan. For this example, we download and use video file \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\ 
+To scan, first identify the media that you would like to scan. For this example, we download and use video file \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\
 
-Second, identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
+Then identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
 
-Finally, run \bulk from the command line and send the required parameters to the \textit{hashdb} scanner using the \textbf{-S} option. Run the following command: 
+Finally, run the \hdb scan command to scan for blocks in the media that match block hashes in the database:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -e hashdb -o outdir -S hashdb_mode=scan \\}
-\textbf{    -S hashdb_scan_path_or_socket=mock_video.hdb mock_video_redacted_image}
+\verbbf{hashdb scan_image mock_video.hdb mock_video_redacted_image > matches.json}
 \end{Verbatim}
-This command tells \bulk to enable the \textit{hashdb} scanner and to run it in ``scan'' mode to try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}. Note: other run options using \bulk are discussed further in \textbf{\autoref{bulkextractorSection}}.\\
+This command tells \hdb to scan \textbf{mock\_video\_redacted\_image} and try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}, putting match data in file matches.json.\\
 
 Listing \ref{bulkHashScan} shows the output printed to the command line as a result of the above \bulk \hdb scan command. \\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=Output from \bulk \hdb scan, label=bulkHashScan]
-bulk_extractor version: 1.4.1
-Input file: mock_video_redacted_image
-Output directory: outdir1
-Disk Size: 12596738
-Threads: 4
-All data are read; waiting for threads to finish...
-Time elapsed waiting for 1 thread to finish:
-     (timeout in 60 min .)
-Time elapsed waiting for 1 thread to finish:
-    6 sec (timeout in 59 min 54 sec.)
-Thread 0: Processing 0
-
-All Threads Finished!
-Producer time spent waiting: 0 sec.
-Average consumer time spent waiting: 4.69167 sec.
-Phase 2. Shutting down scanners
-Phase 3. Creating Histograms
-   ccn histogram...   ccn_track2 histogram...   domain histogram...
-   email histogram...   ether histogram...   find histogram...
-   ip histogram...   telephone histogram...   url histogram...
-   url microsoft-live...   url services...   url facebook-address...
-   url facebook-id...   url searches...
-Elapsed time: 6.33812 sec.
-Total MB processed: 125
-Overall performance: 1.98746 MBytes/sec (0.496864 MBytes/sec/thread)
+zzzzzzzzzzzzzzz
 Total email features found: 0
 \end{lstlisting}
 
-All hash block matches discovered in the hash database are printed to the \bulk output file \texttt{identified\_blocks.txt}. Listing \ref{identifiedBlocks} shows the contents of that file after the \bulk run. Each line of the file corresponds to one hash block from the input data provided that was matched in the database. The number at the beginning of the line is the Forensic Path.\\
+All hash block matches discovered in the hash database are listed in the output.
+zzzzzzzzz\\
 
 
 The second column of the \texttt{identified\_blocks.txt} file shows the actual block hash value. The final column is the number of times this block hash value has been added to the hash database. It is a count of hash duplicates. Hash duplicates occur when the hash value is the same but any part of the source information including repository name, filename or offset, is unique. In this case, each hash values shown has only been added to the database once.\\
@@ -680,20 +679,6 @@ The second column of the \texttt{identified\_blocks.txt} file shows the actual b
 # Feature-File-Version: 1.1
 12452352	3b6b477d391f73f67c1c01e2141dbb17	{"count":1}
 12456448	89a170b6b9a948d21d1d6ee1e7cdc467	{"count":1}
-12460544	f58a09656658c6b41e244b4a6091592c	{"count":1}
-12464640	1d0abbddf1344ac751d17604bdd9ebe8	{"count":1}
-12468736	16d75027533b0a5ab900089a244384a0	{"count":1}
-12472832	97068927ff7ca0c4d27ac527474065bc	{"count":1}
-12476928	80a403ea48854676501a02e390a69699	{"count":1}
-12481024	7de953ea563c4df1f8369d8dd2cfb4d9	{"count":1}
-12485120	1b803bd6e014d1855e6f8413041c2b07	{"count":1}
-12489216	cf49adf3285b983d9f8d60497290bfd2	{"count":1}
-12493312	4cc415709e205ac0ef5b5dcfb77936b6	{"count":1}
-12497408	0c5c611edc8dfd34f85c6cbf88702e51	{"count":1}
-12501504	4a93e65fb187d71c2b8b5697f1460e3d	{"count":1}
-12505600	a667f79e6446222092257af1780f6a9f	{"count":1}
-12509696	aec94ab99f591f507b3c27424a0b52c5	{"count":1}
-12513792	c6361fe0eb4f7b13bac6529e1cdd8ea4	{"count":1}
 \end{lstlisting}
 
 \begin{lstlisting}[float, caption={Two lines from the \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. The third column is replaced with expaned information}, label=identifiedSourceLine]
@@ -735,36 +720,22 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{duplicates} & \verb+duplicates <hashdb> <number>+ &  Prints out hashes in the database that are sourced the given number of times\\
 \hline
-\textbf{hash\_table} & \verb+hash_table <hashdb> <source_id>+ &  Prints hashes associated with the specified source index in a format compatible with \texttt{identified\_blocks.txt} files\\
-\hline
-\textbf{expand\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints expanded source information from the \textit{hashdb} unless more than max, default 200, of each hash in the \texttt{identified\_blocks.txt} input file\\
-\hline
-\textbf{explain\_identified} \textbf{\_blocks} & \verb+expand_identified_blocks+ \verb+[-m <number>] <hashdb>+ \verb+<identified_blocks.txt>+ & Prints out hash and source tables for sources with hashes observed no more than the maximum number of times, default max 20, for each hash feature in the \texttt{identified\_blocks.txt} input file\\
+\textbf{hash\_table} & \verb+hash_table <hashdb> <hex file hash>+ &  Prints hashes associated with the specified source identified by the source file hexdigest\\
 \hline
 \end{tabular}
 \end{table}
 
-To identify the source information associated with the hash values found in \texttt{identified\_blocks.txt}, type the following command using the hash database and \texttt{identified\_blocks.txt} file as input (command should be run from the same directory in which you ran \bulk):
+To find sizes of various data stores in hash database \texttt{zzzz.hdb},
+type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb expand_identified_blocks mock_video.hdb outdir/identified_blocks.txt} 
-\textbf{  > identified_sources.txt}
+\verbbf{hashdb size}
 \end{Verbatim}
-The above command pipes the output directly into the file \texttt{identified\_sources.txt}. Each line of the file will provide the source information for one of the identified hash blocks. An example line from this file is shown in Listing \ref{identifiedSourceLine},
-which shows that the block at Forensic path 12464640 matches the block 10498048 bytes into the \texttt{mock\_video.mp4} files in the hash database, indicating a positive match.\\
+The above command prints sizes of data stores in JSON format.
 
-A table of more relevant hashes and source information may be generated using the \verb+explain_identified_blocks+ command.
-To generate these tables for \texttt{identified\_blocks.txt}, type the following command using the hash database and \texttt{identified\_blocks.txt} file as input (command should be run from the same directory in which you ran \bulk):
+To obtain a list of hashes associated with a particular source that has hexcode \texttt{16d75027533b0a5ab900089a244384a0}, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb explain_identified_blocks mock_video.hdb outdir/identified_blocks.txt} 
-\textbf{  > explained_hashes_and_sources.txt}
+\verbbf{hashdb hash_table 16d75027533b0a5ab900089a244384a0}
 \end{Verbatim}
-The above command pipes the output directly into the file \texttt{explain\_hashes\_and\_sources.txt}.
-The output of this command is shown in Listing \ref{explainHashesAndSources}.
-The first table in file \texttt{explain\_hashes\_and\_sources.txt}
-shows block hashes, their source ID, and the offset into the file where they were sourced from.
-The second table in the file shows sources, in this case, just one source corresponding to source ID 1.
-Each line of source information describes
-the repository name, filename, file size, and file hash for a given source ID.\\
 
 \begin{lstlisting}[float, caption={The \texttt{identified\_hashes\_and\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file using the \texttt{explain\_identified\_blocks} command}, label=explainHashesAndSources]
  hashdb-Version: 2.0.0
@@ -775,30 +746,6 @@ d_blocks.txt
 ["0c5c611edc8dfd34f85c6cbf88702e51",{"count":1},[{"source_id":1,"file_offs
 et":10530816}]]
 ["16d75027533b0a5ab900089a244384a0",{"count":1},[{"source_id":1,"file_offs
-et":10502144}]]
-["1b803bd6e014d1855e6f8413041c2b07",{"count":1},[{"source_id":1,"file_offs
-et":10518528}]]
-["1d0abbddf1344ac751d17604bdd9ebe8",{"count":1},[{"source_id":1,"file_offs
-et":10498048}]]
-["3b6b477d391f73f67c1c01e2141dbb17",{"count":1},[{"source_id":1,"file_offs
-et":10485760}]]
-["4a93e65fb187d71c2b8b5697f1460e3d",{"count":1},[{"source_id":1,"file_offs
-et":10534912}]]
-["4cc415709e205ac0ef5b5dcfb77936b6",{"count":1},[{"source_id":1,"file_offs
-et":10526720}]]
-["7de953ea563c4df1f8369d8dd2cfb4d9",{"count":1},[{"source_id":1,"file_offs
-et":10514432}]]
-["80a403ea48854676501a02e390a69699",{"count":1},[{"source_id":1,"file_offs
-et":10510336}]]
-["89a170b6b9a948d21d1d6ee1e7cdc467",{"count":1},[{"source_id":1,"file_offs
-et":10489856}]]
-["97068927ff7ca0c4d27ac527474065bc",{"count":1},[{"source_id":1,"file_offs
-et":10506240}]]
-["a667f79e6446222092257af1780f6a9f",{"count":1},[{"source_id":1,"file_offs
-et":10539008}]]
-["aec94ab99f591f507b3c27424a0b52c5",{"count":1},[{"source_id":1,"file_offs
-et":10543104}]]
-["c6361fe0eb4f7b13bac6529e1cdd8ea4",{"count":1},[{"source_id":1,"file_offs
 et":10547200}]]
 ["cf49adf3285b983d9f8d60497290bfd2",{"count":1},[{"source_id":1,"file_offs
 et":10522624}]]
@@ -809,24 +756,6 @@ et":10493952}]]
 8\/demo_video.mp4","filesize":10630146,"file_hashdigest":"a003483521c181d2
 6e66dc09740e939d"}
 \end{lstlisting}
-
-\subsection{Tuning}
-Tuning commands are provided to improve performance,
-see Table \ref{tab:tuning}.
-For Bloom filter settings, see Table \ref{tab:bloomSettings}.
-
-\begin{table}[!ht]
-\centering
-\caption{Commands that Tune Hash Databases}
-\label{tab:tuning}
-\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
-\hline \hline
-\textbf{Command} & \textbf{Usage} & \textbf{Description} \\
-\hline
-\textbf{rebuild\_bloom} & \verb+rebuild_bloom[--bloom <state>]+ \verb+[--bloom_n <n>]+ \verb+[--bloom_kM <k:M>]+ \verb+<hashdb.hdb>+ & Rebuilds the Bloom filter using the provided settings, see Table \ref{tab:bloomSettings}\\
-\hline
-\end{tabular}
-\end{table}
 
 \subsection{Performance Analysis}
 Performance analysis commands for analyzing \hdb performance are available, see Table \ref{tab:analysis}.
@@ -841,62 +770,384 @@ Performance analysis commands for analyzing \hdb performance are available, see 
 \hline
 \textbf{add\_random} & \verb+add_random+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count random hashes to the given database, creating timing data in the \texttt{log.xml} file\\
 \hline
-\textbf{scan\_random} & \verb+scan_random <hashdb.hdb>+ & Scans the given database, creating timing data in the \texttt{log.xml} file\\
+\textbf{scan\_random} & \verb+scan_random <hashdb.hdb>+ & Scans random hashes in the given database, creating timing data in the \texttt{log.xml} file\\
+\hline
+\textbf{add\_same} & \verb+add_same+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count same hashes to the given database, creating timing data in the \texttt{log.xml} file\\
+\hline
+\textbf{scan\_same} & \verb+scan_same<hashdb.hdb>+ & Scans count same hashes in the given database, creating timing data in the \texttt{log.xml} file\\
 \hline
 \end{tabular}
 \end{table}
 
-\subsection{Importing and Scanning Using the \bulk \hdb Scanner}
-\label{ImportingAndScanning}
-The \bulk \hdb scanner may be used to import hashes and to scan for hashes.
-Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
-Scanner options are shown in Table \ref{tab:hashdb_be_usage}.
+\section{\hdb Data Types}
+Many of the \hdb commands and API interfaces require or emit data
+in JSON format.  This section describes the syntax used and required by \hdb
+commands and API interfaces.
+
+\subsection{Source Data}
+\hdb import and export commands and interfaces accept and emit source data in JSON format.  Source data defines information about a source. Source data is identified by the file hash of the source.  An example source data line is shown in Listing \ref{JSONSourceData}. Fields are described in Table \ref{tab:JSONSourceData}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON source data}, label=JSONSourceData]
+{
+  "file_hash":"b9e7...",
+  "filesize":8000,
+  "file_type":"exe",
+  "nonprobative_count":4,
+  "name_pairs":["repository1","filename1","repo2","f2"]
+}
+\end{lstlisting}
 
 \begin{table}[!ht]
+
 \centering
-\caption{\bulk \hdb Scanner Commands}
-\label{tab:hashdbScanner}
-\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\caption{Fields used in JSON source data}
+\label{tab:JSONSourceData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
-\textbf{Mode} & \textbf{Example} & \textbf{Description} \\
+\textbf{Field} & \textbf{Meaning} \\
 \hline
-\textbf{import} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
+\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
 \hline
-\textbf{scan} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path_or_socket+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
+\verb+filesize+ & The size, in bytes, of the source file\\
+\hline
+\verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
+\hline
+\verb+name_pairs+ & An array of source name, filename pairs associated with this source\\
 \hline
 \end{tabular}
 \end{table}
+
+\subsection{Block Hash Data}
+\hdb import and export commands and interfaces also accept and emit block hash data in JSON format.  Block hash data defines information about a block hash. Block hash data is identified by the file block hash.  An example block hash line is shown in Listing \ref{JSONBlockHashData}. Fields are described in Table \ref{tab:JSONBlockHashData}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
+{
+  "block_hash":"a7df...",
+  "entropy":8,
+  "block_label":"W",
+  "source_offset_pairs":["b9e7...", 4096]
+}
+\end{lstlisting}
 
 \begin{table}[!ht]
 
 \centering
-\caption{\bulk \hdb Scanner Options}
-\label{tab:hashdb_be_usage}
-%\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
-\begin{tabular}{|p{5 cm}|p{2.0 cm}|p{6.5 cm}|}
+\caption{Fields used in JSON block hash data}
+\label{tab:JSONBlockHashData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
-\textbf{Option} & \textbf{Default} & \textbf{Specification} \\
+\textbf{Field} & \textbf{Meaning} \\
 \hline
-\verb+hashdb_mode+ & \verb+none+ & The mode for the scanner, one of \verb+[none|import|scan]+. For ``none'', the scanner is active but performs no action. For ``import'', the scanner imports block hashes. For ``scan'', the scanner scans for matching block hashes.\\
+\verb+block_hash+ & A block hash hexdigest\\
 \hline
-\verb+hashdb_block_size+ &4096 & Block size, in bytes, used to generate hashes.\\
+\verb+entropy+ & The calculated entropy, scaled between 0 and 100, using an entropy calculation TO BE DETERMINEDzzzzzzz\\
 \hline
-\verb+hashdb_ignore_empty_blocks+ & \verb+YES+ &Selects to ignore empty blocks,  one of \verb+[YES|NO]+.\\
+\verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
-\verb+hashdb_scan_path_or_socket+ & & The file path to a hash database or socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.  Currently, socket server mode is unavailable.\\
-\hline
-\verb+hashdb_scan_sector_size+ & 512 &Selects the scan sector size.  Scans along sector boundaries.  Valid only in scan mode.\\
-\hline
-\verb+hashdb_scan_max_features+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
-\hline
-\verb+hashdb_import_sector_size+ & 4096 & Selects the import sector size.  Imports along sector boundaries.  Valid only in import mode.\\
-\hline
-\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
-\hline
-\verb+hashdb_import_max_+ \verb+duplicates+ & 0 &The maximum number of duplicates to import for a given hash value.  Valid only in import mode. Use default of 0 for no limit.\\
+\verb+source_offset_pairs+ & An array of source file hash, source file offset pairs associated with this block hash\\
 \hline
 \end{tabular}
 \end{table}
+
+\subsection{Scan Data}
+The \hdb scan command and scan API emits hash and source information relating to hashes matched while scanning. An example scan match is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
+{
+  "entropy": 8,
+  "block_label": "W",
+  "source_list_id": 57,
+  "sources": [{
+    "file_hash": "f7035a...",
+    "filesize": 800,
+    "file_type": "exe",
+    "nonprobative_count": 2,
+    "name_pairs": ["repository1", "filename1", "repo2", "f2"]
+  }],
+  "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+}
+\end{lstlisting}
+
+\begin{table}[!ht]
+
+\centering
+\caption{Fields used in JSON scan data}
+\label{tab:JSONScanData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+entropy+ & The calculated entropy integer, scale and algorithm TBD.zzzz\\
+\hline
+\verb+block_label+ & A label describing the type of data within the block\\
+\hline
+\verb+source_list_id+ & A source list ID which is a CRC of the associated source file hashes associated with the block hash\\
+\hline
+\verb+sources+ & An array of source data for each source matching the hash\\
+\hline
+\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
+\hline
+\verb+filesize+ & The size, in bytes, of the source file\\
+\hline
+\verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
+\hline
+\verb+name_pairs+ & An array of repository name, filename pairs associated with this source\\
+\hline
+\verb+source_offset_pairs+ & An array of the source file hash, source file offset pairs associated with this block hash\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Size}
+The \hdb size command and size API returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
+{
+zzzz
+  "hash_data_store":0,
+  "hash_store":0,
+  "source_data_store":0,
+  "source_id_store":0,
+  "source_name_store":0
+}
+\end{lstlisting}
+
+\subsection{Timing Data}
+
+\hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON timestamp format}, label=JSONTimingData]
+{
+  "name":"begin",
+  "delta":"0.000396",
+  "total":"0.000396"
+}
+\end{lstlisting}
+
+\begin{table}[!ht]
+
+\centering
+\caption{Fields used in JSON timing data}
+\label{tab:JSONTimingData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+name+ & The name of the timestamp\\
+\hline
+\verb+delta+ & The delta time since the previous timestamp. In this example, the delta is from the time the timestamping started\\
+\hline
+\verb+total+ & The total time since timestamping started\\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Using the \hdb APIs}
+\hdb provides C++ and Python interfaces for importing, scanning, and working with block hashes.
+
+\subsection{Python}
+Install Python module \verb+hashdb+ to use the \hdb Python interfaces.
+
+\subsubsection{Import}
+To import hash and source data, open an import manager, for example\\
+\verb+{manager = import_manager_t("hashdb.hdb", "create my DB")+. Then use import functions to add data.
+
+\begin{itemize}
+\item \verb+manager = import_manager_t(hashdb_dir, cmd)+
+\item \verb+manager.insert_source_name(file_binary_hash, repository_name, filename)+
+\item \verb+manager.insert_source_data(file_binary_hash, filesize, file_type,+\\
+\verb+nonprobative_count)+
+\item \verb+manager.insert_hash(binary_hash, file_binary_hash, file_offset,+\\
+\verb+entropy, block_label)+
+\item \verb+error_message = manager.insert_json(json_string)+\\
+Insert hash or source. Return "" on success.
+\item \verb+ data_sizes = manager.sizes()+
+\end{itemize}
+
+\subsubsection{Scan}
+To scan for hashes, open a scan manager, for example\\
+\verb+manager = scan_manager_t("hashdb.hdb")+. Then use functions to find hash and source information. Functions that return less information run faster than functions that return more.
+
+\begin{itemize}
+\item \verb+scan_manager = scan_manager_t(hashdb_dir)+
+\item \verb+expanded_text = scan_manager.find_expanded_hash(binary_hash)+\\
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will just be {}.
+\item \verb+json_hash_string = scan_manager.find_hash_json(binary_hash)+
+\item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
+This is the fastest scan function. It returns an approximate source, offset pair count for the hash and can be wrong.
+\item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
+Return the source, offset pair count for the hash.
+\item \verb+json_source_string = scan_manager.find_source_json(file_binary_hash)+
+\item \verb+first_binary_hash = scan_manager.first_hash()+
+\item \verb+next_binary_hash = scan_manager.next_hash(binary_hash)+
+\item \verb+first_file_binary_hash = scan_manager.first_source()+
+\item \verb+file_binary_hash = scan_manager.next_source(file_binary_hash)+
+\item \verb+db_sizes = scan_manager.sizes()+\\
+Return sizes of internal data stores in JSON format.
+\item \verb+size_hashes = scan_manager.size_hashes()+\\
+Return the number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+\item \verb+size_sources = scan_manager.size_sources()+\\
+Return the number of sources in the database.
+\end{itemize}
+
+\subsubsection{Settings}
+Holds \hdb settings.
+
+\begin{itemize}
+\item \verb+settings = settings_t()+\\
+Obtain default settings. Configurable setting parameters are: \verb+settings_version,+\\
+\verb+sector_size, block_size, max_source_offset_pairs, hash_prefix_bits,+\\
+\verb+hash_suffix_bytes+.
+\item \verb+settings_string = settings.settings_string()+\\
+Return setting values in JSON format.
+\end{itemize}
+
+\subsubsection{Timestamp}
+Provide timestamp support.
+
+\begin{itemize}
+\item \verb+timestamp = timestamp_t()+\\
+Create a timestamp object.
+\item \verb+timestamp_string = stamp(text)+\\
+Create a named timestamp and provide time and delta from the last stamp time in JSON format.
+\end{itemize}
+
+\subsubsection{Support Functions}
+Support functions provide miscellaneous support and are not part of a class.
+\begin{itemize}
+\item \verb+version = version()+\\
+Return the \hdb version.
+\item \verb+error_message = create_hashdb(hashdb_dir, settings)+\\
+Create a hash database given settings. Return "" else reason for failure.
+\item \verb+error_message = read_settings(hashdb_dir, &settings)+\\
+Query settings else false and reason for failure.
+\item \verb+binary_string = hex_to_bin(hex_string)+
+\item \verb+hex_string = bin_to_hex(binary_string)+
+\item \verb+import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy,+\\
+\verb+max_entropy, repository_name, import_path)+\\
+Import from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
+\end{itemize}
+
+\subsection{C++}
+To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb library \verb+libhashdb+. \hdb interfaces use the \hdb namespace. Interfaces can assert on unexpected error. For more detail, please see \hdb header file \texttt{hashdb.hpp} at \url{https://github.com/NPS-DEEP/hashdb/blob/new_hashdb_3.0/src_libhashdb/hashdb.hpp}.
+
+\subsubsection{Import}
+Import hashes. Interfaces use lock for DB safety. The destructor appends changes to change log.
+
+\begin{itemize}
+\item \verb+import_manager_t(hashdb_dir, cmd)+
+\item \verb+void insert_source_name(file_binary_hash, repository_name, filename)+
+\item \verb+void insert_source_data(file_binary_hash, filesize, file_type, nonprobative_count)+\\
+Change if different.
+\item \verb+void insert_hash(binary_hash, file_binary_hash, file_offset, entropy, block_label)+\\
+Change if different
+\item \verb+std::string insert_json(json_string)+\\
+Insert hash or source, return \verb+error_message+ or "" for no error.
+\item \verb+std::string sizes()+\\
+Return number of entries in LMDB databases.
+\item \verb+~import_manager_t()+\\
+Append changes to change log at \verb+hashdb_dir/log.dat+.
+\end{itemize}
+
+\subsubsection{Scan}
+Scan for hashes. Provide read-only access to hash and source data stores.
+
+\begin{itemize}
+\item \verb+scan_manager_t(hashdb_dir)+
+\item \verb+std::string find_expanded_hash(binary_hash)+\\
+Find and return JSON text else "" on no match.
+\item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
+\item \verb+std::string find_hash_json(binary_hash)+\\
+Return \verb+json_hash_string+ else "" on no match.
+\item \verb+size_t find_approximate_hash_count(binary_hash)+\\
+Return approximate source, offset pair count for the hash, and can be wrong.
+\item \verb+size_t find_hash_count(binary_hash)+\\
+Return the source, offset pair count for the hash.
+\item \verb+bool find_source_data(file_binary_hash, &filesize, &file_type,+\\
+\verb+&nonprobative_count)+
+False on no source ID.
+\item \verb+bool find_source_names(file_binary_hash, &source_names_t)+\\
+False on no source ID.
+\item \verb+std::string find_source_json(file_binary_hash)+\\
+Return \verb+json_source_string+ else "" on no match.
+\item \verb+std::string first_hash()+
+\item \verb+std::string next_hash(binary_hash)+
+\item \verb+std::string first_source()+
+\item \verb+std::string next_source(file_binary_hash)+
+\item \verb+string sizes()+\\
+Return number of entries in LMDB databases.
+\item \verb+size_t size_hashes()+\\
+Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+\item \verb+size_t size_sources()+\\
+Return number of sources.
+\end{itemize}
+
+\subsubsection{Settings}
+Hold \hdb settings.
+
+\begin{itemize}
+\item \verb+settings_t()+\\
+Create a settings object with default values.
+\item \verb+std::string settings_string()+\\
+Return setting values in JSON format.
+\end{itemize}
+
+\subsubsection{Timestamp}
+Provide timestamp support.
+
+\begin{itemize}
+\item \verb+timestamp_t()+
+\item \verb+std::string stamp(text)+\\
+Return stamp in JSON format.
+\end{itemize}
+
+\subsubsection{Support Functions}
+
+\begin{itemize}
+\item \verb+extern C char* version()+\\
+Return the \hdb version.
+\item \verb+bool create_hashdb(hashdb_dir, settings, &error_message)+\\
+Create a hash database given settings. Return true and "" else false and reason for failure.
+\item \verb+bool read_settings(hashdb_dir, &settings, &error_message)+\\
+Query settings else false and reason for failure.
+\item \verb+print_enviornment(command_line_string, &ostream)+\\
+Print command and environment to output stream. - zzzz this interface may be removed.
+\item \verb+import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy,+\\
+\verb+max_entropy, repository_name, import_path)+\\
+Import from path to \hdb.
+\end{itemize}
+
+\subsubsection{Data Types}
+
+The following data types are defined.
+
+\begin{itemize}
+\item \verb+source_offset_pair_t: typedef pair<file_binary_hash, file_offset> id_offset_pair_t+
+\item \verb+source_offset_pairs_t: typedef set<source_offset_pair_t> source_offset_pairs_t+
+\item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
+\item \verb+source_names_t: typedef set<source_name_t> source_names_t+
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Use Cases for \hdb}
 \label{UseCases}
@@ -1061,6 +1312,61 @@ There are other articles related to block hashing, and its practical and researc
 \item Garfinkel, Simson, Alex Nelson, Douglas White and Vassil Rousseve. Using purpose-built functions and block hashes to enable small block and sub-file forensics. Digital Investigation. Volume 7. 2010. Page S13--S23. \url{http://www.dfrws.org/2010/proceedings/2010-302.pdf}.
 \item Foster, Kristina. Using Distinct Sectors in Media Sampling and Full Media Analysis to Detect Presence of Documents From a Corpus. Naval Postgraduate School Masters Thesis, September 2012. \url{http://calhoun.nps.edu/public/handle/10945/17365}.
 \end{itemize}
+
+% zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz move
+\section{Using the \bulk \hdb Scanner}
+\subsection{Importing and Scanning Using the \bulk \hdb Scanner}
+\label{ImportingAndScanning}
+The \bulk \hdb scanner may be used to import hashes and to scan for hashes.
+Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
+Scanner options are shown in Table \ref{tab:hashdb_be_usage}.
+
+\begin{table}[!ht]
+\centering
+\caption{\bulk \hdb Scanner Commands}
+\label{tab:hashdbScanner}
+\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Mode} & \textbf{Example} & \textbf{Description} \\
+\hline
+\textbf{import} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
+\hline
+\textbf{scan} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path_or_socket+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+
+\centering
+\caption{\bulk \hdb Scanner Options}
+\label{tab:hashdb_be_usage}
+%\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\begin{tabular}{|p{5 cm}|p{2.0 cm}|p{6.5 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Default} & \textbf{Specification} \\
+\hline
+\verb+hashdb_mode+ & \verb+none+ & The mode for the scanner, one of \verb+[none|import|scan]+. For ``none'', the scanner is active but performs no action. For ``import'', the scanner imports block hashes. For ``scan'', the scanner scans for matching block hashes.\\
+\hline
+\verb+hashdb_block_size+ &4096 & Block size, in bytes, used to generate hashes.\\
+\hline
+\verb+hashdb_ignore_empty_blocks+ & \verb+YES+ &Selects to ignore empty blocks,  one of \verb+[YES|NO]+.\\
+\hline
+\verb+hashdb_scan_path_or_socket+ & & The file path to a hash database or socket to a hashdb server to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.  Currently, socket server mode is unavailable.\\
+\hline
+\verb+hashdb_scan_sector_size+ & 512 &Selects the scan sector size.  Scans along sector boundaries.  Valid only in scan mode.\\
+\hline
+\verb+hashdb_scan_max_features+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
+\hline
+\verb+hashdb_import_sector_size+ & 4096 & Selects the import sector size.  Imports along sector boundaries.  Valid only in import mode.\\
+\hline
+\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
+\hline
+\verb+hashdb_import_max_+ \verb+duplicates+ & 0 &The maximum number of duplicates to import for a given hash value.  Valid only in import mode. Use default of 0 for no limit.\\
+\hline
+\end{tabular}
+\end{table}
+% zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz move
 
 \bibliographystyle{acm} 
 \bibliography{references}
