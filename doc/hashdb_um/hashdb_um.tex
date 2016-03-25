@@ -489,7 +489,7 @@ To import block hashes from a directory of blacklist sources, type the following
 \end{Verbatim}
 In the above command the option \textbf{-r} is used along with the repository name \texttt{mock\_video\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. Hash blocks contained in one database often originate from many different sources and the fileme may be the same. For example, if we add two separate but similar databases with partial overlap to a database, this will result in some duplicate hashes from multiple sources with the same filename. The repository name can be used with those duplicates to allow users to track all hashes back to their original sources. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{import} command in the above example imports block hashes from files in the \texttt{mock\_video\_dir} directory into the database \texttt{mock\_video.hdb}. \hdb prints the following to the command line to indicate that the hashes have been inserted into the database successfully: 
+The \textbf{import} command in the above example imports block hashes from files in the \texttt{mock\_video\_dir} directory into the database \texttt{mock\_video.hdb}. \hdb prints the following to the command line to indicate that hashes have been inserted into the database: 
 
 \begingroup
 \footnotesize
@@ -805,7 +805,7 @@ The \sscope tool provides a GUI for analyzing data associated with block hash ma
 \begin{figure}
 	\center
 	\includegraphics[scale=.45]{drawings/SectorScope_main}
-	\caption{Overview of the \hdb system}
+	\caption{Example screenshot of the \sscope main GUI}
 	\label{fig:SectorScope_main}
 \end{figure}
 
