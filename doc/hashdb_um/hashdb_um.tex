@@ -22,9 +22,8 @@
 %define macros for commonly used terms that require special formatting
 \newcommand \hdb {\textit{hashdb}\xspace}
 \newcommand \sscope {\textit{SectorScope}\xspace}
+\newcommand \aut {\textbf{Autopsy}\xspace}
 \newcommand \bulk {\textbf{bulk\_extractor}\xspace}
-\newcommand \mdd {\textbf{md5deep}\xspace}
-\newcommand \fiwalk {\textbf{fiwalk}\xspace}
 
 \hypersetup{%
     pdfborder = {0 0 0}
@@ -66,7 +65,17 @@ This command, if executed successfully, will print statistics about hash values 
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-#    hashes inserted: 2595
+# hashdb changes:
+#     hash_data_data_inserted: 128
+#     hash_data_source_inserted: 128
+#     hash_prefix_inserted: 128
+#     hash_suffix_inserted: 128
+#     source_data_inserted: 1
+#     source_data_changed: 1
+#     source_id_inserted: 1
+#     source_id_already_present: 129
+#     source_name_inserted: 1
+
 \end{Verbatim}
 \endgroup
 \item Additionally, the file \texttt{log.txt} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will include the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices}} for more information on the change statistics tracked in the log file].
@@ -106,7 +115,16 @@ This command, if executed successfully, will print statistics about hash values 
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-#    hashes inserted: 2595
+# hashdb changes:
+#     hash_data_data_inserted: 128
+#     hash_data_source_inserted: 128
+#     hash_prefix_inserted: 128
+#     hash_suffix_inserted: 128
+#     source_data_inserted: 1
+#     source_data_changed: 1
+#     source_id_inserted: 1
+#     source_id_already_present: 129
+#     source_name_inserted: 1
 \end{Verbatim}
 \endgroup
 \item Additionally, the file \texttt{log.txt} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will include the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices}} for more information on the change statistics tracked in the log file].
@@ -142,7 +160,7 @@ Using \hdb, a forensic investigator can take a known set of blacklisted media an
 \hdb provides an advantage when working with hard disks and operating systems that fragment data into discontiguous blocks yet still sector-align media. This is because scans are performed along sector boundaries. Because \hdb works at the block resolution, it can find part of a file when the rest of the file is missing, such as with a large video file where only part of the video is on disk. \hdb can also be used to analyze network traffic (such as that captured by \textbf{tcpflow}).  Finally, \hdb can identify artifacts that are sub-file, such as embedded content in a \texttt{.pdf} document.\\
 
 \hdb stores cryptographic hashes (along with their source information) that have been calculated from hash blocks. It also provides the capability to scan other media for hash matches.
-This manual describes uses cases for the \hdb tools, including usage with \bulk and the \hdb Python and C++ libraries, and demonstrates how users can take full advantage of all of its capabilities.
+This manual describes uses cases for the \hdb tools, including usage with \aut, \sscope, \bulk, and the \hdb Python and C++ libraries, and demonstrates how users can take full advantage of all of its capabilities.
 
 \subsection{Purpose of this Manual}
 This Users Manual is intended to be useful to new, intermediate and experienced users of \hdb. It provides an in-depth review of the functionality included in \hdb and shows how to access and utilize features through command line operation of the tool. This manual includes working examples with links to the input data used, giving users the opportunity to work through the examples and utilize all aspects of the system. 
@@ -285,11 +303,6 @@ This file also contains internal \hdb settings version used to help \hdb identif
 \label{usingSection}
 \hdb provides the capability for users to scan the database for matching hash blocks. Users can also query for hash source information and information about the hash database itself. \hdb provides an API to access the import and scan capabilities.  The import capability allows third party tools to create a new database at a specified directory, import an array of hashes with source information and write changes to the \texttt{log.xml} file. The scan capability provided by the API allows third party tools to open an existing database and perform a scan. Most importantly, the \bulk \textit{hashdb} scanner uses the \hdb API to provide users with the capability to create databases from disk images or scan digital media and find matching hash blocks within the data \bulk is processing. In later sections, this manual describes the methods for using \bulk together with the \hdb tool. 
 
-\subsection{\bulk}
-\bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
-
-\bulk has multiple scanners that extract features. One particular scanner, the \textit{hashdb} scanner links the full set of \bulk capabilities directly to the \hdb tool. The \textit{hashdb} scanner uses the \hdb API to create and import data into hash databases  directly from the data processed by \bulk. The scanner also can be run with a hash database as input (again using the \hdb API) will scan the data processed by \bulk for matching hash values.\\
-
 
 \section{Installation Guide}
 \hdb is a command line tool that can be run on Linux, MacOS or Windows systems. Here we describe the installation procedures for those systems.
@@ -366,18 +379,7 @@ When the installer file is executed, the installation will begin and show a dial
 \end{figure}
 
 \subsection{Installing Other Related Tools}
-
-\subsubsection{\bulk}
-The \bulk \hdb scanner provides the capability to import block hashes into a new hash database and to scan for hashes against an existing hash database.
-\hdb requires a newer build of \bulk.
-Please see the \hdb Wiki page at \url{https://github.com/NPS-DEEP/hashdb/wiki}
-for information on obtaining a compatible version of \bulk.
-
-\subsubsection{\sscope}
-The \sscope tool provides a GUI for analyzing data associated with hash matches found by \hdb.
-\sscope also provides an Autopsy plug-in module for running \hdb and \sscope from within the Autopsy framework.
-Please see the \sscope Wiki page at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}
-for information on downloading and using \sscope.
+Please see \textbf{\Autoref{OtherTools}} for information on installing related tools.
 
 \section {Running the \hdb Tool}
 \label{Running}
@@ -429,22 +431,7 @@ Table \ref{tab:hashDBSettings} shows the configurable database settings.\\
 \end{tabular}
 \end{table}
 
-
-
-\textbf{Block size}\\
-The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
-
-\textbf{Sector size}\\
-The resolution of sectors that may reside on media. The operating system and/or storage device will align data on sector boundaries. Block hashes are calculated on aligned sector boundaries. The default is 512.\\
-
-\textbf{Max ID offset pairs}\\
-The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
-
-\textbf{Hash prefix bits}\\
-The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.\\
-
-\textbf{Hash suffix bytes}\\
-The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
+see \textbf{\Autoref{Settings}} for detailed description of these settings.\\
 
 \textbf{Example}\\
 To create an (empty) hash database named \textbf{\texttt{mock\_video.hdb}}, type the following command:
@@ -784,6 +771,104 @@ Performance analysis commands for analyzing \hdb performance are available, see 
 \end{tabular}
 \end{table}
 
+\section{Tools that use \hdb}
+\label{OtherTools}
+Several tools use \hdb.
+
+\subsection{The \sscope \aut Plug-in}
+\sscope provides an \aut plug-in for scanning for fragments of previously identified files. \aut is currently only available on Windows systems. This section describes how to set up the \sscope \aut plug-in.
+
+\subsubsection{Installing the \sscope Plug-in}
+The \sscope Windows installer installs the requisite \verb+.nbm+ Autopsy plug-in module onto the desktop. Please follow these steps to install this module:
+
+\begin{enumerate}
+\item Open \aut. From the Autopsy menu, select \verb+Tools | Plugins+.
+\item Open the \verb+Downloaded+ tab and click the \verb+Add Plugins...+ button.
+\item From the \verb+Add Plugins+ window, navigate to the \verb+.nbm+ module file that was installed onto the desktop, and open it.
+\item Click \verb+Install+ and follow the wizard. Please note that it may be difficult to replace an old module of NPS-Autopsy-hashdb already installed in Autopsy. In the unlikely case that error \verb+Some plugins require plugin org.jdesktop.beansbinding to be installed+ appears, it may be necessary to uninstall and reinstall Autopsy.
+\end{enumerate}
+
+\subsubsection{Configuring the \sscope Plug-in}
+The path to the \hdb database to scan against must be configured:
+
+\begin{enumerate}
+\item Start a new case, \verb+File | New Case...+, fill in the Case Information fields, and click \verb+Next+.
+\item Fill in Case Information and click \verb+Finish+.
+\item For Add Data Source (1 of 3), put in a media image for Autopsy to process and click \verb+Next+.
+\item For Add Data Source (2 of 3), select checkboxes as desired, then click on \verb+NPS-SectorScope+ text to configure the path to your \hdb database to scan against. Currently a file chooser is not available, so please type in the full path, for example: \verb+C:\Users\me\my_hashdb.hdb+. Click Next.
+\item For Add Data Source (3 of 3) click \verb+Finish+. When the NPS-SectorScope module begins processing, Autopsy will display "NPS-SectorScope ..." as \bulk runs, which may take up to several hours. Unfortunately, \bulk progress is not currently indicated. For diagnostics: please see if progress text is appearing in the generated \verb+bulk_extractor\report.xml+ file and in the generated log file or try running the scan manually.
+\end{enumerate}
+
+\subsection{\sscope}
+The \sscope tool provides a GUI for analyzing data associated with block hash matches found on a media image. An example screenshot is shown in Figure \ref{fig:SectorScope_main}. \sscope also provides GUI interfaces for building and scanning \hdb databases. Please see \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki} for more information on \sscope.
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.45]{drawings/SectorScope_main}
+	\caption{Overview of the \hdb system}
+	\label{fig:SectorScope_main}
+\end{figure}
+
+\subsection{\bulk}
+\bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
+
+In particular, a \hdb \bulk scanner is available which may be used to import block hashes into a new hash database and to scan for hashes against an existing hash database.
+Currently, \hdb requires a newer build of \bulk than is available on the \bulk site.
+Please see the \hdb Wiki page at \url{https://github.com/NPS-DEEP/hashdb/wiki}
+for information on obtaining a version of \bulk that is compatible with the current version of \hdb.\\
+
+Options that control the hashdb
+scanner are provided to \bulk using "-S name=value" parameters.
+Example syntax for the \bulk \hdb scanner is shown in Table \ref{tab:hashdbScanner}.
+Scanner options are described in Table \ref{tab:hashdb_be_usage} and shown in Listing \ref{BEUsage}.
+
+\begin{table}[!ht]
+\centering
+\caption{\bulk \hdb Scanner Commands}
+\label{tab:hashdbScanner}
+\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Mode} & \textbf{Example} & \textbf{Description} \\
+\hline
+\textbf{import files} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 -R my_directory+ & Import hashes from directory into outdir1/hashdb.hdb\\
+\hline
+\textbf{import image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
+\hline
+\textbf{scan image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+
+\centering
+\caption{\bulk \hdb Scanner Options}
+\label{tab:hashdb_be_usage}
+%\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
+\begin{tabular}{|p{5 cm}|p{2.0 cm}|p{6.5 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Default} & \textbf{Specification} \\
+\hline
+\verb+hashdb_mode+ & \verb+none+ & The mode for the scanner, one of \verb+[none|import|scan]+. For ``none'', the scanner is active but performs no action. For ``import'', the scanner imports block hashes. For ``scan'', the scanner scans for matching block hashes.\\
+\hline
+\verb+hashdb_block_size+ &512 & Block size, in bytes, used to generate hashes.\\
+\hline
+\verb+hashdb_sector_size+ &512 & Sector size, in bytes.  Scans and imports along sector boundaries.\\
+\hline
+\verb+hashdb_scan_path+ & & The file path to a hash database to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
+\hline
+\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
+\hline
+\verb+hashdb_max_feature_file_+ \verb+lines+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
+\hline
+\end{tabular}
+\end{table}
+
+\lstset{basicstyle=\footnotesize}
+\lstset{breaklines=true}
+\lstset{breakatwhitespace=true}
+\lstinputlisting[float, caption={\bulk options}, label=BEUsage, style=customfile]{hashdb_be_usage.txt}
+
 \section{\hdb Data Types}
 \label{DataTypes}
 Many of the \hdb commands and API interfaces require or emit data
@@ -911,7 +996,7 @@ The \hdb scan command and scan API emits hash and source information relating to
 \end{tabular}
 \end{table}
 
-\subsection{Size}
+\subsection{Size Data}
 The \hdb size command and size API returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
 
 \lstset{style=customfile}
@@ -957,7 +1042,26 @@ zzzz
 \end{tabular}
 \end{table}
 
-\section{Using the \hdb APIs}
+\section{\hdb Configuration Settings}
+\label{Settings}
+Function and performance of a hashdb database is defined using hashdb configuration settings. These are the settings:
+
+\textbf{Block size}\\
+The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
+
+\textbf{Sector size}\\
+The resolution of sectors that may reside on media. The operating system and/or storage device will align data on sector boundaries. Block hashes are calculated on aligned sector boundaries. The default is 512.\\
+
+\textbf{Max ID offset pairs}\\
+The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
+
+\textbf{Hash prefix bits}\\
+The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.\\
+
+\textbf{Hash suffix bytes}\\
+The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
+
+\section{Using the \hdb Library APIs}
 \label{APIs}
 \hdb provides C++ and Python interfaces for importing, scanning, and working with block hashes.
 
@@ -1223,63 +1327,17 @@ Users can export hashes from a hash database to a JSON export file using the ``e
 \section{Troubleshooting}
 \label{DebuggingHashdb}
 All \hdb users should join the \bulk users Google group for more information and help with any issues encountered. To join, send an email to \textbf{bulk\_extractor-users+subscribe@} \textbf{googlegroups.com}.  \\
+
 \section{Related Reading}
 There are other articles related to block hashing, and its practical and research applications. Some of those articles are specifically cited throughout this manual. Other useful references include but are not limited to:
 \begin{itemize}
+\item Michael McCarrin, Bruce Allen. Rapid Recognition of Blacklisted Files and Fragments. Naval Postgraduate School. \url{http://www.osdfcon.org/presentations/2015/McCarrin-Allen_osdfcon.pdf}.
+\item Jim Jones, Tahir Khan, Kathryn Laskey, Alex Nelson, Mary Laamanen, Doug White.  Inferring Past Activity from Partial Digital Artifacts. George Mason University, National Institute of Standards and Technology. \url{http://www.osdfcon.org/presentations/2015/Jim-Jones_EtAl-Release.pdf}.
+\item Simson Garfinkel, Michael McCarrin. Hash-based Carving: Searching media for complete files and file fragments with sector hashing and hashdb. DFRWS 2015 USA. \url{http://www.sciencedirect.com/science/article/pii/S1742287615000468}
+\item Joel Young, Kristina Foster, Simson Garfinkel, Kevin Fairbanks. Distinct Sector Hashes for Target File Detection. \url{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=6311397}.
 \item Garfinkel, Simson, Alex Nelson, Douglas White and Vassil Rousseve. Using purpose-built functions and block hashes to enable small block and sub-file forensics. Digital Investigation. Volume 7. 2010. Page S13--S23. \url{http://www.dfrws.org/2010/proceedings/2010-302.pdf}.
 \item Foster, Kristina. Using Distinct Sectors in Media Sampling and Full Media Analysis to Detect Presence of Documents From a Corpus. Naval Postgraduate School Masters Thesis, September 2012. \url{http://calhoun.nps.edu/public/handle/10945/17365}.
 \end{itemize}
-
-% zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz move
-\section{Using the \bulk \hdb Scanner}
-\subsection{Importing and Scanning Using the \bulk \hdb Scanner}
-\label{ImportingAndScanning}
-The \bulk \hdb scanner may be used to import hashes and to scan for hashes.
-Example syntax for this scanner is shown in Table \ref{tab:hashdbScanner}.
-Scanner options are shown in Table \ref{tab:hashdb_be_usage}.
-
-\begin{table}[!ht]
-\centering
-\caption{\bulk \hdb Scanner Commands}
-\label{tab:hashdbScanner}
-\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
-\hline \hline
-\textbf{Mode} & \textbf{Example} & \textbf{Description} \\
-\hline
-\textbf{import files} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 -R my_directory+ & Import hashes from directory into outdir1/hashdb.hdb\\
-\hline
-\textbf{import image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
-\hline
-\textbf{scan image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[!ht]
-
-\centering
-\caption{\bulk \hdb Scanner Options}
-\label{tab:hashdb_be_usage}
-%\begin{tabular}{|p{3.5 cm}|p{6 cm}|p{4 cm}|}
-\begin{tabular}{|p{5 cm}|p{2.0 cm}|p{6.5 cm}|}
-\hline \hline
-\textbf{Option} & \textbf{Default} & \textbf{Specification} \\
-\hline
-\verb+hashdb_mode+ & \verb+none+ & The mode for the scanner, one of \verb+[none|import|scan]+. For ``none'', the scanner is active but performs no action. For ``import'', the scanner imports block hashes. For ``scan'', the scanner scans for matching block hashes.\\
-\hline
-\verb+hashdb_block_size+ &512 & Block size, in bytes, used to generate hashes.\\
-\hline
-\verb+hashdb_sector_size+ &512 & Sector size, in bytes.  Scans and imports along sector boundaries.\\
-\hline
-\verb+hashdb_scan_path+ & & The file path to a hash database to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
-\hline
-\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
-\hline
-\verb+hashdb_max_feature_file_+ \verb+lines+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
-\hline
-\end{tabular}
-\end{table}
-% zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz move
 
 \bibliographystyle{acm} 
 \bibliography{references}
@@ -1304,7 +1362,7 @@ Scanner options are shown in Table \ref{tab:hashdb_be_usage}.
 \endgroup
 
 
-\section{\hdb API: \texttt{hashdb.hpp}}
+\section{\hdb C++ API: \texttt{hashdb.hpp}}
 \label{hashdbapi}
 \lstset{language=C++}
 \lstset{basicstyle=\footnotesize}
@@ -1313,20 +1371,21 @@ Scanner options are shown in Table \ref{tab:hashdb_be_usage}.
 \lstinputlisting{../../src_libhashdb/hashdb.hpp}
 
 
-\section{\bulk \textit{hashdb} Scanner Usage Options}
-\label{scannerOptionsAppendix}
-The \bulk hashdb scanner provides two capabilities: 1) scanning
-a hash database for fragments of previously encountered hash values,
-and 2) importing block hashes into a new hash database.
-Options that control the hashdb
-scanner are provided to \bulk using "-S name=value" parameters
-when \bulk is invoked.  Available options are: 
+%\section{\bulk \textit{hashdb} Scanner Usage Options}
+%\label{scannerOptionsAppendix}
+%The \bulk hashdb scanner provides two capabilities: 1) scanning
+%a hash database for fragments of previously encountered hash values,
+%and 2) importing block hashes into a new hash database.
+%Options that control the hashdb
+%scanner are provided to \bulk using "-S name=value" parameters
+%when \bulk is invoked.  Available options are: 
+%
+%\begingroup
+%\footnotesize
+%{
+%\fontfamily{courier}\selectfont
+%\verbatiminput{hashdb_be_usage.txt}
+%}
+%\endgroup
 
-\begingroup
-\footnotesize
-{
-\fontfamily{courier}\selectfont
-\verbatiminput{hashdb_be_usage.txt}
-}
-\endgroup
 \end{document}

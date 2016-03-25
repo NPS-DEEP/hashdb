@@ -1,6 +1,6 @@
 DEPENDENCIES = ../../src_libhashdb/hashdb.hpp hashdb_be_usage.txt hashdb_usage.txt \
      hashdb_um.bbl \
-     hashdb_um.tex hashdbWorkedExamplesStandalone.tex \
+     hashdb_um.tex title.tex hashdbWorkedExamplesStandalone.tex \
      hashdbWorkedExamples.tex Makefile references.bib \
      WindowsInstaller.png windowsWarning.png drawings/* \
      ../hashdb_quick_reference/hashdb_quick_reference_text.tex
