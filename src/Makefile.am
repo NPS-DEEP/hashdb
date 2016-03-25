@@ -24,8 +24,6 @@ bin_PROGRAMS = hashdb
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
-#zzhashdb_LDFLAGS = -static
-
 hashdb_LDADD = ../src_libhashdb/libhashdb.la
 
 hashdb_LDFLAGS = -static
