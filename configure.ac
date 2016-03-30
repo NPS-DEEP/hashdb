@@ -53,8 +53,10 @@ m4_include([m4/hashdb_cflags.m4])
 ## establish default Python for tests and for SWIG
 AM_PATH_PYTHON([2.7],, [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+has_python="yes"
 if test "$PYTHON" == : ; then
   AC_MSG_NOTICE([Python is not available.])
+  has_python="no"
 fi
 
 ################################################################
@@ -363,26 +365,29 @@ else
   fi
 fi
 
-AC_MSG_NOTICE([*************************************])
-AC_MSG_NOTICE([*************************************])
-AC_MSG_NOTICE([  PACKAGE_NAME:     $PACKAGE_NAME])
-AC_MSG_NOTICE([  PACKAGE_VERSION:  $PACKAGE_VERSION])
-AC_MSG_NOTICE([  CC:               $CC])
-AC_MSG_NOTICE([  CXX:              $CXX])
-AC_MSG_NOTICE([  CPPFLAGS:         $CPPFLAGS])
-AC_MSG_NOTICE([  CFLAGS:           $CFLAGS])
-AC_MSG_NOTICE([  CXXFLAGS:         $CXXFLAGS])
-AC_MSG_NOTICE([  LIBS:             $LIBS])
-AC_MSG_NOTICE([  LDFLAGS:          $LDFLAGS])
-AC_MSG_NOTICE([  HASHDB_CFLAGS:    $HASHDB_CFLAGS])
-AC_MSG_NOTICE([  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS])
+AC_MSG_NOTICE([
+*************************************
+*************************************
+  PACKAGE_NAME:     $PACKAGE_NAME
+  PACKAGE_VERSION:  $PACKAGE_VERSION
+  CC:               $CC
+  CXX:              $CXX
+  CPPFLAGS:         $CPPFLAGS
+  CFLAGS:           $CFLAGS
+  CXXFLAGS:         $CXXFLAGS
+  LIBS:             $LIBS
+  LDFLAGS:          $LDFLAGS
+  HASHDB_CFLAGS:    $HASHDB_CFLAGS
+  HASHDB_CXXFLAGS:  $HASHDB_CXXFLAGS
 
-AC_MSG_NOTICE([  PYTHON_VERSION:   $PYTHON_VERSION])
-#AC_MSG_NOTICE([  PYTHON_CPPFLAGS:  $PYTHON_CPPFLAGS])
-#AC_MSG_NOTICE([  PYTHON_LIBS:      $PYTHON_LIBS])
-#AC_MSG_NOTICE([  PYTHON_EXTRA_LIBS:    $PYTHON_EXTRA_LIBS])
-#AC_MSG_NOTICE([  PYTHON_EXTRA_LDFLAGS: $PYTHON_LDFLAGS])
+  PYTHON_VERSION:   $PYTHON_VERSION
 
+Features:
+  Python tests:     $has_python
+  Python module tests (not mingw):  $has_swig
+  mingw:            $mingw
+])
+  
 AC_OUTPUT
 
 ## for hashdb git version
