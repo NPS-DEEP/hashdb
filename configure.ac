@@ -12,12 +12,13 @@ AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_FILES([Makefile
                  src_libhashdb/Makefile
                  src/Makefile
+                 doc/Makefile
                  src_win/Makefile
                  test/Makefile
                  test_py/Makefile
                  python_bindings/Makefile
-                 man/Makefile
-                 doc/Makefile])
+                 src_win_py/Makefile
+                 man/Makefile])
 
 
 # define CC and CXX as desired for alternate compilers

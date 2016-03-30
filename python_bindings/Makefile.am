@@ -48,7 +48,7 @@ _hashdb_la_SOURCES = hashdb_wrap.cpp hashdb.i
 _hashdb_la_LIBADD = ../src_libhashdb/libhashdb.la
 
 # c++ flags for compiling _hashdb.la
-_hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS} -Wno-deprecated-register
+_hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS} -Wno-deprecated-register -I${top_srcdir}/src_libhashdb
 
 
 # for testing

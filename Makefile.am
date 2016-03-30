@@ -10,8 +10,8 @@ if HAVE_SWIG
 PYTHON_BINDINGS_DIR = python_bindings
 endif
 
-SUBDIRS = src_libhashdb src $(SRC_WIN_DIR) test $(TEST_PY_DIR) \
-          $(PYTHON_BINDINGS_DIR) man doc
+SUBDIRS = src_libhashdb src doc $(SRC_WIN_DIR) test $(TEST_PY_DIR) \
+          $(PYTHON_BINDINGS_DIR) man
 
 RELEASE	     = $(PACKAGE)-$(VERSION)
 

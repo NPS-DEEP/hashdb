@@ -1,9 +1,0 @@
-To cross-compile Windows executables and build the Windows installer:
-
-1) Run the latest bulk_extractor/src_win/CONFIGURE_F20.sh configure script
-to set up Fedora with the mingw environment required for cross-compiling
-to Windows.  Please obtain the CONFIGURE_F20.sh script from
-http://github.com/simsong/bulk_extractor.
-
-2) type "make" to build the Windows installer.
-

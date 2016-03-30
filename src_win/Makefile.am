@@ -1,13 +1,10 @@
 # To cross-compile Windows executables and build the Windows installer:
-#   1) Make sure MinGW is configured, see
-#      bulk_extractor/src_win/CONFIGURE_F20.sh configure script
+#   1) run CONFIGURE_F23.bash to configure the MinGW build environment.
 #   2) Make sure NSIS is installed.
 
 EXTRA_DIST = \
 	build_installer.nsi \
-	EnvVarUpdate.nsi \
-	run_tests.bat \
-	Makefile
+	EnvVarUpdate.nsi
 
 PDFDOCS = hashdbUsersManual.pdf
 
@@ -20,27 +17,80 @@ INSTALLER = hashdb-$(HASHDBVERSION)-windowsinstaller.exe
 
 all: $(UNVERSIONED_INSTALLER)
 
-# copy .nsi scripts to builddir since NSIS likes to work from the .nsi directory
-$(UNVERSIONED_INSTALLER): $(builddir)/build_installer.nsi \
-                          $(builddir)/EnvVarUpdate.nsi \
-                          $(PDFDOCS) $(EXES)
-	cp ../../src_win/build_installer.nsi .
-	cp ../../src_win/EnvVarUpdate.nsi .
-	makensis -DVERSION=$(HASHDBVERSION) build_installer.nsi
-	rm build_installer.nsi EnvVarUpdate.nsi
+# we copy files here since NSIS likes to work from the .nsi directory
+$(UNVERSIONED_INSTALLER): ${top_srcdir}/src_win/build_installer.nsi \
+                          ${top_srcdir}/src_win/EnvVarUpdate.nsi \
+                          ${top_srcdir}/python_bindings/test_interfaces.py \
+                          hashdb_um.pdf \
+                          ../src/hashdb.exe \
+                          _hashdb.pyd
+	rm -rf build_installer.nsi EnvVarUpdate.nsi test_hashdb_module.py hashdb.exe
+	ln -s ${top_srcdir}/src_win/build_installer.nsi .
+	ln -s ${top_srcdir}/src_win/EnvVarUpdate.nsi .
+	ln -s ${top_srcdir}/src_win/test_hashdb_module.py .
+	ln -s ../src/hashdb.exe .
+	makensis -NOCD -DVERSION=$(HASHDBVERSION) build_installer.nsi
+	rm build_installer.nsi EnvVarUpdate.nsi test_hashdb_module.py hashdb.exe
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 
-hashdb.exe:
-	cp ../src/hashdb.exe .
+# ############################################################
+# hashdb UM
+# get hashdb UM from URL rather than building it to prevent
+# unnecessary date change and to simplify the build.
+UM_URL = http://digitalcorpora.org/downloads/hashdb/experimental
+hashdb_um.pdf:
+	wget $(UM_URL)/hashdb_um.pdf
 
-hashdbUsersManual.pdf:
-	echo TBD > hashdbUsersManual.pdf
+# ############################################################
+# hashdb Python binding
 
+# constants used for preparing Python parts to compile and link against
+MSI_URL_PATH=https://www.python.org/ftp/python/2.7.6
+DLL_TOOL=/usr/x86_64-w64-mingw32/bin/dlltool
+MSI_FILE=python-2.7.6.amd64.msi
+DLL_FILE=python27.dll
+DEF_FILE=python27.def
+LIB_FILE=libpython27.a
+
+# the hashdb DLL
+_hashdb.pyd: ../src_libhashdb/libhashdb.o py_parts/$(LIB_FILE) hashdb_wrap.o
+	$(CXX) -Wall -Wextra -shared -o _hashdb.pyd \
+	       -static-libgcc -static-libstdc++ \
+	       ../src_libhashdb/libhashdb.o \
+	       ../src_libhashdb/liblmdb/liblmdb_la-mdb.o \
+	       ../src_libhashdb/liblmdb/liblmdb_la-midl.o \
+	       ../src_libhashdb/hex_helper.o \
+	       hashdb_wrap.o \
+	       ${libdir}/libwinpthread.a \
+	       py_parts/$(LIB_FILE)
+
+# the Python parts to compile and link against
+py_parts/$(LIB_FILE):
+	rm -rf py_parts
+	mkdir py_parts
+	cd py_parts; wget $(MSI_URL_PATH)/$(MSI_FILE)
+	cd py_parts; cabextract $(MSI_FILE) -F '*.h'
+	cd py_parts; cabextract $(MSI_FILE) -F $(DLL_FILE)
+	cd py_parts; pexports -v $(DLL_FILE) > $(DEF_FILE)
+	cd py_parts; $(DLL_TOOL) -A -dllname $(DLL_FILE) --def $(DEF_FILE) \
+	             --output-lib $(LIB_FILE)
+
+# the generated hashdb_wrap.cpp and hashdb.py files, both made by SWIG
+hashdb_wrap.cpp: ${top_srcdir}/python_bindings/hashdb.i \
+	         ${top_srcdir}/src_libhashdb/hashdb.hpp
+	/usr/bin/swig -c++ -python -o hashdb_wrap.cpp ${top_srcdir}/python_bindings/hashdb.i
+	$(CC) -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D MS_WIN64
+
+# the C++ wrapper around libhashdb
+hashdb_wrap.o: ${top_srcdir}/python_bindings/hashdb.i ../src_libhashdb/libhashdb.o hashdb_wrap.cpp
+
+# ############################################################
+# distribution wrapped in a .zip
 windist:
 	rm -rf $(distdir).zip
 	mkdir $(distdir)
 	@echo
-	cp win64/hashdb64.exe $(distdir)
+	cp ../src/hashdb64.exe $(distdir)
 	@echo ====================================
 	@echo 
 	@echo Creating ZIP archive

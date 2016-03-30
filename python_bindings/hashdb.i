@@ -5,7 +5,7 @@
 %include "std_pair.i"
 
 %{
-#include "../src_libhashdb/hashdb.hpp"
+#include "hashdb.hpp"
 %}
 
 %feature("autodoc", "1");

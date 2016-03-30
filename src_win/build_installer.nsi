@@ -1,13 +1,18 @@
 # NSIS script for creating the Windows hashdb installer file.
 #
-# Installs the following:
-#   64-bit configuration of hashdb tools
-#   pdf documents
-#   path
+# Installs the following (64-bit only):
+#   hashdb.exe
+#   hashdb_um.pdf
+#   Python binding files:
+#       hashdb.py
+#       _hashdb.pyd
+#       test_hashdb_module.py
+#   PATH
 #   uninstaller
-#   start menu shortcut for pdf documents
-#   uninstaller shurtcut
-#   registry information including uninstaller information
+#   start menu shortcuts:
+#        shortcut to hashdb_um.pdf
+#        shortcut to uninstaller
+#   registry information
 
 # Assign VERSION externally with -DVERSION=<ver>
 # Build from signed files with -DSIGN
@@ -55,8 +60,7 @@ ${If} $0 != "admin" ;Require admin rights on NT4+
 ${EndIf}
 !macroend
 
-#Section "hashdb"
-Section "${APPNAME}"
+Section "hashdb tool"
         # establish out path
         setOutPath "$INSTDIR"
 
@@ -89,13 +93,20 @@ Section "${APPNAME}"
 
         # install PDF doc
         setOutPath "$INSTDIR\pdf"
-        file "hashdbUsersManual.pdf"
+        file "hashdb_um.pdf"
 
         # install shortcut to PDF doc
-	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk" "$INSTDIR\pdf\hashdbUsersManual.pdf"
+	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk" "$INSTDIR\pdf\hashdb_um.pdf"
 sectionEnd
 
-Section "Add to path"
+Section "hashdb Python module"
+	setOutPath "$DESKTOP"
+        file "hashdb.py"
+        file "_hashdb.pyd"
+        file "test_hashdb_module.py"
+sectionEnd
+
+Section "Add to PATH"
 	setOutPath "$INSTDIR"
         # add hashdb to system PATH
         ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR"
@@ -152,13 +163,14 @@ section "uninstall"
 	# manage uninstalling these because they may be open
 	StrCpy $0 "$INSTDIR\hashdb.exe"
 	Call un.FailableDelete
-	StrCpy $0 "$INSTDIR\pdf\hashdbUsersManual.pdf"
+	StrCpy $0 "$INSTDIR\pdf\hashdb_um.pdf"
 	Call un.FailableDelete
-
-#	# uninstall files and links
-#	delete "$INSTDIR\32-bit\*"
-#	delete "$INSTDIR\64-bit\*"
-#	delete "$INSTDIR\pdf\*"
+	StrCpy $0 "$DESKTOP\hashdb.py"
+	Call un.FailableDelete
+	StrCpy $0 "$DESKTOP\_hashdb.pyd"
+	Call un.FailableDelete
+	StrCpy $0 "$DESKTOP\test_hashdb_module.py"
+	Call un.FailableDelete
 
 	# uninstall dir
 	rmdir "$INSTDIR\pdf"
@@ -178,7 +190,7 @@ section "uninstall"
 	DeleteRegKey HKLM "${REG_SUB_KEY}"
 
         # remove associated search paths from the PATH environment variable
-        # were both installed
+        # if installed
         ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR"
 sectionEnd
 
