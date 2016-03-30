@@ -17,7 +17,6 @@ AC_CONFIG_FILES([Makefile
                  test/Makefile
                  test_py/Makefile
                  python_bindings/Makefile
-                 src_win_py/Makefile
                  man/Makefile])
 
 
