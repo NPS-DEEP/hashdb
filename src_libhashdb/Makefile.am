@@ -66,7 +66,7 @@ noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
 liblmdb_la_CFLAGS = \
-	-pthread -O3 -g -fPIC \
+	-pthread -O3 -g \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
 
@@ -74,7 +74,7 @@ liblmdb_la_LDFLAGS = -PIC
 
 libhashdb_la_LDFLAGS = -PIC -avoid-version -static
 
-AM_CPPFLAGS = -fPIC \
+AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
 	-I${top_srcdir}/src_libhashdb/rapidjson
 AM_CFLAGS = $(HASHDB_CFLAGS)
