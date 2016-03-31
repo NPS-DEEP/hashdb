@@ -67,7 +67,7 @@ sudo yum -y update
 # from here on, exit if any command fails
 set -e
 
-if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libewf.a]; then
+if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libewf.a ]; then
   LIBEWF_TAR_GZ=libewf-20140406.tar.gz
   LIBEWF_URL=https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/$LIBEWF_TAR_GZ
   echo Building LIBEWF
