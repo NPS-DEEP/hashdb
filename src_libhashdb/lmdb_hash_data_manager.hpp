@@ -44,7 +44,7 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 
-//#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -278,12 +278,12 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
     // store data at new key
     context.data.mv_size = p - data;
     context.data.mv_data = data;
-    int rc = mdb_put(context.txn, context.dbi,
-                     &context.key, &context.data, MDB_NODUPDATA);
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager put_type3 key", context.key);
 print_mdb_val("hash_data_manager put_type3 data", context.data);
 #endif
+    int rc = mdb_put(context.txn, context.dbi,
+                     &context.key, &context.data, MDB_NODUPDATA);
     return rc;
   }
 
