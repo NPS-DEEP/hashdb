@@ -274,6 +274,16 @@ namespace hashdb {
      * Returns sizes of LMDB databases in the data store.
      */
     std::string sizes() const;
+
+    /**
+     * Return the number of hash records.
+     */
+    size_t size_hashes() const;
+
+    /**
+     * Return the number of sources.
+     */
+    size_t size_sources() const;
   };
 
   // ************************************************************
@@ -508,7 +518,7 @@ namespace hashdb {
     std::string sizes() const;
 
     /**
-     * Return the number of hashes.
+     * Return the number of hash records.
      */
     size_t size_hashes() const;
 

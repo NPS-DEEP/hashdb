@@ -555,6 +555,14 @@ namespace hashdb {
     return ss.str();
   }
 
+  size_t import_manager_t::size_hashes() const {
+    return lmdb_hash_data_manager->size();
+  }
+
+  size_t import_manager_t::size_sources() const {
+    return lmdb_source_id_manager->size();
+  }
+
   // ************************************************************
   // scan
   // ************************************************************

@@ -943,6 +943,12 @@ namespace commands {
     std::string binary_hash =
                 hashdb::hex_to_bin("8000000000000000000000000000000000");
 
+    // get start index for this run
+    uint64_t start_index = manager.size_hashes();
+    if (start_index > 1) {
+      --start_index;
+    }
+
     // insert count same hshes into the database
     for (uint64_t i=0; i<count; i++) {
 
@@ -950,7 +956,8 @@ namespace commands {
       progress_tracker.track();
 
       // add hash
-      manager.insert_hash(binary_hash, file_binary_hash, i*sector_size, 0, "");
+      manager.insert_hash(binary_hash, file_binary_hash,
+                          (i + start_index) * sector_size, 0, "");
     }
   }
 
