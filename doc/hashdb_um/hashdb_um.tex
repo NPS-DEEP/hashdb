@@ -1165,6 +1165,10 @@ Change if different
 Insert hash or source, return \verb+error_message+ or "" for no error.
 \item \verb+std::string sizes()+\\
 Return number of entries in LMDB databases.
+\item \verb+size_t size_hashes()+\\
+Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+\item \verb+size_t size_sources()+\\
+Return number of sources.
 \item \verb+~import_manager_t()+\\
 Append changes to change log at \verb+hashdb_dir/log.dat+.
 \end{itemize}
