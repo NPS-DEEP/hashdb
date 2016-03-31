@@ -111,7 +111,7 @@ fi
 
 function is_installed {
   LIB=$1
-  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
+  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ]; then
   then
     return 0
   else 
