@@ -29,7 +29,7 @@
 #include <string>
 #include <cassert>
 #include "lmdb.h"
-#include "hex_helper.hpp"
+#include "hashdb.hpp" // for bin_to_hex
 
 namespace hashdb {
 
