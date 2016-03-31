@@ -80,7 +80,6 @@ class lmdb_hash_data_manager_t {
   const hashdb::file_mode_type_t file_mode;
   const uint32_t sector_size;
   const uint32_t max_id_offset_pairs;
-  id_offset_pairs_t* id_offset_pairs;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -318,7 +317,6 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
        file_mode(p_file_mode),
        sector_size(p_sector_size),
        max_id_offset_pairs(p_max_id_offset_pairs),
-       id_offset_pairs(new id_offset_pairs_t),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
        M() {
@@ -335,7 +333,6 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
   ~lmdb_hash_data_manager_t() {
     // close the lmdb_hash_store DB environment
     mdb_env_close(env);
-    delete id_offset_pairs;
 
     MUTEX_DESTROY(&M);
   }
