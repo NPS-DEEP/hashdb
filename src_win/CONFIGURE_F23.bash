@@ -27,6 +27,7 @@ MPKGS="autoconf automake gcc gcc-c++ libtool "
 MPKGS+="wine wget bison "
 MPKGS+="libewf libewf-devel "
 MPKGS+="openssl-devel "
+MPKGS+="cabextract gettext-devel "
 MPKGS+="mingw64-gcc mingw64-gcc-c++ "
 #MPKGS+="mingw32-nsis "
 
@@ -71,6 +72,43 @@ MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 # from here on, exit if any command fails
 set -e
 
+if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
+  LIBEWF_TAR_GZ=libewf-20140406.tar.gz
+  LIBEWF_URL=https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/$LIBEWF_TAR_GZ
+  echo Building LIBEWF
+
+  if [ ! -r $LIBEWF_TAR_GZ ]; then
+    wget --content-disposition $LIBEWF_URL
+  fi
+  tar xvf $LIBEWF_TAR_GZ
+
+  # get the directory that it unpacked into
+  DIR=`tar tf $LIBEWF_TAR_GZ |head -1`
+
+  # build and install LIBEWF
+  pushd $DIR
+  echo
+  echo %%% $LIB mingw64
+
+  # patch libewf/libuna/libuna_inline.h for GCC5
+  patch -p0 <../libewf-20140406-gcc5-compatibility.patch
+
+  # configure
+  CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw64-configure --enable-static --disable-shared
+  make clean
+  make
+  sudo make install
+  make clean
+  popd
+  rm -rf $DIR
+fi
+
+
+
+#
+# ICU requires patching and a special build sequence
+#
+
 function is_installed {
   LIB=$1
   if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
@@ -80,44 +118,6 @@ function is_installed {
     return 1
   fi
 }
-    
-# usage: build_mingw <name> <download-URL> <filename-downloaded>
-function build_mingw {
-  LIB=$1
-  URL=$2
-  FILE=$3
-  if is_installed $LIB
-  then
-    echo $LIB already installed. Skipping
-  else
-    echo Building $1 from $URL
-    if [ ! -r $FILE ]; then
-      wget --content-disposition $URL
-    fi
-    tar xvf $FILE
-    # Now get the directory that it unpacked into
-    DIR=`tar tf $FILE |head -1`
-    pushd $DIR
-    echo
-    echo %%% $LIB mingw64
-    if [ ! -r configure -a -r bootstrap.sh ]; then
-      . bootstrap.sh
-    fi
-    CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw64-configure --enable-static --disable-shared
-    make clean
-    make
-    sudo make install
-    make clean
-    popd
-    rm -rf $DIR
-  fi
-}
-
-build_mingw libewf   https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/libewf-20140406.tar.gz   libewf-20140406.tar.gz
-
-#
-# ICU requires patching and a special build sequence
-#
 
 echo "Building and installing ICU for mingw"
 ICUVER=53_1
