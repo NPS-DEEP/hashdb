@@ -72,7 +72,7 @@ MINGW64_DIR=/usr/$MINGW64/sys-root/mingw
 # from here on, exit if any command fails
 set -e
 
-if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
+if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ]; then
   LIBEWF_TAR_GZ=libewf-20140406.tar.gz
   LIBEWF_URL=https://googledrive.com/host/0B3fBvzttpiiSMTdoaVExWWNsRjg/$LIBEWF_TAR_GZ
   echo Building LIBEWF
@@ -101,77 +101,6 @@ if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ];
   make clean
   popd
   rm -rf $DIR
-fi
-
-
-
-#
-# ICU requires patching and a special build sequence
-#
-
-function is_installed {
-  LIB=$1
-  if [ -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/$LIB.a ]; then
-  then
-    return 0
-  else 
-    return 1
-  fi
-}
-
-echo "Building and installing ICU for mingw"
-ICUVER=53_1
-ICUFILE=icu4c-$ICUVER-src.tgz
-ICUDIR=icu
-ICUURL=http://download.icu-project.org/files/icu4c/53.1/$ICUFILE
-
-if is_installed libicuuc
-then
-  echo ICU is already installed
-else
-  if [ ! -r $ICUFILE ]; then
-    wget $ICUURL
-  fi
-  tar xf $ICUFILE
-
-  # patch ICU for MinGW cross-compilation
-  pushd icu
-  patch -p0 <../icu4c-53_1-simpler-crossbuild.patch
-  patch -p0 <../icu4c-53_1-mingw-w64-mkdir-compatibility.patch
-  popd
-
-  ICUDIR=`tar tf $ICUFILE|head -1`
-
-  ICU_DEFINES="-DU_USING_ICU_NAMESPACE=0 -DU_CHARSET_IS_UTF8=1 -DUNISTR_FROM_CHAR_EXPLICIT=explicit -DUNSTR_FROM_STRING_EXPLICIT=explicit"
-
-  ICU_FLAGS="--disable-extras --disable-icuio --disable-layout --disable-samples --disable-tests"
-
-  # build ICU for Linux to get packaging tools used by MinGW builds
-  echo
-  echo icu linux
-  rm -rf icu-linux
-  mkdir icu-linux
-  pushd icu-linux
-  CC=gcc CXX=g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" ../icu/source/runConfigureICU Linux --enable-shared $ICU_FLAGS
-  make VERBOSE=1
-  popd
-  
-  # build 64-bit ICU for MinGW
-  echo
-  echo icu mingw64
-  rm -rf icu-mingw64
-  mkdir icu-mingw64
-  pushd icu-mingw64
-  eval MINGW=\$MINGW64
-  eval MINGW_DIR=\$MINGW64_DIR
-  ../icu/source/configure CC=$MINGW-gcc CXX=$MINGW-g++ CFLAGS=-O3 CXXFLAGS=-O3 CPPFLAGS="$ICU_DEFINES" --enable-static --disable-shared --prefix=$MINGW_DIR --host=$MINGW --with-cross-build=`realpath ../icu-linux` $ICU_FLAGS --disable-tools --disable-dyload --with-data-packaging=static
-  make VERBOSE=1
-  sudo make install
-  make clean
-  popd
-  rm -rf icu-mingw64
-  rm -rf $ICUDIR icu-linux
-  echo "ICU mingw installation complete."
 fi
 
 # build pexports on Linux
