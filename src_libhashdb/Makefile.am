@@ -65,8 +65,9 @@ libhashdb_la_LIBADD = liblmdb.la
 noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
+# may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
 liblmdb_la_CFLAGS = \
-	-pthread -O3 -g \
+	-pthread -fno-strict-aliasing \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
 	-Wno-format-extra-args
 
