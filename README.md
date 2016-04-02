@@ -9,7 +9,7 @@ The hashdb tool provides commands for creating hash databases
 of MD5 hashes on files aligned along hash block boundaries as well as querying
 hash databases, merging hash databases, and performing hash lookups.
 
-hashdb includes C++ and Python interfaces for working with and scanning
+hashdb provides C++ and Python interfaces for working with and scanning
 hashdb databases.
 
 hashdb builds and installs on Linux and OS X systems using
@@ -23,7 +23,7 @@ Web links
 
 Bugs
 ----
-Plese enter bugs on the [github issue tracker](https://github.com/NPS-DEEP/hashdb/issues?state=open)
+Please enter bugs on the [github issue tracker](https://github.com/NPS-DEEP/hashdb/issues?state=open)
 
 Maintainer
 ----------
