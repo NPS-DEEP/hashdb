@@ -37,7 +37,7 @@ $(UNVERSIONED_INSTALLER): ${top_srcdir}/src_win/build_installer.nsi \
 # hashdb UM
 # get hashdb UM from URL rather than building it to prevent
 # unnecessary date change and to simplify the build.
-UM_URL = http://digitalcorpora.org/downloads/hashdb/experimental
+UM_URL = http://digitalcorpora.org/downloads/hashdb
 hashdb_um.pdf:
 	wget $(UM_URL)/hashdb_um.pdf
 
