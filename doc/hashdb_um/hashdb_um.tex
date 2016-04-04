@@ -182,6 +182,45 @@ This manual contains example commands that should be typed in by the user. A com
 
 The first character on the line is the terminal prompt, and should not be typed. The black square is used as the standard prompt in this manual, although the prompt shown on a users screen will vary according to the system they are using.\\
 
+\subsection{Changes Over the \hdb v2.0.1 Release}
+\hdb Version 3 provides significant functional and performance improvements over v2.0.1:
+
+\begin{itemize}
+\item False positive block matches may be evaluated because metadata about hashes and sources are now being stored:
+  \begin{itemize}
+  \item Block labels and block entropy values indicate characteristics about data blocks.
+  \item Source type and the nonprobative count of a source indicate the density of useful blocks within a source.
+\end{itemize}
+\item Sources are now tracked by source hash rather than by name.  This fixes two problems:
+  \begin{itemize}
+  \item By not storing duplicates, source relevance and similarity between sources may be weighed.
+  \item Groups of identical sources are readily identified.
+  \end{itemize}
+\item Bulky output from scans has been significantly reduced:
+  \begin{itemize}
+  \item Information about matched sources and hashes are returned only once and are not reprinted if a source or hash is matched again.
+  \item Information is returned in the more condensed JSON format rather than in XML.
+  \end{itemize}
+\item A complete \hdb API is now available for C++ and Python.
+  \begin{itemize}
+  \item A scan interface supports scan functions and functions for reading all hash and source information.
+  \item An import interface supports functions for importing hash and source information.
+  \item Free functions support access to settings and higher-layer capabilities.
+  \end{itemize}
+\item The database has been retuned to improve scan and import speed:
+  \begin{itemize}
+  \item Several tuned scan interfaces are available:
+    \begin{itemize}
+    \item \verb+find_expanded_hash+ scans for matches and returns complete match information in JSON format.  Matched sources and hashes are cached so that information is not reprinted in other matches.
+    \item \verb+find_hash+ returns match information in a data structure.
+    \item \verb+find_hash_count+ only returns a match count and does not take time to parse match information into a data structure.
+    \item \verb+find_approximate_hash_count+ is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
+    \end{itemize}
+  \item The Bloom filter has been removed in favor of the dense hash store.
+  \end{itemize}
+\item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
+\end{itemize}
+
 
 \section{How \hdb Works}
 The \hdb tool provides capabilities to create, edit, access and search databases of cryptographic hashes created from hash blocks. The cryptographic hashes are imported into a database from a directory, another database, \textbf{bulk\_extractor} or JSON data, or trough the \hdb API.
@@ -869,178 +908,74 @@ Scanner options are described in Table \ref{tab:hashdb_be_usage} and shown in Li
 \lstset{breakatwhitespace=true}
 \lstinputlisting[float, caption={\bulk options}, label=BEUsage, style=customfile]{hashdb_be_usage.txt}
 
-\section{\hdb Data Types}
-\label{DataTypes}
-Many of the \hdb commands and API interfaces require or emit data
-in JSON format.  This section describes the syntax used and required by \hdb
-commands and API interfaces.
+\section{Use Cases for \hdb}
+\label{UseCases}
+There are many different ways to utilize the functionality provided by the \hdb tool. In this section, we highlight some of the most common uses of the system.
 
-\subsection{Source Data}
-\hdb import and export commands and interfaces accept and emit source data in JSON format.  Source data defines information about a source. Source data is identified by the file hash of the source.  An example source data line is shown in Listing \ref{JSONSourceData}. Fields are described in Table \ref{tab:JSONSourceData}.\\
+\subsection{Querying for Source or Database Information}
+ Users can scan a hash database directly using various querying commands. Those commands are outlined in Table \ref{tab:scanServices}.  The ``scan'' command allows users to search for hash blocks.\\
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON source data}, label=JSONSourceData]
-{
-  "file_hash":"b9e7...",
-  "filesize":8000,
-  "file_type":"exe",
-  "nonprobative_count":4,
-  "name_pairs":["repository1","filename1","repo2","f2"]
-}
-\end{lstlisting}
+\subsection{Writing Software that works with \hdb}
+\label{APISection}
+\hdb provides Python and C++ APIs that can manage all aspects of a hash database
+including importing and scanning [see \textbf{\Autoref{APIs}} for information on using these APIs].
+Other software programs can use these APIs to access database capabilities. The file \texttt{hashdb.hpp} found in the \textit{src} directory contains the complete specification of the API. That complete file is also contained in Appendix \ref{hashdbapi} of this document.  The two key features provided by the API include the ability to import values into a hash database and the ability to scan media for any values matching those in a given hash database.  The \bulk program uses the \hdb API to implement both of these capabilities.\\
 
-\begin{table}[!ht]
+\subsection{Scanning or Importing to a Database Using \bulk}
+\label{bulkextractorSection}
+The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner.\\
 
-\centering
-\caption{Fields used in JSON source data}
-\label{tab:JSONSourceData}
-\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
-\hline \hline
-\textbf{Field} & \textbf{Meaning} \\
-\hline
-\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
-\hline
-\verb+filesize+ & The size, in bytes, of the source file\\
-\hline
-\verb+file_type+ & A classification of what type of file the source file is\\
-\hline
-\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
-\hline
-\verb+name_pairs+ & An array of source name, filename pairs associated with this source\\
-\hline
-\end{tabular}
-\end{table}
+For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from the disk image \texttt{my\_image} to a hash database:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{bulk_extractor -e hashdb -o outputDir -S hashdb_mode=import my_image}
+\end{Verbatim}
+Note, \bulk will place feature file and other output not relevant to the \hdb application in the ``outputDir'' directory. When using the import command, the output directory will contain a newly created hash database called \texttt{hashdb.hdb}. That database can then be copied or added to a hash database in another location.
 
-\subsection{Block Hash Data}
-\hdb import and export commands and interfaces also accept and emit block hash data in JSON format.  Block hash data defines information about a block hash. Block hash data is identified by the file block hash.  An example block hash line is shown in Listing \ref{JSONBlockHashData}. Fields are described in Table \ref{tab:JSONBlockHashData}.\\
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
-{
-  "block_hash":"a7df...",
-  "entropy":8,
-  "block_label":"W",
-  "source_offset_pairs":["b9e7...", 4096]
-}
-\end{lstlisting}
+\subsection{Updating Hash Databases}
+\label{updateSection}
+\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{mock\_video.hdb} into \texttt{mock\_video\_dedup.hdb} :
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb deduplicate mock_video.hdb mock_video_dedup.hdb}
+\end{Verbatim}
+Whenever a database is created or updated, \hdb updates the file \texttt{log.xml}, found in the database's directory with information about the actions performed.\\
 
-\begin{table}[!ht]
+After each command to change a database, statistics about the changes are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changeStatistics} shows all of the statistics tracked in the log file along with their meaning. The value of each statistic is the number of times the event happened during the command. For example, if 280 hashes are removed, the statistic ``hashes\_removed'' will be marked with a value of 280. \\
 
-\centering
-\caption{Fields used in JSON block hash data}
-\label{tab:JSONBlockHashData}
-\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
-\hline \hline
-\textbf{Field} & \textbf{Meaning} \\
-\hline
-\verb+block_hash+ & A block hash hexdigest\\
-\hline
-\verb+entropy+ & The calculated entropy, scaled between 0 and 100, using an entropy calculation TO BE DETERMINEDzzzzzzz\\
-\hline
-\verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
-\hline
-\verb+source_offset_pairs+ & An array of source file hash, source file offset pairs associated with this block hash\\
-\hline
-\end{tabular}
-\end{table}
+\subsubsection{Update Commands and ``Duplicate'' Hashes}
+Commands that add or import hashes of the same value will result in hash duplicates if the source information is unique. If hash and source values are identical (including repository name), no hash values are added with the \textbf{add} or \textbf{import} commands. The \textbf{intersect} and \textbf{subtract} commands do not require source information to match. An intersection occurs when hatches match, regardless of whether the source information matches. Similarly, hash values are also subtracted from the database regardless of whether or not their source information matches.  The update statistics specified in the log file (shown in \ref{tab:changeStatistics}) will specify the results of each of these commands to help users track changes. \\
 
-\subsection{Scan Data}
-The \hdb scan command and scan API emits hash and source information relating to hashes matched while scanning. An example scan match is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
+As discussed previously, users can only specify the repository name with the \textbf{import} command. As databases become large, the repository name for each hash value will help identify important source information. Users should plan on importing data with specific repository names whenever possible to avoid source confusion later.\\
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
-{
-  "entropy": 8,
-  "block_label": "W",
-  "source_list_id": 57,
-  "sources": [{
-    "file_hash": "f7035a...",
-    "filesize": 800,
-    "file_type": "exe",
-    "nonprobative_count": 2,
-    "name_pairs": ["repository1", "filename1", "repo2", "f2"]
-  }],
-  "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
-}
-\end{lstlisting}
+Finally, we provide two philosophies for mitigating duplicate hash bloat:
+\begin{itemize}
+ \item If you know you have imported the same blacklist data twice,
+  and you do not want to manage a 'whitelist' database,
+  \texttt{deduplicate} is a quick and easy way to get rid of low-entropy noise.
+  \item If your database has blacklist data from more than one source
+  or you just want tighter control about what you want to remove
+  and are willing to use a 'whitelist' database
+  to remove hashes to improve lookup speed
+  or to reduce noise about uninteresting hashes found,
+  use \texttt{subtract}.
+\end{itemize}
 
-\begin{table}[!ht]
 
-\centering
-\caption{Fields used in JSON scan data}
-\label{tab:JSONScanData}
-\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
-\hline \hline
-\textbf{Field} & \textbf{Meaning} \\
-\hline
-\verb+entropy+ & The calculated entropy integer, scale and algorithm TBD.zzzz\\
-\hline
-\verb+block_label+ & A label describing the type of data within the block\\
-\hline
-\verb+source_list_id+ & A source list ID which is a CRC of the associated source file hashes associated with the block hash\\
-\hline
-\verb+sources+ & An array of source data for each source matching the hash\\
-\hline
-\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
-\hline
-\verb+filesize+ & The size, in bytes, of the source file\\
-\hline
-\verb+file_type+ & A classification of what type of file the source file is\\
-\hline
-\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
-\hline
-\verb+name_pairs+ & An array of repository name, filename pairs associated with this source\\
-\hline
-\verb+source_offset_pairs+ & An array of the source file hash, source file offset pairs associated with this block hash\\
-\hline
-\end{tabular}
-\end{table}
 
-\subsection{Size Data}
-The \hdb size command and size API returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
-{
-zzzz
-  "hash_data_store":0,
-  "hash_store":0,
-  "source_data_store":0,
-  "source_id_store":0,
-  "source_name_store":0
-}
-\end{lstlisting}
 
-\subsection{Timing Data}
 
-\hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON timestamp format}, label=JSONTimingData]
-{
-  "name":"begin",
-  "delta":"0.000396",
-  "total":"0.000396"
-}
-\end{lstlisting}
+\subsection{Optimizing a Hash Database}
+\label{optimizing}
+ 
+For large databases, it takes a bit of time to look up a hash value to determine whether it is in the database. This time adds up when scanning for millions of hash values. As an optimization, \hdb provides tuning parameters for tuning the initial hash lookup when checking to see if a hash value is present in the database [see \textbf{\Autoref{Creating}} for information on using these tuning parameters].
 
-\begin{table}[!ht]
-
-\centering
-\caption{Fields used in JSON timing data}
-\label{tab:JSONTimingData}
-\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
-\hline \hline
-\textbf{Field} & \textbf{Meaning} \\
-\hline
-\verb+name+ & The name of the timestamp\\
-\hline
-\verb+delta+ & The delta time since the previous timestamp. In this example, the delta is from the time the timestamping started\\
-\hline
-\verb+total+ & The total time since timestamping started\\
-\hline
-\end{tabular}
-\end{table}
+\subsection{Exporting Hash Databases}
+Users can export hashes from a hash database to a JSON export file using the ``export'' command [see \textbf{\Autoref{DataTypes}} for information on JSON syntax].  For example, the following command will export the \texttt{mock\_video.hdb} database to the file \texttt{demoVideoHashes.json}:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
+\end{Verbatim}
 
 \section{\hdb Configuration Settings}
 \label{Settings}
@@ -1060,6 +995,8 @@ The number of bits of the hash prefix to use as the key in the store. The idea i
 
 \textbf{Hash suffix bytes}\\
 The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
+
+
 
 \section{Using the \hdb Library APIs}
 \label{APIs}
@@ -1252,80 +1189,261 @@ The following data types are defined.
 \item \verb+source_names_t: typedef set<source_name_t> source_names_t+
 \end{itemize}
 
+\section{\hdb Data Types}
+\label{DataTypes}
+Many of the \hdb commands and API interfaces require or emit data
+in JSON format.  This section describes the syntax used and required by \hdb
+commands and API interfaces.
 
+\subsection{Source Data}
+\hdb import and export commands and interfaces accept and emit source data in JSON format.  Source data defines information about a source. Source data is identified by the file hash of the source.  An example source data line is shown in Listing \ref{JSONSourceData}. Fields are described in Table \ref{tab:JSONSourceData}.\\
 
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON source data}, label=JSONSourceData]
+{
+  "file_hash":"b9e7...",
+  "filesize":8000,
+  "file_type":"exe",
+  "nonprobative_count":4,
+  "name_pairs":["repository1","filename1","repo2","f2"]
+}
+\end{lstlisting}
 
+\begin{table}[!ht]
 
+\centering
+\caption{Fields used in JSON source data}
+\label{tab:JSONSourceData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
+\hline
+\verb+filesize+ & The size, in bytes, of the source file\\
+\hline
+\verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
+\hline
+\verb+name_pairs+ & An array of source name, filename pairs associated with this source\\
+\hline
+\end{tabular}
+\end{table}
 
-\section{Use Cases for \hdb}
-\label{UseCases}
-There are many different ways to utilize the functionality provided by the \hdb tool. In this section, we highlight some of the most common uses of the system.
+\subsection{Block Hash Data}
+\hdb import and export commands and interfaces also accept and emit block hash data in JSON format.  Block hash data defines information about a block hash. Block hash data is identified by the file block hash.  An example block hash line is shown in Listing \ref{JSONBlockHashData}. Fields are described in Table \ref{tab:JSONBlockHashData}.\\
 
-\subsection{Querying for Source or Database Information}
- Users can scan a hash database directly using various querying commands. Those commands are outlined in Table \ref{tab:scanServices}.  The ``scan'' command allows users to search for hash blocks.\\
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
+{
+  "block_hash":"a7df...",
+  "entropy":8,
+  "block_label":"W",
+  "source_offset_pairs":["b9e7...", 4096]
+}
+\end{lstlisting}
 
-\subsection{Writing Software that works with \hdb}
-\label{APISection}
-\hdb provides Python and C++ APIs that can manage all aspects of a hash database
-including importing and scanning [see \textbf{\Autoref{APIs}} for information on using these APIs].
-Other software programs can use these APIs to access database capabilities. The file \texttt{hashdb.hpp} found in the \textit{src} directory contains the complete specification of the API. That complete file is also contained in Appendix \ref{hashdbapi} of this document.  The two key features provided by the API include the ability to import values into a hash database and the ability to scan media for any values matching those in a given hash database.  The \bulk program uses the \hdb API to implement both of these capabilities.\\
+\begin{table}[!ht]
 
-\subsection{Scanning or Importing to a Database Using \bulk}
-\label{bulkextractorSection}
-The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner.\\
+\centering
+\caption{Fields used in JSON block hash data}
+\label{tab:JSONBlockHashData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+block_hash+ & A block hash hexdigest\\
+\hline
+\verb+entropy+ & The calculated entropy, scaled between 0 and 100, using an entropy calculation TO BE DETERMINEDzzzzzzz\\
+\hline
+\verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
+\hline
+\verb+source_offset_pairs+ & An array of source file hash, source file offset pairs associated with this block hash\\
+\hline
+\end{tabular}
+\end{table}
 
-For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from the disk image \texttt{my\_image} to a hash database:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -e hashdb -o outputDir -S hashdb_mode=import my_image}
-\end{Verbatim}
-Note, \bulk will place feature file and other output not relevant to the \hdb application in the ``outputDir'' directory. When using the import command, the output directory will contain a newly created hash database called \texttt{hashdb.hdb}. That database can then be copied or added to a hash database in another location.
+\subsection{Scan Data}
+The \hdb scan command and scan API emits hash and source information relating to hashes matched while scanning. An example scan match is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
 
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data}, label=JSONBlockHashData]
+{
+  "entropy": 8,
+  "block_label": "W",
+  "source_list_id": 57,
+  "sources": [{
+    "file_hash": "f7035a...",
+    "filesize": 800,
+    "file_type": "exe",
+    "nonprobative_count": 2,
+    "name_pairs": ["repository1", "filename1", "repo2", "f2"]
+  }],
+  "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+}
+\end{lstlisting}
 
-\subsection{Updating Hash Databases}
-\label{updateSection}
-\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{mock\_video.hdb} into \texttt{mock\_video\_dedup.hdb} :
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb deduplicate mock_video.hdb mock_video_dedup.hdb}
-\end{Verbatim}
-Whenever a database is created or updated, \hdb updates the file \texttt{log.xml}, found in the database's directory with information about the actions performed.\\
+\begin{table}[!ht]
 
-After each command to change a database, statistics about the changes are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changeStatistics} shows all of the statistics tracked in the log file along with their meaning. The value of each statistic is the number of times the event happened during the command. For example, if 280 hashes are removed, the statistic ``hashes\_removed'' will be marked with a value of 280. \\
+\centering
+\caption{Fields used in JSON scan data}
+\label{tab:JSONScanData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+entropy+ & The calculated entropy integer, scale and algorithm TBD.zzzz\\
+\hline
+\verb+block_label+ & A label describing the type of data within the block\\
+\hline
+\verb+source_list_id+ & A source list ID which is a CRC of the associated source file hashes associated with the block hash\\
+\hline
+\verb+sources+ & An array of source data for each source matching the hash\\
+\hline
+\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
+\hline
+\verb+filesize+ & The size, in bytes, of the source file\\
+\hline
+\verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
+\hline
+\verb+name_pairs+ & An array of repository name, filename pairs associated with this source\\
+\hline
+\verb+source_offset_pairs+ & An array of the source file hash, source file offset pairs associated with this block hash\\
+\hline
+\end{tabular}
+\end{table}
 
-\subsubsection{Update Commands and ``Duplicate'' Hashes}
-Commands that add or import hashes of the same value will result in hash duplicates if the source information is unique. If hash and source values are identical (including repository name), no hash values are added with the \textbf{add} or \textbf{import} commands. The \textbf{intersect} and \textbf{subtract} commands do not require source information to match. An intersection occurs when hatches match, regardless of whether the source information matches. Similarly, hash values are also subtracted from the database regardless of whether or not their source information matches.  The update statistics specified in the log file (shown in \ref{tab:changeStatistics}) will specify the results of each of these commands to help users track changes. \\
+\subsection{Size Data}
+The \hdb size command and size API returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
 
-As discussed previously, users can only specify the repository name with the \textbf{import} command. As databases become large, the repository name for each hash value will help identify important source information. Users should plan on importing data with specific repository names whenever possible to avoid source confusion later.\\
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
+{
+zzzz
+  "hash_data_store":0,
+  "hash_store":0,
+  "source_data_store":0,
+  "source_id_store":0,
+  "source_name_store":0
+}
+\end{lstlisting}
 
-Finally, we provide two philosophies for mitigating duplicate hash bloat:
+\subsection{Timing Data}
+
+\hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON timestamp format}, label=JSONTimingData]
+{
+  "name":"begin",
+  "delta":"0.000396",
+  "total":"0.000396"
+}
+\end{lstlisting}
+
+\begin{table}[!ht]
+
+\centering
+\caption{Fields used in JSON timing data}
+\label{tab:JSONTimingData}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+\verb+name+ & The name of the timestamp\\
+\hline
+\verb+delta+ & The delta time since the previous timestamp. In this example, the delta is from the time the timestamping started\\
+\hline
+\verb+total+ & The total time since timestamping started\\
+\hline
+\end{tabular}
+\end{table}
+
+\section{\hdb Data Stores}
+A \hdb v3.0 database consists of block hash and source storage, settings, a log file, and performance information.
+
+\subsection{LMDB Hash Store}
+The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, \hdb reads the \textit{LMDB Hash Information Store} to be sure there is an actual match.
+
+The \textit{LMDB Hash Store} is a hybrid B-Tree and List store:
 \begin{itemize}
- \item If you know you have imported the same blacklist data twice,
-  and you do not want to manage a 'whitelist' database,
-  \texttt{deduplicate} is a quick and easy way to get rid of low-entropy noise.
-  \item If your database has blacklist data from more than one source
-  or you just want tighter control about what you want to remove
-  and are willing to use a 'whitelist' database
-  to remove hashes to improve lookup speed
-  or to reduce noise about uninteresting hashes found,
-  use \texttt{subtract}.
+\item The \verb+key+ portion consists of the first few bits of the hash, with enough bits so that the \verb+value+ portion is not too large.
+\item The \verb+value+ portion consists of a list of the last few bytes of the hash, with enough bytes so that the bits of the hash in the \verb+key+ and the bytes of the hash in the \verb+value+ collectively identify the hash as present with a sufficiently low false positive rate.
 \end{itemize}
 
+The \textit{LMDB Hash Store} has two tuning parameters: hash prefix bits and hash suffix bytes:
 
+\begin{itemize}
+\item \textit{hash prefix bits} is the number of bits of the hash prefix to use as the key in the store.  The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20.  For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.
+\item \textit{hash suffix bytes} is the number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key.  The idea is to store as few suffix bytes as possible while minimizing false positives.  For example if you expect 5 billion hashes, you might select 3 bytes because $5/2^{28+8*3} = 5/2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.
+\end{itemize}
 
+Whenever a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Information Store} to make sure the hash really exists.  The \textit{LMDB Hash Store} should be tuned with an acceptably low false positive rate to minimize unnecessary accesses to the slower \textit{LMDB Hash Information Store}.
 
+\subsection{LMDB Hash Information Store}
+The \textit{LMDB Hash Information Store} is a store of all hashes and their associated data and source information:
 
+\begin{itemize}
+\item The \verb+key+ portion consists of a block hash, in binary.
+\item The \verb+value+ portion contains metadata fields about the hash plus a list of locations in sources where the block was identified.  Specifically, the \verb+value+ portion consists of:
+  \begin{itemize}
+  \item \verb+entropy+ The calculated entropy for the block.
+  \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
+  \item A list of source IDs and file offset pairs indicating places where the block was identified.
+  \end{itemize}
+\end{itemize}
 
+These tuning parameters help control the size of the \textit{LMDB Hash Information Store}:
+\begin{itemize}
+\item \verb+max_id_offset_pairs+ limits the number of source ID, file offset pairs that are stored for a hash, placing a cap on the maximum size of a `value`.
+\item \verb+block_size+ is used to scale down the file offset value so that it fits in less bits of storage.  Additionally, all numbers in all LMDB stores are encoded using Protocol Buffers, ref. \url{https://developers.google.com/protocol-buffers/}.
+\end{itemize}
 
-\subsection{Optimizing a Hash Database}
-\label{optimizing}
- 
-For large databases, it takes a bit of time to look up a hash value to determine whether it is in the database. This time adds up when scanning for millions of hash values. As an optimization, \hdb provides tuning parameters for tuning the initial hash lookup when checking to see if a hash value is present in the database [see \textbf{\Autoref{Creating}} for information on using these tuning parameters].
+\subsection{LMDB Source ID Store}
+The \textit{LMDB Source ID Store} maps source file hash values to source IDs.  We use source IDs in the \textit{LMDB Hash Information Store} because they are significantly shorter than source file hashes.  We wouldn't need source IDs if we didn't make this optimization.
 
-\subsection{Exporting Hash Databases}
-Users can export hashes from a hash database to a JSON export file using the ``export'' command [see \textbf{\Autoref{DataTypes}} for information on JSON syntax].  For example, the following command will export the \texttt{mock\_video.hdb} database to the file \texttt{demoVideoHashes.json}:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
-\end{Verbatim}
+\begin{itemize}
+\item The \verb+key+ is the \verb+file_binary_hash+.
+\item The \verb+value+ is the \verb+source_id+.
+\end{itemize}
 
+\subsection{LMDB Source Data Store}
+The \textit{LMDB Source Data Store} holds all the metadata about sources:
+\begin{itemize}
+\item The \verb+key+ is the \verb+source_id+.
+\item The \verb+value+ consists of these fields:
+  \begin{itemize}
+  \item \verb+file_binary_hash+ The source file hash associated with this source ID, in binary.
+  \item \verb+filesize+ The size of the source file, in bytes.
+  \item \verb+file_type+ A label indicating the type of the file, user defined.
+  \item \verb+nonprobative_count+ The number of block hashes stored for this source which are considered to be nonprobative.  Users may wish to set the \verb+nonprobative_count+ value based on the \verb+entropy+ and \verb+block_label+ values of each block in the source.
+  \end{itemize}
+\end{itemize}
+
+\subsection{LMDB Source Name Store}
+The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  This store allows us to not re-import hashes from the same source and also allows us to see the list of source names that are of the same source.
+\begin{itemize}
+\item The \verb+key+ is a \verb+source_id+.
+\item The \verb+value+ is a name pair of:
+  \begin{itemize}
+  \item \verb+repository_name+ A label indicating the source repository.
+  \item \verb+filename+ The path to this source.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Settings}
+\verb+settings.json+ stores \hdb settings, including the database version.  The current default is:\\
+\verb+{"settings_version":3, "sector_size":512, "block_size":512,+\\
+\verb+"max_id_offset_pairs":100000, "hash_prefix_bits":28, "hash_suffix_bytes":3}+
+
+\subsection{Log}
+\verb+log.txt+ contains a log of all actions applied to the database.  Specifically, a log entry is appended every time a database is opened for import and then closed.
+
+\subsection{Timestamp}
+\verb+timestamp.json+ is not formally part of the \hdb database.  It is created by the \hdb tool by some of the \hdb commands and contains timing data useful for performance analysis.
 
 
 \section{Troubleshooting}
