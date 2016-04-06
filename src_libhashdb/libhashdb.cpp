@@ -66,7 +66,7 @@
 #include "rapidjson.h"
 #include "writer.h"
 #include "document.h"
-#include "crc32.h"      // for scan_expanded
+#include "crc32.h"      // for find_expanded_hash
 
 // ************************************************************
 // version of the hashdb library
@@ -574,7 +574,7 @@ namespace hashdb {
           lmdb_source_id_manager(0),
           lmdb_source_name_manager(0),
 
-          // for scan_expanded
+          // for find_expanded_hash
           hashes(new std::set<std::string>),
           sources(new std::set<std::string>) {
 
@@ -601,7 +601,7 @@ namespace hashdb {
     delete lmdb_source_id_manager;
     delete lmdb_source_name_manager;
 
-    // for scan_expanded
+    // for find_expanded_hash
     delete hashes;
     delete sources;
   }

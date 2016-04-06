@@ -515,9 +515,9 @@ namespace commands {
   // scan
   // ************************************************************
   // scan
-  static void scan(const std::string& hashdb_dir,
-                   const std::string& hashes_file,
-                   const std::string& cmd) {
+  static void scan_list(const std::string& hashdb_dir,
+                        const std::string& hashes_file,
+                        const std::string& cmd) {
 
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
@@ -565,6 +565,18 @@ namespace commands {
     } else {
       std::cout << "Hash not found for '" << hex_block_hash << "'\n";
     }
+  }
+
+  // scan_image
+  static void scan_image(const std::string& hashdb_dir,
+                         const std::string& media_image_filename,
+                         const std::string& cmd) {
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
+    // open the media image file for reading
+    std::cout << "Not available in Alpha.\n";
   }
 
   // ************************************************************

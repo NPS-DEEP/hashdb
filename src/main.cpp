@@ -414,13 +414,17 @@ void run_command() {
     commands::copy_unique(args[0], args[1], cmd);
 
   // scan
-  } else if (command == "scan") {
+  } else if (command == "scan_list") {
     check_params("", 2);
-    commands::scan(args[0], args[1], cmd);
+    commands::scan_list(args[0], args[1], cmd);
 
   } else if (command == "scan_hash") {
     check_params("", 2);
     commands::scan_hash(args[0], args[1], cmd);
+
+  } else if (command == "scan_image") {
+    check_params("", 2);
+    commands::scan_image(args[0], args[1], cmd);
 
   // statistics
   } else if (command == "sizes") {

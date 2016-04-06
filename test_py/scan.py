@@ -34,7 +34,7 @@ def test_scan():
 "# marker5"]
     H.make_tempfile("temp_1.txt", hash_file)
 
-    returned_answer = H.hashdb(["scan", "temp_1.hdb", "temp_1.txt"])
+    returned_answer = H.hashdb(["scan_list", "temp_1.hdb", "temp_1.txt"])
     expected_answer = [
 '# command: ',
 '# hashdb-Version: ',

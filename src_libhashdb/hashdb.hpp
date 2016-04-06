@@ -301,7 +301,7 @@ namespace hashdb {
     lmdb_source_id_manager_t* lmdb_source_id_manager;
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
-    // support scan_expanded
+    // support find_expanded_hash
     std::set<std::string>* hashes;
     std::set<std::string>* sources;
 
