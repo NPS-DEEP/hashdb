@@ -1,4 +1,4 @@
-hashdb Version 3.0.0-dev-0
+hashdb Version 3.0.0-alpha-1
 Usage: hashdb [-h|--help] [-v|-V|--version] [-q|--quiet]
               [options] <command> [<args>]
 
@@ -169,6 +169,15 @@ Database manipulation:
                           hashes have exactly one reference
 
 Scan:
+  scan_list <hashdb> <hash list file>
+    Scan hash database <hashdb> for hashes in <hash list file> and print out
+    matches.
+
+    Parameters:
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <hashes file>     the file containing hash values to scan for
+
   scan_hash <hashdb> <hex block hash>
     Scan hash database <hashdb> for the specified <hash value> and print
     out matches.
@@ -177,6 +186,15 @@ Scan:
     <hashdb>          the file path to the hash database to use as the
                       lookup source
     <hex block hash>  the hash value to scan for
+
+  scan_image <hashdb> <media image>
+    Scan hash database <hashdb> for hashes in <media image> and print out
+    matches.
+
+    Parameters:
+    <hashdb>          the file path to the hash database to use as the
+                      lookup source
+    <media image>     the media image file to scan for matching block hashes
 
 Statistics:
   sizes <hashdb>
@@ -238,11 +256,3 @@ Performance analysis:
     <hashdb>       the hash database to scan
     <count>        the number of randomly generated hashes to scan for
 
-bulk_extractor hashdb scanner:
-  bulk_extractor -e hashdb -S hashdb_mode=import -o outdir1 my_image1
-    Imports hashes from my_image1 to outdir1/hashdb.hdb
-
-  bulk_extractor -e hashdb -S hashdb_mode=scan
-                 -S hashdb_scan_path_or_socket=outdir1/hashdb.hdb
-                 -o outdir2 my_image2
-    Scans hashes from my_image2 against hashes in outdir1/hashdb.hdb

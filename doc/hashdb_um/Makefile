@@ -1,4 +1,4 @@
-DEPENDENCIES = ../../src_libhashdb/hashdb.hpp hashdb_be_usage.txt hashdb_usage.txt \
+DEPENDENCIES = ../../src_libhashdb/hashdb.hpp hashdb_usage.txt \
      hashdb_um.bbl \
      hashdb_um.tex title.tex hashdbWorkedExamplesStandalone.tex \
      hashdbWorkedExamples.tex Makefile references.bib \
