@@ -15,14 +15,12 @@ not subject to copyright.
 However, because hashdb includes source modules, the compiled hashdb
 executable may be covered under a different copyright.
 
-Released into the public domain on February 25, 2013 by Bruce Allen.
-
-...
-
 rapidjson is Copyright (C) 2015 THL A29 Limited, a Tencent company,
 and Milo Yip.  All rights reserved.
 
 liblmdb is Copyright 2011-2016 Howard Chu, Symas Corp.  All rights reserved.
+
+libewf is Copyright 2007 Free Software Foundation, Inc.
 
 crc32.h is COPYRIGHT (C) 1986 Gary S. Brown.
 

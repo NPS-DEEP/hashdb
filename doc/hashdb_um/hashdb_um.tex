@@ -41,97 +41,6 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \mbox{}
 \newpage
 
-\section*{One Page Quickstart for Windows Users}
- This page provides a very brief introduction to downloading, installing and running \hdb on Windows systems. 
-\begin{enumerate}
-\item Download the windows installer for the latest version of \hdb. It can be obtained from \url{http://digitalcorpora.org/downloads/hashdb}. The file is named \texttt{hashdb-x.y.z-windowsinstaller.exe} where x.y.z is the latest version. 
-
-\item Run the installer file. This will automatically install \hdb on your machine.
-
-\item Navigate to the directory where you would like to create a hash database. Then, to run \hdb from the command line, type the following instructions: 
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create sample.hdb}
-\end{Verbatim} 
-
-In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings.
-
-\item Next, import data into the database. In this example, import
-block hashes from files under directory \texttt{blacklist\_files}.
-type the following instructions from the directory where you created the database:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import sample.hdb blacklist_files}
-\end{Verbatim} 
-This command, if executed successfully, will print statistics about hash values inserted. For example: 
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
-# hashdb changes:
-#     hash_data_data_inserted: 128
-#     hash_data_source_inserted: 128
-#     hash_prefix_inserted: 128
-#     hash_suffix_inserted: 128
-#     source_data_inserted: 1
-#     source_data_changed: 1
-#     source_id_inserted: 1
-#     source_id_already_present: 129
-#     source_name_inserted: 1
-
-\end{Verbatim}
-\endgroup
-\item Additionally, the file \texttt{log.txt} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will include the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices}} for more information on the change statistics tracked in the log file].
- 
-
-\end{enumerate}
-
-\newpage
-\section*{One Page Quickstart for Linux and Mac Users}
-This page provides a very brief introduction to downloading, installing and running \hdb (creating a database and populating it) on Linux and MacOS systems. 
-\begin{enumerate}
-\item Download the latest version of \hdb. It can be obtained from \url{http://digitalcorpora.org/downloads/hashdb}. The file is called \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. 
-
-\item Un-tar and un-zip the file.  In the newly created \textit{hashdb-x.y.z} directory, run the following commands:
-
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{./configure}
-\verbbf{make}
-\verbbf{sudo make install}
-\end{Verbatim}
-Note, users will likely need to first download and install dependent library files. Instructions are outlined in the referenced section.  [Refer to \textbf{\Autoref{Installation}}].
-
-\item Navigate to the directory where you would like to create a hash database. Then, to run \hdb from the command line, type the following instructions: 
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create sample.hdb}
-\end{Verbatim} 
-
-In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings. 
-
-\item Next, import data into the database. In this example, import
-block hashes from files under directory \texttt{blacklist\_files}.
-type the following instructions from the directory where you created the database:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import sample.hdb blacklist_files}
-\end{Verbatim} 
-This command, if executed successfully, will print statistics about hash values inserted. For example: 
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
-# hashdb changes:
-#     hash_data_data_inserted: 128
-#     hash_data_source_inserted: 128
-#     hash_prefix_inserted: 128
-#     hash_suffix_inserted: 128
-#     source_data_inserted: 1
-#     source_data_changed: 1
-#     source_id_inserted: 1
-#     source_id_already_present: 129
-#     source_name_inserted: 1
-\end{Verbatim}
-\endgroup
-\item Additionally, the file \texttt{log.txt} contained in the directory \textit{sample.hdb} will be updated with change statistics. It will include the number of hash values that have been inserted [see \textbf{\Autoref{ScanServices}} for more information on the change statistics tracked in the log file].
- 
-\end{enumerate}
-\newpage
-
 
 \tableofcontents
 \newpage
@@ -162,8 +71,25 @@ Using \hdb, a forensic investigator can take a known set of blacklisted media an
 \hdb stores cryptographic hashes (along with their source information) that have been calculated from hash blocks. It also provides the capability to scan other media for hash matches.
 This manual describes uses cases for the \hdb tools, including usage with \aut, \sscope, \bulk, and the \hdb Python and C++ libraries, and demonstrates how users can take full advantage of all of its capabilities.
 
-\subsection{Purpose of this Manual}
-This Users Manual is intended to be useful to new, intermediate and experienced users of \hdb. It provides an in-depth review of the functionality included in \hdb and shows how to access and utilize features through command line operation of the tool. This manual includes working examples with links to the input data used, giving users the opportunity to work through the examples and utilize all aspects of the system. 
+\subsection{Intended Audience}
+This Users Manual is intended to be useful to new, intermediate and experienced users of \hdb. It provides an in-depth review of the functionality included in \hdb and shows how to access and utilize features through command line operation of the tool. This manual includes working examples with links to the input data used, giving users the opportunity to work through the examples and utilize all aspects of the system.  This manual also introduces Forensic tools that use \hdb.\\
+
+For developers, this manual provides in-depth coverage of the data syntax used by \hdb and for interfacing with \hdb using the \hdb \textbf{c++} and \textbf{Python} interfaces.
+
+\subsection{\hdb Resources}
+Users are encouraged to visit the \hdb Wiki page at \url{https://github.com/NPS-DEEP/hashdb/wiki} for quick links to downloads, documentation, and examples.\\
+
+All \hdb users should join the \bulk users Google group for more information and help with any issues encountered. To join, send an email to \textbf{bulk\_extractor-users+subscribe@} \textbf{googlegroups.com}.  \\
+
+Several articles are available related to block hashing, and its practical and research applications. Some of those articles are specifically cited throughout this manual. Here are some additional references we recommend:
+\begin{itemize}
+\item Michael McCarrin, Bruce Allen. Rapid Recognition of Blacklisted Files and Fragments. Naval Postgraduate School. \url{http://www.osdfcon.org/presentations/2015/McCarrin-Allen_osdfcon.pdf}.
+\item Jim Jones, Tahir Khan, Kathryn Laskey, Alex Nelson, Mary Laamanen, Doug White.  Inferring Past Activity from Partial Digital Artifacts. George Mason University, National Institute of Standards and Technology. \url{http://www.osdfcon.org/presentations/2015/Jim-Jones_EtAl-Release.pdf}.
+\item Simson Garfinkel, Michael McCarrin. Hash-based Carving: Searching media for complete files and file fragments with sector hashing and hashdb. DFRWS 2015 USA. \url{http://www.sciencedirect.com/science/article/pii/S1742287615000468}
+\item Joel Young, Kristina Foster, Simson Garfinkel, Kevin Fairbanks. Distinct Sector Hashes for Target File Detection. \url{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=6311397}.
+\item Garfinkel, Simson, Alex Nelson, Douglas White and Vassil Rousseve. Using purpose-built functions and block hashes to enable small block and sub-file forensics. Digital Investigation. Volume 7. 2010. Page S13--S23. \url{http://www.dfrws.org/2010/proceedings/2010-302.pdf}.
+\item Foster, Kristina. Using Distinct Sectors in Media Sampling and Full Media Analysis to Detect Presence of Documents From a Corpus. Naval Postgraduate School Masters Thesis, September 2012. \url{http://calhoun.nps.edu/public/handle/10945/17365}.
+\end{itemize}
 
 \subsection{Conventions Used in this Manual}
 This manual uses standard formatting conventions to highlight file names, directory names and example commands. The conventions for those specific types are described in this section. \\
@@ -221,6 +147,133 @@ The first character on the line is the terminal prompt, and should not be typed.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
 \end{itemize}
 
+\subsection{Licensing}
+\hdb code is provided with the following notice:\\
+\fbox{\begin{minipage}{37em}
+The software provided here is released by the Naval Postgraduate School, an agency of the U.S. Department of Navy. The software bears no warranty, either expressed or implied. NPS does not assume legal liability nor responsibility for a User's use of the software or the results of such use.\\
+
+Please note that within the United States, copyright protection, under Section 105 of the United States Code, Title 17, is not available for any work of the United States Government and/or for any works created by United States Government employees.  User acknowledges that this software contains work which was created by NPS government employees and is therefore in the public domain and not subject to copyright.\\
+
+However, because hashdb includes source modules, the compiled hashdb
+executable may be covered under a different copyright.\\
+
+\texttt{rapidjson} is Copyright (C) 2015 THL A29 Limited, a Tencent company, and Milo Yip.  All rights reserved.\\
+
+\texttt{liblmdb} is Copyright 2011-2016 Howard Chu, Symas Corp.  All rights reserved.\\
+
+\texttt{libewf} is Copyright 2007 Free Software Foundation, Inc.\\
+
+\texttt{crc32.h} is COPYRIGHT (C) 1986 Gary S. Brown.\\
+\end{minipage}}
+
+\subsection{Obtaining \hdb}
+The \hdb tool and API interface library are readily available for Windows systems, Linux flavors, and MacOS.  A Windows installer is available for Windows users.  A source code distribution is available for Linux and Mac users.  Developers may download \hdb directly from source available on GitHub.\\
+
+Steps for installing \hdb on Windows and one flavor of Linux are described here. For more installation options, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
+
+For information on installing \sscope and \bulk tools which use \hdb, Please see \textbf{\Autoref{OtherTools}}.\\
+
+\subsubsection{Installing on Windows}
+\label{InstallingOnWindows}
+Windows users should download the Windows Installer for \hdb. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.1.1 as of publication of this manual).\\
+
+You should close all Command windows before running the installation executable. Windows will not be able to find the \hdb tools in a Command window if any are open during the installation process. If you do not do this before installation, simply close all Command windows after installation. When you re-open, Windows should be able to find \hdb.\\
+
+ Next run the \texttt{hashdb-x.y.z-windowsinstaller.exe} file. This will automatically install \hdb on your machine. Some Windows safeguards may try to prevent you from running it. Figure \ref{fig:windowsWarning} shows the message Windows 8 displays when trying to run the installer. To run anyway, click on ``More info'' and then select ``Run Anyway.'' \\
+\begin{figure}
+	\center
+	\includegraphics[scale=.5]{windowsWarning.png}
+	\caption{Windows 8 warning when trying to run the installer. Select ``More Info'' and then ``Run Anyway.''}
+	\label{fig:windowsWarning}
+\end{figure}
+
+When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select the 64-bit configuration to install \hdb and select \verb+Add to path+ to add hashdb to \verb+PATH+. \hdb is now installed on your system can be run from the command line.\\
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.8]{WindowsInstaller.png}
+	\caption{Dialog appears when the user executes the Windows Installer. Select the default configuration.}
+	\label{fig:windowsInstaller}
+\end{figure}
+
+\subsubsection{Installing on Linux or Mac}
+This section describes steps for installing \hdb on a Fedora 23 system and is intended to illustrate the installation process.  For steps on installing \hdb to other flavors of Linux or for MacOS, and for installing specific configurations, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
+
+Before compiling \hdb for your platform, you may need to install other packages on your system which \hdb requires to compile cleanly and with a full set of capabilities.\\
+
+\textbf{Dependencies}\\
+The following commands should add the requisite packages:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{sudo dnf update}
+\verbbf{sudo dnf groupinstall development-tools}
+\verbbf{sudo dnf install gcc-c++}
+\verbbf{sudo dnf install openssl-devel}
+\verbbf{sudo dnf install libewf-devel}
+\verbbf{sudo dnf install swig}
+\verbbf{sudo dnf install python-devel}
+\end{Verbatim}
+
+\textbf{Download and Install \hdb}\\
+Next, download the latest version of \hdb. The software can be downloaded from \url{http://digitalcorpora.org/downloads/hashdb/}. The file to download is \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version.\\
+
+After downloading the file, un-tar it by either right-clicking on the file and choosing ``extract to...' or typing the following at the command line:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{tar -xvf hashdb-x.y.z.tar.gz}
+\end{Verbatim}
+
+Then, in the newly created \textit{hashdb-x.y.z} directory, run the following commands to install \hdb in \textit{/usr/local/bin} (by default):
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{./configure}
+\verbbf{make}
+\verbbf{sudo make install}
+\end{Verbatim}
+\hdb is now installed on your system and can be run from the command line. \\
+
+Note: sudo is not required. If you do not wish to use sudo,  build and install \hdb and \bulk in your own space at ``\$HOME/local'' using the following commands:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-}
+\textbf{                                 I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/}
+\verbbf{make}
+\verbbf{make install}
+\end{Verbatim}
+
+\subsubsection{Quickstart Guide}
+The following steps provide a very brief introduction to running your new installation of \hdb. 
+\begin{enumerate}
+\item Navigate to the directory where you would like to create a hash database. Then, to run \hdb from the command line, type the following instructions: 
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb create sample.hdb}
+\end{Verbatim} 
+
+In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings.
+
+\item Next, import data into the database. In this example, import
+block hashes from files under directory \texttt{blacklist\_files}.
+type the following instructions from the directory where you created the database:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb import sample.hdb blacklist_files}
+\end{Verbatim} 
+This command, if executed successfully, will print statistics about hash values inserted. For example: 
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+# hashdb changes:
+#     hash_data_data_inserted: 128
+#     hash_data_source_inserted: 128
+#     hash_prefix_inserted: 128
+#     hash_suffix_inserted: 128
+#     source_data_inserted: 1
+#     source_data_changed: 1
+#     source_id_inserted: 1
+#     source_id_already_present: 129
+#     source_name_inserted: 1
+
+\end{Verbatim}
+\endgroup
+
+\item Next, scan for...zzzzzzz
+\end{enumerate}
 
 \section{How \hdb Works}
 The \hdb tool provides capabilities to create, edit, access and search databases of cryptographic hashes created from hash blocks. The cryptographic hashes are imported into a database from a directory, another database, \textbf{bulk\_extractor} or JSON data, or trough the \hdb API.
@@ -356,7 +409,7 @@ The size of data blocks the database expects to store. Block hashes are calculat
 \item \textbf{Sector size}\\
 The resolution of sectors that may reside on media. The operating system and/or storage device will align data on sector boundaries. Block hashes are calculated on aligned sector boundaries. The default is 512. Although 1 is valid, try to use the full sector size since \hdb makes a more compact database with larger values.\\
 
-\item \textbf{Max ID offset pairs}\\
+\item \textbf{Max source, offset pairs}\\
 The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
 
 \item \textbf{Hash prefix bits}\\
@@ -365,82 +418,6 @@ The number of bits of the hash prefix to use as the key in the store. The idea i
 \item \textbf{Hash suffix bytes}\\
 The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
 \end{itemize}
-
-\section{Installation Guide}
-\label{Installation}
-\hdb is a command line tool that can be run on Linux, MacOS or Windows systems. Here we describe the installation procedures for those systems.
-Steps include how to install the required dependencies as well as download \hdb and compile the release or run the executable. 
-For information on installing \sscope and \bulk tools which use \hdb,
-Please see \textbf{\Autoref{OtherTools}}.
-
-\subsection{Installing on Linux or Mac}
-
-Before compiling \hdb for your platform, you may need to install other packages on your system which \hdb requires to compile cleanly and with a full set of capabilities.\\
-
-\textbf{Dependencies for Linux}\\
-The following commands should add the appropriate packages:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{sudo yum update}
-\verbbf{sudo yum groupinstall development-tools}
-\verbbf{sudo yum install gcc-c++}
-\verbbf{sudo yum install libxml2-devel openssl-devel tre-devel boost-devel}
-\end{Verbatim}
-
-\textbf{Dependencies for Mac Systems}\\
-Mac users must first install Apple's Xcode development system. Other components should be downloaded using the MacPorts system. If you do not have MacPorts, go to the App store and download and install it. It is free. Once it is installed, try:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{sudo port install autoconf automake libxml2} 
-\end{Verbatim}
-
-\textbf{Download and Install \hdb}\\
-Next, download the latest version of \hdb. The software can be downloaded from \url{http://digitalcorpora.org/downloads/hashdb/}. The file to download is \texttt{hashdb-x.y.z.tar.gz} where x.y.z is the latest version. As of publication of this manual, the latest version of \hdb is 1.1.1.\\
-
-
-After downloading the file, un-tar it by either right-clicking on the file and choosing ``extract to...' or typing the following at the command line:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{tar -xvf hashdb-x.y.z.tar.gz}
-\end{Verbatim}
-
-Then, in the newly created \textit{hashdb-x.y.z} directory, run the following commands to install \hdb in \textit{/usr/local/bin} (by default):
-
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{./configure}
-\verbbf{make}
-\verbbf{sudo make install}
-\end{Verbatim}
-\hdb is now installed on your system and can be run from the command line. \\
-
-Note: sudo is not required. If you do not wish to use sudo,  build and install \hdb and \bulk in your own space at ``\$HOME/local'' using the following commands:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-}
-\textbf{                                 I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/}
-\verbbf{make}
-\verbbf{make install}
-\end{Verbatim}
-
-\subsection{Installing on Windows}
-\label{InstallingOnWindows}
-Windows users should download the Windows Installer for \hdb. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.1.1 as of publication of this manual).\\
-
-You should close all Command windows before running the installation executable. Windows will not be able to find the \hdb tools in a Command window if any are open during the installation process. If you do not do this before installation, simply close all Command windows after installation. When you re-open, Windows should be able to find \hdb.\\
-
-
- Next run the \texttt{hashdb-x.y.z-windowsinstaller.exe} file. This will automatically install \hdb on your machine. Some Windows safeguards may try to prevent you from running it. Figure \ref{fig:windowsWarning} shows the message Windows 8 displays when trying to run the installer. To run anyway, click on ``More info'' and then select ``Run Anyway.'' \\
-\begin{figure}
-	\center
-	\includegraphics[scale=.5]{windowsWarning.png}
-	\caption{Windows 8 warning when trying to run the installer. Select ``More Info'' and then ``Run Anyway.''}
-	\label{fig:windowsWarning}
-\end{figure}
-
-When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select the 64-bit configuration to install \hdb and select \verb+Add to path+ to add hashdb to \verb+PATH+. \hdb is now installed on your system can be run from the command line.\\
-
-\begin{figure}
-	\center
-	\includegraphics[scale=.8]{WindowsInstaller.png}
-	\caption{Dialog appears when the user executes the Windows Installer. Select the default configuration.}
-	\label{fig:windowsInstaller}
-\end{figure}
 
 \section {Running the \hdb Tool}
 \label{Running}
@@ -467,7 +444,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-b <block size>]+ \verb+[-b <sector size>]+ \verb+[-m <max ID offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+[-b <sector size>]+ \verb+[-m <max source offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
 \hline
 \end{tabular}
 \end{table}
@@ -841,7 +818,7 @@ The \sscope Windows installer installs the requisite \verb+.nbm+ Autopsy plug-in
 \item Open \aut. From the Autopsy menu, select \verb+Tools | Plugins+.
 \item Open the \verb+Downloaded+ tab and click the \verb+Add Plugins...+ button.
 \item From the \verb+Add Plugins+ window, navigate to the \verb+.nbm+ module file that was installed onto the desktop, and open it.
-\item Click \verb+Install+ and follow the wizard. Please note that it may be difficult to replace an old module of NPS-Autopsy-hashdb already installed in Autopsy. In the unlikely case that error \verb+Some plugins require plugin org.jdesktop.beansbinding to be installed+ appears, it may be necessary to uninstall and reinstall Autopsy.
+\item Click \verb+Install+ and follow the wizard. Please note that it may be difficult to replace an old module of NPS-Autopsy-hashdb already installed in Autopsy. In the unlikely case that error \verb+Some plugins require plugin org.jdesktop.beansbinding+ \verb+to be installed+ appears, it may be necessary to uninstall and reinstall Autopsy.
 \end{enumerate}
 
 \subsubsection{Configuring the \sscope Plug-in}
@@ -994,9 +971,9 @@ An example tab-delimited file is shown in Listing \ref{importTabFile}.\\
 \begin{lstlisting}[caption={Example tab-delimited import file}, label=importTabFile]
 # tab-delimited import file
 # <file hexdigest> <tab> <block hash> <tab> <index>
-fac7051447c781b69125994c5d125637	3b6b477d391f73f67c1c01e2141dbb17	1
-fac7051447c781b69125994c5d125637	89a170b6b9a948d21d1d6ee1e7cdc467	2
-fac7051447c781b69125994c5d125637	f58a09656658c6b41e244b4a6091592c	3
+fac7051447c781b69125994c5d125637    3b6b477d391f73f67c1c01e2141dbb17    1
+fac7051447c781b69125994c5d125637    89a170b6b9a948d21d1d6ee1e7cdc467    2
+fac7051447c781b69125994c5d125637    f58a09656658c6b41e244b4a6091592c    3
 \end{lstlisting}
 
 \subsection{Scan List File}
@@ -1356,9 +1333,9 @@ Return approximate source, offset pair count for the hash, and can be wrong.
 Return the source, offset pair count for the hash.
 \item \verb+bool find_source_data(file_binary_hash, &filesize, &file_type,+\\
 \verb+&nonprobative_count)+
-False on no source ID.
+False on no source file binary hash.
 \item \verb+bool find_source_names(file_binary_hash, &source_names_t)+\\
-False on no source ID.
+False on no source file binary hash.
 \item \verb+std::string find_source_json(file_binary_hash)+\\
 Return \verb+json_source_string+ else "" on no match.
 \item \verb+std::string first_hash()+
@@ -1492,22 +1469,6 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
 \subsection{Timestamp}
 \verb+timestamp.json+ is not formally part of the \hdb database.  It is created by the \hdb tool by some of the \hdb commands and contains timing data useful for performance analysis.
 
-
-\section{Troubleshooting}
-\label{DebuggingHashdb}
-All \hdb users should join the \bulk users Google group for more information and help with any issues encountered. To join, send an email to \textbf{bulk\_extractor-users+subscribe@} \textbf{googlegroups.com}.  \\
-
-\section{Related Reading}
-There are other articles related to block hashing, and its practical and research applications. Some of those articles are specifically cited throughout this manual. Other useful references include but are not limited to:
-\begin{itemize}
-\item Michael McCarrin, Bruce Allen. Rapid Recognition of Blacklisted Files and Fragments. Naval Postgraduate School. \url{http://www.osdfcon.org/presentations/2015/McCarrin-Allen_osdfcon.pdf}.
-\item Jim Jones, Tahir Khan, Kathryn Laskey, Alex Nelson, Mary Laamanen, Doug White.  Inferring Past Activity from Partial Digital Artifacts. George Mason University, National Institute of Standards and Technology. \url{http://www.osdfcon.org/presentations/2015/Jim-Jones_EtAl-Release.pdf}.
-\item Simson Garfinkel, Michael McCarrin. Hash-based Carving: Searching media for complete files and file fragments with sector hashing and hashdb. DFRWS 2015 USA. \url{http://www.sciencedirect.com/science/article/pii/S1742287615000468}
-\item Joel Young, Kristina Foster, Simson Garfinkel, Kevin Fairbanks. Distinct Sector Hashes for Target File Detection. \url{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?reload=true&arnumber=6311397}.
-\item Garfinkel, Simson, Alex Nelson, Douglas White and Vassil Rousseve. Using purpose-built functions and block hashes to enable small block and sub-file forensics. Digital Investigation. Volume 7. 2010. Page S13--S23. \url{http://www.dfrws.org/2010/proceedings/2010-302.pdf}.
-\item Foster, Kristina. Using Distinct Sectors in Media Sampling and Full Media Analysis to Detect Presence of Documents From a Corpus. Naval Postgraduate School Masters Thesis, September 2012. \url{http://calhoun.nps.edu/public/handle/10945/17365}.
-\end{itemize}
-
 \bibliographystyle{acm} 
 \bibliography{references}
 
@@ -1520,7 +1481,7 @@ There are other articles related to block hashing, and its practical and researc
 \input ../hashdb_quick_reference/hashdb_quick_reference_text.tex
 \newpage
 
-\section{Output of \hdb Help Command}
+\section{Output of the \hdb Help Command}
 \label{HelpOutput}
 \begingroup
 \footnotesize

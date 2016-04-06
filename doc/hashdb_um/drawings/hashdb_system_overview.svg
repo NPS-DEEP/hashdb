@@ -13,7 +13,7 @@
    height="646.25"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.5 r10040"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="hashdb_system_overview.svg">
   <defs
      id="defs4">
@@ -656,10 +656,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="468.49813"
+     inkscape:cx="471.32656"
      inkscape:cy="261.84295"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4074-0-1"
      showgrid="false"
      inkscape:window-width="1198"
      inkscape:window-height="1128"
@@ -853,7 +853,7 @@
          d="m -22.926515,1252.0232 c 0,7.9375 -28.6,14.375 -63.875,14.375 -35.277505,0 -63.875005,-6.4375 -63.875005,-14.375 0,-7.9375 28.5975,-14.375 63.875005,-14.375 35.275,0 63.875,6.4375 63.875,14.375 z m 0,0 0,86.25 c 0,7.9388 -28.6,14.375 -63.875,14.375 -35.277505,0 -63.875005,-6.4362 -63.875005,-14.375 l 0,-86.25"
          inkscape:connector-curvature="0" />
       <g
-         transform="matrix(1.25,0,0,-1.25,-190.30152,1451.7732)"
+         transform="matrix(1.25,0,0,-1.25,-190.30152,1463.7732)"
          id="g4378">
         <g
            clip-path="url(#clipPath4382)"
@@ -866,28 +866,13 @@
                sodipodi:role="line"
                y="0"
                x="0 10.998 15.174 22.212 30.402 34.560001 39.150002 53.532001 62.153999 70.344002 79.307999"
-               style="font-size:18px;font-variant:normal;font-weight:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri">Disk Image</tspan>
+               style="font-variant:normal;font-weight:normal;font-size:18px;font-family:Calibri;-inkscape-font-specification:Calibri;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none">Disk Image</tspan>
           </text>
         </g>
       </g>
       <g
          transform="matrix(1.25,0,0,-1.25,-190.30152,1451.7732)"
-         id="g4390">
-        <g
-           clip-path="url(#clipPath4394)"
-           id="g4392">
-          <text
-             id="text4398"
-             transform="matrix(1,0,0,-1,66.375,102.75)">
-            <tspan
-               id="tspan4400"
-               sodipodi:role="line"
-               y="0"
-               x="0 8.201375 12.383175 16.564976 25.541426"
-               style="font-size:18.02499962px;font-variant:normal;font-weight:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri">Files</tspan>
-          </text>
-        </g>
-      </g>
+         id="g4390" />
     </g>
     <g
        id="g3312"
@@ -1514,7 +1499,7 @@
          id="path4286-3-1" />
       <g
          id="g4288-4-0"
-         transform="matrix(1.25,0,0,-1.25,-472.78063,891.79415)">
+         transform="matrix(1.25,0,0,-1.25,-468.78063,891.79415)">
         <g
            id="g4290-8-4"
            clip-path="url(#clipPath4292-6-8-6)">
@@ -1523,7 +1508,7 @@
              id="text4296-2-9">
             <tspan
                y="0"
-               style="font-size:18px;font-variant:normal;font-weight:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
+               style="font-variant:normal;font-weight:normal;font-size:18px;font-family:Calibri;-inkscape-font-specification:Calibri;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
                x="0"
                sodipodi:role="line"
                id="tspan4298-0-4">SectorScope</tspan>
@@ -1588,7 +1573,7 @@
            sodipodi:role="line"
            id="tspan3363"
            x="346.97617"
-           y="103.19199"> </tspan></text>
+           y="103.19199" /></text>
     </g>
   </g>
 </svg>
