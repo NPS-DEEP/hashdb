@@ -89,7 +89,7 @@ has_swig="no"
 if test x"$mingw" = x"no" -a x"$use_SWIG_Python" = x"yes" ; then
   # not mingw and want SWIG so try to load SWIG
   m4_include([m4/ax_pkg_swig.m4])
-  AX_PKG_SWIG(2.0.11, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
+  AX_PKG_SWIG(2.0.10, [has_swig=yes], [ AC_MSG_NOTICE([SWIG is required to build Python bindings]) ])
 fi
 if test x"$has_swig" = x"yes" ; then
   m4_include([m4/ax_python_devel.m4])
