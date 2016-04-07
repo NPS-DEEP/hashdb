@@ -1,5 +1,11 @@
 \begin{thebibliography}{1}
 
+\bibitem{hashBasedCarving}
+{\sc Garfinkel, S., and McCarrin, M.}
+\newblock Hash-based Carving: Searching media for complete files and file fragments with sector hashing and hashdb, DFRWS 2015 USA.
+\newblock
+  \url{http://www.sciencedirect.com/science/article/pii/S1742287615000468}
+
 \bibitem{beusersguide}
 {\sc Bradley, J., and Garfinkel, S.}
 \newblock bulk\_extractor users guide, September 2013.

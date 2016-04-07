@@ -335,6 +335,16 @@ when the sources are actually the same file.
 together and may be looked up by their file hash value.
 \end{itemize}
 
+\subsection{Managing False Positives}
+A significant problem when scanning for probative blocks is dealing with false positives \cite{hashBasedCarving}. False positives arise from data that is easily generated or commonly duplicated such as sparse data or lookup tables. \hdb records and uses information about blocks and sources in order to identify blocks as nonprobative. Then, post-processing tools such as \sscope can readily evaluate matched blocks with these false positives removed.\\
+
+This section describes the data that \hdb stores with hashes and sources. How this data is used to classify blocks as nonprobative is a complex issue. \hdb stores this data. It is up to post-processing tools such as \sscope to evaluate it.
+
+\begin{itemize}
+\item \textbf{Entropy}\\
+One measure of how probative a block might be is its entropy. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values.\\
+\end{itemize}
+
 \subsection{Building a \hdb Database}
 There are several ways to populate a database:
 
@@ -539,7 +549,7 @@ zzz replace with correct data
 \end{lstlisting}
 Users may prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb size mock_video.hdb}
+\verbbf{hashdb sizes mock_video.hdb}
 \end{Verbatim}
 
 \subsection{Database Manipulation}
@@ -742,7 +752,7 @@ Table \ref{tab:statistics} describes available statistics.\\
 To find sizes of various data stores in hash database \texttt{zzzz.hdb},
 type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb size}
+\verbbf{hashdb sizes}
 \end{Verbatim}
 The above command prints sizes of data stores in JSON format.
 
@@ -1056,7 +1066,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_hash+ & A block hash hexdigest\\
 \hline
-\verb+entropy+ & The calculated entropy, scaled between 0 and 100, using an entropy calculation TO BE DETERMINEDzzzzzzz\\
+\verb+entropy+ & The entropy value calculated for the block\\
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
@@ -1096,7 +1106,7 @@ The \hdb scan commands and the \verb+find_expanded_hash+ scan API interface emit
 \hline \hline
 \textbf{Field} & \textbf{Meaning} \\
 \hline
-\verb+entropy+ & The calculated entropy integer, scale and algorithm TBD.zzzz\\
+\verb+entropy+ & The entropy value calculated for the block\\
 \hline
 \verb+block_label+ & A label describing the type of data within the block\\
 \hline
