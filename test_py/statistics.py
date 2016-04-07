@@ -12,7 +12,7 @@ def test_size():
     expected_answer = [
 '{"hash_data_store":2, "hash_store":1, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
-    returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
+    returned_answer = H.hashdb(["size", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
     # source stores, no name_pairs
@@ -21,7 +21,7 @@ def test_size():
     expected_answer = [
 '{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
-    returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
+    returned_answer = H.hashdb(["size", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
     # source stores, name_pairs
@@ -30,7 +30,7 @@ def test_size():
     expected_answer = [
 '{"hash_data_store":0, "hash_store":0, "source_data_store":1, "source_id_store":1, "source_name_store":2}',
 '']
-    returned_answer = H.hashdb(["sizes", "temp_1.hdb"])
+    returned_answer = H.hashdb(["size", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
 
 def test_sources():

@@ -45,7 +45,7 @@ import_manager.insert_source_data("hhhhhhhh", 100, "ft1", 1)
 import_manager.insert_hash("hhhhhhhh","gggggggg", 512, 2, "block label")
 import_manager.insert_json('{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
 import_manager.insert_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]')
-str_equals(import_manager.sizes(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
+str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
 
 # scan
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
@@ -79,7 +79,7 @@ str_equals(hashdb.bin_to_hex(next_binary_source), "6868686868686868")
 next_binary_source = scan_manager.next_source(next_binary_source)
 str_equals(hashdb.bin_to_hex(next_binary_source), "")
 
-str_equals(scan_manager.sizes(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
+str_equals(scan_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
 int_equals(scan_manager.size_hashes(), 1)
 int_equals(scan_manager.size_sources(), 2)
 

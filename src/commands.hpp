@@ -582,8 +582,8 @@ namespace commands {
   // ************************************************************
   // statistics
   // ************************************************************
-  // sizes
-  static void sizes(const std::string& hashdb_dir,
+  // size
+  static void size(const std::string& hashdb_dir,
                    const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -592,7 +592,7 @@ namespace commands {
     // open DB
     hashdb::scan_manager_t manager(hashdb_dir);
 
-    std::cout << manager.sizes() << std::endl;
+    std::cout << manager.size() << std::endl;
   }
 
   // sources

@@ -217,9 +217,9 @@ namespace hashdb {
     std::string insert_json(const std::string& json_string);
 
     /**
-     * Returns sizes of LMDB databases in the data store.
+     * Returns sizes of the LMDB databases in the data store.
      */
-    std::string sizes() const;
+    std::string size() const;
   };
 
   // ************************************************************
@@ -413,7 +413,7 @@ namespace hashdb {
     /**
      * Return sizes of LMDB databases in JSON format.
      */
-    std::string sizes() const;
+    std::string size() const;
 
     /**
      * Return the number of hashes.

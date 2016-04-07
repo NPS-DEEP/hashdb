@@ -427,9 +427,9 @@ void run_command() {
     commands::scan_image(args[0], args[1], cmd);
 
   // statistics
-  } else if (command == "sizes") {
+  } else if (command == "size") {
     check_params("", 1);
-    commands::sizes(args[0], cmd);
+    commands::size(args[0], cmd);
 
   } else if (command == "sources") {
     check_params("", 1);

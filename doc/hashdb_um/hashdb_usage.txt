@@ -197,8 +197,8 @@ Scan:
     <media image>     the media image file to scan for matching block hashes
 
 Statistics:
-  sizes <hashdb>
-    Print sizes of database tables inside the given <hashdb> database.
+  size <hashdb>
+    Print the sizes of the database tables inside the given <hashdb> database.
 
     Parameters:
     <hashdb>       the hash database to print size information for

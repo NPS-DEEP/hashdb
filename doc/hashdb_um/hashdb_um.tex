@@ -248,31 +248,30 @@ The following steps provide a very brief introduction to running your new instal
 
 In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings.
 
-\item Next, import data into the database. In this example, import
-block hashes from files under directory \texttt{blacklist\_files}.
-type the following instructions from the directory where you created the database:
+\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import sample.hdb blacklist_files}
 \end{Verbatim} 
-This command, if executed successfully, will print statistics about hash values inserted. For example: 
+This command, if executed successfully, will print \verb+import completed+, along with statistics indicating changes to the database.
+
+\item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklisted Kitty block hashes. This can be done using the Python interface, \sscope, or \bulk, but lets just use the \hdb tool:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb scan_image sample.hdb jo-favorites-usb-2009-12-11.E01}
+\end{Verbatim} 
+With this image and dataset, the first block hash matched is at media image offset \verb+2543104+ for hash \verb+1d7379fd4d5cf676a9d4de1e48337e71+:
+
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-# hashdb changes:
-#     hash_data_data_inserted: 128
-#     hash_data_source_inserted: 128
-#     hash_prefix_inserted: 128
-#     hash_suffix_inserted: 128
-#     source_data_inserted: 1
-#     source_data_changed: 1
-#     source_id_inserted: 1
-#     source_id_already_present: 129
-#     source_name_inserted: 1
-
+2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0,
+"block_label":"","source_list_id":1193146442,"sources":
+[{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
+"file_type":"","nonprobative_count":10,"name_pairs":
+["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
+"source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
 \end{Verbatim}
 \endgroup
 
-\item Next, scan for...zzzzzzz
 \end{enumerate}
 
 \section{How \hdb Works}
@@ -338,11 +337,23 @@ together and may be looked up by their file hash value.
 \subsection{Managing False Positives}
 A significant problem when scanning for probative blocks is dealing with false positives \cite{hashBasedCarving}. False positives arise from data that is easily generated or commonly duplicated such as sparse data or lookup tables. \hdb records and uses information about blocks and sources in order to identify blocks as nonprobative. Then, post-processing tools such as \sscope can readily evaluate matched blocks with these false positives removed.\\
 
-This section describes the data that \hdb stores with hashes and sources. How this data is used to classify blocks as nonprobative is a complex issue. \hdb stores this data. It is up to post-processing tools such as \sscope to evaluate it.
+Here we describe the data that \hdb stores with hashes and sources. How this data is used to classify blocks as nonprobative is a complex issue. \hdb stores this data. It is up to post-processing tools such as \sscope to evaluate it.\\
 
 \begin{itemize}
 \item \textbf{Entropy}\\
-One measure of how probative a block might be is its entropy. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values.\\
+We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. Unfortunately, data in blocks can be a member of many types of alphabets. \hdb uses one algorithm.  For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative. The entropy field is new to \hdb v3.\\
+\item \textbf{Block Label}\\
+Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.\\
+\item \textbf{File Hash}\\
+Matched source files are indexed by file hash (new to \hdb v3). The \sscope tool uses this value to visualize how specific source files are distributed across a media image.\\
+\item \textbf{Repository Name and Filename}\\
+The list of repository names and filenames associated with a source file are provided, enabling a comprehensive indication of what a hash match is a member of.\\
+\item \textbf{Source File Size}\\
+The source file size indicates how big a source file is. The \sscope tool uses this value to know what percentage of a source file is matched in a scan.\\
+\item \textbf{Source File Type}\\
+This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.\\
+\item \textbf{Source File Nonprobative Count}\\
+The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner, this value is set to the number of blocks that have been given a block label.  In \hdb, zzzzzzz.\\
 \end{itemize}
 
 \subsection{Building a \hdb Database}
@@ -373,6 +384,7 @@ level of detail.
 \end{itemize}
 
 \subsection{Contents of a Hash Database}
+\label{ContentsOfDB}
 Each \hdb database is contained in a directory called \textit{$<$databasename$>$.hdb} and contains a number of files. These files are:
 
 \begingroup
@@ -397,16 +409,63 @@ These files include several data store directories and files, a settings file, a
 
 \begin{itemize}
 \item Data store files \\
-The data store files encode all the block hashes, source files, and related information that are in the database.
+Data store files encode all the block hashes, source files, and related information that are in the database. Data store filenames start with the prefix \verb+lmdb+.
+
+\item \texttt{settings.json} \\
+This file contains the settings requested by the user when the block hash database was created, see \hdb settings and Bloom filter settings options.  This file also contains the internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb. The \texttt{settings.json} file with the default settings looks like this:\\
+
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+{"settings_version":3, "sector_size":512, "block_size":512,
+"max_id_offset_pairs":100000, "hash_prefix_bits":28,
+"hash_suffix_bytes":3}
+\end{Verbatim}
+\endgroup
+
+Settings are described in \textbf{\autoref{Settings}}.
 
 
 \item \texttt{log.txt} \\
-Every time a command is run that changes the content of the database, this file is replaced with a log of the run.
-The log includes the command name, information about \hdb including the command typed and how \hdb was compiled, information about the operating system \hdb was just run on, timestamps indicating how much time the command took, and the specific \hdb changes applied, described in more detail in \textbf{\autoref{Running}}.
-\item \texttt{settings.json} \\
-This file contains the settings requested by the user when the block hash database was created, see \hdb settings and Bloom filter settings options.
-This file also contains internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb.
+Every time a command is run that changes the content of the database, information about the change is appended to this log.  Each entry includes the command name, information about \hdb including the command typed and how \hdb was compiled, information about the operating system \hdb was just run on, timestamps indicating how much time the command took, and the specific \hdb changes applied.\\
+
+Listing \ref{logfile} shows an example log file containing two entries, one for when the hash database was created, and one for when data was imported into the database.
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing two database activities, label=logfile]
+# libhashdb version: 3.0.0-alpha-1
+# command: "hashdb create KittyMaterial.hdb"
+# username: bdallen
+# start time 2016-04-07T19:20:06Z
+{"name":"begin","delta":"0.000386","total":"0.000386"}
+{"name":"end","delta":"0.000013","total":"0.000403"}
+# libhashdb version: 3.0.0-alpha-1
+# command: "hashdb import KittyMaterial.hdb KittyMaterial.json"
+# username: bdallen
+# start time 2016-04-07T19:20:23Z
+{"name":"begin","delta":"0.000387","total":"0.000387"}
+# hashdb changes:
+#     hash_data_data_inserted: 401935
+#     hash_data_data_same: 195
+#     hash_data_source_inserted: 402130
+#     hash_prefix_inserted: 401653
+#     hash_suffix_inserted: 401935
+#     hash_count_changed: 149
+#     hash_not_changed: 46
+#     source_data_inserted: 101
+#     source_id_inserted: 101
+#     source_id_already_present: 402231
+#     source_name_inserted: 101
+{"name":"end","delta":"2.608494","total":"2.608885"}
+\end{lstlisting}
+
+
+\item Timestamp\\
+\verb+timestamp.json+ is not formally part of the \hdb database.  It is created by \hdb tool performance analysis commands shown in \textbf{\autoref{PerformanceAnalysis}}. This file is replaced rather than appended to. Please see \textbf{\Autoref{InputOutputSyntax}} for information on timestamp syntax.
+
 \end{itemize}
+
+
 
 \subsection{Settings}
 \label{Settings}
@@ -528,28 +587,30 @@ The \textbf{import} command in the above example imports block hashes from files
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-zzz replace with correct data
-#    hashes inserted: 2595
+# hashdb changes:
+#     hash_data_data_inserted: 401935
+#     hash_data_data_same: 195
+#     hash_data_source_inserted: 402130
+#     hash_prefix_inserted: 401653
+#     hash_suffix_inserted: 401935
+#     hash_count_changed: 149
+#     hash_not_changed: 46
+#     source_data_inserted: 101
+#     source_id_inserted: 101
+#     source_id_already_present: 402231
+#     source_name_inserted: 101
+import completed.
 \end{Verbatim}
 \endgroup
-The database \texttt{\textbf{mock\_video.hdb}} now contains these block hashes.
+These numbers don't correspond to the actual number of hashes inserted, but they do indicate that data was added.\\
 
-The file \texttt{log.txt} shows that a set of hash blocks have just been inserted. Listing \ref{logexcerpt} shows the excerpt of the log file that tracks this statistic.
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption=Excerpt of the \texttt{log.xml} indicating hash blocks were inserted, label=logexcerpt]
-zzz replace with correct data
-...   
-   <repository_name>mock_video_repository</repository_name>
-    <timestamp name='begin import' delta='0.024016' total='0.024016'/>
-    <timestamp name='end import' delta='0.015009' total='0.039025'/>
-    <hashdb_changes>
-      <hashes_inserted>2595</hashes_inserted>      
-    </hashdb_changes>
-...
-\end{lstlisting}
+The database \texttt{\textbf{mock\_video.hdb}} now contains these block hashes.\\
+
+Also, database log file \texttt{log.txt} is updated to show that a set of hash blocks have just been inserted. The log in Figure \ref{logfile} was generated from similar \textbf{create} and \textbf{import} actions.  The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
+
 Users may prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb sizes mock_video.hdb}
+\verbbf{hashdb size mock_video.hdb}
 \end{Verbatim}
 
 \subsection{Database Manipulation}
@@ -678,43 +739,20 @@ Finally, run the \hdb scan command to scan for blocks in the media that match bl
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb scan_image mock_video.hdb mock_video_redacted_image > matches.json}
 \end{Verbatim}
-This command tells \hdb to scan \textbf{mock\_video\_redacted\_image} and try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}, putting match data in file matches.json.\\
+This command tells \hdb to scan \textbf{mock\_video\_redacted\_image} and try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}, putting match data in file \verb+matches.json+.  An example match might look like this:
 
-Listing \ref{bulkHashScan} shows the output printed to the command line as a result of the above \bulk \hdb scan command. \\
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0,
+"block_label":"","source_list_id":1193146442,"sources":
+[{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
+"file_type":"","nonprobative_count":10,"name_pairs":
+["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
+"source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
+\end{Verbatim}
+\endgroup
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption=Output from \bulk \hdb scan, label=bulkHashScan]
-zzzzzzzzzzzzzzz
-Total email features found: 0
-\end{lstlisting}
-
-All hash block matches discovered in the hash database are listed in the output.
-zzzzzzzzz\\
-
-
-The second column of the \texttt{identified\_blocks.txt} file shows the actual block hash value. The final column is the number of times this block hash value has been added to the hash database. It is a count of hash duplicates. Hash duplicates occur when the hash value is the same but any part of the source information including repository name, filename or offset, is unique. In this case, each hash values shown has only been added to the database once.\\
-
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={The \texttt{identified\_blocks.txt} file produced by \bulk's \textit{hashdb} scanner. First column is the forensic path, second is the hash value, and third is the number of times the hash value occurs in the database}, label=identifiedBlocks]
-# BANNER FILE NOT PROVIDED (-b option)
-# BULK_EXTRACTOR-Version: 1.5.5-dev ($Rev: 10844 $)
-# Feature-Recorder: identified_blocks
-# Filename: /home/bdallen/demo8/demo_video_redacted_image
-# Feature-File-Version: 1.1
-12452352	3b6b477d391f73f67c1c01e2141dbb17	{"count":1}
-12456448	89a170b6b9a948d21d1d6ee1e7cdc467	{"count":1}
-\end{lstlisting}
-
-\begin{lstlisting}[float, caption={Two lines from the \texttt{identified\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file. The third column is replaced with expaned information}, label=identifiedSourceLine]
-12452352	3b6b477d391f73f67c1c01e2141dbb17	[{"count":1},{"sou
-rce_list_id":2844319735, "sources":[{"source_id":1,"file_offset":10485760,
-"repository_name":"temp1","filename":"\/home\/bdallen\/demo8\/demo_video.m
-p4","filesize":10630146,"file_hashdigest":"a003483521c181d26e66dc09740e939
-d"}]}]
-12456448	89a170b6b9a948d21d1d6ee1e7cdc467	[{"count":1},{"sou
-rce_list_id":2844319735, "sources":[{"source_id":1,"file_offset":10489856}
-]}]
-\end{lstlisting}
 
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
 \textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
@@ -749,41 +787,21 @@ Table \ref{tab:statistics} describes available statistics.\\
 \end{tabular}
 \end{table}
 
-To find sizes of various data stores in hash database \texttt{zzzz.hdb},
+To find the size of various data stores in hash database \texttt{example.hdb},
 type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb sizes}
+\verbbf{hashdb size examle.hdb}
 \end{Verbatim}
-The above command prints sizes of data stores in JSON format.
+The above command prints the size of various data stores within the database in JSON format.\\
 
-To obtain a list of hashes associated with a particular source that has hexcode\\
-\texttt{16d75027533b0a5ab900089a244384a0}, type the following:
+To obtain a list of hashes in \texttt{example.hdb} associated with the source file identified by hexcode \texttt{16d75027533b0a5ab900089a244384a0}, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb hash_table 16d75027533b0a5ab900089a244384a0}
+\verbbf{hashdb hash_table example.hdb 16d75027533b0a5ab900089a244384a0}
 \end{Verbatim}
-
-\begin{lstlisting}[float, caption={The \texttt{identified\_hashes\_and\_sources.txt} file produced by post-processing the \texttt{identified\_blocks.txt} file using the \texttt{explain\_identified\_blocks} command}, label=explainHashesAndSources]
- hashdb-Version: 2.0.0
-# explain_identified_blocks-command-Version: 3
-# command_line: hashdb explain_identified_blocks temp1.hdb temp2/identifie
-d_blocks.txt
-# hashes
-["0c5c611edc8dfd34f85c6cbf88702e51",{"count":1},[{"source_id":1,"file_offs
-et":10530816}]]
-["16d75027533b0a5ab900089a244384a0",{"count":1},[{"source_id":1,"file_offs
-et":10547200}]]
-["cf49adf3285b983d9f8d60497290bfd2",{"count":1},[{"source_id":1,"file_offs
-et":10522624}]]
-["f58a09656658c6b41e244b4a6091592c",{"count":1},[{"source_id":1,"file_offs
-et":10493952}]]
-# sources
-{"source_id":1,"repository_name":"temp1","filename":"\/home\/bdallen\/demo
-8\/demo_video.mp4","filesize":10630146,"file_hashdigest":"a003483521c181d2
-6e66dc09740e939d"}
-\end{lstlisting}
 
 \subsection{Performance Analysis}
-Performance analysis commands for analyzing \hdb performance are available, see Table \ref{tab:analysis}.
+\label{PerformanceAnalysis}
+Performance analysis commands for analyzing \hdb performance are shown in Table \ref{tab:analysis}. Timing data is placed in file \verb+timestamp.json+, replacing any previous content.
 
 \begin{table}[!ht]
 \centering
@@ -1129,18 +1147,18 @@ The \hdb scan commands and the \verb+find_expanded_hash+ scan API interface emit
 \end{tabular}
 \end{table}
 
-\subsection{Sizes}
-The \hdb \verb+sizes+ command and \verb+size+ API returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
+\subsection{Size}
+The \hdb \verb+size+ command and \verb+size+ API interface returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
 {
-zzzz
-  "hash_data_store":0,
-  "hash_store":0,
-  "source_data_store":0,
-  "source_id_store":0,
-  "source_name_store":0
+{
+  "hash_data_store":402221,
+  "hash_store":401653,
+  "source_data_store":101,
+  "source_id_store":101,
+  "source_name_store":101
 }
 \end{lstlisting}
 
@@ -1235,7 +1253,7 @@ To import hash and source data, open an import manager, for example\\
 \verb+entropy, block_label)+
 \item \verb+error_message = manager.insert_json(json_string)+\\
 Insert hash or source. Return "" on success.
-\item \verb+ data_sizes = manager.sizes()+
+\item \verb+ data_sizes = manager.size()+
 \end{itemize}
 
 \subsubsection{Scan}
@@ -1256,7 +1274,7 @@ Return the source, offset pair count for the hash.
 \item \verb+next_binary_hash = scan_manager.next_hash(binary_hash)+
 \item \verb+first_file_binary_hash = scan_manager.first_source()+
 \item \verb+file_binary_hash = scan_manager.next_source(file_binary_hash)+
-\item \verb+db_sizes = scan_manager.sizes()+\\
+\item \verb+db_sizes = scan_manager.size()+\\
 Return sizes of internal data stores in JSON format.
 \item \verb+size_hashes = scan_manager.size_hashes()+\\
 Return the number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
@@ -1303,7 +1321,7 @@ Import from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
 \end{itemize}
 
 \subsection{C++}
-To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb library \verb+libhashdb+. \hdb interfaces use the \hdb namespace. Interfaces can assert on unexpected error. For more detail, please see \hdb header file \texttt{hashdb.hpp} at \url{https://github.com/NPS-DEEP/hashdb/blob/new_hashdb_3.0/src_libhashdb/hashdb.hpp}.
+To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb library \verb+libhashdb+. \hdb interfaces use the \hdb namespace. Interfaces can assert on unexpected error. For more detail, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}.\\
 
 \subsubsection{Import}
 Import hashes. Interfaces use lock for DB safety. The destructor appends changes to change log.
@@ -1317,7 +1335,7 @@ Change if different.
 Change if different
 \item \verb+std::string insert_json(json_string)+\\
 Insert hash or source, return \verb+error_message+ or "" for no error.
-\item \verb+std::string sizes()+\\
+\item \verb+std::string size()+\\
 Return number of entries in LMDB databases.
 \item \verb+size_t size_hashes()+\\
 Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
@@ -1352,7 +1370,7 @@ Return \verb+json_source_string+ else "" on no match.
 \item \verb+std::string next_hash(binary_hash)+
 \item \verb+std::string first_source()+
 \item \verb+std::string next_source(file_binary_hash)+
-\item \verb+string sizes()+\\
+\item \verb+string size()+\\
 Return number of entries in LMDB databases.
 \item \verb+size_t size_hashes()+\\
 Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
@@ -1406,8 +1424,8 @@ The following data types are defined.
 \item \verb+source_names_t: typedef set<source_name_t> source_names_t+
 \end{itemize}
 
-\section{\hdb Data Stores}
-A \hdb v3.0 database consists of block hash and source storage, settings, a log file, and performance information.
+\section{LMDB Data Stores}
+This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind optimization settings and optimized programming interfaces available in \hdb, and is intended for advanced users.\\
 
 \subsection{LMDB Hash Store}
 The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Information Store} to be sure the hash actually exists.\\
@@ -1467,17 +1485,6 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
   \item \verb+filename+ The path to this source.
   \end{itemize}
 \end{itemize}
-
-\subsection{Settings}
-\verb+settings.json+ stores \hdb settings, including the database version.  The current default is:\\
-\verb+{"settings_version":3, "sector_size":512, "block_size":512,+\\
-\verb+"max_id_offset_pairs":100000, "hash_prefix_bits":28, "hash_suffix_bytes":3}+
-
-\subsection{Log}
-\verb+log.txt+ contains a log of all actions applied to the database.  Specifically, a log entry is appended every time a database is opened for import and then closed.
-
-\subsection{Timestamp}
-\verb+timestamp.json+ is not formally part of the \hdb database.  It is created by the \hdb tool by some of the \hdb commands and contains timing data useful for performance analysis.
 
 \bibliographystyle{acm} 
 \bibliography{references}

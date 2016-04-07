@@ -544,7 +544,7 @@ namespace hashdb {
     }
   }
 
-  std::string import_manager_t::sizes() const {
+  std::string import_manager_t::size() const {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
@@ -956,7 +956,7 @@ namespace hashdb {
     return lmdb_source_id_manager->next_source(file_binary_hash);
   }
 
-  std::string scan_manager_t::sizes() const {
+  std::string scan_manager_t::size() const {
     std::stringstream ss;
     ss << "{\"hash_data_store\":" << lmdb_hash_data_manager->size()
        << ", \"hash_store\":" << lmdb_hash_manager->size()
