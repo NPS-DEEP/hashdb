@@ -78,7 +78,7 @@ class lmdb_hash_data_manager_t {
   private:
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
-  const uint32_t sector_size;
+  const uint32_t byte_alignment;
   const uint32_t max_id_offset_pairs;
   MDB_env* env;
 
@@ -122,10 +122,10 @@ class lmdb_hash_data_manager_t {
     // prepare Type 1 entry:
 
     // calculate file_offset_index
-    if (file_offset % sector_size != 0) {
+    if (file_offset % byte_alignment != 0) {
       assert(0);
     }
-    uint64_t file_offset_index = file_offset / sector_size;
+    uint64_t file_offset_index = file_offset / byte_alignment;
 
     // make data with enough space for fields
     const size_t block_label_size = block_label.size();
@@ -167,7 +167,7 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
     // file offset
     uint64_t file_offset_index;
     p = lmdb_helper::decode_uint64_t(p, file_offset_index);
-    file_offset = file_offset_index * sector_size;
+    file_offset = file_offset_index * byte_alignment;
 
     // hash data entropy
     p = lmdb_helper::decode_uint64_t(p, entropy);
@@ -261,10 +261,10 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
     // prepare Type 3 entry:
 
     // calculate file_offset_index
-    if (file_offset % sector_size != 0) {
+    if (file_offset % byte_alignment != 0) {
       assert(0);
     }
-    uint64_t file_offset_index = file_offset / sector_size;
+    uint64_t file_offset_index = file_offset / byte_alignment;
 
     // make data with enough space for fields
     uint8_t data[10 + 10];
@@ -300,7 +300,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
     // file offset
     uint64_t file_offset_index;
     p = lmdb_helper::decode_uint64_t(p, file_offset_index);
-    file_offset = file_offset_index * sector_size;
+    file_offset = file_offset_index * byte_alignment;
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
@@ -311,11 +311,11 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
                            const hashdb::file_mode_type_t p_file_mode,
-                           const uint32_t p_sector_size,
+                           const uint32_t p_byte_alignment,
                            const uint32_t p_max_id_offset_pairs) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       sector_size(p_sector_size),
+       byte_alignment(p_byte_alignment),
        max_id_offset_pairs(p_max_id_offset_pairs),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
@@ -324,7 +324,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
     MUTEX_INIT(&M);
 
     // require valid parameters
-    if (sector_size == 0) {
+    if (byte_alignment == 0) {
       std::cerr << "invalid hash data store configuration\n";
       assert(0);
     }
@@ -361,9 +361,9 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
     }
 
     // reject invalid file_offset
-    if (file_offset % sector_size != 0) {
+    if (file_offset % byte_alignment != 0) {
       std::cerr << "Usage error: file offset " << file_offset
-                << " does not fit evenly along sector size " << sector_size
+                << " does not fit evenly along step size " << byte_alignment
                 << ".\n";
       return 0;
     }

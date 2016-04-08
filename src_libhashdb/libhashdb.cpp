@@ -220,7 +220,7 @@ namespace hashdb {
 
     // create new LMDB stores
     lmdb_hash_data_manager_t(hashdb_dir, RW_NEW,
-                  settings.sector_size, settings.max_source_offset_pairs);
+                  settings.byte_alignment, settings.max_source_offset_pairs);
     lmdb_hash_manager_t(hashdb_dir, RW_NEW,
                   settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
@@ -265,7 +265,7 @@ namespace hashdb {
   // ************************************************************
   settings_t::settings_t() :
          settings_version(settings_t::CURRENT_SETTINGS_VERSION),
-         sector_size(512),
+         byte_alignment(512),
          block_size(512),
          max_source_offset_pairs(100000), // 100,000
          hash_prefix_bits(28),            // for 2^28
@@ -275,7 +275,7 @@ namespace hashdb {
   std::string settings_t::settings_string() const {
     std::stringstream ss;
     ss << "{\"settings_version\":" << settings_version
-       << ", \"sector_size\":" << sector_size
+       << ", \"byte_alignment\":" << byte_alignment
        << ", \"block_size\":" << block_size
        << ", \"max_source_offset_pairs\":" << max_source_offset_pairs
        << ", \"hash_prefix_bits\":" << hash_prefix_bits
@@ -305,7 +305,7 @@ namespace hashdb {
 
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY,
-            settings.sector_size, settings.max_source_offset_pairs);
+            settings.byte_alignment, settings.max_source_offset_pairs);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -583,7 +583,7 @@ namespace hashdb {
 
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, READ_ONLY,
-            settings.sector_size, settings.max_source_offset_pairs);
+            settings.byte_alignment, settings.max_source_offset_pairs);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,

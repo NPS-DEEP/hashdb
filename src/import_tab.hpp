@@ -40,10 +40,12 @@ class import_tab_t {
   const std::string& hashdb_dir;
   const std::string& tab_file;
   const std::string& repository_name;
+  const std::string& whitelist_dir;
   size_t line_number;
 
   // resources
   hashdb::import_manager_t manager;
+  hashdb::scan_manager_t* whitelist_manager;
   progress_tracker_t progress_tracker;
 
   static const uint32_t sector_size = 512;
@@ -108,6 +110,14 @@ class import_tab_t {
     }
     uint64_t file_offset = (sector_index - 1) * sector_size;
 
+    // skip if in whitelist
+    if (whitelist_manager != NULL) {
+      if (whitelist_manager->find_hash_count(block_binary_hash) > 0) {
+        // skip because block hash is in whitelist
+        return;
+      }
+    }
+
     // add source data
     manager.insert_source_data(file_binary_hash, 0, "", 0);
 
@@ -125,13 +135,25 @@ class import_tab_t {
   import_tab_t(const std::string& p_hashdb_dir,
                const std::string& p_tab_file,
                const std::string& p_repository_name,
+               const std::string& p_whitelist_dir,
                const std::string& cmd) :
                   hashdb_dir(p_hashdb_dir),
                   tab_file(p_tab_file),
                   repository_name(p_repository_name),
+                  whitelist_dir(p_whitelist_dir),
                   line_number(0),
                   manager(hashdb_dir, cmd),
+                  whitelist_manager(NULL),
                   progress_tracker(hashdb_dir, 0, cmd) {
+    if (whitelist_dir != "") {
+      whitelist_manager = new hashdb::scan_manager_t(whitelist_dir);
+    }
+  }
+
+  ~import_tab_t() {
+    if (whitelist_manager != NULL) {
+      delete whitelist_manager;
+    }
   }
 
   void read_lines(std::istream& in) {
@@ -147,11 +169,13 @@ class import_tab_t {
   static void read(const std::string& hashdb_dir,
                    const std::string& tab_file,
                    const std::string& repository_name,
+                   const std::string& whitelist_dir,
                    const std::string& cmd,
                    std::istream& in) {
 
     // create the reader
-    import_tab_t reader(hashdb_dir, tab_file, repository_name, cmd);
+    import_tab_t reader(hashdb_dir, tab_file, repository_name, whitelist_dir,
+                        cmd);
 
     // read the lines
     reader.read_lines(in);

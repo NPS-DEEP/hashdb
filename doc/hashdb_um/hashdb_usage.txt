@@ -16,8 +16,8 @@ New database:
     -b, --block_size=<block size>
       <block size>, in bytes, or use 0 for no restriction
       (default 512)
-    -s, --sector_size=<n>
-      <sector_size>, in bytes, or 1 for any alignment (default 512)
+    -a, --byte_alignment=<n>
+      <byte_alignment>, in bytes, or 1 for any alignment (default 512)
     -m, --max_source_offset_pairs=<max>
       The maximum number of source, file offset references to
       store for a hash (default 100000)
@@ -46,7 +46,7 @@ Import/Export:
     <import dir>   the directory to recursively import from
     <hashdb>       the hash database to insert the imported hashes into
 
-  import_tab [-r <repository name>] [-s <sector size>] <hashdb> <tab file>
+  import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
     Import hashes from file <tab file> into hash database <hashdb>.
 
     Options:

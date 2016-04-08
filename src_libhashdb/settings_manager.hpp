@@ -87,7 +87,7 @@ namespace hashdb {
 
     // parse the values
     settings.settings_version = document["settings_version"].GetUint64();
-    settings.sector_size = document["sector_size"].GetUint64();
+    settings.byte_alignment = document["byte_alignment"].GetUint64();
     settings.block_size = document["block_size"].GetUint64();
     settings.max_source_offset_pairs =
                           document["max_source_offset_pairs"].GetUint64();

@@ -77,7 +77,7 @@ static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // user-selected options
 static bool has_quiet = false;
-static bool has_sector_size = false;
+static bool has_byte_alignment = false;
 static bool has_block_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
@@ -162,7 +162,7 @@ int main(int argc,char **argv) {
       {"version",                       no_argument, 0, 'v'},
       {"Version",                       no_argument, 0, 'V'},
       {"quiet",                         no_argument, 0, 'q'},
-      {"sector_size",             required_argument, 0, 's'},
+      {"byte_alignment",          required_argument, 0, 'a'},
       {"block_size",              required_argument, 0, 'b'},
       {"repository_name",         required_argument, 0, 'r'},
       {"whitelist_dir",           required_argument, 0, 'w'},
@@ -173,7 +173,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqs:b:r:w:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVqa:b:r:w:m:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -210,9 +210,9 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 's': {	// sector size
-        has_sector_size = true;
-        settings.sector_size = std::atoi(optarg);
+      case 'a': {	// byte alignment
+        has_byte_alignment = true;
+        settings.byte_alignment = std::atoi(optarg);
         break;
       }
 
@@ -291,8 +291,8 @@ int main(int argc,char **argv) {
 
 void check_options(const std::string& options) {
   // fail if an option is not in the options set
-  if (has_sector_size && options.find("s") == std::string::npos) {
-    std::cerr << "The -s sector_size option is not allowed for this command.\n";
+  if (has_byte_alignment && options.find("a") == std::string::npos) {
+    std::cerr << "The -a byte_alignment option is not allowed for this command.\n";
     exit(1);
   }
   if (has_block_size && options.find("b") == std::string::npos) {
@@ -318,13 +318,13 @@ void check_options(const std::string& options) {
     exit(1);
   }
 
-  // fail if block size is incompatible with sector size
-  if (settings.sector_size == 0 ||
-      (settings.block_size % settings.sector_size) != 0) {
+  // fail if block size is incompatible with byte alignment
+  if (settings.byte_alignment == 0 ||
+      (settings.block_size % settings.byte_alignment) != 0) {
     std::cerr << "Incompatible values for block size: "
               << settings.block_size
-              << " and sector size : " << settings.sector_size
-              << ".  block size must be divisible by sector size.\n"
+              << " and byte alignment: " << settings.byte_alignment
+              << ".  block size must be divisible by byte alignment.\n"
               << see_usage << "\n";
     exit(1);
   }
@@ -345,23 +345,23 @@ void check_params(const std::string& options, size_t param_count) {
 void run_command() {
   // new database
   if (command == "create") {
-    check_params("bsmt", 1);
+    check_params("bamt", 1);
     commands::create(args[0], settings, cmd);
 
   // import
   } else if (command == "import_dir") {
-    check_params("rwn", 2);
+    check_params("rw", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
     commands::import_dir(args[0], args[1], repository_name, whitelist_dir, cmd);
 
   } else if (command == "import_tab") {
-    check_params("r", 2);
+    check_params("rw", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::import_tab(args[0], args[1], repository_name, cmd);
+    commands::import_tab(args[0], args[1], repository_name, whitelist_dir, cmd);
 
   } else if (command == "import") {
     check_params("", 2);

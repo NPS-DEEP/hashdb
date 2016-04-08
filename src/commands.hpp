@@ -145,6 +145,7 @@ namespace commands {
   static void import_tab(const std::string& hashdb_dir,
                      const std::string& tab_file,
                      const std::string& repository_name,
+                         const std::string& whitelist_dir,
                      const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -158,7 +159,8 @@ namespace commands {
       exit(1);
     }
 
-    import_tab_t::read(hashdb_dir, tab_file, repository_name, cmd, in);
+    import_tab_t::read(hashdb_dir, tab_file, repository_name, whitelist_dir,
+                       cmd, in);
 
     // done
     in.close();
@@ -843,7 +845,7 @@ namespace commands {
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
 
-    // get sector size
+    // read settings for byte alignment
     hashdb::settings_t settings;
     std::string error_message = hashdb::read_settings(hashdb_dir, settings);
     if (error_message.size() != 0) {
@@ -851,7 +853,7 @@ namespace commands {
       exit(1);
     }
 
-    const uint64_t sector_size = settings.sector_size;
+    const uint64_t byte_alignment = settings.byte_alignment;
 
     // initialize random seed
     srand (time(NULL));
@@ -876,7 +878,7 @@ namespace commands {
 
       // add hash
       manager.insert_hash(random_binary_hash(), file_binary_hash,
-                          i*sector_size, 0, "");
+                          i*byte_alignment, 0, "");
     }
   }
 
@@ -929,7 +931,7 @@ namespace commands {
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
 
-    // get sector size
+    // read settings for byte alignment
     hashdb::settings_t settings;
     std::string error_message = hashdb::read_settings(hashdb_dir, settings);
     if (error_message.size() != 0) {
@@ -937,7 +939,7 @@ namespace commands {
       exit(1);
     }
 
-    const uint64_t sector_size = settings.sector_size;
+    const uint64_t byte_alignment = settings.byte_alignment;
 
     // open manager
     hashdb::import_manager_t manager(hashdb_dir, cmd);
@@ -969,7 +971,7 @@ namespace commands {
 
       // add hash
       manager.insert_hash(binary_hash, file_binary_hash,
-                          (i + start_index) * sector_size, 0, "");
+                          (i + start_index) * byte_alignment, 0, "");
     }
   }
 

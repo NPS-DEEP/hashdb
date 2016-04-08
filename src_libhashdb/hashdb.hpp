@@ -76,7 +76,7 @@ namespace hashdb {
    *
    * Attributes:
    *   settings_version - The version of the settings record
-   *   sector_size - Minimal sector size of data, in bytes.  Blocks must
+   *   byte_alignment - Minimal step size of data, in bytes.  Blocks must
    *     align to this.
    *   block_size - Size, in bytes, of data blocks.
    *   max_source_offset_pairs - The maximum number of source hash,
@@ -89,7 +89,7 @@ namespace hashdb {
   struct settings_t {
     static const uint32_t CURRENT_SETTINGS_VERSION = 3;
     uint32_t settings_version;
-    uint32_t sector_size;
+    uint32_t byte_alignment;
     uint32_t block_size;
     uint32_t max_source_offset_pairs;
     uint32_t hash_prefix_bits;

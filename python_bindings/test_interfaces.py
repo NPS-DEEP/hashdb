@@ -84,12 +84,12 @@ int_equals(scan_manager.size_hashes(), 1)
 int_equals(scan_manager.size_sources(), 2)
 
 # Settings
-settings.sector_size = 1
+settings.byte_alignment = 1
 settings.block_size = 2
 settings.max_source_offset_pairs = 3
 settings.hash_prefix_bits = 4
 settings.hash_suffix_bytes = 5
-str_equals(settings.settings_string(), '{"settings_version":3, "sector_size":1, "block_size":2, "max_source_offset_pairs":3, "hash_prefix_bits":4, "hash_suffix_bytes":5}')
+str_equals(settings.settings_string(), '{"settings_version":3, "byte_alignment":1, "block_size":2, "max_source_offset_pairs":3, "hash_prefix_bits":4, "hash_suffix_bytes":5}')
 
 # Timestamp
 ts = hashdb.timestamp_t()

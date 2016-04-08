@@ -427,7 +427,7 @@ This file contains the settings requested by the user when the block hash databa
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-{"settings_version":3, "sector_size":512, "block_size":512,
+{"settings_version":3, "byte_alignment":512, "block_size":512,
 "max_id_offset_pairs":100000, "hash_prefix_bits":28,
 "hash_suffix_bytes":3}
 \end{Verbatim}
@@ -485,8 +485,8 @@ Function and performance of a \hdb database is set using configurable settings:\
 \item \textbf{Block size}\\
 The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
 
-\item \textbf{Sector size}\\
-The resolution of sectors that may reside on media. The operating system and/or storage device will align data on sector boundaries. Block hashes are calculated on aligned sector boundaries. The default is 512. Although 1 is valid, try to use the full sector size since \hdb makes a more compact database with larger values.\\
+\item \textbf{Byte alignment}\\
+Byte alignment is an optimization parameter created to help make a smaller database. Use the block step size unless you want to hash blocks along unaligned boundaries. For storage devices, use the sector size since this the smallest value that data in storage devices can align to, which is 512. The default is 512.\\
 
 \item \textbf{Max source, offset pairs}\\
 The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
@@ -523,7 +523,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-b <block size>]+ \verb+[-b <sector size>]+ \verb+[-m <max source offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-m <max source offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
 \hline
 \end{tabular}
 \end{table}
@@ -538,7 +538,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline
 \textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored in the database. Default is 512 bytes.  \\
 \hline
-\textbf{\texttt{-s}} & \verb+--sector_size=+\textit{sector\_size} & Specifies the sector size in bytes used to calculate hashes along. Default is 512 bytes.  \\
+\textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{byte\_alignment} & Specifies the byte alignment in bytes used to calculate hashes along. Default is 512 bytes.  \\
 \hline
 \textbf{\texttt{-m}} & \verb+--max_source_offset_pairs=+\textit{max source offset pairs} & Specifies the maximum number of source, source offset pairs allowed. 0 value indicates there is no limit. Default is 0.\\
 \hline
@@ -914,7 +914,7 @@ Scanner options are described in Table \ref{tab:hashdb_be_usage}.
 \hline
 \verb+hashdb_block_size+ &512 & Block size, in bytes, used to generate hashes.\\
 \hline
-\verb+hashdb_sector_size+ &512 & Sector size, in bytes.  Scans and imports along sector boundaries.\\
+\verb+hashdb_byte_alignment+ &512 & byte alignment, in bytes.  Scans and imports along sector boundaries.\\
 \hline
 \verb+hashdb_scan_path+ & & The file path to a hash database to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
 \hline
@@ -1298,7 +1298,7 @@ Holds \hdb settings.
 \begin{itemize}
 \item \verb+settings = settings_t()+\\
 Obtain default settings. Configurable setting parameters are: \verb+settings_version,+\\
-\verb+sector_size, block_size, max_source_offset_pairs, hash_prefix_bits,+\\
+\verb+byte_alignment, block_size, max_source_offset_pairs, hash_prefix_bits,+\\
 \verb+hash_suffix_bytes+.
 \item \verb+settings_string = settings.settings_string()+\\
 Return setting values in JSON format.
