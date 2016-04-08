@@ -1,6 +1,7 @@
 drawings = \
 	hashdb_system_overview.pdf \
-	sector_boundaries.pdf
+	hash_interval.pdf \
+	default_hash_interval.pdf
 
 .SUFFIXES: .svg .pdf
 

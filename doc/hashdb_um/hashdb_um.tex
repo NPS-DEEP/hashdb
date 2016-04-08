@@ -293,15 +293,25 @@ Once the database is populated, \hdb can export content from the database in JSO
 
 \subsection{Block Hash}
 \label{BlockHash}
-\hdb works by matching hashes calculated from blocks of data.
-\hdb is different from tools that match files because it can find matches
-even when part of a file is missing or changed.
-\hdb stores and scans for hashes created from contiguous blocks of data.
-We call the size of the block hashed the \textit{block size}.
-\hdb stores and scans for hashes aligned along sector boundaries.
-We call this alignment the \textit{sector size}.
-Although larger values take up more space, we have found that the smallest
-granularity used by file systems and storage devices is 512 bytes.
+\hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes along a hash interval. Blocks along a hash interval are illustrated in Figure \ref{fig:hashInterval}.\\
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.45]{drawings/hash_interval}
+	\caption{Data blocks are hashed along an interval of bytes}
+	\label{fig:hashInterval}
+\end{figure}
+
+In the default configuration, the size of the data window being hashed and the interval between data blocks being hashed is 512 bytes.  The default interval and size is shown in Figure \ref{fig:defaultHashInterval}.\\
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.45]{drawings/default_hash_interval}
+	\caption{By default, the block size and hash interval are 512 bytes}
+	\label{fig:defaultHashInterval}
+\end{figure}
+
+As an optimization, \hdb provides a byte alignment setting. Allow \hdb to select the default unless you would like the step size to be smaller than the block size. Byte alignment is described in \textbf{\autoref{Settings}}.
 
 \subsection{Blacklist Data}
 Blacklist data is the data we scan against to determine whether forensic data
