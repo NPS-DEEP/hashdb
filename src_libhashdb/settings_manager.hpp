@@ -85,14 +85,33 @@ namespace hashdb {
       return "Invalid JSON in settings file at path '" + hashdb_dir + "'.";
     }
 
-    // parse the values
-    settings.settings_version = document["settings_version"].GetUint64();
-    settings.byte_alignment = document["byte_alignment"].GetUint64();
-    settings.block_size = document["block_size"].GetUint64();
-    settings.max_source_offset_pairs =
+    // make sure all the parts are there
+    if (document.HasMember("settings_version")
+        && document["settings_version"].IsUint64()
+        && document.HasMember("byte_alignment")
+        && document["byte_alignment"].IsUint64()
+        && document.HasMember("block_size")
+        && document["block_size"].IsUint64()
+        && document.HasMember("max_source_offset_pairs")
+        && document["max_source_offset_pairs"].IsUint64()
+        && document.HasMember("hash_prefix_bits")
+        && document["hash_prefix_bits"].IsUint64()
+        && document.HasMember("hash_suffix_bytes")
+        && document["hash_suffix_bytes"].IsUint64()) {
+
+      // parse the values
+      settings.settings_version = document["settings_version"].GetUint64();
+      settings.byte_alignment = document["byte_alignment"].GetUint64();
+      settings.block_size = document["block_size"].GetUint64();
+      settings.max_source_offset_pairs =
                           document["max_source_offset_pairs"].GetUint64();
-    settings.hash_prefix_bits = document["hash_prefix_bits"].GetUint64();
-    settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
+      settings.hash_prefix_bits = document["hash_prefix_bits"].GetUint64();
+      settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
+
+    } else {
+      return "Missing JSON settings in settings file at path '"
+             + hashdb_dir + "'.";
+    }
 
     // settings version must be compatible
     if (settings.settings_version <
@@ -103,7 +122,6 @@ namespace hashdb {
     // accept the read
     return "";
   }
-
 
   std::string write_settings(const std::string& hashdb_dir,
                              const hashdb::settings_t& settings) {
