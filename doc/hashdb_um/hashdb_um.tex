@@ -243,20 +243,20 @@ The following steps provide a very brief introduction to running your new instal
 \begin{enumerate}
 \item Navigate to the directory where you would like to create a hash database. Then, to run \hdb from the command line, type the following instructions: 
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create sample.hdb}
+\verbbf{hashdb create demo.hdb}
 \end{Verbatim} 
 
-In the above instructions, \texttt{\textbf{sample.hdb}} is the empty database that will be created with default database settings.
+In the above instructions, \texttt{\textbf{demo.hdb}} is the empty database that will be created with default database settings.
 
 \item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import sample.hdb blacklist_files}
+\verbbf{hashdb import demo.hdb blacklist_files}
 \end{Verbatim} 
 This command, if executed successfully, will print \verb+import completed+, along with statistics indicating changes to the database.
 
 \item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklisted Kitty block hashes. This can be done using the Python interface, \sscope, or \bulk, but lets just use the \hdb tool:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb scan_image sample.hdb jo-favorites-usb-2009-12-11.E01}
+\verbbf{hashdb scan_image demo.hdb jo-favorites-usb-2009-12-11.E01}
 \end{Verbatim} 
 With this image and dataset, the first block hash matched is at media image offset \verb+2543104+ for hash \verb+1d7379fd4d5cf676a9d4de1e48337e71+:
 
@@ -293,7 +293,8 @@ Once the database is populated, \hdb can export content from the database in JSO
 
 \subsection{Block Hash}
 \label{BlockHash}
-\hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes along a hash interval. Blocks along a hash interval are illustrated in Figure \ref{fig:hashInterval}.\\
+\hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes in step increments along a hash interval. Blocks hashed at step-sized intervals are illustrated in Figure \ref{fig:hashInterval}.  In the default configuration, the block size and step size are 512 bytes, see Figure \ref{fig:defaultHashInterval}.\\
+
 
 \begin{figure}
 	\center
@@ -302,12 +303,10 @@ Once the database is populated, \hdb can export content from the database in JSO
 	\label{fig:hashInterval}
 \end{figure}
 
-In the default configuration, the size of the data window being hashed and the interval between data blocks being hashed is 512 bytes.  The default interval and size is shown in Figure \ref{fig:defaultHashInterval}.\\
-
 \begin{figure}
 	\center
 	\includegraphics[scale=.45]{drawings/default_hash_interval}
-	\caption{By default, the block size and hash interval are 512 bytes}
+	\caption{By default, hashes are calculated from 512 byte blocks of data along 512 byte intervals}
 	\label{fig:defaultHashInterval}
 \end{figure}
 
@@ -320,7 +319,10 @@ We build a hash database of blacklist data by importing block hashes
 from blacklist files, copying from other hash databases,
 or importing from other sources using data prepared in JSON format.\\
 
-Each block hash in the database contains one or more source, file offset pairs indicating a source and location within the source where the hash is located.  If a block is duplicated within a source, then several source, file offset pairs will be stored for that hash.  If a block hash is also found in another source, then source, file offset pair(s) from that source will also be stored for that hash. Block hashes with many source, file offset pairs tend to contain non-probative data.
+Each block hash in the database contains one or more source, file offset pairs indicating a source and location within the source where the hash is located.  If a block is duplicated within a source, then several source, file offset pairs will be stored for that hash.  If a block hash is also found in another source, then source, file offset pair(s) from that source will also be stored for that hash. Block hashes with many source, file offset pairs tend to contain non-probative data.\\
+
+\subsection{Repositories}
+Blacklist data may come from multiple sources called ``repositories''. \hdb tracks repository names in order to know what categories blacklist data belongs to. When importing into a database, users may provide repository names specific to balcklist categories or cases, or allow \hdb to select default values.  When scanning, hashes may match sources from several repositories.\\
 
 \subsection{Forensic Data}
 Forensic data is the data we scan to see if it contains artifact matching
@@ -363,7 +365,7 @@ The source file size indicates how big a source file is. The \sscope tool uses t
 \item \textbf{Source File Type}\\
 This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.\\
 \item \textbf{Source File Nonprobative Count}\\
-The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner, this value is set to the number of blocks that have been given a block label.  In \hdb, zzzzzzz.\\
+The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+import_dir+ function, this value is set to the number of blocks that have been given a block label.\\
 \end{itemize}
 
 \subsection{Building a \hdb Database}
@@ -486,7 +488,7 @@ Function and performance of a \hdb database is set using configurable settings:\
 The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
 
 \item \textbf{Byte alignment}\\
-Byte alignment is an optimization parameter created to help make a smaller database. Use the block step size unless you want to hash blocks along unaligned boundaries. For storage devices, use the sector size since this the smallest value that data in storage devices can align to, which is 512. The default is 512.\\
+Byte alignment is an optimization parameter created to help reduce the size of the database. Use the block size unless you want to hash blocks along unaligned boundaries. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to. The default is 512.\\
 
 \item \textbf{Max source, offset pairs}\\
 The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
@@ -501,11 +503,11 @@ The number of bytes of the hash suffix to store in the set of values of hash suf
 \section {Running the \hdb Tool}
 \label{Running}
 The core capabilities provided by \hdb involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hdb users need to start by building a database (if an existing database is not available for use).
-Users then import hashes using \hdb commands, the \hdb \bulk scanner, or the \hdb API, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
+Users then import hashes using \hdb tool commands, the \hdb \bulk scanner, or through the \hdb library API, and then possibly merge or subtract hashes to obtain the desired set of hashes to scan against.
 Users then scan for hashes that match.
 Additional commands are provided to support statistical analysis, performance tuning and performance analysis.\\
 
-This section describes \hdb commands, along with examples, for performing these tasks.
+This section describes use of the \hdb tool commands, along with examples, for performing these tasks.
 For more examples of command usage, please see \textbf{\autoref{UseCases}}.
 For a \hdb quick reference summary, please see \textbf{\autoref{QuickReference}}
 or \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
@@ -536,7 +538,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
 \hline
-\textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored in the database. Default is 512 bytes.  \\
+\textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored and scanned against. Default is 512 bytes.  \\
 \hline
 \textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{byte\_alignment} & Specifies the byte alignment in bytes used to calculate hashes along. Default is 512 bytes.  \\
 \hline
@@ -548,21 +550,20 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \end{table}
 
 \textbf{Example}\\
-To create an (empty) hash database named \textbf{\texttt{mock\_video.hdb}}, type the following command:
+To create an (empty) hash database named \textbf{\texttt{demo.hdb}}, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create mock_video.hdb}
+\verbbf{hashdb create demo.hdb}
 \end{Verbatim}
 The above command will create a database with all of the default hash database settings. Most users will not need to change these settings.
 Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create --max\_source\_offset\_pairs=20 mock_video.hdb}
-\verbbf{hashdb create -m 20 mock_video.hdb}
+\verbbf{hashdb create --max\_source\_offset\_pairs=20 demo.hdb}
+\verbbf{hashdb create -m 20 demo.hdb}
 \end{Verbatim}
-The above two commands produce identical results, creating the database \texttt{mock\_video.hdb} that will accept a maximum of 20 source, offset pairs per hash.\\
+The above two commands produce identical results, creating the database \texttt{demo.hdb} that will accept a maximum of 20 source, offset pairs per hash.\\
 
 \subsection{Importing and Exporting}
-Hash databases may be imported to in several ways, and may be exported in JSON format.
-Commands to import and export hashes are shown in Table \ref{tab:importExport}.\\
+Hash databases may be imported to in several ways.  Commands to import and export hashes are shown in Table \ref{tab:importExport}.\\
 \begin{table}[!ht]
 \centering
 \caption{Commands for Importing into and Exporting Hash Databases}
@@ -581,6 +582,7 @@ Commands to import and export hashes are shown in Table \ref{tab:importExport}.\
 \hline
 \end{tabular}
 \end{table}
+
 Note that there are other ways to populate a database besides these listed here, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
 by using the \bulk \hdb scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
 and through the use of the import capability provided by the \hdb library API (discussed in \textbf{\autoref{APISection}}).\\
@@ -588,11 +590,11 @@ and through the use of the import capability provided by the \hdb library API (d
 
 To import block hashes from a directory of blacklist sources, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import_dir -r mock_video_repository mock_video.hdb mock_video_dir}
+\verbbf{hashdb import_dir -r demo_repository demo.hdb demo_blacklist_dir}
 \end{Verbatim}
-In the above command the option \textbf{-r} is used along with the repository name \texttt{mock\_video\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. Hash blocks contained in one database often originate from many different sources and the fileme may be the same. For example, if we add two separate but similar databases with partial overlap to a database, this will result in some duplicate hashes from multiple sources with the same filename. The repository name can be used with those duplicates to allow users to track all hashes back to their original sources. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
+In the above command the option \textbf{-r} is used along with the repository name \texttt{demo\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{import} command in the above example imports block hashes from files in the \texttt{mock\_video\_dir} directory into the database \texttt{mock\_video.hdb}. \hdb prints the following to the command line to indicate that hashes have been inserted into the database: 
+The \textbf{import} command in the above example imports block hashes from files in the \texttt{demo\_blacklist\_dir} directory into the database \texttt{demo.hdb}. When the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import} is imported, \hdb prints output to the command line to indicate that hashes have been inserted into the database: 
 
 \begingroup
 \footnotesize
@@ -614,13 +616,13 @@ import completed.
 \endgroup
 These numbers don't correspond to the actual number of hashes inserted, but they do indicate that data was added.\\
 
-The database \texttt{\textbf{mock\_video.hdb}} now contains these block hashes.\\
+The database \texttt{\textbf{demo.hdb}} now contains these block hashes.\\
 
 Also, database log file \texttt{log.txt} is updated to show that a set of hash blocks have just been inserted. The log in Figure \ref{logfile} was generated from similar \textbf{create} and \textbf{import} actions.  The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
 
 Users may prefer to run statistical commands such as this to get information about the contents of the database (and confirm that values were inserted):
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb size mock_video.hdb}
+\verbbf{hashdb size demo.hdb}
 \end{Verbatim}
 
 \subsection{Database Manipulation}
@@ -741,15 +743,15 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \end{tabular}
 \end{table}
 
-To scan, first identify the media that you would like to scan. For this example, we download and use video file \texttt{mock\_video\_redacted\_image} available at \url{http://digitalcorpora.org/downloads/hashdb/demo}.\\
+To scan, first identify the media that you would like to scan. For this example, we download and use the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains matching Kitty material.\\
 
-Then identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{mock\_video.hdb}} that we created in the previous section. That database contains all of the block hash values from a media image. \\
+Then identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{demo.hdb}} that we created from Kitty material in the previous section, containing block hash values calculated from pictures and videos of cats.\\
 
 Finally, run the \hdb scan command to scan for blocks in the media that match block hashes in the database:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb scan_image mock_video.hdb mock_video_redacted_image > matches.json}
+\verbbf{hashdb scan_image demo.hdb jo-favorites-usb-2009-12-11.E01 > matches.json}
 \end{Verbatim}
-This command tells \hdb to scan \textbf{mock\_video\_redacted\_image} and try to match the values found in the local database \texttt{\textbf{mock\_video.hdb}}, putting match data in file \verb+matches.json+.  An example match might look like this:
+This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E01+ and try to match the values found in the local database \texttt{\textbf{demo.hdb}}, putting match data in file \verb+matches.json+.  An example match might look like this:
 
 \begingroup
 \footnotesize
@@ -951,47 +953,19 @@ Note, \bulk will place feature file and other output not relevant to the \hdb ap
 
 \subsection{Updating Hash Databases}
 \label{updateSection}
-\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{mock\_video.hdb} into \texttt{mock\_video\_dedup.hdb} :
+\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{demo.hdb} into \texttt{demo\_dedup.hdb} :
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb deduplicate mock_video.hdb mock_video_dedup.hdb}
+\verbbf{hashdb deduplicate demo.hdb demo_dedup.hdb}
 \end{Verbatim}
 Whenever a database is created or updated, \hdb updates the file \texttt{log.xml}, found in the database's directory with information about the actions performed.\\
 
-After each command to change a database, statistics about the changes are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changeStatistics} shows all of the statistics tracked in the log file along with their meaning. The value of each statistic is the number of times the event happened during the command. For example, if 280 hashes are removed, the statistic ``hashes\_removed'' will be marked with a value of 280. \\
+After each command to change a database, statistics about the changes are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changeStatistics} shows all of the statistics tracked in the log file along with their meaning. The value of each statistic is the number of times the event happened during the command.\\
 
-\subsubsection{Update Commands and ``Duplicate'' Hashes}
-Commands that add or import hashes of the same value will result in hash duplicates if the source information is unique. If hash and source values are identical (including repository name), no hash values are added with the \textbf{add} or \textbf{import} commands. The \textbf{intersect} and \textbf{subtract} commands do not require source information to match. An intersection occurs when hatches match, regardless of whether the source information matches. Similarly, hash values are also subtracted from the database regardless of whether or not their source information matches.  The update statistics specified in the log file (shown in \ref{tab:changeStatistics}) will specify the results of each of these commands to help users track changes. \\
-
-As discussed previously, users can only specify the repository name with the \textbf{import} command. As databases become large, the repository name for each hash value will help identify important source information. Users should plan on importing data with specific repository names whenever possible to avoid source confusion later.\\
-
-Finally, we provide two philosophies for mitigating duplicate hash bloat:
-\begin{itemize}
- \item If you know you have imported the same blacklist data twice,
-  and you do not want to manage a 'whitelist' database,
-  \texttt{deduplicate} is a quick and easy way to get rid of low-entropy noise.
-  \item If your database has blacklist data from more than one source
-  or you just want tighter control about what you want to remove
-  and are willing to use a 'whitelist' database
-  to remove hashes to improve lookup speed
-  or to reduce noise about uninteresting hashes found,
-  use \texttt{subtract}.
-\end{itemize}
-
-
-
-
-
-
-
-\subsection{Optimizing a Hash Database}
-\label{optimizing}
- 
-For large databases, it takes a bit of time to look up a hash value to determine whether it is in the database. This time adds up when scanning for millions of hash values. As an optimization, \hdb provides tuning parameters for tuning the initial hash lookup when checking to see if a hash value is present in the database [see \textbf{\Autoref{Creating}} for information on using these tuning parameters].
 
 \subsection{Exporting Hash Databases}
-Users can export hashes from a hash database to a JSON export file using the ``export'' command [see \textbf{\Autoref{InputOutputSyntax}} for information on JSON syntax].  For example, the following command will export the \texttt{mock\_video.hdb} database to the file \texttt{demoVideoHashes.json}:
+Users can export hashes from a hash database to a JSON export file using the ``export'' command [see \textbf{\Autoref{InputOutputSyntax}} for information on JSON syntax].  For example, the following command will export the \texttt{demo.hdb} database to the file \texttt{demo.json}:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb export mock_video.hdb demoVideoHashes.xml}
+\verbbf{hashdb export demo.hdb demo.json}
 \end{Verbatim}
 
 \section{\hdb Input/Output Syntax}

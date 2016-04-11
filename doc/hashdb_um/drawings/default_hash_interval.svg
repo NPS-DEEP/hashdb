@@ -809,7 +809,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="476.90716"
+     inkscape:cx="240.73349"
      inkscape:cy="217.75318"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -822,7 +822,8 @@
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0" />
+     fit-margin-bottom="0"
+     inkscape:snap-grids="false" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -881,7 +882,7 @@
          style="font-size:22.5px">Byte 0</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m -48.801733,550.70385 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
+       d="m -48.801733,547.87543 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
        id="path4802-98"
        inkscape:connector-curvature="0" />
     <path
@@ -891,7 +892,7 @@
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-93)"
-       d="m 72.822318,563.33863 c 59.396982,0 59.396982,0 59.396982,0 l 0,0 0,0"
+       d="m 72.822318,561.92441 c 59.396982,0 59.396982,0 59.396982,0 l 0,0 0,0"
        id="path4802-9-9"
        inkscape:connector-curvature="0" />
     <path
@@ -965,54 +966,54 @@
          y="658.09094">...</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-8-6)"
-       d="m -49.653709,704.22687 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
+       d="m -49.653709,705.39418 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
        id="path4802-9-0-3"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="-46.197918"
-       y="791.32971"
+       y="792.49701"
        id="text5598-8-4"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-2-0"
          x="-46.197918"
-         y="791.32971"
+         y="792.49701"
          style="font-size:22.5px">Byte 512</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-8-1)"
-       d="m 66.311796,702.81266 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
+       d="m 66.311796,705.39418 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
        id="path4802-9-0-6"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="69.767593"
-       y="789.91547"
+       y="792.49701"
        id="text5598-8-2"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-2-5"
          x="69.767593"
-         y="789.91547"
+         y="792.49701"
          style="font-size:22.5px">Byte 1024</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-8-0)"
-       d="m 181.54939,699.74159 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
+       d="m 181.54939,705.39418 c 0,59.39697 0,59.39697 0,59.39697 l 0,0 0,0"
        id="path4802-9-0-7"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="185.00519"
-       y="786.84442"
+       y="792.49701"
        id="text5598-8-22"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-2-3"
          x="185.00519"
-         y="786.84442"
+         y="792.49701"
          style="font-size:22.5px">Byte 1536</tspan></text>
     <path
        inkscape:connector-curvature="0"
