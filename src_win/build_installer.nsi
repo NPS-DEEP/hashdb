@@ -99,17 +99,17 @@ Section "hashdb tool"
 	createShortCut "$SMPROGRAMS\${APPNAME}\hashdb Users Manual.lnk" "$INSTDIR\pdf\hashdb_um.pdf"
 sectionEnd
 
+Section "Add to PATH"
+	setOutPath "$INSTDIR"
+        # add hashdb to system PATH
+        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR"
+sectionEnd
+
 Section "hashdb Python module"
 	setOutPath "$DESKTOP"
         file "hashdb.py"
         file "_hashdb.pyd"
         file "test_hashdb_module.py"
-sectionEnd
-
-Section "Add to PATH"
-	setOutPath "$INSTDIR"
-        # add hashdb to system PATH
-        ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR"
 sectionEnd
 
 function .onInit

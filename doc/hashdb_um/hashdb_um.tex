@@ -187,14 +187,38 @@ You should close all Command windows before running the installation executable.
 	\label{fig:windowsWarning}
 \end{figure}
 
-When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select the 64-bit configuration to install \hdb and select \verb+Add to path+ to add hashdb to \verb+PATH+. \hdb is now installed on your system can be run from the command line.\\
+When the installer file is executed, the installation will begin and show a dialog like the one shown in Figure \ref{fig:windowsInstaller}.  Users should select all options needed:
+\begin{itemize}
+\item \textbf{hashdb tool}\\
+Installs the \hdb tool into the \verb+Program Files+ directory and installs the Users Manual shortcut in the \verb+Start+ menu.
+\item \textbf{Add to PATH}\\
+Appends the path to the \hdb tool to the System \verb+PATH+ variable so that it can be found at the command prompt and by other tools.
+\item \textbf{hashdb Python module}\\
+Installs the following files onto the desktop at \verb+Users\Public\Desktop+:
+  \begin{itemize}
+  \item \verb+hashdb.py+\\
+  The \hdb Python interface file.
+  \item \verb+_hashdb.pyd+\\
+  The \verb+.dll+ file needed by \verb+hashdb.py+.
+  \item \verb+test_hashdb_module.py+\\
+  A small test program for helping to validate and diagnose the installation of \verb+hashdb.py+ and \verb+hashdb.py+. This file may be delted.
+  \end{itemize}
+
+Suggestions for managing these files include:
+  \begin{itemize}
+  \item Move these files to your working directory so that they can be found by your Python program.
+  \item Move these files to another directory and set \verb+PATH+ to include the path to \verb+_hashdb.pyd+ and set \verb+PYTHONPATH+ to include the path to \verb+hashdb.py+.
+  \end{itemize}
+\end{itemize}
 
 \begin{figure}
 	\center
 	\includegraphics[scale=.8]{WindowsInstaller.png}
-	\caption{Dialog appears when the user executes the Windows Installer. Select the default configuration.}
+	\caption{Dialog appears when the user executes the Windows Installer. Select the default configuration to install all components.}
 	\label{fig:windowsInstaller}
 \end{figure}
+
+\hdb is now installed on your system can be run from the command line.\\
 
 \subsubsection{Installing on Linux or Mac}
 This section describes steps for installing \hdb on a Fedora 23 system and is intended to illustrate the installation process.  For steps on installing \hdb to other flavors of Linux or for MacOS, and for installing specific configurations, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
@@ -233,10 +257,32 @@ Then, in the newly created \textit{hashdb-x.y.z} directory, run the following co
 Note: sudo is not required. If you do not wish to use sudo,  build and install \hdb and \bulk in your own space at ``\$HOME/local'' using the following commands:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-}
-\textbf{                                 I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/}
+\textbf{                         I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/}
 \verbbf{make}
 \verbbf{make install}
 \end{Verbatim}
+
+\textbf{Run \hdb}\\
+When installed as administrator, the \hdb tool should automatically be accessible. The \hdb Python interface can be made available by typing:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{export PYTHONPATH=/usr/local/lib/python2.7/site-packages:/usr/local/}
+\textbf{                         lib64/python2.7/site-packages}
+\end{Verbatim}
+
+which provides access the installed \verb+python.py+ and \verb+_python.so+ resources, respectively.\\
+
+When installed as a user, the \hdb tool can be made available by typing:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{export PATH=$HOME/local/bin:$PATH}
+\end{Verbatim}
+
+The \hdb Python interface can be made available by typing:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{export PYTHONPATH=~/local/lib/python2.7/site-packages:~/local/lib64/}
+\textbf{                         python2.7/site-packages}
+\end{Verbatim}
+
+which provides access the installed \verb+python.py+ and \verb+_python.so+ resources, respectively.\\
 
 \subsubsection{Quickstart Guide}
 The following steps provide a very brief introduction to running your new installation of \hdb. 
