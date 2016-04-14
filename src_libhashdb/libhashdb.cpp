@@ -610,6 +610,7 @@ namespace hashdb {
   //
   // Example abbreviated syntax:
   // {
+  //   "block_hash": 3b6b477d391f73f67c1c01e2141dbb17",
   //   "entropy": 8,
   //   "block_label": "W",
   //   "source_list_id": 57,
@@ -641,66 +642,68 @@ namespace hashdb {
       return "";
     }
 
-    // done if matched before
-    if (hashes->find(binary_hash) != hashes->end()) {
-      delete source_offset_pairs;
-      return "{}";
-    }
-
-    // remember this hash match to skip it later
-    hashes->insert(binary_hash);
-
     // prepare JSON
     rapidjson::Document json_doc;
     rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
     json_doc.SetObject();
 
-    // entropy
-    json_doc.AddMember("entropy", entropy, allocator);
+    // block_hash
+    std::string block_hash = hashdb::bin_to_hex(binary_hash);
+    json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
 
-    // block_label
-    json_doc.AddMember("block_label", v(block_label, allocator), allocator);
+    // report hash if this is the first time for the hash
+    if (hashes->find(binary_hash) == hashes->end()) {
 
-    // source_list_id
-    uint32_t crc = calculate_crc(*source_offset_pairs);
-    json_doc.AddMember("source_list_id", crc, allocator);
+      // remember this hash match to skip it later
+      hashes->insert(binary_hash);
 
-    // sources array
-    rapidjson::Value json_sources(rapidjson::kArrayType);
+      // entropy
+      json_doc.AddMember("entropy", entropy, allocator);
 
-    // put in any sources that have not been put in yet
-    for (hashdb::source_offset_pairs_t::const_iterator it =
+      // block_label
+      json_doc.AddMember("block_label", v(block_label, allocator), allocator);
+
+      // source_list_id
+      uint32_t crc = calculate_crc(*source_offset_pairs);
+      json_doc.AddMember("source_list_id", crc, allocator);
+
+      // sources array
+      rapidjson::Value json_sources(rapidjson::kArrayType);
+
+      // put in any sources that have not been put in yet
+      for (hashdb::source_offset_pairs_t::const_iterator it =
                       source_offset_pairs->begin();
                       it != source_offset_pairs->end(); ++it) {
-      if (sources->find(it->first) == sources->end()) {
-        // remember this source to skip it later
-        sources->insert(it->first);
+        if (sources->find(it->first) == sources->end()) {
+          // remember this source to skip it later
+          sources->insert(it->first);
 
-        // provide the complete source information for this source
-        // a json_source object for the json_sources array
-        rapidjson::Value json_source(rapidjson::kObjectType);
-        provide_source_information(*this, it->first, allocator, json_source);
-        json_sources.PushBack(json_source, allocator);
+          // provide the complete source information for this source
+          // a json_source object for the json_sources array
+          rapidjson::Value json_source(rapidjson::kObjectType);
+          provide_source_information(*this, it->first, allocator, json_source);
+          json_sources.PushBack(json_source, allocator);
+        }
       }
-    }
-    json_doc.AddMember("sources", json_sources, allocator);
+      json_doc.AddMember("sources", json_sources, allocator);
 
-    // source_offset_pairs
-    rapidjson::Value json_pairs(rapidjson::kArrayType);
+      // source_offset_pairs
+      rapidjson::Value json_pairs(rapidjson::kArrayType);
 
-    for (hashdb::source_offset_pairs_t::const_iterator it =
-         source_offset_pairs->begin();
-         it != source_offset_pairs->end(); ++it) {
+      for (hashdb::source_offset_pairs_t::const_iterator it =
+           source_offset_pairs->begin();
+           it != source_offset_pairs->end(); ++it) {
 
-      // file hash
-      json_pairs.PushBack(
+        // file hash
+        json_pairs.PushBack(
                    v(hashdb::bin_to_hex(it->first), allocator), allocator);
-      // file offset
-      json_pairs.PushBack(it->second, allocator);
+        // file offset
+        json_pairs.PushBack(it->second, allocator);
+      }
+      json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
     }
-    delete source_offset_pairs;
 
-    json_doc.AddMember("source_offset_pairs", json_pairs, allocator);
+    delete source_offset_pairs;
 
     // return JSON text
     rapidjson::StringBuffer strbuf;

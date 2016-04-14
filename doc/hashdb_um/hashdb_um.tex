@@ -490,7 +490,7 @@ Every time a command is run that changes the content of the database, informatio
 Listing \ref{logfile} shows an example log file containing two entries, one for when the hash database was created, and one for when data was imported into the database.
 
 \lstset{style=customfile}
-\begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing two database activities, label=logfile]
+\begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase import entry, label=logfile]
 # libhashdb version: 3.0.0-alpha-1
 # command: "hashdb create KittyMaterial.hdb"
 # username: bdallen
@@ -926,10 +926,9 @@ Currently, \hdb requires a newer build of \bulk than is available on the \bulk s
 Please see the \hdb Wiki page at \url{https://github.com/NPS-DEEP/hashdb/wiki}
 for information on obtaining a version of \bulk that is compatible with the current version of \hdb.\\
 
-Options that control the hashdb
-scanner are provided to \bulk using "\verb+-S name=value+" parameters.
-Example syntax for the \bulk \hdb scanner is shown in Table \ref{tab:hashdbScanner}.
-Scanner options are described in Table \ref{tab:hashdb_be_usage}.
+Options that control the hashdb scanner are provided to \bulk using "\verb+-S name=value+" parameters.  Example syntax for the \bulk \hdb scanner is shown in Table \ref{tab:hashdbScanner}.  Scanner options are described in Table \ref{tab:hashdb_be_usage}.\\
+
+When importing, the new database of imported hashes is created in the output directory at \verb+hashdb.hdb+.  When scanning, matches are written in the output directory at file \verb+identified_blocks.txt+ with one match per line, as described in \textbf{\autoref{InputOutputSyntax}}) Listing \ref{ScanDataWithPath}.\\
 
 \begin{table}[!ht]
 \centering
@@ -943,7 +942,7 @@ Scanner options are described in Table \ref{tab:hashdb_be_usage}.
 \hline
 \textbf{import image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
 \hline
-\textbf{scan image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb\_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
+\textbf{scan image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
 \hline
 \end{tabular}
 \end{table}
@@ -1124,13 +1123,25 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \end{table}
 
 \subsection{Scan Data}
-The \hdb scan commands and the \verb+find_expanded_hash+ scan API interface emit hash and source information relating to hashes matched while scanning. An example scan match is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
-
-\hdb does not emit source or hash information multiple times.  If sources for a hash have already been shown, the sources field will read \verb+"sources":[]+. If a hash has already been shown, the entire JSON output will simply be \verb+{}+.\\
+When scanning, \hdb prints out information relating to hashes that match.
+The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON block hash data output from a scan match}, label=JSONScanData]
+\begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
+8000	3b6b477d391f73f67c1c01e2141dbb17    {"hash": "3b6b477d391f73f67c1
+c01e2141dbb17", "entropy": 8, "block_label": "W", "source_list_id": 57, "
+sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
+", "nonprobative_count": 2, "name_pairs": ["repository1", "filename1", "r
+epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
+] }
+\end{lstlisting}
+
+\hdb does not emit source or hash information multiple times in JSON output.  If sources for a hash have already been shown, the sources field will read \verb+"sources":[]+. If a hash has already been shown, the entire JSON output will contain the hash without any other fields, for example \verb+{"block_hash":+ \verb+"3b6b477d391f73f67c1c01e2141dbb17}+.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data output from a scan match, with line breaks for readability}, label=JSONScanData]
 {
+  "block_hash": "3b6b477d391f73f67c101e2141dbb17",
   "entropy": 8,
   "block_label": "W",
   "source_list_id": 57,
