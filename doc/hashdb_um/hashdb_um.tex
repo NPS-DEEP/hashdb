@@ -1443,9 +1443,9 @@ Return stamp in JSON format.
 \begin{itemize}
 \item \verb+extern C char* version()+\\
 Return the \hdb version.
-\item \verb+bool create_hashdb(hashdb_dir, settings, &error_message)+\\
+\item \verb+std::string create_hashdb(hashdb_dir, settings, command_string)+\\
 Create a hash database given settings. Return true and "" else false and reason for failure.
-\item \verb+bool read_settings(hashdb_dir, &settings, &error_message)+\\
+\item \verb+std::string read_settings(hashdb_dir, &settings)+\\
 Query settings else false and reason for failure.
 \item \verb+print_enviornment(command_line_string, &ostream)+\\
 Print command and environment to output stream. - zzzz this interface may be removed.
