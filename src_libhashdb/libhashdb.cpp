@@ -54,6 +54,9 @@
 #endif
 #include <unistd.h>     // for print_environment
 #include <iostream>     // for print_environment
+#ifndef WIN32
+  #include <arpa/inet.h>  // for htonl, Win uses Winsock2.h
+#endif
 #include "file_modes.h"
 #include "settings_manager.hpp"
 #include "lmdb_hash_data_manager.hpp"
@@ -66,7 +69,7 @@
 #include "rapidjson.h"
 #include "writer.h"
 #include "document.h"
-#include "crc32.h"      // for find_expanded_hash
+#include "crc32.h"      // for find_expanded_hash_json
 
 // ************************************************************
 // version of the hashdb library
@@ -171,6 +174,27 @@ namespace hashdb {
     delete source_set;
     return crc;
   }
+
+/*
+  // from http://stackoverflow.com/questions/3022552/is-there-any-standard-htonl-like-function-for-64-bits-integers-in-c
+  uint64_t htonll(uint64_t value)
+  {
+      // The answer is 42
+      static const int num = 42;
+
+      // Check the endianness
+      if (*reinterpret_cast<const char*>(&num) == num)
+      {
+          const uint32_t high_part = htonl(static_cast<uint32_t>(value >> 32));
+          const uint32_t low_part = htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+          return (static_cast<uint64_t>(low_part) << 32) | high_part;
+      } else
+      {
+          return value;
+      }
+  }
+*/
 
   // ************************************************************
   // version of the hashdb library
@@ -574,7 +598,7 @@ namespace hashdb {
           lmdb_source_id_manager(0),
           lmdb_source_name_manager(0),
 
-          // for find_expanded_hash
+          // for find_expanded_hash_json
           hashes(new std::set<std::string>),
           sources(new std::set<std::string>) {
 
@@ -601,9 +625,79 @@ namespace hashdb {
     delete lmdb_source_id_manager;
     delete lmdb_source_name_manager;
 
-    // for find_expanded_hash
+    // for find_expanded_hash_json
     delete hashes;
     delete sources;
+  }
+
+  // iteratively read hash_size+blob_size from in_fd and scan hash.
+  // on match, write JSON count + JSON with embedded blob to out_fd.
+  // quit if binary_hash is all 0
+  void scan_manager_t::scan_fd(std::ifstream& in_fd,
+                               std::ofstream& out_fd,
+                               const size_t hash_size,
+                               const size_t blob_size,
+                               const hashdb::scan_fd_mode_t scan_fd_mode) {
+
+    // loop in_fd until EOF or 0x00...
+    char h[hash_size];
+    char b[blob_size];
+    std::string binary_hash ;
+    while (!in_fd.eof()) {
+
+      // read binary_hash
+      in_fd.read(h, hash_size);
+      binary_hash = std::string(h, hash_size);
+
+      // quit if binary_hash is all 0
+      bool done = true;
+      for (size_t i=0; i< hash_size; i++) {
+        if (h[i] != 0) {
+          done = false;
+          break;
+        }
+      }
+
+      if (done) {
+        return;
+      }
+
+      // read blob into text field
+      in_fd.read(b, blob_size);
+      std::string text = hashdb::bin_to_hex(std::string(b, blob_size));
+
+      // scan
+      std::string json_response;
+      switch(scan_fd_mode) {
+
+        // APPROXIMATE_HASH_COUNT
+        case hashdb::scan_fd_mode_t::APPROXIMATE_HASH_COUNT:
+          json_response = find_approximate_hash_count_json(binary_hash, text);
+          break;
+
+        // HASH_COUNT
+        case hashdb::scan_fd_mode_t::HASH_COUNT:
+          json_response = find_hash_count_json(binary_hash, text);
+          break;
+
+        // EXPANDED_HASH
+        case hashdb::scan_fd_mode_t::EXPANDED_HASH:
+          json_response = find_expanded_hash_json(binary_hash, text);
+          break;
+
+        default: assert(0); std::exit(1);
+      }
+
+      if (json_response.size() > 0) {
+        // match so print JSON size in network byte order followed by JSON
+        uint64_t json_size = json_response.size();
+//zz        uint64_t network_json_size = htonll(json_size);
+        uint64_t network_json_size = json_size;
+        out_fd.write(reinterpret_cast<const char*>(network_json_size),
+                     sizeof(uint64_t));
+        out_fd.write(json_response.c_str(), json_response.size());
+      }
+    }
   }
 
   // may return [] if cached else "" if no hash.
@@ -611,6 +705,7 @@ namespace hashdb {
   // Example abbreviated syntax:
   // {
   //   "block_hash": 3b6b477d391f73f67c1c01e2141dbb17",
+  //   "user_text": "text",
   //   "entropy": 8,
   //   "block_label": "W",
   //   "source_list_id": 57,
@@ -623,8 +718,9 @@ namespace hashdb {
   //   }],
   //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
   // }
-  std::string scan_manager_t::find_expanded_hash(
-                                        const std::string& binary_hash) {
+  std::string scan_manager_t::find_expanded_hash_json(
+                                        const std::string& binary_hash,
+                                        const std::string& user_text) {
 
     // fields to hold the scan
     uint64_t entropy;
@@ -650,6 +746,9 @@ namespace hashdb {
     // block_hash
     std::string block_hash = hashdb::bin_to_hex(binary_hash);
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
+
+    // user text
+    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
 
     // report hash if this is the first time for the hash
     if (hashes->find(binary_hash) == hashes->end()) {
@@ -769,8 +868,8 @@ namespace hashdb {
     }
   }
 
-  // find hash, return result as JSON string
-  std::string scan_manager_t::find_hash_json(
+  // export hash, return result as JSON string
+  std::string scan_manager_t::export_hash_json(
                const std::string& binary_hash) const {
 
     // hash fields
@@ -832,9 +931,82 @@ namespace hashdb {
     return lmdb_hash_data_manager->find_count(binary_hash);
   }
 
+  // find hash count JSON
+  std::string scan_manager_t::find_hash_count_json(
+                                    const std::string& binary_hash,
+                                    const std::string& user_text) const {
+
+    // get count
+    size_t count = find_hash_count(binary_hash);
+
+    // no match
+    if (count == 0) {
+      return "";
+    }
+
+    // return JSON with count and user_text
+    // prepare JSON
+    rapidjson::Document json_doc;
+    rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+    json_doc.SetObject();
+
+    // block hash
+    std::string block_hash = hashdb::bin_to_hex(binary_hash);
+    json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
+
+    // user text
+    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
+
+    // count
+    json_doc.AddMember("count", count, allocator);
+
+    // write JSON text
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    json_doc.Accept(writer);
+    return strbuf.GetString();
+  }
+
   size_t scan_manager_t::find_approximate_hash_count(
                                     const std::string& binary_hash) const {
     return lmdb_hash_manager->find(binary_hash);
+  }
+
+  // find approximate hash count JSON
+  std::string scan_manager_t::find_approximate_hash_count_json(
+                                    const std::string& binary_hash,
+                                    const std::string& user_text) const {
+
+    // get approximate count
+    size_t approximate_count =
+           find_approximate_hash_count(binary_hash);
+
+    // no match
+    if (approximate_count == 0) {
+      return "";
+    }
+
+    // return JSON with approximate count and user_text
+    // prepare JSON
+    rapidjson::Document json_doc;
+    rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
+    json_doc.SetObject();
+
+    // block hash
+    std::string block_hash = hashdb::bin_to_hex(binary_hash);
+    json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
+
+    // user text
+    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
+
+    // approximate count
+    json_doc.AddMember("approximate_count", approximate_count, allocator);
+
+    // write JSON text
+    rapidjson::StringBuffer strbuf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+    json_doc.Accept(writer);
+    return strbuf.GetString();
   }
 
   bool scan_manager_t::find_source_data(
@@ -885,8 +1057,8 @@ namespace hashdb {
     }
   }
 
-  // find source, return result as JSON string
-  std::string scan_manager_t::find_source_json(
+  // export source, return result as JSON string
+  std::string scan_manager_t::export_source_json(
                                const std::string& file_binary_hash) const {
 
     // source fields

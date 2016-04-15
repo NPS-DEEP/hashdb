@@ -1033,23 +1033,24 @@ fac7051447c781b69125994c5d125637    89a170b6b9a948d21d1d6ee1e7cdc467    2
 fac7051447c781b69125994c5d125637    f58a09656658c6b41e244b4a6091592c    3
 \end{lstlisting}
 
-\subsection{Scan List File}
+\subsection{Scan List Input File}
 The \verb+scan_list+ command scans a list of hashes for matches.  Valid lines of input may be:
 \begin{itemize}
 \item Comment lines starting with \verb+#+.  Comment lines are forwarded to output.
 \item Hash lines to scan against, where each line consists of a Forensic Path followed by a tab followed by the hash hexcode.
 \end{itemize}
-An example scan list file is shown in Listing \ref{ScanListFile}.\\
+An example scan list input file is shown in Listing \ref{ScanListFile}.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[caption={Example scan list file}, label=ScanListFile]
-# Scan list file
+\begin{lstlisting}[caption={Example scan list input file}, label=ScanListFile]
+# Scan list input file
 # <Forensic Path> <tab> <block hash hexdigest>
 0	3b6b477d391f73f67c1c01e2141dbb17
 512	89a170b6b9a948d21d1d6ee1e7cdc467
 1024	f58a09656658c6b41e244b4a6091592c
 \end{lstlisting}
 
+Hash match output is described in \textbf{\autoref{ScanData}}.
 \subsection{Import/Export Syntax}
 The import and export commands and API interfaces communicate source data and block hash data using JSON syntax.\\
 
@@ -1123,8 +1124,9 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \end{table}
 
 \subsection{Scan Data}
+\label{ScanData}
 When scanning, \hdb prints out information relating to hashes that match.
-The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
+The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
@@ -1139,7 +1141,7 @@ epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
 \hdb does not emit source or hash information multiple times in JSON output.  If sources for a hash have already been shown, the sources field will read \verb+"sources":[]+. If a hash has already been shown, the entire JSON output will contain the hash without any other fields, for example \verb+{"block_hash":+ \verb+"3b6b477d391f73f67c1c01e2141dbb17}+.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON block hash data output from a scan match, with line breaks for readability}, label=JSONScanData]
+\begin{lstlisting}[float, caption={Example JSON block hash data output from a scan match, with line breaks added for readability}, label=JSONScanData]
 {
   "block_hash": "3b6b477d391f73f67c101e2141dbb17",
   "entropy": 8,

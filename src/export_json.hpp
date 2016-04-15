@@ -79,7 +79,7 @@ class export_json_t {
     while (file_binary_hash.size() != 0) {
 
       // get source data
-      std::string json_source_string = manager.find_source_json(
+      std::string json_source_string = manager.export_source_json(
                                                        file_binary_hash);
 
       // program error
@@ -105,7 +105,7 @@ class export_json_t {
     while (binary_hash.size() != 0) {
 
       // get hash data
-      std::string json_hash_string = manager.find_hash_json(binary_hash);
+      std::string json_hash_string = manager.export_hash_json(binary_hash);
 
       // program error
       if (json_hash_string.size() == 0) {

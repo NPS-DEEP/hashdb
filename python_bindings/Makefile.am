@@ -27,10 +27,13 @@ BUILT_SOURCES = hashdb_wrap.cpp
 
 # recipe for hashdb_wrap.c
 # note that SWIG creates hashdb_wrap.c and hashdb.py
+# SWIG needs to find hashdb.hpp to prepare Python interfaces
 hashdb_wrap.cpp: hashdb.i \
-               ../src_libhashdb/hashdb.hpp \
+               ${top_srcdir}/src_libhashdb/hashdb.hpp \
                ../src_libhashdb/libhashdb.la
+	ln -s ${top_srcdir}/src_libhashdb/hashdb.hpp .
 	$(SWIG) $(AX_SWIG_PYTHON_OPT) -o $@ $<
+	rm hashdb.hpp
 
 # install hashdb.py
 python_PYTHON = $(builddir)/hashdb.py
@@ -57,6 +60,6 @@ testfile = test_interfaces.py
 EXTRA_DIST = $(testfile)
 TESTS = $(testfile)
 clean-local:
-	rm hashdb.py hashdb_wrap.cpp
+	rm hashdb.py hashdb_wrap.cpp hashdb.hpp
 	rm -rf temp_*
 

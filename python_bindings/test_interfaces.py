@@ -49,17 +49,19 @@ str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source
 
 # scan
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
-expanded_hash = scan_manager.find_expanded_hash("hhhhhhhh")
-str_equals(expanded_hash, '{"entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}')
+expanded_hash = scan_manager.find_expanded_hash_json("hhhhhhhh", "fp1")
+str_equals(expanded_hash,
+'{"block_hash":"6868686868686868","user_text":"fp1","entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}'
+)
 
-json_hash_string = scan_manager.find_hash_json("hhhhhhhh")
+json_hash_string = scan_manager.export_hash_json("hhhhhhhh")
 str_equals(json_hash_string, '{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
 
 int_equals(scan_manager.find_approximate_hash_count("hhhhhhhh"), 1)
 
 int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
 
-str_equals(scan_manager.find_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}')
+str_equals(scan_manager.export_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}')
 
 first_binary_hash = scan_manager.first_hash()
 str_equals(hashdb.bin_to_hex(first_binary_hash), "6868686868686868")

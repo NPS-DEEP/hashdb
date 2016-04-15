@@ -20,6 +20,11 @@
 /**
  * \file
  * Header file for the hashdb library.
+ *
+ * NOTE: This file includes SWIG preprocessor directives used for
+ * building Python bindings.  Specifically:
+ *   SWIG is not defined when building C++.
+ *   SWIG is defined when building Python bindings.
  */
 
 #ifndef HASHDB_HPP
@@ -87,7 +92,9 @@ namespace hashdb {
    *     value in the optimized hash storage.
    */
   struct settings_t {
+#ifndef SWIG
     static const uint32_t CURRENT_SETTINGS_VERSION = 3;
+#endif
     uint32_t settings_version;
     uint32_t byte_alignment;
     uint32_t block_size;
@@ -133,7 +140,12 @@ namespace hashdb {
    *   True and "" if settings were retrieved, false and reason if not.
    */
   std::string read_settings(const std::string& hashdb_dir,
-                            hashdb::settings_t& settings);
+#ifdef SWIG
+                            hashdb::settings_t& OUTPUT
+#else
+                            hashdb::settings_t& settings
+#endif
+                           );
 
   /**
    * Print environment information to the stream.  Specifically, print
@@ -175,14 +187,10 @@ namespace hashdb {
     hashdb::lmdb_changes_t* changes;
 
     public:
+#ifndef SWIG
     // do not allow copy or assignment
-#ifdef HAVE_CXX11
     import_manager_t(const import_manager_t&) = delete;
     import_manager_t& operator=(const import_manager_t&) = delete;
-#else
-    import_manager_t(const import_manager_t&) __attribute__ ((noreturn));
-    import_manager_t& operator=(const import_manager_t&)
-                                              __attribute__ ((noreturn));
 #endif
 
     /**
@@ -289,6 +297,12 @@ namespace hashdb {
   // ************************************************************
   // scan
   // ************************************************************
+
+  /**
+   * The scan_fd interface requires one of these modes.
+   */
+  enum scan_fd_mode_t {EXPANDED_HASH, HASH_COUNT, APPROXIMATE_HASH_COUNT};
+ 
   /**
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
    */
@@ -301,19 +315,15 @@ namespace hashdb {
     lmdb_source_id_manager_t* lmdb_source_id_manager;
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
-    // support find_expanded_hash
+    // support find_expanded_hash_json
     std::set<std::string>* hashes;
     std::set<std::string>* sources;
 
     public:
+#ifndef SWIG
     // do not allow copy or assignment
-#ifdef HAVE_CXX11
     scan_manager_t(const scan_manager_t&) = delete;
     scan_manager_t& operator=(const scan_manager_t&) = delete;
-#else
-    scan_manager_t(const scan_manager_t&) __attribute__ ((noreturn));
-    scan_manager_t& operator=(const scan_manager_t&)
-                                          __attribute__ ((noreturn));
 #endif
 
     /**
@@ -330,6 +340,30 @@ namespace hashdb {
     ~scan_manager_t();
 
     /**
+     * Iteratively read hash_size bytes + blob_size bytes from in_fd
+     * and scan hash.  On match, write JSON count + JSON with embedded
+     * blob to out_fd.  Quit if binary_hash is all 0.
+     * When a match is positive, JSON text is written to out_fd.
+     * JSON text depends on mode:
+     *   For mode EXPANDED_HASH, see find_expanded_hash_json.
+     *   For mode HASH_COUNT, see find_hash_count_json.
+     *   For mode APPROXIMATE_HASH_COUNT, see find_approximate_hash_count_json.
+     *
+     * Parameters:
+     *   in_fd - The file descriptor of the input file.
+     *   out_fd - The file descriptor of the output file.
+     *   hash_size - The size, in bytes, of the binary hash.
+     *   blob_size - The size, in bytes, of the binary blob.
+     *   scan_df_mode - The scan mode.  JSON content returned depends on
+     *                  this mode.
+     */
+    void scan_fd(std::ifstream& in_fd,
+                 std::ofstream& out_fd,
+                 const size_t hash_size,
+                 const size_t blob_size,
+                 const hashdb::scan_fd_mode_t scan_fd_mode);
+
+    /**
      * Scan for a hash and return expanded source information associated
      * with it.
      *
@@ -342,10 +376,12 @@ namespace hashdb {
      *   expanded_text - Text about matched sources, or blank if text
      *     for the scanned hash has been returned in a previous scan.
      *
-     *     Text is in JSON format.  Example syntax:
+     * Returns:
+     *   JSON text if source is present, false and "" if not.  Example syntax:
      * 
      * {
      *   "entropy": 8,
+     *   "user_text": "text",
      *   "block_label": "W",
      *   "source_list_id": 57,
      *   "sources": [{
@@ -357,12 +393,11 @@ namespace hashdb {
      *   }],
      *   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
      * }
-     *
-     * Returns:
-     *   True if the hash is present, false if not.
      */
-    std::string find_expanded_hash(const std::string& binary_hash);
+    std::string find_expanded_hash_json(const std::string& binary_hash,
+                                        const std::string& user_text);
 
+#ifndef SWIG
     /**
      * Find hash, return pairs in object.
      *
@@ -381,32 +416,34 @@ namespace hashdb {
                    uint64_t& entropy,
                    std::string& block_label,
                    source_offset_pairs_t& source_offset_pairs) const;
+#endif
 
     /**
-     * Find hash, return JSON string else "" if not there.
+     * Return JSON block_hash export string else "" if not there.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
-     *   json_hash_string - Hash text in JSON format.  Example syntax:
-     *
-     *    {
-     *      "block_hash": "a7df...",
-     *      "entropy": 8,
-     *      "block_label": "W",
-     *      "source_offset_pairs": ["b9e7...", 4096]
-     *    }
      *
      * Returns:
-     *   JSON text if hash is present, false and "" if not.
+     *   JSON text if hash is present, false and "" if not.  Example syntax:
+     *
+     *     {
+     *       "block_hash": "a7df...",
+     *       "entropy": 8,
+     *       "block_label": "W",
+     *       "source_offset_pairs": ["b9e7...", 4096]
+     *     }
      */
-    std::string find_hash_json(const std::string& binary_hash) const;
+    std::string export_hash_json(const std::string& binary_hash) const;
 
     /**
-     * Find source, return JSON string else "" if not there.
+     * Return JSON file_hash export string else "" if not there.
      *
      * Parameters:
      *   file_binary_hash - The file hash in binary form.
-     *   json_source_string - Source text in JSON format.  Example syntax:
+     *
+     * Returns:
+     *   JSON text if source is present, false and "" if not.  Example syntax:
      *
      *     {
      *       "file_hash": "b9e7...",
@@ -415,11 +452,8 @@ namespace hashdb {
      *       "nonprobative_count": 4,
      *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
      *       }
-     *
-     * Returns:
-     *   JSON text if source is present, false and "" if not.
      */
-    std::string find_source_json(const std::string& json_source_string) const;
+    std::string export_source_json(const std::string& file_binary_hash) const;
 
     /**
      * Find hash count.  Faster than find_hash.  Accesses the hash
@@ -434,6 +468,24 @@ namespace hashdb {
     size_t find_hash_count(const std::string& binary_hash) const;
 
     /**
+     * Find hash count, return JSON string else "" if not there.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
+     *   JSON text if hash is present, false and "" if not.  Example syntax:
+     *
+     *     {
+     *       "block_hash": "a7df...",
+     *       "user_text": "text",
+     *       "count": "1"
+     *     }
+     */
+    std::string find_hash_count_json(const std::string& binary_hash,
+                                     const std::string& user_text) const;
+
+    /**
      * Find approximate hash count.  Faster than find_hash, but can be wrong.
      * Accesses the hash store.
      *
@@ -446,6 +498,25 @@ namespace hashdb {
     size_t find_approximate_hash_count(const std::string& binary_hash) const;
 
     /**
+     * Find approximate hash count, return JSON string else "" if not there.
+     *
+     * Parameters:
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
+     *   JSON text if hash is present, false and "" if not.  Example syntax:
+     *
+     *     {
+     *       "block_hash": "a7df...",
+     *       "user_text": "text",
+     *       "approximate_count": "1"
+     *     }
+     */
+    std::string find_approximate_hash_count_json(
+                                     const std::string& binary_hash,
+                                     const std::string& user_text) const;
+
+    /**
      * Find source data for the given source ID, false on no source ID.
      *
      * Parameters:
@@ -454,12 +525,16 @@ namespace hashdb {
      *   file_type - A string representing the type of the file.
      *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
+     *
+     * Returns:
+     *   True if file binary hash is present.
      */
     bool find_source_data(const std::string& file_binary_hash,
                           uint64_t& filesize,
                           std::string& file_type,
                           uint64_t& nonprobative_count) const;
 
+#ifndef SWIG
     /**
      * Find source names for the given source ID, false on no source ID.
      *
@@ -467,9 +542,13 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   source_names - Set of pairs of repository_name, filename
      *     attributed to this source ID.
+     *
+     * Returns:
+     *   True if file binary hash is present.
      */
     bool find_source_names(const std::string& file_binary_hash,
                            source_names_t& source_names) const;
+#endif
 
     /**
      * Return the first block hash in the database.
@@ -508,7 +587,7 @@ namespace hashdb {
      *   last_file_binary_hash - The previous source file hash in binary form.
      *
      * Returns:
-     *   file_binary_hash if a next source is available else "" if at end.
+     *   next file_binary_hash if a next source is available else "" if at end.
      */
     std::string next_source(const std::string& file_binary_hash) const;
 
@@ -552,13 +631,10 @@ namespace hashdb {
      */
     ~timestamp_t();
 
+#ifndef SWIG
     // do not allow copy or assignment
-#ifdef HAVE_CXX11
     timestamp_t(const timestamp_t&) = delete;
     timestamp_t& operator=(const timestamp_t&) = delete;
-#else
-    timestamp_t(const timestamp_t&) __attribute__ ((noreturn));
-    timestamp_t& operator=(const timestamp_t&) __attribute__ ((noreturn));
 #endif
 
     /**
