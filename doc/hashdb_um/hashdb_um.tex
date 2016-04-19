@@ -339,8 +339,7 @@ Once the database is populated, \hdb can export content from the database in JSO
 
 \subsection{Block Hash}
 \label{BlockHash}
-\hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes in step increments along a hash interval. Blocks hashed at step-sized intervals are illustrated in Figure \ref{fig:hashInterval}.  In the default configuration, the block size and step size are 512 bytes, see Figure \ref{fig:defaultHashInterval}.\\
-
+\hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes in step increments along a hash interval. Blocks hashed at step-sized intervals are illustrated in Figure \ref{fig:hashInterval}.\\
 
 \begin{figure}
 	\center
@@ -352,11 +351,11 @@ Once the database is populated, \hdb can export content from the database in JSO
 \begin{figure}
 	\center
 	\includegraphics[scale=.45]{drawings/default_hash_interval}
-	\caption{By default, hashes are calculated from 512 byte blocks of data along 512 byte intervals}
+	\caption{By default, hashes are calculated from 512 byte blocks of data along 512 byte intervals and the database uses a byte alignment of 512}
 	\label{fig:defaultHashInterval}
 \end{figure}
 
-As an optimization, \hdb provides a byte alignment setting. Allow \hdb to select the default unless you would like the step size to be smaller than the block size. Byte alignment is described in \textbf{\autoref{Settings}}.
+As an optimization, \hdb provides a byte alignment setting. The byte alignment value must be divisible by the step size. The default configuration with 512 for step size, block size, and byte alignment is shown in Figure \ref{fig:defaultHashInterval}. Byte alignment is described in \textbf{\autoref{Settings}}.\\
 
 \subsection{Blacklist Data}
 Blacklist data is the data we scan against to determine whether forensic data
@@ -534,7 +533,7 @@ Function and performance of a \hdb database is set using configurable settings:\
 The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
 
 \item \textbf{Byte alignment}\\
-Byte alignment is an optimization parameter created to help reduce the size of the database. Use the block size unless you want to hash blocks along unaligned boundaries. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to. The default is 512.\\
+Byte alignment is an optimization parameter created to help reduce the size of the database. To be optimal, this value should be large, but it must be divisible by the step size used when importing hashes. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to, specifically, 512.\\
 
 \item \textbf{Max source, offset pairs}\\
 The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
@@ -1352,14 +1351,14 @@ Support functions provide miscellaneous support and are not part of a class.
 \begin{itemize}
 \item \verb+version = version()+\\
 Return the \hdb version.
-\item \verb+error_message = create_hashdb(hashdb_dir, settings)+\\
+\item \verb+error_message = create_hashdb(hashdb_dir, settings, command_string)+\\
 Create a hash database given settings. Return "" else reason for failure.
 \item \verb+error_message = read_settings(hashdb_dir, &settings)+\\
 Query settings else false and reason for failure.
 \item \verb+binary_string = hex_to_bin(hex_string)+
 \item \verb+hex_string = bin_to_hex(binary_string)+
-\item \verb+import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy,+\\
-\verb+max_entropy, repository_name, import_path)+\\
+\item \verb+ingest(hashdb_dir, whitelist_dir, min_entropy,+\\
+\verb+max_entropy, repository_name, import_path, command_string)+\\
 Import from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
 \end{itemize}
 
@@ -1451,8 +1450,8 @@ Create a hash database given settings. Return true and "" else false and reason 
 Query settings else false and reason for failure.
 \item \verb+print_enviornment(command_line_string, &ostream)+\\
 Print command and environment to output stream. - zzzz this interface may be removed.
-\item \verb+import_recursive_dir(hashdb_dir, whitelist_dir, min_entropy,+\\
-\verb+max_entropy, repository_name, import_path)+\\
+\item \verb+ingest(hashdb_dir, whitelist_dir, min_entropy,+\\
+\verb+max_entropy, repository_name, import_path, command_string)+\\
 Import from path to \hdb.
 \end{itemize}
 
