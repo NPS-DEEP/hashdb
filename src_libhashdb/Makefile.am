@@ -83,9 +83,12 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 LIBHASHDB_INCS = \
 	crc32.h \
+	dig.cpp \
+	dig.h \
 	file_modes.h \
 	hashdb.hpp \
 	hex_helper.cpp \
+	ingest.cpp \
 	libhashdb.cpp \
 	liblmdb.la \
 	lmdb_changes.hpp \

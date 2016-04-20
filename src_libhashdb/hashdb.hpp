@@ -165,6 +165,26 @@ namespace hashdb {
    */
   std::string bin_to_hex(const std::string& binary_hash);
 
+  /**
+   * Calculate and ingest hashes from files recursively from a source
+   * path.  Files with EWF extensions (.E01 files) will be ingested as
+   * media images.
+   *
+   * Parameters:
+   *   hashdb_dir - Path to the hashdb data store to import into.
+   *   ingest_path - Path to a source file or directory to recursively
+   *     ingest block hashes from.  May include E01 files.
+   *   repository_name - A repository name to attribute the sources to.
+   *   whitelist_dir - Path to a whitelist hashdb data store.  Hashes
+   *     matching these will not be ingested.
+   *   command_string - String to put into the new hashdb log.
+   */
+  std::string ingest(const std::string& hashdb_dir,
+                     const std::string& ingest_path,
+                     const std::string& repository_name,
+                     const std::string& whitelist_dir,
+                     const std::string& command_string);
+
   // ************************************************************
   // import
   // ************************************************************
@@ -251,7 +271,7 @@ namespace hashdb {
                      const std::string& block_label);
 
     /**
-     * Insert hash or source information from JSON record.
+     * Import hash or source information from a JSON record.
      *
      * Parameters:
      *   json_string - Hash or source text in JSON format.
@@ -276,7 +296,7 @@ namespace hashdb {
      * Returns:
      *   "" else error message if JSON is invalid.
      */
-    std::string insert_json(const std::string& json_string);
+    std::string import_json(const std::string& json_string);
 
     /**
      * Return the sizes of LMDB databases in the data store.
@@ -373,15 +393,13 @@ namespace hashdb {
      *
      * Parameters:
      *   binary_hash - The block hash in binary form to scan for.
-     *   expanded_text - Text about matched sources, or blank if text
-     *     for the scanned hash has been returned in a previous scan.
      *
      * Returns:
-     *   JSON text if source is present, false and "" if not.  Example syntax:
+     *   JSON expanded hash text if source is present, false and ""
+     *   if not.  Example syntax:
      * 
      * {
      *   "entropy": 8,
-     *   "user_text": "text",
      *   "block_label": "W",
      *   "source_list_id": 57,
      *   "sources": [{
@@ -394,8 +412,7 @@ namespace hashdb {
      *   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
      * }
      */
-    std::string find_expanded_hash_json(const std::string& binary_hash,
-                                        const std::string& user_text);
+    std::string find_expanded_hash_json(const std::string& binary_hash);
 
 #ifndef SWIG
     /**
@@ -419,13 +436,14 @@ namespace hashdb {
 #endif
 
     /**
-     * Return JSON block_hash export string else "" if not there.
+     * JSON block_hash export text else "" if hash is not there.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
      *
      * Returns:
-     *   JSON text if hash is present, false and "" if not.  Example syntax:
+     *   JSON block_hash export string if hash is present, false and ""
+     *   if not.  Example syntax:
      *
      *     {
      *       "block_hash": "a7df...",
@@ -437,13 +455,14 @@ namespace hashdb {
     std::string export_hash_json(const std::string& binary_hash) const;
 
     /**
-     * Return JSON file_hash export string else "" if not there.
+     * JSON file_hash export text else "" if file hash is not there.
      *
      * Parameters:
      *   file_binary_hash - The file hash in binary form.
      *
      * Returns:
-     *   JSON text if source is present, false and "" if not.  Example syntax:
+     *   JSON file hash export text if file hash is present, false
+     *   and "" if not.  Example syntax:
      *
      *     {
      *       "file_hash": "b9e7...",
@@ -478,12 +497,10 @@ namespace hashdb {
      *
      *     {
      *       "block_hash": "a7df...",
-     *       "user_text": "text",
      *       "count": "1"
      *     }
      */
-    std::string find_hash_count_json(const std::string& binary_hash,
-                                     const std::string& user_text) const;
+    std::string find_hash_count_json(const std::string& binary_hash) const;
 
     /**
      * Find approximate hash count.  Faster than find_hash, but can be wrong.
@@ -498,7 +515,7 @@ namespace hashdb {
     size_t find_approximate_hash_count(const std::string& binary_hash) const;
 
     /**
-     * Find approximate hash count, return JSON string else "" if not there.
+     * Find approximate hash count, return JSON text else "" if not there.
      *
      * Parameters:
      *   binary_hash - The block hash in binary form.
@@ -508,13 +525,11 @@ namespace hashdb {
      *
      *     {
      *       "block_hash": "a7df...",
-     *       "user_text": "text",
      *       "approximate_count": "1"
      *     }
      */
     std::string find_approximate_hash_count_json(
-                                     const std::string& binary_hash,
-                                     const std::string& user_text) const;
+                                     const std::string& binary_hash) const;
 
     /**
      * Find source data for the given source ID, false on no source ID.

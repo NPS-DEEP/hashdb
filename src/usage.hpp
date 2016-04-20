@@ -71,7 +71,7 @@ void usage(const std::string& repository_name,
   << "    <hashdb>   the file path to the new hash database to create\n"
   << "\n"
   << "Import/Export:\n"
-  << "  import_dir [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>\n"
+  << "  ingest [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>\n"
   << "         <import directory>\n"
   << "    Import hashes recursively from <import directory> into hash database\n"
   << "      <hashdb>.\n"

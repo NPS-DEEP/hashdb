@@ -1293,8 +1293,8 @@ To import hash and source data, open an import manager, for example\\
 \verb+nonprobative_count)+
 \item \verb+manager.insert_hash(binary_hash, file_binary_hash, file_offset,+\\
 \verb+entropy, block_label)+
-\item \verb+error_message = manager.insert_json(json_string)+\\
-Insert hash or source. Return "" on success.
+\item \verb+error_message = manager.import_json(json_string)+\\
+Import hash or source. Return "" on success.
 \item \verb+ data_sizes = manager.size()+
 \end{itemize}
 
@@ -1304,9 +1304,8 @@ To scan for hashes, open a scan manager, for example\\
 
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
-\item \verb+expanded_text = scan_manager.find_expanded_hash(binary_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will just be \verb+{}+.
-\item \verb+json_hash_string = scan_manager.find_hash_json(binary_hash)+
+\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field.
 \item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
 This is the fastest scan function. It returns an approximate source, offset pair count for the hash and can be wrong.
 \item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
@@ -1375,8 +1374,8 @@ Import hashes. Interfaces use lock for DB safety. The destructor appends changes
 Change if different.
 \item \verb+void insert_hash(binary_hash, file_binary_hash, file_offset, entropy, block_label)+\\
 Change if different
-\item \verb+std::string insert_json(json_string)+\\
-Insert hash or source, return \verb+error_message+ or "" for no error.
+\item \verb+std::string import_json(json_string)+\\
+Import hash or source, return \verb+error_message+ or "" for no error.
 \item \verb+std::string size()+\\
 Return number of entries in LMDB databases.
 \item \verb+size_t size_hashes()+\\
@@ -1393,9 +1392,9 @@ Scan for hashes. Provide read-only access to hash and source data stores.
 \begin{itemize}
 \item \verb+scan_manager_t(hashdb_dir)+
 \item \verb+std::string find_expanded_hash(binary_hash)+\\
-Find and return JSON text else "" on no match.
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field.
 \item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
-\item \verb+std::string find_hash_json(binary_hash)+\\
+\item \verb+std::string find_expanded_hash_json(binary_hash)+\\
 Return \verb+json_hash_string+ else "" on no match.
 \item \verb+size_t find_approximate_hash_count(binary_hash)+\\
 Return approximate source, offset pair count for the hash, and can be wrong.

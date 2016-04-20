@@ -349,12 +349,12 @@ void run_command() {
     commands::create(args[0], settings, cmd);
 
   // import
-  } else if (command == "import_dir") {
+  } else if (command == "ingest") {
     check_params("rw", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::import_dir(args[0], args[1], repository_name, whitelist_dir, cmd);
+    commands::ingest(args[0], args[1], repository_name, whitelist_dir, cmd);
 
   } else if (command == "import_tab") {
     check_params("rw", 2);

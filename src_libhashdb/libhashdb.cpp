@@ -408,8 +408,8 @@ namespace hashdb {
     }
   }
 
-  // insert JSON hash or source, return "" or error
-  std::string import_manager_t::insert_json(
+  // import JSON hash or source, return "" or error
+  std::string import_manager_t::import_json(
                           const std::string& json_string) {
 
     // open input as a JSON DOM document
@@ -662,9 +662,9 @@ namespace hashdb {
         return;
       }
 
-      // read blob into text field
+      // read blob into hexadecimal blob field
       in_fd.read(b, blob_size);
-      std::string text = hashdb::bin_to_hex(std::string(b, blob_size));
+      std::string hex_blob = hashdb::bin_to_hex(std::string(b, blob_size));
 
       // scan
       std::string json_response;
@@ -672,29 +672,31 @@ namespace hashdb {
 
         // APPROXIMATE_HASH_COUNT
         case hashdb::scan_fd_mode_t::APPROXIMATE_HASH_COUNT:
-          json_response = find_approximate_hash_count_json(binary_hash, text);
+          json_response = find_approximate_hash_count_json(binary_hash);
           break;
 
         // HASH_COUNT
         case hashdb::scan_fd_mode_t::HASH_COUNT:
-          json_response = find_hash_count_json(binary_hash, text);
+          json_response = find_hash_count_json(binary_hash);
           break;
 
         // EXPANDED_HASH
         case hashdb::scan_fd_mode_t::EXPANDED_HASH:
-          json_response = find_expanded_hash_json(binary_hash, text);
+          json_response = find_expanded_hash_json(binary_hash);
           break;
 
         default: assert(0); std::exit(1);
       }
 
       if (json_response.size() > 0) {
-        // match so print JSON size in network byte order followed by JSON
-        uint64_t json_size = json_response.size();
-//zz        uint64_t network_json_size = htonll(json_size);
-        uint64_t network_json_size = json_size;
-        out_fd.write(reinterpret_cast<const char*>(network_json_size),
+        // match so print output size in network byte order followed
+        // by hex blob text and JSON text
+        uint64_t output_size = json_response.size() + blob_size * 2;
+//zz        uint64_t network_output_size = htonll(output_size);
+        uint64_t network_output_size = output_size;
+        out_fd.write(reinterpret_cast<const char*>(network_output_size),
                      sizeof(uint64_t));
+        out_fd.write(hex_blob.c_str(), blob_size * 2);
         out_fd.write(json_response.c_str(), json_response.size());
       }
     }
@@ -705,7 +707,6 @@ namespace hashdb {
   // Example abbreviated syntax:
   // {
   //   "block_hash": 3b6b477d391f73f67c1c01e2141dbb17",
-  //   "user_text": "text",
   //   "entropy": 8,
   //   "block_label": "W",
   //   "source_list_id": 57,
@@ -719,8 +720,7 @@ namespace hashdb {
   //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
   // }
   std::string scan_manager_t::find_expanded_hash_json(
-                                        const std::string& binary_hash,
-                                        const std::string& user_text) {
+                                        const std::string& binary_hash) {
 
     // fields to hold the scan
     uint64_t entropy;
@@ -746,9 +746,6 @@ namespace hashdb {
     // block_hash
     std::string block_hash = hashdb::bin_to_hex(binary_hash);
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
-
-    // user text
-    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
 
     // report hash if this is the first time for the hash
     if (hashes->find(binary_hash) == hashes->end()) {
@@ -933,8 +930,7 @@ namespace hashdb {
 
   // find hash count JSON
   std::string scan_manager_t::find_hash_count_json(
-                                    const std::string& binary_hash,
-                                    const std::string& user_text) const {
+                                    const std::string& binary_hash) const {
 
     // get count
     size_t count = find_hash_count(binary_hash);
@@ -944,7 +940,7 @@ namespace hashdb {
       return "";
     }
 
-    // return JSON with count and user_text
+    // return JSON with count
     // prepare JSON
     rapidjson::Document json_doc;
     rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
@@ -953,9 +949,6 @@ namespace hashdb {
     // block hash
     std::string block_hash = hashdb::bin_to_hex(binary_hash);
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
-
-    // user text
-    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
 
     // count
     json_doc.AddMember("count", count, allocator);
@@ -974,8 +967,7 @@ namespace hashdb {
 
   // find approximate hash count JSON
   std::string scan_manager_t::find_approximate_hash_count_json(
-                                    const std::string& binary_hash,
-                                    const std::string& user_text) const {
+                                    const std::string& binary_hash) const {
 
     // get approximate count
     size_t approximate_count =
@@ -986,7 +978,7 @@ namespace hashdb {
       return "";
     }
 
-    // return JSON with approximate count and user_text
+    // return JSON with approximate count
     // prepare JSON
     rapidjson::Document json_doc;
     rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
@@ -995,9 +987,6 @@ namespace hashdb {
     // block hash
     std::string block_hash = hashdb::bin_to_hex(binary_hash);
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
-
-    // user text
-    json_doc.AddMember("user_text", v(user_text, allocator), allocator);
 
     // approximate count
     json_doc.AddMember("approximate_count", approximate_count, allocator);

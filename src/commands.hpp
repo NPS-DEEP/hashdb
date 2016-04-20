@@ -132,13 +132,16 @@ namespace commands {
   // import/export
   // ************************************************************
   // import recursively from path
-  static void import_dir(const std::string& hashdb_dir,
-                         const std::string& import_dir,
-                         const std::string& repository_name,
-                         const std::string& whitelist_dir,
-                         const std::string& cmd) {
-    // import_dir.hpp
+  static void ingest(const std::string& hashdb_dir,
+                     const std::string& ingest_path,
+                     const std::string& repository_name,
+                     const std::string& whitelist_dir,
+                     const std::string& cmd) {
+
+    // ingest
     std::cout << "TBD\n";
+    hashdb::ingest(hashdb_dir, ingest_path, repository_name,
+                   whitelist_dir, cmd);
   }
 
   // import_tab
@@ -561,7 +564,7 @@ namespace commands {
 
     // scan
     std::string expanded_text = scan_manager.find_expanded_hash_json(
-                                                          binary_hash, "");
+                                                          binary_hash);
 
     if (expanded_text.size() != 0) {
       std::cout << expanded_text << std::endl;
@@ -746,7 +749,7 @@ namespace commands {
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
         std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash, "");
+                                                         binary_hash);
         std::cout << hashdb::bin_to_hex(binary_hash) << "\t"
                   << expanded_text << "\n";
         any_found = true;
@@ -820,7 +823,7 @@ namespace commands {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
           std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash, "");
+                                                               binary_hash);
           std::cout << hashdb::bin_to_hex(binary_hash) << "\t" << expanded_text
                     << "\n";
           break;
@@ -910,7 +913,7 @@ namespace commands {
       std::string binary_hash = random_binary_hash();
 
       std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash, "");
+                                                         binary_hash);
 
       if (expanded_text.size() != 0) {
         std::cout << "Match found, hash "
@@ -1003,7 +1006,7 @@ namespace commands {
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
       std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash, "");
+                                                         binary_hash);
 
       if (expanded_text.size() == 0) {
         std::cout << "Match not found, hash "

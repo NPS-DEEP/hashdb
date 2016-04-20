@@ -95,7 +95,7 @@ class import_json_t {
       }
 
       // import JSON
-      std::string error_message = manager.insert_json(line);
+      std::string error_message = manager.import_json(line);
       if (error_message.size() != 0) {
         report_invalid_line(error_message, line);
       }
