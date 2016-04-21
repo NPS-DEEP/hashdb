@@ -388,7 +388,7 @@ namespace hashdb {
      * with it.
      *
      * scan_manager caches hashes and source IDs and does not return
-     * source information for hashes or sources that has already been
+     * source information for hashes or sources that have already been
      * returned.
      *
      * Parameters:

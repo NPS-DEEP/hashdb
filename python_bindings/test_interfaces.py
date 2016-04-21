@@ -86,26 +86,90 @@ str_equals(scan_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_d
 int_equals(scan_manager.size_hashes(), 1)
 int_equals(scan_manager.size_sources(), 2)
 
-# scan_stream, end with EOF
-temp_in = open("temp_in.bin", "w+b")
+def temp_out_equals(a):
+    infile = open("temp_out", "r")
+    str_equals(infile.read().strip(), a)
+    infile.close()
+
+# setup for scan_stream, end with EOF
+temp_in = open("temp_in.bin", "w")
 in_bytes = pack('8sQ', 'aaaaaaaa', 1)
 temp_in.write(in_bytes)
 in_bytes = pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
-temp_in.flush()
 temp_in.close()
-in_fd = open("temp_in.bin", "r+b").fileno()
-print ("in", in_fd)
-out_fd = open("temp_out.json", "w").fileno()
-print ("out", out_fd)
-print ("fd1 %d fd2 %d" %(in_fd, out_fd))
+
+# scan_stream EXPANDED_HASH
+in_file_object = open("temp_in.bin", "r")
+in_fd = in_file_object.fileno()
+out_file_object = open("temp_out", "w")
+out_fd = out_file_object.fileno()
 status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH)
 str_equals(status, "")
+temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
+in_file_object.close()
+out_file_object.close()
 
-zzbadness = zzbad
+# scan_stream HASH_COUNT
+in_file_object = open("temp_in.bin", "r")
+in_fd = in_file_object.fileno()
+out_file_object = open("temp_out", "w")
+out_fd = out_file_object.fileno()
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.HASH_COUNT)
+str_equals(status, "")
+temp_out_equals('0100000000000000{"block_hash":"6868686868686868","count":1}')
+in_file_object.close()
+out_file_object.close()
 
-# scan_stream, end with 0x00... zz
+# scan_stream EXPANDED_HASH_COUNT
+in_file_object = open("temp_in.bin", "r")
+in_fd = in_file_object.fileno()
+out_file_object = open("temp_out", "w")
+out_fd = out_file_object.fileno()
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.APPROXIMATE_HASH_COUNT)
+str_equals(status, "")
+temp_out_equals('0100000000000000{"block_hash":"6868686868686868","approximate_count":1}')
+in_file_object.close()
+out_file_object.close()
 
+# setup for scan_stream, end with 0x00...
+temp_in = open("temp_in.bin", "w")
+in_bytes = pack('8sQ', '\0\0\0\0\0\0\0\0', 1)
+temp_in.write(in_bytes)
+in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+temp_in.write(in_bytes)
+temp_in.close()
+
+# scan_stream ends early with 0x00...
+in_file_object = open("temp_in.bin", "r")
+in_fd = in_file_object.fileno()
+out_file_object = open("temp_out", "w")
+out_fd = out_file_object.fileno()
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH)
+str_equals(status, "")
+temp_out_equals("")
+in_file_object.close()
+out_file_object.close()
+
+# setup for scan_stream, end with invalid alignment of one extra byte
+temp_in = open("temp_in.bin", "w")
+in_bytes = pack('8sQ', 'aaaaaaaa', 1)
+temp_in.write(in_bytes)
+in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+temp_in.write(in_bytes)
+temp_in.write('\0')
+temp_in.close()
+
+# scan_stream ends with invalid alignment
+in_file_object = open("temp_in.bin", "r")
+in_fd = in_file_object.fileno()
+out_file_object = open("temp_out", "w")
+out_fd = out_file_object.fileno()
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH)
+str_equals(status, "unexpected input size 1 is not 16 in scan stream")
+temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
+in_file_object.close()
+out_file_object.close()
 
 # Settings
 settings.byte_alignment = 1

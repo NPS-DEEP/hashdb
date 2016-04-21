@@ -644,7 +644,6 @@ namespace hashdb {
     const int h_b_size = hash_size + blob_size;
     char h_b[h_b_size];
     while (true) {
-std::cout << "scan_stream.a\n";
       // read hash and blob together
       ssize_t count = ::read(in_fd, h_b, h_b_size);
       if (count == 0) {
@@ -654,16 +653,16 @@ std::cout << "scan_stream.a\n";
       if (count == -1) {
         return strerror(errno);
       }
-std::cout << "scan_stream.b " << count << "\n";
       if (count != h_b_size) {
         // uneven count so warn and quit
-        return "unexpected input size in scan_stream";
+        std::stringstream ss;
+        ss << "unexpected input size " << count
+           << " is not " << h_b_size << " in scan stream";
+        return ss.str();
       }
-std::cout << "scan_stream.c\n";
 
       // read binary_hash
       std::string binary_hash = std::string(h_b, hash_size);
-std::cout << "scan_stream.d " << hashdb::bin_to_hex(binary_hash) << "\n";
 
       // quit if binary_hash is all 0
       bool done = true;
@@ -678,7 +677,6 @@ std::cout << "scan_stream.d " << hashdb::bin_to_hex(binary_hash) << "\n";
         return "";
       }
 
-std::cout << "scan_stream.e\n";
       // read hex_blob
       std::string hex_blob = hashdb::bin_to_hex(std::string(
                                          h_b+hash_size, blob_size));
@@ -704,21 +702,24 @@ std::cout << "scan_stream.e\n";
 
         default: assert(0); std::exit(1);
       }
-std::cout << "scan_stream.f\n";
 
       if (json_response.size() > 0) {
-std::cout << "scan_stream.g\n";
         // match so print hex blob, json data, and CR.
         std::stringstream ss;
         ss << hex_blob << json_response << "\n";
         std::string response = ss.str();
-std::cout << "scan_stream.h response " << response << "\n";
         count = ::write(out_fd, response.c_str(), response.size());
         if (count == -1) {
           return strerror(errno);
         }
         if ((size_t)count != response.size()) {
           return "unexpected incomplete write in scan_stream";
+        }
+
+        // flush for immediate write
+        ssize_t success = ::fsync(out_fd);
+        if (success == -1) {
+          return strerror(errno);
         }
       }
     }

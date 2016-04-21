@@ -137,7 +137,7 @@ The first character on the line is the terminal prompt, and should not be typed.
   \begin{itemize}
   \item Several tuned scan interfaces are available:
     \begin{itemize}
-    \item \verb+find_expanded_hash+ scans for matches and returns complete match information in JSON format.  Matched sources and hashes are cached so that information is not reprinted in other matches.
+    \item \verb+find_expanded_hash_json+ scans for matches and returns complete match information in JSON format.  Matched sources and hashes are cached so that information is not reprinted in other matches.
     \item \verb+find_hash+ returns match information in a data structure.
     \item \verb+find_hash_count+ only returns a match count and does not take time to parse match information into a data structure.
     \item \verb+find_approximate_hash_count+ is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
@@ -1125,7 +1125,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \subsection{Scan Data}
 \label{ScanData}
 When scanning, \hdb prints out information relating to hashes that match.
-The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
+The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash_json+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
@@ -1303,9 +1303,12 @@ To scan for hashes, open a scan manager, for example\\
 \verb+manager = scan_manager_t("hashdb.hdb")+. Then use functions to find hash and source information. Functions that return less information run faster than functions that return more.
 
 \begin{itemize}
+\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
+\verb+scan_stream_mode+\\
+Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
 \item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field.
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
 \item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
 This is the fastest scan function. It returns an approximate source, offset pair count for the hash and can be wrong.
 \item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
@@ -1391,11 +1394,12 @@ Scan for hashes. Provide read-only access to hash and source data stores.
 
 \begin{itemize}
 \item \verb+scan_manager_t(hashdb_dir)+
-\item \verb+std::string find_expanded_hash(binary_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field.
+\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
+\verb+scan_stream_mode+\\
+Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
 \item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
 \item \verb+std::string find_expanded_hash_json(binary_hash)+\\
-Return \verb+json_hash_string+ else "" on no match.
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.\\
 \item \verb+size_t find_approximate_hash_count(binary_hash)+\\
 Return approximate source, offset pair count for the hash, and can be wrong.
 \item \verb+size_t find_hash_count(binary_hash)+\\
