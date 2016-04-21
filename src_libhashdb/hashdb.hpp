@@ -319,9 +319,9 @@ namespace hashdb {
   // ************************************************************
 
   /**
-   * The scan_fd interface requires one of these modes.
+   * The scan_stream interface requires one of these modes.
    */
-  enum scan_fd_mode_t {EXPANDED_HASH, HASH_COUNT, APPROXIMATE_HASH_COUNT};
+  enum scan_stream_mode_t {EXPANDED_HASH, HASH_COUNT, APPROXIMATE_HASH_COUNT};
  
   /**
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
@@ -361,10 +361,10 @@ namespace hashdb {
 
     /**
      * Iteratively read hash_size bytes + blob_size bytes from in_fd
-     * and scan hash.  On match, write JSON count + JSON with embedded
-     * blob to out_fd.  Quit if binary_hash is all 0.
-     * When a match is positive, JSON text is written to out_fd.
-     * JSON text depends on mode:
+     * and scan for the hash encoded in these bytes.  On match, write
+     * JSON count + JSON with the hexcode of the embedded blob to out_fd.
+     * Quit if binary_hash is all 0.  When a match is positive, JSON text
+     * is written to out_fd.  JSON text output depends on the mode:
      *   For mode EXPANDED_HASH, see find_expanded_hash_json.
      *   For mode HASH_COUNT, see find_hash_count_json.
      *   For mode APPROXIMATE_HASH_COUNT, see find_approximate_hash_count_json.
@@ -374,14 +374,14 @@ namespace hashdb {
      *   out_fd - The file descriptor of the output file.
      *   hash_size - The size, in bytes, of the binary hash.
      *   blob_size - The size, in bytes, of the binary blob.
-     *   scan_df_mode - The scan mode.  JSON content returned depends on
-     *                  this mode.
+     *   scan_df_mode - The scan mode.  The JSON content returned depends
+     *                  on this mode.
      */
-    void scan_fd(std::ifstream& in_fd,
-                 std::ofstream& out_fd,
-                 const size_t hash_size,
-                 const size_t blob_size,
-                 const hashdb::scan_fd_mode_t scan_fd_mode);
+    std::string scan_stream(const int in_fd,
+                            const int out_fd,
+                            const size_t hash_size,
+                            const size_t blob_size,
+                            const hashdb::scan_stream_mode_t scan_stream_mode);
 
     /**
      * Scan for a hash and return expanded source information associated

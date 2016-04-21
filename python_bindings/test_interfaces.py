@@ -86,18 +86,25 @@ str_equals(scan_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_d
 int_equals(scan_manager.size_hashes(), 1)
 int_equals(scan_manager.size_sources(), 2)
 
-# scan_fd, end with EOF
-temp_fd = open("temp_in.bin", "w+b")
+# scan_stream, end with EOF
+temp_in = open("temp_in.bin", "w+b")
 in_bytes = pack('8sQ', 'aaaaaaaa', 1)
-temp_fd.write(in_bytes)
+temp_in.write(in_bytes)
 in_bytes = pack('8sQ', 'hhhhhhhh', 1)
-temp_fd.write(in_bytes)
-temp_fd.flush()
-in_fd = open("temp_in.bin", "r+b")
-out_fd = open("temp_out.json", "w")
-# zz scan_manager.scan_fd(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH)
+temp_in.write(in_bytes)
+temp_in.flush()
+temp_in.close()
+in_fd = open("temp_in.bin", "r+b").fileno()
+print ("in", in_fd)
+out_fd = open("temp_out.json", "w").fileno()
+print ("out", out_fd)
+print ("fd1 %d fd2 %d" %(in_fd, out_fd))
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH)
+str_equals(status, "")
 
-# scan_fd, end with 0x00... zz
+zzbadness = zzbad
+
+# scan_stream, end with 0x00... zz
 
 
 # Settings

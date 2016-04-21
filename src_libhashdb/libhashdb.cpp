@@ -631,73 +631,95 @@ namespace hashdb {
   }
 
   // iteratively read hash_size+blob_size from in_fd and scan hash.
-  // on match, write JSON count + JSON with embedded blob to out_fd.
-  // quit if binary_hash is all 0
-  void scan_manager_t::scan_fd(std::ifstream& in_fd,
-                               std::ofstream& out_fd,
-                               const size_t hash_size,
-                               const size_t blob_size,
-                               const hashdb::scan_fd_mode_t scan_fd_mode) {
+  // on match, write count, hex blob, and JSON data to out_fd.
+  // quit if binary_hash is all 0.
+  std::string scan_manager_t::scan_stream(
+                         const int in_fd,
+                         const int out_fd,
+                         const size_t hash_size,
+                         const size_t blob_size,
+                         const hashdb::scan_stream_mode_t scan_stream_mode) {
 
-    // loop in_fd until EOF or 0x00...
-    char h[hash_size];
-    char b[blob_size];
-    std::string binary_hash ;
-    while (!in_fd.eof()) {
+    // loop in_fd until EOF or hash is 0x00...
+    const int h_b_size = hash_size + blob_size;
+    char h_b[h_b_size];
+    while (true) {
+std::cout << "scan_stream.a\n";
+      // read hash and blob together
+      ssize_t count = ::read(in_fd, h_b, h_b_size);
+      if (count == 0) {
+        // done
+        return "";
+      }
+      if (count == -1) {
+        return strerror(errno);
+      }
+std::cout << "scan_stream.b " << count << "\n";
+      if (count != h_b_size) {
+        // uneven count so warn and quit
+        return "unexpected input size in scan_stream";
+      }
+std::cout << "scan_stream.c\n";
 
       // read binary_hash
-      in_fd.read(h, hash_size);
-      binary_hash = std::string(h, hash_size);
+      std::string binary_hash = std::string(h_b, hash_size);
+std::cout << "scan_stream.d " << hashdb::bin_to_hex(binary_hash) << "\n";
 
       // quit if binary_hash is all 0
       bool done = true;
       for (size_t i=0; i< hash_size; i++) {
-        if (h[i] != 0) {
+        if (h_b[i] != 0) {
           done = false;
           break;
         }
       }
-
       if (done) {
-        return;
+        // binary_hash is 0x00...
+        return "";
       }
 
-      // read blob into hexadecimal blob field
-      in_fd.read(b, blob_size);
-      std::string hex_blob = hashdb::bin_to_hex(std::string(b, blob_size));
+std::cout << "scan_stream.e\n";
+      // read hex_blob
+      std::string hex_blob = hashdb::bin_to_hex(std::string(
+                                         h_b+hash_size, blob_size));
 
       // scan
       std::string json_response;
-      switch(scan_fd_mode) {
+      switch(scan_stream_mode) {
 
         // APPROXIMATE_HASH_COUNT
-        case hashdb::scan_fd_mode_t::APPROXIMATE_HASH_COUNT:
+        case hashdb::scan_stream_mode_t::APPROXIMATE_HASH_COUNT:
           json_response = find_approximate_hash_count_json(binary_hash);
           break;
 
         // HASH_COUNT
-        case hashdb::scan_fd_mode_t::HASH_COUNT:
+        case hashdb::scan_stream_mode_t::HASH_COUNT:
           json_response = find_hash_count_json(binary_hash);
           break;
 
         // EXPANDED_HASH
-        case hashdb::scan_fd_mode_t::EXPANDED_HASH:
+        case hashdb::scan_stream_mode_t::EXPANDED_HASH:
           json_response = find_expanded_hash_json(binary_hash);
           break;
 
         default: assert(0); std::exit(1);
       }
+std::cout << "scan_stream.f\n";
 
       if (json_response.size() > 0) {
-        // match so print output size in network byte order followed
-        // by hex blob text and JSON text
-        uint64_t output_size = json_response.size() + blob_size * 2;
-//zz        uint64_t network_output_size = htonll(output_size);
-        uint64_t network_output_size = output_size;
-        out_fd.write(reinterpret_cast<const char*>(network_output_size),
-                     sizeof(uint64_t));
-        out_fd.write(hex_blob.c_str(), blob_size * 2);
-        out_fd.write(json_response.c_str(), json_response.size());
+std::cout << "scan_stream.g\n";
+        // match so print hex blob, json data, and CR.
+        std::stringstream ss;
+        ss << hex_blob << json_response << "\n";
+        std::string response = ss.str();
+std::cout << "scan_stream.h response " << response << "\n";
+        count = ::write(out_fd, response.c_str(), response.size());
+        if (count == -1) {
+          return strerror(errno);
+        }
+        if ((size_t)count != response.size()) {
+          return "unexpected incomplete write in scan_stream";
+        }
       }
     }
   }
