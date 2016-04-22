@@ -631,14 +631,15 @@ namespace hashdb {
   }
 
   // iteratively read hash_size+blob_size from in_fd and scan hash.
-  // on match, write count, hex blob, and JSON data to out_fd.
-  // quit if binary_hash is all 0.
+  // on match, write count, hex blob, and JSON data to out_fd based on
+  // output mode.  Quit if binary_hash is all 0.
   std::string scan_manager_t::scan_stream(
-                         const int in_fd,
-                         const int out_fd,
-                         const size_t hash_size,
-                         const size_t blob_size,
-                         const hashdb::scan_stream_mode_t scan_stream_mode) {
+                   const int in_fd,
+                   const int out_fd,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode) {
 
     // loop in_fd until EOF or hash is 0x00...
     const int h_b_size = hash_size + blob_size;
@@ -677,26 +678,25 @@ namespace hashdb {
         return "";
       }
 
-      // read hex_blob
-      std::string hex_blob = hashdb::bin_to_hex(std::string(
-                                         h_b+hash_size, blob_size));
+      // read blob
+      std::string blob = std::string(h_b+hash_size, blob_size);
 
       // scan
       std::string json_response;
-      switch(scan_stream_mode) {
+      switch(scan_mode) {
 
         // APPROXIMATE_HASH_COUNT
-        case hashdb::scan_stream_mode_t::APPROXIMATE_HASH_COUNT:
+        case hashdb::scan_stream_scan_mode_t::APPROXIMATE_HASH_COUNT:
           json_response = find_approximate_hash_count_json(binary_hash);
           break;
 
         // HASH_COUNT
-        case hashdb::scan_stream_mode_t::HASH_COUNT:
+        case hashdb::scan_stream_scan_mode_t::HASH_COUNT:
           json_response = find_hash_count_json(binary_hash);
           break;
 
         // EXPANDED_HASH
-        case hashdb::scan_stream_mode_t::EXPANDED_HASH:
+        case hashdb::scan_stream_scan_mode_t::EXPANDED_HASH:
           json_response = find_expanded_hash_json(binary_hash);
           break;
 
@@ -704,9 +704,49 @@ namespace hashdb {
       }
 
       if (json_response.size() > 0) {
-        // match so print hex blob, json data, and CR.
+        // match so print match data
         std::stringstream ss;
-        ss << hex_blob << json_response << "\n";
+        switch(response_mode) {
+
+          // TEXT_OUTPUT
+          case hashdb::scan_stream_response_mode_t::TEXT_OUTPUT:
+
+            // print hex blob, json data, and CR.
+            ss << hashdb::bin_to_hex(blob) << json_response << "\n";
+            break;
+
+          // BINARY_OUTPUT
+          case hashdb::scan_stream_response_mode_t::BINARY_OUTPUT:
+            {
+              // print size of output, binary hash, binary blob, and JSON
+
+              // response size in network byte order
+              uint32_t response_size = 8 + h_b_size + json_response.size();
+              static const int num = 42;
+              if (*reinterpret_cast<const char*>(&num) == num) {
+                ss.write("\0\0\0\0", 4);
+                uint32_t nbo_response_size = ::htonl(response_size);
+                ss.write(reinterpret_cast<const char*>(&nbo_response_size), 4);
+              } else {
+                ss.write("\0\0\0\0", 4);
+                ss.write(reinterpret_cast<const char*>(&response_size), 4);
+              }
+
+              // binary hash
+              ss << binary_hash;
+
+              // blob
+              ss << blob;
+
+              // JSON
+              ss << json_response;
+
+              break;
+            }
+
+          default: assert(0); std::exit(1);
+        }
+
         std::string response = ss.str();
         count = ::write(out_fd, response.c_str(), response.size());
         if (count == -1) {

@@ -319,9 +319,12 @@ namespace hashdb {
   // ************************************************************
 
   /**
-   * The scan_stream interface requires one of these modes.
+   * The scan_stream interface requires these modes.
    */
-  enum scan_stream_mode_t {EXPANDED_HASH, HASH_COUNT, APPROXIMATE_HASH_COUNT};
+  enum scan_stream_scan_mode_t {EXPANDED_HASH,
+                                HASH_COUNT,
+                                APPROXIMATE_HASH_COUNT};
+  enum scan_stream_response_mode_t {TEXT_OUTPUT, BINARY_OUTPUT};
  
   /**
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
@@ -360,28 +363,47 @@ namespace hashdb {
     ~scan_manager_t();
 
     /**
-     * Iteratively read hash_size bytes + blob_size bytes from in_fd
-     * and scan for the hash encoded in these bytes.  On match, write
-     * JSON count + JSON with the hexcode of the embedded blob to out_fd.
-     * Quit if binary_hash is all 0.  When a match is positive, JSON text
-     * is written to out_fd.  JSON text output depends on the mode:
+     * Iteratively read bytes from in_fd and scan for the hash encoded
+     * in these bytes.  On match, return match content based on the scan mode.
+     *
+     * Input consists of pairs of binary hash and binary blob data.
+     * Returns when at EOF or when a binary hash value of all 0 is provided.
+     *
+     * On match, JSON text is returned.  JSON content depends on the scan
+     * stream mode selected:
      *   For mode EXPANDED_HASH, see find_expanded_hash_json.
      *   For mode HASH_COUNT, see find_hash_count_json.
      *   For mode APPROXIMATE_HASH_COUNT, see find_approximate_hash_count_json.
      *
+     * The format of returned data depends on the mode selected for returned
+     * data, specifically text mode or binary mode.  For TEXT_OUTPUT,
+     * returned text consists of:
+     *   - Blob data converted to hexadecimal format
+     *   - The JSON text
+     *   - An end of line mark
+     *
+     * For BINARY_OUTPUT, returned data consists of:
+     *   - 8-byte count field in network byte order (big endian)
+     *   - binary hash
+     *   - binary blob
+     *   - JSON text
+     *
      * Parameters:
      *   in_fd - The file descriptor of the input file.
      *   out_fd - The file descriptor of the output file.
-     *   hash_size - The size, in bytes, of the binary hash.
-     *   blob_size - The size, in bytes, of the binary blob.
-     *   scan_df_mode - The scan mode.  The JSON content returned depends
-     *                  on this mode.
+     *   hash_size - The size, in bytes, of binary hashes.
+     *   blob_size - The size, in bytes, of binary blobs.
+     *   scan_mode - The scan mode.  The JSON content returned depends
+     *     on this mode.
+     *   response_mode - The format mode for the response, binary or text.
      */
-    std::string scan_stream(const int in_fd,
-                            const int out_fd,
-                            const size_t hash_size,
-                            const size_t blob_size,
-                            const hashdb::scan_stream_mode_t scan_stream_mode);
+    std::string scan_stream(
+                   const int in_fd,
+                   const int out_fd,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode);
 
     /**
      * Scan for a hash and return expanded source information associated

@@ -2,7 +2,6 @@
 #
 # hashdb_helpers.py
 # A module for helping with hashdb tests
-import xml.etree.ElementTree as ET
 from subprocess import Popen, PIPE
 import os
 import shutil
