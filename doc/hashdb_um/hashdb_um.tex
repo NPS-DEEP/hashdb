@@ -167,6 +167,7 @@ executable may be covered under a different copyright.\\
 \end{minipage}}
 
 \subsection{Obtaining \hdb}
+\label{Obtaining}
 The \hdb tool and API interface library are readily available for Windows systems, Linux flavors, and MacOS.  A Windows installer is available for Windows users.  A source code distribution is available for Linux and Mac users.  Developers may download \hdb directly from source available on GitHub.\\
 
 Steps for installing \hdb on Windows and one flavor of Linux are described here. For more installation options, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
@@ -174,7 +175,6 @@ Steps for installing \hdb on Windows and one flavor of Linux are described here.
 For information on installing \sscope and \bulk tools which use \hdb, Please see \textbf{\Autoref{OtherTools}}.\\
 
 \subsubsection{Installing on Windows}
-\label{InstallingOnWindows}
 Windows users should download the Windows Installer for \hdb. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.1.1 as of publication of this manual).\\
 
 You should close all Command windows before running the installation executable. Windows will not be able to find the \hdb tools in a Command window if any are open during the installation process. If you do not do this before installation, simply close all Command windows after installation. When you re-open, Windows should be able to find \hdb.\\
@@ -338,7 +338,6 @@ Once the database is populated, \hdb can export content from the database in JSO
 \end{figure}
 
 \subsection{Block Hash}
-\label{BlockHash}
 \hdb works by matching hashes calculated from blocks of data.  \hdb is different from tools that match files because it can find matches even when part of a file is missing or changed.  \hdb stores and scans for hashes created from contiguous blocks of data.  We call the size of the block hashed the \textit{block size}.  \hdb stores and scans for hashes in step increments along a hash interval. Blocks hashed at step-sized intervals are illustrated in Figure \ref{fig:hashInterval}.\\
 
 \begin{figure}
@@ -1032,23 +1031,6 @@ fac7051447c781b69125994c5d125637    89a170b6b9a948d21d1d6ee1e7cdc467    2
 fac7051447c781b69125994c5d125637    f58a09656658c6b41e244b4a6091592c    3
 \end{lstlisting}
 
-\subsection{Scan List Input File}
-The \verb+scan_list+ command scans a list of hashes for matches.  Valid lines of input may be:
-\begin{itemize}
-\item Comment lines starting with \verb+#+.  Comment lines are forwarded to output.
-\item Hash lines to scan against, where each line consists of a Forensic Path followed by a tab followed by the hash hexcode.
-\end{itemize}
-An example scan list input file is shown in Listing \ref{ScanListFile}.\\
-
-\lstset{style=customfile}
-\begin{lstlisting}[caption={Example scan list input file}, label=ScanListFile]
-# Scan list input file
-# <Forensic Path> <tab> <block hash hexdigest>
-0	3b6b477d391f73f67c1c01e2141dbb17
-512	89a170b6b9a948d21d1d6ee1e7cdc467
-1024	f58a09656658c6b41e244b4a6091592c
-\end{lstlisting}
-
 Hash match output is described in \textbf{\autoref{ScanData}}.
 \subsection{Import/Export Syntax}
 The import and export commands and API interfaces communicate source data and block hash data using JSON syntax.\\
@@ -1093,7 +1075,7 @@ Source data defines information about a source. Source data is identified by the
 Block hash data is identified by the file block hash.  An example block hash line is shown in Listing \ref{JSONBlockHashData}. Fields are described in Table \ref{tab:JSONBlockHashData}.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[caption={Example JSON block hash data used during import/export}, label=JSONBlockHashData]
+\begin{lstlisting}[float, caption={Example JSON block hash data used during import/export}, label=JSONBlockHashData]
 {
   "block_hash":"3b6b477d391f73f67c1c01e2141dbb17",
   "entropy":8,
@@ -1124,23 +1106,15 @@ Block hash data is identified by the file block hash.  An example block hash lin
 
 \subsection{Scan Data}
 \label{ScanData}
-When scanning, \hdb prints out information relating to hashes that match.
-The \hdb scan commands and the \bulk \hdb scanner produce one line of output per match, consisting of the Forensic Path (offset), the hash in hexadicamal code, and JSON data containing hash and source information relating to the hash matched. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.  The \verb+find_expanded_hash_json+ scan API interface returns JSON data without the Forensic Path and hexcode. An example JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanData}. Fields are described in Table \ref{tab:JSONScanData}.\\
+Several of the \hdb scan commands and interfaces print out JSON data when hash matches are found. The \hdb tool prints JSON output in expanded hash format. \hdb library interfaces which are optimized for performance are available which print less JSON output but run faster. This section describes the types of JSON output available for hash matches.
 
-\lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
-8000	3b6b477d391f73f67c1c01e2141dbb17    {"hash": "3b6b477d391f73f67c1
-c01e2141dbb17", "entropy": 8, "block_label": "W", "source_list_id": 57, "
-sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
-", "nonprobative_count": 2, "name_pairs": ["repository1", "filename1", "r
-epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
-] }
-\end{lstlisting}
+\subsubsection{Expanded Hash}
+The \hdb scan commands and the \hdb library interface in \verb+EXPANDED_HASH+ mode emit expanded hash JSON data. This JSON data contains all the information about a matched hash and the sources containing the hash that matched. An example of expanded JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanDataExpanded}. Fields are described in Table \ref{tab:JSONScanDataExpanded}.\\
 
 \hdb does not emit source or hash information multiple times in JSON output.  If sources for a hash have already been shown, the sources field will read \verb+"sources":[]+. If a hash has already been shown, the entire JSON output will contain the hash without any other fields, for example \verb+{"block_hash":+ \verb+"3b6b477d391f73f67c1c01e2141dbb17}+.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[float, caption={Example JSON block hash data output from a scan match, with line breaks added for readability}, label=JSONScanData]
+\begin{lstlisting}[float, caption={Example JSON block hash expanded data output from a scan match, with line breaks added for readability}, label=JSONScanDataExpanded]
 {
   "block_hash": "3b6b477d391f73f67c101e2141dbb17",
   "entropy": 8,
@@ -1161,7 +1135,7 @@ epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
 
 \centering
 \caption{Fields used in JSON scan data}
-\label{tab:JSONScanData}
+\label{tab:JSONScanDataExpanded}
 \begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
 \textbf{Field} & \textbf{Meaning} \\
@@ -1189,6 +1163,78 @@ epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
 \end{tabular}
 \end{table}
 
+\subsubsection{Hash Count}
+The \hdb library interfaces offer a hash count JSON format for obtaining only the match count for hashes that match.  JSON output contains the hash and the count as shown in example Listing \ref{JSONScanDataCount}. This capability is an optimization provided for users who do not need other hash information.
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data count output from a scan match, with line breaks added for readability}, label=JSONScanDataCount]
+{
+  "block_hash": "3b6b477d391f73f67c101e2141dbb17",
+  "count": 501
+}
+\end{lstlisting}
+
+\subsubsection{Hash Approximate Count}
+The \hdb library interfaces offer an approximate hash count JSON format for obtaining only an approximate match count for hashes that match by only accessing the LMDB Hash Store. The LMDB Hash Store is described in \textbf{\autoref{LMDBDataStores}}. JSON output contains the hash and the approximate count as shown in example Listing \ref{JSONScanDataApproximateCount}. This capability is an optimization provided for users who do not need other hash information and can accept count values that are not exact.
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example JSON block hash data approximate count output from a scan match, with line breaks added for readability}, label=JSONScanDataApproximateCount]
+{
+  "block_hash": "3b6b477d391f73f67c101e2141dbb17",
+  "approximate_count": 500
+}
+\end{lstlisting}
+
+\subsection{Scan Data from Tools}
+The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one line of output per match. This output consists of the Forensic Path (offset), a tab, the hash hexcode, a tab, the expanded hash JSON data, and a carriage return. An example of a scan match produced from tools is shown in Listing \ref{ScanDataWithPath}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
+8000	3b6b477d391f73f67c1c01e2141dbb17    {"hash": "3b6b477d391f73f67c1
+c01e2141dbb17", "entropy": 8, "block_label": "W", "source_list_id": 57, "
+sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
+", "nonprobative_count": 2, "name_pairs": ["repository1", "filename1", "r
+epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
+] }
+\end{lstlisting}
+
+\subsection{Scan Data from the \texttt{scan\_stream} Interface}
+The \verb+scan_steram+ interface returns JSON data for matched hashes in any of the scan data modes. The format of the output depends on the mode:
+\begin{itemize}
+\item \textbf{Text Output}\\
+Text mode is intended for users who stream scan requests locally. Match output consists of the following:
+  \begin{itemize}
+  \item The input blob data converted to hexadecimal.
+  \item The JSON text.
+  \item An end of line mark.
+  \end{itemize}
+\item \textbf{Binary Output}\\
+Binary mode is intended for users who receive matches over a socket. Match data may be read in two steps: first read the 8-byte count, then read the count-sized data. Match output consists of the following:
+  \begin{itemize}
+  \item An 8-byte output length field in Network Byte Order.
+  \item The hash data in binary form.
+  \item The blob data in binary form.
+  \item The JSON text.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Scan List Input File}
+The \verb+scan_list+ command scans a list of hashes for matches.  Valid lines of input may be:
+\begin{itemize}
+\item Comment lines starting with \verb+#+.  Comment lines are forwarded to output.
+\item Hash lines to scan against, where each line consists of a Forensic Path followed by a tab followed by the hash hexcode.
+\end{itemize}
+An example scan list input file is shown in Listing \ref{ScanListFile}.\\
+
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example scan list input file}, label=ScanListFile]
+# Scan list input file
+# <Forensic Path> <tab> <block hash hexdigest>
+0	3b6b477d391f73f67c1c01e2141dbb17
+512	89a170b6b9a948d21d1d6ee1e7cdc467
+1024	f58a09656658c6b41e244b4a6091592c
+\end{lstlisting}
+
 \subsection{Size}
 The \hdb \verb+size+ command and \verb+size+ API interface returns size information about internal data structures in JSON format. The size of the \verb+source_id_store+ indicates the number of sources. The size of the \verb+hash_store+ is greater than or equal to the number of hashes stored, and is not exact because of how data is stored. Although for internal use, these fields can give some sense of the size of a \hdb database. An example output is shown in Listing \ref{JSONSize}.\\
 
@@ -1211,7 +1257,7 @@ The \verb+sources+ command prints JSON data as shown in Listing \ref{JSONSourceD
 The \verb+histogram+ command shows the density of hash duplicates across a hash database.  An example histogram output line is shown in Listing \ref{JSONHistogram}.  Fields are described in Table \ref{tab:JSONHistogram}.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[caption={Example JSON histogram format}, label=JSONHistogram]
+\begin{lstlisting}[float, caption={Example JSON histogram format}, label=JSONHistogram]
 {
   "duplicates":2,
   "distinct_hashes":3,
@@ -1238,16 +1284,16 @@ The \verb+histogram+ command shows the density of hash duplicates across a hash 
 \end{table}
 
 \subsection{Duplicates}
-The \verb+duplicates+ command prints JSON data as shown in Listing \ref{JSONScanData} and described in Table \ref{tab:JSONScanData}.\\
+The \verb+duplicates+ command prints JSON data as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
 
 \subsection{Hash Table}
-The \verb+hash_table+ command prints JSON data as shown in Listing \ref{JSONScanData} and described in Table \ref{tab:JSONScanData}.\\
+The \verb+hash_table+ command prints JSON data as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
 
 \subsection{Timing}
 \hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
 
 \lstset{style=customfile}
-\begin{lstlisting}[caption={Example JSON timestamp format}, label=JSONTimingData]
+\begin{lstlisting}[float, caption={Example JSON timestamp format}, label=JSONTimingData]
 {
   "name":"begin",
   "delta":"0.000396",
@@ -1277,15 +1323,21 @@ The \verb+hash_table+ command prints JSON data as shown in Listing \ref{JSONScan
 
 \section{Using the \hdb Library APIs}
 \label{APIs}
-\hdb provides C++ and Python interfaces for importing, scanning, and working with block hashes.
+\hdb provides C++ and Python interfaces for importing, scanning, and working with block hashes:
 
-\subsection{Python}
-Install Python module \verb+hashdb+ to use the \hdb Python interfaces.
+\begin{itemize}
+\item \textbf{C++ Interfaces}\\
+To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb library \verb+libhashdb+. \hdb interfaces use the \hdb namespace. Interfaces can assert on unexpected error.
+\item \textbf{Python Interfaces}\\
+To use the Python interfaces, load the \verb+hashdb+ module.
+\end{itemize}
 
-\subsubsection{Import}
+For information on installing the \hdb interfaces, please see \textbf{\Autoref{Obtaining}}.\\
+For further details on syntax and usage, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}.\\
+
+\subsection{Import}
 To import hash and source data, open an import manager, for example\\
-\verb+{manager = import_manager_t("hashdb.hdb", "create my DB")+. Then use import functions to add data.
-
+\verb+{manager = import_manager_t("hashdb.hdb", "create my DB")+. Then use import functions to add data. Information in the log file will be added when the import manager closes. The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
 \begin{itemize}
 \item \verb+manager = import_manager_t(hashdb_dir, cmd)+
 \item \verb+manager.insert_source_name(file_binary_hash, repository_name, filename)+
@@ -1294,26 +1346,34 @@ To import hash and source data, open an import manager, for example\\
 \item \verb+manager.insert_hash(binary_hash, file_binary_hash, file_offset,+\\
 \verb+entropy, block_label)+
 \item \verb+error_message = manager.import_json(json_string)+\\
-Import hash or source. Return "" on success.
+Import hash or source, return \verb+error_message+ or "" for no error.
 \item \verb+ data_sizes = manager.size()+
+Return number of entries in LMDB databases.
+\item \verb+size_t size_hashes()+\\
+Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+\item \verb+size_t size_sources()+\\
+Return number of sources.
 \end{itemize}
 
-\subsubsection{Scan}
+\subsection{Scan}
 To scan for hashes, open a scan manager, for example\\
-\verb+manager = scan_manager_t("hashdb.hdb")+. Then use functions to find hash and source information. Functions that return less information run faster than functions that return more.
+\verb+manager = scan_manager_t("hashdb.hdb")+. Then use functions to find hash and source information. Functions that return less information run faster than functions that return more. Scan functions provide read-only access to hash and data stores.
 
 \begin{itemize}
-\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
-\verb+scan_stream_mode+\\
-Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
 \item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
 Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
+\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
+\verb+scan_stream_mode+\\
+Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
 \item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
-This is the fastest scan function. It returns an approximate source, offset pair count for the hash and can be wrong.
+This is the fastest scan function. It returns an approximate source, offset pair count for the hash, and can be wrong.
+\item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
+This interface is only available for C++ and is not available for Python.
 \item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
 Return the source, offset pair count for the hash.
-\item \verb+json_source_string = scan_manager.find_source_json(file_binary_hash)+
+\item \verb+json_source_string = scan_manager.find_source_json(file_binary_hash)+\\
+Return \verb+json_source_string+ else "" on no match.
 \item \verb+first_binary_hash = scan_manager.first_hash()+
 \item \verb+next_binary_hash = scan_manager.next_hash(binary_hash)+
 \item \verb+first_file_binary_hash = scan_manager.first_source()+
@@ -1326,7 +1386,7 @@ Return the number of hash records in the database, which is typically more than 
 Return the number of sources in the database.
 \end{itemize}
 
-\subsubsection{Settings}
+\subsection{Settings}
 Holds \hdb settings.
 
 \begin{itemize}
@@ -1338,7 +1398,7 @@ Obtain default settings. Configurable setting parameters are: \verb+settings_ver
 Return setting values in JSON format.
 \end{itemize}
 
-\subsubsection{Timestamp}
+\subsection{Timestamp}
 Provide timestamp support.
 
 \begin{itemize}
@@ -1348,119 +1408,29 @@ Create a timestamp object.
 Create a named timestamp and provide time and delta from the last stamp time in JSON format.
 \end{itemize}
 
-\subsubsection{Support Functions}
+\subsection{Support Functions}
 Support functions provide miscellaneous support and are not part of a class.
 \begin{itemize}
 \item \verb+version = version()+\\
 Return the \hdb version.
+\item \verb+version = hashdb_version()+\\
+Return the \hdb version, same as \verb+version+.
 \item \verb+error_message = create_hashdb(hashdb_dir, settings, command_string)+\\
 Create a hash database given settings. Return "" else reason for failure.
 \item \verb+error_message = read_settings(hashdb_dir, &settings)+\\
 Query settings else false and reason for failure.
 \item \verb+binary_string = hex_to_bin(hex_string)+
 \item \verb+hex_string = bin_to_hex(binary_string)+
+\item \verb+print_enviornment(command_line_string, &ostream)+\\
+Print command and environment to output stream. - zzzz this interface is expected to be removed.
 \item \verb+ingest(hashdb_dir, whitelist_dir, min_entropy,+\\
 \verb+max_entropy, repository_name, import_path, command_string)+\\
 Import from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
 \end{itemize}
 
-\subsection{C++}
-To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb library \verb+libhashdb+. \hdb interfaces use the \hdb namespace. Interfaces can assert on unexpected error. For more detail, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}.\\
-
-\subsubsection{Import}
-Import hashes. Interfaces use lock for DB safety. The destructor appends changes to change log.
-
-\begin{itemize}
-\item \verb+import_manager_t(hashdb_dir, cmd)+
-\item \verb+void insert_source_name(file_binary_hash, repository_name, filename)+
-\item \verb+void insert_source_data(file_binary_hash, filesize, file_type, nonprobative_count)+\\
-Change if different.
-\item \verb+void insert_hash(binary_hash, file_binary_hash, file_offset, entropy, block_label)+\\
-Change if different
-\item \verb+std::string import_json(json_string)+\\
-Import hash or source, return \verb+error_message+ or "" for no error.
-\item \verb+std::string size()+\\
-Return number of entries in LMDB databases.
-\item \verb+size_t size_hashes()+\\
-Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
-\item \verb+size_t size_sources()+\\
-Return number of sources.
-\item \verb+~import_manager_t()+\\
-Append changes to change log at \verb+hashdb_dir/log.dat+.
-\end{itemize}
-
-\subsubsection{Scan}
-Scan for hashes. Provide read-only access to hash and source data stores.
-
-\begin{itemize}
-\item \verb+scan_manager_t(hashdb_dir)+
-\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
-\verb+scan_stream_mode+\\
-Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
-\item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
-\item \verb+std::string find_expanded_hash_json(binary_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.\\
-\item \verb+size_t find_approximate_hash_count(binary_hash)+\\
-Return approximate source, offset pair count for the hash, and can be wrong.
-\item \verb+size_t find_hash_count(binary_hash)+\\
-Return the source, offset pair count for the hash.
-\item \verb+bool find_source_data(file_binary_hash, &filesize, &file_type,+\\
-\verb+&nonprobative_count)+
-False on no source file binary hash.
-\item \verb+bool find_source_names(file_binary_hash, &source_names_t)+\\
-False on no source file binary hash.
-\item \verb+std::string find_source_json(file_binary_hash)+\\
-Return \verb+json_source_string+ else "" on no match.
-\item \verb+std::string first_hash()+
-\item \verb+std::string next_hash(binary_hash)+
-\item \verb+std::string first_source()+
-\item \verb+std::string next_source(file_binary_hash)+
-\item \verb+string size()+\\
-Return number of entries in LMDB databases.
-\item \verb+size_t size_hashes()+\\
-Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
-\item \verb+size_t size_sources()+\\
-Return number of sources.
-\end{itemize}
-
-\subsubsection{Settings}
-Hold \hdb settings.
-
-\begin{itemize}
-\item \verb+settings_t()+\\
-Create a settings object with default values.
-\item \verb+std::string settings_string()+\\
-Return setting values in JSON format.
-\end{itemize}
-
-\subsubsection{Timestamp}
-Provide timestamp support.
-
-\begin{itemize}
-\item \verb+timestamp_t()+
-\item \verb+std::string stamp(text)+\\
-Return stamp in JSON format.
-\end{itemize}
-
-\subsubsection{Support Functions}
-
-\begin{itemize}
-\item \verb+extern C char* version()+\\
-Return the \hdb version.
-\item \verb+std::string create_hashdb(hashdb_dir, settings, command_string)+\\
-Create a hash database given settings. Return true and "" else false and reason for failure.
-\item \verb+std::string read_settings(hashdb_dir, &settings)+\\
-Query settings else false and reason for failure.
-\item \verb+print_enviornment(command_line_string, &ostream)+\\
-Print command and environment to output stream. - zzzz this interface may be removed.
-\item \verb+ingest(hashdb_dir, whitelist_dir, min_entropy,+\\
-\verb+max_entropy, repository_name, import_path, command_string)+\\
-Import from path to \hdb.
-\end{itemize}
-
 \subsubsection{Data Types}
 
-The following data types are defined.
+The following data types are defined for the C++ interface:
 
 \begin{itemize}
 \item \verb+source_offset_pair_t: typedef pair<file_binary_hash, file_offset> id_offset_pair_t+
@@ -1470,6 +1440,7 @@ The following data types are defined.
 \end{itemize}
 
 \section{LMDB Data Stores}
+\label{LMDBDataStores}
 This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind optimization settings and optimized programming interfaces available in \hdb, and is intended for advanced users.\\
 
 \subsection{LMDB Hash Store}
