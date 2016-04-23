@@ -215,12 +215,12 @@ out_fd = out_file_object.fileno()
 status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH,
                                   hashdb.BINARY_OUTPUT)
 str_equals(status, "")
-# 0000000: 0000 0000 0000 0039 6868 6868 6868 6868  .......9hhhhhhhh
+# 0000000: 0000 0000 0000 0031 6868 6868 6868 6868  .......1hhhhhhhh
 # 0000010: 0100 0000 0000 0000 7b22 626c 6f63 6b5f  ........{"block_
 # 0000020: 6861 7368 223a 2236 3836 3836 3836 3836  hash":"686868686
-# 0000030: 3836 3836 3836 3822 7d0a                 8686868"}.
+# 0000030: 3836 3836 3836 3822 7d                   8686868"}
 temp_out_equals(
-     '\x00\x00\x00\x00\x00\x00\x00\x39\x68\x68\x68\x68\x68\x68\x68\x68'
+     '\x00\x00\x00\x00\x00\x00\x00\x31\x68\x68\x68\x68\x68\x68\x68\x68'
      '\x01\x00\x00\x00\x00\x00\x00\x00\x7b\x22\x62\x6c\x6f\x63\x6b\x5f'
      '\x68\x61\x73\x68\x22\x3a\x22\x36\x38\x36\x38\x36\x38\x36\x38\x36'
      '\x38\x36\x38\x36\x38\x36\x38\x22\x7d'

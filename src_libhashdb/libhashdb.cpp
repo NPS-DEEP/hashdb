@@ -721,7 +721,7 @@ namespace hashdb {
               // print size of output, binary hash, binary blob, and JSON
 
               // response size in network byte order
-              uint32_t response_size = 8 + h_b_size + json_response.size();
+              uint32_t response_size = h_b_size + json_response.size();
               static const int num = 42;
               if (*reinterpret_cast<const char*>(&num) == num) {
                 ss.write("\0\0\0\0", 4);
