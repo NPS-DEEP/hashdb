@@ -86,6 +86,7 @@ LIBHASHDB_INCS = \
 	dig.cpp \
 	dig.h \
 	file_modes.h \
+	fsync.h \
 	hashdb.hpp \
 	hex_helper.cpp \
 	ingest.cpp \
@@ -102,6 +103,7 @@ LIBHASHDB_INCS = \
 	lmdb_source_name_manager.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
+	msvc-nothrow.h \
 	settings_manager.hpp
 
 libhashdb_la_SOURCES = \

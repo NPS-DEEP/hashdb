@@ -60,6 +60,8 @@ _hashdb.pyd: ../src_libhashdb/libhashdb.o py_parts/$(LIB_FILE) hashdb_wrap.o
 	       ../src_libhashdb/liblmdb/liblmdb_la-mdb.o \
 	       ../src_libhashdb/liblmdb/liblmdb_la-midl.o \
 	       ../src_libhashdb/hex_helper.o \
+	       ../src_libhashdb/ingest.o \
+	       ../src_libhashdb/dig.o \
 	       hashdb_wrap.o \
 	       ${libdir}/libwinpthread.a \
 	       py_parts/$(LIB_FILE)
@@ -81,7 +83,7 @@ hashdb_wrap.cpp: ${top_srcdir}/python_bindings/hashdb.i \
 	ln -s ${top_srcdir}/src_libhashdb/hashdb.hpp .
 	/usr/bin/swig -c++ -python -threads -o hashdb_wrap.cpp ${top_srcdir}/python_bindings/hashdb.i
 	rm hashdb.hpp
-	$(CC) -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D MS_WIN64
+	$(CC) -std=c++11 -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D MS_WIN64
 
 # the C++ wrapper around libhashdb
 hashdb_wrap.o: ${top_srcdir}/python_bindings/hashdb.i ../src_libhashdb/libhashdb.o hashdb_wrap.cpp

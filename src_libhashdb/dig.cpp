@@ -216,14 +216,14 @@ static std::wstring utf8to16(const std::string &fn8)
 // adapted from http://stackoverflow.com/questions/6693010/problem-using-multibytetowidechar
 // MultiByteToWideChar needs Windows.h
 {
-    int wchars_num = MultiByteToWideChar(CP_UTF8, 0, x.c_str(), -1, NULL ,0 );
-    if (wchars_num == 0 || wchars_num = 0xfffd) {
+    int wchars_num = MultiByteToWideChar(CP_UTF8, 0, fn8.c_str(), -1, NULL ,0 );
+    if (wchars_num == 0 || wchars_num == 0xfffd) {
         std::cerr << "Invalid UTF8 code in filename.\n";
-        return std::wstring("");
+        return std::wstring(_TEXT(""));
     }
 
     wchar_t* wstr = new wchar_t[wchars_num];
-    MultiByteToWideChar(CP_UTF8, 0, x.c_str(), -1, wstr, wchars_num);
+    MultiByteToWideChar(CP_UTF8, 0, fn8.c_str(), -1, wstr, wchars_num);
     std::wstring fn16(wstr, wchars_num);
     delete[] wstr;
     return fn16;

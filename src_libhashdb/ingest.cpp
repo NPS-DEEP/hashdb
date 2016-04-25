@@ -75,7 +75,11 @@ namespace hashdb {
 
     // iterate
     while (it != dig_tool.end()) {
+#ifdef WIN32
+      std::wcout << *it << "\n";
+#else
       std::cout << *it << "\n";
+#endif
       ++it;
     }
 

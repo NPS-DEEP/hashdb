@@ -70,7 +70,7 @@ case $host in
 
   *mingw*)
      LIBS="$LIBS -lpsapi -lws2_32 -lgdi32"
-     CPPFLAGS="-D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
+     CPPFLAGS="-DUNICODE -D_UNICODE -D__MSVCRT_VERSION__=0x0601 -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 -g $CPPFLAGS"
      CPPFLAGS="$CPPFLAGS --static -static-libgcc -static-libstdc++"
      CXXFLAGS="$CXXFLAGS -Wno-format "  # compiler mingw-4.3.0 is broken on I64u formats
      LDFLAGS="$LDFLAGS --static"
