@@ -383,7 +383,7 @@ namespace hashdb {
      *   - An end of line mark
      *
      * For BINARY_OUTPUT, returned data consists of:
-     *   - 8-byte count field in network byte order (big endian)
+     *   - 8-byte count field in processor-native byte order
      *   - binary hash
      *   - binary blob
      *   - JSON text
