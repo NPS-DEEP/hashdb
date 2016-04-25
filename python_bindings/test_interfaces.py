@@ -60,9 +60,19 @@ str_equals(expanded_hash,
 json_hash_string = scan_manager.export_hash_json("hhhhhhhh")
 str_equals(json_hash_string, '{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
 
+int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
+
+str_equals(scan_manager.find_hash_count_json("hhhhhhhh"), '{"block_hash":"6868686868686868","count":1}')
+
 int_equals(scan_manager.find_approximate_hash_count("hhhhhhhh"), 1)
 
-int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
+str_equals(scan_manager.find_approximate_hash_count_json("hhhhhhhh"), '{"block_hash":"6868686868686868","approximate_count":1}')
+
+has_source_data, filesize, file_type, nonprobative_count = scan_manager.find_source_data("hhhhhhhh")
+bool_equals(has_source_data, True)
+int_equals(filesize, 100)
+str_equals(file_type, "ft1")
+int_equals(nonprobative_count, 1)
 
 str_equals(scan_manager.export_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}')
 

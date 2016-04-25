@@ -567,9 +567,16 @@ namespace hashdb {
      *   True if file binary hash is present.
      */
     bool find_source_data(const std::string& file_binary_hash,
+#ifdef SWIG
+                          uint64_t& OUTPUT,
+                          std::string& OUTPUT,
+                          uint64_t& OUTPUT
+#else
                           uint64_t& filesize,
                           std::string& file_type,
-                          uint64_t& nonprobative_count) const;
+                          uint64_t& nonprobative_count
+#endif
+                         ) const;
 
 #ifndef SWIG
     /**

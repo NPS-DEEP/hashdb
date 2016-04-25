@@ -1361,19 +1361,34 @@ To scan for hashes, open a scan manager, for example\\
 
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
-\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
 \item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
 \verb+scan_stream_mode+\\
-Scans from input stream and writes matches to output stream based on mode.  Modes are \verb+EXPANDED_HASH+, \verb+HASH_COUNT+, and \verb+APPROXIMATE_HASH_COUNT+.
-\item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
-This is the fastest scan function. It returns an approximate source, offset pair count for the hash, and can be wrong.
+Scans from input stream and writes matches to output stream. Output information and syntax are based on selected stream modes.
+\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
+Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
 \item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
-This interface is only available for C++ and is not available for Python.
+C++ only. Find hash, obtain fields related to hash on match.
+\item \verb+json_text = export_hash_json(binary_hash)+\\
+Export hash information for the given binary hash else "" if not there.
+\item \verb+json_text= export_source_json(file_binary_hash)+\\
+Export source information for the given source else "" if not there.
 \item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
 Return the source, offset pair count for the hash.
-\item \verb+json_source_string = scan_manager.find_source_json(file_binary_hash)+\\
-Return \verb+json_source_string+ else "" on no match.
+\item \verb+json_text = scan_manager.find_hash_count_json(binary_hash)+\\
+Export the hash count in JSON format for the given binary hash else "" if not there.
+\item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
+This is the fastest scan function. It returns an approximate source, offset pair count for the hash, and can be wrong.
+\item \verb+json_text = scan_manager.find_approximate_hash_count_json(binary_hash)+\\
+Export the approximate hash count in JSON format for the given binary hash else "" if not there.
+\item \verb+has_source_data = scan_manager.find_source_data(file_binary_hash,+\\
+\verb+filesize, file_type, nonprobative_count+\\
+C++ syntax. Return information about the source.
+\item \verb+has_source_data, filesize, file_type, nonprobative_count =+\\
+\verb+scan_manager.find_source_data(file_binary_hash)+\\
+Python syntax. Return information about the source.
+\item \verb+has_source_names = scan_manager.find_source_names(file_binary_hash,+\\
+\verb+&source_names_t)+\\
+C++ only. Retrieve the source names for this source or "" on no match.
 \item \verb+first_binary_hash = scan_manager.first_hash()+
 \item \verb+next_binary_hash = scan_manager.next_hash(binary_hash)+
 \item \verb+first_file_binary_hash = scan_manager.first_source()+
