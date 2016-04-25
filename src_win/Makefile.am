@@ -79,7 +79,7 @@ py_parts/$(LIB_FILE):
 hashdb_wrap.cpp: ${top_srcdir}/python_bindings/hashdb.i \
 	         ${top_srcdir}/src_libhashdb/hashdb.hpp
 	ln -s ${top_srcdir}/src_libhashdb/hashdb.hpp .
-	/usr/bin/swig -c++ -python -o hashdb_wrap.cpp ${top_srcdir}/python_bindings/hashdb.i
+	/usr/bin/swig -c++ -python -threads -o hashdb_wrap.cpp ${top_srcdir}/python_bindings/hashdb.i
 	rm hashdb.hpp
 	$(CC) -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D MS_WIN64
 

@@ -32,7 +32,7 @@ hashdb_wrap.cpp: hashdb.i \
                ${top_srcdir}/src_libhashdb/hashdb.hpp \
                ../src_libhashdb/libhashdb.la
 	ln -s ${top_srcdir}/src_libhashdb/hashdb.hpp .
-	$(SWIG) $(AX_SWIG_PYTHON_OPT) -o $@ $<
+	$(SWIG) $(AX_SWIG_PYTHON_OPT) -threads -o $@ $<
 	rm hashdb.hpp
 
 # install hashdb.py
