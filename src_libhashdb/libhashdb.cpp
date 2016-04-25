@@ -175,27 +175,6 @@ namespace hashdb {
     return crc;
   }
 
-/*
-  // from http://stackoverflow.com/questions/3022552/is-there-any-standard-htonl-like-function-for-64-bits-integers-in-c
-  uint64_t htonll(uint64_t value)
-  {
-      // The answer is 42
-      static const int num = 42;
-
-      // Check the endianness
-      if (*reinterpret_cast<const char*>(&num) == num)
-      {
-          const uint32_t high_part = htonl(static_cast<uint32_t>(value >> 32));
-          const uint32_t low_part = htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
-
-          return (static_cast<uint64_t>(low_part) << 32) | high_part;
-      } else
-      {
-          return value;
-      }
-  }
-*/
-
   // ************************************************************
   // version of the hashdb library
   // ************************************************************
@@ -720,17 +699,10 @@ namespace hashdb {
             {
               // print size of output, binary hash, binary blob, and JSON
 
-              // response size in network byte order
-              uint32_t response_size = h_b_size + json_response.size();
-              static const int num = 42;
-              if (*reinterpret_cast<const char*>(&num) == num) {
-                ss.write("\0\0\0\0", 4);
-                uint32_t nbo_response_size = ::htonl(response_size);
-                ss.write(reinterpret_cast<const char*>(&nbo_response_size), 4);
-              } else {
-                ss.write("\0\0\0\0", 4);
-                ss.write(reinterpret_cast<const char*>(&response_size), 4);
-              }
+              // response size based on architecture
+              // i.e. do not force network byte order
+              uint64_t response_size = h_b_size + json_response.size();
+              ss.write(reinterpret_cast<const char*>(&response_size), 8);
 
               // binary hash
               ss << binary_hash;
