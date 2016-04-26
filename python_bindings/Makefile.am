@@ -56,7 +56,7 @@ _hashdb_la_CPPFLAGS = ${PYTHON_CPPFLAGS} -Wno-deprecated-register -I${top_srcdir
 
 # for testing
 AM_TESTS_ENVIRONMENT = export PYTHONPATH='.:.libs';
-testfile = test_interfaces.py
+testfile = test_hashdb.py
 EXTRA_DIST = $(testfile)
 TESTS = $(testfile)
 clean-local:

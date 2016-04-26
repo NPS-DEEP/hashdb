@@ -19,10 +19,6 @@ if sys.maxsize != 2**63 - 1:
     print("found %d but expected %d" % (sys.maxsize, 2**64))
     sys.exit(1)
 
-# To run from any directory on Linux-based systems:
-#   1) type: export PYTHONPATH='.:.libs'
-#   2) type: ../../python_bindings/test_interfaces.py
-
 import hashdb
 import shutil
 from struct import pack
