@@ -20,17 +20,17 @@ all: $(UNVERSIONED_INSTALLER)
 # we copy files here since NSIS likes to work from the .nsi directory
 $(UNVERSIONED_INSTALLER): ${top_srcdir}/src_win/build_installer.nsi \
                           ${top_srcdir}/src_win/EnvVarUpdate.nsi \
-                          ${top_srcdir}/python_bindings/test_interfaces.py \
+                          ${top_srcdir}/python_bindings/test_hashdb.py \
                           hashdb_um.pdf \
                           ../src/hashdb.exe \
                           _hashdb.pyd
-	rm -rf build_installer.nsi EnvVarUpdate.nsi test_hashdb_module.py hashdb.exe
+	rm -rf build_installer.nsi EnvVarUpdate.nsi test_hashdb.py hashdb.exe
 	ln -s ${top_srcdir}/src_win/build_installer.nsi .
 	ln -s ${top_srcdir}/src_win/EnvVarUpdate.nsi .
-	ln -s ${top_srcdir}/src_win/test_hashdb_module.py .
+	ln -s ${top_srcdir}/python_bindings/test_hashdb.py .
 	ln -s ../src/hashdb.exe .
 	makensis -NOCD -DVERSION=$(HASHDBVERSION) build_installer.nsi
-	rm build_installer.nsi EnvVarUpdate.nsi test_hashdb_module.py hashdb.exe
+	rm build_installer.nsi EnvVarUpdate.nsi test_hashdb.py hashdb.exe
 	cp $(INSTALLER) $(UNVERSIONED_INSTALLER)
 
 # ############################################################
@@ -78,12 +78,13 @@ py_parts/$(LIB_FILE):
 	             --output-lib $(LIB_FILE)
 
 # the generated hashdb_wrap.cpp and hashdb.py files, both made by SWIG
+# note that -D_hypot=hypot addresses a name clash between Python and C++11.
 hashdb_wrap.cpp: ${top_srcdir}/python_bindings/hashdb.i \
 	         ${top_srcdir}/src_libhashdb/hashdb.hpp
 	ln -s ${top_srcdir}/src_libhashdb/hashdb.hpp .
 	/usr/bin/swig -c++ -python -threads -o hashdb_wrap.cpp ${top_srcdir}/python_bindings/hashdb.i
 	rm hashdb.hpp
-	$(CC) -std=c++11 -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D MS_WIN64
+	$(CC) -std=c++11 -Ipy_parts -I${top_srcdir}/src_libhashdb -c hashdb_wrap.cpp -D_hypot=hypot -D MS_WIN64
 
 # the C++ wrapper around libhashdb
 hashdb_wrap.o: ${top_srcdir}/python_bindings/hashdb.i ../src_libhashdb/libhashdb.o hashdb_wrap.cpp

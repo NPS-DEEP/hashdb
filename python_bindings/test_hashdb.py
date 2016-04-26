@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 
-# To run this test in place but outside the "make check" test harness:
+# This script tests the Python version and hashdb library functions.
+# This script creates filenames starting with "temp_" in the local directory.
+
+# ############################################################
+# test Python version
+# ############################################################
+import sys
+# require Python version 2.7
+if sys.version_info.major != 2 and sys.version_info.minor != 7:
+    print("Error: Invalid Python version: 2.7 is required.")
+    print(sys.version_info)
+    sys.exit(1)
+
+# require 64-bit Python
+if sys.maxsize != 2**63 - 1:
+    print("Error: 64-bit Python is required.")
+    print("found %d but expected %d" % (sys.maxsize, 2**64))
+    sys.exit(1)
+
+# To run from any directory on Linux-based systems:
 #   1) type: export PYTHONPATH='.:.libs'
 #   2) type: ../../python_bindings/test_interfaces.py
 
@@ -22,7 +41,9 @@ def int_equals(a,b):
         raise ValueError(str(a) + " not equal to " + str(b))
 
 
-# Support functions
+# ############################################################
+# test Support functions
+# ############################################################
 # Support function: Version
 str_equals(hashdb.version()[:2], "3.")
 
@@ -40,7 +61,9 @@ binary_string = hashdb.hex_to_bin("0000000000000000")
 hex_string = hashdb.bin_to_hex(binary_string)
 str_equals(hex_string, "0000000000000000")
 
-# import
+# ############################################################
+# test import functions
+# ############################################################
 import_manager = hashdb.import_manager_t("temp_1.hdb", "insert test data")
 import_manager.insert_source_name("hhhhhhhh", "rn1", "fn1")
 import_manager.insert_source_name("hhhhhhhh", "rn2", "fn2")
@@ -50,7 +73,9 @@ import_manager.import_json('{"block_hash":"6868686868686868","entropy":2,"block_
 import_manager.import_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]')
 str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
 
-# scan
+# ############################################################
+# test scan functions
+# ############################################################
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
 expanded_hash = scan_manager.find_expanded_hash_json("hhhhhhhh")
 str_equals(expanded_hash,
@@ -118,7 +143,7 @@ str_equals(ts.stamp("time1")[:15], '{"name":"time1"')
 str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 
 # ############################################################
-# scan_stream in binary mode
+# test scan_stream in binary mode
 # ############################################################
 # setup for scan_stream, end with EOF
 temp_in = open("temp_in.bin", "w")
@@ -207,7 +232,7 @@ in_file_object.close()
 out_file_object.close()
 
 # ############################################################
-# scan_stream in text mode
+# test scan_stream in text mode
 # ############################################################
 # setup for scan_stream, end with EOF
 temp_in = open("temp_in.bin", "w")

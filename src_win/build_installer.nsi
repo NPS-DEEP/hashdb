@@ -6,7 +6,7 @@
 #   Python binding files:
 #       hashdb.py
 #       _hashdb.pyd
-#       test_hashdb_module.py
+#       test_hashdb.py
 #   PATH
 #   uninstaller
 #   start menu shortcuts:
@@ -109,7 +109,7 @@ Section "hashdb Python module"
 	setOutPath "$DESKTOP"
         file "hashdb.py"
         file "_hashdb.pyd"
-        file "test_hashdb_module.py"
+        file "test_hashdb.py"
 sectionEnd
 
 function .onInit
@@ -169,7 +169,7 @@ section "uninstall"
 	Call un.FailableDelete
 	StrCpy $0 "$DESKTOP\_hashdb.pyd"
 	Call un.FailableDelete
-	StrCpy $0 "$DESKTOP\test_hashdb_module.py"
+	StrCpy $0 "$DESKTOP\test_hashdb.py"
 	Call un.FailableDelete
 
 	# uninstall dir
