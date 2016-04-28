@@ -45,9 +45,9 @@ hashdb_um.pdf:
 # hashdb Python binding
 
 # constants used for preparing Python parts to compile and link against
-MSI_URL_PATH=https://www.python.org/ftp/python/2.7.6
+MSI_URL_PATH=https://www.python.org/ftp/python/2.7.11
 DLL_TOOL=/usr/x86_64-w64-mingw32/bin/dlltool
-MSI_FILE=python-2.7.6.amd64.msi
+MSI_FILE=python-2.7.11.amd64.msi
 DLL_FILE=python27.dll
 DEF_FILE=python27.def
 LIB_FILE=libpython27.a

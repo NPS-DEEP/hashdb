@@ -1362,7 +1362,7 @@ To scan for hashes, open a scan manager, for example\\
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
 \item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
-\verb+scan_stream_mode+\\
+\verb+scan_mode, response_mode)+\\
 Scans from input stream and writes matches to output stream. Output information and syntax are based on selected stream modes.
 \item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
 Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.

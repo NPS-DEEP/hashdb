@@ -47,6 +47,7 @@
 #include <cassert>
 #endif
 #include <sys/stat.h>   // for mkdir
+#include <fcntl.h>      // scan_stream_f
 #include <time.h>       // for timestamp
 #include <sys/types.h>  // for timestamp
 #include <sys/time.h>   // for timestamp
@@ -174,6 +175,13 @@ namespace hashdb {
     }
     delete source_set;
     return crc;
+  }
+
+  // file descriptor error
+  static std::string fd_error(const std::string& message, int fd) {
+    std::stringstream ss;
+    ss << message << ", fd=" << fd << ": " << strerror(errno);
+    return ss.str();
   }
 
   // ************************************************************
@@ -610,6 +618,35 @@ namespace hashdb {
     delete sources;
   }
 
+  std::string scan_manager_t::scan_stream_f(
+                   const std::string& in_file,
+                   const std::string& out_file,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode) {
+#ifdef WIN32
+    const int in_fd = ::open(in_file.c_str(), _O_RDONLY);
+    const int out_fd = ::open(out_file.c_str(), _O_WRONLY);
+#else
+    const int in_fd = ::open(in_file.c_str(), O_RDONLY);
+    const int out_fd = ::open(out_file.c_str(), O_WRONLY);
+#endif
+    std::string error_message = scan_stream(in_fd, out_fd, hash_size,
+                                        blob_size, scan_mode, response_mode);
+    if (error_message.size() == 0) {
+      int status = 0;
+      status = ::close(in_fd);
+      if (status == 0) {
+        status = ::close(out_fd);
+      }
+      if (status == -1) {
+        error_message = strerror(errno);
+      }
+    }
+    return error_message;
+  }
+
   // iteratively read hash_size+blob_size from in_fd and scan hash.
   // on match, write count, hex blob, and JSON data to out_fd based on
   // output mode.  Quit if binary_hash is all 0.
@@ -625,6 +662,7 @@ namespace hashdb {
     const int h_b_size = hash_size + blob_size;
     char h_b[h_b_size];
     while (true) {
+
       // read hash and blob together
       ssize_t count = ::read(in_fd, h_b, h_b_size);
       if (count == 0) {
@@ -632,7 +670,7 @@ namespace hashdb {
         return "";
       }
       if (count == -1) {
-        return strerror(errno);
+        return fd_error("error reading in_fd", in_fd);
       }
       if (count != h_b_size) {
         // uneven count so warn and quit
@@ -723,16 +761,19 @@ namespace hashdb {
         std::string response = ss.str();
         count = ::write(out_fd, response.c_str(), response.size());
         if (count == -1) {
-          return strerror(errno);
+          return fd_error("error writing out_fd", out_fd);
         }
         if ((size_t)count != response.size()) {
-          return "unexpected incomplete write in scan_stream";
+          std::stringstream ss2;
+          ss2 << "unexpected incomplete write count " << count
+             << " is not " << response.size();
+          return ss2.str();
         }
 
         // flush for immediate write
         ssize_t success = ::fsync(out_fd);
         if (success == -1) {
-          return strerror(errno);
+          return fd_error("error flushing out_fd", out_fd);
         }
       }
     }

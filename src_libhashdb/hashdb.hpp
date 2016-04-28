@@ -405,6 +405,14 @@ namespace hashdb {
                    const hashdb::scan_stream_scan_mode_t scan_mode,
                    const hashdb::scan_stream_response_mode_t response_mode);
 
+    std::string scan_stream_f(
+                   const std::string& in_file,
+                   const std::string& out_file,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode);
+
     /**
      * Scan for a hash and return expanded source information associated
      * with it.
