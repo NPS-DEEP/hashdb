@@ -409,7 +409,7 @@ The source file size indicates how big a source file is. The \sscope tool uses t
 \item \textbf{Source File Type}\\
 This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.\\
 \item \textbf{Source File Nonprobative Count}\\
-The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+import_dir+ function, this value is set to the number of blocks that have been given a block label.\\
+The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+ingest+ function, this value is set to the number of blocks that have been given a block label.\\
 \end{itemize}
 
 \subsection{Building a \hdb Database}
@@ -616,7 +616,7 @@ Hash databases may be imported to in several ways.  Commands to import and expor
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{import\_dir} & \verb+import_dir [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+<hashdb.hdb>+ \verb+<import directory>+& Imports hashes from files under the import directory.\\
+\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>]+ \verb+<hashdb.hdb>+ \verb+<source directory>+& Computes and imports hashes from files under the source directory.\\
 \hline
 \textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database.\\
 \hline
@@ -634,11 +634,11 @@ and through the use of the import capability provided by the \hdb library API (d
 
 To import block hashes from a directory of blacklist sources, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import_dir -r demo_repository demo.hdb demo_blacklist_dir}
+\verbbf{hashdb ingest -r demo_repository demo.hdb demo_blacklist_dir}
 \end{Verbatim}
 In the above command the option \textbf{-r} is used along with the repository name \texttt{demo\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{import} command in the above example imports block hashes from files in the \texttt{demo\_blacklist\_dir} directory into the database \texttt{demo.hdb}. When the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import} is imported, \hdb prints output to the command line to indicate that hashes have been inserted into the database: 
+The \textbf{ingest} command in the above example imports block hashes from files in the \texttt{demo\_blacklist\_dir} directory into the database \texttt{demo.hdb}. When the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import} is imported, \hdb prints output to the command line to indicate that hashes have been inserted into the database: 
 
 \begingroup
 \footnotesize
@@ -782,7 +782,7 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \hline
 \textbf{scan\_hash} & \verb+scan_hash <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{scan\_image} & \verb+scan_image+ \verb+<hashdb> <media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches\\
+\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>]+ \verb+<hashdb> <media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches\\
 \hline
 \end{tabular}
 \end{table}
