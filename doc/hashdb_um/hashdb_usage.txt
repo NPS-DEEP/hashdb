@@ -1,4 +1,4 @@
-hashdb Version 3.0.0-alpha-1
+hashdb Version 3.0.0-alpha-3
 Usage: hashdb [-h|--help] [-v|-V|--version] [-q|--quiet]
               [options] <command> [<args>]
 
@@ -29,8 +29,8 @@ New database:
     <hashdb>   the file path to the new hash database to create
 
 Import/Export:
-  import_dir [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb>
-         <import directory>
+  ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
+         <hashdb.hdb> <import directory>
     Import hashes recursively from <import directory> into hash database
       <hashdb>.
 
@@ -41,6 +41,9 @@ Import/Export:
     -w, --whitelist_dir
       The path to a whitelist hash database.  Hashes matching this database
       will be marked with a whitelist entropy flag.
+    -s, --step_size
+      The step size to move along while calculating hashes.  Step size must
+      be divisible by the byte alignment defined in the database.
 
     Parameters:
     <import dir>   the directory to recursively import from
@@ -187,9 +190,14 @@ Scan:
                       lookup source
     <hex block hash>  the hash value to scan for
 
-  scan_image <hashdb> <media image>
+  scan_image <hashdb> <media image> [-s <step size>]
     Scan hash database <hashdb> for hashes in <media image> and print out
     matches.
+
+    Options:
+    -s, --step_size
+      The step size to move along while calculating hashes.  Step size must
+      be divisible by the byte alignment defined in the database.
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the

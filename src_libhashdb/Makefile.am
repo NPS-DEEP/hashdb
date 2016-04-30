@@ -76,15 +76,20 @@ liblmdb_la_LDFLAGS = -PIC
 libhashdb_la_LDFLAGS = -PIC -avoid-version -static
 
 AM_CPPFLAGS = \
+	-I${top_srcdir}/src_libhashdb/hasher \
 	-I${top_srcdir}/src_libhashdb/liblmdb \
 	-I${top_srcdir}/src_libhashdb/rapidjson
 AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
+HASHER_INCS = \
+	hasher/dig.cpp \
+	hasher/dig.h \
+	hasher/file_reader_helper.hpp \
+	hasher/file_reader.hpp
+
 LIBHASHDB_INCS = \
 	crc32.h \
-	dig.cpp \
-	dig.h \
 	file_modes.h \
 	fsync.h \
 	hashdb.hpp \
@@ -107,7 +112,7 @@ LIBHASHDB_INCS = \
 	settings_manager.hpp
 
 libhashdb_la_SOURCES = \
-	$(LIBHASHDB_INCS)
+	$(LIBHASHDB_INCS) $(HASHER_INCS)
 
 include_HEADERS = hashdb.hpp
 

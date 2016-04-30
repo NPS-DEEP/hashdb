@@ -134,13 +134,13 @@ namespace commands {
   // import recursively from path
   static void ingest(const std::string& hashdb_dir,
                      const std::string& ingest_path,
+                     const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
                      const std::string& cmd) {
 
     // ingest
-    std::cout << "TBD\n";
-    hashdb::ingest(hashdb_dir, ingest_path, repository_name,
+    hashdb::ingest(hashdb_dir, ingest_path, step_size, repository_name,
                    whitelist_dir, cmd);
   }
 
@@ -576,6 +576,7 @@ namespace commands {
   // scan_image
   static void scan_image(const std::string& hashdb_dir,
                          const std::string& media_image_filename,
+                         const size_t step_size,
                          const std::string& cmd) {
 
     // validate hashdb_dir path

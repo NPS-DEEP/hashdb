@@ -23,7 +23,7 @@
 #include <tchar.h>
 #endif
 
-namespace hashdb {
+namespace hasher {
 class dig {
 public:
 #ifdef WIN32
@@ -93,6 +93,6 @@ public:
     dig::const_iterator end();
 
 };
-dig::const_iterator & operator++(hashdb::dig::const_iterator &it);
-} // end namespace hashdb
+dig::const_iterator & operator++(hasher::dig::const_iterator &it);
+} // end namespace hasher
 #endif

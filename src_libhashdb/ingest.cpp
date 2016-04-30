@@ -30,21 +30,61 @@
 #include <sstream>
 #include "hashdb.hpp"
 #include "dig.h"
+#include "file_reader.hpp"
 
 namespace hashdb {
 
   // ************************************************************
-  // interfaces
+  // support interfaces
   // ************************************************************
+  void print_processing(const hasher::dig::filename_t& filename, const uint64_t filesize) {
+    std::cout << "processing ";
+#ifdef WIN32
+    std::wcout << filename;
+#else
+    std::cout << filename;
+#endif
+    std::cout << ", size " << filesize << "...\n";
+  }
 
+
+  void print_skipping(const hasher::dig::filename_t& filename, const uint64_t filesize,
+                 const std::string message) {
+    std::cout << "skipping ";
+#ifdef WIN32
+    std::wcout << filename;
+#else
+    std::cout << filename;
+#endif
+    std::cout << ", size " << filesize << ": " << message << "\n";
+  }
+
+//zz move this to hasher/ingest_file.hpp
+  void ingest_file(const hasher::file_reader_t& reader,
+                   import_manager_t& import_manager,
+                   scan_manager_t* whitelist_scan_manager,
+                   const std::string& repository_name) {
+
+  // calculate file MD5
+  // iterate file to calculate MD5
+
+  //
+//zz
+  }
+
+
+  // ************************************************************
   // ingest
+  // ************************************************************
   std::string ingest(const std::string& hashdb_dir,
                      const std::string& ingest_path,
+                     const size_t step_size,
                      const std::string& p_repository_name,
                      const std::string& whitelist_dir,
                      const std::string& cmd) {
 
     bool has_whitelist = false;
+    hashdb::scan_manager_t* whitelist_scan_manager;
 
     // make sure hashdb_dir is there
     std::string error_message;
@@ -69,22 +109,46 @@ namespace hashdb {
       has_whitelist = true;
     }
 
+    // open import manager
+    hashdb::import_manager_t import_manager(hashdb_dir, cmd);
+
+    // open whitelist DB
+    
+    if (has_whitelist) {
+      whitelist_scan_manager = new scan_manager_t(whitelist_dir);
+    }
+
     // recursive directory walker
-    hashdb::dig dig_tool(ingest_path);
-    hashdb::dig::const_iterator it = dig_tool.begin();
+    hasher::dig dig_tool(ingest_path);
+    hasher::dig::const_iterator it = dig_tool.begin();
 
     // iterate
+    uint8_t* b = new uint8_t[hasher::buffer_size];
     while (it != dig_tool.end()) {
-#ifdef WIN32
-      std::wcout << *it << "\n";
-#else
-      std::cout << *it << "\n";
-#endif
+      hasher::file_reader_t reader(*it, b);
+      
+      if (reader.is_open) {
+
+        // only process when file size > 0
+        if (reader.filesize > 0) {
+          print_processing(*it, reader.filesize);
+          ingest_file(reader, import_manager, whitelist_scan_manager,
+                      p_repository_name);
+        } else {
+          print_skipping(*it, reader.filesize, "empty file");
+        }
+      } else {
+        // this file could not be opened
+        print_skipping(*it, reader.filesize, reader.error_message);
+      }
       ++it;
     }
 
     // done
-    std::cout << "TBD\n";
+    if (has_whitelist) {
+      delete[] b;
+      delete whitelist_scan_manager;
+    }
 
     // success
     return "";

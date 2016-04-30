@@ -68,7 +68,6 @@
 #include "../src_libhashdb/hashdb.hpp" // for settings
 
 // default settings
-static const hashdb::settings_t default_settings;
 static const std::string default_repository_name = "";
 static const std::string default_whitelist_dir = "";
 
@@ -79,6 +78,7 @@ static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 static bool has_quiet = false;
 static bool has_byte_alignment = false;
 static bool has_block_size = false;
+static bool has_step_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
 static bool has_max_source_offset_pairs = false;
@@ -88,6 +88,7 @@ static bool has_tuning = false;
 hashdb::settings_t settings;
 static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
+static size_t step_size = settings.block_size;
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -164,6 +165,7 @@ int main(int argc,char **argv) {
       {"quiet",                         no_argument, 0, 'q'},
       {"byte_alignment",          required_argument, 0, 'a'},
       {"block_size",              required_argument, 0, 'b'},
+      {"step_size",               required_argument, 0, 's'},
       {"repository_name",         required_argument, 0, 'r'},
       {"whitelist_dir",           required_argument, 0, 'w'},
       {"max_source_offset_pairs", required_argument, 0, 'm'},
@@ -173,7 +175,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:b:r:w:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:m:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -219,6 +221,12 @@ int main(int argc,char **argv) {
       case 'b': {	// block size
         has_block_size = true;
         settings.block_size = std::atoi(optarg);
+        break;
+      }
+
+      case 's': {	// block size
+        has_step_size = true;
+        step_size = std::atoi(optarg);
         break;
       }
 
@@ -299,6 +307,10 @@ void check_options(const std::string& options) {
     std::cerr << "The -b block_size option is not allowed for this command.\n";
     exit(1);
   }
+  if (has_step_size && options.find("s") == std::string::npos) {
+    std::cerr << "The -s step_size option is not allowed for this command.\n";
+    exit(1);
+  }
   if (has_repository_name && options.find("r") == std::string::npos) {
     std::cerr << "The -r repository_name option is not allowed for this command.\n";
     exit(1);
@@ -350,11 +362,12 @@ void run_command() {
 
   // import
   } else if (command == "ingest") {
-    check_params("rw", 2);
+    check_params("srw", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
-    commands::ingest(args[0], args[1], repository_name, whitelist_dir, cmd);
+    commands::ingest(args[0], args[1], step_size,
+                     repository_name, whitelist_dir, cmd);
 
   } else if (command == "import_tab") {
     check_params("rw", 2);
@@ -423,8 +436,8 @@ void run_command() {
     commands::scan_hash(args[0], args[1], cmd);
 
   } else if (command == "scan_image") {
-    check_params("", 2);
-    commands::scan_image(args[0], args[1], cmd);
+    check_params("s", 2);
+    commands::scan_image(args[0], args[1], step_size, cmd);
 
   // statistics
   } else if (command == "size") {

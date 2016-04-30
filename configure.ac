@@ -250,6 +250,11 @@ LIBS="-lcrypto $LIBS"
 #LIBS="-lcrypto -lpthread $LIBS"
 
 ################################################################
+# LIBEWF is required for ingest and scan image interfaces
+AC_CHECK_HEADER([libewf.h])
+AC_CHECK_LIB([ewf], libewf_handle_read_random)
+
+################################################################
 # Should we disable optimization?
 AC_ARG_WITH([opt], AC_HELP_STRING([--without-opt], [Drop all -O C flags]))
 # Or maybe just tone it down a bit?

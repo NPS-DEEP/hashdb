@@ -1,0 +1,222 @@
+// Author:  Bruce Allen <bdallen@nps.edu>
+// Created: 2/25/2013
+//
+// The software provided here is released by the Naval Postgraduate
+// School, an agency of the U.S. Department of Navy.  The software
+// bears no warranty, either expressed or implied. NPS does not assume
+// legal liability nor responsibility for a User's use of the software
+// or the results of such use.
+//
+// Please note that within the United States, copyright protection,
+// under Section 105 of the United States Code, Title 17, is not
+// available for any work of the United States Government and/or for
+// any works created by United States Government employees. User
+// acknowledges that this software contains work which was created by
+// NPS government employees and is therefore in the public domain and
+// not subject to copyright.
+//
+// Released into the public domain on February 25, 2013 by Bruce Allen.
+
+/**
+ * \file
+ * Raw file accessors.  Mostly copied from bulk_extractor/src/image_process.cpp
+ *
+ * Provides:
+ *   GetDriveGeometry() for Windows
+ *   pread64() for Windows
+ *   getSizeOfFile(&filename)
+ */
+
+#ifndef FILE_READER_HELPER
+#define FILE_READER_HELPER
+
+#include <cassert>
+#include <string>
+#include <string.h>
+#include <iostream>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+namespace hasher {
+
+// reduce ifdef clutter
+#ifdef WIN32
+typedef std::wstring filename_t;
+#else
+typedef std::string filename_t;
+#endif
+
+#ifdef WIN32
+static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
+{
+    HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined 
+    BOOL bResult   = FALSE;                 // results flag
+    DWORD junk     = 0;                     // discard results
+
+    hDevice = CreateFileW(wszPath,          // drive to open
+                          0,                // no access to the drive
+                          FILE_SHARE_READ | // share mode
+                          FILE_SHARE_WRITE, 
+                          NULL,             // default security attributes
+                          OPEN_EXISTING,    // disposition
+                          0,                // file attributes
+                          NULL);            // do not copy file attributes
+
+    if (hDevice == INVALID_HANDLE_VALUE)    // cannot open the drive
+        {
+            return (FALSE);
+        }
+
+    bResult = DeviceIoControl(hDevice,                       // device to be queried
+                              IOCTL_DISK_GET_DRIVE_GEOMETRY, // operation to perform
+                              NULL, 0,                       // no input buffer
+                              pdg, sizeof(*pdg),            // output buffer
+                              &junk,                         // # bytes returned
+                              (LPOVERLAPPED) NULL);          // synchronous I/O
+
+    CloseHandle(hDevice);
+
+    return (bResult);
+}
+
+#endif
+
+/****************************************************************
+ *** get_filesize()
+ ****************************************************************/
+
+/**
+ * It's hard to figure out the filesize in an opearting system independent method that works with both
+ * files and devices. This seems to work. It only requires a functioning pread64 or pread.
+ */
+
+#ifdef WIN32
+int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
+{
+    DWORD bytes_read = 0;
+    LARGE_INTEGER li;
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
+        return -1;
+    }
+    return bytes_read;
+}
+#else
+  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
+{
+    if(_lseeki64(d,offset,0)!=offset) return -1;
+    return read(d,buf,nbyte);
+}
+  #endif
+#endif
+
+#ifdef WIN32
+int64_t get_filesize(HANDLE fd)
+#else
+int64_t get_filesize(int fd)
+#endif
+{
+    char buf[64];
+    int64_t raw_filesize = 0;		/* needs to be signed for lseek */
+    int bits = 0;
+    int i =0;
+
+#if defined(HAVE_PREAD64)
+    /* If we have pread64, make sure it is defined */
+    extern size_t pread64(int fd,char *buf,size_t nbyte,off_t offset);
+#endif
+
+#if !defined(HAVE_PREAD64) && defined(HAVE_PREAD)
+    /* if we are not using pread64, make sure that off_t is 8 bytes in size */
+#define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
+    if(sizeof(off_t)!=8){
+	err(1,"Compiled with off_t==%d and no pread64 support.",(int)sizeof(off_t));
+    }
+#endif
+
+#ifndef WIN32
+    /* We can use fstat if sizeof(st_size)==8 and st_size>0 */
+    struct stat st;
+    memset(&st,0,sizeof(st));
+    if(sizeof(st.st_size)==8 && fstat(fd,&st)==0){
+	if(st.st_size>0) return st.st_size;
+    }
+#endif
+
+    /* Phase 1; figure out how far we can seek... */
+    for(bits=0;bits<60;bits++){
+	raw_filesize = ((int64_t)1<<bits);
+	if(::pread64(fd,buf,1,raw_filesize)!=1){
+	    break;
+	}
+    }
+    if(bits==60) {
+      std::cerr << "filesize seek error: Partition detection not functional.\n";
+      return 0;
+    }
+
+    /* Phase 2; blank bits as necessary */
+    for(i=bits;i>=0;i--){
+	int64_t test = (int64_t)1<<i;
+	int64_t test_filesize = raw_filesize | ((int64_t)1<<i);
+	if(::pread64(fd,buf,1,test_filesize)==1){
+	    raw_filesize |= test;
+	} else{
+	    raw_filesize &= ~test;
+	}
+    }
+    if(raw_filesize>0) raw_filesize+=1;	/* seems to be needed */
+    return raw_filesize;
+}
+
+
+
+// getSizeOfFile() for Win or Linux
+int64_t getSizeOfFile(const filename_t &fname) {
+#ifdef WIN32
+// Win
+    HANDLE current_handle = CreateFile(fname.c_str(), FILE_READ_DATA,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+				     OPEN_EXISTING, 0, NULL);
+    if(current_handle!=INVALID_HANDLE_VALUE){
+        // good, able to read file
+        int64_t fname_length = get_filesize(current_handle);
+        ::CloseHandle(current_handle);
+        return fname_length;
+
+    } else {
+        fprintf(stderr,"WIN32 subsystem: cannot open file '%s'\n",fname.c_str());
+        // try this
+
+        /* On Windows, see if we can use this */
+        fprintf(stderr,"%s checking physical drive\n",fname.c_str());
+        // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
+        DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
+        GetDriveGeometry(fname.c_str(), &pdg);
+        return pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
+                     (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
+    }
+
+#else
+// Linux
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+    int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
+    if(fd<0){
+        std::cerr << "*** unix getSizeOfFile: Cannot open " << fname << ": " << strerror(errno) << "\n";
+        return 0;
+    }
+    int64_t fname_length = get_filesize(fd);
+    ::close(fd);
+    return fname_length;
+#endif
+}
+
+} // end namespace hasher
+
+#endif
+

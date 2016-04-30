@@ -181,6 +181,7 @@ namespace hashdb {
    */
   std::string ingest(const std::string& hashdb_dir,
                      const std::string& ingest_path,
+                     const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
                      const std::string& command_string);

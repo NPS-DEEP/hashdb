@@ -21,7 +21,7 @@
 #define _TEXT(x) x
 #endif
 
-namespace hashdb {
+namespace hasher {
 
 const dig::filename_t dig::DIRSEP(_TEXT("/"));
 
@@ -251,7 +251,7 @@ dig::dig(const std::string &start_):start(utf8to16(start_))
 }
 #endif
 
-} // end namespace hashdb
+} // end namespace hasher
 
 #ifdef STANDALONE
 
