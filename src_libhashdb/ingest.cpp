@@ -37,7 +37,7 @@ namespace hashdb {
   // ************************************************************
   // support interfaces
   // ************************************************************
-  void print_processing(const hasher::dig::filename_t& filename, const uint64_t filesize) {
+  void print_processing(const hasher::filename_t& filename, const uint64_t filesize) {
     std::cout << "processing ";
 #ifdef WIN32
     std::wcout << filename;
@@ -48,7 +48,7 @@ namespace hashdb {
   }
 
 
-  void print_skipping(const hasher::dig::filename_t& filename, const uint64_t filesize,
+  void print_skipping(const hasher::filename_t& filename, const uint64_t filesize,
                  const std::string message) {
     std::cout << "skipping ";
 #ifdef WIN32
@@ -123,23 +123,24 @@ namespace hashdb {
     hasher::dig::const_iterator it = dig_tool.begin();
 
     // iterate
-    uint8_t* b = new uint8_t[hasher::buffer_size];
+    const size_t buffer_size = 16777216; // 2^24=16MiB
+    uint8_t* b = new uint8_t[buffer_size];
     while (it != dig_tool.end()) {
-      hasher::file_reader_t reader(*it, b);
+      hasher::file_reader_t file_reader(*it, b, buffer_size);
       
-      if (reader.is_open) {
+      if (file_reader.is_open) {
 
         // only process when file size > 0
-        if (reader.filesize > 0) {
-          print_processing(*it, reader.filesize);
-          ingest_file(reader, import_manager, whitelist_scan_manager,
+        if (file_reader.filesize > 0) {
+          print_processing(*it, file_reader.filesize);
+          ingest_file(file_reader, import_manager, whitelist_scan_manager,
                       p_repository_name);
         } else {
-          print_skipping(*it, reader.filesize, "empty file");
+          print_skipping(*it, file_reader.filesize, "empty file");
         }
       } else {
         // this file could not be opened
-        print_skipping(*it, reader.filesize, reader.error_message);
+        print_skipping(*it, file_reader.filesize, file_reader.error_message);
       }
       ++it;
     }

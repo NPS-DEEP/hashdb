@@ -23,7 +23,7 @@
 
 namespace hasher {
 
-const dig::filename_t dig::DIRSEP(_TEXT("/"));
+const filename_t dig::DIRSEP(_TEXT("/"));
 
 dig::const_iterator dig::begin()
 {
@@ -70,7 +70,7 @@ bool dig::const_iterator::open(const filename_t &fn)
  * Dereferencing the iterator returns the current file.
  * This is pretty simple, given everything else.
  */
-dig::filename_t dig::const_iterator::operator*() {
+filename_t dig::const_iterator::operator*() {
     return current_file;
 }
 
@@ -114,7 +114,7 @@ dig::const_iterator & operator++(dig::const_iterator &it)
     }
 
     while(it.dirstack.size()!=0){
-	dig::filename_t filename;		// that is read
+	filename_t filename;		// that is read
 #ifdef WIN32
 	/* MICROSOFT; UTF-16 */
 	WIN32_FIND_DATA FindFileData;
@@ -141,7 +141,7 @@ dig::const_iterator & operator++(dig::const_iterator &it)
 	}
 
 	/* Get the full path name */
-	dig::filename_t pathname = it.dirstack.top().name;
+	filename_t pathname = it.dirstack.top().name;
 	pathname.append(_TEXT("/"));
 	pathname.append(filename);
 
@@ -207,7 +207,7 @@ bool dig::const_iterator::operator == (const const_iterator &i2) {
  * the constructor isn't all that exciting.
  */
 
-dig::dig(const dig::filename_t &start_):start(start_)
+dig::dig(const filename_t &start_):start(start_)
 {
 }
 

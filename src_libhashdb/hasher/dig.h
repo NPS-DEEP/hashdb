@@ -24,13 +24,14 @@
 #endif
 
 namespace hasher {
-class dig {
-public:
 #ifdef WIN32
     typedef std::wstring filename_t;
 #else    
     typedef std::string filename_t;
 #endif
+
+class dig {
+public:
     static bool ignore_file_name(const filename_t &name);
     static const filename_t DIRSEP;
     class const_iterator {
