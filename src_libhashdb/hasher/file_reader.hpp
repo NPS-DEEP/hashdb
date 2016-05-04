@@ -19,9 +19,9 @@
 
 /**
  * \file
- * Read E01,RAW, and general files, based on filename extension.
+ * Read E01, serial 001, and single files.
  *
- * Adapted heavily from bulk_extractor/src/image_process.cpp.
+ * Adapted from bulk_extractor/src/image_process.cpp.
  */
 
 
@@ -45,44 +45,7 @@ enum file_reader_type_t {E01, SERIAL, SINGLE};
 class file_reader_t {
 
   public:
-  // very simple iterator to walk offsets up to filesize.
-  // dereferencing simply returns the itherator's current offset.
-  class const_iterator {
-    private:
-    const uint64_t filesize;
-    const size_t increment;
-    uint64_t current_offset;
-    public:
-    const_iterator(const uint64_t p_filesize, const uint64_t p_increment, bool at_end) :
-              filesize(p_filesize), increment(p_increment), current_offset(0) {
-      if (at_end) {
-        current_offset = filesize;
-      }
-    }
-    bool operator==(const const_iterator& it) {
-      return (filesize == it.filesize &&
-              increment == it.increment &&
-              current_offset == it.current_offset);
-    }
-    bool operator!=(const const_iterator& it) {
-      return !((*this) != it);
-    }
-    const_iterator& operator++() {
-      if (current_offset == filesize) {
-        std::cerr << "Usage error: attempt to increment iterator after end\n";
-      }
-      current_offset += increment;
-      if (current_offset > filesize) {
-        current_offset = filesize;
-      }
-      return *this;
-    }
-    uint64_t operator*(const const_iterator& it) {
-      return current_offset;
-    }
-  };
-
-  const filename_t filename;
+  const std::string filename;
   std::string error_message;
   const file_reader_type_t file_reader_type;
   ewf_file_reader_t* ewf_file_reader;
@@ -91,27 +54,25 @@ class file_reader_t {
   public:
   const bool is_open;
   const uint64_t filesize;
-  uint8_t* const buffer;
-  size_t const buffer_size;
-
-  // set by read()
-  bool has_buffer;
-  uint64_t file_offset;
-  size_t bytes_read;
 
   private:
+  // last read
+  mutable size_t last_offset;
+  mutable uint8_t* last_buffer;
+  mutable size_t last_buffer_size;
+  mutable size_t last_bytes_read;
 
   // do not allow copy or assignment
   file_reader_t(const file_reader_t&);
   file_reader_t& operator=(const file_reader_t&);
 
-  // get reader type from fname extension
-  file_reader_type_t reader_type(const filename_t& fname) {
-    if (fname.size() < 4) {
-      // no special fname extension
+  // get reader type from native_filename extension
+  file_reader_type_t reader_type(const filename_t& native_filename) {
+    if (native_filename.size() < 4) {
+      // no special native_filename extension
       return file_reader_type_t::SINGLE;
     }
-    const filename_t last4 = fname.substr(fname.size() - 4);
+    const filename_t last4 = native_filename.substr(native_filename.size() - 4);
     if (last4 == ".E01" || last4 == ".E01") {
       // E01
       return file_reader_type_t::E01;
@@ -120,17 +81,31 @@ class file_reader_t {
       // 001
       return file_reader_type_t::SERIAL;
     }
-    if (fname.size() >= 8 && fname.substr(fname.size() - 8) ==
-                                           "001.vmdk") {
+    if (native_filename.size() >= 8 &&
+        native_filename.substr(native_filename.size() - 8) == "001.vmdk") {
       // 001.vdmk
       return file_reader_type_t::SERIAL;
     }
-    // no special fname extension
+    // no special native_filename extension
     return file_reader_type_t::SINGLE;
   }
 
+  std::string utf8_filename(const filename_t& native_string) {
+#ifdef WIN32
+// from http://stackoverflow.com/questions/215963/how-do-you-properly-use-widechartomultibyte
+// Convert a wide Unicode string to an UTF8 string
+    if( native_string.empty() ) return std::string();
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &native_string[0], (int)native_string.size(), NULL, 0, NULL, NULL);
+    std::string strTo( size_needed, 0 );
+    WideCharToMultiByte                  (CP_UTF8, 0, &native_string[0], (int)native_string.size(), &strTo[0], size_needed, NULL, NULL);
+    return strTo;
+#else
+    return native_string;
+  }
+#endif
+
   // open the file for reading
-  bool open_reader() {
+  bool open_reader(const filename_t& native_filename) {
     switch(file_reader_type) {
 
       // E01
@@ -175,28 +150,22 @@ class file_reader_t {
   /**
    * Opens a file reader.  The reader detects file types.
    * Provide the filename or device name to read from.
-   * Provide an allocated buffer of size hasher::buffer_size for this
-   * reader to read into.
    * Check is_open.  If false, print error_message.
-   * To read: read(offset).
-   * To iterate through file: use const_iterator.
+   * To read: read(offset, buffer, buffer_size).
    * Use these const globals as desired: filename, filesize, file_reader_type.
    */
-  file_reader_t(const filename_t& p_filename,
-                uint8_t* const p_buffer,
-                const size_t p_buffer_size) :
-          filename(p_filename),
+  file_reader_t(const filename_t& p_filename) :
+          filename(utf8_filename(p_filename)),
           error_message(""),
           file_reader_type(reader_type(filename)),
           ewf_file_reader(NULL),
           single_file_reader(NULL),
-          is_open(open_reader()),
+          is_open(open_reader(p_filename)),
           filesize(get_filesize()),
-          buffer(p_buffer),
-          buffer_size(p_buffer_size),
-          has_buffer(false),
-          file_offset(0),
-          bytes_read(0) {
+          last_offset(0),
+          last_buffer(NULL),
+          last_buffer_size(0),
+          last_bytes_read(0) {
   }
 
   // destructor closes any open resources
@@ -220,40 +189,51 @@ class file_reader_t {
     }
   }
 
-  std::string read(int64_t offset) {
+  std::string read(int64_t offset,
+                   uint8_t* const buffer,
+                   const size_t buffer_size,
+                   size_t* const bytes_read) const {
+
+    // reader must be in good state
+    if (error_message != "") {
+      std::cerr << "read requested when in bad state";
+    }
     if (is_open == false) {
       return "reader not open";
     }
+
+    // do not re-read same
+    if (offset == last_offset &&
+        buffer == last_buffer &&
+        buffer_size == last_buffer_size) {
+      *bytes_read = last_bytes_read;
+      return "";
+    }
+    last_offset = offset;
+    last_buffer = buffer;
+    last_buffer_size = buffer_size;
 
     switch(file_reader_type) {
 
       // E01
       case file_reader_type_t::E01: {
-        error_message = ewf_file_reader->read(
-                               offset, buffer, buffer_size, &bytes_read);
-        return "";
-        break;
+        std::string read_error_message = ewf_file_reader->read(
+                               offset, buffer, buffer_size, bytes_read);
+        last_bytes_read = *bytes_read;
+        return read_error_message;
       }
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
-        error_message = single_file_reader->read(
-                               offset, buffer, buffer_size, &bytes_read);
-        return "";
-        break;
+        std::string read_error_message = single_file_reader->read(
+                               offset, buffer, buffer_size, bytes_read);
+        last_bytes_read = *bytes_read;
+        return read_error_message;
       }
 
       default: assert(0); std::exit(1);
     }
   }
-
-  const_iterator begin() {
-    return const_iterator(filesize, buffer_size, false);
-  }
-  const_iterator end() {
-    return const_iterator(filesize, buffer_size, true);
-  }
-
 };
 
 } // end namespace hasher

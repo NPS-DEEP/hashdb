@@ -31,47 +31,96 @@
 #include "hashdb.hpp"
 #include "dig.h"
 #include "file_reader.hpp"
+#include "calculate_hash.hpp"
+#include "calculate_entropy.hpp"
+#include "calculate_block_label.hpp"
 
 namespace hashdb {
 
   // ************************************************************
   // support interfaces
   // ************************************************************
-  void print_processing(const hasher::filename_t& filename, const uint64_t filesize) {
-    std::cout << "processing ";
-#ifdef WIN32
-    std::wcout << filename;
-#else
-    std::cout << filename;
-#endif
-    std::cout << ", size " << filesize << "...\n";
+
+  // calculate source file hash from file in reader
+  static std::string calculate_file_hash(const file_reader_t& reader,
+                                  uint8_t* const buffer,
+                                  const size_t buffer_size) {
+    size_t bytes_read;
+    hasher::calculate_hash_t calculate_hash;
+    calculate_hash.init();
+    for (uint64_t offset = 0; offset < reader.filesize; offset += buffer_size) {
+      reader.read(offset, buffer, buffer_size, &bytes_read);
+      calculate_hash.update(buffer, buffer_size, 0, bytes_read);
+    }
+    return calculate_hash.final();
   }
 
+  // ingest file in reader
+  static void ingest_file(const hasher::file_reader_t& reader,
+                          import_manager_t& import_manager,
+                          scan_manager_t* whitelist_scan_manager,
+                          const std::string& repository_name,
+                          const size_t step_size,
+                          const size_t block_size) {
 
-  void print_skipping(const hasher::filename_t& filename, const uint64_t filesize,
-                 const std::string message) {
-    std::cout << "skipping ";
-#ifdef WIN32
-    std::wcout << filename;
-#else
-    std::cout << filename;
-#endif
-    std::cout << ", size " << filesize << ": " << message << "\n";
+    // zz until multithreading, everything uses this buffer
+    const size_t buffer_size = 16777216+1048576; // 2^24+2^20=16MiB+1MiB
+    const size_t page_size = 16777216; // 2^24=16MiB
+    uint8_t* buffer = new uint8_t[buffer_size];
+
+    // calculate source file hash
+    std::string source_file_hash = calculate_file_hash(
+                                             reader, buffer, buffer_size);
+
+    // add source file to DB
+    import_manager.insert_source_name(
+                      source_file_hash, repository_name, reader.filename);
+
+    // allocate a hash calculator for block hashes
+    calculate_hash_t calculate_hash;
+
+    // iterate over file
+    size_t nonprobative_count = 0;
+    for (uint64_t offset = 0; offset < reader.filesize; offset += page_size) {
+
+      // print status
+      std::cout << "ingesting file " << file_reader.filename
+                << " offset " << offset
+                << " size " << file_reader.filesize
+                << "\n";
+
+      // read into buffer
+      reader.read(offset, buffer, buffer_size, &bytes_read);
+      const size_t end_byte = (bytes_read < page_size) ? bytes_read : page_size;
+
+      // iterate over buffer to add block hashes and metadata
+      for (size_t i=0; i < end_byte; i+= step_size) {
+
+        // block hash
+        std::string block_hash = calculate_hash.calculate(
+                                         buffer, end_byte, i, block_size);
+
+        // entropy
+        std::string entropy = calculate_entropy(
+                                         buffer, end_byte, i, block_size);
+
+        // block label
+        std::string block_label = calculate_block_label(
+                                         buffer, end_byte, i, block_size);
+        if (block_label.size() != 0) {
+          ++nonprobative_count;
+        }
+      }
+
+      // add block hash to DB
+      import_manager.insert_hash(block_hash, source_file_hash,
+                                 offset+i, entropy, block_label);
+    }
+
+    // add source file metadata
+    import_manager.insert_source_data(source_file_hash,
+                                   offset+end_byte, "", nonprobative_count);
   }
-
-//zz move this to hasher/ingest_file.hpp
-  void ingest_file(const hasher::file_reader_t& reader,
-                   import_manager_t& import_manager,
-                   scan_manager_t* whitelist_scan_manager,
-                   const std::string& repository_name) {
-
-  // calculate file MD5
-  // iterate file to calculate MD5
-
-  //
-//zz
-  }
-
 
   // ************************************************************
   // ingest
@@ -88,10 +137,18 @@ namespace hashdb {
 
     // make sure hashdb_dir is there
     std::string error_message;
-    hashdb::settings_t settings;
+    const hashdb::settings_t settings;
     error_message = hashdb::read_settings(hashdb_dir, settings);
     if (error_message.size() != 0) {
       return error_message;
+    }
+
+    // make sure step size is compatible with byte alignment
+    if (step_size % settings.byte_alignment != 0) {
+      stringstream ss;
+      ss << "Invalid byte alignment: step size " << step_size
+         << " does not align with byte alignment " << settings.byte_alignment;
+      return ss.str();
     }
 
     // make sure file or directory at ingest_path is readable
@@ -112,8 +169,7 @@ namespace hashdb {
     // open import manager
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
-    // open whitelist DB
-    
+    // maybe open whitelist DB
     if (has_whitelist) {
       whitelist_scan_manager = new scan_manager_t(whitelist_dir);
     }
@@ -122,25 +178,24 @@ namespace hashdb {
     hasher::dig dig_tool(ingest_path);
     hasher::dig::const_iterator it = dig_tool.begin();
 
-    // iterate
-    const size_t buffer_size = 16777216; // 2^24=16MiB
-    uint8_t* b = new uint8_t[buffer_size];
+    // iterate over files
     while (it != dig_tool.end()) {
-      hasher::file_reader_t file_reader(*it, b, buffer_size);
-      
+      hasher::file_reader_t file_reader(*it);
+
       if (file_reader.is_open) {
 
         // only process when file size > 0
         if (file_reader.filesize > 0) {
-          print_processing(*it, file_reader.filesize);
           ingest_file(file_reader, import_manager, whitelist_scan_manager,
-                      p_repository_name);
+                      p_repository_name, step_size, settings.block_size);
         } else {
-          print_skipping(*it, file_reader.filesize, "empty file");
+          std::cout << "skipping file " << file_reader.filename
+                    << " size " << file_reader.filesize << "\n";
         }
       } else {
         // this file could not be opened
-        print_skipping(*it, file_reader.filesize, file_reader.error_message);
+        std::cout << "unable to import file " << file_reader.filename
+                  << ", " << file_reader.error_message << "\n";
       }
       ++it;
     }
