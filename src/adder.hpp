@@ -233,6 +233,50 @@ class adder_t {
     delete source_offset_pairs;
   }
 
+  // add hash and source information in count range without reprocessing sources
+  void add_range(const std::string& binary_hash,
+                 size_t m, size_t n) {
+
+    // hash data
+    uint64_t entropy;
+    std::string block_label;
+    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+
+    // get hash data from A
+    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
+                                          *source_offset_pairs);
+    // hash required
+    if (!found_hash) {
+      // program error
+      assert(0);
+    }
+
+    // add if in range
+    if (source_offset_pairs->size() >= m &&
+        (n==0 || source_offset_pairs->size() <= n)) {
+
+      // process each source offset pair in hash
+      for (source_offset_pairs_t::const_iterator it =
+         source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
+
+        // add hash for source
+        manager_b->insert_hash(binary_hash, it->first, it->second,
+                               entropy, block_label);
+
+        if (processed_sources->find(it->first) == processed_sources->end()) {
+          // add source information
+          add_source_data(it->first);
+          add_source_names(it->first);
+          processed_sources->insert(it->first);
+        } else {
+          // already processed
+        }
+      }
+    }
+
+    delete source_offset_pairs;
+  }
+
   // add hashes and source references when the repository name matches
   void add_repository(const std::string& binary_hash) {
 
@@ -329,46 +373,6 @@ class adder_t {
         } else {
           // already processed
         }
-      }
-    }
-
-    delete source_offset_pairs;
-  }
-
-  // add hashes that have only one source reference
-  void copy_unique(const std::string& binary_hash) {
-
-    // hash data
-    uint64_t entropy;
-    std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
-
-    // get hash data from A
-    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
-                                          *source_offset_pairs);
-    // hash required
-    if (!found_hash) {
-      // program error
-      assert(0);
-    }
-
-    // process hashes that have exactly one source
-    if (source_offset_pairs->size() == 1) {
-
-      // process the single source offset pair in the hash
-      source_offset_pairs_t::const_iterator it = source_offset_pairs->begin();
-
-      // add hash for source
-      manager_b->insert_hash(binary_hash, it->first, it->second,
-                             entropy, block_label);
-
-      if (processed_sources->find(it->first) == processed_sources->end()) {
-        // add source information
-        add_source_data(it->first);
-        add_source_names(it->first);
-        processed_sources->insert(it->first);
-      } else {
-        // already processed
       }
     }
 

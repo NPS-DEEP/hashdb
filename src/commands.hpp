@@ -349,6 +349,31 @@ namespace commands {
     }
   }
 
+  // add_range
+  static void add_range(const std::string& hashdb_dir,
+                        const std::string& dest_dir,
+                        const size_t m,
+                        const size_t n,
+                        const std::string& cmd) {
+
+    // validate hashdb directories, maybe make dest_dir
+    require_hashdb_dir(hashdb_dir);
+    create_if_new(dest_dir, hashdb_dir, cmd);
+
+    // resources
+    hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
+    adder_t adder(&manager_a, &manager_b);
+
+    // add data for binary_hash from A to B
+    std::string binary_hash = manager_a.first_hash();
+    while (binary_hash.size() != 0) {
+      // add the hash
+      adder.add_range(binary_hash, m, n);
+      binary_hash = manager_a.next_hash(binary_hash);
+    }
+  }
+
   // intersect A and B into C
   static void intersect(const std::string& hashdb_dir1,
                         const std::string& hashdb_dir2,
@@ -489,29 +514,6 @@ namespace commands {
     while (binary_hash.size() != 0) {
       // add the hash
       adder.add_non_repository(binary_hash);
-      binary_hash = manager_a.next_hash(binary_hash);
-    }
-  }
-
-  // copy_unique
-  static void copy_unique(const std::string& hashdb_dir,
-                          const std::string& dest_dir,
-                          const std::string& cmd) {
-
-    // validate hashdb directories, maybe make dest_dir
-    require_hashdb_dir(hashdb_dir);
-    create_if_new(dest_dir, hashdb_dir, cmd);
-
-    // resources
-    hashdb::scan_manager_t manager_a(hashdb_dir);
-    hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &manager_b);
-
-    // add data for binary_hash from A to B
-    std::string binary_hash = manager_a.first_hash();
-    while (binary_hash.size() != 0) {
-      // add the hash
-      adder.copy_unique(binary_hash);
       binary_hash = manager_a.next_hash(binary_hash);
     }
   }

@@ -402,6 +402,24 @@ void run_command() {
     check_params("", 3);
     commands::add_repository(args[0], args[1], args[2], cmd);
 
+  } else if (command == "add_range") {
+    check_params("", 3);
+    size_t m = 0;
+    size_t n = 0;
+    std::string range = args[2];
+    size_t colon_index = range.find(':');
+    if (colon_index == std::string::npos) {
+      std::cerr << "Range syntax is invalid and needs to include `:`.\n";
+      exit(1);
+    }
+    if (colon_index != 0) {
+      m = std::atoi(range.substr(0, colon_index).c_str());
+    }
+    if (colon_index + 1 != range.size()) {
+      n = std::atoi(range.substr(colon_index + 1, std::string::npos).c_str());
+    }
+    commands::add_range(args[0], args[1], m, n, cmd);
+
   } else if (command == "intersect") {
     check_params("", 3);
     commands::intersect(args[0], args[1], args[2], cmd);
@@ -421,10 +439,6 @@ void run_command() {
   } else if (command == "subtract_repository") {
     check_params("", 3);
     commands::subtract_repository(args[0], args[1], args[2], cmd);
-
-  } else if (command == "copy_unique") {
-    check_params("", 2);
-    commands::copy_unique(args[0], args[1], cmd);
 
   // scan
   } else if (command == "scan_list") {

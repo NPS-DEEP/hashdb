@@ -121,6 +121,84 @@ def test_add_repository():
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}'
 ])
 
+def test_add_range():
+    colon_one = [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2","second_temp_1.tab"]}',
+'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
+]
+    two_colon_two = [
+'# command: ',
+'# hashdb-Version: '
+]
+    two_colon = [
+'# command: ',
+'# hashdb-Version: ',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
+'{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}'
+]
+
+    # create new hashdb
+    H.make_hashdb("temp_1.hdb", json_out1)
+
+    # add_range to new temp_2.hdb using ":1"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", ":1"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, colon_one)
+
+    # add_range to new temp_2.hdb using "0:1"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", "0:1"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, colon_one)
+
+    # add_range to new temp_2.hdb using "1:1"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", "1:1"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, colon_one)
+
+    # add_range to new temp_2.hdb using "2:"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", "2:"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, two_colon)
+
+    # add_range to new temp_2.hdb using "2:2"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", "2:2"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, two_colon_two)
+
+    # add_range to new temp_2.hdb using "3:3"
+    H.rm_tempdir("temp_2.hdb")
+    H.hashdb(["add_range", "temp_1.hdb", "temp_2.hdb", "3:3"])
+
+    # temp_2.hdb should match
+    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
+    json2 = H.read_file("temp_2.json")
+    H.lines_equals(json2, two_colon)
+
 def test_intersect():
     # create new hashdb
     H.make_hashdb("temp_1.hdb", json_set_db1)
@@ -254,35 +332,15 @@ def test_subtract_repository():
 '{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
 ])
 
-def test_copy_unique():
-    # create new hashdb
-    H.make_hashdb("temp_1.hdb", json_out1)
-    H.rm_tempdir("temp_2.hdb")
-
-    # copy_unique to new temp_2.hdb
-    H.hashdb(["copy_unique", "temp_1.hdb", "temp_2.hdb"])
-
-    # temp_2.hdb should match
-    H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
-    json2 = H.read_file("temp_2.json")
-    H.lines_equals(json2, [
-'# command: ',
-'# hashdb-Version: ',
-'{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
-'{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2","second_temp_1.tab"]}',
-'{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
-'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
-])
-
 if __name__=="__main__":
     test_add()
     test_add_multiple()
     test_add_repository()
+    test_add_range()
     test_intersect()
     test_intersect_hash()
     test_subtract()
     test_subtract_hash()
     test_subtract_repository()
-    test_copy_unique()
     print("Test Done.")
 

@@ -685,9 +685,11 @@ Destination databases are created if they do not exist yet.
 \hline
 \textbf{add} & \verb+add <source db>+ \verb+<destination db>+ & Copies all of the hashes from \textit{source db} to \textit{destination db}\\
 \hline
-\textbf{add\_multiple} &  \verb+add_multiple <source db1>+ \verb+<source db2>+ \verb+...+ \verb+<destination db>+ & Adds databases \textit{source db1}, \textit{source db2}, etc.\ to \textit{destination db}\\
+\textbf{add\_multiple} &  \verb+add_multiple <source db1>+ \verb+<source db2> ...+ \verb+<destination db>+ & Adds databases \textit{source db1}, \textit{source db2}, etc.\ to \textit{destination db}\\
 \hline
-\textbf{add\_repository} & \verb+add_repository <source db1>+ \verb+<destination db2>+ \verb+<repository name>+ & Adds \textit{source db1} to \textit{destination db2} but only when the repository name matches\\
+\textbf{add\_repository} & \verb+add_repository <source db>+ \verb+<destination db>+ \verb+<repository name>+ & Adds \textit{source db} to \textit{destination db} but only when the repository name matches\\
+\hline
+\textbf{add\_range} & \verb+add_range<source db>+ \verb+<destination db>+ \verb+<m:n>+&   Copies hash values from \textit{source db} into \textit{destination db} that have source counts within range $m$ and $n$, inclusive\\
 \hline
 \textbf{intersect} & \verb+intersect <source db1>+ \verb+<source db2> <destination db>+ &   Copies hash values common to both \textit{source db1} and \textit{source db2} into \textit{destination db} where sources match\\
 \hline
@@ -698,8 +700,6 @@ Destination databases are created if they do not exist yet.
 \textbf{subtract\_hash} & \verb+subtract <source db1>+ \verb+<source db2> <destination db>+&   Copies hash values found in \textit{source db1} but not in \textit{source db2} into \textit{destination db} even if their sources are different.\\
 \hline
 \textbf{subtract \_repository} & \verb+subtract_repository+ \verb+<source db1>+ \verb+<destination db2>+ \verb+<repository namedb>+ & Adds \textit{source db1} to \textit{destination db2} unless the repository name matches\\
-\hline
-\textbf{deduplicate} & \verb+deduplicate <source db>+ \verb+<destination db>+ &   Copies hash values that have only one source, offset pair associated with them from \textit{source db} into \textit{destination db}\\
 \hline
 \end{tabular}
 \end{table}
@@ -814,7 +814,7 @@ Users may be put off by the quantity of matches incurred by low-entropy data in 
 \textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
-\item Alternatively, use the ``deduplicate'' command to copy all hash values that have been imported exactly once.
+\item Alternatively, use the ``copy\_range'' command to copy all hash values that have been imported some number of times, for example, exactly once.
 \end{itemize}
 These commands are provided to manage false positives.
 
@@ -996,9 +996,9 @@ Note, \bulk will place feature file and other output not relevant to the \hdb ap
 
 \subsection{Updating Hash Databases}
 \label{updateSection}
-\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will  copy all non-duplicate values from \texttt{demo.hdb} into \texttt{demo\_dedup.hdb} :
+\hdb provides users with the ability to manipulate the contents of hash databases. The specific command line options for performing these functions are described in Table \ref{tab:databaseManipulation}. \hdb databases are treated as sets with the add, subtract and intersect commands basically using add, subtract and intersect set operations. For example, the following command will copy all non-duplicate values from \texttt{demo.hdb} into \texttt{demo\_dedup.hdb} by copying all values with a count less than or equal to one:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb deduplicate demo.hdb demo_dedup.hdb}
+\verbbf{hashdb add_range demo.hdb demo_dedup.hdb :1}
 \end{Verbatim}
 Whenever a database is created or updated, \hdb updates the file \texttt{log.xml}, found in the database's directory with information about the actions performed.\\
 
@@ -1526,7 +1526,7 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
 
 \section{\hdb Quick Reference}
 \label{QuickReference}
-\input ../hashdb_quick_reference/hashdb_quick_reference_text.tex
+\input hashdb_quick_reference_text.tex
 \newpage
 
 \section{Output of the \hdb Help Command}
