@@ -40,7 +40,8 @@ namespace hasher {
   static size_t calculate_entropy_private(const uint8_t* const buffer,
                                           const size_t count) {
     // zzzzzzzzz
-    return 86;
+//    return 86;
+    return 0;
   }
 
   size_t calculate_entropy(uint8_t* const buffer,
@@ -53,9 +54,10 @@ namespace hasher {
       return calculate_entropy_private(buffer + offset, count);
     } else {
       // make new buffer from old but zero-extended
-      b = ::calloc(buffer_size, 1);
+      uint8_t* b = new uint8_t[count];
+      ::memcpy (b, buffer+offset, offset + count - buffer_size);
       size_t entropy = calculate_entropy_private(b, count);
-      free(b);
+      delete[] b;
       return entropy;
     }
   }

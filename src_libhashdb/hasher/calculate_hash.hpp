@@ -31,43 +31,35 @@
 #include <iostream>
 #include <unistd.h>
 
-#if defined(HAVE_OPENSSL_HMAC_H) && defined(HAVE_OPENSSL_EVP_H)
-#include <openssl/hmac.h>
+//#include <openssl/hmac.h>
 #include <openssl/evp.h>
-#else
-#error OpenSSL required for hash_t.h
-#endif
 
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
-#ifdef HAVE_SYS_MMAP_H
-#include <sys/mmap.h>
-#endif
+//#ifdef HAVE_SYS_MMAN_H
+//#include <sys/mman.h>
+//#endif
+//
+//#ifdef HAVE_SYS_MMAP_H
+//#include <sys/mmap.h>
+//#endif
 
 namespace hasher {
 
 class calculate_hash_t {
 
-  public:
-  // replace this with SHA256 if desired
-//  static const char* const digest_name = "EVP_md5";
-
   private:
-  EVP_MD_CTX* md_context;
+  EVP_MD_CTX* const md_context;
+  const EVP_MD* md;
   bool in_progress;
 
   public:
   // zz new to create
-  calculate_hash_t() : md_context(EVP_MD_CTX_create()), in_progress(false) {
-    // initialize the digest calculator
-//    EVP_DigestInit_ex(&md_context, EVP_getdigestbyname(digest_name), NULL);
-    EVP_DigestInit_ex(&md_context, EVP_get_digestbyname("EVP_md5"), NULL);
+  calculate_hash_t() : md_context(EVP_MD_CTX_create()),
+                       md(EVP_md5()),
+                       in_progress(false) {
   }
 
   ~calculate_hash_t(){
-    delete md_context;
+    EVP_MD_CTX_cleanup(md_context);
   }
 
   // do not allow copy or assignment
@@ -85,10 +77,8 @@ class calculate_hash_t {
     }
 
     // reset
-    int success = EVP_MD_CTX_reset(md_context);
-    if (!success) {
-      std::cout << "Error resetting hash calculator.\n";
-    }
+    EVP_MD_CTX_init(md_context);
+    EVP_DigestInit_ex(md_context, md, NULL);
 
     if (offset + count <= buffer_size) {
       // hash when not a buffer overrun
@@ -99,16 +89,21 @@ class calculate_hash_t {
 
       // hash zeros for part outside buffer
       size_t extra = count - (buffer_size - offset);
-      b = ::calloc(extra, 1);
+      uint8_t* b = new uint8_t[extra];
       EVP_DigestUpdate(md_context, b, extra);
-      free(b);
+      delete[] b;
     }
 
     // put hash into string
-    int md_len
+    unsigned int md_len;
     unsigned char md_value[EVP_MAX_MD_SIZE];
-    EVP_DigestFinal_ex(md_context, md_value, &md_len)
-    return std::string(md_value, md_len);
+    int success = EVP_DigestFinal_ex(md_context, md_value, &md_len);
+    if (success == 0) {
+      std::cout << "error calculating hash\n";
+      assert(0);
+    }
+    return std::string(reinterpret_cast<char*>(md_value),
+                       static_cast<size_t>(md_len));
   }
 
   void init() {
@@ -120,46 +115,9 @@ class calculate_hash_t {
     in_progress = true;
 
     // reset
-    int success = EVP_MD_CTX_reset(md_context);
-    if (!success) {
-      std::cout << "Error resetting hash calculator.\n";
-    }
+    EVP_MD_CTX_init(md_context);
+    EVP_DigestInit_ex(md_context, md, NULL);
   }
-
-/*
-  void init(uint8_t* const buffer,
-            const size_t buffer_size,
-            const size_t offset,
-            const size_t count) {
-
-    // program error if already engaged
-    if (in_progress) {
-      assert(0);
-    }
-    in_progress = true;
-
-    // reset
-    int success = EVP_MD_CTX_reset(md_context);
-    if (!success) {
-      std::cout << "Error resetting hash calculator.\n";
-    }
-
-    // update
-    if (offset + count <= buffer_size) {
-      // hash when not a buffer overrun
-      EVP_DigestUpdate(md_context, buffer + offset, count);
-    } else {
-      // hash part in buffer
-      EVP_DigestUpdate(md_context, buffer + offset, buffer_size - offset);
-
-      // hash zeros for part outside buffer
-      size_t extra = count - (buffer_size - offset);
-      b = ::calloc(extra, 1);
-      EVP_DigestUpdate(md_context, b, extra);
-      free(b);
-    }
-  }
-*/
 
   void update(uint8_t* const buffer,
               const size_t buffer_size,
@@ -174,6 +132,8 @@ class calculate_hash_t {
     // update
     if (offset + count <= buffer_size) {
       // hash when not a buffer overrun
+//std::cerr << "update.ba.buffer_size " << buffer_size << " offset: " << offset << " count: " << count << "\n";
+//std::cerr << "update.bb " << buffer[0] << ", " << buffer[1] << "\n";
       EVP_DigestUpdate(md_context, buffer + offset, count);
     } else {
       // hash part in buffer
@@ -181,9 +141,10 @@ class calculate_hash_t {
 
       // hash zeros for part outside buffer
       size_t extra = count - (buffer_size - offset);
-      b = ::calloc(extra, 1);
+//std::cerr << "buffer_size " << buffer_size << " offset: " << offset << " count: " << count << " extra " << extra << "\n";
+      uint8_t* b = new uint8_t[extra];
       EVP_DigestUpdate(md_context, b, extra);
-      free(b);
+      delete[] b;
     }
   }
 
@@ -196,10 +157,15 @@ class calculate_hash_t {
     in_progress = false;
 
     // put hash into string
-    int md_len
+    unsigned int md_len;
     unsigned char md_value[EVP_MAX_MD_SIZE];
-    EVP_DigestFinal_ex(md_context, md_value, &md_len)
-    return std::string(md_value, md_len);
+    int success = EVP_DigestFinal_ex(md_context, md_value, &md_len);
+    if (success == 0) {
+      std::cout << "error calculating hash\n";
+      assert(0);
+    }
+    return std::string(reinterpret_cast<char*>(md_value),
+                       static_cast<size_t>(md_len));
   }
 };
 

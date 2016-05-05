@@ -37,6 +37,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cctype> // isspace
+#include <map> // isspace
 
 namespace hasher {
 
@@ -46,14 +47,14 @@ static bool ramp_trait(const uint8_t* const buffer, const size_t size) {
     uint32_t count = 0;
     for(size_t i=0; i+8 < size; i+= 4) {
         // note that little endian is detected and big endian is not detected
-        uint32_t a = (uint32_t)(this->buf[i+0]<<0) 
-                   | (uint32_t)(this->buf[i+1]<<8) 
-                   | (uint32_t)(this->buf[i+2]<<16) 
-                   | (uint32_t)(this->buf[i+3]<<24);
-        uint32_t b = (uint32_t)(this->buf[i+4]<<0) 
-                   | (uint32_t)(this->buf[i+5]<<8) 
-                   | (uint32_t)(this->buf[i+6]<<16) 
-                   | (uint32_t)(this->buf[i+7]<<24);
+        uint32_t a = (uint32_t)(buffer[i+0]<<0) 
+                   | (uint32_t)(buffer[i+1]<<8) 
+                   | (uint32_t)(buffer[i+2]<<16) 
+                   | (uint32_t)(buffer[i+3]<<24);
+        uint32_t b = (uint32_t)(buffer[i+4]<<0) 
+                   | (uint32_t)(buffer[i+5]<<8) 
+                   | (uint32_t)(buffer[i+6]<<16) 
+                   | (uint32_t)(buffer[i+7]<<24);
         if (a+1 == b) {
             count += 1;
         }
@@ -64,10 +65,10 @@ static bool ramp_trait(const uint8_t* const buffer, const size_t size) {
 static bool hist_trait(const uint8_t* const buffer, const size_t size) {
     std::map<uint32_t,uint32_t> hist;
     for(size_t i=0; i+4 < size; i+= 4) {
-        uint32_t a = (uint32_t)(this->buf[i+3]<<0) 
-                   | (uint32_t)(this->buf[i+2]<<8) 
-                   | (uint32_t)(this->buf[i+1]<<16) 
-                   | (uint32_t)(this->buf[i+0]<<24);
+        uint32_t a = (uint32_t)(buffer[i+3]<<0) 
+                   | (uint32_t)(buffer[i+2]<<8) 
+                   | (uint32_t)(buffer[i+1]<<16) 
+                   | (uint32_t)(buffer[i+0]<<24);
         hist[a] += 1;
     }
     if (hist.size() < 3) return true;
@@ -83,7 +84,7 @@ static bool hist_trait(const uint8_t* const buffer, const size_t size) {
 static bool whitespace_trait(const uint8_t* const buffer, const size_t size) {
     size_t count = 0;
     for(size_t i=0; i<size; i++){
-        if (::isspace(sbuf[i])) count+=1;
+        if (::isspace(buffer[i])) count+=1;
     }
     return count >= (size * 3)/4;
 }
@@ -94,14 +95,14 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
     for (size_t i=0; i+8 < size; i += 4) {
 
         // note that little endian is detected and big endian is not detected
-        uint32_t a = (uint32_t)(this->buf[i+0]<<0) 
-                   | (uint32_t)(this->buf[i+1]<<8) 
-                   | (uint32_t)(this->buf[i+2]<<16) 
-                   | (uint32_t)(this->buf[i+3]<<24);
-        uint32_t b = (uint32_t)(this->buf[i+4]<<0) 
-                   | (uint32_t)(this->buf[i+5]<<8) 
-                   | (uint32_t)(this->buf[i+6]<<16) 
-                   | (uint32_t)(this->buf[i+7]<<24);
+        uint32_t a = (uint32_t)(buffer[i+0]<<0) 
+                   | (uint32_t)(buffer[i+1]<<8) 
+                   | (uint32_t)(buffer[i+2]<<16) 
+                   | (uint32_t)(buffer[i+3]<<24);
+        uint32_t b = (uint32_t)(buffer[i+4]<<0) 
+                   | (uint32_t)(buffer[i+5]<<8) 
+                   | (uint32_t)(buffer[i+6]<<16) 
+                   | (uint32_t)(buffer[i+7]<<24);
 
 
         if (b > a) {
@@ -123,10 +124,10 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
                      const uint8_t* const buffer, const size_t count) {
     // zzzzzzzzz
     std::stringstream ss_flags;
-    if (ramp_trait(s))       ss_flags << "R";
-    if (hist_trait(s))       ss_flags << "H";
-    if (whitespace_trait(s)) ss_flags << "W";
-    if (monotonic_trait(s))  ss_flags << "M";
+    if (ramp_trait(buffer, count))       ss_flags << "R";
+    if (hist_trait(buffer, count))       ss_flags << "H";
+    if (whitespace_trait(buffer, count)) ss_flags << "W";
+    if (monotonic_trait(buffer, count))  ss_flags << "M";
     return ss_flags.str();
   }
 
@@ -140,9 +141,10 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
       return calculate_block_label_private(buffer + offset, count);
     } else {
       // make new buffer from old but zero-extended
-      b = ::calloc(buffer_size, 1);
+      uint8_t* b = new uint8_t[count];
+      ::memcpy (b, buffer+offset, offset + count - buffer_size);
       std::string block_label = calculate_block_label_private(b, count);
-      free(b);
+      delete[] b;
       return block_label;
     }
   }
