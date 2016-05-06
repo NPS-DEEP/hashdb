@@ -8,8 +8,8 @@
  * This file is public domain
  */
 
-#ifndef CALCULATE_HASH_HPP
-#define CALCULATE_HASH_HPP
+#ifndef HASH_CALCULATOR_HPP
+#define HASH_CALCULATOR_HPP
 
 #include <cstring>
 #include <cstdlib>
@@ -44,7 +44,7 @@
 
 namespace hasher {
 
-class calculate_hash_t {
+class hash_calculator_t {
 
   private:
   EVP_MD_CTX* const md_context;
@@ -52,18 +52,18 @@ class calculate_hash_t {
   bool in_progress;
 
   public:
-  calculate_hash_t() : md_context(EVP_MD_CTX_create()),
-                       md(EVP_md5()),
-                       in_progress(false) {
+  hash_calculator_t() : md_context(EVP_MD_CTX_create()),
+                        md(EVP_md5()),
+                        in_progress(false) {
   }
 
-  ~calculate_hash_t(){
+  ~hash_calculator_t(){
     EVP_MD_CTX_cleanup(md_context);
   }
 
   // do not allow copy or assignment
-  calculate_hash_t(const calculate_hash_t&);
-  calculate_hash_t& operator=(const calculate_hash_t&);
+  hash_calculator_t(const hash_calculator_t&);
+  hash_calculator_t& operator=(const hash_calculator_t&);
 
   std::string calculate(const uint8_t* const buffer,
                         const size_t buffer_size,
