@@ -1,4 +1,4 @@
-# Author:  Bruce Allen <bdallen@nps.edu>
+# Author:  Bruce Allen
 # Created: 2/25/2013
 #
 # The software provided here is released by the Naval Postgraduate

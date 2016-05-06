@@ -27,7 +27,7 @@ Please enter bugs on the [github issue tracker](https://github.com/NPS-DEEP/hash
 
 Maintainer
 ----------
-Bruce Allen <bdallen@nps.edu>
+Bruce Allen bdallen nps edu
 
 License
 -------

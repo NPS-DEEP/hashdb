@@ -57,5 +57,5 @@ Availability
 
 Contacts
 ========
-* Developer: mailto:bdallen@nps.edu
+* Developer: Bruce Allen bdallen nps edu
 * Bulk Extractor Users Group: http://groups.google.com/group/bulk_extractor-users
