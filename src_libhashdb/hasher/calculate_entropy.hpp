@@ -44,7 +44,7 @@ namespace hasher {
     return 0;
   }
 
-  size_t calculate_entropy(uint8_t* const buffer,
+  size_t calculate_entropy(const uint8_t* const buffer,
                            const size_t buffer_size,
                            const size_t offset,
                            const size_t count) {

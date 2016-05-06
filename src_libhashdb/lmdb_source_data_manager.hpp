@@ -187,7 +187,7 @@ print_mdb_val("source_data_manager insert change to data", context.data);
         ++changes.source_data_changed;
       }
 
-      // closeure for already there
+      // close for already there
       context.close();
       MUTEX_UNLOCK(&M);
       return;

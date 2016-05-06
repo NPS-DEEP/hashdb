@@ -31,6 +31,7 @@
 #include "hashdb.hpp"
 #include "dig.h"
 #include "file_reader.hpp"
+#include "hasher_buffer.hpp"
 #include "calculate_hash.hpp"
 #include "calculate_entropy.hpp"
 #include "calculate_block_label.hpp"
@@ -65,6 +66,42 @@ namespace hashdb {
     }
     return calculate_hash.final();
   }
+
+  static void ingest_buffer(import_manager_t& import_manager,
+                            scan_manager_t* whitelist_scan_manager,
+                            const std::string& repository_name,
+                            const size_t step_size,
+                            const size_t block_size,
+                            const hasher::hasher_buffer_t& hasher_buffer,
+                            size_t* nonprobative_count) {
+
+    // get hash calculator object
+    hasher::calculate_hash_t calculate_hash;
+
+    // iterate over buffer to add block hashes and metadata
+    for (size_t i=0; i < hasher_buffer.end_byte; i+= step_size) {
+
+      // block hash
+      std::string block_hash = calculate_hash.calculate(hasher_buffer.buffer,
+                  hasher_buffer.end_byte, i, block_size);
+
+      // entropy
+      size_t entropy = hasher::calculate_entropy(hasher_buffer.buffer,
+                  hasher_buffer.end_byte, i, block_size);
+
+      // block label
+      std::string block_label = hasher::calculate_block_label(
+                  hasher_buffer.buffer, hasher_buffer.end_byte, i, block_size);
+      if (block_label.size() != 0) {
+        ++nonprobative_count;
+      }
+
+      // add block hash to DB
+      import_manager.insert_hash(block_hash, hasher_buffer.source_hash,
+                  hasher_buffer.offset+i, entropy, block_label);
+    }
+  }
+
 
   // ingest file in file reader
   static void ingest_file(const hasher::file_reader_t& file_reader,
@@ -105,28 +142,23 @@ namespace hashdb {
       file_reader.read(offset, buffer, buffer_size, &bytes_read);
       const size_t end_byte = (bytes_read < page_size) ? bytes_read : page_size;
 
-      // iterate over buffer to add block hashes and metadata
-      for (size_t i=0; i < end_byte; i+= step_size) {
+      // create hasher buffer
+      hasher::hasher_buffer_t hasher_buffer(source_file_hash,
+                                            file_reader.filename,
+                                            offset,
+                                            buffer,
+                                            buffer_size,
+                                            end_byte,
+                                            true,
+                                            0);
 
-        // block hash
-        std::string block_hash = calculate_hash.calculate(
-                                         buffer, end_byte, i, block_size);
-
-        // entropy
-        size_t entropy = hasher::calculate_entropy(
-                                         buffer, end_byte, i, block_size);
-
-        // block label
-        std::string block_label = hasher::calculate_block_label(
-                                         buffer, end_byte, i, block_size);
-        if (block_label.size() != 0) {
-          ++nonprobative_count;
-        }
-
-        // add block hash to DB
-        import_manager.insert_hash(block_hash, source_file_hash,
-                                   offset+i, entropy, block_label);
-      }
+      ingest_buffer(import_manager,
+                    whitelist_scan_manager,
+                    repository_name,
+                    step_size,
+                    block_size,
+                    hasher_buffer,
+                    &nonprobative_count);
     }
 
     // add source file metadata

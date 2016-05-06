@@ -122,7 +122,7 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
 
   static std::string calculate_block_label_private(
                      const uint8_t* const buffer, const size_t count) {
-    // zzzzzzzzz
+
     std::stringstream ss_flags;
     if (ramp_trait(buffer, count))       ss_flags << "R";
     if (hist_trait(buffer, count))       ss_flags << "H";
@@ -131,7 +131,7 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
     return ss_flags.str();
   }
 
-  std::string calculate_block_label(uint8_t* const buffer,
+  std::string calculate_block_label(const uint8_t* const buffer,
                                     const size_t buffer_size,
                                     const size_t offset,
                                     const size_t count) {

@@ -52,7 +52,6 @@ class calculate_hash_t {
   bool in_progress;
 
   public:
-  // zz new to create
   calculate_hash_t() : md_context(EVP_MD_CTX_create()),
                        md(EVP_md5()),
                        in_progress(false) {
@@ -66,7 +65,7 @@ class calculate_hash_t {
   calculate_hash_t(const calculate_hash_t&);
   calculate_hash_t& operator=(const calculate_hash_t&);
 
-  std::string calculate(uint8_t* const buffer,
+  std::string calculate(const uint8_t* const buffer,
                         const size_t buffer_size,
                         const size_t offset,
                         const size_t count) {
