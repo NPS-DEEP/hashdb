@@ -19,15 +19,12 @@
 
 /**
  * \file
- * This data structure is used by threads in the threadpool for ingesting
- * or scanning data.
- *
- * There are four job types, see job_type_t.
- * See job_t generators for parameters required by each job type.
+ * job data is used by threads for ingesting or scanning data.
+ * There are two job types, see job_type_t.
  */
 
-#ifndef JOB_RECORD_HPP
-#define JOB_RECORD_HPP
+#ifndef JOB_HPP
+#define JOB_HPP
 
 #include <cstring>
 #include <cstdlib>
@@ -36,14 +33,14 @@
 
 namespace hasher {
 
-enum job_type_t {INGEST_FILE, SCAN_FILE, INGEST_BUFFER, SCAN_BUFFER};
+enum job_type_t {INGEST, SCAN};
 
-class job_record_t {
+class job_t {
 
   private:
   const job_type_t job_type;
-  hasher::threadpool_t* const threadpool;
   hashdb::import_manager_t* const import_manager;
+  hasher::nonprobative_count_manager_t* const nonprobative_count_manager;
   const hashdb::scan_manager_t* const whitelist_scan_manager;
   const hashdb::scan_manager_t* const scan_manager;
   const std::string repository_name;
@@ -57,11 +54,9 @@ class job_record_t {
   const size_t buffer_size;
   const size_t buffer_data_size;
   const size_t recursion_count;
-  size_t nonprobative_count;
   std::string error_message;
 
-  job_record_t(const job_type_t p_job_type,
-               const hasher::threadpool_t* const p_threadpool,
+  job_t(const job_type_t p_job_type,
                const hashdb::import_manager_t* const p_import_manager,
                const hashdb::scan_manager_t* const p_whitelist_scan_manager,
                const hashdb::scan_manager_t* const p_scan_manager,
@@ -77,8 +72,8 @@ class job_record_t {
                const size_t p_buffer_data_size,
                const size_t p_recursion_count) :
                    job_type(p_job_type),
-                   threadpool(p_threadpool),
                    import_manager(p_import_manager),
+                   nonprobative_count_manager(p_nonprobative_count_manager),
                    whitelist_scan_manager(p_whitelist_scan_manager),
                    scan_manager(p_scan_manager),
                    repository_name(p_repository_name),
@@ -92,73 +87,19 @@ class job_record_t {
                    buffer_size(p_buffer_size),
                    buffer_data_size(p_buffer_data_size),
                    recursion_count(p_recursion_count),
-                   nonprobative_count(0),
                    error_message("") {
   }
 
   // do not allow copy or assignment
-  job_record_t(const job_record_t&);
-  job_record_t& operator=(const job_record_t&);
+  job_t(const job_t&);
+  job_t& operator=(const job_t&);
 
   public:
-  static job_record_t* new_ingest_file_job_record(
-        const hasher::threadpool_t* const threadpool,
-        const hashdb::import_manager_t* const import_manager,
-        const hashdb::scan_manager_t* const whitelist_scan_manager,
-        const std::string repository_name,
-        const size_t step_size,
-        const size_t block_size,
-        const hasher::file_reader_t* const file_reader) {
 
-    return new job_record_t(
-                     job_type_t::INGEST_FILE,
-                     threadpool,
-                     import_manager,
-                     whitelist_scan_manager,
-                     repository_name,
-                     step_size,
-                     block_size,
-                     file_reader,
-                     "",   // source hash
-                     "",   // source name
-                     0,    // source offset
-                     NULL, // buffer
-                     0,    // buffer size
-                     0,    // buffer data size
-                     0,    // recursion count
-                     "");  // error message
-  }
-
-  static job_record_t* new_scan_file_job_record(
-        const hasher::threadpool_t* const threadpool,
-        const hashdb::scan_manager_t* const scan_manager,
-        const size_t step_size,
-        const size_t block_size,
-        const hasher::file_reader_t* const file_reader) {
-
-    return new job_record_t(
-                     job_type_t::SCAN_FILE,
-                     threadpool,
-                     import_manager,
-                     NULL, // whitelist_scan_manager
-                     NULL, // scan_manager
-                     "",   // repository_name
-                     step_size,
-                     block_size,
-                     file_reader,
-                     "",   // source hash
-                     "",   // source name
-                     0,    // source offset
-                     NULL, // buffer
-                     0,    // buffer size
-                     0,    // buffer data size
-                     0,    // recursion count
-                     "");  // error message
-  }
-
-  static job_record_t* new_ingest_buffer_job_record(
-        const hasher::threadpool_t* const threadpool,
-        const hashdb::import_manager_t* const import_manager,
+  // ingest
+  static job_t* new_ingest_job(
+        hashdb::import_manager_t* const import_manager,
+        nonprobative_count_manager_t* const nonprobative_count_manager,
         const hashdb::scan_manager_t* const whitelist_scan_manager,
         const std::string repository_name,
         const size_t step_size,
@@ -171,10 +112,10 @@ class job_record_t {
         const size_t buffer_data_size,
         const size_t recursion_count) {
 
-    return new job_record_t(
-                     job_type_t::INGEST_FILE,
-                     threadpool,
+    return new job_t(
+                     job_type_t::INGEST,
                      import_manager,
+                     nonprobative_count_manager,
                      whitelist_scan_manager,
                      repository_name,
                      step_size,
@@ -190,8 +131,8 @@ class job_record_t {
                      "");  // error message
   }
 
-  static job_record_t* new_scan_buffer_job_record(
-        const hasher::threadpool_t* const threadpool,
+  // scan
+  static job_t* new_scan_job(
         const hashdb::scan_manager_t* const scan_manager,
         const size_t step_size,
         const size_t block_size,
@@ -204,9 +145,8 @@ class job_record_t {
         const size_t recursion_count) {
 
 
-    return new job_record_t(
-                     job_type_t::SCAN_FILE,
-                     threadpool,
+    return new job_t(
+                     job_type_t::SCAN,
                      import_manager,
                      NULL, // whitelist_scan_manager
                      NULL, // scan_manager
