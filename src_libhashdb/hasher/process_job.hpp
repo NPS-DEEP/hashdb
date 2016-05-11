@@ -35,42 +35,32 @@
 #include <iostream>
 #include <unistd.h>
 #include <sched.h>  // sched_yield
+#include "hashdb.hpp"
 #include "job.hpp"
+#include "hash_calculator.hpp"
 
 namespace hasher {
 
-  std::string process_job(const hasher::job_t& job) {
-
-
-
-
-
-
-  static void ingest_buffer(import_manager_t& import_manager,
-                            scan_manager_t* whitelist_scan_manager,
-                            const std::string& repository_name,
-                            const size_t step_size,
-                            const size_t block_size,
-                            const hasher::hasher_buffer_t& hasher_buffer,
-                            size_t* nonprobative_count) {
+  // process INGEST job
+  static void process_ingest_job(const hasher::job_t& const job) {
 
     // get hash calculator object
-    hasher::calculate_hash_t calculate_hash;
+    hasher::hash_calculator_t hash_calculator;
 
     // iterate over buffer to add block hashes and metadata
-    for (size_t i=0; i < hasher_buffer.end_byte; i+= step_size) {
+    for (size_t i=0; i < job.bufer_data_size; i+= job.step_size) {
 
       // block hash
-      std::string block_hash = calculate_hash.calculate(hasher_buffer.buffer,
-                  hasher_buffer.end_byte, i, block_size);
+      std::string block_hash = calculate_hash.calculate(job.buffer,
+                  job.buffer_size, i, job.block_size);
 
       // entropy
-      size_t entropy = hasher::calculate_entropy(hasher_buffer.buffer,
-                  hasher_buffer.end_byte, i, block_size);
+      size_t entropy = hasher::calculate_entropy(job.buffer,
+                  job.buffer_size, i, job.block_size);
 
       // block label
-      std::string block_label = hasher::calculate_block_label(
-                  hasher_buffer.buffer, hasher_buffer.end_byte, i, block_size);
+      std::string block_label = hasher::calculate_block_label(job.buffer,
+                  job.buffer_size, i, job.block_size);
       if (block_label.size() != 0) {
         ++nonprobative_count;
       }
@@ -79,10 +69,60 @@ namespace hasher {
       import_manager.insert_hash(block_hash, hasher_buffer.source_hash,
                   hasher_buffer.offset+i, entropy, block_label);
     }
+
+    // submit nonprobative count to source data manager
+    job.source_data_manager.update_nonprobative_count(
+                                       job.file_hash, nonprobative_count);
+
+    // we are now done with this job.  Delete it.
+    delete[] job.buffer;
+    delete job;
   }
 
+  // process SCAN job
+  static void process_scan_job(const hasher::job_t& const job) {
 
+    // get hash calculator object
+    hasher::hash_calculator_t hash_calculator;
 
+    // iterate over buffer to calculate and scan for block hashes
+    for (size_t i=0; i < job.bufer_data_size; i+= job.step_size) {
+
+      // block hash
+      std::string block_hash = calculate_hash.calculate(job.buffer,
+                  job.buffer_size, i, job.block_size);
+
+      std::string json_string = 
+                     job.scan_manager->find_expanded_hash_json(block_hash);
+
+      if (json_string.size() > 0) {
+        // offset <tab> file <tab> json
+        std::cout << job.offset + i << job.filename << json << "\n";
+      }
+    }
+
+    // we are now done with this job.  Delete it.
+    delete[] job.buffer;
+    delete job;
+  }
+
+  void process_job(const hasher::job_t& const job) {
+
+    switch(job.job_type) {
+      case hasher::job_type_t::INGEST: {
+        process_ingest_job(job);
+        break;
+      }
+
+      case hasher::job_type_t::SCAN: {
+        process_scan_job(job);
+        break;
+      }
+
+      default:
+        assert(0);
+    }
+  }
 } // end namespace hasher
 
 #endif

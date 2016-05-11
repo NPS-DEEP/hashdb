@@ -59,6 +59,7 @@ class job_queue_t {
   public:
   bool is_done;
 
+  private:
   mutable pthread_mutex_t M;                  // mutext
 
   // do not allow copy or assignment
@@ -74,10 +75,6 @@ class job_queue_t {
   void unlock() {
     pthread_mutex_unlock(&M);
   }
-
-
- errx(1,"pthread_mutex_lock failed");
-
 
   public:
   job_queue_t(const p_max_queue_size) : max_queue_size(p_max_queue_size),

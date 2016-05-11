@@ -36,6 +36,7 @@
 #include "threadpool.hpp"
 #include "job.hpp"
 #include "job_queue.hpp"
+#include "source_data_manager.hpp"
 
 static const size_t BUFFER_DATA_SIZE = 16777216;   // 2^24=16MiB
 static const size_t BUFFER_SIZE = 17825792;        // 2^24+2^20=17MiB
@@ -47,7 +48,7 @@ namespace hashdb {
   std::string ingest_file(
         const hasher::file_reader_t* const file_reader,
         hashdb::import_manager_t* const import_manager,
-        hasher::nonprobative_count_manager_t* const nonprobative_count_manager,
+        hasher::source_data_t* const source_data,
         const hashdb::scan_manager_t* const  whitelist_scan_manager,
         const std::string& p_repository_name,
         const size_t step_size,
@@ -112,10 +113,10 @@ namespace hashdb {
       delete[] b2;
     }
 
-    // retrieve source file hash
+    // get the source file hash
     std::string file_hash = hash_calculator.final();
 
-    // store the source file name
+    // store the source repository name and filename
     job_record->import_manager->insert_source_name(file_hash,
             job_record->repository_name, job_record->file_reader->filename);
 
@@ -126,14 +127,14 @@ namespace hashdb {
                          ? BUFFER_DATA_SIZE : b_size;
     job_queue->push(new_ingest_job(
                  import_manager,
-                 nonprobative_count_manager,
+                 source_data_manager,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
                  block_size,
-                 source_hash,
-                 source_name,
-                 0,      // source_offset
+                 file_hash,
+                 file_name,
+                 0,      // file_offset
                  b,      // buffer
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
@@ -165,14 +166,14 @@ namespace hashdb {
                                         ? BUFFER_DATA_SIZE : b_2_data_size;
       job_queue->push(new_ingest_job(
                  import_manager,
-                 nonprobative_count_manager,
+                 source_data_manager,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
                  block_size,
-                 source_hash,
-                 source_name,
-                 offset,  // source_offset
+                 file_hash,
+                 file_name,
+                 offset,  // file_offset
                  b2,      // buffer
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
@@ -227,6 +228,9 @@ namespace hashdb {
     // open import manager
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
+    // create the source_data_manager
+    hasher::source_data_manager_t source_data_manager(import_manager);
+
     // maybe open whitelist DB
     if (has_whitelist) {
       whitelist_scan_manager = new scan_manager_t(whitelist_dir);
@@ -241,9 +245,6 @@ namespace hashdb {
     // create the threads
     hasher::threads_t* threads = new hasher::threads_t(num_cpus, job_queue);
 
-    // create the nonprobative_count manager
-    hasher::nonprobative_count_manager_t nonprobative_count_manager();
-
     // open the recursive directory walker
     hasher::dig dig_tool(ingest_path);
     hasher::dig::const_iterator it = dig_tool.begin();
@@ -256,7 +257,7 @@ namespace hashdb {
 
         // only process when file size > 0
         if (file_reader.filesize > 0) {
-          ingest_file(file_reader, import_manager, nonprobative_count_manager,
+          ingest_file(file_reader, import_manager, source_data_manager,
                  whitelist_scan_manager,
                  repository_name, step_size, settings.block_size, job_queue);
 
