@@ -75,10 +75,13 @@ def test_import_tab2():
 
     returned_answer = H.read_file("temp_2.json")
     expected_answer = ["#","#", \
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
 '{"file_hash":"1111111111111111","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
 '{"block_hash":"2222222222222222","entropy":0,"block_label":"","source_offset_pairs":["1111111111111111",4096]}',
-'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}']
+'{"block_hash":"8899aabbccddeeff","entropy":0,"block_label":"w","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'{"block_hash":"ffffffffffffffff","entropy":0,"block_label":"","source_offset_pairs":["0011223344556677",1024]}'
+]
 
     H.lines_equals(returned_answer, expected_answer)
 

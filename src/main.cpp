@@ -81,6 +81,7 @@ static bool has_block_size = false;
 static bool has_step_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
+static bool has_embedded_data = false;
 static bool has_max_source_offset_pairs = false;
 static bool has_tuning = false;
 
@@ -168,6 +169,7 @@ int main(int argc,char **argv) {
       {"step_size",               required_argument, 0, 's'},
       {"repository_name",         required_argument, 0, 'r'},
       {"whitelist_dir",           required_argument, 0, 'w'},
+      {"embedded_data",           required_argument, 0, 'e'},
       {"max_source_offset_pairs", required_argument, 0, 'm'},
       {"tuning",                  required_argument, 0, 't'},
 
@@ -175,7 +177,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:em:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -239,6 +241,11 @@ int main(int argc,char **argv) {
       case 'w': {	// whitelist directory
         has_whitelist_dir = true;
         whitelist_dir = std::string(optarg);
+        break;
+      }
+
+      case 'e': {	// process embedded data
+        has_embedded_data = true;
         break;
       }
 
@@ -319,6 +326,10 @@ void check_options(const std::string& options) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
+  if (has_embedded_data && options.find("e") == std::string::npos) {
+    std::cerr << "The -e embedded_data option is not allowed for this command.\n";
+    exit(1);
+  }
   if (has_max_source_offset_pairs && options.find("m") ==
       std::string::npos) {
     std::cerr << "The -m max_source_offset_pairs option is not allowed for this command.\n";
@@ -367,7 +378,7 @@ void run_command() {
       repository_name = args[1];
     }
     commands::ingest(args[0], args[1], step_size,
-                     repository_name, whitelist_dir, cmd);
+                     repository_name, whitelist_dir, has_embedded_data, cmd);
 
   } else if (command == "import_tab") {
     check_params("rw", 2);

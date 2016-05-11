@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <stdint.h>
 //#include <unistd.h>
+#include "hashdb.hpp"
+#include "source_data_manager.hpp"
 
 namespace hasher {
 
@@ -37,17 +39,17 @@ enum job_type_t {INGEST, SCAN};
 
 class job_t {
 
-  private:
+  public:
   const job_type_t job_type;
   hashdb::import_manager_t* const import_manager;
   hasher::source_data_manager_t* const source_data_manager;
   const hashdb::scan_manager_t* const whitelist_scan_manager;
-  const hashdb::scan_manager_t* const scan_manager;
+  hashdb::scan_manager_t* const scan_manager;
   const std::string repository_name;
   const size_t step_size;
   const size_t block_size;
   const std::string file_hash;
-  const std::string file_name;
+  const std::string filename;
   const uint64_t file_offset;
   const uint8_t* const buffer;
   const size_t buffer_size;
@@ -57,10 +59,10 @@ class job_t {
   std::string error_message;
 
   job_t(const job_type_t p_job_type,
-               const hashdb::import_manager_t* const p_import_manager,
-               const hasher::source_data_manager_t* const p_source_data_manager,
+               hashdb::import_manager_t* const p_import_manager,
+               hasher::source_data_manager_t* const p_source_data_manager,
                const hashdb::scan_manager_t* const p_whitelist_scan_manager,
-               const hashdb::scan_manager_t* const p_scan_manager,
+               hashdb::scan_manager_t* const p_scan_manager,
                const std::string p_repository_name,
                const size_t p_step_size,
                const size_t p_block_size,
@@ -81,7 +83,7 @@ class job_t {
                    step_size(p_step_size),
                    block_size(p_block_size),
                    file_hash(p_file_hash),
-                   file_name(p_file_name),
+                   filename(p_file_name),
                    file_offset(p_file_offset),
                    buffer(p_buffer),
                    buffer_size(p_buffer_size),
@@ -91,6 +93,7 @@ class job_t {
                    error_message("") {
   }
 
+  private:
   // do not allow copy or assignment
   job_t(const job_t&);
   job_t& operator=(const job_t&);
@@ -99,53 +102,52 @@ class job_t {
 
   // ingest
   static job_t* new_ingest_job(
-        hashdb::import_manager_t* const import_manager,
-        const hasher::source_data_manager_t* const source_data_manager,
-        const hashdb::scan_manager_t* const whitelist_scan_manager,
-        const std::string repository_name,
-        const size_t step_size,
-        const size_t block_size,
-        const std::string file_hash,
-        const std::string file_name,
-        const uint64_t file_offset,
-        const uint8_t* const buffer,
-        const size_t buffer_size,
-        const size_t buffer_data_size,
+        hashdb::import_manager_t* const p_import_manager,
+        hasher::source_data_manager_t* const p_source_data_manager,
+        const hashdb::scan_manager_t* const p_whitelist_scan_manager,
+        const std::string p_repository_name,
+        const size_t p_step_size,
+        const size_t p_block_size,
+        const std::string p_file_hash,
+        const std::string p_file_name,
+        const uint64_t p_file_offset,
+        const uint8_t* const p_buffer,
+        const size_t p_buffer_size,
+        const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t recursion_count) {
+        const size_t p_recursion_count) {
 
     return new job_t(
                      job_type_t::INGEST,
-                     import_manager,
-                     source_data_manager,
-                     whitelist_scan_manager,
+                     p_import_manager,
+                     p_source_data_manager,
+                     p_whitelist_scan_manager,
                      NULL, // scan_manager
-                     repository_name,
-                     step_size,
-                     block_size,
-                     file_hash,
-                     file_name,
-                     file_offset,
-                     buffer,
-                     buffer_size,
-                     buffer_data_size,
-                     max_recursion_depth,
-                     recursion_count,
-                     "");  // error message
+                     p_repository_name,
+                     p_step_size,
+                     p_block_size,
+                     p_file_hash,
+                     p_file_name,
+                     p_file_offset,
+                     p_buffer,
+                     p_buffer_size,
+                     p_buffer_data_size,
+                     p_max_recursion_depth,
+                     p_recursion_count);
   }
 
   // scan
   static job_t* new_scan_job(
-        const hashdb::scan_manager_t* const scan_manager,
-        const size_t step_size,
-        const size_t block_size,
-        const std::string file_name,
-        const uint64_t file_offset,
-        const uint8_t* const buffer,
-        const size_t buffer_size,
-        const size_t buffer_data_size,
+        hashdb::scan_manager_t* const p_scan_manager,
+        const size_t p_step_size,
+        const size_t p_block_size,
+        const std::string p_file_name,
+        const uint64_t p_file_offset,
+        const uint8_t* const p_buffer,
+        const size_t p_buffer_size,
+        const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t recursion_count) {
+        const size_t p_recursion_count) {
 
 
     return new job_t(
@@ -153,19 +155,18 @@ class job_t {
                      NULL, // import_manager
                      NULL, // source_data_manager
                      NULL, // whitelist_scan_manager
-                     scan_manager,
+                     p_scan_manager,
                      "",   // repository_name
-                     step_size,
-                     block_size,
+                     p_step_size,
+                     p_block_size,
                      "",   // file hash
-                     file_name,
-                     file_offset,
-                     buffer,
-                     buffer_size,
-                     buffer_data_size,
-                     max_recursion_depth,
-                     recursion_count,
-                     "");  // error message
+                     p_file_name,
+                     p_file_offset,
+                     p_buffer,
+                     p_buffer_size,
+                     p_buffer_data_size,
+                     p_max_recursion_depth,
+                     p_recursion_count);
   }
 };
 

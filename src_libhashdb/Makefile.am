@@ -85,8 +85,18 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 HASHER_INCS = \
 	hasher/dig.cpp \
 	hasher/dig.h \
+	hasher/ewf_file_reader.hpp \
 	hasher/file_reader_helper.hpp \
-	hasher/file_reader.hpp
+	hasher/file_reader.hpp \
+	hasher/hash_calculator.hpp \
+	hasher/ingest.cpp \
+	hasher/job.hpp \
+	hasher/job_queue.hpp \
+	hasher/num_cpus.h \
+	hasher/process_job.hpp \
+	hasher/single_file_reader.hpp \
+	hasher/source_data_manager.hpp \
+	hasher/threadpool.hpp
 
 LIBHASHDB_INCS = \
 	crc32.h \
@@ -94,7 +104,6 @@ LIBHASHDB_INCS = \
 	fsync.h \
 	hashdb.hpp \
 	hex_helper.cpp \
-	ingest.cpp \
 	libhashdb.cpp \
 	liblmdb.la \
 	lmdb_changes.hpp \

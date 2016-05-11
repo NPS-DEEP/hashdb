@@ -40,24 +40,30 @@
 
 static const size_t BUFFER_DATA_SIZE = 16777216;   // 2^24=16MiB
 static const size_t BUFFER_SIZE = 17825792;        // 2^24+2^20=17MiB
+static const size_t MAX_RECURSION_DEPTH = 7;
 
 namespace hashdb {
   // ************************************************************
   // ingest
   // ************************************************************
   std::string ingest_file(
-        const hasher::file_reader_t* const file_reader,
-        hashdb::import_manager_t* const import_manager,
-        hasher::source_data_t* const source_data,
-        const hashdb::scan_manager_t* const  whitelist_scan_manager,
-        const std::string& p_repository_name,
+        const hasher::file_reader_t& file_reader,
+        hashdb::import_manager_t& import_manager,
+        hasher::source_data_manager_t& source_data_manager,
+        const hashdb::scan_manager_t* const whitelist_scan_manager,
+        const std::string& repository_name,
         const size_t step_size,
         const size_t block_size,
+        const bool process_embedded_data,
         hasher::job_queue_t* const job_queue) {
 
+    // identify the maximum recursion depth
+    size_t max_recursion_depth = 
+                        (process_embedded_data) ? MAX_RECURSION_DEPTH : 0;
+
     // create buffer b to read into
-    size_t b_size = (job_record->file_reader->filesize <= BUFFER_SIZE) ?
-                          job_record->file_reader->filesize : BUFFER_SIZE;
+    size_t b_size = (file_reader.filesize <= BUFFER_SIZE) ?
+                          file_reader.filesize : BUFFER_SIZE;
     uint8_t* b = new (std::nothrow) uint8_t[b_size];
     if (b == NULL) {
       return "bad memory allocation";
@@ -65,11 +71,12 @@ namespace hashdb {
 
     // read into buffer b
     size_t bytes_read;
-    std::string success = job_record->file_reader->read(b, b_size, &bytes_read);
-    if (success.size() > 0) {
+    std::string error_message;
+    error_message = file_reader.read(0, b, b_size, &bytes_read);
+    if (error_message.size() > 0) {
       // abort
       delete[] b;
-      return "bad memory allocation";
+      return error_message;
     }
 
     // get a source file hash calculator
@@ -80,7 +87,7 @@ namespace hashdb {
     hash_calculator.update(b, b_size, 0, b_size);
 
     // read and hash subsequent buffers in b2
-    if (job_record->file_reader->filesize > BFFER_SIZE) {
+    if (file_reader.filesize > BUFFER_SIZE) {
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE];
@@ -92,18 +99,18 @@ namespace hashdb {
 
       // read and hash b2 into final source file hash value
       for (uint64_t offset = BUFFER_SIZE;
-           offset < job_record->file_reader->filesize;
+           offset < file_reader.filesize;
            offset += BUFFER_SIZE) {
 
         // read into b2
-        size_t b2_bytes_read
-        std::string success = job_record->file_reader->read(
-                                          b2, BUFFER_SIZE, &b2_bytes_read);
-        if (success.size() > 0) {
+        size_t b2_bytes_read;
+        error_message = file_reader.read(
+                              offset, b2, BUFFER_SIZE, &b2_bytes_read);
+        if (error_message.size() > 0) {
           // abort
           delete[] b2;
           delete[] b;
-          return "bad memory allocation";
+          return error_message;
         }
 
         // hash b2 into final source file hash value
@@ -117,32 +124,33 @@ namespace hashdb {
     std::string file_hash = hash_calculator.final();
 
     // store the source repository name and filename
-    job_record->import_manager->insert_source_name(file_hash,
-            job_record->repository_name, job_record->file_reader->filename);
+    import_manager.insert_source_name(file_hash,
+            repository_name, file_reader.filename);
 
     // build buffers from file sections and push them onto the job queue
 
     // push buffer b onto the job queue
     size_t b_data_size = (b_size > BUFFER_DATA_SIZE)
                          ? BUFFER_DATA_SIZE : b_size;
-    job_queue->push(new_ingest_job(
-                 import_manager,
-                 source_data_manager,
+    job_queue->push(hasher::job_t::new_ingest_job(
+                 &import_manager,
+                 &source_data_manager,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
                  block_size,
                  file_hash,
-                 file_name,
+                 file_reader.filename,
                  0,      // file_offset
                  b,      // buffer
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
+                 max_recursion_depth,
                  0));    // recursion_count
 
     // read and push remaining buffers onto the job queue
     for (uint64_t offset = BUFFER_SIZE;
-         offset < job_record->file_reader->filesize;
+         offset < file_reader.filesize;
          offset += BUFFER_SIZE) {
 
       // print status
@@ -151,34 +159,44 @@ namespace hashdb {
                 << " size " << file_reader.filesize
                 << "\n";
 
+      // create b2 to read into
+      uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE];
+      if (b2 == NULL) {
+        // abort
+        return "bad memory allocation";
+      }
+
       // read into b2
       size_t b2_bytes_read;
-      std::string success = job_record->file_reader->read(
-                                          b2, BUFFER_SIZE, &b2_bytes_read);
-      if (success.size() > 0) {
+      error_message = file_reader.read(
+                                  offset, b2, BUFFER_SIZE, &b2_bytes_read);
+      if (error_message.size() > 0) {
         // abort submitting jobs for this file
         delete[] b2;
-        return "bad memory allocation";
+        return error_message;
       }
 
       // push this buffer b2 onto the job queue
       size_t b2_data_size = (b2_bytes_read > BUFFER_DATA_SIZE)
-                                        ? BUFFER_DATA_SIZE : b_2_data_size;
-      job_queue->push(new_ingest_job(
-                 import_manager,
-                 source_data_manager,
+                                        ? BUFFER_DATA_SIZE : b2_bytes_read;
+      job_queue->push(hasher::job_t::new_ingest_job(
+                 &import_manager,
+                 &source_data_manager,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
                  block_size,
                  file_hash,
-                 file_name,
+                 file_reader.filename,
                  offset,  // file_offset
                  b2,      // buffer
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
+                 max_recursion_depth,
                  0));  // recursion_count
+
     }
+    return "";
   }
 
   // ************************************************************
@@ -189,6 +207,7 @@ namespace hashdb {
                      const size_t step_size,
                      const std::string& p_repository_name,
                      const std::string& whitelist_dir,
+                     const bool process_embedded_data,
                      const std::string& cmd) {
 
     bool has_whitelist = false;
@@ -229,7 +248,7 @@ namespace hashdb {
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
     // create the source_data_manager
-    hasher::source_data_manager_t source_data_manager(import_manager);
+    hasher::source_data_manager_t source_data_manager(&import_manager);
 
     // maybe open whitelist DB
     if (has_whitelist) {
@@ -242,8 +261,9 @@ namespace hashdb {
     // create the job queue to hold more jobs than threads
     hasher::job_queue_t* job_queue = new hasher::job_queue_t(num_cpus * 2);
 
-    // create the threads
-    hasher::threads_t* threads = new hasher::threads_t(num_cpus, job_queue);
+    // create the threadpool that will process jobs until job_queue.is_done
+    hasher::threadpool_t* const threadpool =
+                               new hasher::threadpool_t(num_cpus, job_queue);
 
     // open the recursive directory walker
     hasher::dig dig_tool(ingest_path);
@@ -251,15 +271,21 @@ namespace hashdb {
 
     // iterate over files
     while (it != dig_tool.end()) {
-      hasher::file_reader_t file_reader(*it);
+      const hasher::file_reader_t file_reader(*it);
 
       if (file_reader.is_open) {
 
         // only process when file size > 0
         if (file_reader.filesize > 0) {
-          ingest_file(file_reader, import_manager, source_data_manager,
+          std::string success = ingest_file(
+                 file_reader, import_manager, source_data_manager,
                  whitelist_scan_manager,
-                 repository_name, step_size, settings.block_size, job_queue);
+                 repository_name, step_size, settings.block_size,
+                 process_embedded_data, job_queue);
+          if (success.size() > 0) {
+            std::cout << "error while importing file " << file_reader.filename
+                  << ", " << file_reader.error_message << "\n";
+          }
 
         } else {
           std::cout << "skipping file " << file_reader.filename
@@ -274,7 +300,8 @@ namespace hashdb {
     }
 
     // done
-    delete threads;
+    job_queue->is_done = true;
+    delete threadpool;
     delete job_queue;
     if (has_whitelist) {
       delete whitelist_scan_manager;

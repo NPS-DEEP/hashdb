@@ -40,7 +40,7 @@
 #include <string>
 #include <string.h> // strlen
 #include <vector>
-#include <set>
+#include <queue>
 #include <cassert>
 #include <libewf.h>
 
@@ -77,8 +77,8 @@ class job_queue_t {
   }
 
   public:
-  job_queue_t(const p_max_queue_size) : max_queue_size(p_max_queue_size),
-                                        job_queue(), is_done(false) {
+  job_queue_t(const size_t p_max_queue_size) :
+             max_queue_size(p_max_queue_size), job_queue(), is_done(false) {
     if(pthread_mutex_init(&M,NULL)) {
       std::cerr << "Error obtaining mutex.\n";
       assert(0);
@@ -103,7 +103,7 @@ class job_queue_t {
 
         // add job to queue now
         lock();
-        size_t size = job_queue.push(job);
+        job_queue.push(job);
         unlock();
         break;
 
@@ -114,11 +114,14 @@ class job_queue_t {
     }
   }
 
-  hasher::job_t* pop() {
-    const job_t* job = NULL;
+  const hasher::job_t* pop() {
+    const hasher::job_t* job = NULL;
     lock();
     if (job_queue.size() > 0) {
-      job = job_queue.pop();
+      job = job_queue.front();
+      job_queue.pop();
+    } else {
+      // empty so return NULL
     }
     unlock();
     return job;

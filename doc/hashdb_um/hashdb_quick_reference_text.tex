@@ -17,8 +17,8 @@ Create a new hash database \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \hangindent=2em\texttt{ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>] <hashdb.hdb> <import directory>} &
 \textbf{(Not available in Alpha)} Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits \\
-\hangindent=2em\texttt{import\_tab [-r <repository name>] <hashdb.hdb> <tab.txt>} &
-Import from tab file into hash database \\
+\hangindent=2em\texttt{import\_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <tab.txt>} &
+Import from tab file into hash database, labeling hashes in the whitelist\\
 \hangindent=2em\texttt{import <hashdb.hdb> <hashdb.json>} &
 Import JSON format data into hash database \\
 \hangindent=2em\texttt{export <hashdb.hdb> <hashdb.json>} &

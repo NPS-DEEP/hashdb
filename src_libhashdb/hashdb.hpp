@@ -177,13 +177,18 @@ namespace hashdb {
    *   repository_name - A repository name to attribute the sources to.
    *   whitelist_dir - Path to a whitelist hashdb data store.  Hashes
    *     matching these will not be ingested.
+   *   process_embedded_data - Whether to process embedded data.
    *   command_string - String to put into the new hashdb log.
+   *
+   * Returns:
+   *   "" if successful else reason if not.
    */
   std::string ingest(const std::string& hashdb_dir,
                      const std::string& ingest_path,
                      const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
+                     const bool process_embedded_data,
                      const std::string& command_string);
 
   // ************************************************************

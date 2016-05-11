@@ -43,6 +43,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <pthread.h>
+#include <map>
 
 namespace hasher {
 
@@ -52,16 +53,17 @@ class source_data_manager_t {
   hashdb::import_manager_t* const import_manager;
 
   class source_data_t {
+    public:
     const uint64_t filesize;
     std::string file_type;
-    const size_t parts_required;
+    const size_t parts_total;
     size_t parts_done;
     size_t nonprobative_count;
     source_data_t(const uint64_t p_filesize,
                   const std::string& p_file_type,
-                  const size_t p_parts_required) :
+                  const size_t p_parts_total) :
            filesize(p_filesize), file_type(p_file_type),
-           parts_required(p_parts_required), parts_done(0),
+           parts_total(p_parts_total), parts_done(0),
            nonprobative_count(0) {
     }
   };
@@ -97,7 +99,7 @@ class source_data_manager_t {
   }
 
   bool add_source(const std::string& file_hash, const uint64_t filesize,
-                  const std::string& file_type, const size_t parts_required) {
+                  const std::string& file_type, const size_t parts_total) {
     lock();
     if (source_data_map.find(file_hash) != source_data_map.end()) {
       // already added
@@ -106,7 +108,7 @@ class source_data_manager_t {
     }
     // add
     source_data_map.insert(std::pair<std::string, source_data_t>(
-             file_hash, source_data_t(filesize, file_type, parts_required)));
+             file_hash, source_data_t(filesize, file_type, parts_total)));
     unlock();
     return true;
   }
@@ -122,20 +124,20 @@ class source_data_manager_t {
       // program error
       assert(0);
     }
-    if (it->parts_required == 0) {
+    if (it->second.parts_done == it->second.parts_total) {
       // program error
       assert(0);
     }
-    source_data_t source_data = *it;
+    source_data_t source_data = it->second;
     source_data_map.erase(it);
     source_data.nonprobative_count += nonprobative_count;
-    --source_data.parts_required;
+    ++source_data.parts_done;
     source_data_map.insert(std::pair<std::string, source_data_t>(
                                                    file_hash, source_data));
     unlock();
 
     // if this is the final update, add source data to DB
-    if (source_data.parts_required == 0) {
+    if (source_data.parts_done == it->second.parts_total) {
       import_manager->insert_source_data(file_hash,
                                          source_data.filesize,
                                          source_data.file_type,

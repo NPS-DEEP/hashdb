@@ -38,20 +38,23 @@
 #include "hashdb.hpp"
 #include "job.hpp"
 #include "hash_calculator.hpp"
+#include "calculate_entropy.hpp"
+#include "calculate_block_label.hpp"
 
 namespace hasher {
 
   // process INGEST job
-  static void process_ingest_job(const hasher::job_t& const job) {
+  static void process_ingest_job(const hasher::job_t& job) {
 
     // get hash calculator object
     hasher::hash_calculator_t hash_calculator;
 
     // iterate over buffer to add block hashes and metadata
-    for (size_t i=0; i < job.bufer_data_size; i+= job.step_size) {
+    size_t nonprobative_count = 0;
+    for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
       // block hash
-      std::string block_hash = calculate_hash.calculate(job.buffer,
+      std::string block_hash = hash_calculator.calculate(job.buffer,
                   job.buffer_size, i, job.block_size);
 
       // entropy
@@ -66,47 +69,47 @@ namespace hasher {
       }
 
       // add block hash to DB
-      import_manager.insert_hash(block_hash, hasher_buffer.source_hash,
-                  hasher_buffer.offset+i, entropy, block_label);
+      job.import_manager->insert_hash(block_hash, job.file_hash,
+                  job.file_offset+i, entropy, block_label);
     }
 
     // submit nonprobative count to source data manager
-    job.source_data_manager.update_nonprobative_count(
+    job.source_data_manager->update_nonprobative_count(
                                        job.file_hash, nonprobative_count);
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
-    delete job;
+    delete &job;
   }
 
   // process SCAN job
-  static void process_scan_job(const hasher::job_t& const job) {
+  static void process_scan_job(const hasher::job_t& job) {
 
     // get hash calculator object
     hasher::hash_calculator_t hash_calculator;
 
     // iterate over buffer to calculate and scan for block hashes
-    for (size_t i=0; i < job.bufer_data_size; i+= job.step_size) {
+    for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
       // block hash
-      std::string block_hash = calculate_hash.calculate(job.buffer,
+      const std::string block_hash = hash_calculator.calculate(job.buffer,
                   job.buffer_size, i, job.block_size);
 
-      std::string json_string = 
+      const std::string json_string = 
                      job.scan_manager->find_expanded_hash_json(block_hash);
 
       if (json_string.size() > 0) {
         // offset <tab> file <tab> json
-        std::cout << job.offset + i << job.filename << json << "\n";
+        std::cout << job.file_offset + i << job.filename << json_string << "\n";
       }
     }
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
-    delete job;
+    delete &job;
   }
 
-  void process_job(const hasher::job_t& const job) {
+  void process_job(const hasher::job_t& job) {
 
     switch(job.job_type) {
       case hasher::job_type_t::INGEST: {

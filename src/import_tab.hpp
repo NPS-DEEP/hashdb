@@ -110,11 +110,11 @@ class import_tab_t {
     }
     uint64_t file_offset = (sector_index - 1) * sector_size;
 
-    // skip if in whitelist
+    // mark with "w" if in whitelist
+    std::string whitelist_flag = "";
     if (whitelist_manager != NULL) {
       if (whitelist_manager->find_hash_count(block_binary_hash) > 0) {
-        // skip because block hash is in whitelist
-        return;
+        whitelist_flag = "w";
       }
     }
 
@@ -126,7 +126,7 @@ class import_tab_t {
 
     // add block hash
     manager.insert_hash(block_binary_hash, file_binary_hash, file_offset,
-                        0, "");
+                        0, whitelist_flag);
 
     // update progress tracker
     progress_tracker.track();

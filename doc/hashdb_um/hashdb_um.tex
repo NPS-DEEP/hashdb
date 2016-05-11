@@ -616,7 +616,7 @@ Hash databases may be imported to in several ways.  Commands to import and expor
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>]+ \verb+<hashdb.hdb>+ \verb+<source directory>+& Computes and imports hashes from files under the source directory.\\
+\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-e] <hashdb.hdb>+ \verb+<source directory>+& Computes and imports hashes from files under the source directory. Marks whitelist hashes. May process embedded data.\\
 \hline
 \textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database.\\
 \hline

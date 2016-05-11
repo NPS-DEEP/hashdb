@@ -137,11 +137,12 @@ namespace commands {
                      const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
+                     const bool process_embedded_data,
                      const std::string& cmd) {
 
     // ingest
     hashdb::ingest(hashdb_dir, ingest_path, step_size, repository_name,
-                   whitelist_dir, cmd);
+                   whitelist_dir, process_embedded_data, cmd);
   }
 
   // import_tab
