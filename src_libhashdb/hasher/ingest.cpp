@@ -64,7 +64,7 @@ namespace hashdb {
     // create buffer b to read into
     size_t b_size = (file_reader.filesize <= BUFFER_SIZE) ?
                           file_reader.filesize : BUFFER_SIZE;
-    uint8_t* b = new (std::nothrow) uint8_t[b_size];
+    uint8_t* b = new (std::nothrow) uint8_t[b_size]();
     if (b == NULL) {
       return "bad memory allocation";
     }
@@ -90,7 +90,7 @@ namespace hashdb {
     if (file_reader.filesize > BUFFER_SIZE) {
 
       // create b2 to read into
-      uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE];
+      uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
         // abort
         delete[] b;
@@ -101,6 +101,12 @@ namespace hashdb {
       for (uint64_t offset = BUFFER_SIZE;
            offset < file_reader.filesize;
            offset += BUFFER_SIZE) {
+
+        // print status
+        std::cout << "Calculating file hash for file " << file_reader.filename
+                  << " offset " << offset
+                  << " size " << file_reader.filesize
+                  << "\n";
 
         // read into b2
         size_t b2_bytes_read;
@@ -114,7 +120,7 @@ namespace hashdb {
         }
 
         // hash b2 into final source file hash value
-        hash_calculator.update(b2, bytes_read, 0, bytes_read);
+        hash_calculator.update(b2, BUFFER_SIZE, 0, b2_bytes_read);
       }
 
       delete[] b2;
@@ -162,18 +168,18 @@ namespace hashdb {
                  0));    // recursion_count
 
     // read and push remaining buffers onto the job queue
-    for (uint64_t offset = BUFFER_SIZE;
+    for (uint64_t offset = BUFFER_DATA_SIZE;
          offset < file_reader.filesize;
-         offset += BUFFER_SIZE) {
+         offset += BUFFER_DATA_SIZE) {
 
       // print status
-      std::cout << "Ingesting file " << file_reader.filename
+      std::cout << "Processing file " << file_reader.filename
                 << " offset " << offset
                 << " size " << file_reader.filesize
                 << "\n";
 
       // create b2 to read into
-      uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE];
+      uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
         // abort
         return "bad memory allocation";
@@ -207,7 +213,6 @@ namespace hashdb {
                  b2_data_size,  // buffer_data_size
                  max_recursion_depth,
                  0));  // recursion_count
-
     }
     return "";
   }
@@ -269,8 +274,7 @@ namespace hashdb {
     }
 
     // get the number of CPUs
-//zz    const size_t num_cpus = hasher::numCPU();
-    const size_t num_cpus = 1;
+    const size_t num_cpus = hasher::numCPU();
 
     // create the job queue to hold more jobs than threads
     hasher::job_queue_t* job_queue = new hasher::job_queue_t(num_cpus * 2);

@@ -54,7 +54,7 @@ namespace hasher {
       return calculate_entropy_private(buffer + offset, count);
     } else {
       // make new buffer from old but zero-extended
-      uint8_t* b = new uint8_t[count];
+      uint8_t* b = new uint8_t[count]();
       ::memcpy (b, buffer+offset, offset + count - buffer_size);
       size_t entropy = calculate_entropy_private(b, count);
       delete[] b;

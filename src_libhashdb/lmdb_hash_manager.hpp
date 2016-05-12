@@ -298,7 +298,7 @@ print_mdb_val("hash_manager insert update count data", context.data);
 
       // prepare new data
       size_t new_size = context.data.mv_size + num_suffix_bytes + 1;
-      uint8_t* new_data = new uint8_t[new_size];
+      uint8_t* new_data = new uint8_t[new_size]();
       memcpy(new_data, context.data.mv_data, context.data.mv_size);
       memcpy(new_data + context.data.mv_size, data, num_suffix_bytes + 1);
 

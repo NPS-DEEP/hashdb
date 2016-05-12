@@ -123,15 +123,12 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
   static std::string calculate_block_label_private(
                      const uint8_t* const buffer, const size_t count) {
 
-/*zzz
     std::stringstream ss_flags;
     if (ramp_trait(buffer, count))       ss_flags << "R";
     if (hist_trait(buffer, count))       ss_flags << "H";
     if (whitespace_trait(buffer, count)) ss_flags << "W";
     if (monotonic_trait(buffer, count))  ss_flags << "M";
     return ss_flags.str();
-*/
-return "";
   }
 
   std::string calculate_block_label(const uint8_t* const buffer,
@@ -144,8 +141,9 @@ return "";
       return calculate_block_label_private(buffer + offset, count);
     } else {
       // make new buffer from old but zero-extended
-      uint8_t* b = new uint8_t[count];
-      ::memcpy (b, buffer+offset, offset + count - buffer_size);
+      uint8_t* b = new uint8_t[count]();
+      ::memcpy (b, buffer+offset, buffer_size - offset);
+//zz      ::memcpy (b, buffer+offset, offset + count - buffer_size);
       std::string block_label = calculate_block_label_private(b, count);
       delete[] b;
       return block_label;
