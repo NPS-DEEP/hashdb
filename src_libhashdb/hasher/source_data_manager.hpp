@@ -96,6 +96,7 @@ class source_data_manager_t {
   }
 
   ~source_data_manager_t() {
+    pthread_mutex_destroy(&M);
   }
 
   bool add_source(const std::string& file_hash, const uint64_t filesize,
@@ -113,7 +114,7 @@ class source_data_manager_t {
     return true;
   }
 
-  void update_nonprobative_count(const std::string file_hash,
+  void update_nonprobative_count(const std::string& file_hash,
                                  const uint64_t nonprobative_count) {
     lock();
 
@@ -129,6 +130,7 @@ class source_data_manager_t {
       assert(0);
     }
     source_data_t source_data = it->second;
+    const size_t parts_total = source_data.parts_total;
     source_data_map.erase(it);
     source_data.nonprobative_count += nonprobative_count;
     ++source_data.parts_done;
@@ -137,7 +139,7 @@ class source_data_manager_t {
     unlock();
 
     // if this is the final update, add source data to DB
-    if (source_data.parts_done == it->second.parts_total) {
+    if (source_data.parts_done == parts_total) {
       import_manager->insert_source_data(file_hash,
                                          source_data.filesize,
                                          source_data.file_type,

@@ -57,7 +57,7 @@ class job_queue_t {
   std::queue<const hasher::job_t*> job_queue;
 
   public:
-  bool is_done;
+  bool is_done_adding;
 
   private:
   mutable pthread_mutex_t M;                  // mutext
@@ -78,7 +78,8 @@ class job_queue_t {
 
   public:
   job_queue_t(const size_t p_max_queue_size) :
-             max_queue_size(p_max_queue_size), job_queue(), is_done(false) {
+                max_queue_size(p_max_queue_size), job_queue(),
+                is_done_adding(false), M() {
     if(pthread_mutex_init(&M,NULL)) {
       std::cerr << "Error obtaining mutex.\n";
       assert(0);
@@ -86,10 +87,12 @@ class job_queue_t {
   }
     
   ~job_queue_t() {
+    lock();
     if (job_queue.size() > 0) {
       // program error if queue is not empty
       std::cerr << "Processing error: job ended but job queue is not empty.\n";
     }
+    unlock();
     pthread_mutex_destroy(&M);
   }
 
@@ -125,6 +128,19 @@ class job_queue_t {
     }
     unlock();
     return job;
+  }
+
+  void done_adding() {
+    lock();
+    is_done_adding = true;
+    unlock();
+  }
+
+  bool is_done() {
+    lock();
+    bool done = is_done_adding && job_queue.size() == 0;
+    unlock();
+    return done;
   }
 };
 

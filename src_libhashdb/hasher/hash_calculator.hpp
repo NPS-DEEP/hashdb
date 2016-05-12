@@ -58,7 +58,7 @@ class hash_calculator_t {
   }
 
   ~hash_calculator_t(){
-    EVP_MD_CTX_cleanup(md_context);
+    EVP_MD_CTX_destroy(md_context);
   }
 
   // do not allow copy or assignment
@@ -96,7 +96,7 @@ class hash_calculator_t {
     // put hash into string
     unsigned int md_len;
     unsigned char md_value[EVP_MAX_MD_SIZE];
-    int success = EVP_DigestFinal_ex(md_context, md_value, &md_len);
+    int success = EVP_DigestFinal(md_context, md_value, &md_len);
     if (success == 0) {
       std::cout << "error calculating hash\n";
       assert(0);
@@ -158,7 +158,7 @@ class hash_calculator_t {
     // put hash into string
     unsigned int md_len;
     unsigned char md_value[EVP_MAX_MD_SIZE];
-    int success = EVP_DigestFinal_ex(md_context, md_value, &md_len);
+    int success = EVP_DigestFinal(md_context, md_value, &md_len);
     if (success == 0) {
       std::cout << "error calculating hash\n";
       assert(0);

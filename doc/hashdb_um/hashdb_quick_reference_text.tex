@@ -15,7 +15,7 @@ Create a new hash database \\
 \\
 \textbf{Import/Export} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em\texttt{ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>] <hashdb.hdb> <import directory>} &
+\hangindent=2em\texttt{ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>] [-e] <hashdb.hdb> <import directory>} &
 \textbf{(Not available in Alpha)} Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits \\
 \hangindent=2em\texttt{import\_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <tab.txt>} &
 Import from tab file into hash database, labeling hashes in the whitelist\\
@@ -44,7 +44,7 @@ Export hash database data in JSON format \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{scan\_list <hashdb.hdb> <hashes file>} & Scan hashes file for hash match \\
 \texttt{scan\_hash <hashdb.hdb> <hex block hash>} & Scan for hash match \\
-\texttt{scan\_image [-s <step size>] <hashdb.hdb> <media image file>} & \textbf{(Not available in Alpha)} Scan media image for hash match \\
+\hangindent=2em\texttt{scan\_image [-s <step size>] [-e] <hashdb.hdb> <media image file>} & \textbf{(Not available in Alpha)} Scan media image for hash match \\
 \end{tabular}
 \\
 \\

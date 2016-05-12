@@ -22,7 +22,7 @@
  * Creates a pool of threads.
  *
  * Threads will continually pop *job from job_queue
- * and call hasher::process_job(job) until job_queue->is_done.
+ * and call hasher::process_job(job) until job_queue->is_done().
  *
  * Destructor waits on join for all threads.
  */
@@ -52,10 +52,10 @@ namespace hasher {
     hasher::job_queue_t* const job_queue =
                            static_cast<hasher::job_queue_t* const>(arg);
 
-    while (job_queue->is_done == false) {
+    while (job_queue->is_done() == false) {
       const hasher::job_t* const job = job_queue->pop();
       if (job == NULL) {
-        // queue is empty
+        // queue is active but empty
         sched_yield();
       } else {
         // process the job

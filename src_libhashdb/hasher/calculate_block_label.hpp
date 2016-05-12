@@ -123,12 +123,15 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
   static std::string calculate_block_label_private(
                      const uint8_t* const buffer, const size_t count) {
 
+/*zzz
     std::stringstream ss_flags;
     if (ramp_trait(buffer, count))       ss_flags << "R";
     if (hist_trait(buffer, count))       ss_flags << "H";
     if (whitespace_trait(buffer, count)) ss_flags << "W";
     if (monotonic_trait(buffer, count))  ss_flags << "M";
     return ss_flags.str();
+*/
+return "";
   }
 
   std::string calculate_block_label(const uint8_t* const buffer,

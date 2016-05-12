@@ -121,11 +121,24 @@ namespace hashdb {
     }
 
     // get the source file hash
-    std::string file_hash = hash_calculator.final();
+    const std::string file_hash = hash_calculator.final();
 
     // store the source repository name and filename
-    import_manager.insert_source_name(file_hash,
-            repository_name, file_reader.filename);
+    import_manager.insert_source_name(file_hash, repository_name,
+                                      file_reader.filename);
+
+    // done with file if file_hash is already in source_data_manager
+    if (source_data_manager.seen_source(file_hash)) {
+      delete[] b;
+      return "skipping duplicate file";
+    }
+
+    // add source file to source_data_manager
+    const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
+                               BUFFER_DATA_SIZE;
+    const std::string file_type = "";
+    source_data_manager.add_source(file_hash, file_reader.filesize,
+                                   file_type, parts_total);
 
     // build buffers from file sections and push them onto the job queue
 
@@ -256,7 +269,8 @@ namespace hashdb {
     }
 
     // get the number of CPUs
-    size_t num_cpus = hasher::numCPU();
+//zz    const size_t num_cpus = hasher::numCPU();
+    const size_t num_cpus = 1;
 
     // create the job queue to hold more jobs than threads
     hasher::job_queue_t* job_queue = new hasher::job_queue_t(num_cpus * 2);
@@ -300,7 +314,7 @@ namespace hashdb {
     }
 
     // done
-    job_queue->is_done = true;
+    job_queue->done_adding();
     delete threadpool;
     delete job_queue;
     if (has_whitelist) {
