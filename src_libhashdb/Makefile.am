@@ -86,6 +86,8 @@ HASHER_INCS = \
 	hasher/dig.cpp \
 	hasher/dig.h \
 	hasher/ewf_file_reader.hpp \
+	hasher/filename_t.hpp \
+	hasher/filename_t.cpp \
 	hasher/file_reader_helper.hpp \
 	hasher/file_reader.hpp \
 	hasher/hash_calculator.hpp \
@@ -93,10 +95,13 @@ HASHER_INCS = \
 	hasher/job.hpp \
 	hasher/job_queue.hpp \
 	hasher/num_cpus.h \
+	hasher/print_environment.hpp \
 	hasher/process_job.hpp \
 	hasher/single_file_reader.hpp \
 	hasher/source_data_manager.hpp \
 	hasher/threadpool.hpp
+
+#	hasher/scan_image.cpp 
 
 LIBHASHDB_INCS = \
 	crc32.h \

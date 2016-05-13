@@ -31,6 +31,7 @@
 #include <iostream>
 #include <cstring>
 #include "hashdb.hpp" // for timestamp_t
+#include "print_environment.hpp"
 
 namespace hashdb {
 

@@ -15,6 +15,7 @@
  */
 
 #include "dig.h"
+#include "filename_t.hpp"
 #include <iostream>
 
 #ifndef _TEXT
@@ -202,54 +203,10 @@ bool dig::const_iterator::operator == (const const_iterator &i2) {
 	&& i2.dirstack.size()==0;
 };
 
-
-/**
- * the constructor isn't all that exciting.
- */
-
-dig::dig(const filename_t &start_):start(start_)
+// use system-native start string given utf8 start string
+dig::dig(const std::string &start_):start(utf8_to_native(start_))
 {
 }
-
-#ifdef WIN32
-static std::wstring utf8to16(const std::string &fn8)
-// adapted from http://stackoverflow.com/questions/6693010/problem-using-multibytetowidechar
-// MultiByteToWideChar needs Windows.h
-{
-    int wchars_num = MultiByteToWideChar(CP_UTF8, 0, fn8.c_str(), -1, NULL ,0 );
-    if (wchars_num == 0 || wchars_num == 0xfffd) {
-        std::cerr << "Invalid UTF8 code in filename.\n";
-        return std::wstring(_TEXT(""));
-    }
-
-    wchar_t* wstr = new wchar_t[wchars_num];
-    MultiByteToWideChar(CP_UTF8, 0, fn8.c_str(), -1, wstr, wchars_num);
-    std::wstring fn16(wstr, wchars_num);
-    delete[] wstr;
-    return fn16;
-}
-
-/*
-static std::wstring utf8to16(const std::string &fn8)
-{
-    std::wstring fn16;
-    utf8::utf8to16(fn8.begin(),fn8.end(),back_inserter(fn16));
-    return fn16;
-}
-#if 0
-static std::string utf16to8(const std::wstring &fn16)
-{
-    std::string fn8;
-    utf8::utf16to8(fn16.begin(),fn16.end(),back_inserter(fn8));
-    return fn8;
-}
-#endif
-*/
-
-dig::dig(const std::string &start_):start(utf8to16(start_))
-{
-}
-#endif
 
 } // end namespace hasher
 

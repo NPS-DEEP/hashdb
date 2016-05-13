@@ -141,8 +141,14 @@ namespace commands {
                      const std::string& cmd) {
 
     // ingest
-    hashdb::ingest(hashdb_dir, ingest_path, step_size, repository_name,
-                   whitelist_dir, process_embedded_data, cmd);
+    std::string error_message = hashdb::ingest(
+                    hashdb_dir, ingest_path, step_size, repository_name,
+                    whitelist_dir, process_embedded_data, cmd);
+    if (error_message.size() == 0) {
+      std::cout << "ingest completed.\n";
+    } else {
+      std::cout << "Error: " << error_message << "\n";
+    }
   }
 
   // import_tab
@@ -580,13 +586,19 @@ namespace commands {
   static void scan_image(const std::string& hashdb_dir,
                          const std::string& media_image_filename,
                          const size_t step_size,
-                         const std::string& cmd) {
+                         const bool process_embedded_data) {
 
-    // validate hashdb_dir path
-    require_hashdb_dir(hashdb_dir);
-
-    // open the media image file for reading
-    std::cout << "Not available in Alpha.\n";
+/*
+zzzz
+    std::string error_message = hashdb::scan_image(
+          hashdb_dir, media_image_filename, step_size, process_embedded_data);
+*/
+    std::string error_message = "scan_image TBD";
+    if (error_message.size() == 0) {
+      std::cout << "scan_image completed.\n";
+    } else {
+      std::cout << "Error: " << error_message << "\n";
+    }
   }
 
   // ************************************************************

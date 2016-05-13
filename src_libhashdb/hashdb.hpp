@@ -147,12 +147,12 @@ namespace hashdb {
 #endif
                            );
 
-  /**
-   * Print environment information to the stream.  Specifically, print
-   * lines starting with the pound character followed by version information,
-   * the command line, the username, if available, and the date.
-   */
-  void print_environment(const std::string& command_line, std::ostream& os);
+//  /**
+//   * Print environment information to the stream.  Specifically, print
+//   * lines starting with the pound character followed by version information,
+//   * the command line, the username, if available, and the date.
+//   */
+//  void print_environment(const std::string& command_line, std::ostream& os);
 
   /**
    * Return binary string or empty if hexdigest length is not even
@@ -174,6 +174,9 @@ namespace hashdb {
    *   hashdb_dir - Path to the hashdb data store to import into.
    *   ingest_path - Path to a source file or directory to recursively
    *     ingest block hashes from.  May include E01 files.
+   *   step_size - The step size to move along while calculating hashes.
+   *     The step size must be divisible by the byte alignment defined in
+   *     the database.
    *   repository_name - A repository name to attribute the sources to.
    *   whitelist_dir - Path to a whitelist hashdb data store.  Hashes
    *     matching these will not be ingested.
@@ -190,6 +193,28 @@ namespace hashdb {
                      const std::string& whitelist_dir,
                      const bool process_embedded_data,
                      const std::string& command_string);
+
+  /**
+   * Calculate and scan for hashes from the media image file.  Files with
+   * EWF extensions (.E01 files) are recognized as media images.
+   *
+   * Parameters:
+   *   hashdb_dir - Path to the hashdb data store to scan against.
+   *   media_image_file - Path to a media image file, which can be a
+   *     raw file or an E01 file.
+   *   step_size - The step size to move along while calculating hashes.
+   *     The step size must be divisible by the byte alignment defined in
+   *     the database.
+   *   process_embedded_data - Whether to process embedded data.
+   *
+   * Returns:
+   *   "" if successful else reason if not.
+   */
+//zz
+//  std::string scan_image(const std::string& hashdb_dir,
+//                     const std::string& media_image_file,
+//                     const size_t step_size,
+//                     const bool process_embedded_data);
 
   // ************************************************************
   // import

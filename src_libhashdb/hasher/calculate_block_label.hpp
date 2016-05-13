@@ -143,7 +143,6 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();
       ::memcpy (b, buffer+offset, buffer_size - offset);
-//zz      ::memcpy (b, buffer+offset, offset + count - buffer_size);
       std::string block_label = calculate_block_label_private(b, count);
       delete[] b;
       return block_label;

@@ -36,15 +36,9 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "filename_t.hpp"
 
 namespace hasher {
-
-// reduce ifdef clutter
-#ifdef WIN32
-typedef std::wstring filename_t;
-#else
-typedef std::string filename_t;
-#endif
 
 #ifdef WIN32
 static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)

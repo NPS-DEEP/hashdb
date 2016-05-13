@@ -22,13 +22,9 @@
 #include <windowsx.h>
 #include <tchar.h>
 #endif
+#include "filename_t.hpp"
 
 namespace hasher {
-#ifdef WIN32
-    typedef std::wstring filename_t;
-#else    
-    typedef std::string filename_t;
-#endif
 
 class dig {
 public:

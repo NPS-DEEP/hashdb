@@ -22,6 +22,9 @@
  * Support hashdb ingest recursive from path.
  */
 
+#ifndef INGEST_HPP
+#define INGEST_HPP
+
 #include <config.h>
 #include <string>
 #include <cassert>
@@ -331,3 +334,4 @@ namespace hashdb {
 
 } // end namespace hashdb
 
+#endif

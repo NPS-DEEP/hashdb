@@ -51,14 +51,6 @@
 #include <time.h>       // for timestamp
 #include <sys/types.h>  // for timestamp
 #include <sys/time.h>   // for timestamp
-#ifdef HAVE_PWD_H
-#include <pwd.h>        // for print_environment
-#endif
-#include <unistd.h>     // for print_environment
-#include <iostream>     // for print_environment
-#ifndef WIN32
-  #include <arpa/inet.h>  // for htonl, Win uses Winsock2.h
-#endif
 #include "file_modes.h"
 #include "settings_manager.hpp"
 #include "lmdb_hash_data_manager.hpp"
@@ -243,33 +235,6 @@ namespace hashdb {
     logger_t(hashdb_dir, command_string);
 
     return "";
-  }
-
-  /**
-   * Print environment information to the stream.
-   */
-  void print_environment(const std::string& command_line, std::ostream& os) {
-    // version
-    os << "# libhashdb version: " << PACKAGE_VERSION;
-#ifdef GIT_COMMIT
-    os << ", GIT commit: " << GIT_COMMIT;
-#endif
-    os << "\n";
-
-    // command
-    os << "# command: \"" << command_line << "\"\n";
-
-    // username
-#ifdef HAVE_GETPWUID
-    os << "# username: " << getpwuid(getuid())->pw_name << "\n";
-#endif
-
-    // date
-#define TM_FORMAT "%Y-%m-%dT%H:%M:%SZ"
-    char buf[256];
-    time_t t = time(0);
-    strftime(buf,sizeof(buf),TM_FORMAT,gmtime(&t));
-    os << "# start time " << buf << "\n";
   }
 
   // ************************************************************

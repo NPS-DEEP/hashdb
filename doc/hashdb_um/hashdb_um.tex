@@ -1438,9 +1438,11 @@ Query settings else false and reason for failure.
 \item \verb+hex_string = bin_to_hex(binary_string)+
 \item \verb+print_enviornment(command_line_string, &ostream)+\\
 Print command and environment to output stream. - zzzz this interface is expected to be removed.
-\item \verb+ingest(hashdb_dir, whitelist_dir, min_entropy,+\\
-\verb+max_entropy, repository_name, import_path, command_string)+\\
-Import from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
+\item \verb+ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
+\verb+whitelist_dir, process_embedded_data, command_string)+\\
+Recursively calculate and import hashes from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
+\item \verb+scan_image(hashdb_dir, media_image_file, step_size, process_embedded_data)+\\
+Scan the media image for matches. zzz NOT AVAILABLE IN ALPHA.
 \end{itemize}
 
 \subsubsection{Data Types}
