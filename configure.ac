@@ -278,10 +278,14 @@ AC_CHECK_LIB([sicuuc],[main])
 #AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 ################################################################
-## support required by hashdb_environment.hpp
+## support required by print_environment.hpp
 #AC_CHECK_HEADERS([sys/cdefs.h sys/resource.h pwd.h sys/utsname.h])
 AC_CHECK_HEADERS([pwd.h])
 AC_CHECK_FUNCS([getuid getpwuid])
+
+################################################################
+## support required by hasher file reader helper
+AC_CHECK_FUNCS([pread pread64])
 
 ################################################################
 ## libtool required for preparing the hashdb library

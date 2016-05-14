@@ -20,12 +20,7 @@
 /**
  * \file
  * Calculate entropy from data.
- *
- * Adapted from bulk_extractor/scan_hashdb.cpp and bulk_extractor sbuf.
  */
-
-#ifndef CALCULATE_BLOCK_LABEL_HPP
-#define CALCULATE_BLOCK_LABEL_HPP
 
 #include <cstring>
 #include <cstdlib>
@@ -36,19 +31,32 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <unistd.h>
-#include <cctype> // isspace
-#include <map> // isspace
 
 namespace hasher {
 
-  /**
-   * safely calculate block label by padding with zeros on overflow.
-   */
-  std::string calculate_block_label(const uint8_t* const buffer,
-                                    const size_t buffer_size,
-                                    const size_t offset,
-                                    const size_t count);
+  static size_t calculate_entropy_private(const uint8_t* const buffer,
+                                          const size_t count) {
+    // zzzzzzzzz
+    return 0;
+  }
 
+  // safely calculate block entropy by padding with zeros on overflow.
+  size_t calculate_entropy(const uint8_t* const buffer,
+                           const size_t buffer_size,
+                           const size_t offset,
+                           const size_t count) {
+
+    if (offset + count <= buffer_size) {
+      // calculate when not a buffer overrun
+      return calculate_entropy_private(buffer + offset, count);
+    } else {
+      // make new buffer from old but zero-extended
+      uint8_t* b = new uint8_t[count]();
+      ::memcpy (b, buffer+offset, offset + count - buffer_size);
+      size_t entropy = calculate_entropy_private(b, count);
+      delete[] b;
+      return entropy;
+    }
+  }
 } // end namespace hasher
 
-#endif

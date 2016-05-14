@@ -37,30 +37,14 @@
 
 namespace hasher {
 
-  static size_t calculate_entropy_private(const uint8_t* const buffer,
-                                          const size_t count) {
-    // zzzzzzzzz
-//    return 86;
-    return 0;
-  }
-
+  /**
+   * safely calculate block entropy by padding with zeros on overflow.
+   */
   size_t calculate_entropy(const uint8_t* const buffer,
                            const size_t buffer_size,
                            const size_t offset,
-                           const size_t count) {
+                           const size_t count);
 
-    if (offset + count <= buffer_size) {
-      // calculate when not a buffer overrun
-      return calculate_entropy_private(buffer + offset, count);
-    } else {
-      // make new buffer from old but zero-extended
-      uint8_t* b = new uint8_t[count]();
-      ::memcpy (b, buffer+offset, offset + count - buffer_size);
-      size_t entropy = calculate_entropy_private(b, count);
-      delete[] b;
-      return entropy;
-    }
-  }
 } // end namespace hasher
 
 #endif

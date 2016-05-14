@@ -21,17 +21,28 @@
  * \file
  * Support hashdb ingest recursive from path.
  */
-
-#ifndef INGEST_HPP
-#define INGEST_HPP
-
 #include <config.h>
+// this process of getting WIN32 defined was inspired
+// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
+// All this to include winsock2.h before windows.h to avoid a warning.
+#if defined(__MINGW64__) && defined(__cplusplus)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+#endif
+#ifdef WIN32
+  // including winsock2.h now keeps an included header somewhere from
+  // including windows.h first, resulting in a warning.
+  #include <winsock2.h>
+  #include "fsync.h"      // for simulation of linux fsync
+#endif
+
 #include <string>
 #include <cassert>
 #include <iostream>
 #include <unistd.h> // for F_OK
 #include <sstream>
-#include "num_cpus.h"
+#include "num_cpus.hpp"
 #include "hashdb.hpp"
 #include "dig.h"
 #include "file_reader.hpp"
@@ -334,4 +345,3 @@ namespace hashdb {
 
 } // end namespace hashdb
 
-#endif

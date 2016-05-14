@@ -7,7 +7,7 @@
 // this process of getting WIN32 defined was inspired
 // from i686-w64-mingw32/sys-root/mingw/include/windows.h.
 // All this to include winsock2.h before windows.h to avoid a warning.
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && defined(__cplusplus)
+#if defined(__MINGW64__) && defined(__cplusplus)
 #  ifndef WIN32
 #    define WIN32
 #  endif

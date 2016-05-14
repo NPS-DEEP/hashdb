@@ -83,19 +83,25 @@ AM_CFLAGS = $(HASHDB_CFLAGS)
 AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 
 HASHER_INCS = \
+	hasher/calculate_block_label.cpp \
+	hasher/calculate_block_label.hpp \
+	hasher/calculate_entropy.cpp \
+	hasher/calculate_entropy.hpp \
 	hasher/dig.cpp \
 	hasher/dig.h \
 	hasher/ewf_file_reader.hpp \
-	hasher/filename_t.hpp \
 	hasher/filename_t.cpp \
+	hasher/filename_t.hpp \
+	hasher/file_reader_helper.cpp \
 	hasher/file_reader_helper.hpp \
 	hasher/file_reader.hpp \
 	hasher/hash_calculator.hpp \
 	hasher/ingest.cpp \
 	hasher/job.hpp \
 	hasher/job_queue.hpp \
-	hasher/num_cpus.h \
-	hasher/print_environment.hpp \
+	hasher/num_cpus.cpp \
+	hasher/num_cpus.hpp \
+	hasher/process_job.cpp \
 	hasher/process_job.hpp \
 	hasher/single_file_reader.hpp \
 	hasher/source_data_manager.hpp \
@@ -123,6 +129,7 @@ LIBHASHDB_INCS = \
 	logger.hpp \
 	mutex_lock.hpp \
 	msvc-nothrow.h \
+	print_environment.hpp \
 	settings_manager.hpp
 
 libhashdb_la_SOURCES = \

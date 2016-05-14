@@ -38,6 +38,10 @@
 #include <libewf.h>
 #include "file_reader_helper.hpp"
 
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 namespace hasher {
 
 class single_file_reader_t {

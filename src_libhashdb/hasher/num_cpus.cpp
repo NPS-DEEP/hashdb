@@ -3,8 +3,23 @@
  * Return number of system cores.
  */
 
-#ifndef NUM_CPUS_H
-#define NUM_CPUS_H
+#include <config.h>
+// this process of getting WIN32 defined was inspired
+// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
+// All this to include winsock2.h before windows.h to avoid a warning.
+#if defined(__MINGW64__) && defined(__cplusplus)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+#endif
+#ifdef WIN32
+  // including winsock2.h now keeps an included header somewhere from
+  // including windows.h first, resulting in a warning.
+  #include <winsock2.h>
+  #include "fsync.h"      // for simulation of linux fsync
+#endif
+
+#include <sys/types.h>
 
 namespace hasher {
 
@@ -49,4 +64,3 @@ u_int numCPU()
 }
 } // end namespace hasher
 
-#endif
