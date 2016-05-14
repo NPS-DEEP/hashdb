@@ -210,11 +210,11 @@ namespace hashdb {
    * Returns:
    *   "" if successful else reason if not.
    */
-//zz
-//  std::string scan_image(const std::string& hashdb_dir,
-//                     const std::string& media_image_file,
-//                     const size_t step_size,
-//                     const bool process_embedded_data);
+
+  std::string scan_image(const std::string& hashdb_dir,
+                     const std::string& media_image_file,
+                     const size_t step_size,
+                     const bool process_embedded_data);
 
   // ************************************************************
   // import

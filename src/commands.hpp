@@ -588,12 +588,8 @@ namespace commands {
                          const size_t step_size,
                          const bool process_embedded_data) {
 
-/*
-zzzz
     std::string error_message = hashdb::scan_image(
           hashdb_dir, media_image_filename, step_size, process_embedded_data);
-*/
-    std::string error_message = "scan_image TBD";
     if (error_message.size() == 0) {
       std::cout << "scan_image completed.\n";
     } else {
