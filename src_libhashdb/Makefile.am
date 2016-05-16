@@ -106,8 +106,9 @@ HASHER_INCS = \
 	hasher/scan_image.cpp \
 	hasher/single_file_reader.hpp \
 	hasher/source_data_manager.hpp \
-	hasher/threadpool.hpp
-
+	hasher/threadpool.hpp \
+	hasher/tprint.cpp \
+	hasher/tprint.hpp
 
 LIBHASHDB_INCS = \
 	crc32.h \

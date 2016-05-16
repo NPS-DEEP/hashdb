@@ -71,6 +71,10 @@ class threadpool_t {
   ::pthread_t* threads;
   const hasher::job_queue_t* job_queue;
 
+  // do not allow copy or assignment
+  threadpool_t(const threadpool_t&);
+  threadpool_t& operator=(const threadpool_t&);
+
   public:
   threadpool_t(const int p_num_threads, const job_queue_t* const p_job_queue) :
            num_threads(p_num_threads),

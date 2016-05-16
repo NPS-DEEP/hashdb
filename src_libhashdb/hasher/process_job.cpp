@@ -38,6 +38,7 @@
 #endif
 
 #include <cstring>
+#include <sstream>
 #include <cstdlib>
 #include <stdint.h>
 #include <assert.h>
@@ -48,12 +49,28 @@
 #include <unistd.h>
 #include "hashdb.hpp"
 #include "job.hpp"
+#include "tprint.hpp"
 #include "process_job.hpp"
 #include "hash_calculator.hpp"
 #include "calculate_entropy.hpp"
 #include "calculate_block_label.hpp"
 
 namespace hasher {
+
+  // detect if block is all the same
+  inline bool all_same(const uint8_t* const buffer, const size_t buffer_size,
+                       const size_t offset, const size_t p_count) {
+
+    // number of bytes
+    const size_t count =
+          (offset + p_count <= buffer_size) ? p_count : buffer_size - offset;
+    for (size_t i=offset+1; i < offset + count; ++i) {
+      if (buffer[i] != buffer[offset]) {
+        return false;
+      }
+    }
+    return true;                        // all the same
+  }
 
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
@@ -64,6 +81,11 @@ namespace hasher {
     // iterate over buffer to add block hashes and metadata
     size_t nonprobative_count = 0;
     for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
+
+      // skip if all the bytes are the same
+      if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+        continue;
+      }
 
       // calculate block hash
       const std::string block_hash = hash_calculator.calculate(job.buffer,
@@ -103,6 +125,11 @@ namespace hasher {
     // iterate over buffer to calculate and scan for block hashes
     for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
+      // skip if all the bytes are the same
+      if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+        continue;
+      }
+
       // calculate block hash
       const std::string block_hash = hash_calculator.calculate(job.buffer,
                   job.buffer_size, i, job.block_size);
@@ -113,7 +140,11 @@ namespace hasher {
 
       if (json_string.size() > 0) {
         // offset <tab> file <tab> json
-        std::cout << job.file_offset + i << job.filename << json_string << "\n";
+        std::stringstream ss;
+        ss << job.file_offset + i << "\t"
+           << job.filename << "\t"
+           << json_string << "\n";
+        hasher::tprint(ss.str());
       }
     }
 

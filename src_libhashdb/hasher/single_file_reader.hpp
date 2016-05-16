@@ -122,17 +122,19 @@ class single_file_reader_t {
 #endif
   }
 
-  std::string read(const int64_t offset,
+  std::string read(const uint64_t offset,
                    uint8_t* const buffer,
                    const size_t buffer_size,
                    size_t* const bytes_read) const {
 
 #ifdef WIN32
-    DWORD *bytes_read = 0;
+    *bytes_read = 0; //DWORD
     LARGE_INTEGER li;
     li.QuadPart = offset;
     li.LowPart = SetFilePointer(serial_current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
-    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if(li.LowPart == INVALID_SET_FILE_POINTER) {
+      return "read failed, invalid set file pointer";
+    }
     bool did_read = ReadFile(serial_current_handle,
                     buffer, (DWORD) buffer_size, bytes_read, NULL);
     if (!did_read) {

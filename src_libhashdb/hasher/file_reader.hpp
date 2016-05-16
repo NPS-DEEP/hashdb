@@ -57,7 +57,7 @@ class file_reader_t {
 
   private:
   // last read
-  mutable size_t last_offset;
+  mutable uint64_t last_offset;
   mutable uint8_t* last_buffer;
   mutable size_t last_buffer_size;
   mutable size_t last_bytes_read;
@@ -189,7 +189,7 @@ class file_reader_t {
     }
   }
 
-  std::string read(int64_t offset,
+  std::string read(uint64_t offset,
                    uint8_t* const buffer,
                    const size_t buffer_size,
                    size_t* const bytes_read) const {

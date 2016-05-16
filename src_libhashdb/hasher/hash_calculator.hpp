@@ -139,9 +139,9 @@ class hash_calculator_t {
       EVP_DigestUpdate(md_context, buffer + offset, buffer_size - offset);
 
       // hash zeros for part outside buffer
-      size_t extra = count - (buffer_size - offset);
+      const size_t extra = count - (buffer_size - offset);
 //std::cerr << "buffer_size " << buffer_size << " offset: " << offset << " count: " << count << " extra " << extra << "\n";
-      uint8_t* b = new uint8_t[extra]();
+      const uint8_t* const b = new uint8_t[extra]();
       EVP_DigestUpdate(md_context, b, extra);
       delete[] b;
     }

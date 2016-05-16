@@ -51,6 +51,7 @@
 #include "job.hpp"
 #include "job_queue.hpp"
 #include "source_data_manager.hpp"
+#include "tprint.hpp"
 
 static const size_t BUFFER_DATA_SIZE = 16777216;   // 2^24=16MiB
 static const size_t BUFFER_SIZE = 17825792;        // 2^24+2^20=17MiB
@@ -117,13 +118,15 @@ namespace hashdb {
            offset += BUFFER_SIZE) {
 
         // print status
-        std::cout << "Calculating file hash for file " << file_reader.filename
-                  << " offset " << offset
-                  << " size " << file_reader.filesize
-                  << "\n";
+        std::stringstream ss;
+        ss << "# Calculating file hash for file " << file_reader.filename
+           << " offset " << offset
+           << " size " << file_reader.filesize
+           << "\n";
+        hasher::tprint(ss.str());
 
         // read into b2
-        size_t b2_bytes_read;
+        size_t b2_bytes_read = 0;
         error_message = file_reader.read(
                               offset, b2, BUFFER_SIZE, &b2_bytes_read);
         if (error_message.size() > 0) {
@@ -187,10 +190,12 @@ namespace hashdb {
          offset += BUFFER_DATA_SIZE) {
 
       // print status
-      std::cout << "Processing file " << file_reader.filename
-                << " offset " << offset
-                << " size " << file_reader.filesize
-                << "\n";
+      std::stringstream ss;
+      ss << "# Processing file " << file_reader.filename
+         << " offset " << offset
+         << " size " << file_reader.filesize
+         << "\n";
+      hasher::tprint(ss.str());
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
@@ -200,7 +205,7 @@ namespace hashdb {
       }
 
       // read into b2
-      size_t b2_bytes_read;
+      size_t b2_bytes_read = 0;
       error_message = file_reader.read(
                                   offset, b2, BUFFER_SIZE, &b2_bytes_read);
       if (error_message.size() > 0) {
@@ -243,7 +248,7 @@ namespace hashdb {
                      const std::string& cmd) {
 
     bool has_whitelist = false;
-    hashdb::scan_manager_t* whitelist_scan_manager;
+    hashdb::scan_manager_t* whitelist_scan_manager = NULL;
 
     // make sure hashdb_dir is there
     std::string error_message;
@@ -315,18 +320,24 @@ namespace hashdb {
                  repository_name, step_size, settings.block_size,
                  process_embedded_data, job_queue);
           if (success.size() > 0) {
-            std::cout << "error while importing file " << file_reader.filename
-                  << ", " << file_reader.error_message << "\n";
+            std::stringstream ss;
+            ss << "# error while importing file " << file_reader.filename
+               << ", " << file_reader.error_message << "\n";
+            hasher::tprint(ss.str());
           }
 
         } else {
-          std::cout << "skipping file " << file_reader.filename
-                    << " size " << file_reader.filesize << "\n";
+          std::stringstream ss;
+          ss << "# skipping file " << file_reader.filename
+             << " size " << file_reader.filesize << "\n";
+          hasher::tprint(ss.str());
         }
       } else {
         // this file could not be opened
-        std::cout << "unable to import file " << file_reader.filename
-                  << ", " << file_reader.error_message << "\n";
+        std::stringstream ss;
+        ss << "# unable to import file " << file_reader.filename
+           << ", " << file_reader.error_message << "\n";
+        hasher::tprint(ss.str());
       }
       ++it;
     }
