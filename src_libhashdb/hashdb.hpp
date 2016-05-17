@@ -617,7 +617,7 @@ namespace hashdb {
 #ifdef SWIG
                           uint64_t& OUTPUT,      // filesize
                           std::string& OUTPUT,   // file_type
-                          uint64_t& OUTPUT       // zero_count
+                          uint64_t& OUTPUT,      // zero_count
                           uint64_t& OUTPUT       // nonprobative_count
 #else
                           uint64_t& filesize,

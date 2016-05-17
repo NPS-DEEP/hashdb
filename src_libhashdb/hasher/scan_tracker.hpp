@@ -50,14 +50,29 @@ class scan_tracker_t {
   size_t zero_count;
 
   private:
+  const uint64_t bytes_total;
+  uint64_t bytes_done;
+  uint64_t bytes_reported_done;
   mutable pthread_mutex_t M;
   
   // do not allow copy or assignment
   scan_tracker_t(const scan_tracker_t&);
   scan_tracker_t& operator=(const scan_tracker_t&);
 
+  void lock() {
+    if(pthread_mutex_lock(&M)) {
+      assert(0);
+    }
+  }
+
+  void unlock() {
+    pthread_mutex_unlock(&M);
+  }
+
   public:
-  scan_tracker_t() : zero_count(0), M() {
+  scan_tracker_t(const uint64_t p_bytes_total) :
+                     zero_count(0), bytes_total(p_bytes_total),
+                     bytes_done(0), bytes_reported_done(0), M() {
     if(pthread_mutex_init(&M,NULL)) {
       std::cerr << "Error obtaining mutex.\n";
       assert(0);
@@ -68,17 +83,31 @@ class scan_tracker_t {
     pthread_mutex_destroy(&M);
   }
 
-  void track(const uint64_t p_zero_count) {
-    // lock
-    if(pthread_mutex_lock(&M)) {
-      assert(0);
-    }
-
-    // update zero_count
+  void track_zero_count(const uint64_t p_zero_count) {
+    lock();
     zero_count += p_zero_count;
+    unlock();
+  }
 
-    // unlock
-    pthread_mutex_unlock(&M);
+  void track_bytes(const uint64_t count) {
+    static const size_t INCREMENT = 134217728; // = 2^27 = 100 MiB
+    lock();
+    bytes_done += count;
+    if (bytes_done == bytes_total ||
+        bytes_done > bytes_reported_done + INCREMENT) {
+
+      // print %done
+      std::stringstream ss;
+      ss << "# " << bytes_done
+         << " of " << bytes_total
+         << " bytes completed (" << bytes_done * 100 / bytes_total
+         << "%)\n";
+      hasher::tprint(ss.str());
+
+      // next milestone
+      bytes_reported_done += INCREMENT;
+    }
+    unlock();
   }
 };
 

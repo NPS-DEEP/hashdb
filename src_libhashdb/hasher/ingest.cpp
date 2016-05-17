@@ -59,8 +59,26 @@ static const size_t MAX_RECURSION_DEPTH = 7;
 
 namespace hashdb {
   // ************************************************************
-  // ingest
+  // helpers
   // ************************************************************
+  static uint64_t calculate_total_bytes(const std::string& ingest_path) {
+
+    // open the recursive directory walker
+    hasher::dig dig_tool(ingest_path);
+    hasher::dig::const_iterator it = dig_tool.begin();
+
+    // iterate over files
+    uint64_t total_bytes = 0;
+    while (it != dig_tool.end()) {
+      const hasher::file_reader_t file_reader(*it);
+      if (file_reader.is_open) {
+        total_bytes += file_reader.filesize;
+        ++it;
+      }
+    }
+    return total_bytes;
+  }
+
   std::string ingest_file(
         const hasher::file_reader_t& file_reader,
         hashdb::import_manager_t& import_manager,
@@ -150,16 +168,19 @@ namespace hashdb {
     import_manager.insert_source_name(file_hash, repository_name,
                                       file_reader.filename);
 
+    // calculate the number of buffer parts required to process this file
+
     // do not reprocess file if file_hash is already in ingest_tracker
     if (ingest_tracker.seen_source(file_hash)) {
+      ingest_tracker.track_bytes(file_reader.filesize);
       delete[] b;
       return "skipping duplicate file";
     }
 
     // add source file to ingest_tracker
+    const std::string file_type = "";
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
                                BUFFER_DATA_SIZE;
-    const std::string file_type = "";
     ingest_tracker.add_source(file_hash, file_reader.filesize,
                               file_type, parts_total);
 
@@ -284,8 +305,11 @@ namespace hashdb {
     // open import manager
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
+    // calculate the total number of buffers that will be processed
+    uint64_t total_bytes = calculate_total_bytes(ingest_path);
+
     // create the ingest_tracker
-    hasher::ingest_tracker_t ingest_tracker(&import_manager);
+    hasher::ingest_tracker_t ingest_tracker(&import_manager, total_bytes);
 
     // maybe open whitelist DB
     if (has_whitelist) {

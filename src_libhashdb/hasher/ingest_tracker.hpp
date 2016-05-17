@@ -23,12 +23,14 @@
  *   1) to be able to know if the same source file hash has been processed.
  *   2) to track zero_count and nonprobative_count and store them
  *      when the total is ready.
+ * Also tracks total bytes processed in order to provide progress feedback.
  */
 
 #ifndef INGEST_TRACKER_HPP
 #define INGEST_TRACKER_HPP
 
 #include <cstring>
+#include <sstream>
 #include <cstdlib>
 #include <stdint.h>
 #include <assert.h>
@@ -39,14 +41,13 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <map>
+#include "tprint.hpp"
 
 namespace hasher {
 
 class ingest_tracker_t {
 
   private:
-  hashdb::import_manager_t* const import_manager;
-
   class source_data_t {
     public:
     const uint64_t filesize;
@@ -65,7 +66,11 @@ class ingest_tracker_t {
     }
   };
     
+  hashdb::import_manager_t* const import_manager;
   std::map<std::string, source_data_t> source_data_map;
+  const uint64_t bytes_total;
+  uint64_t bytes_done;
+  uint64_t bytes_reported_done;
   mutable pthread_mutex_t M;
   
   // do not allow copy or assignment
@@ -83,9 +88,14 @@ class ingest_tracker_t {
   }
 
   public:
-  ingest_tracker_t(hashdb::import_manager_t* const p_import_manager) :
+  ingest_tracker_t(hashdb::import_manager_t* const p_import_manager,
+                   const size_t p_bytes_total) :
                import_manager(p_import_manager),
-               source_data_map(), M() {
+               source_data_map(),
+               bytes_total(p_bytes_total),
+               bytes_done(0),
+               bytes_reported_done(0),
+               M() {
     if(pthread_mutex_init(&M,NULL)) {
       std::cerr << "Error obtaining mutex.\n";
       assert(0);
@@ -104,16 +114,16 @@ class ingest_tracker_t {
       unlock();
       return false;
     }
-    // add
+    // add this source
     source_data_map.insert(std::pair<std::string, source_data_t>(
              file_hash, source_data_t(filesize, file_type, parts_total)));
     unlock();
     return true;
   }
 
-  void track(const std::string& file_hash,
-             const uint64_t zero_count,
-             const uint64_t nonprobative_count) {
+  void track_source(const std::string& file_hash,
+                    const uint64_t zero_count,
+                    const uint64_t nonprobative_count) {
     lock();
 
     // update count values in source_data
@@ -135,9 +145,10 @@ class ingest_tracker_t {
     ++source_data.parts_done;
     source_data_map.insert(std::pair<std::string, source_data_t>(
                                                    file_hash, source_data));
+
     unlock();
 
-    // if this is the final update, add source data to DB
+    // if this is the final update for this source, add this source data to DB
     if (source_data.parts_done == parts_total) {
       import_manager->insert_source_data(file_hash,
                                          source_data.filesize,
@@ -145,6 +156,27 @@ class ingest_tracker_t {
                                          source_data.zero_count,
                                          source_data.nonprobative_count);
     }
+  }
+
+  void track_bytes(const uint64_t count) {
+    static const size_t INCREMENT = 134217728; // = 2^27 = 100 MiB
+    lock();
+    bytes_done += count;
+    if (bytes_done == bytes_total ||
+        bytes_done > bytes_reported_done + INCREMENT) {
+
+      // print %done
+      std::stringstream ss;
+      ss << "# " << bytes_done
+         << " of " << bytes_total
+         << " bytes completed (" << bytes_done * 100 / bytes_total
+         << "%)\n";
+      hasher::tprint(ss.str());
+
+      // next milestone
+      bytes_reported_done += INCREMENT;
+    }
+    unlock();
   }
 
   bool seen_source(const std::string& file_hash) {

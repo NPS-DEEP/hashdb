@@ -186,9 +186,6 @@ namespace hashdb {
     // open scan manager
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
-    // create the scan_tracker
-    hasher::scan_tracker_t scan_tracker;
-
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
                                                            image_filename));
@@ -196,6 +193,9 @@ namespace hashdb {
       // the file failed to open
       return file_reader.error_message;
     }
+
+    // create the scan_tracker
+    hasher::scan_tracker_t scan_tracker(file_reader.filesize);
 
     // get the number of CPUs
     const size_t num_cpus = hasher::numCPU();

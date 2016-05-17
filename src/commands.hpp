@@ -591,7 +591,7 @@ namespace commands {
     std::string error_message = hashdb::scan_image(
           hashdb_dir, media_image_filename, step_size, process_embedded_data);
     if (error_message.size() == 0) {
-      std::cout << "scan_image completed.\n";
+      std::cout << "# scan_image completed.\n";
     } else {
       std::cout << "Error: " << error_message << "\n";
     }

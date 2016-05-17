@@ -109,8 +109,14 @@ namespace hasher {
                   job.file_offset+i, entropy, block_label);
     }
 
-    // submit tracked counts to the ingest tracker for final reporting
-    job.ingest_tracker->track(job.file_hash, zero_count, nonprobative_count);
+    // submit tracked source counts to the ingest tracker for final reporting
+    job.ingest_tracker->track_source(
+                               job.file_hash, zero_count, nonprobative_count);
+
+    // submit tracked bytes processed to the ingest tracker for final reporting
+    if (job.recursion_count == 0) {
+      job.ingest_tracker->track_bytes(job.buffer_data_size);
+    }
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
@@ -152,8 +158,13 @@ namespace hasher {
       }
     }
 
-    // submit tracked count to the scan tracker for final reporting
-    job.scan_tracker->track(zero_count);
+    // submit tracked zero_count to the scan tracker for final reporting
+    job.scan_tracker->track_zero_count(zero_count);
+
+    // submit tracked bytes processed to the scan tracker for final reporting
+    if (job.recursion_count == 0) {
+      job.scan_tracker->track_bytes(job.buffer_data_size);
+    }
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;

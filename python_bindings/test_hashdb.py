@@ -63,10 +63,10 @@ str_equals(hex_string, "0000000000000000")
 import_manager = hashdb.import_manager_t("temp_1.hdb", "insert test data")
 import_manager.insert_source_name("hhhhhhhh", "rn1", "fn1")
 import_manager.insert_source_name("hhhhhhhh", "rn2", "fn2")
-import_manager.insert_source_data("hhhhhhhh", 100, "ft1", 1)
+import_manager.insert_source_data("hhhhhhhh", 100, "ft1", 11, 1)
 import_manager.insert_hash("hhhhhhhh","gggggggg", 512, 2, "block label")
 import_manager.import_json('{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
-import_manager.import_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]')
+import_manager.import_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]')
 str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
 
 # ############################################################
@@ -75,7 +75,7 @@ str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
 expanded_hash = scan_manager.find_expanded_hash_json("hhhhhhhh")
 str_equals(expanded_hash,
-'{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}'
+'{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}'
 )
 
 json_hash_string = scan_manager.export_hash_json("hhhhhhhh")
@@ -89,13 +89,14 @@ int_equals(scan_manager.find_approximate_hash_count("hhhhhhhh"), 1)
 
 str_equals(scan_manager.find_approximate_hash_count_json("hhhhhhhh"), '{"block_hash":"6868686868686868","approximate_count":1}')
 
-has_source_data, filesize, file_type, nonprobative_count = scan_manager.find_source_data("hhhhhhhh")
+has_source_data, filesize, file_type, zero_count, nonprobative_count = scan_manager.find_source_data("hhhhhhhh")
 bool_equals(has_source_data, True)
 int_equals(filesize, 100)
 str_equals(file_type, "ft1")
+int_equals(zero_count, 11)
 int_equals(nonprobative_count, 1)
 
-str_equals(scan_manager.export_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","nonprobative_count":0,"name_pairs":[]}')
+str_equals(scan_manager.export_source_json("gggggggg"), '{"file_hash":"6767676767676767","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}')
 
 first_binary_hash = scan_manager.first_hash()
 str_equals(hashdb.bin_to_hex(first_binary_hash), "6868686868686868")
