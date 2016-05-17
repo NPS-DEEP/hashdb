@@ -582,6 +582,7 @@ void lmdb_source_data_manager() {
   std::string file_binary_hash;
   uint64_t filesize;
   std::string file_type;
+  uint64_t zero_count;
   uint64_t nonprobative_count;
   bool found;
 
@@ -591,59 +592,64 @@ void lmdb_source_data_manager() {
 
   // no source ID
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
+    manager.find(1, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(found, false);
 
   // insert
-  manager.insert(1, "fbh", 2, "ft", 3, changes);
+  manager.insert(1, "fbh", 2, "ft", 1, 3, changes);
   TEST_EQ(changes.source_data_inserted, 1);
   TEST_EQ(changes.source_data_changed, 0);
   TEST_EQ(changes.source_data_same, 0);
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
+    manager.find(1, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(found, true);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
+  TEST_EQ(zero_count, 1);
   TEST_EQ(nonprobative_count, 3);
 
   // insert same
-  manager.insert(1, "fbh", 2, "ft", 3, changes);
+  manager.insert(1, "fbh", 2, "ft", 1, 3, changes);
   TEST_EQ(changes.source_data_inserted, 1);
   TEST_EQ(changes.source_data_changed, 0);
   TEST_EQ(changes.source_data_same, 1);
   found =
-    manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
+    manager.find(1, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(found, true);
   TEST_EQ(file_binary_hash, "fbh");
   TEST_EQ(filesize, 2);
   TEST_EQ(file_type, "ft");
+  TEST_EQ(zero_count, 1);
   TEST_EQ(nonprobative_count, 3);
 
   // change
-  manager.insert(1, "fbh2", 22, "ft2", 32, changes);
+  manager.insert(1, "fbh2", 22, "ft2", 31, 32, changes);
   TEST_EQ(changes.source_data_inserted, 1);
   TEST_EQ(changes.source_data_changed, 1);
   TEST_EQ(changes.source_data_same, 1);
-  manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
+  manager.find(1, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(file_binary_hash, "fbh2");
   TEST_EQ(filesize, 22);
   TEST_EQ(file_type, "ft2");
+  TEST_EQ(zero_count, 31);
   TEST_EQ(nonprobative_count, 32);
 
   // insert second
-  manager.insert(0, "", 0, "", 0, changes);
-  manager.find(0, file_binary_hash, filesize, file_type, nonprobative_count);
+  manager.insert(0, "", 0, "", 0, 0, changes);
+  manager.find(0, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(file_binary_hash, "");
   TEST_EQ(filesize, 0);
   TEST_EQ(file_type, "");
+  TEST_EQ(zero_count, 0);
   TEST_EQ(nonprobative_count, 0);
 
   // make sure 1 is still in place
-  manager.find(1, file_binary_hash, filesize, file_type, nonprobative_count);
+  manager.find(1, file_binary_hash, filesize, file_type, zero_count, nonprobative_count);
   TEST_EQ(file_binary_hash, "fbh2");
   TEST_EQ(filesize, 22);
   TEST_EQ(file_type, "ft2");
+  TEST_EQ(zero_count, 31);
   TEST_EQ(nonprobative_count, 32);
 
   // size
