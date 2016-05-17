@@ -99,12 +99,13 @@ namespace hashdb {
     // fields to hold source information
     uint64_t filesize;
     std::string file_type;
+    uint64_t zero_count;
     uint64_t nonprobative_count;
     hashdb::source_names_t* source_names(new hashdb::source_names_t);
 
     // read source data
     manager.find_source_data(file_binary_hash, filesize, file_type,
-                             nonprobative_count);
+                             zero_count, nonprobative_count);
 
     // provide source data
     const std::string hex_hash = hashdb::bin_to_hex(file_binary_hash);
@@ -113,6 +114,7 @@ namespace hashdb {
     json_source.AddMember("file_hash", v(hex_hash, allocator), allocator);
     json_source.AddMember("filesize", filesize, allocator);
     json_source.AddMember("file_type", v(file_type, allocator), allocator);
+    json_source.AddMember("zero_count", zero_count, allocator);
     json_source.AddMember("nonprobative_count", nonprobative_count, allocator);
 
     // read source names
@@ -322,7 +324,7 @@ namespace hashdb {
     // If the source ID is new then add a blank source data record just to keep
     // from breaking the reverse look-up done in scan_manager_t.
     if (new_id == true) {
-      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0,
+      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0, 0,
                                        *changes);
     }
   }
@@ -331,11 +333,12 @@ namespace hashdb {
                           const std::string& file_binary_hash,
                           const uint64_t filesize,
                           const std::string& file_type,
+                          const uint64_t zero_count,
                           const uint64_t nonprobative_count) {
     uint64_t source_id;
     lmdb_source_id_manager->insert(file_binary_hash, *changes, source_id);
     lmdb_source_data_manager->insert(source_id, file_binary_hash,
-                        filesize, file_type, nonprobative_count, *changes);
+               filesize, file_type, zero_count, nonprobative_count, *changes);
   }
 
   void import_manager_t::insert_hash(const std::string& binary_hash,
@@ -356,7 +359,7 @@ namespace hashdb {
     // If the source ID is new then add a blank source data record just to keep
     // from breaking the reverse look-up done in scan_manager_t.
     if (new_id == true) {
-      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0,
+      lmdb_source_data_manager->insert(source_id, file_binary_hash, 0, "", 0, 0,
                                        *changes);
     }
   }
@@ -468,6 +471,16 @@ namespace hashdb {
         }
       }
 
+      // zero_count (optional)
+      uint64_t zero_count = 0;
+      if (document.HasMember("zero_count")) {
+        if (document["zero_count"].IsUint64()) {
+          zero_count = document["zero_count"].GetUint64();
+        } else {
+          return "Invalid zero_count field";
+        }
+      }
+
       // nonprobative_count (optional)
       uint64_t nonprobative_count = 0;
       if (document.HasMember("nonprobative_count")) {
@@ -507,7 +520,7 @@ namespace hashdb {
 
       // everything worked so insert the source data and source names
       insert_source_data(file_binary_hash,
-                         filesize, file_type, nonprobative_count);
+                         filesize, file_type, zero_count, nonprobative_count);
       for (hashdb::source_names_t::const_iterator it = names->begin();
            it != names->end(); ++it) {
         insert_source_name(file_binary_hash, it->first, it->second);
@@ -756,6 +769,7 @@ namespace hashdb {
   //     "file_hash": "f7035a...",
   //     "filesize": 800,
   //     "file_type": "exe",
+  //     "zero_count": 1,
   //     "nonprobative_count": 2,
   //     "name_pairs": ["r1", "f1", "r2", "f2]
   //   }],
@@ -877,6 +891,7 @@ namespace hashdb {
       std::string file_binary_hash;
       uint64_t filesize;
       std::string file_type;
+      uint64_t zero_count;
       uint64_t nonprobative_count;
 
       // build source_offset_pairs from id_offset_pairs
@@ -886,7 +901,8 @@ namespace hashdb {
         // get file_binary_hash from source_id
         bool source_data_found = lmdb_source_data_manager->find(
                                 it->first, file_binary_hash,
-                                filesize, file_type, nonprobative_count);
+                                filesize, file_type,
+                                zero_count, nonprobative_count);
 
         // source_data must have a source_id to match the source_id in hash_data
         if (source_data_found == false) {
@@ -1044,6 +1060,7 @@ namespace hashdb {
                         const std::string& file_binary_hash,
                         uint64_t& filesize,
                         std::string& file_type,
+                        uint64_t& zero_count,
                         uint64_t& nonprobative_count) const {
 
     // read source_id
@@ -1053,6 +1070,7 @@ namespace hashdb {
       // no source ID for this file_binary_hash
       filesize = 0;
       file_type = "";
+      zero_count = 0;
       nonprobative_count = 0;
       return false;
     } else {
@@ -1061,7 +1079,7 @@ namespace hashdb {
       std::string returned_file_binary_hash;
       bool source_data_found = lmdb_source_data_manager->find(source_id,
                              returned_file_binary_hash, filesize, file_type,
-                             nonprobative_count);
+                             zero_count, nonprobative_count);
 
       // if source data is found, make sure the file binary hash is right
       if (source_data_found == true &&
@@ -1095,6 +1113,7 @@ namespace hashdb {
     // source fields
     uint64_t filesize;
     std::string file_type;
+    uint64_t zero_count;
     uint64_t nonprobative_count;
 
     // prepare JSON
@@ -1104,7 +1123,7 @@ namespace hashdb {
 
     // get source data
     bool has_source = find_source_data(file_binary_hash, filesize,
-                                       file_type, nonprobative_count);
+                                 file_type, zero_count, nonprobative_count);
     if (!has_source) {
       return "";
     }
@@ -1116,6 +1135,7 @@ namespace hashdb {
     json_doc.AddMember("file_hash", v(file_hash, allocator), allocator);
     json_doc.AddMember("filesize", filesize, allocator);
     json_doc.AddMember("file_type", v(file_type, allocator), allocator);
+    json_doc.AddMember("zero_count", zero_count, allocator);
     json_doc.AddMember("nonprobative_count", nonprobative_count, allocator);
 
     // get source names

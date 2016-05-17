@@ -79,11 +79,13 @@ namespace hasher {
     hasher::hash_calculator_t hash_calculator;
 
     // iterate over buffer to add block hashes and metadata
+    size_t zero_count = 0;
     size_t nonprobative_count = 0;
     for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
       // skip if all the bytes are the same
       if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+        ++zero_count;
         continue;
       }
 
@@ -107,9 +109,8 @@ namespace hasher {
                   job.file_offset+i, entropy, block_label);
     }
 
-    // submit nonprobative count to source data manager
-    job.source_data_manager->update_nonprobative_count(
-                                       job.file_hash, nonprobative_count);
+    // submit tracked counts to the ingest tracker for final reporting
+    job.ingest_tracker->track(job.file_hash, zero_count, nonprobative_count);
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
@@ -119,6 +120,8 @@ namespace hasher {
   // process SCAN job
   static void process_scan_job(const hasher::job_t& job) {
 
+    size_t zero_count = 0;
+
     // get hash calculator object
     hasher::hash_calculator_t hash_calculator;
 
@@ -127,6 +130,7 @@ namespace hasher {
 
       // skip if all the bytes are the same
       if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+        ++zero_count;
         continue;
       }
 
@@ -147,6 +151,9 @@ namespace hasher {
         hasher::tprint(ss.str());
       }
     }
+
+    // submit tracked count to the scan tracker for final reporting
+    job.scan_tracker->track(zero_count);
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;

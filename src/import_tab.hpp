@@ -119,7 +119,7 @@ class import_tab_t {
     }
 
     // add source data
-    manager.insert_source_data(file_binary_hash, 0, "", 0);
+    manager.insert_source_data(file_binary_hash, 0, "", 0, 0);
 
     // add name pair
     manager.insert_source_name(file_binary_hash, repository_name, tab_file);

@@ -62,18 +62,20 @@ class adder_t {
     // source data
     uint64_t filesize = 0;
     std::string file_type = "";
+    uint64_t zero_count = 0;
     uint64_t nonprobative_count = 0;
 
     // read
     bool found_source_data = manager_a->find_source_data(
-                 file_binary_hash, filesize, file_type, nonprobative_count);
+                                    file_binary_hash, filesize, file_type,
+                                    zero_count, nonprobative_count);
     if (found_source_data == false) {
       assert(0);
     }
 
     // write
     manager_b->insert_source_data(file_binary_hash, filesize, file_type,
-                                nonprobative_count);
+                                  zero_count, nonprobative_count);
   }
 
   // add source names

@@ -796,11 +796,12 @@ namespace commands {
     std::string file_binary_hash = hashdb::hex_to_bin(hex_file_hash);
     uint64_t filesize = 0;
     std::string file_type = "";
+    uint64_t zero_count = 0;
     uint64_t nonprobative_count = 0;
 
     // see if this source is even present
     bool has_source_data = manager.find_source_data(file_binary_hash,
-                                filesize, file_type, nonprobative_count);
+                       filesize, file_type, zero_count, nonprobative_count);
     if (has_source_data == false) {
       // the source is not present
       std::cout << "There is no source with this file hash\n";
@@ -886,7 +887,7 @@ namespace commands {
     std::string file_binary_hash = hashdb::hex_to_bin("00");
     manager.insert_source_name(file_binary_hash, "add_random_repository_name",
                                "add_random_filename");
-    manager.insert_source_data(file_binary_hash, 0, "", 0);
+    manager.insert_source_data(file_binary_hash, 0, "", 0, 0);
 
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
@@ -970,7 +971,7 @@ namespace commands {
     std::string file_binary_hash = hashdb::hex_to_bin("00");
     manager.insert_source_name(file_binary_hash, "add_same_repository_name",
                                "add_same_filename");
-    manager.insert_source_data(file_binary_hash, 0, "", 0);
+    manager.insert_source_data(file_binary_hash, 0, "", 0, 0);
 
     // hash to use
     std::string binary_hash =

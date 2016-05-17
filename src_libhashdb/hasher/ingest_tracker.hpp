@@ -19,19 +19,14 @@
 
 /**
  * \file
- * Tracks source data by source file hash for two reasons:
- *   1) to know to not re-process the same file hash.
- *   2) to track nonprobative_count to save it when the total is ready.
- *
- * Usage:
- *   seen_source(file_hash) to see if this file hash is processing or is done
- *   add_source(file_hash, source data) to begin processing
- *   update_nonprobative_count(file_hash, nonprobative_count) to update count
- *     and if done, to write the source data to the DB.
+ * Tracks source events during threaded ingest for several reasons:
+ *   1) to be able to know if the same source file hash has been processed.
+ *   2) to track zero_count and nonprobative_count and store them
+ *      when the total is ready.
  */
 
-#ifndef SOURCE_DATA_MANAGER_HPP
-#define SOURCE_DATA_MANAGER_HPP
+#ifndef INGEST_TRACKER_HPP
+#define INGEST_TRACKER_HPP
 
 #include <cstring>
 #include <cstdlib>
@@ -47,7 +42,7 @@
 
 namespace hasher {
 
-class source_data_manager_t {
+class ingest_tracker_t {
 
   private:
   hashdb::import_manager_t* const import_manager;
@@ -58,12 +53,14 @@ class source_data_manager_t {
     std::string file_type;
     const size_t parts_total;
     size_t parts_done;
+    size_t zero_count;
     size_t nonprobative_count;
     source_data_t(const uint64_t p_filesize,
                   const std::string& p_file_type,
                   const size_t p_parts_total) :
            filesize(p_filesize), file_type(p_file_type),
            parts_total(p_parts_total), parts_done(0),
+           zero_count(0),
            nonprobative_count(0) {
     }
   };
@@ -72,8 +69,8 @@ class source_data_manager_t {
   mutable pthread_mutex_t M;
   
   // do not allow copy or assignment
-  source_data_manager_t(const source_data_manager_t&);
-  source_data_manager_t& operator=(const source_data_manager_t&);
+  ingest_tracker_t(const ingest_tracker_t&);
+  ingest_tracker_t& operator=(const ingest_tracker_t&);
 
   void lock() {
     if(pthread_mutex_lock(&M)) {
@@ -86,7 +83,7 @@ class source_data_manager_t {
   }
 
   public:
-  source_data_manager_t(hashdb::import_manager_t* const p_import_manager) :
+  ingest_tracker_t(hashdb::import_manager_t* const p_import_manager) :
                import_manager(p_import_manager),
                source_data_map(), M() {
     if(pthread_mutex_init(&M,NULL)) {
@@ -95,7 +92,7 @@ class source_data_manager_t {
     }
   }
 
-  ~source_data_manager_t() {
+  ~ingest_tracker_t() {
     pthread_mutex_destroy(&M);
   }
 
@@ -114,11 +111,12 @@ class source_data_manager_t {
     return true;
   }
 
-  void update_nonprobative_count(const std::string& file_hash,
-                                 const uint64_t nonprobative_count) {
+  void track(const std::string& file_hash,
+             const uint64_t zero_count,
+             const uint64_t nonprobative_count) {
     lock();
 
-    // add nonprobative_count to source_data
+    // update count values in source_data
     std::map<std::string, source_data_t>::const_iterator it =
                                             source_data_map.find(file_hash);
     if (it == source_data_map.end()) {
@@ -132,6 +130,7 @@ class source_data_manager_t {
     source_data_t source_data = it->second;
     const size_t parts_total = source_data.parts_total;
     source_data_map.erase(it);
+    source_data.zero_count += zero_count;
     source_data.nonprobative_count += nonprobative_count;
     ++source_data.parts_done;
     source_data_map.insert(std::pair<std::string, source_data_t>(
@@ -143,6 +142,7 @@ class source_data_manager_t {
       import_manager->insert_source_data(file_hash,
                                          source_data.filesize,
                                          source_data.file_type,
+                                         source_data.zero_count,
                                          source_data.nonprobative_count);
     }
   }

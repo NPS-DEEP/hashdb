@@ -50,7 +50,7 @@
 #include "threadpool.hpp"
 #include "job.hpp"
 #include "job_queue.hpp"
-#include "source_data_manager.hpp"
+#include "scan_tracker.hpp"
 #include "tprint.hpp"
 
 static const size_t BUFFER_DATA_SIZE = 16777216;   // 2^24=16MiB
@@ -64,6 +64,7 @@ namespace hashdb {
   std::string scan_file(
         const hasher::file_reader_t& file_reader,
         hashdb::scan_manager_t& scan_manager,
+        hasher::scan_tracker_t& scan_tracker,
         const size_t step_size,
         const size_t block_size,
         const bool process_embedded_data,
@@ -98,6 +99,7 @@ namespace hashdb {
                          ? BUFFER_DATA_SIZE : b_size;
     job_queue->push(hasher::job_t::new_scan_job(
                  &scan_manager,
+                 &scan_tracker,
                  step_size,
                  block_size,
                  file_reader.filename,
@@ -143,6 +145,7 @@ namespace hashdb {
                                         ? BUFFER_DATA_SIZE : b2_bytes_read;
       job_queue->push(hasher::job_t::new_scan_job(
                  &scan_manager,
+                 &scan_tracker,
                  step_size,
                  block_size,
                  file_reader.filename,
@@ -183,6 +186,9 @@ namespace hashdb {
     // open scan manager
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
+    // create the scan_tracker
+    hasher::scan_tracker_t scan_tracker;
+
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
                                                            image_filename));
@@ -202,9 +208,9 @@ namespace hashdb {
                                new hasher::threadpool_t(num_cpus, job_queue);
 
     // scan the file
-    std::string success = scan_file(
-                 file_reader, scan_manager, step_size, settings.block_size,
-                 process_embedded_data, job_queue);
+    std::string success = scan_file(file_reader, scan_manager, scan_tracker,
+                                    step_size, settings.block_size,
+                                    process_embedded_data, job_queue);
     if (success.size() > 0) {
       std::stringstream ss;
       ss << "error while scanning file " << file_reader.filename
@@ -216,6 +222,9 @@ namespace hashdb {
     job_queue->done_adding();
     delete threadpool;
     delete job_queue;
+
+    std::cout << "# Total zero-byte blocks found: " << scan_tracker.zero_count
+              << "\n";
 
     // success
     return "";

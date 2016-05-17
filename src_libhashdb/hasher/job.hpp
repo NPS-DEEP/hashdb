@@ -31,7 +31,8 @@
 #include <stdint.h>
 //#include <unistd.h>
 #include "hashdb.hpp"
-#include "source_data_manager.hpp"
+#include "ingest_tracker.hpp"
+#include "scan_tracker.hpp"
 
 namespace hasher {
 
@@ -42,10 +43,11 @@ class job_t {
   public:
   const job_type_t job_type;
   hashdb::import_manager_t* const import_manager;
-  hasher::source_data_manager_t* const source_data_manager;
+  hasher::ingest_tracker_t* const ingest_tracker;
   const hashdb::scan_manager_t* const whitelist_scan_manager;
-  hashdb::scan_manager_t* const scan_manager;
   const std::string repository_name;
+  hashdb::scan_manager_t* const scan_manager;
+  hasher::scan_tracker_t* const scan_tracker;
   const size_t step_size;
   const size_t block_size;
   const std::string file_hash;
@@ -60,10 +62,11 @@ class job_t {
 
   job_t(const job_type_t p_job_type,
                hashdb::import_manager_t* const p_import_manager,
-               hasher::source_data_manager_t* const p_source_data_manager,
+               hasher::ingest_tracker_t* const p_ingest_tracker,
                const hashdb::scan_manager_t* const p_whitelist_scan_manager,
-               hashdb::scan_manager_t* const p_scan_manager,
                const std::string p_repository_name,
+               hashdb::scan_manager_t* const p_scan_manager,
+               hasher::scan_tracker_t* const p_scan_tracker,
                const size_t p_step_size,
                const size_t p_block_size,
                const std::string p_file_hash,
@@ -76,10 +79,11 @@ class job_t {
                const size_t p_recursion_count) :
                    job_type(p_job_type),
                    import_manager(p_import_manager),
-                   source_data_manager(p_source_data_manager),
+                   ingest_tracker(p_ingest_tracker),
                    whitelist_scan_manager(p_whitelist_scan_manager),
-                   scan_manager(p_scan_manager),
                    repository_name(p_repository_name),
+                   scan_manager(p_scan_manager),
+                   scan_tracker(p_scan_tracker),
                    step_size(p_step_size),
                    block_size(p_block_size),
                    file_hash(p_file_hash),
@@ -103,7 +107,7 @@ class job_t {
   // ingest
   static job_t* new_ingest_job(
         hashdb::import_manager_t* const p_import_manager,
-        hasher::source_data_manager_t* const p_source_data_manager,
+        hasher::ingest_tracker_t* const p_ingest_tracker,
         const hashdb::scan_manager_t* const p_whitelist_scan_manager,
         const std::string p_repository_name,
         const size_t p_step_size,
@@ -120,10 +124,11 @@ class job_t {
     return new job_t(
                      job_type_t::INGEST,
                      p_import_manager,
-                     p_source_data_manager,
+                     p_ingest_tracker,
                      p_whitelist_scan_manager,
-                     NULL, // scan_manager
                      p_repository_name,
+                     NULL, // scan_manager
+                     NULL, // scan_tracker
                      p_step_size,
                      p_block_size,
                      p_file_hash,
@@ -139,6 +144,7 @@ class job_t {
   // scan
   static job_t* new_scan_job(
         hashdb::scan_manager_t* const p_scan_manager,
+        hasher::scan_tracker_t* const p_scan_tracker,
         const size_t p_step_size,
         const size_t p_block_size,
         const std::string p_file_name,
@@ -153,10 +159,11 @@ class job_t {
     return new job_t(
                      job_type_t::SCAN,
                      NULL, // import_manager
-                     NULL, // source_data_manager
+                     NULL, // ingest_tracker
                      NULL, // whitelist_scan_manager
-                     p_scan_manager,
                      "",   // repository_name
+                     p_scan_manager,
+                     p_scan_tracker,
                      p_step_size,
                      p_block_size,
                      "",   // file hash

@@ -275,12 +275,15 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
+     *   zero_count - The count of blocks skipped because they only
+     *     contain the zero byte.
      *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
      */
     void insert_source_data(const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
+                            const uint64_t zero_size,
                             const uint64_t nonprobative_count);
 
     /**
@@ -320,6 +323,7 @@ namespace hashdb {
      *       "file_hash": "b9e7...",
      *       "filesize": 8000,
      *       "file_type": "exe",
+     *       "zero_count": 1,
      *       "nonprobative_count": 4,
      *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
      *     }
@@ -467,6 +471,7 @@ namespace hashdb {
      *     "file_hash": "f7035a...",
      *     "filesize": 800,
      *     "file_type": "exe",
+     *     "zero_count": 1,
      *     "nonprobative_count": 2,
      *     "names": ["repository1", "filename1", "repo2", "f2"]
      *   }],
@@ -529,6 +534,7 @@ namespace hashdb {
      *       "file_hash": "b9e7...",
      *       "filesize": 8000,
      *       "file_type": "exe",
+     *       "zero_count": 1,
      *       "nonprobative_count": 4,
      *       "name_pairs": ["repository1", "filename1", "repo2", "f2"]
      *       }
@@ -599,6 +605,8 @@ namespace hashdb {
      *   file_binary_hash - The MD5 hash of the source in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
+     *   zero_count - The count of blocks skipped because they only
+     *     contain the zero byte.
      *   nonprobative_count - The count of non-probative hashes
      *     identified for this source.
      *
@@ -607,12 +615,14 @@ namespace hashdb {
      */
     bool find_source_data(const std::string& file_binary_hash,
 #ifdef SWIG
-                          uint64_t& OUTPUT,
-                          std::string& OUTPUT,
-                          uint64_t& OUTPUT
+                          uint64_t& OUTPUT,      // filesize
+                          std::string& OUTPUT,   // file_type
+                          uint64_t& OUTPUT       // zero_count
+                          uint64_t& OUTPUT       // nonprobative_count
 #else
                           uint64_t& filesize,
                           std::string& file_type,
+                          uint64_t& zero_count,
                           uint64_t& nonprobative_count
 #endif
                          ) const;

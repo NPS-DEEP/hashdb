@@ -58,15 +58,18 @@ class adder_set_t {
     // source data
     uint64_t filesize = 0;
     std::string file_type = "";
+    uint64_t zero_count = 0;
     uint64_t nonprobative_count = 0;
 
     // read source data from A else B
     bool found_source_data_a = manager_a->find_source_data(
-                 file_binary_hash, filesize, file_type, nonprobative_count);
+                                file_binary_hash, filesize, file_type,
+                                zero_count, nonprobative_count);
     if (found_source_data_a == false) {
       // read source data from B instead
       bool found_source_data_b = manager_b->find_source_data(
-                 file_binary_hash, filesize, file_type, nonprobative_count);
+                                file_binary_hash, filesize, file_type,
+                                zero_count, nonprobative_count);
       if (found_source_data_b == false) {
         // program error
         assert(0);
@@ -75,7 +78,7 @@ class adder_set_t {
 
     // write source data
     manager_c->insert_source_data(file_binary_hash, filesize, file_type,
-                                nonprobative_count);
+                                  zero_count, nonprobative_count);
   }
 
   // add source names

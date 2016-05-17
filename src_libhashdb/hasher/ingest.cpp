@@ -50,7 +50,7 @@
 #include "threadpool.hpp"
 #include "job.hpp"
 #include "job_queue.hpp"
-#include "source_data_manager.hpp"
+#include "ingest_tracker.hpp"
 #include "tprint.hpp"
 
 static const size_t BUFFER_DATA_SIZE = 16777216;   // 2^24=16MiB
@@ -64,7 +64,7 @@ namespace hashdb {
   std::string ingest_file(
         const hasher::file_reader_t& file_reader,
         hashdb::import_manager_t& import_manager,
-        hasher::source_data_manager_t& source_data_manager,
+        hasher::ingest_tracker_t& ingest_tracker,
         const hashdb::scan_manager_t* const whitelist_scan_manager,
         const std::string& repository_name,
         const size_t step_size,
@@ -150,18 +150,18 @@ namespace hashdb {
     import_manager.insert_source_name(file_hash, repository_name,
                                       file_reader.filename);
 
-    // done with file if file_hash is already in source_data_manager
-    if (source_data_manager.seen_source(file_hash)) {
+    // do not reprocess file if file_hash is already in ingest_tracker
+    if (ingest_tracker.seen_source(file_hash)) {
       delete[] b;
       return "skipping duplicate file";
     }
 
-    // add source file to source_data_manager
+    // add source file to ingest_tracker
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
                                BUFFER_DATA_SIZE;
     const std::string file_type = "";
-    source_data_manager.add_source(file_hash, file_reader.filesize,
-                                   file_type, parts_total);
+    ingest_tracker.add_source(file_hash, file_reader.filesize,
+                              file_type, parts_total);
 
     // build buffers from file sections and push them onto the job queue
 
@@ -170,7 +170,7 @@ namespace hashdb {
                          ? BUFFER_DATA_SIZE : b_size;
     job_queue->push(hasher::job_t::new_ingest_job(
                  &import_manager,
-                 &source_data_manager,
+                 &ingest_tracker,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
@@ -219,7 +219,7 @@ namespace hashdb {
                                         ? BUFFER_DATA_SIZE : b2_bytes_read;
       job_queue->push(hasher::job_t::new_ingest_job(
                  &import_manager,
-                 &source_data_manager,
+                 &ingest_tracker,
                  whitelist_scan_manager,
                  repository_name,
                  step_size,
@@ -284,8 +284,8 @@ namespace hashdb {
     // open import manager
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
-    // create the source_data_manager
-    hasher::source_data_manager_t source_data_manager(&import_manager);
+    // create the ingest_tracker
+    hasher::ingest_tracker_t ingest_tracker(&import_manager);
 
     // maybe open whitelist DB
     if (has_whitelist) {
@@ -315,7 +315,7 @@ namespace hashdb {
         // only process when file size > 0
         if (file_reader.filesize > 0) {
           std::string success = ingest_file(
-                 file_reader, import_manager, source_data_manager,
+                 file_reader, import_manager, ingest_tracker,
                  whitelist_scan_manager,
                  repository_name, step_size, settings.block_size,
                  process_embedded_data, job_queue);
