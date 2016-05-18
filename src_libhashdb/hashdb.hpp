@@ -206,6 +206,7 @@ namespace hashdb {
    *     The step size must be divisible by the byte alignment defined in
    *     the database.
    *   process_embedded_data - Whether to process embedded data.
+   *   command_string - String to put into the scan output stream.
    *
    * Returns:
    *   "" if successful else reason if not.
@@ -214,7 +215,8 @@ namespace hashdb {
   std::string scan_image(const std::string& hashdb_dir,
                      const std::string& media_image_file,
                      const size_t step_size,
-                     const bool process_embedded_data);
+                     const bool process_embedded_data,
+                     const std::string& command_string);
 
   // ************************************************************
   // import

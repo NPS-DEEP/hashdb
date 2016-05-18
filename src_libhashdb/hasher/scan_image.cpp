@@ -117,9 +117,8 @@ namespace hashdb {
 
       // print status
       std::stringstream ss;
-      ss << "# Processing file " << file_reader.filename
-         << " offset " << offset
-         << " size " << file_reader.filesize
+      ss << "# Scanning from byte " << offset
+         << " of " << file_reader.filesize
          << "\n";
       hasher::tprint(ss.str());
 
@@ -165,7 +164,8 @@ namespace hashdb {
   std::string scan_image(const std::string& hashdb_dir,
                          const std::string& image_filename,
                          const size_t step_size,
-                         const bool process_embedded_data) {
+                         const bool process_embedded_data,
+                         const std::string& command_string) {
 
     // make sure hashdb_dir is there
     std::string error_message;
@@ -206,6 +206,14 @@ namespace hashdb {
     // create the threadpool that will process jobs until job_queue.is_done
     hasher::threadpool_t* const threadpool =
                                new hasher::threadpool_t(num_cpus, job_queue);
+
+    // print the command line
+    std::cout << "# Command: \"" << command_string << "\"\n";
+
+//zz
+//    // print "Scanning media image..."
+//    std::cout << "# Scanning media image '" << image_filename
+//              << "' size " << file_reader.filesize << "\n";
 
     // scan the file
     std::string success = scan_file(file_reader, scan_manager, scan_tracker,

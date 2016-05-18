@@ -586,10 +586,11 @@ namespace commands {
   static void scan_image(const std::string& hashdb_dir,
                          const std::string& media_image_filename,
                          const size_t step_size,
-                         const bool process_embedded_data) {
+                         const bool process_embedded_data,
+                         const std::string& cmd) {
 
-    std::string error_message = hashdb::scan_image(
-          hashdb_dir, media_image_filename, step_size, process_embedded_data);
+    std::string error_message = hashdb::scan_image(hashdb_dir,
+             media_image_filename, step_size, process_embedded_data, cmd);
     if (error_message.size() == 0) {
       std::cout << "# scan_image completed.\n";
     } else {

@@ -462,7 +462,7 @@ void run_command() {
 
   } else if (command == "scan_image") {
     check_params("s", 2);
-    commands::scan_image(args[0], args[1], step_size, has_embedded_data);
+    commands::scan_image(args[0], args[1], step_size, has_embedded_data, cmd);
 
   // statistics
   } else if (command == "size") {
