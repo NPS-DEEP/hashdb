@@ -152,7 +152,7 @@ namespace hasher {
         // offset <tab> file <tab> json
         std::stringstream ss;
         ss << job.file_offset + i << "\t"
-           << job.filename << "\t"
+           << hashdb::bin_to_hex(block_hash) << "\t"
            << json_string << "\n";
         hasher::tprint(ss.str());
       }
