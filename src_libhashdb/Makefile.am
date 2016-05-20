@@ -85,10 +85,9 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 HASHER_INCS = \
 	hasher/calculate_block_label.cpp \
 	hasher/calculate_block_label.hpp \
-	hasher/calculate_entropy.cpp \
-	hasher/calculate_entropy.hpp \
 	hasher/dig.cpp \
 	hasher/dig.h \
+	hasher/entropy_calculator.hpp \
 	hasher/ewf_file_reader.hpp \
 	hasher/filename_t.cpp \
 	hasher/filename_t.hpp \
@@ -97,6 +96,7 @@ HASHER_INCS = \
 	hasher/file_reader.hpp \
 	hasher/hash_calculator.hpp \
 	hasher/ingest.cpp \
+	hasher/ingest_tracker.hpp \
 	hasher/job.hpp \
 	hasher/job_queue.hpp \
 	hasher/num_cpus.cpp \
@@ -105,8 +105,8 @@ HASHER_INCS = \
 	hasher/process_job.hpp \
 	hasher/read_bytes.cpp \
 	hasher/scan_image.cpp \
+	hasher/scan_tracker.hpp \
 	hasher/single_file_reader.hpp \
-	hasher/source_data_manager.hpp \
 	hasher/threadpool.hpp \
 	hasher/tprint.cpp \
 	hasher/tprint.hpp

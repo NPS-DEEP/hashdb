@@ -52,7 +52,7 @@
 #include "tprint.hpp"
 #include "process_job.hpp"
 #include "hash_calculator.hpp"
-#include "calculate_entropy.hpp"
+#include "entropy_calculator.hpp"
 #include "calculate_block_label.hpp"
 
 namespace hasher {
@@ -78,6 +78,9 @@ namespace hasher {
     // get hash calculator object
     hasher::hash_calculator_t hash_calculator;
 
+    // get entropy calculator object
+    hasher::entropy_calculator_t entropy_calculator(job.block_size);
+
     // iterate over buffer to add block hashes and metadata
     size_t zero_count = 0;
     size_t nonprobative_count = 0;
@@ -94,7 +97,7 @@ namespace hasher {
                   job.buffer_size, i, job.block_size);
 
       // calculate entropy
-      const size_t entropy = hasher::calculate_entropy(job.buffer,
+      const uint64_t entropy = entropy_calculator.calculate(job.buffer,
                   job.buffer_size, i, job.block_size);
 
       // calculate block label
