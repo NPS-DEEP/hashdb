@@ -840,6 +840,8 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source identified by the source file hexdigest\\
 \hline
+\textbf{read\_bytes} & \verb+read_bytes <image file>+ \verb+<offset> <count>+ &  Prints raw bytes from a media image file\\
+\hline
 \end{tabular}
 \end{table}
 
@@ -1284,10 +1286,13 @@ The \verb+histogram+ command shows the density of hash duplicates across a hash 
 \end{table}
 
 \subsection{Duplicates}
-The \verb+duplicates+ command prints JSON data as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
+The \verb+duplicates+ command prints JSON data associated with hashes with a specified duplicates count as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
 
 \subsection{Hash Table}
-The \verb+hash_table+ command prints JSON data as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
+The \verb+hash_table+ command prints JSON data associated with a file hash as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
+
+\subsection{Read Bytes}
+The \verb+read_bytes+ command prints raw binary bytes from an image file. It is intended that this output be consumed by other tools since raw binary data is typically unreadable.\\
 
 \subsection{Timing}
 \hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
@@ -1436,13 +1441,14 @@ Create a hash database given settings. Return "" else reason for failure.
 Query settings else false and reason for failure.
 \item \verb+binary_string = hex_to_bin(hex_string)+
 \item \verb+hex_string = bin_to_hex(binary_string)+
-\item \verb+print_enviornment(command_line_string, &ostream)+\\
-Print command and environment to output stream. - zzzz this interface is expected to be removed.
-\item \verb+ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
+\item \verb+error_message = ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
 \verb+whitelist_dir, process_embedded_data, command_string)+\\
-Recursively calculate and import hashes from path to \hdb. zzz NOT AVAILABLE IN ALPHA.
-\item \verb+scan_image(hashdb_dir, media_image_file, step_size, process_embedded_data)+\\
-Scan the media image for matches. zzz NOT AVAILABLE IN ALPHA.
+Recursively calculate and import hashes from path to \hdb.
+\item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
+\verb+process_embedded_data)+\\
+Scan the media image for matches, writing match data to \verb+stdout+.
+\item \verb+binary_string = read_bytes(media_image_file, offset, count)+\\
+Read bytes from a media image file and write them to \verb+stdout+.
 \end{itemize}
 
 \subsubsection{Data Types}

@@ -30,7 +30,7 @@ New database:
 
 Import/Export:
   ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
-         <hashdb.hdb> <import directory>
+         [-e] <hashdb.hdb> <import directory>
     Import hashes recursively from <import directory> into hash database
       <hashdb>.
 
@@ -44,6 +44,8 @@ Import/Export:
     -s, --step_size
       The step size to move along while calculating hashes.  Step size must
       be divisible by the byte alignment defined in the database.
+    -e, --embedded_data
+      Find and process embedded data.
 
     Parameters:
     <import dir>   the directory to recursively import from
@@ -58,6 +60,7 @@ Import/Export:
       (default is "repository_" followed by the <import directory> path).
     -w, --whitelist_dir
       The path to a whitelist hash database.  Hashes matching this database
+      will be marked with a whitelist entropy flag.
       will not be imported.
 
     Parameters:
@@ -103,6 +106,18 @@ Database manipulation:
     <source hashdb>       the source hash database to copy hashes from
     <destination hashdb>  the destination hash database to copy hashes into
     <repository name>     the repository name to match when adding hashes
+
+  add_range <source hashdb> <destination hashdb> <m:n>
+    Copy the hashes from the <source hashdb> to the <destination hashdb>
+    that have source reference count values between m and n.
+
+    Parameters:
+    <source hashdb>       the hash database to copy hashes from that have a
+                          source count within range m and n
+    <destination hashdb>  the hash database to copy hashes to when the
+                          source count is within range m and n
+    <m:n>                 the minimum and maximum count value range in which
+                          hashes will be copied
 
   intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
     Copy hashes that are common to both <source hashdb 1> and
@@ -161,16 +176,6 @@ Database manipulation:
     <destination hashdb>  the destination hash database to copy hashes into
     <repository name>     the repository name to exclude when adding hashes
 
-  copy_unique <source hashdb> <destination hashdb>
-    Copy the hashes that have only one source reference from <source hashdb>
-    to <destination hashdb>.
-
-    Parameters:
-    <source hashdb>       the hash database to copy hashes from when source
-                          hashes have exactly one reference
-    <destination hashdb>  the hash database to copy hashes to when source
-                          hashes have exactly one reference
-
 Scan:
   scan_list <hashdb> <hash list file>
     Scan hash database <hashdb> for hashes in <hash list file> and print out
@@ -190,7 +195,7 @@ Scan:
                       lookup source
     <hex block hash>  the hash value to scan for
 
-  scan_image <hashdb> <media image> [-s <step size>]
+  scan_image <hashdb> <media image> [-s <step size>] [-e]
     Scan hash database <hashdb> for hashes in <media image> and print out
     matches.
 
@@ -198,6 +203,8 @@ Scan:
     -s, --step_size
       The step size to move along while calculating hashes.  Step size must
       be divisible by the byte alignment defined in the database.
+    -e, --embedded_data
+      Find and process embedded data.
 
     Parameters:
     <hashdb>          the file path to the hash database to use as the
@@ -240,6 +247,15 @@ Statistics:
     Parameters:
     <hashdb>              the hash database to print hashes from
     <hex file hash>       the file hash of the source to print hashes for
+
+  read_bytes <media image> <offset> <count>
+    Print <count> number of raw bytes starting at the specified <offset> in
+    the <media image> file.
+
+    Parameters:
+    <media image>  the media image file to print raw bytes from
+    <offset>       the offset in the media image file to read from
+    <count>        the number of raw bytes to read
 
 Performance analysis:
   add_random <hashdb> <hex file hash> <count>

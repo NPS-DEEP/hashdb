@@ -485,6 +485,10 @@ void run_command() {
     check_params("", 2);
     commands::hash_table(args[0], args[1], cmd);
 
+  } else if (command == "read_bytes") {
+    check_params("", 3);
+    commands::read_bytes(args[0], args[1], args[2]);
+
   // performance analysis
   } else if (command == "add_random") {
     check_params("", 2);

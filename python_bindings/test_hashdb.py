@@ -7,6 +7,11 @@
 # test Python version
 # ############################################################
 import sys
+import hashdb
+import shutil
+import struct
+import io
+
 # require Python version 2.7
 if sys.version_info.major != 2 and sys.version_info.minor != 7:
     print("Error: Invalid Python version: 2.7 is required.")
@@ -18,10 +23,6 @@ if sys.maxsize != 2**63 - 1:
     print("Error: 64-bit Python is required.")
     print("found %d but expected %d" % (sys.maxsize, 2**64))
     sys.exit(1)
-
-import hashdb
-import shutil
-from struct import pack
 
 # require equality, adapted from ../test_py/helpers.py
 def str_equals(a,b):
@@ -36,14 +37,36 @@ def int_equals(a,b):
     if a != b:
         raise ValueError(str(a) + " not equal to " + str(b))
 
-
 # ############################################################
 # test Support functions
 # ############################################################
+
+# read bytes from hashdb.read_bytes
+# inspired by http://stackoverflow.com/questions/16571150/how-to-capture-stdout-output-from-a-python-function-call
+def _read_bytes(offset, count):
+    print ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    # call, capturing bytes
+    normal_stdout = sys.stdout
+    call_bytesio = io.BytesIO()
+    sys.stdout = call_bytesio
+    error_message = hashdb.read_bytes("temp_in.bin", offset, count)
+    sys.stdout = normal_stdout
+    print ("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
+
+    # make sure the call was successful
+    str_equals(error_message, "")
+    z = call_bytesio.read(10)
+    print ("z",z)
+
+    # return the bytes in a string
+    stdout_string = "".join(map(chr, call_bytesio.read(10)))
+    return stdout_string
+
 # Support function: Version
 str_equals(hashdb.version()[:2], "3.")
+str_equals(hashdb.hashdb_version()[:2], "3.")
 
-# Support function: Create new temp_1.hdb
+# Support function: Create new hashdb temp_1.hdb
 shutil.rmtree("temp_1.hdb", True)
 cmd="my command string"
 settings = hashdb.settings_t()
@@ -56,6 +79,20 @@ str_equals(hashdb.read_settings("temp_1.hdb", settings), "")
 binary_string = hashdb.hex_to_bin("0000000000000000")
 hex_string = hashdb.bin_to_hex(binary_string)
 str_equals(hex_string, "0000000000000000")
+
+# support function: ingest, scan_image: not tested
+
+# support function: read_bytes
+# setup for read_bytes, end with EOF
+temp_in = open("temp_in.bin", "w")
+in_bytes = struct.pack('5s', '\0\0a\0\0')
+temp_in.write(in_bytes)
+temp_in.close()
+
+print("checkpoint.a")
+str_equals(_read_bytes(0, 10), b'\0\0a\0\0')
+print("checkpoint.b")
+
 
 # ############################################################
 # test import functions
@@ -144,9 +181,9 @@ str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 # ############################################################
 # setup for scan_stream, end with EOF
 temp_in = open("temp_in.bin", "w")
-in_bytes = pack('8sQ', 'aaaaaaaa', 1)
+in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
 temp_in.write(in_bytes)
-in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.close()
 
@@ -189,9 +226,9 @@ out_file_object.close()
 
 # setup for scan_stream, end with 0x00...
 temp_in = open("temp_in.bin", "w")
-in_bytes = pack('8sQ', '\0\0\0\0\0\0\0\0', 1)
+in_bytes = struct.pack('8sQ', '\0\0\0\0\0\0\0\0', 1)
 temp_in.write(in_bytes)
-in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.close()
 
@@ -209,9 +246,9 @@ out_file_object.close()
 
 # setup for scan_stream, end with invalid alignment of one extra byte
 temp_in = open("temp_in.bin", "w")
-in_bytes = pack('8sQ', 'aaaaaaaa', 1)
+in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
 temp_in.write(in_bytes)
-in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.write('\0')
 temp_in.close()
@@ -233,9 +270,9 @@ out_file_object.close()
 # ############################################################
 # setup for scan_stream, end with EOF
 temp_in = open("temp_in.bin", "w")
-in_bytes = pack('8sQ', 'aaaaaaaa', 1)
+in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
 temp_in.write(in_bytes)
-in_bytes = pack('8sQ', 'hhhhhhhh', 1)
+in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.close()
 

@@ -103,6 +103,7 @@ HASHER_INCS = \
 	hasher/num_cpus.hpp \
 	hasher/process_job.cpp \
 	hasher/process_job.hpp \
+	hasher/read_bytes.cpp \
 	hasher/scan_image.cpp \
 	hasher/single_file_reader.hpp \
 	hasher/source_data_manager.hpp \

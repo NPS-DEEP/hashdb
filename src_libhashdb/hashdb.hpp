@@ -218,6 +218,24 @@ namespace hashdb {
                      const bool process_embedded_data,
                      const std::string& command_string);
 
+  /**
+   * Read raw bytes from the media image file and print them to stdout.
+   * Files with * EWF extensions (.E01 files) are recognized as media images.
+   *
+   * Parameters:
+   *   media_image_file - Path to a media image file, which can be a
+   *     raw file or an E01 file.
+   *   offset - The offset into the media image file.
+   *   count - The number of bytes to read.
+   *
+   * Returns:
+   *   "" if successful else reason if not.
+   */
+
+  std::string read_bytes(const std::string& media_image_file,
+                         const uint64_t offset,
+                         const uint64_t count);
+
   // ************************************************************
   // import
   // ************************************************************

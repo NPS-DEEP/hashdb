@@ -851,6 +851,27 @@ namespace commands {
     delete source_offset_pairs;
   }
 
+  // read_bytes
+  static void read_bytes(const std::string& media_image_filename,
+                         const std::string& offset_string,
+                         const std::string& count_string) {
+
+    // convert offset string to number
+    const uint64_t offset = atol(offset_string.c_str());
+
+    // convert count string to number
+    const uint64_t count = atol(count_string.c_str());
+
+    // read the bytes which go to stdout
+    std::string error_message = hashdb::read_bytes(
+                                       media_image_filename, offset, count);
+
+    if (error_message.size() != 0) {
+      std::cout << "Error: " << error_message << "\n";
+      exit(1);
+    }
+  }
+
   // ************************************************************
   // performance analysis
   // ************************************************************
