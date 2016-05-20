@@ -210,11 +210,6 @@ namespace hashdb {
     // print the command line
     std::cout << "# Command: \"" << command_string << "\"\n";
 
-//zz
-//    // print "Scanning media image..."
-//    std::cout << "# Scanning media image '" << image_filename
-//              << "' size " << file_reader.filesize << "\n";
-
     // scan the file
     std::string success = scan_file(file_reader, scan_manager, scan_tracker,
                                     step_size, settings.block_size,
