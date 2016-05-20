@@ -55,10 +55,11 @@
 
 namespace hashdb {
 
-  // read bytes from image file to stdout.
+  // read bytes from image.
   std::string read_bytes(const std::string& image_filename,
                          const uint64_t offset,
-                         const uint64_t count) {
+                         const uint64_t count,
+                         std::string& bytes) {
 
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
@@ -82,10 +83,10 @@ namespace hashdb {
 
       if (error_message.size() == 0) {
         // good, print bytes to stdout
-        std::cout << std::string(reinterpret_cast<const char*>(b),
-                                 b_bytes_read) << std::flush;
+        bytes = std::string(reinterpret_cast<const char*>(b), b_bytes_read);
       }
 
+      // done
       delete[] b;
       return error_message;
   }

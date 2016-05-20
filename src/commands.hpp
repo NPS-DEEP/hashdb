@@ -862,12 +862,17 @@ namespace commands {
     // convert count string to number
     const uint64_t count = atol(count_string.c_str());
 
-    // read the bytes which go to stdout
+    // read the bytes
+    std::string bytes;
     std::string error_message = hashdb::read_bytes(
-                                       media_image_filename, offset, count);
+                                media_image_filename, offset, count, bytes);
 
-    if (error_message.size() != 0) {
-      std::cout << "Error: " << error_message << "\n";
+    if (error_message.size() == 0) {
+      // print the bytes to stdout
+      std::cout << bytes << std::flush;
+    } else {
+      // print the error to stderr
+      std::cerr << "Error: " << error_message << "\n";
       exit(1);
     }
   }

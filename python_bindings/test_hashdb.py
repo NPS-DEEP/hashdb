@@ -41,27 +41,6 @@ def int_equals(a,b):
 # test Support functions
 # ############################################################
 
-# read bytes from hashdb.read_bytes
-# inspired by http://stackoverflow.com/questions/16571150/how-to-capture-stdout-output-from-a-python-function-call
-def _read_bytes(offset, count):
-    print ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-    # call, capturing bytes
-    normal_stdout = sys.stdout
-    call_bytesio = io.BytesIO()
-    sys.stdout = call_bytesio
-    error_message = hashdb.read_bytes("temp_in.bin", offset, count)
-    sys.stdout = normal_stdout
-    print ("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
-
-    # make sure the call was successful
-    str_equals(error_message, "")
-    z = call_bytesio.read(10)
-    print ("z",z)
-
-    # return the bytes in a string
-    stdout_string = "".join(map(chr, call_bytesio.read(10)))
-    return stdout_string
-
 # Support function: Version
 str_equals(hashdb.version()[:2], "3.")
 str_equals(hashdb.hashdb_version()[:2], "3.")
@@ -89,10 +68,18 @@ in_bytes = struct.pack('5s', '\0\0a\0\0')
 temp_in.write(in_bytes)
 temp_in.close()
 
-print("checkpoint.a")
-str_equals(_read_bytes(0, 10), b'\0\0a\0\0')
-print("checkpoint.b")
-
+error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 0, 10)
+str_equals(error_message,"")
+str_equals(bytes_read, b'\0\0a\0\0')
+error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 2, 2)
+str_equals(error_message,"")
+str_equals(bytes_read, b'a\0')
+error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 10, 10)
+str_equals(error_message,"")
+str_equals(bytes_read, b'')
+error_message, bytes_read = hashdb.read_bytes("temp_invalid_fileanme", 10, 10)
+bool_equals(len(error_message) > 0, True)
+str_equals(bytes_read, b'')
 
 # ############################################################
 # test import functions

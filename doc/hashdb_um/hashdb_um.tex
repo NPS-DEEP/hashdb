@@ -1337,8 +1337,7 @@ To use C++ interfaces, include interface file \verb+hashdb.hpp+ and link \hdb li
 To use the Python interfaces, load the \verb+hashdb+ module.
 \end{itemize}
 
-For information on installing the \hdb interfaces, please see \textbf{\Autoref{Obtaining}}.\\
-For further details on syntax and usage, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}.\\
+For information on installing the \hdb interfaces, please see \textbf{\Autoref{Obtaining}}.  For further details on syntax and usage, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}. Python users may also want to reference the Python interface test module in the source code at \verb+hashdb/python_bindings/test_hashdb.py+.\\
 
 \subsection{Import}
 To import hash and source data, open an import manager, for example\\
@@ -1386,7 +1385,7 @@ This is the fastest scan function. It returns an approximate source, offset pair
 \item \verb+json_text = scan_manager.find_approximate_hash_count_json(binary_hash)+\\
 Export the approximate hash count in JSON format for the given binary hash else "" if not there.
 \item \verb+has_source_data = scan_manager.find_source_data(file_binary_hash,+\\
-\verb+filesize, file_type, nonprobative_count+\\
+\verb+filesize, file_type, nonprobative_count)+\\
 C++ syntax. Return information about the source.
 \item \verb+has_source_data, filesize, file_type, nonprobative_count =+\\
 \verb+scan_manager.find_source_data(file_binary_hash)+\\
@@ -1447,8 +1446,10 @@ Recursively calculate and import hashes from path to \hdb.
 \item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
 \verb+process_embedded_data)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
-\item \verb+binary_string = read_bytes(media_image_file, offset, count)+\\
-Read bytes from a media image file and write them to \verb+stdout+.
+\item \verb+error_message = read_bytes(media_image_file, offset, count, &bytes)+\\
+C++ syntax.  Read bytes from a media image file.
+\item \verb+binary_string, bytes_read = read_bytes(media_image_file, offset, count)+\\
+Python syntax. Read bytes from a media image file.
 \end{itemize}
 
 \subsubsection{Data Types}
