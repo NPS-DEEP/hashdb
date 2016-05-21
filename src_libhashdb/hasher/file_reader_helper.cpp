@@ -22,8 +22,8 @@
  * Raw file accessors.  Mostly copied from bulk_extractor/src/image_process.cpp
  *
  * Provides:
+ *   pread64() for Windows in global namespace
  *   GetDriveGeometry() for Windows
- *   pread64() for Windows
  *   getSizeOfFile(&filename)
  */
 
@@ -52,6 +52,30 @@
 #include <fcntl.h>
 #include "filename_t.hpp"
 #include "file_reader_helper.hpp"
+
+// if pread64 is not defined then define it in the global namespace
+#ifdef WIN32
+int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
+{
+    DWORD bytes_read = 0;
+    LARGE_INTEGER li;
+    li.QuadPart = offset;
+    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
+    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
+        return -1;
+    }
+    return bytes_read;
+}
+#else
+  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
+size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
+{
+    if(_lseeki64(d,offset,0)!=offset) return -1;
+    return read(d,buf,nbyte);
+}
+  #endif
+#endif
 
 namespace hasher {
 
@@ -98,29 +122,6 @@ static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
  * It's hard to figure out the filesize in an opearting system independent method that works with both
  * files and devices. This seems to work. It only requires a functioning pread64 or pread.
  */
-
-#ifdef WIN32
-int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset)
-{
-    DWORD bytes_read = 0;
-    LARGE_INTEGER li;
-    li.QuadPart = offset;
-    li.LowPart = SetFilePointer(current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
-    if(li.LowPart == INVALID_SET_FILE_POINTER) return -1;
-    if (FALSE == ReadFile(current_handle, buf, (DWORD) bytes, &bytes_read, NULL)){
-        return -1;
-    }
-    return bytes_read;
-}
-#else
-  #if !defined(HAVE_PREAD64) && !defined(HAVE_PREAD) && defined(HAVE__LSEEKI64)
-size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
-{
-    if(_lseeki64(d,offset,0)!=offset) return -1;
-    return read(d,buf,nbyte);
-}
-  #endif
-#endif
 
 #ifdef WIN32
 int64_t get_filesize(HANDLE fd)

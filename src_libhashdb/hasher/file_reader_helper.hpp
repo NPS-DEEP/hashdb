@@ -34,8 +34,7 @@
 #include <fcntl.h>
 #include "filename_t.hpp"
 
-namespace hasher {
-
+// if pread64 is not defined then define it in the global namespace
 #ifdef WIN32
 int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset);
 #else
@@ -43,6 +42,8 @@ int pread64(HANDLE current_handle,char *buf,size_t bytes,uint64_t offset);
 size_t pread64(int d,void *buf,size_t nbyte,int64_t offset);
   #endif
 #endif
+
+namespace hasher {
 
 #ifdef WIN32
 int64_t get_filesize(HANDLE fd);

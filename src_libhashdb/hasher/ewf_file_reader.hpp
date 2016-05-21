@@ -37,6 +37,9 @@
 #include <set>
 #include <cassert>
 #include <libewf.h>
+#ifdef WIN32
+#include <cwchar>
+#endif
 
 namespace hasher {
 
@@ -76,7 +79,7 @@ class ewf_file_reader_t {
     int amount_of_filenames = 0;
     libewf_error_t *error=0;
 
-    if(libewf_glob_wide(fname,strlen(fname),LIBEWF_FORMAT_UNKNOWN,
+    if(libewf_glob_wide(fname,wcslen(fname),LIBEWF_FORMAT_UNKNOWN,
                        &libewf_filenames,&amount_of_filenames,&error)<0){
       std::stringstream ss;
       ss << "libewf_glob " << fname << ", " << consume_libewf_error(error);
@@ -98,7 +101,7 @@ class ewf_file_reader_t {
     }
       
     // Free the allocated filenames
-    if(libewf_glob_free_wide(libewf_filenames,amount_of_filenames,&error)<0){
+    if(libewf_glob_wide_free(libewf_filenames,amount_of_filenames,&error)<0){
       std::stringstream ss;
       error_message = ss.str();
       ss << "libewf_glob_free failed, " << consume_libewf_error(error);

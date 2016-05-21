@@ -20,6 +20,7 @@
 #endif
 
 #include <string>
+#include <iostream>
 #include "filename_t.hpp"
 
 namespace hasher {
@@ -33,7 +34,7 @@ filename_t utf8_to_native(const std::string &fn8)
     int wchars_num = MultiByteToWideChar(CP_UTF8, 0, fn8.c_str(), -1, NULL ,0 );
     if (wchars_num == 0 || wchars_num == 0xfffd) {
         std::cerr << "Invalid UTF8 code in filename.\n";
-        return std::wstring(_TEXT(""));
+        return std::wstring(L"");
     }
 
     wchar_t* wstr = new wchar_t[wchars_num];
