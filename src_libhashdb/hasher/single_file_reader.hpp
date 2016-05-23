@@ -73,12 +73,13 @@ class single_file_reader_t {
 
     // open the file for reading
 #ifdef WIN32
-    file_handle = CreateFileA(filename.c_str(), FILE_READ_DATA,
+    file_handle = CreateFileW(filename.c_str(), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                      OPEN_EXISTING, 0, NULL);
     if(file_handle==INVALID_HANDLE_VALUE){
       std::stringstream ss;
-      ss << "hashdb WIN32 subsystem: cannot open file " << filename;
+      ss << "hashdb WIN32 subsystem: cannot open file "
+         << utf8_filename(filename);
       error_message = ss.str();
       return false;
     }
@@ -116,7 +117,7 @@ class single_file_reader_t {
   ~single_file_reader_t() {
     // SINGLE binary file
 #ifdef WIN32
-    if(single_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(single_handle);
+    if(file_handle!=INVALID_HANDLE_VALUE) ::CloseHandle(file_handle);
 #else
     if(fd>=0) close(fd);
 #endif
@@ -128,18 +129,20 @@ class single_file_reader_t {
                    size_t* const bytes_read) const {
 
 #ifdef WIN32
-    *bytes_read = 0; //DWORD
     LARGE_INTEGER li;
     li.QuadPart = offset;
-    li.LowPart = SetFilePointer(serial_current_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
+    li.LowPart = SetFilePointer(file_handle, li.LowPart, &li.HighPart, FILE_BEGIN);
     if(li.LowPart == INVALID_SET_FILE_POINTER) {
       return "read failed, invalid set file pointer";
     }
-    bool did_read = ReadFile(serial_current_handle,
-                    buffer, (DWORD) buffer_size, bytes_read, NULL);
+    DWORD dword_bytes_read = 0;
+    bool did_read = ReadFile(file_handle,
+                    buffer, (DWORD) buffer_size, &dword_bytes_read, NULL);
     if (!did_read) {
       return "read failed";
     }
+    *bytes_read = dword_bytes_read;
+    return "";
 #else
   #if defined(HAVE_PREAD64)
     /* If we have pread64, make sure it is defined */

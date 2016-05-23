@@ -118,7 +118,6 @@ LIBHASHDB_INCS = \
 	hashdb.hpp \
 	hex_helper.cpp \
 	libhashdb.cpp \
-	liblmdb.la \
 	lmdb_changes.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_data_manager.hpp \

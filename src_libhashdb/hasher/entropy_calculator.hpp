@@ -51,7 +51,7 @@ class entropy_calculator_t {
 
     // calculate entropy buckets
     std::map<size_t, size_t> buckets;
-    for (int i=0; i<count-1; i+=2) {
+    for (size_t i=0; i<count-1; i+=2) {
       uint16_t element = (uint16_t)(buffer[i+0]<<0 | buffer[i+1]<<8);
       buckets[element] += 1;
     }

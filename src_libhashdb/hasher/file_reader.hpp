@@ -35,6 +35,7 @@
 #include <vector>
 #include <set>
 #include <cassert>
+#include "file_reader_helper.hpp"
 #include "ewf_file_reader.hpp"
 #include "single_file_reader.hpp"
 
@@ -66,13 +67,13 @@ class file_reader_t {
   file_reader_t(const file_reader_t&);
   file_reader_t& operator=(const file_reader_t&);
 
-  // get reader type from native_filename extension
-  file_reader_type_t reader_type(const filename_t& native_filename) {
-    if (native_filename.size() < 4) {
-      // no special native_filename extension
+  // get reader type from filename extension
+  file_reader_type_t reader_type(const std::string& p_filename) {
+    if (p_filename.size() < 4) {
+      // no special filename extension
       return file_reader_type_t::SINGLE;
     }
-    const filename_t last4 = native_filename.substr(native_filename.size() - 4);
+    const std::string last4 = p_filename.substr(p_filename.size() - 4);
     if (last4 == ".E01" || last4 == ".E01") {
       // E01
       return file_reader_type_t::E01;
@@ -81,28 +82,14 @@ class file_reader_t {
       // 001
       return file_reader_type_t::SERIAL;
     }
-    if (native_filename.size() >= 8 &&
-        native_filename.substr(native_filename.size() - 8) == "001.vmdk") {
+    if (p_filename.size() >= 8 &&
+        p_filename.substr(p_filename.size() - 8) == "001.vmdk") {
       // 001.vdmk
       return file_reader_type_t::SERIAL;
     }
-    // no special native_filename extension
+    // no special filename extension
     return file_reader_type_t::SINGLE;
   }
-
-  std::string utf8_filename(const filename_t& native_string) {
-#ifdef WIN32
-// from http://stackoverflow.com/questions/215963/how-do-you-properly-use-widechartomultibyte
-// Convert a wide Unicode string to an UTF8 string
-    if( native_string.empty() ) return std::string();
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &native_string[0], (int)native_string.size(), NULL, 0, NULL, NULL);
-    std::string strTo( size_needed, 0 );
-    WideCharToMultiByte                  (CP_UTF8, 0, &native_string[0], (int)native_string.size(), &strTo[0], size_needed, NULL, NULL);
-    return strTo;
-#else
-    return native_string;
-  }
-#endif
 
   // open the file for reading
   bool open_reader(const filename_t& native_filename) {
@@ -110,14 +97,14 @@ class file_reader_t {
 
       // E01
       case file_reader_type_t::E01: {
-        ewf_file_reader = new ewf_file_reader_t(filename);
+        ewf_file_reader = new ewf_file_reader_t(native_filename);
         error_message = ewf_file_reader->error_message;
         return ewf_file_reader->is_open;
       }
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
-        single_file_reader = new single_file_reader_t(filename);
+        single_file_reader = new single_file_reader_t(native_filename);
         error_message = single_file_reader->error_message;
         return single_file_reader->is_open;
       }
@@ -154,13 +141,13 @@ class file_reader_t {
    * To read: read(offset, buffer, buffer_size).
    * Use these const globals as desired: filename, filesize, file_reader_type.
    */
-  file_reader_t(const filename_t& p_filename) :
-          filename(utf8_filename(p_filename)),
+  file_reader_t(const filename_t& p_native_filename) :
+          filename(hasher::utf8_filename(p_native_filename)),
           error_message(""),
           file_reader_type(reader_type(filename)),
           ewf_file_reader(NULL),
           single_file_reader(NULL),
-          is_open(open_reader(p_filename)),
+          is_open(open_reader(p_native_filename)),
           filesize(get_filesize()),
           last_offset(0),
           last_buffer(NULL),
@@ -201,6 +188,8 @@ class file_reader_t {
     if (is_open == false) {
       return "reader not open";
     }
+
+    *bytes_read = 0;
 
     // do not re-read same
     if (offset == last_offset &&

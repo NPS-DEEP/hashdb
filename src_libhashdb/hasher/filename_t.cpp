@@ -16,7 +16,6 @@
   // including winsock2.h now keeps an included header somewhere from
   // including windows.h first, resulting in a warning.
   #include <winsock2.h>
-  #include "fsync.h"      // for simulation of linux fsync
 #endif
 
 #include <string>

@@ -56,14 +56,11 @@ LIB_FILE=libpython27.a
 _hashdb.pyd: ../src_libhashdb/libhashdb.o py_parts/$(LIB_FILE) hashdb_wrap.o
 	$(CXX) -Wall -Wextra -shared -o _hashdb.pyd \
 	       -static-libgcc -static-libstdc++ \
-	       ../src_libhashdb/libhashdb.o \
-	       ../src_libhashdb/liblmdb/liblmdb_la-mdb.o \
-	       ../src_libhashdb/liblmdb/liblmdb_la-midl.o \
-	       ../src_libhashdb/hex_helper.o \
-	       ../src_libhashdb/ingest.o \
-	       ../src_libhashdb/dig.o \
 	       hashdb_wrap.o \
+	       ../src_libhashdb/.libs/libhashdb.a \
+	       ${libdir}/libewf.a \
 	       ${libdir}/libwinpthread.a \
+	       -lewf -lcrypto -lz \
 	       py_parts/$(LIB_FILE)
 
 # the Python parts to compile and link against

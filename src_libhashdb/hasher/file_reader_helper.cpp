@@ -40,7 +40,6 @@
   // including winsock2.h now keeps an included header somewhere from
   // including windows.h first, resulting in a warning.
   #include <winsock2.h>
-  #include "fsync.h"      // for simulation of linux fsync
 #endif
 
 #include <cassert>
@@ -78,6 +77,20 @@ size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 #endif
 
 namespace hasher {
+
+  std::string utf8_filename(const filename_t& native_string) {
+#ifdef WIN32
+// from http://stackoverflow.com/questions/215963/how-do-you-properly-use-widechartomultibyte
+// Convert a wide Unicode string to an UTF8 string
+    if( native_string.empty() ) return std::string();
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &native_string[0], (int)native_string.size(), NULL, 0, NULL, NULL);
+    std::string strTo( size_needed, 0 );
+    WideCharToMultiByte                  (CP_UTF8, 0, &native_string[0], (int)native_string.size(), &strTo[0], size_needed, NULL, NULL);
+    return strTo;
+#else
+    return native_string;
+#endif
+  }
 
 #ifdef WIN32
 static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
