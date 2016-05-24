@@ -73,7 +73,7 @@ liblmdb_la_CFLAGS = \
 
 liblmdb_la_LDFLAGS = -PIC
 
-libhashdb_la_LDFLAGS = -PIC -avoid-version -static
+libhashdb_la_LDFLAGS = -PIC -avoid-version -static -no-undefined
 
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src_libhashdb/hasher \
