@@ -45,15 +45,15 @@ enum file_reader_type_t {E01, SERIAL, SINGLE};
 
 class file_reader_t {
 
-  public:
-  const std::string filename;
-  std::string error_message;
-  const file_reader_type_t file_reader_type;
+  private:
+  // state
   ewf_file_reader_t* ewf_file_reader;
   single_file_reader_t* single_file_reader;
 
   public:
-  const bool is_open;
+  const std::string filename;
+  const file_reader_type_t file_reader_type;
+  const std::string error_message;
   const uint64_t filesize;
 
   private:
@@ -91,32 +91,28 @@ class file_reader_t {
     return file_reader_type_t::SINGLE;
   }
 
-  // open the file for reading
-  bool open_reader(const filename_t& native_filename) {
+  // open the file for reading, return error_message or ""
+  std::string open_reader(const filename_t& native_filename) {
     switch(file_reader_type) {
 
       // E01
       case file_reader_type_t::E01: {
+std::cout << "file_reader E01\n";
         ewf_file_reader = new ewf_file_reader_t(native_filename);
-        error_message = ewf_file_reader->error_message;
-        return ewf_file_reader->is_open;
+        return ewf_file_reader->error_message;
       }
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
+std::cout << "file_reader SINGLE\n";
         single_file_reader = new single_file_reader_t(native_filename);
-        error_message = single_file_reader->error_message;
-        return single_file_reader->is_open;
+        return single_file_reader->error_message;
       }
       default: assert(0); std::exit(1);
     }
   }
 
   uint64_t get_filesize() {
-    if (!is_open) {
-      return 0;
-    }
-
     switch(file_reader_type) {
 
       // E01
@@ -137,17 +133,16 @@ class file_reader_t {
   /**
    * Opens a file reader.  The reader detects file types.
    * Provide the filename or device name to read from.
-   * Check is_open.  If false, print error_message.
+   * Check error_message.
    * To read: read(offset, buffer, buffer_size).
-   * Use these const globals as desired: filename, filesize, file_reader_type.
+   * Use as desired: filename, filesize, file_reader_type.
    */
   file_reader_t(const filename_t& p_native_filename) :
-          filename(hasher::utf8_filename(p_native_filename)),
-          error_message(""),
-          file_reader_type(reader_type(filename)),
           ewf_file_reader(NULL),
           single_file_reader(NULL),
-          is_open(open_reader(p_native_filename)),
+          filename(native_to_utf8(p_native_filename)),
+          file_reader_type(reader_type(filename)),
+          error_message(open_reader(p_native_filename)),
           filesize(get_filesize()),
           last_offset(0),
           last_buffer(NULL),
@@ -180,14 +175,7 @@ class file_reader_t {
                    uint8_t* const buffer,
                    const size_t buffer_size,
                    size_t* const bytes_read) const {
-
-    // reader must be in good state
-    if (error_message != "") {
-      std::cerr << "read requested when in bad state";
-    }
-    if (is_open == false) {
-      return "reader not open";
-    }
+std::cerr << "file_reader.read.a\n";
 
     *bytes_read = 0;
 
@@ -198,15 +186,18 @@ class file_reader_t {
       *bytes_read = last_bytes_read;
       return "";
     }
+std::cerr << "file_reader.read.b\n";
     last_offset = offset;
     last_buffer = buffer;
     last_buffer_size = buffer_size;
 
+std::cerr << "file_reader.read.c\n";
     switch(file_reader_type) {
 
       // E01
       case file_reader_type_t::E01: {
-        std::string read_error_message = ewf_file_reader->read(
+std::cerr << "file_reader.read.d\n";
+        const std::string read_error_message = ewf_file_reader->read(
                                offset, buffer, buffer_size, bytes_read);
         last_bytes_read = *bytes_read;
         return read_error_message;
@@ -214,7 +205,9 @@ class file_reader_t {
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
-        std::string read_error_message = single_file_reader->read(
+std::cerr << "file_reader.read.e\n";
+std::cerr << "file_reader.read.e.sfr " << single_file_reader << "\n";
+        const std::string read_error_message = single_file_reader->read(
                                offset, buffer, buffer_size, bytes_read);
         last_bytes_read = *bytes_read;
         return read_error_message;
@@ -222,6 +215,7 @@ class file_reader_t {
 
       default: assert(0); std::exit(1);
     }
+std::cerr << "file_reader.read.f\n";
   }
 };
 

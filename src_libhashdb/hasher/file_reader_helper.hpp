@@ -22,10 +22,9 @@
  * Raw file accessors.  Mostly copied from bulk_extractor/src/image_process.cpp
  *
  * Provides:
- *   utf8_filename(filename_t) for wstring filenames
- *   GetDriveGeometry() for Windows
  *   pread64() for Windows
- *   getSizeOfFile(&filename)
+ *   get_filesize()
+ *   get_filesize_by_filename()
  */
 
 #ifndef FILE_READER_HELPER_HPP
@@ -46,15 +45,8 @@ size_t pread64(int d,void *buf,size_t nbyte,int64_t offset);
 
 namespace hasher {
 
-std::string utf8_filename(const filename_t& native_string);
-
-#ifdef WIN32
-int64_t get_filesize(HANDLE fd);
-#else
-int64_t get_filesize(int fd);
-#endif
-
-int64_t getSizeOfFile(const filename_t &fname);
+// return error_message or ""
+std::string get_filesize_by_filename(const filename_t &fname, uint64_t* size);
 
 } // end namespace hasher
 

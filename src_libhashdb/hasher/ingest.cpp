@@ -43,9 +43,10 @@
 #include <sstream>
 #include "num_cpus.hpp"
 #include "hashdb.hpp"
-#include "dig.h"
+#include "filename_t.hpp"
 #include "file_reader.hpp"
 #include "hash_calculator.hpp"
+#include "filename_list.hpp"
 #include "threadpool.hpp"
 #include "job.hpp"
 #include "job_queue.hpp"
@@ -60,20 +61,15 @@ namespace hashdb {
   // ************************************************************
   // helpers
   // ************************************************************
-  static uint64_t calculate_total_bytes(const std::string& ingest_path) {
-
-    // open the recursive directory walker
-    hasher::dig dig_tool(ingest_path);
-    hasher::dig::const_iterator it = dig_tool.begin();
+  static uint64_t calculate_total_bytes(const hasher::filenames_t filenames) {
 
     // iterate over files
     uint64_t total_bytes = 0;
-    while (it != dig_tool.end()) {
+    for (hasher::filenames_t::const_iterator it=filenames.begin();
+                                           it != filenames.end(); it++) {
       const hasher::file_reader_t file_reader(*it);
-      if (file_reader.is_open) {
-        total_bytes += file_reader.filesize;
-        ++it;
-      }
+      total_bytes += file_reader.filesize;
+      ++it;
     }
     return total_bytes;
   }
@@ -89,10 +85,12 @@ namespace hashdb {
         const bool process_embedded_data,
         hasher::job_queue_t* const job_queue) {
 
+std::cout << "ingest.ingest_file.a\n";
     // identify the maximum recursion depth
     size_t max_recursion_depth = 
                         (process_embedded_data) ? MAX_RECURSION_DEPTH : 0;
 
+std::cout << "ingest.ingest_file.b\n";
     // create buffer b to read into
     size_t b_size = (file_reader.filesize <= BUFFER_SIZE) ?
                           file_reader.filesize : BUFFER_SIZE;
@@ -101,16 +99,21 @@ namespace hashdb {
       return "bad memory allocation";
     }
 
+std::cout << "ingest.ingest_file.c\n";
     // read into buffer b
     size_t bytes_read;
     std::string error_message;
+std::cout << "ingest.ingest_file.ca\n";
     error_message = file_reader.read(0, b, b_size, &bytes_read);
+std::cout << "ingest.ingest_file.cb\n";
     if (error_message.size() > 0) {
+std::cout << "ingest.ingest_file.cc\n";
       // abort
       delete[] b;
       return error_message;
     }
 
+std::cout << "ingest.ingest_file.d\n";
     // get a source file hash calculator
     hasher::hash_calculator_t hash_calculator;
     hash_calculator.init();
@@ -121,6 +124,7 @@ namespace hashdb {
     // read and hash subsequent buffers in b2
     if (file_reader.filesize > BUFFER_SIZE) {
 
+std::cout << "ingest.ingest_file.e\n";
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
@@ -134,6 +138,7 @@ namespace hashdb {
            offset < file_reader.filesize;
            offset += BUFFER_SIZE) {
 
+std::cout << "ingest.ingest_file.f\n";
         // print status
         std::stringstream ss;
         ss << "# Calculating file hash for file " << file_reader.filename
@@ -159,6 +164,7 @@ namespace hashdb {
 
       delete[] b2;
     }
+std::cout << "ingest.ingest_file.g\n";
 
     // get the source file hash
     const std::string file_hash = hash_calculator.final();
@@ -176,6 +182,7 @@ namespace hashdb {
       return "skipping duplicate file";
     }
 
+std::cout << "ingest.ingest_file.h\n";
     // add source file to ingest_tracker
     const std::string file_type = "";
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
@@ -204,6 +211,7 @@ namespace hashdb {
                  max_recursion_depth,
                  0));    // recursion_count
 
+std::cout << "ingest.ingest_file.i\n";
     // read and push remaining buffers onto the job queue
     for (uint64_t offset = BUFFER_DATA_SIZE;
          offset < file_reader.filesize;
@@ -217,6 +225,7 @@ namespace hashdb {
          << "\n";
       hasher::tprint(ss.str());
 
+std::cout << "ingest.ingest_file.j\n";
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
@@ -299,13 +308,20 @@ namespace hashdb {
     error_message = hashdb::read_settings(whitelist_dir, settings);
     if (error_message.size() == 0) {
       has_whitelist = true;
+    } else {
+      // no whitelist
+      error_message = "";
     }
 
     // open import manager
     hashdb::import_manager_t import_manager(hashdb_dir, cmd);
 
+    // get the list of filenames to be processed
+    hasher::filenames_t filenames;
+    error_message = hasher::filename_list(ingest_path, &filenames);
+
     // calculate the total number of buffers that will be processed
-    uint64_t total_bytes = calculate_total_bytes(ingest_path);
+    uint64_t total_bytes = calculate_total_bytes(filenames);
 
     // create the ingest_tracker
     hasher::ingest_tracker_t ingest_tracker(&import_manager, total_bytes);
@@ -325,41 +341,48 @@ namespace hashdb {
     hasher::threadpool_t* const threadpool =
                                new hasher::threadpool_t(num_cpus, job_queue);
 
-    // open the recursive directory walker
-    hasher::dig dig_tool(ingest_path);
-    hasher::dig::const_iterator it = dig_tool.begin();
-
+std::cerr << "ingest.a\n";
     // iterate over files
-    while (it != dig_tool.end()) {
+    for (hasher::filenames_t::const_iterator it=filenames.begin();
+                                           it != filenames.end(); it++) {
+std::cerr << "ingest.b\n";
       const hasher::file_reader_t file_reader(*it);
 
-      if (file_reader.is_open) {
+std::cerr << "ingest.c\n";
+      if (file_reader.error_message.size() == 0) {
 
+std::cerr << "ingest.d\n";
         // only process when file size > 0
         if (file_reader.filesize > 0) {
+std::cerr << "ingest.e\n";
           std::string success = ingest_file(
                  file_reader, import_manager, ingest_tracker,
                  whitelist_scan_manager,
                  repository_name, step_size, settings.block_size,
                  process_embedded_data, job_queue);
+std::cerr << "ingest.e2\n";
           if (success.size() > 0) {
+std::cerr << "ingest.f\n";
             std::stringstream ss;
-            ss << "# error while importing file " << file_reader.filename
+            ss << "# Error while importing file " << file_reader.filename
                << ", " << file_reader.error_message << "\n";
             hasher::tprint(ss.str());
           }
 
+std::cerr << "ingest.g\n";
         } else {
+std::cerr << "ingest.h\n";
           std::stringstream ss;
-          ss << "# skipping file " << file_reader.filename
+          ss << "# Skipping file " << file_reader.filename
              << " size " << file_reader.filesize << "\n";
           hasher::tprint(ss.str());
         }
+std::cerr << "ingest.i\n";
       } else {
+std::cerr << "ingest.j\n";
         // this file could not be opened
         std::stringstream ss;
-        ss << "# unable to import file " << file_reader.filename
-           << ", " << file_reader.error_message << "\n";
+        ss << "# Unable to import file: " << file_reader.error_message << "\n";
         hasher::tprint(ss.str());
       }
       ++it;

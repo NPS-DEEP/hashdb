@@ -43,7 +43,6 @@
 #include <sstream>
 #include "num_cpus.hpp"
 #include "hashdb.hpp"
-#include "dig.h"
 #include "file_reader.hpp"
 #include "hash_calculator.hpp"
 #include "threadpool.hpp"
@@ -63,7 +62,7 @@ namespace hashdb {
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
                                                            image_filename));
-    if (file_reader.is_open == false) {
+    if (file_reader.error_message.size() > 0) {
       // the file failed to open
       return file_reader.error_message;
     }

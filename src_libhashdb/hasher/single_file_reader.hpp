@@ -36,6 +36,7 @@
 #include <set>
 #include <cassert>
 #include <libewf.h>
+#include "filename_t.hpp"
 #include "file_reader_helper.hpp"
 
 #ifndef O_BINARY
@@ -46,21 +47,21 @@ namespace hasher {
 
 class single_file_reader_t {
 
-  public:
-  const filename_t filename;
-  std::string error_message;
-
   private:
   // SINGLE file data
 #ifdef WIN32
-  mutable HANDLE file_handle;         // currently open file
+  HANDLE file_handle;         // currently open file
 #else
-  mutable int fd;                     // currently open file
+  int fd;                     // currently open file
 #endif
 
   public:
-  const bool is_open;
+  const filename_t native_filename;
+  private:
+  std::string temp_error_message;
+  public:
   const uint64_t filesize;
+  const std::string error_message;
 
   private:
 
@@ -68,49 +69,61 @@ class single_file_reader_t {
   single_file_reader_t(const single_file_reader_t&);
   single_file_reader_t& operator=(const single_file_reader_t&);
 
-  // open the file for reading
-  bool open_reader() {
+  // open the file for reading, return error_message else ""
+  std::string open_reader() {
 
     // open the file for reading
 #ifdef WIN32
-    file_handle = CreateFileW(filename.c_str(), FILE_READ_DATA,
+    file_handle = CreateFileW(native_filename.c_str(), FILE_READ_DATA,
                                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                      OPEN_EXISTING, 0, NULL);
     if(file_handle==INVALID_HANDLE_VALUE){
       std::stringstream ss;
-      ss << "hashdb WIN32 subsystem: cannot open file "
-         << utf8_filename(filename);
-      error_message = ss.str();
-      return false;
+      ss << "hashdb file reader cannot open file "
+         << native_to_utf8(native_filename);
+      return ss.str();
     }
 #else        
-    fd = ::open(filename.c_str(),O_RDONLY|O_BINARY);
+    fd = ::open(native_filename.c_str(),O_RDONLY|O_BINARY);
     if(fd<=0) {
       std::stringstream ss;
-      ss << "hashdb Linux subsystem: cannot open file " << filename;
-      error_message = ss.str();
-      return false;
+      ss << "hashdb file reader cannot open file " << native_filename;
+      return ss.str();
     }
 #endif
-    return true;
+    return "";
   }
+
+  uint64_t get_filesize() {
+    if (temp_error_message.size() == 0) {
+      // open so try to get filesize
+      uint64_t p_filesize;
+      temp_error_message = get_filesize_by_filename(
+                                          native_filename, &p_filesize);
+      return p_filesize;
+    } else {
+      // not open
+      return 0;
+    }
+  }
+
+
+
 
   public:
   /**
    * Opens a single file reader.
-   * Provide the filename or device name to read from.
-   * Check is_open.  If false, print error_message.
    */
-  single_file_reader_t(const filename_t& p_filename) :
-          filename(p_filename),
-          error_message(""),
+  single_file_reader_t(const filename_t& p_native_filename) :
 #ifdef WIN32
           file_handle(INVALID_HANDLE_VALUE),
 #else
           fd(-1),
 #endif
-          is_open(open_reader()),
-          filesize(getSizeOfFile(filename)) {
+          native_filename(p_native_filename),
+          temp_error_message(open_reader()),
+          filesize(get_filesize()),
+          error_message(temp_error_message) {
   }
 
   // close any open resources
@@ -127,6 +140,16 @@ class single_file_reader_t {
                    uint8_t* const buffer,
                    const size_t buffer_size,
                    size_t* const bytes_read) const {
+
+    // make sure reader is working
+std::cout << "error_message.a" << &error_message << "\n";
+std::cout << "error_message.b" << error_message << "\n";
+    if (error_message.size() > 0) {
+      // error so leave alone
+      std::stringstream ss;
+      ss << "Unable to read: " << error_message << "\n";
+      return ss.str();
+    }
 
 #ifdef WIN32
     LARGE_INTEGER li;

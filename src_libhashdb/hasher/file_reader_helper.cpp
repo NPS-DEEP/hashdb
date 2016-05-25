@@ -23,8 +23,8 @@
  *
  * Provides:
  *   pread64() for Windows in global namespace
- *   GetDriveGeometry() for Windows
- *   getSizeOfFile(&filename)
+ *   get_drive_geometry() for Windows
+ *   get_filesize_by_filename()
  */
 
 #include <config.h>
@@ -44,6 +44,7 @@
 
 #include <cassert>
 #include <string>
+#include <sstream>
 #include <string.h>
 #include <iostream>
 #include <sys/stat.h>
@@ -78,22 +79,8 @@ size_t pread64(int d,void *buf,size_t nbyte,int64_t offset)
 
 namespace hasher {
 
-  std::string utf8_filename(const filename_t& native_string) {
 #ifdef WIN32
-// from http://stackoverflow.com/questions/215963/how-do-you-properly-use-widechartomultibyte
-// Convert a wide Unicode string to an UTF8 string
-    if( native_string.empty() ) return std::string();
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &native_string[0], (int)native_string.size(), NULL, 0, NULL, NULL);
-    std::string strTo( size_needed, 0 );
-    WideCharToMultiByte                  (CP_UTF8, 0, &native_string[0], (int)native_string.size(), &strTo[0], size_needed, NULL, NULL);
-    return strTo;
-#else
-    return native_string;
-#endif
-  }
-
-#ifdef WIN32
-static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
+static BOOL get_drive_geometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 {
     HANDLE hDevice = INVALID_HANDLE_VALUE;  // handle to the drive to be examined 
     BOOL bResult   = FALSE;                 // results flag
@@ -127,19 +114,15 @@ static BOOL GetDriveGeometry(const wchar_t *wszPath, DISK_GEOMETRY *pdg)
 
 #endif
 
-/****************************************************************
- *** get_filesize()
- ****************************************************************/
-
 /**
  * It's hard to figure out the filesize in an opearting system independent method that works with both
  * files and devices. This seems to work. It only requires a functioning pread64 or pread.
  */
 
 #ifdef WIN32
-int64_t get_filesize(HANDLE fd)
+static int64_t get_filesize(HANDLE fd)
 #else
-int64_t get_filesize(int fd)
+static int64_t get_filesize(int fd)
 #endif
 {
     char buf[64];
@@ -197,8 +180,10 @@ int64_t get_filesize(int fd)
 
 
 
-// getSizeOfFile() for Win or Linux
-int64_t getSizeOfFile(const filename_t &fname) {
+// get_filesize_by_filename() for Win or Linux, return error_message or ""
+std::string get_filesize_by_filename(const filename_t &fname,
+                                     uint64_t* size) {
+    int64_t file_length;
 #ifdef WIN32
 // Win
     HANDLE current_handle = CreateFile(fname.c_str(), FILE_READ_DATA,
@@ -206,21 +191,26 @@ int64_t getSizeOfFile(const filename_t &fname) {
 				     OPEN_EXISTING, 0, NULL);
     if(current_handle!=INVALID_HANDLE_VALUE){
         // good, able to read file
-        int64_t fname_length = get_filesize(current_handle);
+        file_length = get_filesize(current_handle);
         ::CloseHandle(current_handle);
-        return fname_length;
+        *size = file_length;
+        return "";
 
     } else {
-        fprintf(stderr,"WIN32 subsystem: cannot open file '%s'\n",fname.c_str());
-        // try this
+        std::cout << "# Cannot open file '" << hasher::native_to_utf8(fname)
+                  << " to read filesize, checking physical drive.\n";
 
+        // try this
         /* On Windows, see if we can use this */
-        fprintf(stderr,"%s checking physical drive\n",fname.c_str());
         // http://msdn.microsoft.com/en-gb/library/windows/desktop/aa363147%28v=vs.85%29.aspx
         DISK_GEOMETRY pdg = { 0 }; // disk drive geometry structure
-        GetDriveGeometry(fname.c_str(), &pdg);
-        return pdg.Cylinders.QuadPart * (ULONG)pdg.TracksPerCylinder *
-                     (ULONG)pdg.SectorsPerTrack * (ULONG)pdg.BytesPerSector;
+        get_drive_geometry(fname.c_str(), &pdg);
+        file_length = pdg.Cylinders.QuadPart *
+                       (ULONG)pdg.TracksPerCylinder *
+                       (ULONG)pdg.SectorsPerTrack *
+                       (ULONG)pdg.BytesPerSector;
+        *size = file_length;
+        return "";
     }
 
 #else
@@ -230,12 +220,16 @@ int64_t getSizeOfFile(const filename_t &fname) {
 #endif
     int fd = ::open(fname.c_str(),O_RDONLY|O_BINARY);
     if(fd<0){
-        std::cerr << "*** unix getSizeOfFile: Cannot open " << fname << ": " << strerror(errno) << "\n";
-        return 0;
+        *size = 0;
+        std::stringstream ss;
+        ss << "cannot open " << fname << " to read file size.  "
+           << strerror(errno) << "\n";
+        return ss.str();
     }
-    int64_t fname_length = get_filesize(fd);
+    file_length = get_filesize(fd);
     ::close(fd);
-    return fname_length;
+    *size = file_length;
+    return "";
 #endif
 }
 

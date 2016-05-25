@@ -85,10 +85,10 @@ AM_CXXFLAGS = $(HASHDB_CXXFLAGS)
 HASHER_INCS = \
 	hasher/calculate_block_label.cpp \
 	hasher/calculate_block_label.hpp \
-	hasher/dig.cpp \
-	hasher/dig.h \
 	hasher/entropy_calculator.hpp \
 	hasher/ewf_file_reader.hpp \
+	hasher/filename_list.cpp \
+	hasher/filename_list.hpp \
 	hasher/filename_t.cpp \
 	hasher/filename_t.hpp \
 	hasher/file_reader_helper.cpp \
