@@ -85,12 +85,10 @@ namespace hashdb {
         const bool process_embedded_data,
         hasher::job_queue_t* const job_queue) {
 
-std::cout << "ingest.ingest_file.a\n";
     // identify the maximum recursion depth
     size_t max_recursion_depth = 
                         (process_embedded_data) ? MAX_RECURSION_DEPTH : 0;
 
-std::cout << "ingest.ingest_file.b\n";
     // create buffer b to read into
     size_t b_size = (file_reader.filesize <= BUFFER_SIZE) ?
                           file_reader.filesize : BUFFER_SIZE;
@@ -99,21 +97,16 @@ std::cout << "ingest.ingest_file.b\n";
       return "bad memory allocation";
     }
 
-std::cout << "ingest.ingest_file.c\n";
     // read into buffer b
     size_t bytes_read;
     std::string error_message;
-std::cout << "ingest.ingest_file.ca\n";
     error_message = file_reader.read(0, b, b_size, &bytes_read);
-std::cout << "ingest.ingest_file.cb\n";
     if (error_message.size() > 0) {
-std::cout << "ingest.ingest_file.cc\n";
       // abort
       delete[] b;
       return error_message;
     }
 
-std::cout << "ingest.ingest_file.d\n";
     // get a source file hash calculator
     hasher::hash_calculator_t hash_calculator;
     hash_calculator.init();
@@ -124,7 +117,6 @@ std::cout << "ingest.ingest_file.d\n";
     // read and hash subsequent buffers in b2
     if (file_reader.filesize > BUFFER_SIZE) {
 
-std::cout << "ingest.ingest_file.e\n";
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
@@ -138,7 +130,6 @@ std::cout << "ingest.ingest_file.e\n";
            offset < file_reader.filesize;
            offset += BUFFER_SIZE) {
 
-std::cout << "ingest.ingest_file.f\n";
         // print status
         std::stringstream ss;
         ss << "# Calculating file hash for file " << file_reader.filename
@@ -164,7 +155,6 @@ std::cout << "ingest.ingest_file.f\n";
 
       delete[] b2;
     }
-std::cout << "ingest.ingest_file.g\n";
 
     // get the source file hash
     const std::string file_hash = hash_calculator.final();
@@ -182,7 +172,6 @@ std::cout << "ingest.ingest_file.g\n";
       return "skipping duplicate file";
     }
 
-std::cout << "ingest.ingest_file.h\n";
     // add source file to ingest_tracker
     const std::string file_type = "";
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
@@ -211,7 +200,6 @@ std::cout << "ingest.ingest_file.h\n";
                  max_recursion_depth,
                  0));    // recursion_count
 
-std::cout << "ingest.ingest_file.i\n";
     // read and push remaining buffers onto the job queue
     for (uint64_t offset = BUFFER_DATA_SIZE;
          offset < file_reader.filesize;
@@ -225,7 +213,6 @@ std::cout << "ingest.ingest_file.i\n";
          << "\n";
       hasher::tprint(ss.str());
 
-std::cout << "ingest.ingest_file.j\n";
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
       if (b2 == NULL) {
@@ -341,45 +328,34 @@ std::cout << "ingest.ingest_file.j\n";
     hasher::threadpool_t* const threadpool =
                                new hasher::threadpool_t(num_cpus, job_queue);
 
-std::cerr << "ingest.a\n";
     // iterate over files
     for (hasher::filenames_t::const_iterator it=filenames.begin();
                                            it != filenames.end(); it++) {
-std::cerr << "ingest.b\n";
       const hasher::file_reader_t file_reader(*it);
 
-std::cerr << "ingest.c\n";
       if (file_reader.error_message.size() == 0) {
 
-std::cerr << "ingest.d\n";
         // only process when file size > 0
         if (file_reader.filesize > 0) {
-std::cerr << "ingest.e\n";
           std::string success = ingest_file(
                  file_reader, import_manager, ingest_tracker,
                  whitelist_scan_manager,
                  repository_name, step_size, settings.block_size,
                  process_embedded_data, job_queue);
-std::cerr << "ingest.e2\n";
           if (success.size() > 0) {
-std::cerr << "ingest.f\n";
             std::stringstream ss;
             ss << "# Error while importing file " << file_reader.filename
                << ", " << file_reader.error_message << "\n";
             hasher::tprint(ss.str());
           }
 
-std::cerr << "ingest.g\n";
         } else {
-std::cerr << "ingest.h\n";
           std::stringstream ss;
           ss << "# Skipping file " << file_reader.filename
              << " size " << file_reader.filesize << "\n";
           hasher::tprint(ss.str());
         }
-std::cerr << "ingest.i\n";
       } else {
-std::cerr << "ingest.j\n";
         // this file could not be opened
         std::stringstream ss;
         ss << "# Unable to import file: " << file_reader.error_message << "\n";

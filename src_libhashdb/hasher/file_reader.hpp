@@ -97,14 +97,12 @@ class file_reader_t {
 
       // E01
       case file_reader_type_t::E01: {
-std::cout << "file_reader E01\n";
         ewf_file_reader = new ewf_file_reader_t(native_filename);
         return ewf_file_reader->error_message;
       }
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
-std::cout << "file_reader SINGLE\n";
         single_file_reader = new single_file_reader_t(native_filename);
         return single_file_reader->error_message;
       }
@@ -175,7 +173,6 @@ std::cout << "file_reader SINGLE\n";
                    uint8_t* const buffer,
                    const size_t buffer_size,
                    size_t* const bytes_read) const {
-std::cerr << "file_reader.read.a\n";
 
     *bytes_read = 0;
 
@@ -186,17 +183,14 @@ std::cerr << "file_reader.read.a\n";
       *bytes_read = last_bytes_read;
       return "";
     }
-std::cerr << "file_reader.read.b\n";
     last_offset = offset;
     last_buffer = buffer;
     last_buffer_size = buffer_size;
 
-std::cerr << "file_reader.read.c\n";
     switch(file_reader_type) {
 
       // E01
       case file_reader_type_t::E01: {
-std::cerr << "file_reader.read.d\n";
         const std::string read_error_message = ewf_file_reader->read(
                                offset, buffer, buffer_size, bytes_read);
         last_bytes_read = *bytes_read;
@@ -205,8 +199,6 @@ std::cerr << "file_reader.read.d\n";
 
       // SINGLE binary file
       case file_reader_type_t::SINGLE: {
-std::cerr << "file_reader.read.e\n";
-std::cerr << "file_reader.read.e.sfr " << single_file_reader << "\n";
         const std::string read_error_message = single_file_reader->read(
                                offset, buffer, buffer_size, bytes_read);
         last_bytes_read = *bytes_read;
@@ -215,7 +207,6 @@ std::cerr << "file_reader.read.e.sfr " << single_file_reader << "\n";
 
       default: assert(0); std::exit(1);
     }
-std::cerr << "file_reader.read.f\n";
   }
 };
 

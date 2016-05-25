@@ -142,8 +142,6 @@ class single_file_reader_t {
                    size_t* const bytes_read) const {
 
     // make sure reader is working
-std::cout << "error_message.a" << &error_message << "\n";
-std::cout << "error_message.b" << error_message << "\n";
     if (error_message.size() > 0) {
       // error so leave alone
       std::stringstream ss;

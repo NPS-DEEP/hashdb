@@ -215,7 +215,6 @@ std::string filename_list(const std::string& filename, filenames_t* files) {
   // stack for processing found directories
   std::stack<std::string> directories;
 
-std::cerr << "a.filename " << filename << "\n";
   // push the first directory for processing
   directories.push(filename);
 
@@ -226,7 +225,6 @@ std::cerr << "a.filename " << filename << "\n";
     const std::string path = directories.top();
     directories.pop();
 
-std::cerr << "b.path " << path << "\n";
     // read POSIX directory entry
     DIR *dir= opendir(path.c_str());
     if (dir == NULL) {
@@ -291,9 +289,6 @@ std::cerr << "b.path " << path << "\n";
   // strip out non-first recursive filenames such as *.E02, etc.
   // zz TBD
 
-for (filenames_t::const_iterator it=files->begin(); it!=files->end(); ++it) {
-std::cerr << "c.done " << *it << "\n";
-}
   // done
   return "";
 }
