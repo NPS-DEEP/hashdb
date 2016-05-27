@@ -77,7 +77,10 @@ std::string filename_list(const std::string& utf8_filename,
   DWORD file_attributes = 0;
   file_attributes = GetFileAttributes(native_filename.c_str());
   if (file_attributes == INVALID_FILE_ATTRIBUTES) {
-    return "invalid file attributes for file";
+    std::stringstream ss;
+    ss << "Invalid file attributes for file "
+       << hasher::native_to_utf8(native_filename) << ".";
+    return ss.str();
   }
   if (!(file_attributes & FILE_ATTRIBUTE_DIRECTORY)) {
     // not directory so just use filename
@@ -107,7 +110,10 @@ std::string filename_list(const std::string& utf8_filename,
 
       // make sure the file handle is valid
       if (filehandle == INVALID_HANDLE_VALUE)  {
-        return "invalid file path from invalid handle";
+        std::stringstream ss;
+        ss << "Invalid file handle for file "
+           << hasher::native_to_utf8(filename_star) << ".";
+        return ss.str();
       } 
 
       // skip file if "." or ".."
@@ -129,13 +135,19 @@ std::string filename_list(const std::string& utf8_filename,
              (FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS),
              NULL);
       if (opened_filehandle == INVALID_HANDLE_VALUE) {
-        return "invalid file handle";
+        std::stringstream ss;
+        ss << "Invalid file handle for file "
+           << hasher::native_to_utf8(absolute_filename) << ".";
+        return ss.str();
       }
       BY_HANDLE_FILE_INFORMATION fileinfo;
       bool got_info = GetFileInformationByHandle(opened_filehandle, &fileinfo);
       CloseHandle(opened_filehandle);
       if (!got_info) {
-        return "invalid information by file handle";
+        std::stringstream ss;
+        ss << "Invalid information by file handle for file "
+           << hasher::native_to_utf8(absolute_filename) << ".";
+        return ss.str();
       }
       uint64_t file_index = (((uint64_t)fileinfo.nFileIndexHigh)<<32) |
                             (fileinfo.nFileIndexLow);
@@ -159,7 +171,10 @@ std::string filename_list(const std::string& utf8_filename,
 
     if (GetLastError() != ERROR_NO_MORE_FILES) {
       FindClose(filehandle);
-      return "invalid file path from invalid last error";
+      std::stringstream ss;
+      ss << "Invalid file path from invalid last error while processing "
+         << hasher::native_to_utf8(filename_star) << ".";
+      return ss.str();
     }
 
     FindClose(filehandle);
