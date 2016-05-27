@@ -115,7 +115,7 @@ The first character on the line is the terminal prompt, and should not be typed.
 \item False positive block matches may be evaluated because metadata about hashes and sources are now being stored:
   \begin{itemize}
   \item Block labels and block entropy values indicate characteristics about data blocks.
-  \item Source type and the nonprobative count of a source indicate the density of useful blocks within a source.
+  \item Source type, zero count, and nonprobative count of a source indicate the density of useful blocks within a source.
 \end{itemize}
 \item Sources are now tracked by source hash rather than by name.  This fixes two problems:
   \begin{itemize}
@@ -144,6 +144,7 @@ The first character on the line is the terminal prompt, and should not be typed.
     \end{itemize}
   \item The Bloom filter has been removed in favor of the dense hash store.
   \end{itemize}
+\item Ingest, image scan, and image read interfaces are added to \hdb. \bulk is no longer required to perform these functions.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
 \end{itemize}
 
@@ -312,7 +313,7 @@ With this image and dataset, the first block hash matched is at media image offs
 2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0,
 "block_label":"","source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
-"file_type":"","nonprobative_count":10,"name_pairs":
+"file_type":"","zero_count":1,"nonprobative_count":10,"name_pairs":
 ["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
 "source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
 \end{Verbatim}
@@ -803,7 +804,7 @@ This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E0
 2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0,
 "block_label":"","source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
-"file_type":"","nonprobative_count":10,"name_pairs":
+"file_type":"","zero_count":1,"nonprobative_count":10,"name_pairs":
 ["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
 "source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
 \end{Verbatim}
@@ -1046,6 +1047,7 @@ Source data defines information about a source. Source data is identified by the
   "file_hash":"fac7051447c781b69125994c5d125637",
   "filesize":8000,
   "file_type":"exe",
+  "zero_count":1,
   "nonprobative_count":4,
   "name_pairs":["repository1","filename1","repo2","f2"]
 }
@@ -1065,6 +1067,8 @@ Source data defines information about a source. Source data is identified by the
 \verb+filesize+ & The size, in bytes, of the source file\\
 \hline
 \verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+zero_count+ & The number of blocks in the source that have all bytes in the block equal to zero\\
 \hline
 \verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
 \hline
@@ -1126,6 +1130,7 @@ The \hdb scan commands and the \hdb library interface in \verb+EXPANDED_HASH+ mo
     "file_hash": "f7035a...",
     "filesize": 800,
     "file_type": "exe",
+    "zero_count":1,
     "nonprobative_count": 2,
     "name_pairs": ["repository1", "filename1", "repo2", "f2"]
   }],
@@ -1155,6 +1160,8 @@ The \hdb scan commands and the \hdb library interface in \verb+EXPANDED_HASH+ mo
 \verb+filesize+ & The size, in bytes, of the source file\\
 \hline
 \verb+file_type+ & A classification of what type of file the source file is\\
+\hline
+\verb+zero_count+ & The number of blocks in the source that have all bytes in the block equal to zero\\
 \hline
 \verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
 \hline
@@ -1195,9 +1202,9 @@ The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one
 8000	3b6b477d391f73f67c1c01e2141dbb17    {"hash": "3b6b477d391f73f67c1
 c01e2141dbb17", "entropy": 8, "block_label": "W", "source_list_id": 57, "
 sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
-", "nonprobative_count": 2, "name_pairs": ["repository1", "filename1", "r
-epo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512
-] }
+", "zero_count": 1, "nonprobative_count": 2, "name_pairs": ["repository1"
+, "filename1", "repo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0,
+ "f7035a...", 512] }
 \end{lstlisting}
 
 \subsection{Scan Data from the \texttt{scan\_stream} Interface}
@@ -1346,7 +1353,7 @@ To import hash and source data, open an import manager, for example\\
 \item \verb+manager = import_manager_t(hashdb_dir, cmd)+
 \item \verb+manager.insert_source_name(file_binary_hash, repository_name, filename)+
 \item \verb+manager.insert_source_data(file_binary_hash, filesize, file_type,+\\
-\verb+nonprobative_count)+
+\verb+zero_count, nonprobative_count)+
 \item \verb+manager.insert_hash(binary_hash, file_binary_hash, file_offset,+\\
 \verb+entropy, block_label)+
 \item \verb+error_message = manager.import_json(json_string)+\\
@@ -1385,9 +1392,9 @@ This is the fastest scan function. It returns an approximate source, offset pair
 \item \verb+json_text = scan_manager.find_approximate_hash_count_json(binary_hash)+\\
 Export the approximate hash count in JSON format for the given binary hash else "" if not there.
 \item \verb+has_source_data = scan_manager.find_source_data(file_binary_hash,+\\
-\verb+filesize, file_type, nonprobative_count)+\\
+\verb+filesize, file_type, zero_count, nonprobative_count)+\\
 C++ syntax. Return information about the source.
-\item \verb+has_source_data, filesize, file_type, nonprobative_count =+\\
+\item \verb+has_source_data, filesize, file_type, zero_count, nonprobative_count =+\\
 \verb+scan_manager.find_source_data(file_binary_hash)+\\
 Python syntax. Return information about the source.
 \item \verb+has_source_names = scan_manager.find_source_names(file_binary_hash,+\\
@@ -1511,6 +1518,7 @@ The \textit{LMDB Source Data Store} holds all the metadata about sources:
   \item \verb+file_binary_hash+ The source file hash associated with this source ID, in binary.
   \item \verb+filesize+ The size of the source file, in bytes.
   \item \verb+file_type+ A label indicating the type of the file, user defined.
+  \item \verb+zero_count+ The number of blocks in the source that have all bytes in the block equal to zero.
   \item \verb+nonprobative_count+ The number of block hashes stored for this source which are considered to be nonprobative.  Users may wish to set the \verb+nonprobative_count+ value based on the \verb+entropy+ and \verb+block_label+ values of each block in the source.
   \end{itemize}
 \end{itemize}
