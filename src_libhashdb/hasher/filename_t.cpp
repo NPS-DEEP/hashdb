@@ -27,20 +27,24 @@ namespace hasher {
 // get filename in native string type
 filename_t utf8_to_native(const std::string &utf8_string)
 #ifdef WIN32
-// adapted from http://stackoverflow.com/questions/6693010/problem-using-multibytetowidechar
+// https://msdn.microsoft.com/en-us/library/windows/desktop/dd319072%28v=vs.85%29.aspx
+// http://stackoverflow.com/questions/6693010/problem-using-multibytetowidechar
 // MultiByteToWideChar needs Windows.h
 {
-    int wchars_num = MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, NULL ,0 );
-    if (wchars_num == 0 || wchars_num == 0xfffd) {
-        std::cerr << "Invalid UTF8 code in filename.\n";
-        return std::wstring(L"");
-    }
+    // target buffer with at least enough size for ASCII to wchar
+    size_t max_wide_char_size = utf8_string.size();
+    wchar_t* wide_chars = new wchar_t[max_wide_char_size];
+    int wide_chars_size = MultiByteToWideChar(
+                      CP_UTF8,                // code page
+                      MB_ERR_INVALID_CHARS,   // fail on any invalid input
+                      utf8_string.c_str(),    // pointer to UTF8 bytes
+                      utf8_string.size(),     // number of bytes to process
+                      wide_chars,             // pointer to output
+                      max_wide_char_size);    // size of wide_chars allocation
 
-    wchar_t* wstr = new wchar_t[wchars_num];
-    MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, wstr, wchars_num);
-    std::wstring fn16(wstr, wchars_num);
-    delete[] wstr;
-    return fn16;
+    std::wstring wide_string(wide_chars, wide_chars_size);
+    delete[] wide_chars;
+    return wide_string;
 }
 #else
 {

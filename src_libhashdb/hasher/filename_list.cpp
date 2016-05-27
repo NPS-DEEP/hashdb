@@ -59,25 +59,7 @@
 
 namespace hasher {
 
-#ifdef WIN32
-// Helper since simple string concatenation fails.
-// Derived from https://msdn.microsoft.com/en-us/library/windows/desktop/aa365200%28v=vs.85%29.aspx.
-static std::wstring wjoin(const std::wstring& a,
-                          const std::wstring& b) {
-  TCHAR join[MAX_PATH];
-  StringCchCopy(join, MAX_PATH, a.c_str());
-  StringCchCat(join, MAX_PATH, b.c_str());
-  return std::wstring(join);
-}
-static std::wstring wjoin(const std::wstring& a,
-                          const std::wstring& b,
-                          const std::wstring& c) {
-  TCHAR join[MAX_PATH];
-  StringCchCopy(join, MAX_PATH, a.c_str());
-  StringCchCat(join, MAX_PATH, b.c_str());
-  StringCchCat(join, MAX_PATH, c.c_str());
-  return std::wstring(join);
-}
+#ifdef WIN32 // Windows implementation
 
 // adapted from stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c
 
@@ -94,7 +76,10 @@ std::string filename_list(const std::string& utf8_filename,
   // first make sure the filename is a directory
   DWORD file_attributes = 0;
   file_attributes = GetFileAttributes(native_filename.c_str());
-  if (!file_attributes & FILE_ATTRIBUTE_DIRECTORY) {
+  if (file_attributes == INVALID_FILE_ATTRIBUTES) {
+    return "invalid file attributes for file";
+  }
+  if (!(file_attributes & FILE_ATTRIBUTE_DIRECTORY)) {
     // not directory so just use filename
     files->push_back(native_filename);
     return "";
@@ -113,62 +98,72 @@ std::string filename_list(const std::string& utf8_filename,
     directories.pop();
 
     // prepare filename with '\*' appended
-    const std::wstring filename_star = wjoin(path, L"\\*");
-    HANDLE hFind = INVALID_HANDLE_VALUE;
+    const std::wstring filename_star = path + L"\\*";
+    HANDLE filehandle = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATA file_data;
-    hFind = FindFirstFile(filename_star.c_str(), &file_data);
-    if (hFind == INVALID_HANDLE_VALUE)  {
-      return "invalid file path from invalid handle";
-    } 
+    filehandle = FindFirstFile(filename_star.c_str(), &file_data);
 
     do {
+
+      // make sure the file handle is valid
+      if (filehandle == INVALID_HANDLE_VALUE)  {
+        return "invalid file path from invalid handle";
+      } 
+
       // skip file if "." or ".."
       if (wcscmp(file_data.cFileName, L".") == 0 ||
                               wcscmp(file_data.cFileName, L"..") == 0) {
         continue;
       }
 
+      // prepare absolute_filename
+      std::wstring absolute_filename = path + L"\\" +
+                                         std::wstring(file_data.cFileName);
+  
       // skip file if seen before
-      HANDLE filehandle = CreateFile(
-                 file_data.cFileName,
-                 0,   // desired access
-                 FILE_SHARE_READ,
-                 NULL,  
-                 OPEN_EXISTING,
-                 (FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS),
-                 NULL);
+      HANDLE opened_filehandle = CreateFile(absolute_filename.c_str(),
+             0,   // desired access
+             FILE_SHARE_READ,
+             NULL,  
+             OPEN_EXISTING,
+             (FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS),
+             NULL);
+      if (opened_filehandle == INVALID_HANDLE_VALUE) {
+        return "invalid file handle";
+      }
       BY_HANDLE_FILE_INFORMATION fileinfo;
-      (void)GetFileInformationByHandle(filehandle, &fileinfo);
-      CloseHandle(filehandle);
-      uint64_t file_index =
-       (((uint64_t)fileinfo.nFileIndexHigh)<<32) | (fileinfo.nFileIndexLow);
+      bool got_info = GetFileInformationByHandle(opened_filehandle, &fileinfo);
+      CloseHandle(opened_filehandle);
+      if (!got_info) {
+        return "invalid information by file handle";
+      }
+      uint64_t file_index = (((uint64_t)fileinfo.nFileIndexHigh)<<32) |
+                            (fileinfo.nFileIndexLow);
       if (seen_file_indexes.find(file_index) == seen_file_indexes.end()) {
         // new
         seen_file_indexes.insert(file_index);
       } else {
-        // seen
+        // seen so skip
         continue;
       }
 
-      // prepare absolute_filename
-      std::wstring absolute_filename = wjoin(path, L"\\",
-                                         std::wstring(file_data.cFileName));
-  
       if (file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         directories.push(absolute_filename);
 
       } else {
         files->push_back(absolute_filename);
       }
-    } while (FindNextFile(hFind, &file_data) != 0);
+
+    // next
+    } while (FindNextFile(filehandle, &file_data) != 0);
 
     if (GetLastError() != ERROR_NO_MORE_FILES) {
-      FindClose(hFind);
+      FindClose(filehandle);
       return "invalid file path from invalid last error";
     }
 
-    FindClose(hFind);
-    hFind = INVALID_HANDLE_VALUE;
+    FindClose(filehandle);
+    filehandle = INVALID_HANDLE_VALUE;
   }
 
   // sort the files
@@ -180,7 +175,7 @@ std::string filename_list(const std::string& utf8_filename,
   // done
   return "";
 }
-#else // non-Windows implementation
+#else // POSIX implementation
 
 // Provide a (device, inode) encoding so we can see if the file
 // has been seen before.  From bulk_extractor/src/dig.cpp.

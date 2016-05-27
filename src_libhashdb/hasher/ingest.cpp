@@ -66,10 +66,9 @@ namespace hashdb {
     // iterate over files
     uint64_t total_bytes = 0;
     for (hasher::filenames_t::const_iterator it=filenames.begin();
-                                           it != filenames.end(); it++) {
+                                           it != filenames.end(); ++it) {
       const hasher::file_reader_t file_reader(*it);
       total_bytes += file_reader.filesize;
-      ++it;
     }
     return total_bytes;
   }
@@ -306,6 +305,9 @@ namespace hashdb {
     // get the list of filenames to be processed
     hasher::filenames_t filenames;
     error_message = hasher::filename_list(ingest_path, &filenames);
+    if (error_message.size() != 0) {
+      return error_message;
+    }
 
     // calculate the total number of buffers that will be processed
     uint64_t total_bytes = calculate_total_bytes(filenames);
@@ -361,7 +363,6 @@ namespace hashdb {
         ss << "# Unable to import file: " << file_reader.error_message << "\n";
         hasher::tprint(ss.str());
       }
-      ++it;
     }
 
     // done
