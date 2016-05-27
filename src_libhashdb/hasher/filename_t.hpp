@@ -7,16 +7,16 @@
 #define FILENAME_T_HPP
 
 #include <string>
-#include <vector>
+#include <set>
 
 namespace hasher {
 
 #ifdef WIN32
   typedef std::wstring filename_t;
-  typedef std::vector<std::wstring> filenames_t;
+  typedef std::set<std::wstring> filenames_t;
 #else    
   typedef std::string filename_t;
-  typedef std::vector<std::string> filenames_t;
+  typedef std::set<std::string> filenames_t;
 #endif
 
   // get filename in native string type

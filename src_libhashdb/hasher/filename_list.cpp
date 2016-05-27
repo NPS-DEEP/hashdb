@@ -54,11 +54,77 @@
 #include <fcntl.h>
 #include <stack>
 #include <set>
-#include <algorithm>  // for std::sort
 #include "filename_t.hpp"
 
 namespace hasher {
 
+// ************************************************************
+// helper functions
+// ************************************************************
+// return true if filename ends with suffix
+static bool ends_with(const filename_t& filename, const filename_t& suffix) {
+  if(suffix.size() > filename.size()) return false;
+  return filename.substr(filename.size()-suffix.size())==suffix;
+}
+
+// return true if filename can be the first filename of a multipart series
+static bool is_multipart(const filename_t& filename) {
+#ifdef WIN32
+  return (ends_with(filename, L".E01") ||
+          ends_with(filename, L".e01"));
+#else
+  return (ends_with(filename, ".E01") ||
+          ends_with(filename, ".e01"));
+#endif
+}
+
+// strip out non-first multipart filenames
+static void strip_non_first_multipart_filenames(filenames_t& filenames) {
+  const filenames_t names(filenames);
+
+  for (filenames_t::const_iterator it = names.begin(); it != names.end();
+                                                                     ++it) {
+    filename_t filename = *it;
+    if (is_multipart(filename)) {
+      // get root
+      filename_t filename_root = filename.substr(0, filename.size()-2);
+
+      // remove filenames of root after first
+      for (size_t i=2;;++i) {
+#ifdef WIN32
+        std::wstringstream ss;
+#else
+        std::stringstream ss;
+#endif
+        // concatenate root and digit
+        ss << filename_root;
+        if (i < 10) {
+          // prepend 0 if <= 09
+#ifdef WIN32
+          ss << L"0";
+#else
+          ss << "0";
+#endif
+        }
+        ss << i;
+        filename_t next_filename = ss.str();
+
+        // remove next filename from filenames
+        size_t num_erased = filenames.erase(next_filename);
+        if (num_erased == 1) {
+          // keep going
+        } else {
+          // done with this root
+          break;
+        }
+      }
+    }
+  }
+}
+
+// ************************************************************
+// filename_list
+// ************************************************************
 #ifdef WIN32 // Windows implementation
 
 // adapted from stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c
@@ -84,7 +150,7 @@ std::string filename_list(const std::string& utf8_filename,
   }
   if (!(file_attributes & FILE_ATTRIBUTE_DIRECTORY)) {
     // not directory so just use filename
-    files->push_back(native_filename);
+    files->insert(native_filename);
     return "";
   }
 
@@ -163,7 +229,7 @@ std::string filename_list(const std::string& utf8_filename,
         directories.push(absolute_filename);
 
       } else {
-        files->push_back(absolute_filename);
+        files->insert(absolute_filename);
       }
 
     // next
@@ -181,11 +247,8 @@ std::string filename_list(const std::string& utf8_filename,
     filehandle = INVALID_HANDLE_VALUE;
   }
 
-  // sort the files
-  std::sort(files->begin(), files->end());
-
   // strip out non-first recursive filenames such as *.E02, etc.
-  // zz TBD
+  strip_non_first_multipart_filenames(*files);
 
   // done
   return "";
@@ -215,7 +278,7 @@ std::string filename_list(const std::string& filename, filenames_t* files) {
   DIR *d = opendir(filename.c_str());
   if (d == NULL) {
     // filename is not a directory
-    files->push_back(filename);
+    files->insert(filename);
     return "";
   } else {
     // close resource
@@ -285,7 +348,7 @@ std::string filename_list(const std::string& filename, filenames_t* files) {
       DIR *name = opendir(next_filename.c_str());
       if (name == NULL) {
         // filename is not a directory
-        files->push_back(next_filename);
+        files->insert(next_filename);
       } else {
         // filename is a directory
         directories.push(next_filename);
@@ -293,11 +356,8 @@ std::string filename_list(const std::string& filename, filenames_t* files) {
     }
   }
 
-  // sort the files
-  std::sort(files->begin(), files->end());
-
   // strip out non-first recursive filenames such as *.E02, etc.
-  // zz TBD
+  strip_non_first_multipart_filenames(*files);
 
   // done
   return "";
