@@ -92,7 +92,7 @@ class entropy_calculator_t {
     } else {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();
-      ::memcpy (b, buffer+offset, offset + count - buffer_size);
+      ::memcpy (b, buffer+offset, buffer_size - offset);
       size_t entropy = calculate_private(b, count);
       delete[] b;
       return entropy;

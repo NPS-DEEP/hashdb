@@ -112,6 +112,7 @@ HASHER_INCS = \
 	hasher/tprint.hpp
 
 LIBHASHDB_INCS = \
+	crc32.cpp \
 	crc32.h \
 	file_modes.h \
 	fsync.h \
