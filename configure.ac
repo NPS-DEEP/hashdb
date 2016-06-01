@@ -218,17 +218,16 @@ AC_SYS_POSIX_TERMIOS
 
 ################################################################
 ## OpenSSL Support is required for md5 hash
-
-if test  x"$mingw" = x"yes";  then
-  AC_CHECK_LIB([z], [gzdopen],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
-fi
-
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
 AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
 AC_CHECK_LIB([ssl],[SSL_library_init])
 AC_CHECK_FUNCS([EVP_get_digestbyname],,
 	AC_MSG_ERROR([SSL/OpenSSL support required]))
+
+################################################################
+## zlib is required for zip, gzip recursive decompression
+AC_CHECK_LIB([z], [inflate],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
 
 ################################################################
 ## support required by LMDB

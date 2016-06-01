@@ -103,6 +103,8 @@ HASHER_INCS = \
 	hasher/num_cpus.hpp \
 	hasher/process_job.cpp \
 	hasher/process_job.hpp \
+	hasher/process_recursive.cpp \
+	hasher/process_recursive.hpp \
 	hasher/read_bytes.cpp \
 	hasher/scan_image.cpp \
 	hasher/scan_tracker.hpp \

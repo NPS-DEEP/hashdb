@@ -27,10 +27,12 @@
 #define JOB_HPP
 
 #include <cstring>
+#include <sstream>
 #include <cstdlib>
 #include <stdint.h>
 //#include <unistd.h>
 #include "hashdb.hpp"
+#include "hash_calculator.hpp"
 #include "ingest_tracker.hpp"
 #include "scan_tracker.hpp"
 
@@ -39,6 +41,18 @@ namespace hasher {
 enum job_type_t {INGEST, SCAN};
 
 class job_t {
+
+  private:
+  // return recursed filename based on parent attributes
+  std::string recursed_filename(const std::string& parent_filename,
+                                const size_t offset,
+                                const std::string& compression_name) {
+    std::stringstream ss;
+    ss << parent_filename << "-"
+       << offset << "-"
+       << compression_name;
+    return ss.str();
+  }
 
   public:
   const job_type_t job_type;
@@ -57,7 +71,7 @@ class job_t {
   const size_t buffer_size;
   const size_t buffer_data_size;
   const size_t max_recursion_depth;
-  const size_t recursion_count;
+  const size_t recursion_depth;
   std::string error_message;
 
   job_t(const job_type_t p_job_type,
@@ -70,13 +84,13 @@ class job_t {
                const size_t p_step_size,
                const size_t p_block_size,
                const std::string p_file_hash,
-               const std::string p_file_name,
+               const std::string p_filename,
                const uint64_t p_file_offset,
                const uint8_t* const p_buffer,
                const size_t p_buffer_size,
                const size_t p_buffer_data_size,
                const size_t p_max_recursion_depth,
-               const size_t p_recursion_count) :
+               const size_t p_recursion_depth) :
                    job_type(p_job_type),
                    import_manager(p_import_manager),
                    ingest_tracker(p_ingest_tracker),
@@ -87,13 +101,13 @@ class job_t {
                    step_size(p_step_size),
                    block_size(p_block_size),
                    file_hash(p_file_hash),
-                   filename(p_file_name),
+                   filename(p_filename),
                    file_offset(p_file_offset),
                    buffer(p_buffer),
                    buffer_size(p_buffer_size),
                    buffer_data_size(p_buffer_data_size),
                    max_recursion_depth(p_max_recursion_depth),
-                   recursion_count(p_recursion_count),
+                   recursion_depth(p_recursion_depth),
                    error_message("") {
   }
 
@@ -113,13 +127,13 @@ class job_t {
         const size_t p_step_size,
         const size_t p_block_size,
         const std::string p_file_hash,
-        const std::string p_file_name,
+        const std::string p_filename,
         const uint64_t p_file_offset,
         const uint8_t* const p_buffer,
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t p_recursion_count) {
+        const size_t p_recursion_depth) {
 
     return new job_t(
                      job_type_t::INGEST,
@@ -132,13 +146,13 @@ class job_t {
                      p_step_size,
                      p_block_size,
                      p_file_hash,
-                     p_file_name,
+                     p_filename,
                      p_file_offset,
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,
                      p_max_recursion_depth,
-                     p_recursion_count);
+                     p_recursion_depth);
   }
 
   // scan
@@ -147,14 +161,13 @@ class job_t {
         hasher::scan_tracker_t* const p_scan_tracker,
         const size_t p_step_size,
         const size_t p_block_size,
-        const std::string p_file_name,
+        const std::string p_filename,
         const uint64_t p_file_offset,
         const uint8_t* const p_buffer,
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t p_recursion_count) {
-
+        const size_t p_recursion_depth) {
 
     return new job_t(
                      job_type_t::SCAN,
@@ -167,13 +180,57 @@ class job_t {
                      p_step_size,
                      p_block_size,
                      "",   // file hash
-                     p_file_name,
+                     p_filename,
                      p_file_offset,
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,
                      p_max_recursion_depth,
-                     p_recursion_count);
+                     p_recursion_depth);
+  }
+
+  // recursed
+  static job_t* new_recursed_job(
+        const hasher::job_t& parent_job,
+        const size_t relative_offset,
+        const std::string& compression_name,
+        const uint8_t* const uncompressed_buffer,
+        const size_t uncompressed_size) {
+
+    // calculate the recursed file hash
+    hash_calculator_t hash_calculator;
+    const std::string recursed_file_hash = hash_calculator.calculate(
+            uncompressed_buffer, uncompressed_size, 0, uncompressed_size);
+
+    // calculate the absolute offset
+    const size_t absolute_offset = (parent_job.recursion_depth == 0)
+               ? parent_job.file_offset + relative_offset : relative_offset;
+
+    // calculate the recursed filename
+    std::stringstream ss;
+    ss << parent_job.filename<< "-"
+       << absolute_offset << "-"
+       << compression_name;
+    const std::string recursed_filename = ss.str();
+
+    return new job_t(
+                   parent_job.job_type,
+                   parent_job.import_manager,
+                   parent_job.ingest_tracker,
+                   parent_job.whitelist_scan_manager,
+                   parent_job.repository_name,
+                   parent_job.scan_manager,
+                   parent_job.scan_tracker,
+                   parent_job.step_size,
+                   parent_job.block_size,
+                   recursed_file_hash,
+                   recursed_filename,
+                   0, // file_offset
+                   uncompressed_buffer,
+                   uncompressed_size,
+                   uncompressed_size,
+                   parent_job.max_recursion_depth,
+                   parent_job.recursion_depth + 1);
   }
 };
 

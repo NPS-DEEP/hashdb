@@ -106,7 +106,7 @@ namespace hashdb {
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
                  max_recursion_depth,
-                 0));    // recursion_count
+                 0));    // recursion_depth
 
     // read and push remaining buffers onto the job queue
     for (uint64_t offset = BUFFER_DATA_SIZE;
@@ -151,7 +151,7 @@ namespace hashdb {
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
                  max_recursion_depth,
-                 0));  // recursion_count
+                 0));  // recursion_depth
     }
     return "";
   }

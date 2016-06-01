@@ -50,6 +50,7 @@
 #include "job.hpp"
 #include "tprint.hpp"
 #include "process_job.hpp"
+#include "process_recursive.hpp"
 #include "hash_calculator.hpp"
 #include "entropy_calculator.hpp"
 #include "calculate_block_label.hpp"
@@ -74,51 +75,58 @@ namespace hasher {
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
 
-    // get hash calculator object
-    hasher::hash_calculator_t hash_calculator;
+    // ingest block hashes along with their calculated information
+    if (!job.ingest_tracker->seen_source(job.file_hash)) {
 
-    // get entropy calculator object
-    hasher::entropy_calculator_t entropy_calculator(job.block_size);
+      // get hash calculator object
+      hasher::hash_calculator_t hash_calculator;
 
-    // iterate over buffer to add block hashes and metadata
-    size_t zero_count = 0;
-    size_t nonprobative_count = 0;
-    for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
+      // get entropy calculator object
+      hasher::entropy_calculator_t entropy_calculator(job.block_size);
 
-      // skip if all the bytes are the same
-      if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
-        ++zero_count;
-        continue;
+      // iterate over buffer to add block hashes and metadata
+      size_t zero_count = 0;
+      size_t nonprobative_count = 0;
+      for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
+
+        // skip if all the bytes are the same
+        if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+          ++zero_count;
+          continue;
+        }
+
+        // calculate block hash
+        const std::string block_hash = hash_calculator.calculate(job.buffer,
+                    job.buffer_size, i, job.block_size);
+
+        // calculate entropy
+        const uint64_t entropy = entropy_calculator.calculate(job.buffer,
+                    job.buffer_size, i, job.block_size);
+
+        // calculate block label
+        const std::string block_label = hasher::calculate_block_label(
+                    job.buffer, job.buffer_size, i, job.block_size);
+        if (block_label.size() != 0) {
+          ++nonprobative_count;
+        }
+
+        // add block hash to DB
+        job.import_manager->insert_hash(block_hash, job.file_hash,
+                    job.file_offset+i, entropy, block_label);
       }
 
-      // calculate block hash
-      const std::string block_hash = hash_calculator.calculate(job.buffer,
-                  job.buffer_size, i, job.block_size);
-
-      // calculate entropy
-      const uint64_t entropy = entropy_calculator.calculate(job.buffer,
-                  job.buffer_size, i, job.block_size);
-
-      // calculate block label
-      const std::string block_label = hasher::calculate_block_label(job.buffer,
-                  job.buffer_size, i, job.block_size);
-      if (block_label.size() != 0) {
-        ++nonprobative_count;
-      }
-
-      // add block hash to DB
-      job.import_manager->insert_hash(block_hash, job.file_hash,
-                  job.file_offset+i, entropy, block_label);
+      // submit tracked source counts to the ingest tracker for final reporting
+      job.ingest_tracker->track_source(
+                               job.file_hash, zero_count, nonprobative_count);
     }
 
-    // submit tracked source counts to the ingest tracker for final reporting
-    job.ingest_tracker->track_source(
-                               job.file_hash, zero_count, nonprobative_count);
-
-    // submit tracked bytes processed to the ingest tracker for final reporting
-    if (job.recursion_count == 0) {
+    // submit bytes processed to the ingest tracker for final reporting
+    if (job.recursion_depth == 0) {
       job.ingest_tracker->track_bytes(job.buffer_data_size);
     }
+
+    // recursively find and process any uncompressed data
+    process_recursive(job);
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
@@ -164,9 +172,12 @@ namespace hasher {
     job.scan_tracker->track_zero_count(zero_count);
 
     // submit tracked bytes processed to the scan tracker for final reporting
-    if (job.recursion_count == 0) {
+    if (job.recursion_depth == 0) {
       job.scan_tracker->track_bytes(job.buffer_data_size);
     }
+
+    // recursively find and process any uncompressed data
+    process_recursive(job);
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;

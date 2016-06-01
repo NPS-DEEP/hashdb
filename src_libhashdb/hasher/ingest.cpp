@@ -162,19 +162,14 @@ namespace hashdb {
     import_manager.insert_source_name(file_hash, repository_name,
                                       file_reader.filename);
 
-    // calculate the number of buffer parts required to process this file
-
-    // do not reprocess file if file_hash is already in ingest_tracker
-    if (ingest_tracker.seen_source(file_hash)) {
-      ingest_tracker.track_bytes(file_reader.filesize);
-      delete[] b;
-      return "skipping duplicate file";
-    }
-
-    // add source file to ingest_tracker
+    // define the file type, currently not defined
     const std::string file_type = "";
+
+    // calculate the number of buffer parts required to process this file
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
                                BUFFER_DATA_SIZE;
+
+    // add source file to ingest_tracker
     ingest_tracker.add_source(file_hash, file_reader.filesize,
                               file_type, parts_total);
 
@@ -197,7 +192,7 @@ namespace hashdb {
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
                  max_recursion_depth,
-                 0));    // recursion_count
+                 0));    // recursion_depth
 
     // read and push remaining buffers onto the job queue
     for (uint64_t offset = BUFFER_DATA_SIZE;
@@ -246,7 +241,7 @@ namespace hashdb {
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
                  max_recursion_depth,
-                 0));  // recursion_count
+                 0));  // recursion_depth
     }
     return "";
   }
