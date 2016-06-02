@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <sstream>
 #include "../src_libhashdb/hashdb.hpp"
+#include "s_to_uint64.hpp"
 #include "progress_tracker.hpp"
 
 class import_tab_t {
@@ -100,7 +101,7 @@ class import_tab_t {
 
     // get file offset
     size_t sector_index;
-    sector_index = std::atol(line.substr(tab_index2 + 1).c_str());
+    sector_index = s_to_uint64(line.substr(tab_index2 + 1));
     if (sector_index == 0) {
       // index starts at 1 so 0 is invalid
       std::cerr << "Invalid sector index on line " << line_number

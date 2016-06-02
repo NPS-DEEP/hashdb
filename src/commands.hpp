@@ -864,10 +864,10 @@ namespace commands {
                          const std::string& count_string) {
 
     // convert offset string to number
-    const uint64_t offset = atol(offset_string.c_str());
+    const uint64_t offset = s_to_uint64(offset_string);
 
     // convert count string to number
-    const uint64_t count = atol(count_string.c_str());
+    const uint64_t count = s_to_uint64(count_string);
 
     // read the bytes
     std::string bytes;
@@ -896,7 +896,7 @@ namespace commands {
     require_hashdb_dir(hashdb_dir);
 
     // convert count string to number
-    const uint64_t count = atol(count_string.c_str());
+    const uint64_t count = s_to_uint64(count_string);
 
     // read settings for byte alignment
     hashdb::settings_t settings;
@@ -944,7 +944,7 @@ namespace commands {
     require_hashdb_dir(hashdb_dir);
 
     // convert count string to number
-    const uint64_t count = atol(count_string.c_str());
+    const uint64_t count = s_to_uint64(count_string);
 
     // initialize random seed
     srand (time(NULL)+1); // ensure seed is different by advancing 1 second
@@ -983,7 +983,7 @@ namespace commands {
     require_hashdb_dir(hashdb_dir);
 
     // convert count string to number
-    const uint64_t count = atol(count_string.c_str());
+    const uint64_t count = s_to_uint64(count_string);
 
     // read settings for byte alignment
     hashdb::settings_t settings;
@@ -1038,7 +1038,7 @@ namespace commands {
     require_hashdb_dir(hashdb_dir);
 
     // convert count string to number
-    const uint64_t count = atol(count_string.c_str());
+    const uint64_t count = s_to_uint64(count_string);
 
     // open manager
     hashdb::scan_manager_t manager(hashdb_dir);

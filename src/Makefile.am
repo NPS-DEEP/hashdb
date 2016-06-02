@@ -38,6 +38,7 @@ HASHDB_INCS = \
 	main.cpp \
 	progress_tracker.hpp \
 	scan_hashes.hpp \
+	s_to_uint64.hpp \
 	usage.hpp
 
 hashdb_SOURCES = $(HASHDB_INCS)

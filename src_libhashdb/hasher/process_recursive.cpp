@@ -81,6 +81,21 @@ namespace hasher {
                const size_t uncompressed_size) {
 std::cerr << "proces_recursive.recurse size " << uncompressed_size << "\n";
 
+    // make sure there is something to do
+    if (uncompressed_size == 0) {
+      // no data so free the buffer and be done
+      delete[] uncompressed_buffer;
+      return;
+    }
+
+    // impose max recursion depth
+    if (parent_job.recursion_depth >= 7) {
+      // too much recursive depth
+      delete[] uncompressed_buffer;
+      return;
+    }
+
+    // process recursed job based on job type
     switch(parent_job.job_type) {
       // this is similar to ingest.cpp
       case hasher::job_type_t::INGEST: {
@@ -191,12 +206,21 @@ std::cerr << "proces_recursive.recurse size " << uncompressed_size << "\n";
     return (b[0] == 0x50 && b[1]==0x4B && b[2]==0x03 && b[3]==0x04);
   }
 
-  static void process_zip(const hasher::job_t& job, size_t offset) {
-std::cerr << "process_zip.a\n";
+  // always returns new out_buf, even if empty
+  static void new_from_zip(const std::string& filename,
+                           const uint8_t* const in_buf, const size_t in_size,
+                           const size_t in_offset,
+                           uint8_t** out_buf, size_t* out_size) {
 
-    const uint8_t* const b = job.buffer + offset;
+std::cerr << "new_from_zip.a\n";
 
-    const uint16_t version_needed_to_extract= u16(b+4);
+    // pointer to the output buffer that will be created using new
+    *out_buf = NULL;
+    *out_size = 0;
+
+    const uint8_t* const b = in_buf + in_offset;
+
+//    const uint16_t version_needed_to_extract= u16(b+4);
     const uint32_t compr_size=u32(b+18);
     const uint32_t uncompr_size=u32(b+22);
     const uint16_t name_len=u16(b+26);
@@ -204,30 +228,29 @@ std::cerr << "process_zip.a\n";
 
 //    // validate version
 //    if (version_needed_to_extract != 20) {
-//std::cerr << "process_zip.version needed " << version_needed_to_extract << "\n";
+//std::cerr << ".version needed " << version_needed_to_extract << "\n";
 //      return;
 //    }
 
-std::cerr << "process_zip.b\n";
     // validate name length
     if (name_len == 0 || name_len > zip_name_len_max) {
+      *out_buf = new uint8_t[0]();
       return;
     }
 
-std::cerr << "process_zip.c\n";
     // calculate offset to compressed data
-    uint32_t compressed_offset = offset + 30 + name_len + extra_field_len;
+    uint32_t compressed_offset = in_offset + 30 + name_len + extra_field_len;
 
     // offset must be inside the buffer
-    if (compressed_offset >= job.buffer_size) {
+    if (compressed_offset >= in_size) {
+      *out_buf = new uint8_t[0]();
       return;
     }
 
-std::cerr << "process_zip.d\n";
     // size of compressed data
     const uint32_t compressed_size = (compr_size == 0 ||
-               compressed_offset + compr_size > job.buffer_size) 
-                          ? job.buffer_size - compressed_offset : compr_size;
+               compressed_offset + compr_size > in_size) 
+                          ? in_size - compressed_offset : compr_size;
 
     // size of uncompressed data
     const uint32_t potential_uncompressed_size =
@@ -236,18 +259,17 @@ std::cerr << "process_zip.d\n";
     
     // skip if uncompressed size is too small
     if (potential_uncompressed_size < uncompressed_size_min) {
+      *out_buf = new uint8_t[0]();
       return;
     }
 
-std::cerr << "process_zip.e\n";
     // create the uncompressed buffer
-    uint8_t* uncompressed_buffer =
-                 new (std::nothrow) uint8_t[potential_uncompressed_size]();
-    if (uncompressed_buffer == NULL) {
+    *out_buf = new (std::nothrow) uint8_t[potential_uncompressed_size]();
+    if (*out_buf == NULL) {
       // comment that the buffer acquisition request failed
       std::stringstream ss;
       ss << "# bad memory allocation in uncompression in file "
-         << job.filename << "\n";
+         << filename << "\n";
       tprint(ss.str());
       return;
     }
@@ -256,35 +278,32 @@ std::cerr << "process_zip.e\n";
     z_stream zs;
     memset(&zs, 0, sizeof(zs));
     zs.next_in = const_cast<Bytef *>(reinterpret_cast<const Bytef *>(
-                                         job.buffer + compressed_offset));
+                                         in_buf + compressed_offset));
     zs.avail_in = compressed_size;
-    zs.next_out = uncompressed_buffer;
+    zs.next_out = *out_buf;
     zs.avail_out = potential_uncompressed_size;
-
-    // total_out
-    uint32_t total_out = 0;
 
     // initialize zlib for this decompression
     int r = inflateInit2(&zs, -15);
     if (r == 0) {
+
       // inflate
       inflate(&zs, Z_SYNC_FLUSH);
 
-      // note total_out
-      total_out = zs.total_out;
+      // set out_size
+      *out_size = zs.total_out;
 
       // close zlib
       inflateEnd(&zs);
-    }
-std::cerr << "process_zip.total_out " << total_out << ", potential_uncompressed_size: " << potential_uncompressed_size << "\n";
-
-    // recurse if there was any decompressed data
-    if (total_out > 0) {
-      recurse(job, offset, "zip", uncompressed_buffer, total_out);
+      return;
 
     } else {
-      // release the empty uncompressed_buffer
-      delete[] uncompressed_buffer;
+
+      // comment that zlib inflate failed
+      std::stringstream ss;
+      ss << "# zlib inflate failed in file " << filename << "\n";
+      tprint(ss.str());
+      return;
     }
   }
 
@@ -301,14 +320,26 @@ std::cerr << "process_recursive.a\n";
     for (size_t i=0; i+100 < job.buffer_data_size; ++i) {
 
       if (zip_signature(job.buffer+i)) {
-        process_zip(job, i);
-      }
+
+        // inflate and recurse
+        uint8_t* out_buf;
+        size_t out_size;
+        new_from_zip(job.filename, job.buffer, job.buffer_size, i,
+                     &out_buf, &out_size);
+        recurse(job, i, "zip", out_buf, out_size);
 
 /*
-      if (gzip_signature(job.buffer+i)) {
-        process_gzip(job, i);
-      }
+      } else if (gzip_signature(job.buffer+i)) {
+
+        // inflate and recurse
+        uint8_t** out_buf;
+        size_t* out_size;
+        new_from_gzip(job.filename, job.buffer, job.buffer_size, i,
+                     *out_buf, *out_size);
+        recurse(job, i, "gzip", *out_buf, *out_size);
 */
+      }
+
     }
   }
 } // end namespace hasher

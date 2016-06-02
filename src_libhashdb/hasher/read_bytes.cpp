@@ -53,7 +53,7 @@
 
 namespace hashdb {
 
-  // read bytes from image.
+  // read bytes from image starting at offset.
   std::string read_bytes(const std::string& image_filename,
                          const uint64_t offset,
                          const uint64_t count,
@@ -69,24 +69,100 @@ namespace hashdb {
 
     // create a buffer to read into
     uint8_t* b = new (std::nothrow) uint8_t[count]();
-      if (b == NULL) {
-        // abort
-        return "bad memory allocation";
-      }
+    if (b == NULL) {
+      // abort
+      return "bad memory allocation";
+    }
 
-      // read into b
-      size_t b_bytes_read = 0;
-      const std::string error_message =
+    // read into b
+    size_t b_bytes_read = 0;
+    const std::string error_message =
                           file_reader.read(offset, b, count, &b_bytes_read);
 
-      if (error_message.size() == 0) {
-        // good, print bytes to stdout
-        bytes = std::string(reinterpret_cast<const char*>(b), b_bytes_read);
-      }
+    if (error_message.size() == 0) {
+      // good, print bytes to stdout
+      bytes = std::string(reinterpret_cast<const char*>(b), b_bytes_read);
+    }
 
-      // done
-      delete[] b;
-      return error_message;
+    // done
+    delete[] b;
+    return error_message;
+  }
+
+  // read bytes from image starting at forensic path.
+  std::string read_bytes_fp(const std::string& image_filename,
+                            const std::string& forensic_path,
+                            const uint64_t count,
+                            std::string& bytes) {
+/*
+
+    // split forensic path into array of parts
+    std::vector<std::string> parts;
+    std::stringstream ss(forensic_path);
+    std::string part;
+    while (std::getline(ss, part, '-')) {
+      parts.push_back(part);
+    }
+
+    // get file offset
+    std::vector<std::string>::const_iterator it = parts.begin();
+    if (it == parts.end()) {
+      return "invalid forensic path";
+    }
+    uint64_t offset = 0;
+    std::istringstream iss(str);
+    iss >> offset;
+
+    // open the file reader
+    const hasher::file_reader_t file_reader(hasher::utf8_to_native(
+                                                           image_filename));
+    if (file_reader.error_message.size() > 0) {
+      // the file failed to open
+      return file_reader.error_message;
+    }
+
+    // create a buffer to read into, allow 1MB
+    static const size_t in_size = 1048576; // 1MiB = 2^20
+    uint8_t* in_buf = new (std::nothrow) uint8_t[buffer_size]();
+    if (in_buf == NULL) {
+      // abort
+      return "bad memory allocation";
+    }
+
+    // read into in_buf
+    size_t b_bytes_read = 0;
+    const std::string error_message =
+               file_reader.read(offset, in_buf, buffer_size, &b_bytes_read);
+
+    // now recursively read down the forensic path
+    while (++it != parts.end()) {
+      std::string compression_type = *it;
+
+      // pointer to the output buffer that will be created using new
+      *out_buf = NULL;
+      *out_size = 0;
+
+      if (compression_type == "zip") {
+        new_from_zip(image_filename, in_buf, in_size, &out_buf, &out_size);
+        delete[] in_buf;
+}
+}
+
+
+
+    // get compression type
+
+    if (error_message.size() == 0) {
+      // good, print bytes to stdout
+      bytes = std::string(reinterpret_cast<const char*>(b), b_bytes_read);
+    }
+
+    // done
+    delete[] b;
+*/
+
+//    return error_message;
+    return "";
   }
 
 } // end namespace hashdb
