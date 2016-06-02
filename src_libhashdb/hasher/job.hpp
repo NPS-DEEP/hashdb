@@ -43,37 +43,6 @@ enum job_type_t {INGEST, SCAN};
 class job_t {
 
   private:
-  // return recursed filename based on parent attributes
-  std::string recursed_filename(const std::string& parent_filename,
-                                const size_t offset,
-                                const std::string& compression_name) {
-    std::stringstream ss;
-    ss << parent_filename << "-"
-       << offset << "-"
-       << compression_name;
-    return ss.str();
-  }
-
-  public:
-  const job_type_t job_type;
-  hashdb::import_manager_t* const import_manager;
-  hasher::ingest_tracker_t* const ingest_tracker;
-  const hashdb::scan_manager_t* const whitelist_scan_manager;
-  const std::string repository_name;
-  hashdb::scan_manager_t* const scan_manager;
-  hasher::scan_tracker_t* const scan_tracker;
-  const size_t step_size;
-  const size_t block_size;
-  const std::string file_hash;
-  const std::string filename;
-  const uint64_t file_offset;
-  const uint8_t* const buffer;
-  const size_t buffer_size;
-  const size_t buffer_data_size;
-  const size_t max_recursion_depth;
-  const size_t recursion_depth;
-  std::string error_message;
-
   job_t(const job_type_t p_job_type,
                hashdb::import_manager_t* const p_import_manager,
                hasher::ingest_tracker_t* const p_ingest_tracker,
@@ -86,6 +55,10 @@ class job_t {
                const std::string p_file_hash,
                const std::string p_filename,
                const uint64_t p_file_offset,
+               const bool p_disable_recursive_processing,
+               const bool p_disable_calculate_entropy,
+               const bool p_disable_calculate_labels,
+               const bool p_disable_ingest_hashes,
                const uint8_t* const p_buffer,
                const size_t p_buffer_size,
                const size_t p_buffer_data_size,
@@ -103,6 +76,10 @@ class job_t {
                    file_hash(p_file_hash),
                    filename(p_filename),
                    file_offset(p_file_offset),
+                   disable_recursive_processing(p_disable_recursive_processing),
+                   disable_calculate_entropy(p_disable_calculate_entropy),
+                   disable_calculate_labels(p_disable_calculate_labels),
+                   disable_ingest_hashes(p_disable_ingest_hashes),
                    buffer(p_buffer),
                    buffer_size(p_buffer_size),
                    buffer_data_size(p_buffer_data_size),
@@ -111,12 +88,33 @@ class job_t {
                    error_message("") {
   }
 
-  private:
   // do not allow copy or assignment
   job_t(const job_t&);
   job_t& operator=(const job_t&);
 
   public:
+  const job_type_t job_type;
+  hashdb::import_manager_t* const import_manager;
+  hasher::ingest_tracker_t* const ingest_tracker;
+  const hashdb::scan_manager_t* const whitelist_scan_manager;
+  const std::string repository_name;
+  hashdb::scan_manager_t* const scan_manager;
+  hasher::scan_tracker_t* const scan_tracker;
+  const size_t step_size;
+  const size_t block_size;
+  const std::string file_hash;
+  const std::string filename;
+  const uint64_t file_offset;
+  const bool disable_recursive_processing;
+  const bool disable_calculate_entropy;
+  const bool disable_calculate_labels;
+  const bool disable_ingest_hashes;
+  const uint8_t* const buffer;
+  const size_t buffer_size;
+  const size_t buffer_data_size;
+  const size_t max_recursion_depth;
+  const size_t recursion_depth;
+  std::string error_message;
 
   // ingest
   static job_t* new_ingest_job(
@@ -129,6 +127,10 @@ class job_t {
         const std::string p_file_hash,
         const std::string p_filename,
         const uint64_t p_file_offset,
+        const bool p_disable_recursive_processing,
+        const bool p_disable_calculate_entropy,
+        const bool p_disable_calculate_labels,
+        const bool p_disable_ingest_hashes,
         const uint8_t* const p_buffer,
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
@@ -148,6 +150,10 @@ class job_t {
                      p_file_hash,
                      p_filename,
                      p_file_offset,
+                     p_disable_recursive_processing,
+                     p_disable_calculate_entropy,
+                     p_disable_calculate_labels,
+                     p_disable_ingest_hashes,
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,
@@ -163,6 +169,7 @@ class job_t {
         const size_t p_block_size,
         const std::string p_filename,
         const uint64_t p_file_offset,
+        const bool p_disable_recursive_processing,
         const uint8_t* const p_buffer,
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
@@ -182,55 +189,15 @@ class job_t {
                      "",   // file hash
                      p_filename,
                      p_file_offset,
+                     p_disable_recursive_processing,
+                     false, // disable_calculate_entropy
+                     false, // disable_calculate_labels
+                     false, // disable_ingest_hashes
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,
                      p_max_recursion_depth,
                      p_recursion_depth);
-  }
-
-  // recursed
-  static job_t* new_recursed_job(
-        const hasher::job_t& parent_job,
-        const size_t relative_offset,
-        const std::string& compression_name,
-        const uint8_t* const uncompressed_buffer,
-        const size_t uncompressed_size) {
-
-    // calculate the recursed file hash
-    hash_calculator_t hash_calculator;
-    const std::string recursed_file_hash = hash_calculator.calculate(
-            uncompressed_buffer, uncompressed_size, 0, uncompressed_size);
-
-    // calculate the absolute offset
-    const size_t absolute_offset = (parent_job.recursion_depth == 0)
-               ? parent_job.file_offset + relative_offset : relative_offset;
-
-    // calculate the recursed filename
-    std::stringstream ss;
-    ss << parent_job.filename<< "-"
-       << absolute_offset << "-"
-       << compression_name;
-    const std::string recursed_filename = ss.str();
-
-    return new job_t(
-                   parent_job.job_type,
-                   parent_job.import_manager,
-                   parent_job.ingest_tracker,
-                   parent_job.whitelist_scan_manager,
-                   parent_job.repository_name,
-                   parent_job.scan_manager,
-                   parent_job.scan_tracker,
-                   parent_job.step_size,
-                   parent_job.block_size,
-                   recursed_file_hash,
-                   recursed_filename,
-                   0, // file_offset
-                   uncompressed_buffer,
-                   uncompressed_size,
-                   uncompressed_size,
-                   parent_job.max_recursion_depth,
-                   parent_job.recursion_depth + 1);
   }
 };
 

@@ -617,7 +617,7 @@ Hash databases may be imported to in several ways.  Commands to import and expor
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-e] <hashdb.hdb>+ \verb+<source directory>+& Computes and imports hashes from files under the source directory. Marks whitelist hashes. May process embedded data.\\
+\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-x <rel>]+ \verb+ <hashdb.hdb> <source directory>+& Computes and imports hashes from files under the source directory. Marks whitelist hashes. Disable processing: \verb+r+ disable recursively processesing embedded data, \verb+e+ disable calculating block entropy, \verb+l+ disable calculating block labels.\\
 \hline
 \textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database.\\
 \hline
@@ -783,7 +783,7 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \hline
 \textbf{scan\_hash} & \verb+scan_hash <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>]+ \verb+<hashdb> <media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches\\
+\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>]+ \verb+[-x <r>] <hashdb>+ \verb+<media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches. Disable processing: \verb+r+ disable recursively processing embedded data.\\
 \hline
 \end{tabular}
 \end{table}
@@ -1448,10 +1448,11 @@ Query settings else false and reason for failure.
 \item \verb+binary_string = hex_to_bin(hex_string)+
 \item \verb+hex_string = bin_to_hex(binary_string)+
 \item \verb+error_message = ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
-\verb+whitelist_dir, process_embedded_data, command_string)+\\
-Recursively calculate and import hashes from path to \hdb.
+\verb+whitelist_dir, disable_recursive_processing, disable_calculate_entropy,+\\
+\verb+disable_calculate_labels, command_string)+\\
+Calculate and import hashes from path to \hdb. Can disable recursive processing, calculating entropy, and calculating labels.
 \item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
-\verb+process_embedded_data)+\\
+\verb+disable_recursive_processing)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
 \item \verb+error_message = read_bytes(media_image_file, offset, count, &bytes)+\\
 C++ syntax.  Read bytes from a media image file.

@@ -81,7 +81,9 @@ static bool has_block_size = false;
 static bool has_step_size = false;
 static bool has_repository_name = false;
 static bool has_whitelist_dir = false;
-static bool has_embedded_data = false;
+static bool has_disable_recursive_processing = false;
+static bool has_disable_calculate_entropy = false;
+static bool has_disable_calculate_labels = false;
 static bool has_max_source_offset_pairs = false;
 static bool has_tuning = false;
 
@@ -138,6 +140,47 @@ static std::string make_command_line(int argc,char * const *argv){
     return command_line;
 }
 
+/*
+static void set_disable_processing(const char* const chars) {
+std::cerr << "main.a\n";
+  int i=0;
+  while (char c = chars[i++] != '\0') {
+std::cerr << "main.b\n";
+    if (c == 'r') {
+      has_disable_recursive_processing = true;
+    } else if (c == 'e') {
+      has_disable_calculate_entropy = true;
+    } else if (c == 'l') {
+      has_disable_calculate_labels = true;
+    } else {
+      std::cerr << "Invalid disable processing option: '" << c
+                << "'.  " << see_usage << "\n";
+      exit(1);
+    }
+  }
+std::cerr << "main.c\n";
+}
+*/
+
+static void set_disable_processing(const std::string& list) {
+std::cerr << "main.a\n";
+  for (std::string::const_iterator it=list.begin(); it!= list.end(); ++it) {
+std::cerr << "main.b\n";
+    if (*it == 'r') {
+      has_disable_recursive_processing = true;
+    } else if (*it == 'e') {
+      has_disable_calculate_entropy = true;
+    } else if (*it == 'l') {
+      has_disable_calculate_labels = true;
+    } else {
+      std::cerr << "Invalid disable processing option: '" << *it
+                << "'.  " << see_usage << "\n";
+      exit(1);
+    }
+  }
+std::cerr << "main.c\n";
+}
+
 int main(int argc,char **argv) {
 
 #ifdef HAVE_MCHECK
@@ -169,7 +212,7 @@ int main(int argc,char **argv) {
       {"step_size",               required_argument, 0, 's'},
       {"repository_name",         required_argument, 0, 'r'},
       {"whitelist_dir",           required_argument, 0, 'w'},
-      {"embedded_data",           required_argument, 0, 'e'},
+      {"disable_processing",      required_argument, 0, 'x'},
       {"max_source_offset_pairs", required_argument, 0, 'm'},
       {"tuning",                  required_argument, 0, 't'},
 
@@ -177,7 +220,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:em:t:",
+    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:x:m:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -244,8 +287,8 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'e': {	// process embedded data
-        has_embedded_data = true;
+      case 'x': {	// disable processing
+        set_disable_processing(std::string(optarg));
         break;
       }
 
@@ -326,8 +369,16 @@ void check_options(const std::string& options) {
     std::cerr << "The -w whitelist_dir option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_embedded_data && options.find("e") == std::string::npos) {
-    std::cerr << "The -e embedded_data option is not allowed for this command.\n";
+  if (has_disable_recursive_processing && options.find("R") == std::string::npos) {
+    std::cerr << "The -x r disable recursively processing embedded data option is not allowed for this command.\n";
+    exit(1);
+  }
+  if (has_disable_calculate_entropy && options.find("E") == std::string::npos) {
+    std::cerr << "The -x e disable calculate entropy option is not allowed for this command.\n";
+    exit(1);
+  }
+  if (has_disable_calculate_labels && options.find("L") == std::string::npos) {
+    std::cerr << "The -x l disable calculate labels option is not allowed for this command.\n";
     exit(1);
   }
   if (has_max_source_offset_pairs && options.find("m") ==
@@ -373,12 +424,16 @@ void run_command() {
 
   // import
   } else if (command == "ingest") {
-    check_params("srw", 2);
+    check_params("srwREL", 2);
     if (repository_name == "") {
       repository_name = args[1];
     }
     commands::ingest(args[0], args[1], step_size,
-                     repository_name, whitelist_dir, has_embedded_data, cmd);
+             repository_name, whitelist_dir,
+             has_disable_recursive_processing,
+             has_disable_calculate_entropy,
+             has_disable_calculate_labels,
+             cmd);
 
   } else if (command == "import_tab") {
     check_params("rw", 2);
@@ -461,8 +516,9 @@ void run_command() {
     commands::scan_hash(args[0], args[1], cmd);
 
   } else if (command == "scan_image") {
-    check_params("s", 2);
-    commands::scan_image(args[0], args[1], step_size, has_embedded_data, cmd);
+    check_params("sR", 2);
+    commands::scan_image(args[0], args[1], step_size,
+                         has_disable_recursive_processing, cmd);
 
   // statistics
   } else if (command == "size") {

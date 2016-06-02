@@ -102,6 +102,7 @@ namespace hashdb {
                  block_size,
                  file_reader.filename,
                  0,      // file_offset
+                 process_embedded_data,
                  b,      // buffer
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
@@ -147,6 +148,7 @@ namespace hashdb {
                  block_size,
                  file_reader.filename,
                  offset,  // file_offset
+                 process_embedded_data,
                  b2,      // buffer
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size

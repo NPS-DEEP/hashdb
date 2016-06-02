@@ -64,11 +64,11 @@ namespace hasher {
 
   static std::string make_recursed_filename(
                 const std::string& parent_filename,
-                const uint64_t absolute_offset,
+                const uint64_t parent_file_offset,
                 const std::string& compression_name) {
     std::stringstream ss;
     ss << parent_filename<< "-"
-       << absolute_offset << "-"
+       << parent_file_offset << "-"
        << compression_name;
     return ss.str();
   }
@@ -79,6 +79,7 @@ namespace hasher {
                const std::string& compression_name,
                const uint8_t* const uncompressed_buffer,
                const size_t uncompressed_size) {
+std::cerr << "proces_recursive.recurse size " << uncompressed_size << "\n";
 
     switch(parent_job.job_type) {
       // this is similar to ingest.cpp
@@ -89,26 +90,30 @@ namespace hasher {
         const std::string recursed_file_hash = hash_calculator.calculate(
                 uncompressed_buffer, uncompressed_size, 0, uncompressed_size);
 
-        // calculate the absolute offset
-        const size_t absolute_offset = (parent_job.recursion_depth == 0)
+        // calculate the parent file offset
+        const uint64_t parent_file_offset = (parent_job.recursion_depth == 0)
                ? parent_job.file_offset + relative_offset : relative_offset;
 
         // calculate the recursed filename
         const std::string recursed_filename = make_recursed_filename(
-                     parent_job.filename, absolute_offset, compression_name);
+                   parent_job.filename, parent_file_offset, compression_name);
 
         // store the source repository name and filename
         parent_job.import_manager->insert_source_name(recursed_file_hash,
-                      parent_job.repository_name, recursed_filename);
+                   parent_job.repository_name, recursed_filename);
 
         // define the file type, currently not defined
         const std::string file_type = "";
 
         // add uncompressed recursed source file to ingest_tracker
-        parent_job.ingest_tracker->add_source(recursed_file_hash,
+        const bool source_added = parent_job.ingest_tracker->add_source(
+                                              recursed_file_hash,
                                               uncompressed_size,
                                               file_type,
                                               1);  // parts_total
+
+        // do not re-ingest hashes from duplicate sources
+        const bool ingest_hashes = (source_added == false);
 
         // create a new recursed ingest job
         job_t* recursed_ingest_job = job_t::new_ingest_job(
@@ -120,7 +125,11 @@ namespace hasher {
                    parent_job.block_size,
                    recursed_file_hash,
                    recursed_filename,
-                   absolute_offset,
+                   0,                 // file_offset
+                   parent_job.disable_recursive_processing,
+                   parent_job.disable_calculate_entropy,
+                   parent_job.disable_calculate_labels,
+                   ingest_hashes,
                    uncompressed_buffer,
                    uncompressed_size, // buffer_size
                    uncompressed_size, // buffer_data_size
@@ -135,13 +144,13 @@ namespace hasher {
       // this is similar to scan_image.cpp
       case hasher::job_type_t::SCAN: {
 
-        // calculate the absolute offset
-        const size_t absolute_offset = (parent_job.recursion_depth == 0)
+        // calculate the parent file offset
+        const uint64_t parent_file_offset = (parent_job.recursion_depth == 0)
                ? parent_job.file_offset + relative_offset : relative_offset;
 
         // calculate the recursed filename
         const std::string recursed_filename = make_recursed_filename(
-                     parent_job.filename, absolute_offset, compression_name);
+                  parent_job.filename, parent_file_offset, compression_name);
 
         job_t* recursed_scan_image_job = job_t::new_scan_job(
                    parent_job.scan_manager,
@@ -149,7 +158,8 @@ namespace hasher {
                    parent_job.step_size,
                    parent_job.block_size,
                    recursed_filename,
-                   absolute_offset,
+                   0,                 // file_offset
+                   parent_job.disable_recursive_processing,
                    uncompressed_buffer,
                    uncompressed_size, // buffer_size
                    uncompressed_size, // buffer_data_size
@@ -220,18 +230,19 @@ std::cerr << "process_zip.d\n";
                           ? job.buffer_size - compressed_offset : compr_size;
 
     // size of uncompressed data
-    const uint32_t uncompressed_size = (compr_size == 0 || compr_size >
-               uncompressed_size_max) ? uncompressed_size_max : uncompr_size;
+    const uint32_t potential_uncompressed_size =
+               (compr_size == 0 || compr_size > uncompressed_size_max)
+                                  ? uncompressed_size_max : uncompr_size;
     
     // skip if uncompressed size is too small
-    if (uncompressed_size < uncompressed_size_min) {
+    if (potential_uncompressed_size < uncompressed_size_min) {
       return;
     }
 
 std::cerr << "process_zip.e\n";
     // create the uncompressed buffer
     uint8_t* uncompressed_buffer =
-                           new (std::nothrow) uint8_t[uncompressed_size]();
+                 new (std::nothrow) uint8_t[potential_uncompressed_size]();
     if (uncompressed_buffer == NULL) {
       // comment that the buffer acquisition request failed
       std::stringstream ss;
@@ -248,7 +259,7 @@ std::cerr << "process_zip.e\n";
                                          job.buffer + compressed_offset));
     zs.avail_in = compressed_size;
     zs.next_out = uncompressed_buffer;
-    zs.avail_out = uncompressed_size;
+    zs.avail_out = potential_uncompressed_size;
 
     // total_out
     uint32_t total_out = 0;
@@ -265,22 +276,14 @@ std::cerr << "process_zip.e\n";
       // close zlib
       inflateEnd(&zs);
     }
+std::cerr << "process_zip.total_out " << total_out << ", potential_uncompressed_size: " << potential_uncompressed_size << "\n";
 
     // recurse if there was any decompressed data
     if (total_out > 0) {
-      recurse(job, offset, "zip", uncompressed_buffer, uncompressed_size);
-
-
-
-      // create a new job using this decompressed data
-      job_t* new_recursed_job = job_t::new_recursed_job(job, offset, "zip",
-                             uncompressed_buffer, uncompressed_size);
-
-      // run this new job right now
-      hasher::process_job(*new_recursed_job);
+      recurse(job, offset, "zip", uncompressed_buffer, total_out);
 
     } else {
-      // release uncompressed_buffer
+      // release the empty uncompressed_buffer
       delete[] uncompressed_buffer;
     }
   }

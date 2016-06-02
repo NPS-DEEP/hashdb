@@ -81,12 +81,14 @@ namespace hashdb {
         const std::string& repository_name,
         const size_t step_size,
         const size_t block_size,
-        const bool process_embedded_data,
+        const bool disable_recursive_processing,
+        const bool disable_calculate_entropy,
+        const bool disable_calculate_labels,
         hasher::job_queue_t* const job_queue) {
 
     // identify the maximum recursion depth
     size_t max_recursion_depth = 
-                        (process_embedded_data) ? MAX_RECURSION_DEPTH : 0;
+                    (disable_recursive_processing) ? MAX_RECURSION_DEPTH : 0;
 
     // create buffer b to read into
     size_t b_size = (file_reader.filesize <= BUFFER_SIZE) ?
@@ -170,8 +172,11 @@ namespace hashdb {
                                BUFFER_DATA_SIZE;
 
     // add source file to ingest_tracker
-    ingest_tracker.add_source(file_hash, file_reader.filesize,
-                              file_type, parts_total);
+    const bool source_added = ingest_tracker.add_source(file_hash,
+                           file_reader.filesize, file_type, parts_total);
+
+    // do not re-ingest hashes from duplicate sources
+    const bool disable_ingest_hashes = (source_added == false);
 
     // build buffers from file sections and push them onto the job queue
 
@@ -188,6 +193,10 @@ namespace hashdb {
                  file_hash,
                  file_reader.filename,
                  0,      // file_offset
+                 disable_recursive_processing,
+                 disable_calculate_entropy,
+                 disable_calculate_labels,
+                 disable_ingest_hashes,
                  b,      // buffer
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
@@ -237,6 +246,10 @@ namespace hashdb {
                  file_hash,
                  file_reader.filename,
                  offset,  // file_offset
+                 disable_recursive_processing,
+                 disable_calculate_entropy,
+                 disable_calculate_labels,
+                 disable_ingest_hashes,
                  b2,      // buffer
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
@@ -254,7 +267,9 @@ namespace hashdb {
                      const size_t step_size,
                      const std::string& p_repository_name,
                      const std::string& whitelist_dir,
-                     const bool process_embedded_data,
+                     const bool disable_recursive_processing,
+                     const bool disable_calculate_entropy,
+                     const bool disable_calculate_labels,
                      const std::string& cmd) {
 
     bool has_whitelist = false;
@@ -338,7 +353,10 @@ namespace hashdb {
                  file_reader, import_manager, ingest_tracker,
                  whitelist_scan_manager,
                  repository_name, step_size, settings.block_size,
-                 process_embedded_data, job_queue);
+                 disable_recursive_processing,
+                 disable_calculate_entropy,
+                 disable_calculate_labels,
+                 job_queue);
           if (success.size() > 0) {
             std::stringstream ss;
             ss << "# Error while importing file " << file_reader.filename

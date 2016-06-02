@@ -180,7 +180,9 @@ namespace hashdb {
    *   repository_name - A repository name to attribute the sources to.
    *   whitelist_dir - Path to a whitelist hashdb data store.  Hashes
    *     matching these will not be ingested.
-   *   process_embedded_data - Whether to process embedded data.
+   *   disable_recursive_processing - Disable processing embedded data.
+   *   disable_calculate_entropy - Disable calculating block entropy values.
+   *   disable_calculate_labels - Disable calculating block entropy labels.
    *   command_string - String to put into the new hashdb log.
    *
    * Returns:
@@ -191,7 +193,9 @@ namespace hashdb {
                      const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
-                     const bool process_embedded_data,
+                     const bool disable_recursive_processing,
+                     const bool disable_calculate_entropy,
+                     const bool disable_calculate_labels,
                      const std::string& command_string);
 
   /**
@@ -205,7 +209,7 @@ namespace hashdb {
    *   step_size - The step size to move along while calculating hashes.
    *     The step size must be divisible by the byte alignment defined in
    *     the database.
-   *   process_embedded_data - Whether to process embedded data.
+   *   disable_recursive_processing - Disable processing embedded data.
    *   command_string - String to put into the scan output stream.
    *
    * Returns:
@@ -215,7 +219,7 @@ namespace hashdb {
   std::string scan_image(const std::string& hashdb_dir,
                      const std::string& media_image_file,
                      const size_t step_size,
-                     const bool process_embedded_data,
+                     const bool disable_recursive_processing,
                      const std::string& command_string);
 
   /**

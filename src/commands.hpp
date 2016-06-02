@@ -137,13 +137,19 @@ namespace commands {
                      const size_t step_size,
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
-                     const bool process_embedded_data,
+                     const bool disable_recursive_processing,
+                     const bool disable_calculate_entropy,
+                     const bool disable_calculate_labels,
                      const std::string& cmd) {
 
     // ingest
     std::string error_message = hashdb::ingest(
                     hashdb_dir, ingest_path, step_size, repository_name,
-                    whitelist_dir, process_embedded_data, cmd);
+                    whitelist_dir,
+                    disable_recursive_processing,
+                    disable_calculate_entropy,
+                    disable_calculate_labels,
+                    cmd);
     if (error_message.size() == 0) {
       std::cout << "ingest completed.\n";
     } else {
@@ -586,11 +592,12 @@ namespace commands {
   static void scan_image(const std::string& hashdb_dir,
                          const std::string& media_image_filename,
                          const size_t step_size,
-                         const bool process_embedded_data,
+                         const bool disable_recursive_processing,
                          const std::string& cmd) {
 
     std::string error_message = hashdb::scan_image(hashdb_dir,
-             media_image_filename, step_size, process_embedded_data, cmd);
+                             media_image_filename, step_size,
+                             disable_recursive_processing, cmd);
     if (error_message.size() == 0) {
       std::cout << "# scan_image completed.\n";
     } else {

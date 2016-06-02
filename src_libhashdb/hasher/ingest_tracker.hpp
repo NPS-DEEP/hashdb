@@ -109,6 +109,7 @@ class ingest_tracker_t {
   bool add_source(const std::string& file_hash, const uint64_t filesize,
                   const std::string& file_type, const size_t parts_total) {
     lock();
+std::cerr << "ingest_tracker.add_source " << hashdb::bin_to_hex(file_hash) << "filesize: " << filesize << "\n";
     if (source_data_map.find(file_hash) != source_data_map.end()) {
       // already added
       unlock();
@@ -125,6 +126,7 @@ class ingest_tracker_t {
                     const uint64_t zero_count,
                     const uint64_t nonprobative_count) {
     lock();
+std::cerr << "ingest_tracker.track_source " << hashdb::bin_to_hex(file_hash) << "\n";
 
     // update count values in source_data
     std::map<std::string, source_data_t>::const_iterator it =
@@ -143,6 +145,7 @@ class ingest_tracker_t {
     source_data.zero_count += zero_count;
     source_data.nonprobative_count += nonprobative_count;
     ++source_data.parts_done;
+std::cerr << "ingest_tracker.track_source insert " << hashdb::bin_to_hex(file_hash) << " size " << source_data.filesize << "\n";
     source_data_map.insert(std::pair<std::string, source_data_t>(
                                                    file_hash, source_data));
 

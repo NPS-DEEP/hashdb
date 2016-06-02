@@ -74,13 +74,13 @@ namespace hasher {
 
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
+std::cerr << "process_job.process_ingest_job.a\n";
 
-    // ingest block hashes along with their calculated information
-    if (!job.ingest_tracker->seen_source(job.file_hash)) {
-
+    if (!job.disable_ingest_hashes) {
       // get hash calculator object
       hasher::hash_calculator_t hash_calculator;
 
+std::cerr << "process_job.process_ingest_job.b\n";
       // get entropy calculator object
       hasher::entropy_calculator_t entropy_calculator(job.block_size);
 
@@ -97,17 +97,23 @@ namespace hasher {
 
         // calculate block hash
         const std::string block_hash = hash_calculator.calculate(job.buffer,
-                    job.buffer_size, i, job.block_size);
+                                    job.buffer_size, i, job.block_size);
 
         // calculate entropy
-        const uint64_t entropy = entropy_calculator.calculate(job.buffer,
-                    job.buffer_size, i, job.block_size);
+        uint64_t entropy = 0;
+        if (!job.disable_calculate_entropy) {
+          entropy = entropy_calculator.calculate(job.buffer,
+                                    job.buffer_size, i, job.block_size);
+        }
 
         // calculate block label
-        const std::string block_label = hasher::calculate_block_label(
-                    job.buffer, job.buffer_size, i, job.block_size);
-        if (block_label.size() != 0) {
-          ++nonprobative_count;
+        std::string block_label = "";
+        if (!job.disable_calculate_labels) {
+          block_label = hasher::calculate_block_label(job.buffer,
+                                   job.buffer_size, i, job.block_size);
+          if (block_label.size() != 0) {
+            ++nonprobative_count;
+          }
         }
 
         // add block hash to DB
@@ -121,12 +127,14 @@ namespace hasher {
     }
 
     // submit bytes processed to the ingest tracker for final reporting
-    if (job.recursion_depth == 0) {
+    if (job.recursion_depth == 0 && !job.disable_ingest_hashes) {
       job.ingest_tracker->track_bytes(job.buffer_data_size);
     }
 
-    // recursively find and process any uncompressed data
-    process_recursive(job);
+    // recursively find and process any uncompressible data
+    if (!job.disable_recursive_processing) {
+      process_recursive(job);
+    }
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
@@ -176,8 +184,10 @@ namespace hasher {
       job.scan_tracker->track_bytes(job.buffer_data_size);
     }
 
-    // recursively find and process any uncompressed data
-    process_recursive(job);
+    // recursively find and process any uncompressible data
+    if (!job.disable_recursive_processing) {
+      process_recursive(job);
+    }
 
     // we are now done with this job.  Delete it.
     delete[] job.buffer;
