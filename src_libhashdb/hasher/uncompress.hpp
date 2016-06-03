@@ -33,11 +33,12 @@ namespace hasher {
   inline bool zip_signature(const uint8_t* const b, const size_t b_size,
                      const size_t offset) {
     // do not let this overflow.
-    if (offset + 30 < b_size) {
+    if (offset + 30 > b_size) {
       return false;
     }
 
-    return (b[0] == 0x50 && b[1]==0x4B && b[2]==0x03 && b[3]==0x04);
+    return (b[offset+0]==0x50 && b[offset+1]==0x4B &&
+            b[offset+2]==0x03 && b[offset+3]==0x04);
   }
 
   // return a new buffer which must be deleted, successful or not.
