@@ -72,8 +72,6 @@ namespace hasher {
                            uint8_t** out_buf,
                            size_t* out_size) {
 
-std::cerr << "new_from_zip.a\n";
-
     // pointer to the output buffer that will be created using new
     *out_buf = NULL;
     *out_size = 0;

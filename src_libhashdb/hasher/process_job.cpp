@@ -74,13 +74,11 @@ namespace hasher {
 
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
-std::cerr << "process_job.process_ingest_job.a\n";
 
     if (!job.disable_ingest_hashes) {
       // get hash calculator object
       hasher::hash_calculator_t hash_calculator;
 
-std::cerr << "process_job.process_ingest_job.b\n";
       // get entropy calculator object
       hasher::entropy_calculator_t entropy_calculator(job.block_size);
 
