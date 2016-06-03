@@ -89,6 +89,9 @@ class entropy_calculator_t {
     if (offset + count <= buffer_size) {
       // calculate when not a buffer overrun
       return calculate_private(buffer + offset, count);
+    } else if (offset > buffer_size) {
+      // program error
+      assert(0);
     } else {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();

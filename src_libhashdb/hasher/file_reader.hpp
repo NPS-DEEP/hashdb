@@ -169,6 +169,7 @@ class file_reader_t {
     }
   }
 
+  // read into the provided buffer
   std::string read(uint64_t offset,
                    uint8_t* const buffer,
                    const size_t buffer_size,

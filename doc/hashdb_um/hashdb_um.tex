@@ -1454,10 +1454,14 @@ Calculate and import hashes from path to \hdb. Can disable recursive processing,
 \item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
 \verb+disable_recursive_processing)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
+\item \verb+error_message = read_bytes(media_image_file, forensic_path, count, &bytes)+\\
+C++ syntax.  Read bytes at numeric offset from a media image file.
+\item \verb+binary_string, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \item \verb+error_message = read_bytes(media_image_file, offset, count, &bytes)+\\
-C++ syntax.  Read bytes from a media image file.
-\item \verb+binary_string, bytes_read = read_bytes(media_image_file, offset, count)+\\
-Python syntax. Read bytes from a media image file.
+C++ syntax.  Read bytes at numeric offset from a media image file.
+\item \verb+binary_string, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \end{itemize}
 
 \subsubsection{Data Types}

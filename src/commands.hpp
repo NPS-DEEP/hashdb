@@ -860,11 +860,8 @@ namespace commands {
 
   // read_bytes
   static void read_bytes(const std::string& media_image_filename,
-                         const std::string& offset_string,
+                         const std::string& forensic_path,
                          const std::string& count_string) {
-
-    // convert offset string to number
-    const uint64_t offset = s_to_uint64(offset_string);
 
     // convert count string to number
     const uint64_t count = s_to_uint64(count_string);
@@ -872,7 +869,7 @@ namespace commands {
     // read the bytes
     std::string bytes;
     std::string error_message = hashdb::read_bytes(
-                                media_image_filename, offset, count, bytes);
+                         media_image_filename, forensic_path, count, bytes);
 
     if (error_message.size() == 0) {
       // print the bytes to stdout

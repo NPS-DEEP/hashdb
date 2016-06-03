@@ -223,13 +223,41 @@ namespace hashdb {
                      const std::string& command_string);
 
   /**
-   * Read raw bytes at the offset in the media image file.  Files
+   * Read raw bytes at the forensic path in the media image file.  Files
+   * with EWF extensions (.E01 files) are recognized as media images.
+   * Example forensic paths are "1000" and "1000-zip-0".
+   *
+   * Parameters:
+   *   media_image_file - Path to a media image file, which can be a
+   *     raw file or an E01 file.
+   *   forensic_path - The offset into the media image file.
+   *     Example forensic paths include "1000" and "1000-zip-0".
+   *   count - The number of bytes to read.
+   *
+   * Returns:
+   *   "" if successful else reason if not.
+   */
+
+  std::string read_bytes(const std::string& media_image_file,
+                         const std::string& forensic_path,
+                         const uint64_t count,
+#ifndef SWIG
+                         std::string& bytes
+#else
+                         std::string& OUTPUT // bytes
+#endif
+                        );
+
+  /**
+   * Read raw bytes at the given offset in the media image file.  Files
    * with EWF extensions (.E01 files) are recognized as media images.
    *
    * Parameters:
    *   media_image_file - Path to a media image file, which can be a
    *     raw file or an E01 file.
    *   offset - The offset into the media image file.
+   *   forensic_path - The offset into the media image file.
+   *     Example forensic paths include "1000" and "1000-zip-0".
    *   count - The number of bytes to read.
    *
    * Returns:
@@ -245,30 +273,6 @@ namespace hashdb {
                          std::string& OUTPUT // bytes
 #endif
                         );
-
-  /**
-   * Read raw bytes at the forensic path in the media image file.  Files
-   * with EWF extensions (.E01 files) are recognized as media images.
-   *
-   * Parameters:
-   *   media_image_file - Path to a media image file, which can be a
-   *     raw file or an E01 file.
-   *   offset - The offset into the media image file.
-   *   count - The number of bytes to read.
-   *
-   * Returns:
-   *   "" if successful else reason if not.
-   */
-
-  std::string read_bytes_fp(const std::string& media_image_file,
-                            const std::string& forensic_path,
-                            const uint64_t count,
-#ifndef SWIG
-                            std::string& bytes
-#else
-                            std::string& OUTPUT // bytes
-#endif
-                           );
 
   // ************************************************************
   // import

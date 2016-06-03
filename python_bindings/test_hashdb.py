@@ -68,6 +68,7 @@ in_bytes = struct.pack('5s', '\0\0a\0\0')
 temp_in.write(in_bytes)
 temp_in.close()
 
+# read_bytes using numeric offset
 error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 0, 10)
 str_equals(error_message,"")
 str_equals(bytes_read, b'\0\0a\0\0')
@@ -80,6 +81,14 @@ str_equals(bytes_read, b'')
 error_message, bytes_read = hashdb.read_bytes("temp_invalid_fileanme", 10, 10)
 bool_equals(len(error_message) > 0, True)
 str_equals(bytes_read, b'')
+
+# read_bytes using forensic path
+error_message, bytes_read = hashdb.read_bytes("temp_in.bin", "0", 10)
+str_equals(error_message,"")
+str_equals(bytes_read, b'\0\0a\0\0')
+error_message, bytes_read = hashdb.read_bytes("temp_in.bin", "0-zip-0", 10)
+str_equals(error_message,"zip region too small")
+str_equals(bytes_read, "")
 
 # ############################################################
 # test import functions

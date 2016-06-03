@@ -137,6 +137,9 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
     if (offset + count <= buffer_size) {
       // calculate when not a buffer overrun
       return calculate_block_label_private(buffer + offset, count);
+    } else if (offset > buffer_size) {
+      // program error
+      assert(0);
     } else {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();

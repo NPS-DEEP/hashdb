@@ -51,10 +51,10 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <unistd.h>
-#include <zlib.h>
 #include "hashdb.hpp"
 #include "job.hpp"
 #include "tprint.hpp"
+#include "uncompress.hpp"
 #include "process_job.hpp"
 #include "hash_calculator.hpp"
 #include "entropy_calculator.hpp"
@@ -79,7 +79,6 @@ namespace hasher {
                const std::string& compression_name,
                const uint8_t* const uncompressed_buffer,
                const size_t uncompressed_size) {
-std::cerr << "proces_recursive.recurse size " << uncompressed_size << "\n";
 
     // make sure there is something to do
     if (uncompressed_size == 0) {
@@ -188,127 +187,7 @@ std::cerr << "proces_recursive.recurse size " << uncompressed_size << "\n";
     }
   }
 
-  static const uint32_t zip_name_len_max = 1024;
-  static const size_t uncompressed_size_min = 6;
-  static const size_t uncompressed_size_max = 16777216; // 2^24 = 16MiB
-
-  inline uint16_t u16(const uint8_t* const b) {
-    return (uint16_t)(b[0]<<0) | (uint16_t)(b[1]<<8);
-  }
-
-  inline uint32_t u32(const uint8_t* const b) {
-    return (uint32_t)(b[0]<<0) | (uint32_t)(b[1]<<8) |
-           (uint32_t)(b[2]<<16) | (uint32_t)(b[3]<<24);
-  }
-
-  inline bool zip_signature(const uint8_t* const b) {
-    // do not let this overflow.
-    return (b[0] == 0x50 && b[1]==0x4B && b[2]==0x03 && b[3]==0x04);
-  }
-
-  // always returns new out_buf, even if empty
-  static void new_from_zip(const std::string& filename,
-                           const uint8_t* const in_buf, const size_t in_size,
-                           const size_t in_offset,
-                           uint8_t** out_buf, size_t* out_size) {
-
-std::cerr << "new_from_zip.a\n";
-
-    // pointer to the output buffer that will be created using new
-    *out_buf = NULL;
-    *out_size = 0;
-
-    const uint8_t* const b = in_buf + in_offset;
-
-//    const uint16_t version_needed_to_extract= u16(b+4);
-    const uint32_t compr_size=u32(b+18);
-    const uint32_t uncompr_size=u32(b+22);
-    const uint16_t name_len=u16(b+26);
-    const uint16_t extra_field_len=u16(b+28);
-
-//    // validate version
-//    if (version_needed_to_extract != 20) {
-//std::cerr << ".version needed " << version_needed_to_extract << "\n";
-//      return;
-//    }
-
-    // validate name length
-    if (name_len == 0 || name_len > zip_name_len_max) {
-      *out_buf = new uint8_t[0]();
-      return;
-    }
-
-    // calculate offset to compressed data
-    uint32_t compressed_offset = in_offset + 30 + name_len + extra_field_len;
-
-    // offset must be inside the buffer
-    if (compressed_offset >= in_size) {
-      *out_buf = new uint8_t[0]();
-      return;
-    }
-
-    // size of compressed data
-    const uint32_t compressed_size = (compr_size == 0 ||
-               compressed_offset + compr_size > in_size) 
-                          ? in_size - compressed_offset : compr_size;
-
-    // size of uncompressed data
-    const uint32_t potential_uncompressed_size =
-               (compr_size == 0 || compr_size > uncompressed_size_max)
-                                  ? uncompressed_size_max : uncompr_size;
-    
-    // skip if uncompressed size is too small
-    if (potential_uncompressed_size < uncompressed_size_min) {
-      *out_buf = new uint8_t[0]();
-      return;
-    }
-
-    // create the uncompressed buffer
-    *out_buf = new (std::nothrow) uint8_t[potential_uncompressed_size]();
-    if (*out_buf == NULL) {
-      // comment that the buffer acquisition request failed
-      std::stringstream ss;
-      ss << "# bad memory allocation in uncompression in file "
-         << filename << "\n";
-      tprint(ss.str());
-      return;
-    }
-
-    // set up zlib data
-    z_stream zs;
-    memset(&zs, 0, sizeof(zs));
-    zs.next_in = const_cast<Bytef *>(reinterpret_cast<const Bytef *>(
-                                         in_buf + compressed_offset));
-    zs.avail_in = compressed_size;
-    zs.next_out = *out_buf;
-    zs.avail_out = potential_uncompressed_size;
-
-    // initialize zlib for this decompression
-    int r = inflateInit2(&zs, -15);
-    if (r == 0) {
-
-      // inflate
-      inflate(&zs, Z_SYNC_FLUSH);
-
-      // set out_size
-      *out_size = zs.total_out;
-
-      // close zlib
-      inflateEnd(&zs);
-      return;
-
-    } else {
-
-      // comment that zlib inflate failed
-      std::stringstream ss;
-      ss << "# zlib inflate failed in file " << filename << "\n";
-      tprint(ss.str());
-      return;
-    }
-  }
-
   void process_recursive(const hasher::job_t& job) {
-std::cerr << "process_recursive.a\n";
 
     // impose max recursion depth
     if (job.recursion_depth >= 7) {
@@ -319,14 +198,17 @@ std::cerr << "process_recursive.a\n";
     // scan each byte for a compression signature, stop before end
     for (size_t i=0; i+100 < job.buffer_data_size; ++i) {
 
-      if (zip_signature(job.buffer+i)) {
+      if (zip_signature(job.buffer, job.buffer_size, i)) {
 
         // inflate and recurse
         uint8_t* out_buf;
         size_t out_size;
-        new_from_zip(job.filename, job.buffer, job.buffer_size, i,
-                     &out_buf, &out_size);
-        recurse(job, i, "zip", out_buf, out_size);
+        std::string error_message = new_from_zip(
+                                           job.buffer, job.buffer_size, i,
+                                           &out_buf, &out_size);
+        if (error_message == "") {
+          recurse(job, i, "zip", out_buf, out_size);
+        }
 
 /*
       } else if (gzip_signature(job.buffer+i)) {

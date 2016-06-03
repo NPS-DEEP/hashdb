@@ -32,16 +32,7 @@
 #include <iostream>
 #include <unistd.h>
 
-//#include <openssl/hmac.h>
 #include <openssl/evp.h>
-
-//#ifdef HAVE_SYS_MMAN_H
-//#include <sys/mman.h>
-//#endif
-//
-//#ifdef HAVE_SYS_MMAP_H
-//#include <sys/mmap.h>
-//#endif
 
 namespace hasher {
 
@@ -83,6 +74,9 @@ class hash_calculator_t {
     if (offset + count <= buffer_size) {
       // hash when not a buffer overrun
       EVP_DigestUpdate(md_context, buffer + offset, count);
+    } else if (offset > buffer_size) {
+      // program error
+      assert(0);
     } else {
       // hash part in buffer
       EVP_DigestUpdate(md_context, buffer + offset, buffer_size - offset);
@@ -132,8 +126,6 @@ class hash_calculator_t {
     // update
     if (offset + count <= buffer_size) {
       // hash when not a buffer overrun
-//std::cerr << "update.ba.buffer_size " << buffer_size << " offset: " << offset << " count: " << count << "\n";
-//std::cerr << "update.bb " << buffer[0] << ", " << buffer[1] << "\n";
       EVP_DigestUpdate(md_context, buffer + offset, count);
     } else {
       // hash part in buffer
@@ -141,7 +133,6 @@ class hash_calculator_t {
 
       // hash zeros for part outside buffer
       const size_t extra = count - (buffer_size - offset);
-//std::cerr << "buffer_size " << buffer_size << " offset: " << offset << " count: " << count << " extra " << extra << "\n";
       const uint8_t* const b = new uint8_t[extra]();
       EVP_DigestUpdate(md_context, b, extra);
       delete[] b;

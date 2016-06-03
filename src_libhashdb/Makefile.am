@@ -111,7 +111,9 @@ HASHER_INCS = \
 	hasher/single_file_reader.hpp \
 	hasher/threadpool.hpp \
 	hasher/tprint.cpp \
-	hasher/tprint.hpp
+	hasher/tprint.hpp \
+	hasher/uncompress.cpp \
+	hasher/uncompress.hpp
 
 LIBHASHDB_INCS = \
 	crc32.cpp \
