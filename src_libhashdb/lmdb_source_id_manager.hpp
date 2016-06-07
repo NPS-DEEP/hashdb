@@ -128,6 +128,7 @@ print_mdb_val("source_id_manager insert has data", context.data);
       // read must align to data record
       if (p != static_cast<uint8_t*>(context.data.mv_data) +
                                                 context.data.mv_size) {
+        std::cerr << "data decode error in LMDB source ID store\n";
         assert(0);
       }
 
@@ -209,6 +210,7 @@ print_mdb_val("source_id_manager find data", context.data);
       // read must align to data record
       if (p != static_cast<uint8_t*>(context.data.mv_data) +
                                                 context.data.mv_size) {
+        std::cerr << "data decode error in LMDB source ID store\n";
         assert(0);
       }
 

@@ -47,6 +47,7 @@ class adder_t {
   private:
 
   const hashdb::scan_manager_t* const manager_a;
+  progress_tracker_t* const tracker;
   hashdb::import_manager_t* const manager_b;
   std::set<std::string>* const processed_sources;
   std::set<std::string>* const repository_sources;
@@ -170,8 +171,10 @@ class adder_t {
   public:
   // add A into B
   adder_t(const hashdb::scan_manager_t* const p_manager_a,
+          progress_tracker_t* p_tracker,
           hashdb::import_manager_t* const p_manager_b) :
                   manager_a(p_manager_a),
+                  tracker(p_tracker),
                   manager_b(p_manager_b),
                   processed_sources(new sources_t),
                   repository_sources(new sources_t),
@@ -181,9 +184,11 @@ class adder_t {
 
   // add A into B contingent on repository_name
   adder_t(const hashdb::scan_manager_t* const p_manager_a,
+          progress_tracker_t* p_tracker,
           hashdb::import_manager_t* const p_manager_b,
           const std::string& p_repository_name) :
                   manager_a(p_manager_a),
+                  tracker(p_tracker),
                   manager_b(p_manager_b),
                   processed_sources(new sources_t),
                   repository_sources(new sources_t),
@@ -197,7 +202,7 @@ class adder_t {
     delete non_repository_sources;
   }
 
-  // add hash and source information without reprocessing sources
+  // add hash and source information and do not re-add sources
   void add(const std::string& binary_hash) {
 
     // hash data
@@ -213,6 +218,9 @@ class adder_t {
       // program error
       assert(0);
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =
@@ -235,7 +243,7 @@ class adder_t {
     delete source_offset_pairs;
   }
 
-  // add hash and source information in count range without reprocessing sources
+  // add hash and source information in count range and do not re-add sources
   void add_range(const std::string& binary_hash,
                  size_t m, size_t n) {
 
@@ -252,6 +260,9 @@ class adder_t {
       // program error
       assert(0);
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     // add if in range
     if (source_offset_pairs->size() >= m &&
@@ -295,6 +306,9 @@ class adder_t {
       // program error
       assert(0);
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =
@@ -346,6 +360,9 @@ class adder_t {
       // program error
       assert(0);
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =

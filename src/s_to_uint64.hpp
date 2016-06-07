@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 // string to uint64_t
 inline uint64_t s_to_uint64(std::string str)

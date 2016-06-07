@@ -23,49 +23,48 @@
  * Comment lines are forwarded to output.
  */
 
-#ifndef SCAN_HASHES_HPP
-#define SCAN_HASHES_HPP
+#include <config.h>
+// this process of getting WIN32 defined was inspired
+// from i686-w64-mingw32/sys-root/mingw/include/windows.h.
+// All this to include winsock2.h before windows.h to avoid a warning.
+#if defined(__MINGW64__) && defined(__cplusplus)
+#  ifndef WIN32
+#    define WIN32
+#  endif
+#endif
+#ifdef WIN32
+  // including winsock2.h now keeps an included header somewhere from
+  // including windows.h first, resulting in a warning.
+  #include <winsock2.h>
+#endif
 
 #include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <sstream>
 #include "../src_libhashdb/hashdb.hpp"
-#include "progress_tracker.hpp"
 
-class scan_hashes_t {
-  private:
-  // state
-  const std::string& hashdb_dir;
-  size_t line_number;
+void scan_list(hashdb::scan_manager_t& manager, std::istream& in) {
 
-  // resources
-  hashdb::scan_manager_t manager;
-
-  // do not allow these
-  scan_hashes_t();
-  scan_hashes_t(const scan_hashes_t&);
-  scan_hashes_t& operator=(const scan_hashes_t&);
-
-  void scan_line(const std::string& line) {
+  size_t line_number = 0;
+  std::string line;
+  while(getline(in, line)) {
+    ++line_number;
 
     // print comment lines
     if (line[0] == '#') {
       // forward to stdout
       std::cout << line << "\n";
-      return;
+      continue;
     }
 
     // skip empty lines
     if (line.size() == 0) {
-      return;
+      continue;
     }
 
     // find tabs
     size_t tab_index1 = line.find('\t');
     if (tab_index1 == std::string::npos) {
       std::cerr << "Tab not found on line " << line_number << ": '" << line << "'\n";
-      return;
+      continue;
     }
 
     // get forensic path
@@ -77,11 +76,11 @@ class scan_hashes_t {
     if (block_binary_hash == "") {
       std::cerr << "Invalid block hash on line " << line_number
                 << ": '" << line << "'\n";
-      return;
+      continue;
     }
 
     // scan
-    std::string expanded_text = manager.find_expanded_hash_json(
+    const std::string expanded_text = manager.find_expanded_hash_json(
                                                          block_binary_hash);
     if (expanded_text.size() != 0) {
       std::cout << forensic_path << "\t"
@@ -89,39 +88,5 @@ class scan_hashes_t {
                 << expanded_text << std::endl;
     }
   }
- 
-  scan_hashes_t(const std::string& p_hashdb_dir,
-                const std::string& cmd) :
-                     hashdb_dir(p_hashdb_dir),
-                     line_number(0),
-                     manager(hashdb_dir) {
-  }
-
-  void read_lines(std::istream& in) {
-    std::string line;
-    while(getline(in, line)) {
-      ++line_number;
-      scan_line(line);
-    }
-  }
-
-  public:
-  // read tab file
-  static void read(const std::string& hashdb_dir,
-                   const std::string& cmd,
-                   std::istream& in) {
-
-    // create the reader
-    scan_hashes_t reader(hashdb_dir, cmd);
-
-    // write cmd
-    std::cout << "# command: '" << cmd << "'\n"
-              << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
-
-    // read the lines
-    reader.read_lines(in);
-  }
-};
-
-#endif
+}
 

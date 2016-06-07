@@ -214,6 +214,7 @@ print_mdb_val("source_name_manager find data", context.data);
 
       // validate that the decoding was properly consumed
       if (p != p_stop) {
+        std::cerr << "data decode error in LMDB source name store\n";
         assert(0);
       }
 

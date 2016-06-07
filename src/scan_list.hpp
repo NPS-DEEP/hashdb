@@ -19,25 +19,16 @@
 
 /**
  * \file
- * Provides the service of importing hash data from a file formatted
- * using tab delimited fields, specifically:
- * <file hash>\t<block hash>\t<block offset>\n
+ * Scan for hashes in file where lines are "<forensic path><tab><hex hash>".
+ * Comment lines are forwarded to output.
  */
 
-#ifndef IMPORT_TAB_HPP
-#define IMPORT_TAB_HPP
+#ifndef SCAN_LIST_HPP
+#define SCAN_LIST_HPP
 
 #include <iostream>
 #include "../src_libhashdb/hashdb.hpp"
-#include "s_to_uint64.hpp"
-#include "progress_tracker.hpp"
 
-void import_tab(hashdb::import_manager_t& manager,
-                const std::string& repository_name,
-                const std::string& filename,
-                const hashdb::scan_manager_t* const whitelist_manager,
-                progress_tracker_t& progress_tracker,
-                std::istream& in);
+void scan_list(hashdb::scan_manager_t& manager, std::istream& in);
 
 #endif
-

@@ -28,13 +28,9 @@
 #include "import_tab.hpp"
 #include "import_json.hpp"
 #include "export_json.hpp"
-#include "scan_hashes.hpp"
+#include "scan_list.hpp"
 #include "adder.hpp"
 #include "adder_set.hpp"
-//#include "expand_manager.hpp"
-//#include "dfxml_scan_consumer.hpp"
-//#include "dfxml_scan_expanded_consumer.hpp"
-//#include "dfxml_hashdigest_writer.hpp"
 
 // Standard includes
 #include <cerrno>
@@ -167,6 +163,15 @@ namespace commands {
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
 
+    // resources
+    hashdb::import_manager_t manager(hashdb_dir, cmd);
+    hashdb::scan_manager_t* whitelist_manager = NULL;
+    if (whitelist_dir != "") {
+      require_hashdb_dir(whitelist_dir);
+      whitelist_manager = new hashdb::scan_manager_t(whitelist_dir);
+    }
+    progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
+
     // open the tab file for reading
     std::ifstream in(tab_file.c_str());
     if (!in.is_open()) {
@@ -175,11 +180,14 @@ namespace commands {
       exit(1);
     }
 
-    import_tab_t::read(hashdb_dir, tab_file, repository_name, whitelist_dir,
-                       cmd, in);
+    ::import_tab(manager, repository_name, tab_file, whitelist_manager,
+                 progress_tracker, in);
 
     // done
     in.close();
+    if (whitelist_manager != NULL) {
+      delete whitelist_manager;
+    }
     std::cout << "import_tab completed.\n";
   }
 
@@ -191,6 +199,10 @@ namespace commands {
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
 
+    // resources
+    hashdb::import_manager_t manager(hashdb_dir, cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
+
     // open the JSON file for reading
     std::ifstream in(json_file.c_str());
     if (!in.is_open()) {
@@ -200,7 +212,7 @@ namespace commands {
     }
 
     // import the hashdb
-    import_json_t::read(hashdb_dir, cmd, in);
+    ::import_json(manager, progress_tracker, in);
 
     // done
     in.close();
@@ -215,6 +227,10 @@ namespace commands {
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
 
+    // resources
+    hashdb::scan_manager_t manager(hashdb_dir);
+    progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
+
     // open the JSON file for writing
     std::ofstream out(json_file.c_str());
     if (!out.is_open()) {
@@ -223,8 +239,13 @@ namespace commands {
       exit(1);
     }
 
+    // write cmd to out
+    out << "# command: '" << cmd << "'\n"
+        << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
+
     // export the hashdb
-    export_json_t::write(hashdb_dir, cmd, out);
+    ::export_json_sources(manager, out);
+    ::export_json_hashes(manager, progress_tracker, out);
 
     // done
     out.close();
@@ -245,8 +266,10 @@ namespace commands {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    progress_tracker_t progress_tracker(
+                                dest_dir, manager_a.size_hashes(), cmd);
     hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &manager_b);
+    adder_t adder(&manager_a, &progress_tracker, &manager_b);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -255,6 +278,7 @@ namespace commands {
       adder.add(binary_hash);
       binary_hash = manager_a.next_hash(binary_hash);
     }
+    std::cout << "add completed.\n";
   }
 
   // add_multiple
@@ -283,6 +307,17 @@ namespace commands {
     // open the consumer at dest_dir
     hashdb::import_manager_t consumer(dest_dir, cmd);
 
+    // calculate the total hash records for the tracker
+    size_t total_hash_records = 0;
+    for (std::vector<std::string>::const_iterator it = hashdb_dirs.begin();
+                    it != hashdb_dirs.end(); ++it) {
+      hashdb::scan_manager_t scan_manager(*it);
+      total_hash_records += scan_manager.size_hashes();
+    }
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(dest_dir, total_hash_records, cmd);
+
     // define the ordered multimap of key=hash, value=producer_t
     typedef std::pair<hashdb::scan_manager_t*, adder_t*> producer_t;
     typedef std::pair<std::string, producer_t> ordered_producers_value_t;
@@ -300,9 +335,12 @@ namespace commands {
       if (binary_hash.size() != 0) {
         // the producer is not empty, so enqueue it
         // create the adder
-        adder_t* adder = new adder_t(producer, &consumer);
+        adder_t* adder = new adder_t(producer, &progress_tracker, &consumer);
         ordered_producers.insert(ordered_producers_value_t(binary_hash,
                                       producer_t(producer, adder)));
+
+      // also track total hashes to be processed
+      total_hash_records += producer->size_hashes();
 
       } else {
         // no hashes for this producer so close it
@@ -350,8 +388,10 @@ namespace commands {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    progress_tracker_t progress_tracker(dest_dir,
+                                        manager_a.size_hashes(), cmd);
     hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &manager_b, repository_name);
+    adder_t adder(&manager_a, &progress_tracker, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -375,8 +415,10 @@ namespace commands {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    progress_tracker_t progress_tracker(dest_dir,
+                                        manager_a.size_hashes(), cmd);
     hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &manager_b);
+    adder_t adder(&manager_a, &progress_tracker, &manager_b);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -519,8 +561,10 @@ namespace commands {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    progress_tracker_t progress_tracker(dest_dir,
+                                        manager_a.size_hashes(), cmd);
     hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &manager_b, repository_name);
+    adder_t adder(&manager_a, &progress_tracker, &manager_b, repository_name);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -542,7 +586,10 @@ namespace commands {
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
 
-    // open the hashes file for reading
+    // resources
+    hashdb::scan_manager_t manager(hashdb_dir);
+
+    // open the hashes list file for reading
     std::ifstream in(hashes_file.c_str());
     if (!in.is_open()) {
       std::cout << "Error: Cannot open " << hashes_file
@@ -550,11 +597,16 @@ namespace commands {
       exit(1);
     }
 
-    scan_hashes_t::read(hashdb_dir, cmd, in);
+    // write cmd to out
+    std::cout << "# command: '" << cmd << "'\n"
+              << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
+
+    // scan the list
+    ::scan_list(manager, in);
 
     // done
     in.close();
-    std::cout << "# scan completed.\n";
+    std::cout << "# scan_list completed.\n";
   }
 
   // scan_hash
@@ -632,7 +684,7 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // print the sources
-    export_json_t::print_sources(hashdb_dir);
+    ::export_json_sources(manager, std::cout);
   }
 
   // histogram

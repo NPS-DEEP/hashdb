@@ -123,6 +123,7 @@ class lmdb_hash_data_manager_t {
 
     // calculate file_offset_index
     if (file_offset % byte_alignment != 0) {
+      std::cerr << "file_offset, byte_alignment usage error\n";
       assert(0);
     }
     uint64_t file_offset_index = file_offset / byte_alignment;
@@ -183,6 +184,7 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
+      std::cerr << "data decode error in LMDB hash data store\n";
       assert(0);
     }
   }
@@ -250,6 +252,7 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
+      std::cerr << "data decode error in LMDB hash data store\n";
       assert(0);
     }
   }
@@ -262,6 +265,7 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
 
     // calculate file_offset_index
     if (file_offset % byte_alignment != 0) {
+      std::cerr << "file_offset, byte_alignment usage error\n";
       assert(0);
     }
     uint64_t file_offset_index = file_offset / byte_alignment;
@@ -304,6 +308,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
+      std::cerr << "data decode error in LMDB hash data store\n";
       assert(0);
     }
   }
@@ -351,6 +356,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
     // program error if source ID is 0 since NULL distinguishes between
     // type 1 and type 2 data.
     if (source_id == 0) {
+      std::cerr << "program error in source_id\n";
       assert(0);
     }
 
@@ -409,6 +415,7 @@ print_mdb_val("hash_data_manager insert found data", context.data);
 #endif
       // require data to have size
       if (context.data.mv_size == 0) {
+        std::cerr << "program error in data size\n";
         assert(0);
       }
 
@@ -610,6 +617,7 @@ print_mdb_val("hash_data_manager find did not find key", context.key);
       // check first byte to see if the entry is Type 1 or Type 2
       // require data to have size
       if (context.data.mv_size == 0) {
+        std::cerr << "program error in data size\n";
         assert(0);
       }
 
@@ -682,6 +690,7 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
       assert(0);
       return false; // for mingw
     }
+    std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
     assert(0); // for mingw
     return false; // for mingw
   }
@@ -715,6 +724,7 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
       // check first byte to see if the entry is Type 1 or Type 2
       // require data to have size
       if (context.data.mv_size == 0) {
+        std::cerr << "program error in data size\n";
         assert(0);
       }
 
@@ -728,6 +738,7 @@ print_mdb_val("hash_data_manager find Type 3 done, data", context.data);
         size_t cursor_count = get_cursor_count(context);
         // value of 1 is not valid
         if (cursor_count == 1) {
+          std::cerr << "program error in cursor count\n";
           assert(0);
         }
         context.close();

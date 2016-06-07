@@ -32,12 +32,16 @@ HASHDB_INCS = \
 	adder.hpp \
 	adder_set.hpp \
 	commands.hpp \
+	export_json.cpp \
 	export_json.hpp \
+	import_json.cpp \
 	import_json.hpp \
+	import_tab.cpp \
 	import_tab.hpp \
 	main.cpp \
 	progress_tracker.hpp \
-	scan_hashes.hpp \
+	scan_list.cpp \
+	scan_list.hpp \
 	s_to_uint64.hpp \
 	usage.hpp
 
