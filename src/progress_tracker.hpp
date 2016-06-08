@@ -44,7 +44,7 @@ class progress_tracker_t {
   uint64_t index;
   std::ofstream os;
   hashdb::timestamp_t timestamp;
- 
+
   // do not allow copy or assignment
   progress_tracker_t(const progress_tracker_t&);
   progress_tracker_t& operator=(const progress_tracker_t&);

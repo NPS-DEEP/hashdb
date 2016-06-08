@@ -6,7 +6,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT(hashdb, 3.0.0-alpha-4, github.com/NPS-DEEP/hashdb/issues)
+AC_INIT(hashdb, 3.0.0-alpha-5, github.com/NPS-DEEP/hashdb/issues)
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_CONFIG_FILES([Makefile

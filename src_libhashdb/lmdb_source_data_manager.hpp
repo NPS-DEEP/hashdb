@@ -152,7 +152,7 @@ print_mdb_val("source_data_manager insert new data", context.data);
         std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
         assert(0);
       }
- 
+
       // new source data inserted
       ++changes.source_data_inserted;
       context.close();

@@ -107,6 +107,77 @@ std::string random_binary_hash() {
 
 namespace commands {
 
+// ************************************************************
+// helpers
+// ************************************************************
+class in_ptr_t {
+  private:
+  std::istream* in;
+
+  // do not allow copy or assignment
+  in_ptr_t(const in_ptr_t&);
+  in_ptr_t& operator=(const in_ptr_t&);
+
+  public:
+  in_ptr_t(const std::string& in_filename) : in(NULL) {
+    if (in_filename == "-") {
+      in = &std::cin;
+    } else {
+      std::ifstream* inf = new std::ifstream(in_filename.c_str());
+      if (!inf->is_open()) {
+        std::cout << "Error: Cannot open " << in_filename
+                  << ": " << strerror(errno) << "\n";
+        exit(1);
+      }
+      in = inf;
+    }
+  }
+
+  ~in_ptr_t() {
+    if (in != &std::cin) {
+      delete in;
+    }
+  }
+
+  std::istream* operator()() {
+    return in;
+  }
+};
+
+class out_ptr_t {
+  private:
+  std::ostream* out;
+
+  // do not allow copy or assignment
+  out_ptr_t(const out_ptr_t&);
+  out_ptr_t& operator=(const out_ptr_t&);
+
+  public:
+  out_ptr_t(const std::string& out_filename) : out(NULL) {
+    if (out_filename == "-") {
+      out = &std::cout;
+    } else {
+      std::ofstream* outf = new std::ofstream(out_filename.c_str());
+      if (!outf->is_open()) {
+        std::cout << "Error: Cannot open " << out_filename
+                  << ": " << strerror(errno) << "\n";
+        exit(1);
+      }
+      out = outf;
+    }
+  }
+
+  ~out_ptr_t() {
+    if (out != &std::cout) {
+      delete out;
+    }
+  }
+
+  std::ostream* operator()() {
+    return out;
+  }
+};
+
   // ************************************************************
   // new database
   // ************************************************************
@@ -173,18 +244,11 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
 
     // open the tab file for reading
-    std::ifstream in(tab_file.c_str());
-    if (!in.is_open()) {
-      std::cout << "Error: Cannot open " << tab_file
-                << ": " << strerror(errno) << "\n";
-      exit(1);
-    }
-
+    in_ptr_t in_ptr(tab_file);
     ::import_tab(manager, repository_name, tab_file, whitelist_manager,
-                 progress_tracker, in);
+                 progress_tracker, *in_ptr());
 
     // done
-    in.close();
     if (whitelist_manager != NULL) {
       delete whitelist_manager;
     }
@@ -204,18 +268,10 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
 
     // open the JSON file for reading
-    std::ifstream in(json_file.c_str());
-    if (!in.is_open()) {
-      std::cout << "Error: Cannot open " << json_file
-                << ": " << strerror(errno) << "\n";
-      exit(1);
-    }
-
-    // import the hashdb
-    ::import_json(manager, progress_tracker, in);
+    in_ptr_t in_ptr(json_file);
+    ::import_json(manager, progress_tracker, *in_ptr());
 
     // done
-    in.close();
     std::cout << "import completed.\n";
   }
 
@@ -232,23 +288,17 @@ namespace commands {
     progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
 
     // open the JSON file for writing
-    std::ofstream out(json_file.c_str());
-    if (!out.is_open()) {
-      std::cout << "Error: Cannot open " << json_file
-                << ": " << strerror(errno) << "\n";
-      exit(1);
-    }
+    out_ptr_t out_ptr(json_file);
 
-    // write cmd to out
-    out << "# command: '" << cmd << "'\n"
-        << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
+    // write cmd
+    *out_ptr() << "# command: '" << cmd << "'\n"
+               << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // export the hashdb
-    ::export_json_sources(manager, out);
-    ::export_json_hashes(manager, progress_tracker, out);
+    ::export_json_sources(manager, *out_ptr());
+    ::export_json_hashes(manager, progress_tracker, *out_ptr());
 
     // done
-    out.close();
     std::cout << "export completed.\n";
   }
 
@@ -347,7 +397,7 @@ namespace commands {
         delete producer;
       }
     }
-      
+
     // add ordered hashes from producers until all hashes are consumed
     while (ordered_producers.size() != 0) {
       // get the hash, producer, and adder for the first hash
@@ -590,22 +640,16 @@ namespace commands {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // open the hashes list file for reading
-    std::ifstream in(hashes_file.c_str());
-    if (!in.is_open()) {
-      std::cout << "Error: Cannot open " << hashes_file
-                << ": " << strerror(errno) << "\n";
-      exit(1);
-    }
+    in_ptr_t in_ptr(hashes_file);
 
-    // write cmd to out
+    // write cmd to stdout
     std::cout << "# command: '" << cmd << "'\n"
               << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // scan the list
-    ::scan_list(manager, in);
+    ::scan_list(manager, *in_ptr());
 
     // done
-    in.close();
     std::cout << "# scan_list completed.\n";
   }
 

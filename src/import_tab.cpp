@@ -91,7 +91,7 @@ void import_tab(hashdb::import_manager_t& manager,
       continue;
     }
 
-    // get block hash 
+    // get block hash
     std::string block_hashdigest_string = line.substr(
                                   tab_index1+1, tab_index2 - tab_index1 - 1);
     std::string block_binary_hash = hashdb::hex_to_bin(block_hashdigest_string);

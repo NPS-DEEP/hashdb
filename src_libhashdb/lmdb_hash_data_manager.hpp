@@ -407,7 +407,7 @@ print_whole_mdb("hash_data_manager insert", context.cursor);
       context.close();
       MUTEX_UNLOCK(&M);
       return 1;
- 
+
     } else if (rc == 0) {
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager insert found key", context.key);

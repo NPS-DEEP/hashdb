@@ -418,7 +418,7 @@ namespace hashdb {
                                 HASH_COUNT,
                                 APPROXIMATE_HASH_COUNT};
   enum scan_stream_response_mode_t {TEXT_OUTPUT, BINARY_OUTPUT};
- 
+
   /**
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
    */
@@ -520,7 +520,7 @@ namespace hashdb {
      * Returns:
      *   JSON expanded hash text if source is present, false and ""
      *   if not.  Example syntax:
-     * 
+     *
      * {
      *   "entropy": 8,
      *   "block_label": "W",

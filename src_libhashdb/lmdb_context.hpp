@@ -74,7 +74,7 @@ namespace hashdb {
         std::cerr << "Error: LMDB context not 0: state " << state << "\n";
         assert(0);
       }
- 
+
       // create txn object
       int rc = mdb_txn_begin(env, NULL, txn_flags, &txn);
       if (rc != 0) {
@@ -109,7 +109,7 @@ namespace hashdb {
 
       // free txn object
       if ((txn_flags & MDB_RDONLY) != MDB_RDONLY) {
- 
+
         // RW
         int rc = mdb_txn_commit(txn);
         if (rc != 0) {
