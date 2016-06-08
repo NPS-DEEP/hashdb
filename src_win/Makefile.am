@@ -60,7 +60,9 @@ _hashdb.pyd: ../src_libhashdb/libhashdb.o py_parts/$(LIB_FILE) hashdb_wrap.o
 	       ../src_libhashdb/.libs/libhashdb.a \
 	       ${libdir}/libewf.a \
 	       ${libdir}/libwinpthread.a \
-	       -lewf -lcrypto -lz \
+	       ${libdir}/libcrypto.a \
+	       ${libdir}/libz.a \
+	       -lgdi32 \
 	       py_parts/$(LIB_FILE)
 
 # the Python parts to compile and link against

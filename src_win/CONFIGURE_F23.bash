@@ -85,8 +85,11 @@ if [ ! -r /usr/x86_64-w64-mingw32/sys-root/mingw/lib/libewf.a ]; then
   echo
   echo %%% $LIB mingw64
 
-  # patch libewf/libuna/libuna_inline.h for GCC5
+  # patch libewf/libuna/libuna_inline.h to work with GCC5
   patch -p0 <../libewf-20140406-gcc5-compatibility.patch
+
+  # patch libewf/libewf/libewf.c to prevent generation of DllMain
+  patch -p0 <../libewf-20140406-no-dllmain.patch
 
   # configure
   CPPFLAGS=-DHAVE_LOCAL_LIBEWF mingw64-configure --enable-static --disable-shared

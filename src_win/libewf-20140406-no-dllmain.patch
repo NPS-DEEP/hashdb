@@ -1,0 +1,11 @@
+--- libewf/libewf.c	2016-06-08 12:51:01.943589894 -0700
++++ libewf/libewf.c	2016-06-08 12:53:22.540594393 -0700
+@@ -29,7 +29,7 @@
+ 
+ /* Define HAVE_LOCAL_LIBEWF for local use of libewf
+  */
+-#if !defined( HAVE_LOCAL_LIBEWF )
++#if !defined( HAVE_LOCAL_LIBEWF ) && defined( HAVE_DLLMAIN )
+ 
+ #if defined( WINAPI )
+ 
