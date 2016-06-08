@@ -412,7 +412,7 @@ namespace hashdb {
   // ************************************************************
 
   /**
-   * The scan_stream interface requires these modes.
+   * The scan interface accepts these modes.
    */
   enum scan_stream_scan_mode_t {EXPANDED_HASH,
                                 HASH_COUNT,

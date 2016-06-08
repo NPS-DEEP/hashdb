@@ -1220,7 +1220,7 @@ Text mode is intended for users who stream scan requests locally. Match output c
 \item \textbf{Binary Output}\\
 Binary mode is intended for users who receive matches over a socket. Match data may be read in two steps: first read the 8-byte count, then read the count-sized data. Match output consists of the following:
   \begin{itemize}
-  \item An 8-byte output length field in architecture order, likely Little Endian, as opposed to Network Byte Order.
+  \item An 8-byte output length field in architecture byte order, likely Little Endian, as opposed to Network Byte Order.
   \item The hash data in binary form.
   \item The blob data in binary form.
   \item The JSON text.
@@ -1249,7 +1249,6 @@ The \hdb \verb+size+ command and \verb+size+ API interface returns size informat
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
-{
 {
   "hash_data_store":402221,
   "hash_store":401653,
