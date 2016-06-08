@@ -47,12 +47,12 @@ class adder_t {
   private:
 
   const hashdb::scan_manager_t* const manager_a;
-  progress_tracker_t* const tracker;
   hashdb::import_manager_t* const manager_b;
+  const std::string repository_name;
+  progress_tracker_t* const tracker;
   std::set<std::string>* const processed_sources;
   std::set<std::string>* const repository_sources;
   std::set<std::string>* const non_repository_sources;
-  const std::string repository_name;
 
   // do not allow copy or assignment
   adder_t(const adder_t&);
@@ -171,29 +171,29 @@ class adder_t {
   public:
   // add A into B
   adder_t(const hashdb::scan_manager_t* const p_manager_a,
-          progress_tracker_t* p_tracker,
-          hashdb::import_manager_t* const p_manager_b) :
+          hashdb::import_manager_t* const p_manager_b,
+          progress_tracker_t* const p_tracker) :
                   manager_a(p_manager_a),
-                  tracker(p_tracker),
                   manager_b(p_manager_b),
+                  repository_name(""),
+                  tracker(p_tracker),
                   processed_sources(new sources_t),
                   repository_sources(new sources_t),
-                  non_repository_sources(new sources_t),
-                  repository_name("") {
+                  non_repository_sources(new sources_t) {
   }
 
   // add A into B contingent on repository_name
   adder_t(const hashdb::scan_manager_t* const p_manager_a,
-          progress_tracker_t* p_tracker,
           hashdb::import_manager_t* const p_manager_b,
-          const std::string& p_repository_name) :
+          const std::string& p_repository_name,
+          progress_tracker_t* const p_tracker) :
                   manager_a(p_manager_a),
-                  tracker(p_tracker),
                   manager_b(p_manager_b),
+                  repository_name(p_repository_name),
+                  tracker(p_tracker),
                   processed_sources(new sources_t),
                   repository_sources(new sources_t),
-                  non_repository_sources(new sources_t),
-                  repository_name(p_repository_name) {
+                  non_repository_sources(new sources_t) {
   }
 
   ~adder_t() {

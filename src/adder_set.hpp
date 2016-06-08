@@ -47,6 +47,7 @@ class adder_set_t {
   const hashdb::scan_manager_t* const manager_a;
   const hashdb::scan_manager_t* const manager_b;
   hashdb::import_manager_t* const manager_c;
+  progress_tracker_t* const tracker;
   std::set<std::string>* const processed_sources;
 
   // do not allow copy or assignment
@@ -105,10 +106,12 @@ class adder_set_t {
   public:
   adder_set_t(const hashdb::scan_manager_t* const p_manager_a,
               const hashdb::scan_manager_t* const p_manager_b,
-              hashdb::import_manager_t* const p_manager_c) :
+              hashdb::import_manager_t* const p_manager_c,
+              progress_tracker_t* const p_tracker) :
                   manager_a(p_manager_a),
                   manager_b(p_manager_b),
                   manager_c(p_manager_c),
+                  tracker(p_tracker),
                   processed_sources(new sources_t) {
   }
 
@@ -116,7 +119,7 @@ class adder_set_t {
     delete processed_sources;
   }
 
-  // add A and B into C when A and B hash sources are common
+  // add A and B into C where A and B hash sources are common
   void intersect(const std::string& binary_hash) {
 
     // read hash data from A
@@ -131,50 +134,51 @@ class adder_set_t {
       assert(0);
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
     source_offset_pairs_t* source_offset_pairs_b = new source_offset_pairs_t;
     bool found_hash_b = manager_b->find_hash(binary_hash,
                            entropy_b, block_label_b, *source_offset_pairs_b);
-    // hash required
-    if (!found_hash_b) {
-      // program error
-      assert(0);
-    }
+    if (found_hash_b) {
 
-    // intersect sources A and B into C
-    source_offset_pairs_t* source_offset_pairs_c = new source_offset_pairs_t;
-    for (source_offset_pairs_t::const_iterator it_a =
+      // intersect sources A and B into C
+      source_offset_pairs_t* source_offset_pairs_c = new source_offset_pairs_t;
+      for (source_offset_pairs_t::const_iterator it_a =
          source_offset_pairs_a->begin(); it_a != source_offset_pairs_a->end();
          ++it_a) {
-      if (source_offset_pairs_b->find(*it_a) != source_offset_pairs_b->end()) {
-        source_offset_pairs_c->insert(*it_a);
+        if (source_offset_pairs_b->find(*it_a) != source_offset_pairs_b->end()) {
+          source_offset_pairs_c->insert(*it_a);
+        }
       }
-    }
 
-    // copy intersected sources
-    for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs_c->begin(); it != source_offset_pairs_c->end();
-         ++it) {
+      // copy intersected sources
+      for (source_offset_pairs_t::const_iterator it =
+           source_offset_pairs_c->begin(); it != source_offset_pairs_c->end();
+           ++it) {
 
-      // add hash for source
-      manager_c->insert_hash(binary_hash, it->first, it->second,
-                             entropy_a, block_label_a);
+        // add hash for source
+        manager_c->insert_hash(binary_hash, it->first, it->second,
+                               entropy_a, block_label_a);
 
-      if (processed_sources->find(it->first) == processed_sources->end()) {
-        // add source information
-        add_source_data(it->first);
-        add_source_names(it->first);
-        processed_sources->insert(it->first);
-      } else {
-        // already processed
+        if (processed_sources->find(it->first) == processed_sources->end()) {
+          // add source information
+          add_source_data(it->first);
+          add_source_names(it->first);
+          processed_sources->insert(it->first);
+        } else {
+          // already processed
+        }
       }
+
+      delete source_offset_pairs_c;
     }
 
     delete source_offset_pairs_a;
     delete source_offset_pairs_b;
-    delete source_offset_pairs_c;
   }
 
   // add A and B into C when A and B hash is common
@@ -192,6 +196,9 @@ class adder_set_t {
       assert(0);
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
@@ -199,46 +206,44 @@ class adder_set_t {
     bool found_hash_b = manager_b->find_hash(binary_hash,
                            entropy_b, block_label_b, *source_offset_pairs_b);
     // hash required
-    if (!found_hash_b) {
-      // program error
-      assert(0);
-    }
+    if (found_hash_b) {
 
-    // union sources A and B into C
-    source_offset_pairs_t* source_offset_pairs_c = new source_offset_pairs_t;
-    for (source_offset_pairs_t::const_iterator it_a =
-         source_offset_pairs_a->begin(); it_a != source_offset_pairs_a->end();
-         ++it_a) {
-      source_offset_pairs_c->insert(*it_a);
-    }
-    for (source_offset_pairs_t::const_iterator it_b =
-         source_offset_pairs_b->begin(); it_b != source_offset_pairs_b->end();
-         ++it_b) {
-      source_offset_pairs_c->insert(*it_b);
-    }
-
-    // copy union of sources
-    for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs_c->begin(); it != source_offset_pairs_c->end();
-         ++it) {
-
-      // add hash for source
-      manager_c->insert_hash(binary_hash, it->first, it->second,
-                             entropy_a, block_label_a);
-
-      if (processed_sources->find(it->first) == processed_sources->end()) {
-        // add source information
-        add_source_data(it->first);
-        add_source_names(it->first);
-        processed_sources->insert(it->first);
-      } else {
-        // already processed
+      // union sources A and B into C
+      source_offset_pairs_t* source_offset_pairs_c = new source_offset_pairs_t;
+      for (source_offset_pairs_t::const_iterator it_a =
+           source_offset_pairs_a->begin(); it_a != source_offset_pairs_a->end();
+           ++it_a) {
+        source_offset_pairs_c->insert(*it_a);
       }
+      for (source_offset_pairs_t::const_iterator it_b =
+           source_offset_pairs_b->begin(); it_b != source_offset_pairs_b->end();
+           ++it_b) {
+        source_offset_pairs_c->insert(*it_b);
+      }
+
+      // copy union of sources
+      for (source_offset_pairs_t::const_iterator it =
+           source_offset_pairs_c->begin(); it != source_offset_pairs_c->end();
+           ++it) {
+
+        // add hash for source
+        manager_c->insert_hash(binary_hash, it->first, it->second,
+                               entropy_a, block_label_a);
+
+        if (processed_sources->find(it->first) == processed_sources->end()) {
+          // add source information
+          add_source_data(it->first);
+          add_source_names(it->first);
+          processed_sources->insert(it->first);
+        } else {
+          // already processed
+        }
+      }
+      delete source_offset_pairs_c;
     }
 
     delete source_offset_pairs_a;
     delete source_offset_pairs_b;
-    delete source_offset_pairs_c;
   }
 
   // add A into C when A hash and source is not in B
@@ -256,6 +261,9 @@ class adder_set_t {
       assert(0);
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
@@ -312,6 +320,9 @@ class adder_set_t {
       assert(0);
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     // read hash count from B
     size_t count = manager_b->find_hash_count(binary_hash);
     if (count == 0) {

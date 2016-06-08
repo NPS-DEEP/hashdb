@@ -316,10 +316,10 @@ class out_ptr_t {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
     progress_tracker_t progress_tracker(
                                 dest_dir, manager_a.size_hashes(), cmd);
-    hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &progress_tracker, &manager_b);
+    adder_t adder(&manager_a, &manager_b, &progress_tracker);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -385,7 +385,7 @@ class out_ptr_t {
       if (binary_hash.size() != 0) {
         // the producer is not empty, so enqueue it
         // create the adder
-        adder_t* adder = new adder_t(producer, &progress_tracker, &consumer);
+        adder_t* adder = new adder_t(producer, &consumer, &progress_tracker);
         ordered_producers.insert(ordered_producers_value_t(binary_hash,
                                       producer_t(producer, adder)));
 
@@ -438,10 +438,10 @@ class out_ptr_t {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
     progress_tracker_t progress_tracker(dest_dir,
                                         manager_a.size_hashes(), cmd);
-    hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &progress_tracker, &manager_b, repository_name);
+    adder_t adder(&manager_a, &manager_b, repository_name, &progress_tracker);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -465,10 +465,10 @@ class out_ptr_t {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
     progress_tracker_t progress_tracker(dest_dir,
                                         manager_a.size_hashes(), cmd);
-    hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &progress_tracker, &manager_b);
+    adder_t adder(&manager_a, &manager_b, &progress_tracker);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
@@ -494,19 +494,14 @@ class out_ptr_t {
     hashdb::scan_manager_t manager_a(hashdb_dir1);
     hashdb::scan_manager_t manager_b(hashdb_dir2);
     hashdb::import_manager_t manager_c(dest_dir, cmd);
-    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+    progress_tracker_t progress_tracker(dest_dir, manager_a.size_hashes(), cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c,
+                                                           &progress_tracker);
 
     // iterate A to intersect A and B into C
     std::string binary_hash = manager_a.first_hash();
     while (binary_hash.size() != 0) {
-
-      // intersect if hash is in B
-      size_t count = manager_b.find_hash_count(binary_hash);
-      if (count > 0) {
-        // intersect
-        adder_set.intersect(binary_hash);
-      }
-
+      adder_set.intersect(binary_hash);
       binary_hash = manager_a.next_hash(binary_hash);
     }
   }
@@ -526,19 +521,14 @@ class out_ptr_t {
     hashdb::scan_manager_t manager_a(hashdb_dir1);
     hashdb::scan_manager_t manager_b(hashdb_dir2);
     hashdb::import_manager_t manager_c(dest_dir, cmd);
-    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+    progress_tracker_t progress_tracker(dest_dir, manager_a.size_hashes(), cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c,
+                                                          & progress_tracker);
 
     // iterate A to intersect_hash A and B into C
     std::string binary_hash = manager_a.first_hash();
     while (binary_hash.size() != 0) {
-
-      // intersect if hash is in B
-      size_t count = manager_b.find_hash_count(binary_hash);
-      if (count > 0) {
-        // intersect_hash
-        adder_set.intersect_hash(binary_hash);
-      }
-
+      adder_set.intersect_hash(binary_hash);
       binary_hash = manager_a.next_hash(binary_hash);
     }
   }
@@ -558,7 +548,9 @@ class out_ptr_t {
     hashdb::scan_manager_t manager_a(hashdb_dir1);
     hashdb::scan_manager_t manager_b(hashdb_dir2);
     hashdb::import_manager_t manager_c(dest_dir, cmd);
-    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+    progress_tracker_t progress_tracker(dest_dir, manager_a.size_hashes(), cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c,
+                                                          &progress_tracker);
 
     // iterate A to add A to C if A hash and source not in B
     std::string binary_hash = manager_a.first_hash();
@@ -586,7 +578,9 @@ class out_ptr_t {
     hashdb::scan_manager_t manager_a(hashdb_dir1);
     hashdb::scan_manager_t manager_b(hashdb_dir2);
     hashdb::import_manager_t manager_c(dest_dir, cmd);
-    adder_set_t adder_set(&manager_a, &manager_b, &manager_c);
+    progress_tracker_t progress_tracker(dest_dir, manager_a.size_hashes(), cmd);
+    adder_set_t adder_set(&manager_a, &manager_b, &manager_c,
+                                                          &progress_tracker);
 
     // iterate A to add A to C if A hash not in B
     std::string binary_hash = manager_a.first_hash();
@@ -611,10 +605,10 @@ class out_ptr_t {
 
     // resources
     hashdb::scan_manager_t manager_a(hashdb_dir);
+    hashdb::import_manager_t manager_b(dest_dir, cmd);
     progress_tracker_t progress_tracker(dest_dir,
                                         manager_a.size_hashes(), cmd);
-    hashdb::import_manager_t manager_b(dest_dir, cmd);
-    adder_t adder(&manager_a, &progress_tracker, &manager_b, repository_name);
+    adder_t adder(&manager_a, &manager_b, repository_name, &progress_tracker);
 
     // add data for binary_hash from A to B
     std::string binary_hash = manager_a.first_hash();
