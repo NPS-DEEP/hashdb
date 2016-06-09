@@ -558,7 +558,6 @@ class out_ptr_t {
 
       // add A to C if A hash and source not in B
       adder_set.subtract(binary_hash);
-
       binary_hash = manager_a.next_hash(binary_hash);
     }
   }
@@ -588,7 +587,6 @@ class out_ptr_t {
 
       // add A to C if A hash not in B
       adder_set.subtract_hash(binary_hash);
-
       binary_hash = manager_a.next_hash(binary_hash);
     }
   }

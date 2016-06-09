@@ -372,13 +372,23 @@ Blacklist data may come from multiple sources called ``repositories''. \hdb trac
 \subsection{Forensic Data}
 Forensic data is the data we scan to see if it contains artifact matching
 that in our hash database.
-Note that just having matches is not sufficiently probative.
+Note that just having matches is not sufficient to be considered probative.
 Some matches are common to many files.
 \hdb tracks entropy and data information to automate the process
 of eliminating many false positives.
 Direct analysis such as that provided by the \sscope tool
 may be used to see the exact content at that location.
 \sscope is available at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}.
+
+\subsection{Forensic Path}
+A forensic path is a byte offset into a media image. However, when recursive mode is used to uncompress data, the forensic path includes information for pointing to uncompressed data and also the compression algorithm used to reach that data. An example forensic path of \texttt{1000-zip-2100} at filename \texttt{myfile-100-zip} extracted from filename \texttt{myfile} is shown in Figure \ref{fig:forensicPath}.\\
+
+\begin{figure}
+	\center
+	\includegraphics[scale=.45]{drawings/forensic_path}
+	\caption{Example forensic path to an extracted file}
+	\label{fig:forensicPath}
+\end{figure}
 
 \subsection{File Hash}
 \hdb tracks sources by their file hash rather than by their filename
@@ -398,19 +408,19 @@ Here we describe the data that \hdb stores with hashes and sources. How this dat
 
 \begin{itemize}
 \item \textbf{Entropy}\\
-We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. Unfortunately, data in blocks can be a member of many types of alphabets. \hdb uses one algorithm.  For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative. The entropy field is new to \hdb v3.\\
+We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. Unfortunately, data in blocks can be a member of many types of alphabets. \hdb uses one algorithm.  For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative. The entropy field is new to \hdb v3.
 \item \textbf{Block Label}\\
-Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.\\
+Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
 \item \textbf{File Hash}\\
-Matched source files are indexed by file hash (new to \hdb v3). The \sscope tool uses this value to visualize how specific source files are distributed across a media image.\\
+Matched source files are indexed by file hash (new to \hdb v3). The \sscope tool uses this value to visualize how specific source files are distributed across a media image.
 \item \textbf{Repository Name and Filename}\\
-The list of repository names and filenames associated with a source file are provided, enabling a comprehensive indication of what a hash match is a member of.\\
+The list of repository names and filenames associated with a source file are provided, enabling a comprehensive indication of what a hash match is a member of.
 \item \textbf{Source File Size}\\
-The source file size indicates how big a source file is. The \sscope tool uses this value to know what percentage of a source file is matched in a scan.\\
+The source file size indicates how big a source file is. The \sscope tool uses this value to know what percentage of a source file is matched in a scan.
 \item \textbf{Source File Type}\\
-This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.\\
+This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.
 \item \textbf{Source File Nonprobative Count}\\
-The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+ingest+ function, this value is set to the number of blocks that have been given a block label.\\
+The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+ingest+ function, this value is set to the number of blocks that have been given a block label.
 \end{itemize}
 
 \subsection{Building a \hdb Database}
@@ -465,11 +475,11 @@ settings.json
 These files include several data store directories and files, a settings file, and a log file:
 
 \begin{itemize}
-\item Data store files \\
-Data store files encode all the block hashes, source files, and related information that are in the database. Data store filenames start with the prefix \verb+lmdb+.
+\item \texttt{lmdb store} files \\
+The \texttt{lmdb store} files encode all the block hashes, source files, and related information that are in the database. These filenames start with the prefix \verb+lmdb+.
 
 \item \texttt{settings.json} \\
-This file contains the settings requested by the user when the block hash database was created, see \hdb settings and Bloom filter settings options.  This file also contains the internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb. The \texttt{settings.json} file with the default settings looks like this:\\
+This file contains the settings requested by the user when the block hash database was created. Settings are described in \textbf{\autoref{Settings}}. This file also contains the internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb. The \texttt{settings.json} file with the default settings looks like this:
 
 \begingroup
 \footnotesize
@@ -479,9 +489,6 @@ This file contains the settings requested by the user when the block hash databa
 "hash_suffix_bytes":3}
 \end{Verbatim}
 \endgroup
-
-Settings are described in \textbf{\autoref{Settings}}.
-
 
 \item \texttt{log.txt} \\
 Every time a command is run that changes the content of the database, information about the change is appended to this log.  Each entry includes the command name, information about \hdb including the command typed and how \hdb was compiled, information about the operating system \hdb was just run on, timestamps indicating how much time the command took, and the specific \hdb changes applied.\\
@@ -517,32 +524,29 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 \end{lstlisting}
 
 
-\item Timestamp\\
-\verb+timestamp.json+ is not formally part of the \hdb database.  It is created by \hdb tool performance analysis commands shown in \textbf{\autoref{PerformanceAnalysis}}. This file is replaced rather than appended to. Please see \textbf{\Autoref{InputOutputSyntax}} for information on timestamp syntax.
-
+\item \texttt{timestamp.json}\\
+\verb+timestamp.json+ is not formally part of the \hdb database.  It is created by the \hdb tool performance analysis commands described in \textbf{\autoref{PerformanceAnalysis}}. This file is replaced rather than appended to. Timestamp syntax is described in \textbf{\Autoref{InputOutputSyntax}}.
 \end{itemize}
-
-
 
 \subsection{Settings}
 \label{Settings}
-Function and performance of a \hdb database is set using configurable settings:\\
+Function and performance of a \hdb database is set using configurable settings:
 
 \begin{itemize}
 \item \textbf{Block size}\\
-The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.\\
+The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.
 
 \item \textbf{Byte alignment}\\
-Byte alignment is an optimization parameter created to help reduce the size of the database. To be optimal, this value should be large, but it must be divisible by the step size used when importing hashes. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to, specifically, 512.\\
+Byte alignment is an optimization parameter created to help reduce the size of the database. To be optimal, this value should be large, but it must be divisible by the step size used when importing hashes. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to, specifically, 512.
 
 \item \textbf{Max source, offset pairs}\\
-The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.\\
+The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.
 
 \item \textbf{Hash prefix bits}\\
-The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.\\
+The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.
 
 \item \textbf{Hash suffix bytes}\\
-The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.\\
+The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.
 \end{itemize}
 
 \section {Running the \hdb Tool}
@@ -554,13 +558,12 @@ Additional commands are provided to support statistical analysis, performance tu
 
 This section describes use of the \hdb tool commands, along with examples, for performing these tasks.
 For more examples of command usage, please see \textbf{\autoref{UseCases}}.
-For a \hdb quick reference summary, please see \textbf{\autoref{QuickReference}}
-or \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
+For a \hdb quick reference summary, please see \textbf{\autoref{QuickReference}}, also available at \url{http://digitalcorpora.org/downloads/hashdb/hashdb_quick_reference.pdf}.
 
-\subsection{Creating a Hash Database}
+\subsection{Creating a New Hash Database}
 \label{Creating}
 A hash database must be created before hashes can be added to it.
-The command to create a hash database is shown in Table \ref{tab:createDatabase}.
+Syntax for creating a hash database is shown in Table \ref{tab:createDatabase}.
 Configurable settings associated with the database is shown in Table \ref{tab:hashDBSettings} and described in \textbf{\Autoref{Settings}}.\\
 \begin{table}[!ht]
 \centering
@@ -594,6 +597,10 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \end{tabular}
 \end{table}
 
+\begin{itemize}
+\item \textbf{create}\\
+Create a new hash database configured with provided or default settings.\\
+
 \textbf{Example}\\
 To create an (empty) hash database named \textbf{\texttt{demo.hdb}}, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -606,9 +613,15 @@ Users can specify either the option and value or the verbose option value for ea
 \verbbf{hashdb create -m 20 demo.hdb}
 \end{Verbatim}
 The above two commands produce identical results, creating the database \texttt{demo.hdb} that will accept a maximum of 20 source, offset pairs per hash.\\
+\end{itemize}
 
 \subsection{Importing and Exporting}
-Hash databases may be imported to in several ways.  Commands to import and export hashes are shown in Table \ref{tab:importExport}.\\
+Hash databases may be imported to in several ways.  Syntax for commands that import and export hashes is shown in Table \ref{tab:importExport}. Options are shown in Table \ref{tab:ImportExportOptions}.\\
+
+Note that there are other ways to populate a database besides these listed here, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
+by using the \bulk \hdb scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
+and through the use of the import capability provided by the \hdb library API (discussed in \textbf{\autoref{APISection}}).\\
+
 \begin{table}[!ht]
 \centering
 \caption{Commands for Importing into and Exporting Hash Databases}
@@ -617,51 +630,48 @@ Hash databases may be imported to in several ways.  Commands to import and expor
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-x <rel>]+ \verb+ <hashdb.hdb> <source directory>+& Computes and imports hashes from files under the source directory. Marks whitelist hashes. Disable processing: \verb+r+ disable recursively processesing embedded data, \verb+e+ disable calculating block entropy, \verb+l+ disable calculating block labels.\\
+\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-x <rel>]+ \verb+ <hashdb.hdb> <source directory>+& Computes and imports block hashes from files under the source directory into the hash database as directed by options.\\
 \hline
-\textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database.\\
+\textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
 \hline
-\textbf{import} & \verb+import <hashdb.hdb>+ \verb+<hashdb.json>+& Imports values from the JSON file into the hash database.\\
+\textbf{import} & \verb+import <hashdb.hdb>+ \verb+<hashdb.json>+& Imports values from the JSON file into the hash database. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
 \hline
-\textbf{export} & \verb+export <hashdb.hdb>+ \verb+<hashdb.json>+& Exports the hash database to the JSON file\\
+\textbf{export} & \verb+export <hashdb.hdb>+ \verb+<hashdb.json>+& Exports the hash database to the JSON file. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming to \verb+stdout+.\\
 \hline
 \end{tabular}
 \end{table}
 
-Note that there are other ways to populate a database besides these listed here, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
-by using the \bulk \hdb scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
-and through the use of the import capability provided by the \hdb library API (discussed in \textbf{\autoref{APISection}}).\\
+\begin{table}[!ht]
+\centering
+\caption{Options for Importing and Exporting Hash Databases}
+\label{tab:ImportExportOptions}
+\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
+\hline
+\textbf{\texttt{-r}} & \verb+--repository_name=+\textit{repository name} & Specifies the name to associate the imported hashes with. If not provided, the source filename entered is used as the repository name.\\
+\hline
+\textbf{\texttt{-w}} & \verb+--whitelist_dir=+\textit{whitelist directory} & If a whitelist database is provided, matching hashes are marked with \verb+w+ in their block label.\\
+\hline
+\textbf{\texttt{-s}} & \verb+--step_size=+\textit{step size} & The increment to step along for calculating block hashes. The step size must be compatible with the byte alignment defined in the database, specifically the byte alignment must be divisible by the byte alignment.\\
+\hline
+\textbf{\texttt{-x}} & \verb+--disable_processing=rel+ & Use this option to disable specific processing, specifically: \verb+r+ disables recursively processing embedded data, \verb+e+ disables calculating block entropy, and \verb+l+ disables calculating block labels.\\
+\hline
+\end{tabular}
+\end{table}
 
+\begin{itemize}
+\item \textbf{ingest}\\
+Computes and and imports hashes from files under the source directory, including files in subdirectories. Files with \verb+.E01+ extensions are treated as E01 files.\\
 
+\textbf{Example}\\
 To import block hashes from a directory of blacklist sources, type the following command:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb ingest -r demo_repository demo.hdb demo_blacklist_dir}
 \end{Verbatim}
 In the above command the option \textbf{-r} is used along with the repository name \texttt{demo\_repository} to indicate the repository source of the block hashes being imported into the database. The repository name is used to keep track of the sources of hashes. By default, the repository name used is the text \texttt{repository\_} with the filename of the file being imported from appended after it.\\
 
-The \textbf{ingest} command in the above example imports block hashes from files in the \texttt{demo\_blacklist\_dir} directory into the database \texttt{demo.hdb}. When the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import} is imported, \hdb prints output to the command line to indicate that hashes have been inserted into the database: 
-
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
-# hashdb changes:
-#     hash_data_data_inserted: 401935
-#     hash_data_data_same: 195
-#     hash_data_source_inserted: 402130
-#     hash_prefix_inserted: 401653
-#     hash_suffix_inserted: 401935
-#     hash_count_changed: 149
-#     hash_not_changed: 46
-#     source_data_inserted: 101
-#     source_id_inserted: 101
-#     source_id_already_present: 402231
-#     source_name_inserted: 101
-import completed.
-\end{Verbatim}
-\endgroup
-These numbers don't correspond to the actual number of hashes inserted, but they do indicate that data was added.\\
-
-The database \texttt{\textbf{demo.hdb}} now contains these block hashes.\\
+The \textbf{ingest} command in the above example imports block hashes from files in the \texttt{demo\_blacklist\_dir} directory into the database \texttt{demo.hdb}. When the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import} is imported, \hdb prints output to the command line to indicate that hashes have been inserted into database \texttt{\textbf{demo.hdb}}. Listing \ref{DatabaseChanges} shows an example output of changes from running an ingest command.\\
 
 Also, database log file \texttt{log.txt} is updated to show that a set of hash blocks have just been inserted. The log in Figure \ref{logfile} was generated from similar \textbf{create} and \textbf{import} actions.  The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
 
@@ -670,12 +680,19 @@ Users may prefer to run statistical commands such as this to get information abo
 \verbbf{hashdb size demo.hdb}
 \end{Verbatim}
 
+\item \textbf{import\_tab}\\
+Imports values from the tab-delimited file into the hash database. Note that tab-delimited files are expected to contain block hashes calculated from 512-byte blocks along 512-byte boundaries. Tab-delimited files are described in \textbf{\autoref{TabFile}}.
+\item \textbf{import}\\
+Imports values from an exported database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}.
+\item \textbf{export}\\
+Exports values from a \hdb block hash database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}.
+\end{itemize}
+
 \subsection{Database Manipulation}
 \label{DatabaseManipulation}
 Databases may need to be merged together or common hash values may need to be subtracted out in order to produce a specific set of blacklist data to scan against.
-Commands that manipulate hash databases are outlined in Table \ref{tab:databaseManipulation}.
+Syntax for commands that manipulate hash databases is shown in Table \ref{tab:databaseManipulation}.
 Destination databases are created if they do not exist yet.
-
 \begin{table}[!ht]
 \centering
 \caption{Commands to Manipulate Hash Databases}
@@ -705,71 +722,31 @@ Destination databases are created if they do not exist yet.
 \end{tabular}
 \end{table}
 
-\subsubsection{Tracking Changes in Hash Databases}
-Statistics about hash database changes are reported on the console and to the log file inside the hash database.
-These statistics show specific changes made to stores within the hash database
-and also changes not made because conditions were not met.
-These statistics are shown in Table \ref{tab:changeStatistics}.
-\begin{table}[!ht]
-
-\centering
-\caption{Database Changes Resulting from Commands that Manipulate Hash Databases}
-\label{tab:changeStatistics}
-\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
-\hline \hline
-\textbf{Statistic} & \textbf{Meaning} \\
-\hline
-
-% hash_data
-\verb+hash_data_data_inserted+ &  Number of hash data records inserted.\\
-\hline
-\verb+hash_data_data_changed+ &  Number of hash data records changed.\\
-\hline
-\verb+hash_data_data_same+ &  Number of hash data records provided but same.\\
-\hline
-\verb+hash_data_source_inserted+ &  Number of hash data source, offset pairs inserted.\\
-\hline
-\verb+hash_data_source_already_+ \verb+present+ &  Number of hash data source, offset pairs provided but same\\
-\hline
-\verb+hash_data_source_at_max+ &  Number of hash data source, offset pairs dropped because of max pair limit.\\
-\hline
-
-% hash
-\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted.\\
-\hline
-\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted.\\
-\hline
-\verb+hash_count_changed+ &  Number of hash count changes were applied.\\
-\hline
-\verb+hash_not_changed+ &  Number of hash and count values provided but same.\\
-\hline
-
-% source data
-\verb+source_data_inserted+ &  Number of source data records inserted.\\
-\hline
-\verb+source_data_changed+ &  Number of source data records changed.\\
-\hline
-\verb+source_data_same+ &  Number of source data records provided but same.\\
-\hline
-
-% source_id
-\verb+source_id_inserted+ &  Number of source ID records inserted.\\
-\hline
-\verb+source_id_already_present+ &  Number of source ID records provided but already present.\\
-\hline
-
-% source_name
-\verb+source_name_inserted+ &  Number of source names inserted.\\
-\hline
-\verb+source_name_already_+ \verb+present+ &  Number of source names provided but already present.\\
-\hline
-\end{tabular}
-\end{table}
+\begin{itemize}
+\item \textbf{add}\\
+Add a database to another database.
+\item \textbf{add\_multiple}\\
+Add multiple databases into a destination database.
+\item \textbf{add\_repository}\\
+Add a database to another database but only when the repository name matches.
+\item \textbf{add\_range}\\
+Add a database to another database but only when the hash source count falls within the given range.
+\item \textbf{intersect}\\
+Add hashes to a destination database when the hash and source are common.
+\item \textbf{intersect\_hash}\\
+Add hashes to a destination database when the hash is common, even if the referenced sources are different.
+\item \textbf{subtract}\\
+Add hashes to a destination database when the hash and source is in the first database but not in the second.
+\item \textbf{subtract\_hash}\\
+Add hashes to a destination database when the hash is in the first database but not in the second, even if the referenced sources are different.
+\item \textbf{subtract\_repository}\\
+Add a database to another database but only when the repository name does not match.
+\end{itemize}
 
 \subsection{Scan Services}
 \label{ScanServices}
 \hdb can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content.
-Scan services are shown in Table \ref{tab:scanServices}. \\
+Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Options are shown in Table \ref{tab:ScanOptions}.\\
 
 \begin{table}[!ht]
 \centering
@@ -788,6 +765,30 @@ Scan services are shown in Table \ref{tab:scanServices}. \\
 \end{tabular}
 \end{table}
 
+\begin{table}[!ht]
+\centering
+\caption{Options for Scanning from a Media Image}
+\label{tab:ScanOptions}
+\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
+\hline
+\textbf{\texttt{-s}} & \verb+--step_size=+\textit{step size} & The increment to step along for calculating block hashes. The step size must be compatible with the byte alignment defined in the database, specifically the byte alignment must be divisible by the byte alignment.\\
+\hline
+\textbf{\texttt{-x}} & \verb+--disable_processing=r+ & Use this option to disable specific processing, specifically: \verb+r+ disables recursively processing embedded data.\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+\item \textbf{scan\_list}\\
+Scan for hashes in the list. List input syntax is described in \textbf{\autoref{ScanListInputFile}}. Scan output is described in \textbf{\autoref{ScanData}}. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
+\item \textbf{scan\_hash}\\
+Scan for the specified hash. The hash to scan for must be provided in hexadecimal format.
+\item \textbf{scan\_image}\\
+Scan the specified image for matching hashes.
+
+\textbf{Example}\\
 To scan, first identify the media that you would like to scan. For this example, we download and use the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains matching Kitty material.\\
 
 Then identify the existing hash database that will be used to search for hash value matches. We'll use the database \texttt{\textbf{demo.hdb}} that we created from Kitty material in the previous section, containing block hash values calculated from pictures and videos of cats.\\
@@ -810,19 +811,18 @@ This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E0
 \end{Verbatim}
 \endgroup
 
-
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
 \textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
-\item Alternatively, use the ``copy\_range'' command to copy all hash values that have been imported some number of times, for example, exactly once.
+\item Alternatively, use the ``add\_range'' command to copy all hash values that have been imported some number of times, for example, exactly once.
 \end{itemize}
-These commands are provided to manage false positives.
+
+\end{itemize}
 
 \subsection{Statistics}
 Various statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
-Table \ref{tab:statistics} describes available statistics.\\
-
+Table \ref{tab:statistics} shows syntax for the statistics commands.\\
 \begin{table}[!ht]
 \centering
 \caption{Commands that provide Statistics about Hash Databases}
@@ -831,20 +831,24 @@ Table \ref{tab:statistics} describes available statistics.\\
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{size} & \verb+size <hashdb>+ & Prints out size information relating to the database\\
+\textbf{size} & \verb+size <hashdb>+ & Prints out size information relating to the database.\\
 \hline
-\textbf{sources} & \verb+sources <hashdb>+ & Provides a top-level view of the repository names and filenames in the database. It prints out all repositories and files that have contributed to this database\\
+\textbf{sources} & \verb+sources <hashdb>+ & Prints source information for all sources in the database.\\
 \hline
-\textbf{histogram} & \verb+histogram <hashdb>+ &  Prints a hash distribution for the hashes in the \textit{hashdb}\\
+\textbf{histogram} & \verb+histogram <hashdb>+ & Prints a hash distribution for the hashes in the \textit{hashdb}.\\
 \hline
-\textbf{duplicates} & \verb+duplicates <hashdb> <number>+ &  Prints out hashes in the database that are sourced the given number of times\\
+\textbf{duplicates} & \verb+duplicates <hashdb> <number>+ &  Prints out hashes in the database that are sourced the given number of times.\\
 \hline
-\textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source identified by the source file hexdigest\\
+\textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source.\\
 \hline
-\textbf{read\_bytes} & \verb+read_bytes <image file>+ \verb+<offset> <count>+ &  Prints raw bytes from a media image file\\
+\textbf{read\_bytes} & \verb+read_bytes <image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given forensic path.\\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{itemize}
+\item \textbf{size}\\
+Prints size information about the given database.
 
 To find the size of various data stores in hash database \texttt{example.hdb},
 type the following:
@@ -853,10 +857,23 @@ type the following:
 \end{Verbatim}
 The above command prints the size of various data stores within the database in JSON format.\\
 
+\item \textbf{sources}\\
+Prints out all source file references that have contributed to this database including repository names and filenames.
+\item \textbf{histogram}\\
+Prints a hash distribution of the hashes in the given database, see \textbf{\autoref{Histogram}} for syntax.
+\item \textbf{duplicates}\\
+Prints out hashes in the database that are sourced the given number of times.
+\item \textbf{hash\_table}\\
+Prints out hashes associated with the specified source identified by the source file hexdigest.
+
 To obtain a list of hashes in \texttt{example.hdb} associated with the source file identified by hexcode \texttt{16d75027533b0a5ab900089a244384a0}, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb hash_table example.hdb 16d75027533b0a5ab900089a244384a0}
 \end{Verbatim}
+
+\item \textbf{read\_bytes}\\
+Prints raw bytes from the given media image. Note that these bytes are often not printable.
+\end{itemize}
 
 \subsection{Performance Analysis}
 \label{PerformanceAnalysis}
@@ -880,6 +897,17 @@ Performance analysis commands for analyzing \hdb performance are shown in Table 
 \hline
 \end{tabular}
 \end{table}
+
+\begin{itemize}
+\item \textbf{add\_random}\\
+Add random hashes, leaving timing data in \verb+log.xml+.
+\item \textbf{scan\_random}\\
+Scan random hashes, leaving timing data in \verb+log.xml+.
+\item \textbf{add\_same}\\
+Add the same hash, leaving timing data in \verb+log.xml+.
+\item \textbf{scan\_same}\\
+Scan the same hash, leaving timing data in \verb+log.xml+.
+\end{itemize}
 
 \section{Tools that use \hdb}
 \label{OtherTools}
@@ -1021,8 +1049,9 @@ This section describes the syntax used and required by \hdb
 commands and API interfaces.
 
 \subsection{Tab-delimited Import File}
+\label{TabFile}
 The \verb+import_tab+ command imports hashes from tab delimited files.
-The tab-delimited import file consists of hash lines separated by carriage returns, where each line consists of a filename followed by a tab followed by the file hash followed by a sector index that starts at 1.  Comment lines are allowed by starting them with the \texttt{\#} character.
+The tab-delimited import file consists of hash lines separated by carriage returns, where each line consists of a filename followed by a tab followed by the file hash followed by a 512-byte sector index that starts at 1.  Comment lines are allowed by starting them with the \texttt{\#} character.
 An example tab-delimited file is shown in Listing \ref{importTabFile}.\\
 
 \lstset{style=customfile}
@@ -1034,8 +1063,8 @@ fac7051447c781b69125994c5d125637    89a170b6b9a948d21d1d6ee1e7cdc467    2
 fac7051447c781b69125994c5d125637    f58a09656658c6b41e244b4a6091592c    3
 \end{lstlisting}
 
-Hash match output is described in \textbf{\autoref{ScanData}}.
 \subsection{Import/Export Syntax}
+\label{ImportExportSyntax}
 The import and export commands and API interfaces communicate source data and block hash data using JSON syntax.\\
 
 \subsubsection{Source Data}
@@ -1228,6 +1257,7 @@ Binary mode is intended for users who receive matches over a socket. Match data 
 \end{itemize}
 
 \subsection{Scan List Input File}
+\label{ScanListInputFile}
 The \verb+scan_list+ command scans a list of hashes for matches.  Valid lines of input may be:
 \begin{itemize}
 \item Comment lines starting with \verb+#+.  Comment lines are forwarded to output.
@@ -1262,7 +1292,8 @@ The \hdb \verb+size+ command and \verb+size+ API interface returns size informat
 The \verb+sources+ command prints JSON data as shown in Listing \ref{JSONSourceData} and described in Table \ref{tab:JSONSourceData}.\\
 
 \subsection{Histogram}
-The \verb+histogram+ command shows the density of hash duplicates across a hash database.  An example histogram output line is shown in Listing \ref{JSONHistogram}.  Fields are described in Table \ref{tab:JSONHistogram}.\\
+\label{Histogram}
+The \verb+histogram+ command shows the density of hash duplicates across a hash database. Fields are described in Table \ref{tab:JSONHistogram}. An example histogram output line is shown in Listing \ref{JSONHistogram}.
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON histogram format}, label=JSONHistogram]
@@ -1330,7 +1361,80 @@ The \verb+read_bytes+ command prints raw binary bytes from an image file. It is 
 \end{tabular}
 \end{table}
 
+\subsection{Database Changes}
+Statistics about hash database changes are reported on the console and to the log file inside the hash database. These statistics show specific changes made to stores within the hash database and also changes not made because conditions were not met. An example change report is shown in Listing \ref{DatabaseChanges}. Changes with a count of zero are not reported. The complete set of statistics tracked is shown in Table \ref{tab:changeStatistics}.
 
+\lstset{style=customfile}
+\begin{lstlisting}[float, caption={Example report of a database change from an import operation}, label=DatabaseChanges]
+# hashdb changes:
+#     hash_data_data_inserted: 401935
+#     hash_data_data_same: 195
+#     hash_data_source_inserted: 402130
+#     hash_prefix_inserted: 401653
+#     hash_suffix_inserted: 401935
+#     hash_count_changed: 149
+#     hash_not_changed: 46
+#     source_data_inserted: 101
+#     source_id_inserted: 101
+#     source_id_already_present: 402231
+#     source_name_inserted: 101
+import completed.
+\end{lstlisting}
+
+\begin{table}[!ht]
+\centering
+\caption{Database Changes Resulting from Commands that Manipulate Hash Databases}
+\label{tab:changeStatistics}
+\begin{tabular}{|p{5 cm}|p{8.8 cm}|}
+\hline \hline
+\textbf{Statistic} & \textbf{Meaning} \\
+\hline
+
+% hash_data
+\verb+hash_data_data_inserted+ &  Number of hash data records inserted.\\
+\hline
+\verb+hash_data_data_changed+ &  Number of hash data records changed.\\
+\hline
+\verb+hash_data_data_same+ &  Number of hash data records provided but same.\\
+\hline
+\verb+hash_data_source_inserted+ &  Number of hash data source, offset pairs inserted.\\
+\hline
+\verb+hash_data_source_already_+ \verb+present+ &  Number of hash data source, offset pairs provided but same\\
+\hline
+\verb+hash_data_source_at_max+ &  Number of hash data source, offset pairs dropped because of max pair limit.\\
+\hline
+
+% hash
+\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted.\\
+\hline
+\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted.\\
+\hline
+\verb+hash_count_changed+ &  Number of hash count changes were applied.\\
+\hline
+\verb+hash_not_changed+ &  Number of hash and count values provided but same.\\
+\hline
+
+% source data
+\verb+source_data_inserted+ &  Number of source data records inserted.\\
+\hline
+\verb+source_data_changed+ &  Number of source data records changed.\\
+\hline
+\verb+source_data_same+ &  Number of source data records provided but same.\\
+\hline
+
+% source_id
+\verb+source_id_inserted+ &  Number of source ID records inserted.\\
+\hline
+\verb+source_id_already_present+ &  Number of source ID records provided but already present.\\
+\hline
+
+% source_name
+\verb+source_name_inserted+ &  Number of source names inserted.\\
+\hline
+\verb+source_name_already_+ \verb+present+ &  Number of source names provided but already present.\\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Using the \hdb Library APIs}
 \label{APIs}

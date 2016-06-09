@@ -1,7 +1,8 @@
 drawings = \
 	hashdb_system_overview.pdf \
 	hash_interval.pdf \
-	default_hash_interval.pdf
+	default_hash_interval.pdf \
+	forensic_path.pdf
 
 .SUFFIXES: .svg .pdf
 
