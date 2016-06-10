@@ -1141,12 +1141,10 @@ Block hash data is identified by the file block hash.  An example block hash lin
 
 \subsection{Scan Data}
 \label{ScanData}
-Several of the \hdb scan commands and interfaces print out JSON data when hash matches are found. The \hdb tool prints JSON output in expanded hash format. \hdb library interfaces which are optimized for performance are available which print less JSON output but run faster. This section describes the types of JSON output available for hash matches.
+When hash matches are found, \hdb returns data in JSON format. Due to varying requirements for speed and completeness, several options are available. This section describes the JSON output options available for hash matches.\\
 
 \subsubsection{Expanded Hash}
-The \hdb scan commands and the \hdb library interface in \verb+EXPANDED_HASH+ mode emit expanded hash JSON data. This JSON data contains all the information about a matched hash and the sources containing the hash that matched. An example of expanded JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanDataExpanded}. Fields are described in Table \ref{tab:JSONScanDataExpanded}.\\
-
-\hdb does not emit source or hash information multiple times in JSON output.  If sources for a hash have already been shown, the sources field will read \verb+"sources":[]+. If a hash has already been shown, the entire JSON output will contain the hash without any other fields, for example \verb+{"block_hash":+ \verb+"3b6b477d391f73f67c1c01e2141dbb17}+.\\
+The returned JSON data contains all the information about a matched hash and the sources containing the hash that matched, even if it has already been returned in a previous scan. An example of expanded JSON output formatted with line breaks added for readability is shown in Listing \ref{JSONScanDataExpanded}. Fields are described in Table \ref{tab:JSONScanDataExpanded}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON block hash expanded data output from a scan match, with line breaks added for readability}, label=JSONScanDataExpanded]
@@ -1201,8 +1199,11 @@ The \hdb scan commands and the \hdb library interface in \verb+EXPANDED_HASH+ mo
 \end{tabular}
 \end{table}
 
+\subsubsection{Expanded Hash, Optimized}
+The returned JSON data contains all the information about a matched hash and the sources containing the hash that matched in the first match, but hash and source metadata is not returned more than once. This optimization reduces the amount of data returned during the scan, but the user must remember associated hash and source metadata as it is returned because it is not returned in subsequent matches. An example output of a subsequent match of the same hash might be: \verb+{"block_hash":+ \verb+"3b6b477d391f73f67c1c01e2141dbb17}+.\\
+
 \subsubsection{Hash Count}
-The \hdb library interfaces offer a hash count JSON format for obtaining only the match count for hashes that match.  JSON output contains the hash and the count as shown in example Listing \ref{JSONScanDataCount}. This capability is an optimization provided for users who do not need other hash information.
+Only the count field is returned, indicating the number of sources cited in each match. JSON output contains the hash and the count as shown in example Listing \ref{JSONScanDataCount}. This capability is an optimization provided for users who do not need other hash information.
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON block hash data count output from a scan match, with line breaks added for readability}, label=JSONScanDataCount]
@@ -1212,8 +1213,8 @@ The \hdb library interfaces offer a hash count JSON format for obtaining only th
 }
 \end{lstlisting}
 
-\subsubsection{Hash Approximate Count}
-The \hdb library interfaces offer an approximate hash count JSON format for obtaining only an approximate match count for hashes that match by only accessing the LMDB Hash Store. The LMDB Hash Store is described in \textbf{\autoref{LMDBDataStores}}. JSON output contains the hash and the approximate count as shown in example Listing \ref{JSONScanDataApproximateCount}. This capability is an optimization provided for users who do not need other hash information and can accept count values that are not exact.
+\subsubsection{Approximate Hash Count}
+Only an approximate count field is returned, and it is possible for the count to be wrong. This capability is an optimization provided for users who do not need other hash information and can accept count values that are not exact. This is the fastest scan option since it only reads the hash store. For information on the hash store, see \textbf{\Autoref{LMDBDataStores}}. JSON output contains the hash and the approximate count as shown in example Listing \ref{JSONScanDataApproximateCount}. 
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON block hash data approximate count output from a scan match, with line breaks added for readability}, label=JSONScanDataApproximateCount]
