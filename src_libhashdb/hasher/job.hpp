@@ -59,6 +59,7 @@ class job_t {
                const bool p_disable_calculate_entropy,
                const bool p_disable_calculate_labels,
                const bool p_disable_ingest_hashes,
+               const hashdb::scan_mode_t p_scan_mode,
                const uint8_t* const p_buffer,
                const size_t p_buffer_size,
                const size_t p_buffer_data_size,
@@ -80,6 +81,7 @@ class job_t {
                    disable_calculate_entropy(p_disable_calculate_entropy),
                    disable_calculate_labels(p_disable_calculate_labels),
                    disable_ingest_hashes(p_disable_ingest_hashes),
+                   scan_mode(p_scan_mode),
                    buffer(p_buffer),
                    buffer_size(p_buffer_size),
                    buffer_data_size(p_buffer_data_size),
@@ -109,6 +111,7 @@ class job_t {
   const bool disable_calculate_entropy;
   const bool disable_calculate_labels;
   const bool disable_ingest_hashes;
+  const hashdb::scan_mode_t scan_mode;
   const uint8_t* const buffer;
   const size_t buffer_size;
   const size_t buffer_data_size;
@@ -154,6 +157,7 @@ class job_t {
                      p_disable_calculate_entropy,
                      p_disable_calculate_labels,
                      p_disable_ingest_hashes,
+                     hashdb::scan_mode_t::EXPANDED, // scan_mode not used
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,
@@ -170,6 +174,7 @@ class job_t {
         const std::string p_filename,
         const uint64_t p_file_offset,
         const bool p_disable_recursive_processing,
+        const hashdb::scan_mode_t p_scan_mode,
         const uint8_t* const p_buffer,
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
@@ -193,6 +198,7 @@ class job_t {
                      false, // disable_calculate_entropy
                      false, // disable_calculate_labels
                      false, // disable_ingest_hashes
+                     p_scan_mode,
                      p_buffer,
                      p_buffer_size,
                      p_buffer_data_size,

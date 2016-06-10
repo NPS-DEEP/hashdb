@@ -174,6 +174,7 @@ namespace hasher {
                    recursed_filename,
                    0,                 // file_offset
                    parent_job.disable_recursive_processing,
+                   parent_job.scan_mode,
                    uncompressed_buffer,
                    uncompressed_size, // buffer_size
                    uncompressed_size, // buffer_data_size

@@ -596,12 +596,39 @@ namespace hashdb {
     delete sources;
   }
 
+  std::string scan_manager_t::find_hash_json(
+                   const hashdb::scan_mode_t scan_mode,
+                   const std::string& binary_hash) {
+
+    // delegate to low-level handler
+    switch(scan_mode) {
+
+      // EXPANDED
+      case hashdb::scan_mode_t::EXPANDED:
+        return find_expanded_hash_json(false, binary_hash);
+
+      // EXPANDED_OPTIMIZED
+      case hashdb::scan_mode_t::EXPANDED_OPTIMIZED:
+        return find_expanded_hash_json(true, binary_hash);
+
+      // COUNT_ONLY
+      case hashdb::scan_mode_t::COUNT_ONLY:
+        return find_hash_count_json(binary_hash);
+
+      // APPROXIMATE_COUNT
+      case hashdb::scan_mode_t::APPROXIMATE_COUNT:
+        return find_approximate_hash_count_json(binary_hash);
+
+      default: assert(0); std::exit(1);
+    }
+  }
+
   std::string scan_manager_t::scan_stream_f(
                    const std::string& in_file,
                    const std::string& out_file,
                    const size_t hash_size,
                    const size_t blob_size,
-                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_mode_t scan_mode,
                    const hashdb::scan_stream_response_mode_t response_mode) {
 #ifdef WIN32
     const int in_fd = ::open(in_file.c_str(), _O_RDONLY);
@@ -611,7 +638,7 @@ namespace hashdb {
     const int out_fd = ::open(out_file.c_str(), O_WRONLY);
 #endif
     std::string error_message = scan_stream(in_fd, out_fd, hash_size,
-                                        blob_size, scan_mode, response_mode);
+                                 blob_size, scan_mode, response_mode);
     if (error_message.size() == 0) {
       int status = 0;
       status = ::close(in_fd);
@@ -633,7 +660,7 @@ namespace hashdb {
                    const int out_fd,
                    const size_t hash_size,
                    const size_t blob_size,
-                   const hashdb::scan_stream_scan_mode_t scan_mode,
+                   const hashdb::scan_mode_t scan_mode,
                    const hashdb::scan_stream_response_mode_t response_mode) {
 
     // loop in_fd until EOF or hash is 0x00...
@@ -678,26 +705,7 @@ namespace hashdb {
       std::string blob = std::string(h_b+hash_size, blob_size);
 
       // scan
-      std::string json_response;
-      switch(scan_mode) {
-
-        // APPROXIMATE_HASH_COUNT
-        case hashdb::scan_stream_scan_mode_t::APPROXIMATE_HASH_COUNT:
-          json_response = find_approximate_hash_count_json(binary_hash);
-          break;
-
-        // HASH_COUNT
-        case hashdb::scan_stream_scan_mode_t::HASH_COUNT:
-          json_response = find_hash_count_json(binary_hash);
-          break;
-
-        // EXPANDED_HASH
-        case hashdb::scan_stream_scan_mode_t::EXPANDED_HASH:
-          json_response = find_expanded_hash_json(binary_hash);
-          break;
-
-        default: assert(0); std::exit(1);
-      }
+      const std::string json_response = find_hash_json(scan_mode, binary_hash);
 
       if (json_response.size() > 0) {
         // match so print match data
@@ -757,26 +765,10 @@ namespace hashdb {
     }
   }
 
-  // may return [] if cached else "" if no hash.
-  //
-  // Example abbreviated syntax:
-  // {
-  //   "block_hash": 3b6b477d391f73f67c1c01e2141dbb17",
-  //   "entropy": 8,
-  //   "block_label": "W",
-  //   "source_list_id": 57,
-  //   "sources": [{
-  //     "file_hash": "f7035a...",
-  //     "filesize": 800,
-  //     "file_type": "exe",
-  //     "zero_count": 1,
-  //     "nonprobative_count": 2,
-  //     "name_pairs": ["r1", "f1", "r2", "f2]
-  //   }],
-  //   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
-  // }
+  // find expanded hash, optimized with caching, return JSON
+  // if optimizing, then cache hashes and sources
   std::string scan_manager_t::find_expanded_hash_json(
-                                        const std::string& binary_hash) {
+                    const bool optimizing, const std::string& binary_hash) {
 
     // fields to hold the scan
     uint64_t entropy;
@@ -803,11 +795,13 @@ namespace hashdb {
     std::string block_hash = hashdb::bin_to_hex(binary_hash);
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
 
-    // report hash if this is the first time for the hash
-    if (hashes->find(binary_hash) == hashes->end()) {
+    // report hash if not caching or this is the first time for the hash
+    if (!optimizing || hashes->find(binary_hash) == hashes->end()) {
 
-      // remember this hash match to skip it later
-      hashes->insert(binary_hash);
+      // if caching then remember this hash match to skip it later
+      if (optimizing) {
+        hashes->insert(binary_hash);
+      }
 
       // entropy
       json_doc.AddMember("entropy", entropy, allocator);
@@ -826,9 +820,11 @@ namespace hashdb {
       for (hashdb::source_offset_pairs_t::const_iterator it =
                       source_offset_pairs->begin();
                       it != source_offset_pairs->end(); ++it) {
-        if (sources->find(it->first) == sources->end()) {
+        if (!optimizing || sources->find(it->first) == sources->end()) {
           // remember this source to skip it later
-          sources->insert(it->first);
+          if (optimizing) {
+            sources->insert(it->first);
+          }
 
           // provide the complete source information for this source
           // a json_source object for the json_sources array

@@ -12,7 +12,7 @@ json_data = ["#","#", \
 '{"block_hash":"8899aabbccddeeff","entropy":8,"block_label":"bl2","source_offset_pairs":["0011223344556677",0,"0011223344556677",512,"0000000000000000",0]}',
 '{"block_hash":"ffffffffffffffff","entropy":9,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
 
-def test_scan():
+def test_scan_list():
     H.rm_tempdir("temp_1.hdb")
     H.rm_tempfile("temp_1.json")
     H.hashdb(["create", "temp_1.hdb"])
@@ -73,7 +73,7 @@ def test_scan_hash():
 ''])
 
 if __name__=="__main__":
-    test_scan()
+    test_scan_list()
     test_scan_hash()
     print("Test Done.")
 

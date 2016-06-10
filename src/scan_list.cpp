@@ -41,7 +41,8 @@
 #include <iostream>
 #include "../src_libhashdb/hashdb.hpp"
 
-void scan_list(hashdb::scan_manager_t& manager, std::istream& in) {
+void scan_list(hashdb::scan_manager_t& manager, std::istream& in,
+               const hashdb::scan_mode_t scan_mode) {
 
   size_t line_number = 0;
   std::string line;
@@ -80,8 +81,8 @@ void scan_list(hashdb::scan_manager_t& manager, std::istream& in) {
     }
 
     // scan
-    const std::string expanded_text = manager.find_expanded_hash_json(
-                                                         block_binary_hash);
+    const std::string expanded_text = manager.find_hash_json(
+                                              scan_mode, block_binary_hash);
     if (expanded_text.size() != 0) {
       std::cout << forensic_path << "\t"
                 << block_hashdigest_string << "\t"

@@ -66,6 +66,7 @@ namespace hashdb {
         const size_t step_size,
         const size_t block_size,
         const bool process_embedded_data,
+        const hashdb::scan_mode_t scan_mode,
         hasher::job_queue_t* const job_queue) {
 
     // identify the maximum recursion depth
@@ -103,6 +104,7 @@ namespace hashdb {
                  file_reader.filename,
                  0,      // file_offset
                  process_embedded_data,
+                 scan_mode,
                  b,      // buffer
                  b_size, // buffer_size
                  b_data_size, // buffer_data_size,
@@ -149,6 +151,7 @@ namespace hashdb {
                  file_reader.filename,
                  offset,  // file_offset
                  process_embedded_data,
+                 scan_mode,
                  b2,      // buffer
                  b2_bytes_read, // buffer_size
                  b2_data_size,  // buffer_data_size
@@ -165,6 +168,7 @@ namespace hashdb {
                          const std::string& image_filename,
                          const size_t step_size,
                          const bool process_embedded_data,
+                         const hashdb::scan_mode_t scan_mode,
                          const std::string& command_string) {
 
     // make sure hashdb_dir is there
@@ -213,7 +217,8 @@ namespace hashdb {
     // scan the file
     std::string success = scan_file(file_reader, scan_manager, scan_tracker,
                                     step_size, settings.block_size,
-                                    process_embedded_data, job_queue);
+                                    process_embedded_data, scan_mode,
+                                    job_queue);
     if (success.size() > 0) {
       std::stringstream ss;
       ss << "error while scanning file " << file_reader.filename

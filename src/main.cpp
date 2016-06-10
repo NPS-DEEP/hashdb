@@ -84,6 +84,7 @@ static bool has_whitelist_dir = false;
 static bool has_disable_recursive_processing = false;
 static bool has_disable_calculate_entropy = false;
 static bool has_disable_calculate_labels = false;
+static bool has_json_scan_mode = false;
 static bool has_max_source_offset_pairs = false;
 static bool has_tuning = false;
 
@@ -92,6 +93,7 @@ hashdb::settings_t settings;
 static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
 static size_t step_size = settings.block_size;
+static hashdb::scan_mode_t scan_mode = hashdb::scan_mode_t::EXPANDED_OPTIMIZED;
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -140,32 +142,8 @@ static std::string make_command_line(int argc,char * const *argv){
     return command_line;
 }
 
-/*
-static void set_disable_processing(const char* const chars) {
-std::cerr << "main.a\n";
-  int i=0;
-  while (char c = chars[i++] != '\0') {
-std::cerr << "main.b\n";
-    if (c == 'r') {
-      has_disable_recursive_processing = true;
-    } else if (c == 'e') {
-      has_disable_calculate_entropy = true;
-    } else if (c == 'l') {
-      has_disable_calculate_labels = true;
-    } else {
-      std::cerr << "Invalid disable processing option: '" << c
-                << "'.  " << see_usage << "\n";
-      exit(1);
-    }
-  }
-std::cerr << "main.c\n";
-}
-*/
-
 static void set_disable_processing(const std::string& list) {
-std::cerr << "main.a\n";
   for (std::string::const_iterator it=list.begin(); it!= list.end(); ++it) {
-std::cerr << "main.b\n";
     if (*it == 'r') {
       has_disable_recursive_processing = true;
     } else if (*it == 'e') {
@@ -178,7 +156,18 @@ std::cerr << "main.b\n";
       exit(1);
     }
   }
-std::cerr << "main.c\n";
+}
+
+static void set_scan_mode(const std::string& mode) {
+  if (mode == "e") scan_mode = hashdb::scan_mode_t::EXPANDED;
+  else if (mode == "o") scan_mode = hashdb::scan_mode_t::EXPANDED_OPTIMIZED;
+  else if (mode == "c") scan_mode = hashdb::scan_mode_t::COUNT_ONLY;
+  else if (mode == "a") scan_mode = hashdb::scan_mode_t::APPROXIMATE_COUNT;
+  else {
+    std::cerr << "Invalid scan mode option: '" << mode
+              << "'.  " << see_usage << "\n";
+    exit(1);
+  }
 }
 
 int main(int argc,char **argv) {
@@ -213,6 +202,7 @@ int main(int argc,char **argv) {
       {"repository_name",         required_argument, 0, 'r'},
       {"whitelist_dir",           required_argument, 0, 'w'},
       {"disable_processing",      required_argument, 0, 'x'},
+      {"json_scan_mode",          required_argument, 0, 'j'},
       {"max_source_offset_pairs", required_argument, 0, 'm'},
       {"tuning",                  required_argument, 0, 't'},
 
@@ -220,7 +210,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:x:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:x:j:m:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -289,6 +279,12 @@ int main(int argc,char **argv) {
 
       case 'x': {	// disable processing
         set_disable_processing(std::string(optarg));
+        break;
+      }
+
+      case 'j': {	// select JSON mode
+        has_json_scan_mode = true;
+        set_scan_mode(std::string(optarg));
         break;
       }
 
@@ -379,6 +375,10 @@ void check_options(const std::string& options) {
   }
   if (has_disable_calculate_labels && options.find("L") == std::string::npos) {
     std::cerr << "The -x l disable calculate labels option is not allowed for this command.\n";
+    exit(1);
+  }
+  if (has_disable_calculate_labels && options.find("j") == std::string::npos) {
+    std::cerr << "The -j JSON scan mode option is not allowed for this command.\n";
     exit(1);
   }
   if (has_max_source_offset_pairs && options.find("m") ==
@@ -508,17 +508,17 @@ void run_command() {
 
   // scan
   } else if (command == "scan_list") {
-    check_params("", 2);
-    commands::scan_list(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::scan_list(args[0], args[1], scan_mode, cmd);
 
   } else if (command == "scan_hash") {
-    check_params("", 2);
-    commands::scan_hash(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::scan_hash(args[0], args[1], scan_mode, cmd);
 
   } else if (command == "scan_image") {
-    check_params("sR", 2);
+    check_params("sRj", 2);
     commands::scan_image(args[0], args[1], step_size,
-                         has_disable_recursive_processing, cmd);
+                         has_disable_recursive_processing, scan_mode, cmd);
 
   // statistics
   } else if (command == "size") {
@@ -534,12 +534,12 @@ void run_command() {
     commands::histogram(args[0], cmd);
 
   } else if (command == "duplicates") {
-    check_params("", 2);
-    commands::duplicates(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::duplicates(args[0], args[1], scan_mode, cmd);
 
   } else if (command == "hash_table") {
-    check_params("", 2);
-    commands::hash_table(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::hash_table(args[0], args[1], scan_mode, cmd);
 
   } else if (command == "read_bytes") {
     check_params("", 3);
@@ -551,16 +551,16 @@ void run_command() {
     commands::add_random(args[0], args[1], cmd);
 
   } else if (command == "scan_random") {
-    check_params("", 2);
-    commands::scan_random(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::scan_random(args[0], args[1], scan_mode, cmd);
 
   } else if (command == "add_same") {
     check_params("", 2);
     commands::add_same(args[0], args[1], cmd);
 
   } else if (command == "scan_same") {
-    check_params("", 2);
-    commands::scan_same(args[0], args[1], cmd);
+    check_params("j", 2);
+    commands::scan_same(args[0], args[1], scan_mode, cmd);
 
   // error
   } else {

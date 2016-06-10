@@ -66,7 +66,7 @@ def _bad_list(a,b):
 def lines_equals(a,b):
     # length differs
     if len(a) != len(b) or len(a) == 0:
-        print("line counts differ")
+        print("line counts differ: a: %d, b: %d" % (len(a), len(b)))
         _bad_list(a,b)
     # lines differ
     for item_a, item_b in zip(a, b):

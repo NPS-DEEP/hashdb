@@ -29,6 +29,7 @@
 #include <iostream>
 #include "../src_libhashdb/hashdb.hpp"
 
-void scan_list(hashdb::scan_manager_t& manager, std::istream& in);
+void scan_list(hashdb::scan_manager_t& manager, std::istream& in,
+               const hashdb::scan_mode_t scan_mode);
 
 #endif

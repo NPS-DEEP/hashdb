@@ -85,11 +85,9 @@ static void require_hashdb_dir(const std::string& hashdb_dir) {
   }
 }
 
-static void print_header(const std::string& command_id,
-                         const std::string& cmd) {
-  std::cout << "# hashdb-Version: " << PACKAGE_VERSION << "\n"
-            << "# " << command_id << "\n"
-            << "# command_line: " << cmd << "\n";
+static void print_header(const std::string& cmd) {
+  std::cout << "# command: " << cmd << "\n"
+            << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 }
 
 // helper
@@ -623,6 +621,7 @@ class out_ptr_t {
   // scan
   static void scan_list(const std::string& hashdb_dir,
                         const std::string& hashes_file,
+                        const hashdb::scan_mode_t scan_mode,
                         const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -639,7 +638,7 @@ class out_ptr_t {
               << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // scan the list
-    ::scan_list(manager, *in_ptr());
+    ::scan_list(manager, *in_ptr(), scan_mode);
 
     // done
     std::cout << "# scan_list completed.\n";
@@ -648,6 +647,7 @@ class out_ptr_t {
   // scan_hash
   static void scan_hash(const std::string& hashdb_dir,
                         const std::string& hex_block_hash,
+                        const hashdb::scan_mode_t scan_mode,
                         const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -666,8 +666,8 @@ class out_ptr_t {
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 
     // scan
-    std::string expanded_text = scan_manager.find_expanded_hash_json(
-                                                          binary_hash);
+    std::string expanded_text = scan_manager.find_hash_json(
+                                                  scan_mode, binary_hash);
 
     if (expanded_text.size() != 0) {
       std::cout << expanded_text << std::endl;
@@ -681,11 +681,12 @@ class out_ptr_t {
                          const std::string& media_image_filename,
                          const size_t step_size,
                          const bool disable_recursive_processing,
+                         const hashdb::scan_mode_t scan_mode,
                          const std::string& cmd) {
 
     std::string error_message = hashdb::scan_image(hashdb_dir,
                              media_image_filename, step_size,
-                             disable_recursive_processing, cmd);
+                             disable_recursive_processing, scan_mode, cmd);
     if (error_message.size() == 0) {
       std::cout << "# scan_image completed.\n";
     } else {
@@ -734,7 +735,7 @@ class out_ptr_t {
     hashdb::scan_manager_t manager(hashdb_dir);
 
     // print header information
-    print_header("histogram-command-Version: 2", cmd);
+    print_header(cmd);
 
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
@@ -817,6 +818,7 @@ class out_ptr_t {
   // duplicates
   static void duplicates(const std::string& hashdb_dir,
                          const std::string& number_string,
+                         const hashdb::scan_mode_t scan_mode,
                          const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -835,7 +837,7 @@ class out_ptr_t {
     }
 
     // print header information
-    print_header("duplicates-command-Version: 2", cmd);
+    print_header(cmd);
 
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
@@ -856,8 +858,8 @@ class out_ptr_t {
                                   *source_offset_pairs);
       if (source_offset_pairs->size() == number) {
         // show hash with requested duplicates number
-        std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash);
+        std::string expanded_text = manager.find_hash_json(
+                                                    scan_mode, binary_hash);
         std::cout << hashdb::bin_to_hex(binary_hash) << "\t"
                   << expanded_text << "\n";
         any_found = true;
@@ -880,6 +882,7 @@ class out_ptr_t {
   // hash_table
   static void hash_table(const std::string& hashdb_dir,
                          const std::string& hex_file_hash,
+                         const hashdb::scan_mode_t scan_mode,
                          const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -905,7 +908,7 @@ class out_ptr_t {
     }
 
     // print header information
-    print_header("hash-table-command-Version: 3", cmd);
+    print_header(cmd);
 
     // start progress tracker
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
@@ -931,8 +934,8 @@ class out_ptr_t {
                        it!= source_offset_pairs->end(); ++it) {
         if (it->first == file_binary_hash) {
           // the source matches so print the hash and move on
-          std::string expanded_text = manager.find_expanded_hash_json(
-                                                               binary_hash);
+          std::string expanded_text = manager.find_hash_json(
+                                                    scan_mode, binary_hash);
           std::cout << hashdb::bin_to_hex(binary_hash) << "\t" << expanded_text
                     << "\n";
           break;
@@ -1023,6 +1026,7 @@ class out_ptr_t {
   // scan_random
   static void scan_random(const std::string& hashdb_dir,
                           const std::string& count_string,
+                          const hashdb::scan_mode_t scan_mode,
                           const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -1044,8 +1048,8 @@ class out_ptr_t {
     for (uint64_t i=1; i<=count; ++i) {
       std::string binary_hash = random_binary_hash();
 
-      std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash);
+      std::string expanded_text = manager.find_hash_json(
+                                                    scan_mode, binary_hash);
 
       if (expanded_text.size() != 0) {
         std::cout << "Match found, hash "
@@ -1117,6 +1121,7 @@ class out_ptr_t {
   // scan_same
   static void scan_same(const std::string& hashdb_dir,
                         const std::string& count_string,
+                        const hashdb::scan_mode_t scan_mode,
                         const std::string& cmd) {
 
     // validate hashdb_dir path
@@ -1137,8 +1142,8 @@ class out_ptr_t {
 
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
-      std::string expanded_text = manager.find_expanded_hash_json(
-                                                         binary_hash);
+      std::string expanded_text = manager.find_hash_json(
+                                                    scan_mode, binary_hash);
 
       if (expanded_text.size() == 0) {
         std::cout << "Match not found, hash "

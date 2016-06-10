@@ -106,7 +106,7 @@ str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source
 # test scan functions
 # ############################################################
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
-expanded_hash = scan_manager.find_expanded_hash_json("hhhhhhhh")
+expanded_hash = scan_manager.find_hash_json(hashdb.EXPANDED_OPTIMIZED, "hhhhhhhh")
 str_equals(expanded_hash,
 '{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_list_id":3724381083,"sources":[{"file_hash":"6767676767676767","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["6767676767676767",512]}'
 )
@@ -116,11 +116,11 @@ str_equals(json_hash_string, '{"block_hash":"6868686868686868","entropy":2,"bloc
 
 int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
 
-str_equals(scan_manager.find_hash_count_json("hhhhhhhh"), '{"block_hash":"6868686868686868","count":1}')
+str_equals(scan_manager.find_hash_json(hashdb.COUNT_ONLY, "hhhhhhhh"), '{"block_hash":"6868686868686868","count":1}')
 
 int_equals(scan_manager.find_approximate_hash_count("hhhhhhhh"), 1)
 
-str_equals(scan_manager.find_approximate_hash_count_json("hhhhhhhh"), '{"block_hash":"6868686868686868","approximate_count":1}')
+str_equals(scan_manager.find_hash_json(hashdb.APPROXIMATE_COUNT, "hhhhhhhh"), '{"block_hash":"6868686868686868","approximate_count":1}')
 
 has_source_data, filesize, file_type, zero_count, nonprobative_count = scan_manager.find_source_data("hhhhhhhh")
 bool_equals(has_source_data, True)
@@ -183,24 +183,24 @@ in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.close()
 
-# scan_stream EXPANDED_HASH
+# scan_stream EXPANDED_OPTIMIZED
 in_file_object = open("temp_in.bin", "r")
 in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH,
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
                                   hashdb.TEXT_OUTPUT)
 str_equals(status, "")
 temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
 in_file_object.close()
 out_file_object.close()
 
-# scan_stream HASH_COUNT
+# scan_stream COUNT_ONLY
 in_file_object = open("temp_in.bin", "r")
 in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.HASH_COUNT,
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.COUNT_ONLY,
                                   hashdb.TEXT_OUTPUT)
 str_equals(status, "")
 temp_out_equals('0100000000000000{"block_hash":"6868686868686868","count":1}')
@@ -213,7 +213,7 @@ in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
 status = scan_manager.scan_stream(in_fd, out_fd, 8, 8,
-                                  hashdb.APPROXIMATE_HASH_COUNT,
+                                  hashdb.APPROXIMATE_COUNT,
                                   hashdb.TEXT_OUTPUT)
 str_equals(status, "")
 temp_out_equals('0100000000000000{"block_hash":"6868686868686868","approximate_count":1}')
@@ -233,7 +233,7 @@ in_file_object = open("temp_in.bin", "r")
 in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH,
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
                                   hashdb.TEXT_OUTPUT)
 str_equals(status, "")
 temp_out_equals("")
@@ -254,7 +254,7 @@ in_file_object = open("temp_in.bin", "r")
 in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH,
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
                                   hashdb.TEXT_OUTPUT)
 str_equals(status, "unexpected input size 1 is not 16 in scan stream")
 temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
@@ -272,12 +272,12 @@ in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
 temp_in.write(in_bytes)
 temp_in.close()
 
-# scan_stream EXPANDED_HASH
+# scan_stream EXPANDED_OPTIMIZED
 in_file_object = open("temp_in.bin", "r")
 in_fd = in_file_object.fileno()
 out_file_object = open("temp_out", "w")
 out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_HASH,
+status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
                                   hashdb.BINARY_OUTPUT)
 str_equals(status, "")
 # 0000000: 3100 0000 0000 0000 6868 6868 6868 6868  .......1hhhhhhhh

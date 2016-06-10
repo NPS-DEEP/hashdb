@@ -2,78 +2,78 @@
 %\begin{small}
 \textbf{General Usage} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{hashdb <command> <options> <args>} & Run hashdb command \\
+\texttt{hashdb <command> <options> <args>} & \\
 \end{tabular}
 \\
 \\
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \hangindent=2em \texttt{create [-b <block size>] [-a <byte alignment>] [-m <max source, offset pairs>] [-t <hash prefix bits:hash suffix bytes>] <hashdb.hdb>} &
-Create a new hash database \\
+Create a new hash database.\\
 \end{tabular}
 \\
 \\
 \textbf{Import/Export} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em\texttt{ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>] [-x <rel>] <hashdb.hdb> <import directory>} &
-Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits, can disable recursion, entropy, labels \\
+\hangindent=2em\texttt{ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>] [-x rel] <hashdb.hdb> <import directory>} &
+Import from path recursively into hash database, labeling hashes in the whitelist and hashes matching entropy traits.  Can disable \textbf{r}ecursion, \textbf{e}ntropy, \textbf{l}abels \\
 \hangindent=2em\texttt{import\_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb.hdb> <tab.txt>} &
-Import from tab file into hash database, labeling hashes in the whitelist\\
+Import from tab file into hash database, labeling hashes in the whitelist.\\
 \hangindent=2em\texttt{import <hashdb.hdb> <hashdb.json>} &
-Import JSON format data into hash database \\
+Import JSON format data into hash database.\\
 \hangindent=2em\texttt{export <hashdb.hdb> <hashdb.json>} &
-Export hash database data in JSON format \\
+Export hash database data in JSON format.\\
 \end{tabular}
 \\
 \\
 \textbf{Database Manipulation} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{add <A.hdb> <B.hdb>} & $A \rightarrow B$ add $A$ into $B$ \\
-\texttt{add\_multiple <A.hdb> <B.hdb> ... <C.hdb>} & $A + B + \ldots \rightarrow C$ add $A$, $B$, \ldots into $C$\\
-\hangindent=2em\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A_r \rightarrow B$ add when repository name matches \\
-\texttt{add\_range<A.hdb> <B.hdb> <m:n>} & $A_{m:n} \rightarrow B$ add hashes that have source counts within range, inclusive\\
-\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hash and source are common\\
-\texttt{intersect\_hash <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hashes are common\\
-\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add when hash and source not common\\
-\texttt{subtract\_hash <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add when hashes are not common\\
-\hangindent=2em\texttt{subtract\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A_{\overline{r}} \rightarrow B$ add unless repository name matches\\
+\texttt{add\_multiple <A.hdb> <B.hdb> ... <C.hdb>} & $A + B + \ldots \rightarrow C$ add $A$, $B$, \ldots into $C$.\\
+\hangindent=2em\texttt{add\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A_r \rightarrow B$ add when repository name matches.\\
+\texttt{add\_range<A.hdb> <B.hdb> <m:n>} & $A_{m:n} \rightarrow B$ add hashes that have source counts within range, inclusive.\\
+\texttt{intersect <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hash and source are common.\\
+\texttt{intersect\_hash <A.hdb> <B.hdb> <C.hdb>} & $A \cap B \rightarrow C$ add when hashes are common.\\
+\texttt{subtract <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add when hash and source not common.\\
+\texttt{subtract\_hash <A.hdb> <B.hdb> <C.hdb>} & $A - B \rightarrow C$ add when hashes are not common.\\
+\hangindent=2em\texttt{subtract\_repository <A.hdb> <B.hdb> <repository name>} & \hangindent=2em$A_{\overline{r}} \rightarrow B$ add unless repository name matches.\\
 \end{tabular}
 \\
 \\
 \textbf{Scan} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{scan\_list <hashdb.hdb> <hashes file>} & Scan hashes file for hash match \\
-\texttt{scan\_hash <hashdb.hdb> <hex block hash>} & Scan for hash match \\
-\hangindent=2em\texttt{scan\_image [-s <step size>] [-x <r>] <hashdb.hdb> <media image file>} & Scan media image for hash match, can disable recursion \\
+\texttt{scan\_list [-j e|o|c|a] <hashdb.hdb> <hashes file>} & Scan hashes file for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count.\\
+\texttt{scan\_hash [-j e|o|c|a] <hashdb.hdb> <hex block hash>} & Scan for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count.\\
+\hangindent=2em\texttt{scan\_image [-s <step size>] [-j e|o|c|a] [-x r] <hashdb.hdb> <media image file>} & Scan media image for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count. Can disable \textbf{r}ecursion.\\
 \end{tabular}
 \\
 \\
 \textbf{Statistics}\\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{size <hashdb.hdb>} & Print size information for internal database tables \\
-\texttt{sources <hashdb.hdb>} & Print source information \\
-\texttt{histogram <hashdb.hdb>} & Print hash distribution \\
-\texttt{duplicates <hashdb.hdb> <number>} & Print hashes sourced the given number of times \\
-\texttt{hash\_table <hashdb.hdb> <hex file hash>} & Print hashes associated with the source file hash\\
-\texttt{read\_bytes <image file> <offset> <count>} & Print raw bytes from the image file\\
+\texttt{size <hashdb.hdb>} & Print size information for internal database tables.\\
+\texttt{sources <hashdb.hdb>} & Print source information.\\
+\texttt{histogram <hashdb.hdb>} & Print hash distribution.\\
+\texttt{duplicates [-j e|o|c|a] <hashdb.hdb> <number>} & Print hashes sourced the given number of times.\\
+\texttt{hash\_table [-j e|o|c|a] <hashdb.hdb> <hex file hash>} & Print hashes associated with the source file hash.\\
+\texttt{read\_bytes <image file> <offset> <count>} & Print raw bytes from the image file.\\
 \end{tabular}
 \\
 \\
 \textbf{Performance Analysis}\\
 \begin{tabular}{p{3.6 in} p{4 in}}
-\hangindent=2em\texttt{add\_random <hashdb.hdb> <count>} & Add random hashes, log to \texttt{timestamp.json}\\
-\texttt{scan\_random <hashdb.hdb> <count>} & Scan random hashes, log to \texttt{timestamp.json}\\
-\hangindent=2em\texttt{add\_same <hashdb.hdb> <count>} & Add same hashes, log to \texttt{timestamp.json}\\
-\texttt{scan\_same <hashdb.hdb> <count>} & Scan same hashes, log to \texttt{timestamp.json}\\
+\hangindent=2em\texttt{add\_random <hashdb.hdb> <count>} & Add random hashes, log to \texttt{timestamp.json}.\\
+\texttt{scan\_random [-j e|o|c|a] <hashdb.hdb> <count>} & Scan random hashes, log to \texttt{timestamp.json}.\\
+\hangindent=2em\texttt{add\_same <hashdb.hdb> <count>} & Add same hashes, log to \texttt{timestamp.json}.\\
+\texttt{scan\_same [-j e|o|c|a] <hashdb.hdb> <count>} & Scan same hashes, log to \texttt{timestamp.json}.\\
 \end{tabular}
 \\
 \\
 \textbf{\bulk Scanner}\\
 %\begin{tabular}{p{5.8 in} l}
 \begin{tabular}{p{5.6 in} p{2 in}}
-\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 -R my\_import\_dir} & Import directory\\
-\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 my\_media\_image} & Import image\\
-\hangindent=2em\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path= outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image\\
+\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 -R my\_import\_dir} & Import directory.\\
+\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 my\_media\_image} & Import image.\\
+\hangindent=2em\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path= outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image.\\
 \end{tabular}
 \end{footnotesize}
 %\end{small}

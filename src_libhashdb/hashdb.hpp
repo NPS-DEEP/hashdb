@@ -106,6 +106,17 @@ namespace hashdb {
   };
 
   // ************************************************************
+  // scan modes
+  // ************************************************************
+  /**
+   * The scan mode controls optimization and returned JSON content.
+   */
+  enum scan_mode_t {EXPANDED,
+                    EXPANDED_OPTIMIZED,
+                    COUNT_ONLY,
+                    APPROXIMATE_COUNT};
+
+  // ************************************************************
   // misc support interfaces
   // ************************************************************
   /**
@@ -210,6 +221,8 @@ namespace hashdb {
    *     The step size must be divisible by the byte alignment defined in
    *     the database.
    *   disable_recursive_processing - Disable processing embedded data.
+   *   scan_mode - The mode to use for performing the scan.  Controls
+   *     optimization and returned JSON content.
    *   command_string - String to put into the scan output stream.
    *
    * Returns:
@@ -220,6 +233,7 @@ namespace hashdb {
                      const std::string& media_image_file,
                      const size_t step_size,
                      const bool disable_recursive_processing,
+                     const hashdb::scan_mode_t scan_mode,
                      const std::string& command_string);
 
   /**
@@ -370,7 +384,7 @@ namespace hashdb {
      *
      *   Example hash syntax:
      *     {
-     *       "block_hash": "a7df...",
+     *       "block_hash": "c313ac...",
      *       "entropy": 8,
      *       "block_label": "W",
      *       "source_offset_pairs": ["b9e7...", 4096]
@@ -410,13 +424,9 @@ namespace hashdb {
   // ************************************************************
   // scan
   // ************************************************************
-
   /**
-   * The scan interface accepts these modes.
+   * Response mode selects output format for streaming scans.
    */
-  enum scan_stream_scan_mode_t {EXPANDED_HASH,
-                                HASH_COUNT,
-                                APPROXIMATE_HASH_COUNT};
   enum scan_stream_response_mode_t {TEXT_OUTPUT, BINARY_OUTPUT};
 
   /**
@@ -431,10 +441,16 @@ namespace hashdb {
     lmdb_source_id_manager_t* lmdb_source_id_manager;
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
-    // support find_expanded_hash_json
+    // support find_expanded_hash_json when optimizing
     std::set<std::string>* hashes;
     std::set<std::string>* sources;
 
+    // low-level find interfaces
+    std::string find_expanded_hash_json(const bool optimizing,
+                                     const std::string& binary_hash);
+    std::string find_hash_count_json(const std::string& binary_hash) const;
+    std::string find_approximate_hash_count_json(
+                                     const std::string& binary_hash) const;
     public:
 #ifndef SWIG
     // do not allow copy or assignment
@@ -454,89 +470,6 @@ namespace hashdb {
      * The destructor closes read-only data store resources.
      */
     ~scan_manager_t();
-
-    /**
-     * Iteratively read bytes from in_fd and scan for the hash encoded
-     * in these bytes.  On match, return match content based on the scan mode.
-     *
-     * Input consists of pairs of binary hash and binary blob data.
-     * Returns when at EOF or when a binary hash value of all 0 is provided.
-     *
-     * On match, JSON text is returned.  JSON content depends on the scan
-     * stream mode selected:
-     *   For mode EXPANDED_HASH, see find_expanded_hash_json.
-     *   For mode HASH_COUNT, see find_hash_count_json.
-     *   For mode APPROXIMATE_HASH_COUNT, see find_approximate_hash_count_json.
-     *
-     * The format of returned data depends on the mode selected for returned
-     * data, specifically text mode or binary mode.  For TEXT_OUTPUT,
-     * returned text consists of:
-     *   - Blob data converted to hexadecimal format
-     *   - The JSON text
-     *   - An end of line mark
-     *
-     * For BINARY_OUTPUT, returned data consists of:
-     *   - 8-byte count field in processor-native byte order
-     *   - binary hash
-     *   - binary blob
-     *   - JSON text
-     *
-     * Parameters:
-     *   in_fd - The file descriptor of the input file.
-     *   out_fd - The file descriptor of the output file.
-     *   hash_size - The size, in bytes, of binary hashes.
-     *   blob_size - The size, in bytes, of binary blobs.
-     *   scan_mode - The scan mode.  The JSON content returned depends
-     *     on this mode.
-     *   response_mode - The format mode for the response, binary or text.
-     */
-    std::string scan_stream(
-                   const int in_fd,
-                   const int out_fd,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_stream_scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode);
-
-    std::string scan_stream_f(
-                   const std::string& in_file,
-                   const std::string& out_file,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_stream_scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode);
-
-    /**
-     * Scan for a hash and return expanded source information associated
-     * with it.
-     *
-     * scan_manager caches hashes and source IDs and does not return
-     * source information for hashes or sources that have already been
-     * returned.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form to scan for.
-     *
-     * Returns:
-     *   JSON expanded hash text if source is present, false and ""
-     *   if not.  Example syntax:
-     *
-     * {
-     *   "entropy": 8,
-     *   "block_label": "W",
-     *   "source_list_id": 57,
-     *   "sources": [{
-     *     "file_hash": "f7035a...",
-     *     "filesize": 800,
-     *     "file_type": "exe",
-     *     "zero_count": 1,
-     *     "nonprobative_count": 2,
-     *     "names": ["repository1", "filename1", "repo2", "f2"]
-     *   }],
-     *   "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
-     * }
-     */
-    std::string find_expanded_hash_json(const std::string& binary_hash);
 
 #ifndef SWIG
     /**
@@ -570,7 +503,7 @@ namespace hashdb {
      *   if not.  Example syntax:
      *
      *     {
-     *       "block_hash": "a7df...",
+     *       "block_hash": "c313ac...",
      *       "entropy": 8,
      *       "block_label": "W",
      *       "source_offset_pairs": ["b9e7...", 4096]
@@ -612,22 +545,6 @@ namespace hashdb {
     size_t find_hash_count(const std::string& binary_hash) const;
 
     /**
-     * Find hash count, return JSON string else "" if not there.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *
-     * Returns:
-     *   JSON text if hash is present, false and "" if not.  Example syntax:
-     *
-     *     {
-     *       "block_hash": "a7df...",
-     *       "count": "1"
-     *     }
-     */
-    std::string find_hash_count_json(const std::string& binary_hash) const;
-
-    /**
      * Find approximate hash count.  Faster than find_hash, but can be wrong.
      * Accesses the hash store.
      *
@@ -638,23 +555,6 @@ namespace hashdb {
      *   Approximate hash count.
      */
     size_t find_approximate_hash_count(const std::string& binary_hash) const;
-
-    /**
-     * Find approximate hash count, return JSON text else "" if not there.
-     *
-     * Parameters:
-     *   binary_hash - The block hash in binary form.
-     *
-     * Returns:
-     *   JSON text if hash is present, false and "" if not.  Example syntax:
-     *
-     *     {
-     *       "block_hash": "a7df...",
-     *       "approximate_count": "1"
-     *     }
-     */
-    std::string find_approximate_hash_count_json(
-                                     const std::string& binary_hash) const;
 
     /**
      * Find source data for the given source ID, false on no source ID.
@@ -700,6 +600,92 @@ namespace hashdb {
     bool find_source_names(const std::string& file_binary_hash,
                            source_names_t& source_names) const;
 #endif
+
+    /**
+     * Find hash, return JSON text else "" if not there.
+     *
+     * Parameters:
+     *   scan_mode - The mode to use for performing the scan.  Controls
+     *     optimization and returned JSON content.
+     *   binary_hash - The block hash in binary form.
+     *
+     * Returns:
+     *   JSON text if hash is present, false and "" if not.  Example syntax
+     *   based on mode:
+     *     EXPANDED - always return all available data.  Example syntax:
+     *       {
+     *         "block_hash": "c313ac...",
+     *         "entropy": 8,
+     *         "block_label": "W",
+     *         "source_list_id": 57,
+     *         "sources": [{
+     *           "file_hash": "f7035a...",
+     *           "filesize": 800,
+     *           "file_type": "exe",
+     *           "zero_count": 1,
+     *           "nonprobative_count": 2,
+     *           "names": ["repository1", "filename1", "repo2", "f2"]
+     *         }],
+     *         "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+     *       }
+     *     EXPANDED_OPTIMIZED - return all available data the first time
+     *       but suppress hash and source data after.  Example syntax
+     *       when suppressed:
+     *       { "block_hash": "c313ac..." }
+     *     COUNT_ONLY - Only return the count.  Example syntax:
+     *       { "block_hash": "c313ac...", "count": "1" }
+     *     APPROXIMATE_COUNT - Return approximate count.  Example syntax:
+     *       { "block_hash": "c313ac...", "approximate_count": "1" }
+     */
+    std::string find_hash_json(const scan_mode_t scan_mode,
+                               const std::string& binary_hash);
+
+    /**
+     * Iteratively read bytes from in_fd and scan for the hash encoded
+     * in these bytes.  On match, return match content based on the scan mode.
+     *
+     * Input consists of pairs of binary hash and binary blob data.
+     * Returns when at EOF or when a binary hash value of all 0 is provided.
+     *
+     * On match, JSON text is returned, else "".
+     *
+     * The format of returned data depends on the mode selected for returned
+     * data, specifically text mode or binary mode.  For TEXT_OUTPUT,
+     * returned text consists of:
+     *   - Blob data converted to hexadecimal format
+     *   - The JSON text
+     *   - An end of line mark
+     *
+     * For BINARY_OUTPUT, returned data consists of:
+     *   - 8-byte count field in processor-native byte order
+     *   - binary hash
+     *   - binary blob
+     *   - JSON text
+     *
+     * Parameters:
+     *   in_fd - The file descriptor of the input file.
+     *   out_fd - The file descriptor of the output file.
+     *   hash_size - The size, in bytes, of binary hashes.
+     *   blob_size - The size, in bytes, of binary blobs.
+     *   scan_mode - The mode to use for performing the scan.  Controls
+     *     optimization and returned JSON content.
+     *   response_mode - The format mode for the response, binary or text.
+     */
+    std::string scan_stream(
+                   const int in_fd,
+                   const int out_fd,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode);
+
+    std::string scan_stream_f(
+                   const std::string& in_file,
+                   const std::string& out_file,
+                   const size_t hash_size,
+                   const size_t blob_size,
+                   const hashdb::scan_mode_t scan_mode,
+                   const hashdb::scan_stream_response_mode_t response_mode);
 
     /**
      * Return the first block hash in the database.

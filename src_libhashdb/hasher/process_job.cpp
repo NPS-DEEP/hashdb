@@ -162,7 +162,7 @@ namespace hasher {
 
       // scan
       const std::string json_string = 
-                     job.scan_manager->find_expanded_hash_json(block_hash);
+              job.scan_manager->find_hash_json(job.scan_mode, block_hash);
 
       if (json_string.size() > 0) {
         // offset <tab> file <tab> json

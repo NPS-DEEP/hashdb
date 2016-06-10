@@ -25,7 +25,8 @@ python_tests = \
 	database_manipulation.py \
 	scan.py \
 	statistics.py \
-	performance_analysis.py
+	performance_analysis.py \
+	json_modes.py
 
 EXTRA_DIST = \
 	$(python_tests) \
