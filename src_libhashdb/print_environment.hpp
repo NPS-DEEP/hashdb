@@ -40,15 +40,15 @@ namespace hashdb {
    * Print environment information to the stream.
    */
   void print_environment(const std::string& command_line, std::ostream& os) {
+    // command
+    os << "# command: \"" << command_line << "\"\n";
+
     // version
-    os << "# libhashdb version: " << PACKAGE_VERSION;
+    os << "# hashdb version: " << PACKAGE_VERSION;
 #ifdef GIT_COMMIT
     os << ", GIT commit: " << GIT_COMMIT;
 #endif
     os << "\n";
-
-    // command
-    os << "# command: \"" << command_line << "\"\n";
 
     // username
 #ifdef HAVE_GETPWUID
