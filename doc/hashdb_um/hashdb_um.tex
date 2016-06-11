@@ -445,10 +445,11 @@ There are multiple ways users can scan for matches in a block hash database:
 \begin{itemize}
 \item Using one of the \hdb tool scan commands to scan from a media image,
 list, stream, or specific hash.
-\item Using one of the \hdb API scan interfaces to scan at a particular
-level of detail.
+\item Using one of the \hdb library Python or C++ scan interfaces.
 \item Using the \bulk \hdb scanner Scan function.
 \end{itemize}
+
+Additionally, there are several output modes for receiving scan matches. These modes provide varying levels of detail and speed.
 
 \subsection{Contents of a Hash Database}
 \label{ContentsOfDB}
@@ -497,14 +498,14 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase import entry, label=logfile]
-# libhashdb version: 3.0.0-alpha-1
 # command: "hashdb create KittyMaterial.hdb"
+# hashdb version: 3.0.0-alpha-1
 # username: bdallen
 # start time 2016-04-07T19:20:06Z
 {"name":"begin","delta":"0.000386","total":"0.000386"}
 {"name":"end","delta":"0.000013","total":"0.000403"}
-# libhashdb version: 3.0.0-alpha-1
 # command: "hashdb import KittyMaterial.hdb KittyMaterial.json"
+# hashdb version: 3.0.0-alpha-1
 # username: bdallen
 # start time 2016-04-07T19:20:23Z
 {"name":"begin","delta":"0.000387","total":"0.000387"}
@@ -616,7 +617,7 @@ The above two commands produce identical results, creating the database \texttt{
 \end{itemize}
 
 \subsection{Importing and Exporting}
-Hash databases may be imported to in several ways.  Syntax for commands that import and export hashes is shown in Table \ref{tab:importExport}. Options are shown in Table \ref{tab:ImportExportOptions}.\\
+Hash databases may be imported to in several ways.  Syntax for commands that import and export hashes is shown in Table \ref{tab:importExport}. Import and export options are shown in Table \ref{tab:ImportExportOptions}.\\
 
 Note that there are other ways to populate a database besides these listed here, including using other hash databases (discussed in \textbf{\autoref{updateSection}}),
 by using the \bulk \hdb scanner (discussed in \textbf{\autoref{bulkextractorSection}}),
@@ -746,7 +747,7 @@ Add a database to another database but only when the repository name does not ma
 \subsection{Scan Services}
 \label{ScanServices}
 \hdb can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content.
-Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Options are shown in Table \ref{tab:ScanOptions}.\\
+Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Scan service options are shown in Table \ref{tab:ScanOptions}.\\
 
 \begin{table}[!ht]
 \centering
@@ -756,11 +757,11 @@ Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Optio
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{scan\_list} & \verb+scan <hashdb>+ \verb+<hash list file>+ & Scans the hashdb for hashes that match hashes in the hash list file and prints out matches\\
+\textbf{scan\_list} & \verb+scan_list [-j e|o|c|a] <hashdb>+ \verb+<hash list file>+ & Scans the hashdb for hashes that match hashes in the hash list file and prints out matches\\
 \hline
-\textbf{scan\_hash} & \verb+scan_hash <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
+\textbf{scan\_hash} & \verb+scan_hash [-j e|o|c|a] <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>]+ \verb+[-x <r>] <hashdb>+ \verb+<media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches. Disable processing: \verb+r+ disable recursively processing embedded data.\\
+\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>] [-j e|o|c|a]+ \verb+[-x <r>] <hashdb> <media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches.\\
 \hline
 \end{tabular}
 \end{table}
@@ -774,6 +775,8 @@ Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Optio
 \textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
 \hline
 \textbf{\texttt{-s}} & \verb+--step_size=+\textit{step size} & The increment to step along for calculating block hashes. The step size must be compatible with the byte alignment defined in the database, specifically the byte alignment must be divisible by the byte alignment.\\
+\hline
+\textbf{\texttt{-j}} & \verb+--json_scan_mode=e|o|c|a+ & Select a mode, one of \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, \textbf{a}pproximate count. Default is \textbf{o}.\\
 \hline
 \textbf{\texttt{-x}} & \verb+--disable_processing=r+ & Use this option to disable specific processing, specifically: \verb+r+ disables recursively processing embedded data.\\
 \hline
@@ -822,7 +825,8 @@ Users may be put off by the quantity of matches incurred by low-entropy data in 
 
 \subsection{Statistics}
 Various statistics are available about a given hash database including the size of a database, where its hashes were sourced from, a histogram of its hashes, and more.
-Table \ref{tab:statistics} shows syntax for the statistics commands.\\
+Table \ref{tab:statistics} shows syntax for the statistics commands.
+Statistics options are shown in Table \ref{tab:StatisticsOptions}.
 \begin{table}[!ht]
 \centering
 \caption{Commands that provide Statistics about Hash Databases}
@@ -842,6 +846,19 @@ Table \ref{tab:statistics} shows syntax for the statistics commands.\\
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source.\\
 \hline
 \textbf{read\_bytes} & \verb+read_bytes <image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given forensic path.\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\caption{Options for Commands that Provide Statistics}
+\label{tab:StatisticsOptions}
+\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
+\hline
+\textbf{\texttt{-j}} & \verb+--json_scan_mode=e|o|c|a+ & Select a mode, one of \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, \textbf{a}pproximate count. Default is \textbf{o}.\\
 \hline
 \end{tabular}
 \end{table}
@@ -877,7 +894,7 @@ Prints raw bytes from the given media image. Note that these bytes are often not
 
 \subsection{Performance Analysis}
 \label{PerformanceAnalysis}
-Performance analysis commands for analyzing \hdb performance are shown in Table \ref{tab:analysis}. Timing data is placed in file \verb+timestamp.json+, replacing any previous content.
+Performance analysis commands for analyzing \hdb performance are shown in Table \ref{tab:analysis}. Performance analysis options are shown in Table \ref{tab:AnalysisOptions}. Timing data is placed in file \verb+timestamp.json+, replacing any previous content.
 
 \begin{table}[!ht]
 \centering
@@ -887,13 +904,26 @@ Performance analysis commands for analyzing \hdb performance are shown in Table 
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{add\_random} & \verb+add_random+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count random hashes to the given database, creating timing data in the \texttt{log.xml} file\\
+\textbf{add\_random} & \verb+add_random+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count random hashes to the given database, creating timing data in the \texttt{log.xml} file.\\
 \hline
-\textbf{scan\_random} & \verb+scan_random <hashdb.hdb>+ & Scans random hashes in the given database, creating timing data in the \texttt{log.xml} file\\
+\textbf{scan\_random} & \verb+scan_random [-j e|o|c|a]+ \verb+<hashdb.hdb>+ & Scans random hashes in the given database, creating timing data in the \texttt{log.xml} file.\\
 \hline
-\textbf{add\_same} & \verb+add_same+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count same hashes to the given database, creating timing data in the \texttt{log.xml} file\\
+\textbf{add\_same} & \verb+add_same+ \verb+-r [<repository name>]+ \verb+<hashdb.hdb> <count>+ & Adds count same hashes to the given database, creating timing data in the \texttt{log.xml} file.\\
 \hline
-\textbf{scan\_same} & \verb+scan_same<hashdb.hdb>+ & Scans count same hashes in the given database, creating timing data in the \texttt{log.xml} file\\
+\textbf{scan\_same} & \verb+scan_same [-j e|o|c|a]+ \verb+<hashdb.hdb>+ & Scans count same hashes in the given database, creating timing data in the \texttt{log.xml} file.\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\caption{Options for Commands that Support Performance Analysis}
+\label{tab:AnalysisOptions}
+\begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
+\hline \hline
+\textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
+\hline
+\textbf{\texttt{-j}} & \verb+--json_scan_mode=e|o|c|a+ & Select a mode, one of \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, \textbf{a}pproximate count. Default is \textbf{o}.\\
 \hline
 \end{tabular}
 \end{table}
@@ -902,11 +932,11 @@ Performance analysis commands for analyzing \hdb performance are shown in Table 
 \item \textbf{add\_random}\\
 Add random hashes, leaving timing data in \verb+log.xml+.
 \item \textbf{scan\_random}\\
-Scan random hashes, leaving timing data in \verb+log.xml+.
+Scan random hashes, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode impacts timing.
 \item \textbf{add\_same}\\
 Add the same hash, leaving timing data in \verb+log.xml+.
 \item \textbf{scan\_same}\\
-Scan the same hash, leaving timing data in \verb+log.xml+.
+Scan the same hash, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode impacts timing.
 \end{itemize}
 
 \section{Tools that use \hdb}
