@@ -92,6 +92,7 @@ class entropy_calculator_t {
     } else if (offset > buffer_size) {
       // program error
       assert(0);
+      return 0; // for mingw
     } else {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();
