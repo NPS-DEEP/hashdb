@@ -23,7 +23,7 @@
 #include <cassert>
 #include "pthread.h"
 
-namespace hasher {
+namespace hashdb {
 
 static pthread_mutex_t M = PTHREAD_MUTEX_INITIALIZER;
 
@@ -36,5 +36,5 @@ void tprint(const std::string& text) {
   pthread_mutex_unlock(&M);
 }
 
-} // end namespace hasher
+} // end namespace hashdb
 

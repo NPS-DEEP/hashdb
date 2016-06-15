@@ -20,7 +20,7 @@
 
 #include <sys/types.h>
 
-namespace hasher {
+namespace hashdb {
 
 // from bulk_extractor/src/threadpool.cpp
 /* Return the number of CPUs we have on various architectures.
@@ -61,5 +61,5 @@ u_int numCPU()
 #endif
     return numCPU;
 }
-} // end namespace hasher
+} // end namespace hashdb
 

@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace hasher {
+namespace hashdb {
 
   void tprint(const std::string& text);
 

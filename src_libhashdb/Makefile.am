@@ -99,8 +99,6 @@ HASHER_INCS = \
 	hasher/ingest_tracker.hpp \
 	hasher/job.hpp \
 	hasher/job_queue.hpp \
-	hasher/num_cpus.cpp \
-	hasher/num_cpus.hpp \
 	hasher/process_job.cpp \
 	hasher/process_job.hpp \
 	hasher/process_recursive.cpp \
@@ -110,8 +108,6 @@ HASHER_INCS = \
 	hasher/scan_tracker.hpp \
 	hasher/single_file_reader.hpp \
 	hasher/threadpool.hpp \
-	hasher/tprint.cpp \
-	hasher/tprint.hpp \
 	hasher/uncompress.cpp \
 	hasher/uncompress.hpp
 
@@ -135,8 +131,12 @@ LIBHASHDB_INCS = \
 	logger.hpp \
 	mutex_lock.hpp \
 	msvc-nothrow.h \
+	num_cpus.cpp \
+	num_cpus.hpp \
 	print_environment.hpp \
-	settings_manager.hpp
+	settings_manager.hpp \
+	tprint.cpp \
+	tprint.hpp
 
 libhashdb_la_SOURCES = \
 	$(LIBHASHDB_INCS) $(HASHER_INCS)

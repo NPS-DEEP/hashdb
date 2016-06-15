@@ -6,13 +6,13 @@
 #ifndef NUM_CPUS_H
 #define NUM_CPUS_H
 
-namespace hasher {
+namespace hashdb {
 
 /**
  * Return the number of CPUs in the system.
  */
 u_int numCPU();
 
-} // end namespace hasher
+} // end namespace hashdb
 
 #endif
