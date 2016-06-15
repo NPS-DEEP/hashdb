@@ -158,13 +158,6 @@ namespace hashdb {
 #endif
                            );
 
-//  /**
-//   * Print environment information to the stream.  Specifically, print
-//   * lines starting with the pound character followed by version information,
-//   * the command line, the username, if available, and the date.
-//   */
-//  void print_environment(const std::string& command_line, std::ostream& os);
-
   /**
    * Return binary string or empty if hexdigest length is not even
    * or has any invalid digits.
@@ -223,18 +216,15 @@ namespace hashdb {
    *   disable_recursive_processing - Disable processing embedded data.
    *   scan_mode - The mode to use for performing the scan.  Controls
    *     optimization and returned JSON content.
-   *   command_string - String to put into the scan output stream.
    *
    * Returns:
    *   "" if successful else reason if not.
    */
-
   std::string scan_image(const std::string& hashdb_dir,
                      const std::string& media_image_file,
                      const size_t step_size,
                      const bool disable_recursive_processing,
-                     const hashdb::scan_mode_t scan_mode,
-                     const std::string& command_string);
+                     const hashdb::scan_mode_t scan_mode);
 
   /**
    * Read raw bytes at the forensic path in the media image file.  Files
@@ -277,7 +267,6 @@ namespace hashdb {
    * Returns:
    *   "" if successful else reason if not.
    */
-
   std::string read_bytes(const std::string& media_image_file,
                          const uint64_t offset,
                          const uint64_t count,

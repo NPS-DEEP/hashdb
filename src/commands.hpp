@@ -684,9 +684,13 @@ class out_ptr_t {
                          const hashdb::scan_mode_t scan_mode,
                          const std::string& cmd) {
 
+    // print header information
+    print_header(cmd);
+
+    // scan
     std::string error_message = hashdb::scan_image(hashdb_dir,
                              media_image_filename, step_size,
-                             disable_recursive_processing, scan_mode, cmd);
+                             disable_recursive_processing, scan_mode);
     if (error_message.size() == 0) {
       std::cout << "# scan_image completed.\n";
     } else {

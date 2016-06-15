@@ -168,8 +168,7 @@ namespace hashdb {
                          const std::string& image_filename,
                          const size_t step_size,
                          const bool process_embedded_data,
-                         const hashdb::scan_mode_t scan_mode,
-                         const std::string& command_string) {
+                         const hashdb::scan_mode_t scan_mode) {
 
     // make sure hashdb_dir is there
     std::string error_message;
@@ -210,9 +209,6 @@ namespace hashdb {
     // create the threadpool that will process jobs until job_queue.is_done
     hasher::threadpool_t* const threadpool =
                                new hasher::threadpool_t(num_cpus, job_queue);
-
-    // print the command line
-    std::cout << "# Command: \"" << command_string << "\"\n";
 
     // scan the file
     std::string success = scan_file(file_reader, scan_manager, scan_tracker,
