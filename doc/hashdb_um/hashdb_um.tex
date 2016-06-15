@@ -1590,11 +1590,11 @@ Calculate and import hashes from path to \hdb. Can disable recursive processing,
 Scan the media image for matches, writing match data to \verb+stdout+.
 \item \verb+error_message = read_bytes(media_image_file, forensic_path, count, &bytes)+\\
 C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+binary_string, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+\item \verb+error_message, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
 Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \item \verb+error_message = read_bytes(media_image_file, offset, count, &bytes)+\\
 C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+binary_string, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+\item \verb+error_message, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
 Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \end{itemize}
 
@@ -1611,7 +1611,7 @@ The following data types are defined for the C++ interface:
 
 \section{LMDB Data Stores}
 \label{LMDBDataStores}
-This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind optimization settings and optimized programming interfaces available in \hdb, and is intended for advanced users.\\
+This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind the optimization settings and options provided by \hdb.\\
 
 \subsection{LMDB Hash Store}
 The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Information Store} to be sure the hash actually exists.\\
