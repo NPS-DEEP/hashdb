@@ -11,6 +11,7 @@ import hashdb
 import shutil
 import struct
 import io
+import os
 
 # require Python version 2.7
 if sys.version_info.major != 2 and sys.version_info.minor != 7:
@@ -173,124 +174,56 @@ str_equals(ts.stamp("time1")[:15], '{"name":"time1"')
 str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 
 # ############################################################
-# test scan_stream in binary mode
+# test scan_stream
 # ############################################################
-# setup for scan_stream, end with EOF
-temp_in = open("temp_in.bin", "w")
-in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
-temp_in.write(in_bytes)
-in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
-temp_in.write(in_bytes)
-temp_in.close()
+# setup for scan_stream
+in_bytes_a = struct.pack('8sI', 'aaaaaaaa', 1) # not present
+in_bytes_h = struct.pack('8sI', 'hhhhhhhh', 1) # present
+
+# scan_stream EXPANDED
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.EXPANDED)
+scan_stream.put(in_bytes_a)  # check that the unfound value does not get in the way
+scan_stream.put(in_bytes_h)
+scan_stream.put(in_bytes_h)
+scan_stream.finish()
+scanned = scan_stream.get()
+int_equals(len(scanned), 295)
+scanned = scan_stream.get()
+int_equals(len(scanned), 295)
+scanned = scan_stream.get()
+int_equals(len(scanned), 0)
 
 # scan_stream EXPANDED_OPTIMIZED
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
-                                  hashdb.TEXT_OUTPUT)
-str_equals(status, "")
-temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
-in_file_object.close()
-out_file_object.close()
+#zz
+scan_manager = hashdb.scan_manager_t("temp_1.hdb") # reset EXPANDED_OPTIMIZED
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.EXPANDED_OPTIMIZED)
+scan_stream.put(in_bytes_h)
+scan_stream.put(in_bytes_h)
+scan_stream.finish()
+scanned = scan_stream.get()
+int_equals(len(scanned), 295)
+scanned = scan_stream.get()
+int_equals(len(scanned), 53)
+scanned = scan_stream.get()
+int_equals(len(scanned), 0)
 
 # scan_stream COUNT_ONLY
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.COUNT_ONLY,
-                                  hashdb.TEXT_OUTPUT)
-str_equals(status, "")
-temp_out_equals('0100000000000000{"block_hash":"6868686868686868","count":1}')
-in_file_object.close()
-out_file_object.close()
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.COUNT_ONLY)
+scan_stream.put(in_bytes_h)
+scan_stream.put(in_bytes_h)
+scan_stream.finish()
+scanned = scan_stream.get()
+int_equals(len(scanned), 63)
+scanned = scan_stream.get()
+int_equals(len(scanned), 63)
 
-# scan_stream EXPANDED_HASH_COUNT
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8,
-                                  hashdb.APPROXIMATE_COUNT,
-                                  hashdb.TEXT_OUTPUT)
-str_equals(status, "")
-temp_out_equals('0100000000000000{"block_hash":"6868686868686868","approximate_count":1}')
-in_file_object.close()
-out_file_object.close()
-
-# setup for scan_stream, end with 0x00...
-temp_in = open("temp_in.bin", "w")
-in_bytes = struct.pack('8sQ', '\0\0\0\0\0\0\0\0', 1)
-temp_in.write(in_bytes)
-in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
-temp_in.write(in_bytes)
-temp_in.close()
-
-# scan_stream ends early with 0x00...
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
-                                  hashdb.TEXT_OUTPUT)
-str_equals(status, "")
-temp_out_equals("")
-in_file_object.close()
-out_file_object.close()
-
-# setup for scan_stream, end with invalid alignment of one extra byte
-temp_in = open("temp_in.bin", "w")
-in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
-temp_in.write(in_bytes)
-in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
-temp_in.write(in_bytes)
-temp_in.write('\0')
-temp_in.close()
-
-# scan_stream ends with invalid alignment
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
-                                  hashdb.TEXT_OUTPUT)
-str_equals(status, "unexpected input size 1 is not 16 in scan stream")
-temp_out_equals('0100000000000000{"block_hash":"6868686868686868"}')
-in_file_object.close()
-out_file_object.close()
-
-# ############################################################
-# test scan_stream in text mode
-# ############################################################
-# setup for scan_stream, end with EOF
-temp_in = open("temp_in.bin", "w")
-in_bytes = struct.pack('8sQ', 'aaaaaaaa', 1)
-temp_in.write(in_bytes)
-in_bytes = struct.pack('8sQ', 'hhhhhhhh', 1)
-temp_in.write(in_bytes)
-temp_in.close()
-
-# scan_stream EXPANDED_OPTIMIZED
-in_file_object = open("temp_in.bin", "r")
-in_fd = in_file_object.fileno()
-out_file_object = open("temp_out", "w")
-out_fd = out_file_object.fileno()
-status = scan_manager.scan_stream(in_fd, out_fd, 8, 8, hashdb.EXPANDED_OPTIMIZED,
-                                  hashdb.BINARY_OUTPUT)
-str_equals(status, "")
-# 0000000: 3100 0000 0000 0000 6868 6868 6868 6868  .......1hhhhhhhh
-# 0000010: 0100 0000 0000 0000 7b22 626c 6f63 6b5f  ........{"block_
-# 0000020: 6861 7368 223a 2236 3836 3836 3836 3836  hash":"686868686
-# 0000030: 3836 3836 3836 3822 7d                   8686868"}
-temp_out_equals(
-     '\x31\x00\x00\x00\x00\x00\x00\x00\x68\x68\x68\x68\x68\x68\x68\x68'
-     '\x01\x00\x00\x00\x00\x00\x00\x00\x7b\x22\x62\x6c\x6f\x63\x6b\x5f'
-     '\x68\x61\x73\x68\x22\x3a\x22\x36\x38\x36\x38\x36\x38\x36\x38\x36'
-     '\x38\x36\x38\x36\x38\x36\x38\x22\x7d'
-)
-in_file_object.close()
-out_file_object.close()
-
+# scan_stream APPROXIMATE_COUNT
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.APPROXIMATE_COUNT)
+scan_stream.put(in_bytes_h)
+scan_stream.put(in_bytes_h)
+scan_stream.finish()
+scanned = scan_stream.get()
+int_equals(len(scanned), 75)
+scanned = scan_stream.get()
+int_equals(len(scanned), 75)
 

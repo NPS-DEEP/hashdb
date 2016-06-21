@@ -51,6 +51,7 @@
 #include <time.h>       // for timestamp
 #include <sys/types.h>  // for timestamp
 #include <sys/time.h>   // for timestamp
+#include <unistd.h>     // for pipe
 #include "file_modes.h"
 #include "settings_manager.hpp"
 #include "lmdb_hash_data_manager.hpp"
@@ -169,13 +170,6 @@ namespace hashdb {
     }
     delete source_set;
     return crc;
-  }
-
-  // file descriptor error
-  static std::string fd_error(const std::string& message, int fd) {
-    std::stringstream ss;
-    ss << message << ", fd=" << fd << ": " << strerror(errno);
-    return ss.str();
   }
 
   // ************************************************************
@@ -620,148 +614,6 @@ namespace hashdb {
         return find_approximate_hash_count_json(binary_hash);
 
       default: assert(0); std::exit(1);
-    }
-  }
-
-  std::string scan_manager_t::scan_stream_f(
-                   const std::string& in_file,
-                   const std::string& out_file,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode) {
-#ifdef WIN32
-    const int in_fd = ::open(in_file.c_str(), _O_RDONLY);
-    const int out_fd = ::open(out_file.c_str(), _O_WRONLY);
-#else
-    const int in_fd = ::open(in_file.c_str(), O_RDONLY);
-    const int out_fd = ::open(out_file.c_str(), O_WRONLY);
-#endif
-    std::string error_message = scan_stream(in_fd, out_fd, hash_size,
-                                 blob_size, scan_mode, response_mode);
-    if (error_message.size() == 0) {
-      int status = 0;
-      status = ::close(in_fd);
-      if (status == 0) {
-        status = ::close(out_fd);
-      }
-      if (status == -1) {
-        error_message = strerror(errno);
-      }
-    }
-    return error_message;
-  }
-
-  // iteratively read hash_size+blob_size from in_fd and scan hash.
-  // on match, write count, hex blob, and JSON data to out_fd based on
-  // output mode.  Quit if binary_hash is all 0.
-  std::string scan_manager_t::scan_stream(
-                   const int in_fd,
-                   const int out_fd,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode) {
-
-    // loop in_fd until EOF or hash is 0x00...
-    const int h_b_size = hash_size + blob_size;
-    char h_b[h_b_size];
-    while (true) {
-
-      // read hash and blob together
-      ssize_t count = ::read(in_fd, h_b, h_b_size);
-      if (count == 0) {
-        // done
-        return "";
-      }
-      if (count == -1) {
-        return fd_error("error reading in_fd", in_fd);
-      }
-      if (count != h_b_size) {
-        // uneven count so warn and quit
-        std::stringstream ss;
-        ss << "unexpected input size " << count
-           << " is not " << h_b_size << " in scan stream";
-        return ss.str();
-      }
-
-      // read binary_hash
-      std::string binary_hash = std::string(h_b, hash_size);
-
-      // quit if binary_hash is all 0
-      bool done = true;
-      for (size_t i=0; i< hash_size; i++) {
-        if (h_b[i] != 0) {
-          done = false;
-          break;
-        }
-      }
-      if (done) {
-        // binary_hash is 0x00...
-        return "";
-      }
-
-      // read blob
-      std::string blob = std::string(h_b+hash_size, blob_size);
-
-      // scan
-      const std::string json_response = find_hash_json(scan_mode, binary_hash);
-
-      if (json_response.size() > 0) {
-        // match so print match data
-        std::stringstream ss;
-        switch(response_mode) {
-
-          // TEXT_OUTPUT
-          case hashdb::scan_stream_response_mode_t::TEXT_OUTPUT:
-
-            // print hex blob, json data, and CR.
-            ss << hashdb::bin_to_hex(blob) << json_response << "\n";
-            break;
-
-          // BINARY_OUTPUT
-          case hashdb::scan_stream_response_mode_t::BINARY_OUTPUT:
-            {
-              // print size of output, binary hash, binary blob, and JSON
-
-              // response size based on architecture
-              // i.e. do not force network byte order
-              uint64_t response_size = h_b_size + json_response.size();
-              ss.write(reinterpret_cast<const char*>(&response_size), 8);
-
-              // binary hash
-              ss << binary_hash;
-
-              // blob
-              ss << blob;
-
-              // JSON
-              ss << json_response;
-
-              break;
-            }
-
-          default: assert(0); std::exit(1);
-        }
-
-        std::string response = ss.str();
-        count = ::write(out_fd, response.c_str(), response.size());
-        if (count == -1) {
-          return fd_error("error writing out_fd", out_fd);
-        }
-        if ((size_t)count != response.size()) {
-          std::stringstream ss2;
-          ss2 << "unexpected incomplete write count " << count
-             << " is not " << response.size();
-          return ss2.str();
-        }
-
-        // flush for immediate write
-        ssize_t success = ::fsync(out_fd);
-        if (success == -1) {
-          return fd_error("error flushing out_fd", out_fd);
-        }
-      }
     }
   }
 

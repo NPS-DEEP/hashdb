@@ -111,6 +111,11 @@ HASHER_INCS = \
 	hasher/uncompress.cpp \
 	hasher/uncompress.hpp
 
+SCAN_STREAM_INCS = \
+	scan_stream/scan_queue.hpp \
+	scan_stream/scan_stream.cpp \
+	scan_stream/scan_thread_data.hpp
+
 LIBHASHDB_INCS = \
 	crc32.cpp \
 	crc32.h \
@@ -139,7 +144,7 @@ LIBHASHDB_INCS = \
 	tprint.hpp
 
 libhashdb_la_SOURCES = \
-	$(LIBHASHDB_INCS) $(HASHER_INCS)
+	$(LIBHASHDB_INCS) $(HASHER_INCS) $(SCAN_STREAM_INCS)
 
 include_HEADERS = hashdb.hpp
 

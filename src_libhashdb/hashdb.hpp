@@ -44,6 +44,9 @@
 extern "C"
 const char* hashdb_version();
 
+namespace scan_stream {
+  class scan_thread_data_t;
+}
 namespace hashdb {
   class lmdb_hash_data_manager_t;
   class lmdb_hash_manager_t;
@@ -109,7 +112,7 @@ namespace hashdb {
   // scan modes
   // ************************************************************
   /**
-   * The scan mode controls optimization and returned JSON content.
+   * The scan mode controls scan optimization and returned JSON content.
    */
   enum scan_mode_t {EXPANDED,
                     EXPANDED_OPTIMIZED,
@@ -215,7 +218,7 @@ namespace hashdb {
    *     the database.
    *   disable_recursive_processing - Disable processing embedded data.
    *   scan_mode - The mode to use for performing the scan.  Controls
-   *     optimization and returned JSON content.
+   *     scan optimization and returned JSON content.
    *
    * Returns:
    *   "" if successful else reason if not.
@@ -414,11 +417,6 @@ namespace hashdb {
   // scan
   // ************************************************************
   /**
-   * Response mode selects output format for streaming scans.
-   */
-  enum scan_stream_response_mode_t {TEXT_OUTPUT, BINARY_OUTPUT};
-
-  /**
    * Manage LMDB scans.  Interfaces should be threadsafe by LMDB design.
    */
   class scan_manager_t {
@@ -595,7 +593,7 @@ namespace hashdb {
      *
      * Parameters:
      *   scan_mode - The mode to use for performing the scan.  Controls
-     *     optimization and returned JSON content.
+     *     scan optimization and returned JSON content.
      *   binary_hash - The block hash in binary form.
      *
      * Returns:
@@ -628,53 +626,6 @@ namespace hashdb {
      */
     std::string find_hash_json(const scan_mode_t scan_mode,
                                const std::string& binary_hash);
-
-    /**
-     * Iteratively read bytes from in_fd and scan for the hash encoded
-     * in these bytes.  On match, return match content based on the scan mode.
-     *
-     * Input consists of pairs of binary hash and binary blob data.
-     * Returns when at EOF or when a binary hash value of all 0 is provided.
-     *
-     * On match, JSON text is returned, else "".
-     *
-     * The format of returned data depends on the mode selected for returned
-     * data, specifically text mode or binary mode.  For TEXT_OUTPUT,
-     * returned text consists of:
-     *   - Blob data converted to hexadecimal format
-     *   - The JSON text
-     *   - An end of line mark
-     *
-     * For BINARY_OUTPUT, returned data consists of:
-     *   - 8-byte count field in processor-native byte order
-     *   - binary hash
-     *   - binary blob
-     *   - JSON text
-     *
-     * Parameters:
-     *   in_fd - The file descriptor of the input file.
-     *   out_fd - The file descriptor of the output file.
-     *   hash_size - The size, in bytes, of binary hashes.
-     *   blob_size - The size, in bytes, of binary blobs.
-     *   scan_mode - The mode to use for performing the scan.  Controls
-     *     optimization and returned JSON content.
-     *   response_mode - The format mode for the response, binary or text.
-     */
-    std::string scan_stream(
-                   const int in_fd,
-                   const int out_fd,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode);
-
-    std::string scan_stream_f(
-                   const std::string& in_file,
-                   const std::string& out_file,
-                   const size_t hash_size,
-                   const size_t blob_size,
-                   const hashdb::scan_mode_t scan_mode,
-                   const hashdb::scan_stream_response_mode_t response_mode);
 
     /**
      * Return the first block hash in the database.
@@ -731,6 +682,86 @@ namespace hashdb {
      * Return the number of sources.
      */
     size_t size_sources() const;
+  };
+
+  // ************************************************************
+  // scan_stream
+  // ************************************************************
+  /**
+   * Provide a threaded streaming scan interface.  Use put to enqueue
+   * arrays of scan input.  Use get to receive arrays of scan output.
+   */
+  class scan_stream_t {
+    private:
+    const int num_threads;
+    ::pthread_t* threads;
+    scan_stream::scan_thread_data_t* scan_thread_data;
+    bool finished;
+
+#ifndef SWIG
+    // do not allow copy or assignment
+    scan_stream_t(const scan_stream_t&);
+    scan_stream_t& operator=(const scan_stream_t&);
+#endif
+
+    public:
+    /**
+     * Create a streaming scan service.
+     *
+     * Parameters:
+     *   scan_manger - The hashdb scan manager to use for scanning.
+     *   hash_size - The size, in bytes, of a binary hash, 16 for MD5.
+     *   label_size - The size, in bytes, of a binary label to pass through.
+     *   scan_mode - The mode to use for performing the scan.  Controls
+     *     scan optimization and returned JSON content.
+     */
+    scan_stream_t(hashdb::scan_manager_t* const scan_manager,
+                  const size_t hash_size,
+                  const size_t label_size,
+                  const hashdb::scan_mode_t scan_mode);
+
+    /**
+     * Release scan_stream resources.
+     */
+    ~scan_stream_t();
+
+    /**
+     * Submit a string containing an array of records to scan.
+     *
+     * Paramters:
+     *   unscanned_data - An array of records to scan, packed without
+     *     delimiters.  Each record contains:
+     *     - A binary hash to scan for, of length hash_size.
+     *     - A binary label associated with the scan record, of length
+     *       label_size.
+     *
+     * Returns
+     *   "" if successful else reason if not.
+     */
+    void put(const std::string& input_array);
+
+    /**
+     * Receive a string containing an array of records of matched scanned
+     * data or "" if no data is available.
+     *
+     * Returns:
+     *   scanned_data - An array of records of matched scanned data
+     *     or "" if no data is available.  Each record conatins:
+     *     - An 8-byte count field indicating the remaining length of
+     *       the record.
+     *     - A binary hash that matched, of length hash_size.
+     *     - A binary label associated with the scan record, of length
+     *       label_size.
+     *     - JSON text formatted based on the scan mode selected.
+     */
+    std::string get();
+
+    /**
+     * Call this to give the scan_stream system time to finish scanning
+     * and to close thread resources.  Once called, new scanned data may
+     * become available and new unscanned data cannot be added.
+     */
+    void finish();
   };
 
   // ************************************************************
