@@ -37,11 +37,9 @@ class scan_thread_data_t {
   public:
   hashdb::scan_manager_t* const scan_manager;
   const size_t hash_size;
-  const size_t label_size;
-  const size_t in_size;
   const ::hashdb::scan_mode_t scan_mode;
   scan_queue_t scan_queue;
-  bool should_close;
+  volatile bool done;
 
   // do not allow copy or assignment
   scan_thread_data_t(const scan_thread_data_t&);
@@ -50,15 +48,12 @@ class scan_thread_data_t {
   public:
   scan_thread_data_t(hashdb::scan_manager_t* const p_scan_manager,
                      const size_t p_hash_size,
-                     const size_t p_label_size,
                      const hashdb::scan_mode_t p_scan_mode) :
             scan_manager(p_scan_manager),
             hash_size(p_hash_size),
-            label_size(p_label_size),
-            in_size(hash_size + label_size),
             scan_mode(p_scan_mode),
             scan_queue(),
-            should_close(false) {
+            done(false) {
   }
 };
 

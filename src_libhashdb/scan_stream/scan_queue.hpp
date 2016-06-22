@@ -141,12 +141,22 @@ class scan_queue_t {
 
   bool busy() {
     lock();
-    // Busy when unscanned input is available and processing is active.
+    // Busy when unscanned input is available or processing is active.
     // Unpulled scanned output does not count as busy.
     const bool is_busy = unscanned.size() != 0 ||
                          unscanned_submitted != scanned_submitted;
     unlock();
     return is_busy;
+  }
+
+  bool empty() {
+    lock();
+    // Empty when both queues are empty and processing is not active.
+    const bool is_empty = unscanned.size() == 0 &&
+                          scanned.size() == 0 &&
+                          unscanned_submitted == scanned_submitted;
+    unlock();
+    return is_empty;
   }
 };
 

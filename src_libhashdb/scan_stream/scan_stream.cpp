@@ -58,16 +58,13 @@ static void* run(void* const arg) {
 
   // make space for the hash and label
   char* char_hash = new char[job->hash_size]();
-  char* char_label = new char[job->label_size]();
-
-  // size of unscanned record
-  const size_t unscanned_record_size = job->hash_size + job->label_size;
+  char* char_label = new char[65536](); // fits uint16_t
 
   // get and process input arrays until signaled to close
   // print warnings to stderr
-  while (!job->should_close || job->scan_queue.busy()) {
+  while (!job->done) {
 
-    // read unscanned from scan_queue
+    // read unscanned array from scan_queue
     const std::string unscanned_array = job->scan_queue.get_unscanned();
 
     // empty so pause and retry
@@ -85,22 +82,32 @@ static void* run(void* const arg) {
     // read and process the scan input elements
     while (unscanned_stream.peek() != EOF) {
 
-      // char_hash
+      // read char_hash
       unscanned_stream.read(char_hash, job->hash_size);
 
-      // char_label
-      unscanned_stream.read(char_label, job->label_size);
-
-      // check for underflow
+      // check for EOF
       if (unscanned_stream.rdstate() & std::ios::eofbit) {
-        std::stringstream ss;
-        ss << "Data error in scan_stream thread: unscanned input data was truncated.\n"
-           << "A record size of " << unscanned_record_size
-           << " bytes was requested but only "
-           << unscanned_array.size() % unscanned_record_size
-           << " were available.\n";
+        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading hash.\n");
+        continue;
+      }
 
-        hashdb::tprint(ss.str());
+      // read char_label length, size uint16_t
+      uint16_t char_label_length = 0;
+      unscanned_stream.read(reinterpret_cast<char*>(&char_label_length),
+                            sizeof(uint16_t));
+
+      // check for EOF
+      if (unscanned_stream.rdstate() & std::ios::eofbit) {
+        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading label length.\n");
+        continue;
+      }
+
+      // read char_label
+      unscanned_stream.read(char_label, char_label_length);
+
+      // check for EOF
+      if (unscanned_stream.rdstate() & std::ios::eofbit) {
+        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading label.\n");
         continue;
       }
 
@@ -110,22 +117,24 @@ static void* run(void* const arg) {
 
       if (json_response.size() > 0) {
 
-        // calculate response payload size
-        const uint64_t scanned_record_size =
-                               unscanned_record_size + json_response.size();
-
-        // response size
-        scanned_stream.write(
-                        reinterpret_cast<const char*>(&scanned_record_size),
-                        sizeof(uint64_t));
-
-        // binary hash
+        // write char_hash
         scanned_stream.write(char_hash, job->hash_size);
 
-        // label
-        scanned_stream.write(char_label, job->label_size);
+        // write char_label length
+        scanned_stream.write(
+                        reinterpret_cast<const char*>(&char_label_length),
+                        sizeof(uint16_t));
 
-        // JSON
+        // write char_label
+        scanned_stream.write(char_label, char_label_length);
+
+        // write json_response length
+        const uint32_t json_response_length = json_response.size();
+        scanned_stream.write(
+                        reinterpret_cast<const char*>(&json_response_length),
+                        sizeof(uint32_t));
+
+        // write json_response
         scanned_stream << json_response;
       }
     }
@@ -145,13 +154,12 @@ namespace hashdb {
   scan_stream_t::scan_stream_t(
               hashdb::scan_manager_t* const scan_manager,
               const size_t hash_size,
-              const size_t label_size,
               const hashdb::scan_mode_t scan_mode) :
          num_threads(hashdb::numCPU()),
          threads(new ::pthread_t[num_threads]),
          scan_thread_data(new scan_stream::scan_thread_data_t(
-                          scan_manager, hash_size, label_size, scan_mode)),
-         finished(false) {
+                          scan_manager, hash_size, scan_mode)),
+         done(false) {
 
     // open one scan thread per CPU
     for (int i=0; i<num_threads; i++) {
@@ -167,10 +175,6 @@ namespace hashdb {
 
   // put in data to scan
   void scan_stream_t::put(const std::string& unscanned_data) {
-    if (finished) {
-      std::cerr << "Usage error in scan_stream: put is not allowed after finish.\n";
-      return;
-    }
     scan_thread_data->scan_queue.put_unscanned(unscanned_data);
   }
 
@@ -179,31 +183,28 @@ namespace hashdb {
     return scan_thread_data->scan_queue.get_scanned();
   }
 
-  // done with input so wrap up and close
-  void scan_stream_t::finish() {
-    // set the flag that closes threads when scan_queue is no longer busy
-    scan_thread_data->should_close = true;
+  // wait until all unscanned input has finished processing and all
+  // scanned output is available for retrieval.
+  void scan_stream_t::flush() {
+    while (scan_thread_data->scan_queue.busy()) {
+      sched_yield();
+    }
+  }
+
+  scan_stream_t::~scan_stream_t() {
 
     // join each thread
+    scan_thread_data->done = true;
     for (int i=0; i<num_threads; i++) {
       int status = pthread_join(threads[i], NULL);
       if (status != 0) {
         std::cerr << "Error in threadpool join: " << strerror(status) << ".\n";
       }
     }
-    finished = true;
-  }
 
-  scan_stream_t::~scan_stream_t() {
-    // warn if threads are open
-    if (!finished) {
-      std::cerr << "Usage error in scan_stream: please call finish before closing to ensure\nthat processing has completed.\n";
-      finish();
-    }
-
-    // warn if data is left behind
-    if (scan_thread_data->scan_queue.busy()) {
-      std::cerr << "Usage error in scan_stream: stream closed but more data is available.\n";
+    // warn if data was left behind
+    if (!scan_thread_data->scan_queue.empty()) {
+      std::cerr << "Usage error in scan_stream: the stream was closed but more data was available.\n";
     }
 
     delete[] threads;

@@ -696,7 +696,7 @@ namespace hashdb {
     const int num_threads;
     ::pthread_t* threads;
     scan_stream::scan_thread_data_t* scan_thread_data;
-    bool finished;
+    bool done;
 
 #ifndef SWIG
     // do not allow copy or assignment
@@ -711,13 +711,11 @@ namespace hashdb {
      * Parameters:
      *   scan_manger - The hashdb scan manager to use for scanning.
      *   hash_size - The size, in bytes, of a binary hash, 16 for MD5.
-     *   label_size - The size, in bytes, of a binary label to pass through.
      *   scan_mode - The mode to use for performing the scan.  Controls
      *     scan optimization and returned JSON content.
      */
     scan_stream_t(hashdb::scan_manager_t* const scan_manager,
                   const size_t hash_size,
-                  const size_t label_size,
                   const hashdb::scan_mode_t scan_mode);
 
     /**
@@ -732,8 +730,11 @@ namespace hashdb {
      *   unscanned_data - An array of records to scan, packed without
      *     delimiters.  Each record contains:
      *     - A binary hash to scan for, of length hash_size.
-     *     - A binary label associated with the scan record, of length
-     *       label_size.
+     *     - A 2-byte unsigned integer in native-Endian format indicating
+     *       the length, in bytes, of the upcoming binary label associated
+     *       with the scan record.
+     *     - A binary label associated with the scan record, of the
+     *       length just indicated.
      *
      * Returns
      *   "" if successful else reason if not.
@@ -747,21 +748,25 @@ namespace hashdb {
      * Returns:
      *   scanned_data - An array of records of matched scanned data
      *     or "" if no data is available.  Each record conatins:
-     *     - An 8-byte count field indicating the remaining length of
-     *       the record.
      *     - A binary hash that matched, of length hash_size.
-     *     - A binary label associated with the scan record, of length
-     *       label_size.
-     *     - JSON text formatted based on the scan mode selected.
+     *     - A 2-byte unsigned integer in native-Endian format indicating
+     *       the length, in bytes, of the upcoming binary label associated
+     *       with the hash that matched.
+     *     - A binary label associated with the scan record, of the
+     *       length just indicated.
+     *     - A 4-byte unsigned integer in native-Endian format indicating
+     *       the length, in bytes, of the upcoming JSON text associated
+     *       with the hash that matched.
+     *     - JSON text formatted based on the scan mode selected, of the
+     *       length just indicated.
      */
     std::string get();
 
     /**
-     * Call this to give the scan_stream system time to finish scanning
-     * and to close thread resources.  Once called, new scanned data may
-     * become available and new unscanned data cannot be added.
+     * Wait until all submitted unscanned data has been processed and all
+     * scanned data is available for retrieval.
      */
-    void finish();
+    void flush();
   };
 
   // ************************************************************

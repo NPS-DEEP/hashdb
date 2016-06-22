@@ -177,29 +177,38 @@ str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 # test scan_stream
 # ############################################################
 # setup for scan_stream
-in_bytes_a = struct.pack('8sI', 'aaaaaaaa', 1) # not present
-in_bytes_h = struct.pack('8sI', 'hhhhhhhh', 1) # present
+in_bytes_a = struct.pack('8sH10s', 'aaaaaaaa', 10, 'iiiiiiiiii') # not present
+in_bytes_h = struct.pack('8sH10s', 'hhhhhhhh', 10, 'iiiiiiiiii') # present
+print("in_bytes_h", in_bytes_h)
 
 # scan_stream EXPANDED
-scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.EXPANDED)
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.EXPANDED)
 scan_stream.put(in_bytes_a)  # check that the unfound value does not get in the way
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
-scan_stream.finish()
+scan_stream.flush()
 scanned = scan_stream.get()
+str_equals(scanned, "zz")
 int_equals(len(scanned), 295)
 scanned = scan_stream.get()
 int_equals(len(scanned), 295)
 scanned = scan_stream.get()
 int_equals(len(scanned), 0)
+scan_stream.put(in_bytes_h)  # check second put
+scan_stream.flush()
+scanned = scan_stream.get()
+int_equals(len(scanned), 295)
+scanned = scan_stream.get()
+int_equals(len(scanned), 0)
+scan_stream.put(in_bytes_h)  # add data to verify warning to stderr,
+                             # checked by hand
 
 # scan_stream EXPANDED_OPTIMIZED
-#zz
 scan_manager = hashdb.scan_manager_t("temp_1.hdb") # reset EXPANDED_OPTIMIZED
-scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.EXPANDED_OPTIMIZED)
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.EXPANDED_OPTIMIZED)
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
-scan_stream.finish()
+scan_stream.flush()
 scanned = scan_stream.get()
 int_equals(len(scanned), 295)
 scanned = scan_stream.get()
@@ -208,20 +217,20 @@ scanned = scan_stream.get()
 int_equals(len(scanned), 0)
 
 # scan_stream COUNT_ONLY
-scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.COUNT_ONLY)
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.COUNT_ONLY)
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
-scan_stream.finish()
+scan_stream.flush()
 scanned = scan_stream.get()
 int_equals(len(scanned), 63)
 scanned = scan_stream.get()
 int_equals(len(scanned), 63)
 
 # scan_stream APPROXIMATE_COUNT
-scan_stream = hashdb.scan_stream_t(scan_manager, 8, 4, hashdb.APPROXIMATE_COUNT)
+scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.APPROXIMATE_COUNT)
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
-scan_stream.finish()
+scan_stream.flush()
 scanned = scan_stream.get()
 int_equals(len(scanned), 75)
 scanned = scan_stream.get()
