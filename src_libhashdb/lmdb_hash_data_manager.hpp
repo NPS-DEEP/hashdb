@@ -438,9 +438,8 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         const bool data_same = entropy == p_entropy &&
                                block_label == p_block_label;
 
-        // note if at max duplicates
-        const bool at_max = (max_id_offset_pairs != 0 &&
-                             1 >= max_id_offset_pairs);
+        // note if at max duplicates for type 1
+        const bool at_max = (max_id_offset_pairs == 1);
 
         // tally changes
         if (data_same) {
