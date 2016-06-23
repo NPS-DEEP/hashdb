@@ -102,6 +102,7 @@ import_manager.insert_hash("hhhhhhhh","gggggggg", 512, 2, "block label")
 import_manager.import_json('{"block_hash":"6868686868686868","entropy":2,"block_label":"block label","source_offset_pairs":["6767676767676767",512]}')
 import_manager.import_json('"file_hash":"6767676767676767","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]')
 str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
+import_manager = None
 
 # ############################################################
 # test scan functions
@@ -179,7 +180,6 @@ str_equals(ts.stamp("time2")[:15], '{"name":"time2"')
 # setup for scan_stream
 in_bytes_a = struct.pack('8sH10s', 'aaaaaaaa', 10, 'iiiiiiiiii') # not present
 in_bytes_h = struct.pack('8sH10s', 'hhhhhhhh', 10, 'iiiiiiiiii') # present
-print("in_bytes_h", in_bytes_h)
 
 # helper to read one scanned line from scan_stream
 def read_scan_stream(scan_stream):
@@ -195,7 +195,6 @@ scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.EXPANDED)
 scan_stream.put(in_bytes_a)  # check that the unfound value does not get in the way
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
-print("checkpoint.a")
 scanned = read_scan_stream(scan_stream)
 int_equals(len(scanned), 299)
 scanned = read_scan_stream(scan_stream)
@@ -235,4 +234,6 @@ scanned = read_scan_stream(scan_stream)
 int_equals(len(scanned), 79)
 scanned = read_scan_stream(scan_stream)
 int_equals(len(scanned), 79)
+
+print("Done.")
 

@@ -60,6 +60,7 @@
 #include "lmdb_source_id_manager.hpp"
 #include "lmdb_source_name_manager.hpp"
 #include "logger.hpp"
+#include "locked_member.hpp"
 #include "lmdb_changes.hpp"
 #include "rapidjson.h"
 #include "writer.h"
@@ -559,8 +560,8 @@ namespace hashdb {
           lmdb_source_name_manager(0),
 
           // for find_expanded_hash_json
-          hashes(new std::set<std::string>),
-          sources(new std::set<std::string>) {
+          hashes(new locked_member_t),
+          sources(new locked_member_t) {
 
     // read settings
     hashdb::settings_t settings = private_read_settings(hashdb_dir);
@@ -648,12 +649,7 @@ namespace hashdb {
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
 
     // report hash if not caching or this is the first time for the hash
-    if (!optimizing || hashes->find(binary_hash) == hashes->end()) {
-
-      // if caching then remember this hash match to skip it later
-      if (optimizing) {
-        hashes->insert(binary_hash);
-      }
+    if (!optimizing || hashes->locked_insert(binary_hash)) {
 
       // entropy
       json_doc.AddMember("entropy", entropy, allocator);
@@ -672,11 +668,7 @@ namespace hashdb {
       for (hashdb::source_offset_pairs_t::const_iterator it =
                       source_offset_pairs->begin();
                       it != source_offset_pairs->end(); ++it) {
-        if (!optimizing || sources->find(it->first) == sources->end()) {
-          // remember this source to skip it later
-          if (optimizing) {
-            sources->insert(it->first);
-          }
+        if (!optimizing || sources->locked_insert(it->first)) {
 
           // provide the complete source information for this source
           // a json_source object for the json_sources array

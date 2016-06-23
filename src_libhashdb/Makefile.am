@@ -133,6 +133,7 @@ LIBHASHDB_INCS = \
 	lmdb_source_data_manager.hpp \
 	lmdb_source_id_manager.hpp \
 	lmdb_source_name_manager.hpp \
+	locked_member.hpp \
 	logger.hpp \
 	mutex_lock.hpp \
 	msvc-nothrow.h \

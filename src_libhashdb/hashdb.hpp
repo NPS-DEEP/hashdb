@@ -56,6 +56,7 @@ namespace hashdb {
   class lmdb_source_name_manager_t;
   class lmdb_changes_t;
   class logger_t;
+  class locked_member_t;
 
   // ************************************************************
   // typedefs
@@ -430,8 +431,8 @@ namespace hashdb {
     lmdb_source_name_manager_t* lmdb_source_name_manager;
 
     // support find_expanded_hash_json when optimizing
-    std::set<std::string>* hashes;
-    std::set<std::string>* sources;
+    locked_member_t* hashes;
+    locked_member_t* sources;
 
     // low-level find interfaces
     std::string find_expanded_hash_json(const bool optimizing,
