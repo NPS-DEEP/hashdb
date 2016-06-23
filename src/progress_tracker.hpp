@@ -49,6 +49,19 @@ class progress_tracker_t {
   progress_tracker_t(const progress_tracker_t&);
   progress_tracker_t& operator=(const progress_tracker_t&);
 
+  void show_progress() {
+    std::stringstream ss;
+    if (total > 0) {
+      // total is known
+      ss << "# Processed " << index << " of " << total;
+    } else {
+      // total is not known
+      ss << "# Processed " << index << " of ?";
+    }
+    std::cout << ss.str() << "..." << std::endl;
+    os << timestamp.stamp(ss.str()) << std::endl;
+  }
+
   public:
   progress_tracker_t(const std::string& p_dir, const uint64_t p_total,
                      const std::string& cmd) :
@@ -73,39 +86,34 @@ class progress_tracker_t {
   }
 
   void track() {
-    if (index%100000 == 0 && index > 0) {
-      std::stringstream ss;
-      if (total > 0) {
-        // total is known
-        ss << "# Processing index " << index << " of " << total;
-      } else {
-        // total is not known
-        ss << "# Processing index " << index << " of ?";
-      }
-      std::cout << ss.str() << "..." << std::endl;
-      os << timestamp.stamp(ss.str()) << std::endl;
-    }
     ++index;
+    if (index%100000 == 0) {
+      show_progress();
+    }
+  }
+
+  void track_count(const size_t count) {
+    size_t old_index = index;
+    index += count;
+    if ((index > 0) && (index / 100000 > old_index / 100000)) {
+      show_progress();
+    }
   }
 
   void track_hash_data(const uint64_t count) {
     // The amount of hash data traversed is calculated from count,
     // which is 1 or size + 1, see hashdb_data store.
-    // This is an inefficient but simple approach to track count
-    const size_t record_count = (count == 1) ? 1 : count + 1;
-    for (size_t i=0; i<record_count; ++i) {
-      track();
-    }
+    track_count(count == 1? 1 : count + 1);
   }
 
   ~progress_tracker_t() {
     std::stringstream ss;
     if (total > 0) {
       // total is known
-      ss << "# Processing index " << index << " of " << total << " completed.";
+      ss << "# Processing " << index << " of " << total << " completed.";
     } else {
       // total is not known
-      ss << "# Processing index " << index << " of " << index << " completed.";
+      ss << "# Processing " << index << " of " << index << " completed.";
     }
     std::cout << ss.str() << std::endl;
     os << timestamp.stamp(ss.str()) << std::endl;

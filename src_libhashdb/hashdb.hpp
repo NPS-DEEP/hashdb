@@ -33,7 +33,8 @@
 #include <string>
 #include <set>
 #include <stdint.h>
-#include <sys/time.h>   // timeval for timestamp
+#include <sys/time.h>   // timeval* for timestamp_t
+#include <pthread.h>    // pthread_t* for scan_stream_t
 
 // ************************************************************
 // version of the hashdb library
@@ -763,10 +764,15 @@ namespace hashdb {
     std::string get();
 
     /**
-     * Wait until all submitted unscanned data has been processed and all
-     * scanned data is available for retrieval.
+     * Returns true if scan_stream is empty, meaning that there is no
+     * unscanned data left to scan and there is no scanned data left to
+     * retrieve.  If not empty, a thread yield is issued so that the
+     * caller can busy-wait with less waste.
+     *
+     * Returns:
+     *   true if scan_stream is empty.
      */
-    void flush();
+    bool empty();
   };
 
   // ************************************************************

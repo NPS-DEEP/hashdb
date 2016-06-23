@@ -562,6 +562,10 @@ void run_command() {
     check_params("j", 2);
     commands::scan_same(args[0], args[1], scan_mode, cmd);
 
+  } else if (command == "test_scan_stream") {
+    check_params("j", 2);
+    commands::test_scan_stream(args[0], args[1], scan_mode, cmd);
+
   // error
   } else {
     std::cerr << "Error: unsupported command.\nAborting.\n";

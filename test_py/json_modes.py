@@ -115,7 +115,7 @@ def test_json_commands():
     # scan_same: nothing returned but accepts -j
     returned_answer = H.hashdb(["scan_same", "-j", "c", "temp_1.hdb", "1"])
     H.lines_equals(returned_answer, [
-'Match not found, hash 8000000000000000000000000000000000:',
+'Match not found, hash 80000000000000000000000000000000:',
 '# Processing index 1 of 1 completed.',
 ''
 ])

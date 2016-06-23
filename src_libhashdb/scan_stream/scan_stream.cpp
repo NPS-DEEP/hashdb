@@ -50,6 +50,7 @@
 #include <pthread.h>
 #include "scan_thread_data.hpp"
 #include "num_cpus.hpp"
+#include "tprint.hpp"
 
 static void* run(void* const arg) {
   // get pointer to scan thread data job
@@ -80,6 +81,7 @@ static void* run(void* const arg) {
     std::ostringstream scanned_stream;
 
     // read and process the scan input elements
+    size_t next_index = 0;
     while (unscanned_stream.peek() != EOF) {
 
       // read char_hash
@@ -87,9 +89,14 @@ static void* run(void* const arg) {
 
       // check for EOF
       if (unscanned_stream.rdstate() & std::ios::eofbit) {
-        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading hash.\n");
+        std::stringstream ss;
+        ss << "Unexpected end of data error in unscanned data size "
+           << unscanned_array.size() << " index " << next_index
+           << " while reading hash.\n";
+        hashdb::tprint(ss.str());
         continue;
       }
+      next_index += job->hash_size;
 
       // read char_label length, size uint16_t
       uint16_t char_label_length = 0;
@@ -98,18 +105,28 @@ static void* run(void* const arg) {
 
       // check for EOF
       if (unscanned_stream.rdstate() & std::ios::eofbit) {
-        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading label length.\n");
+        std::stringstream ss;
+        ss << "Unexpected end of data error in unscanned data size "
+           << unscanned_array.size() << " index " << next_index
+           << " while reading label length.\n";
+        hashdb::tprint(ss.str());
         continue;
       }
+      next_index += sizeof(uint16_t);
 
       // read char_label
       unscanned_stream.read(char_label, char_label_length);
 
       // check for EOF
       if (unscanned_stream.rdstate() & std::ios::eofbit) {
-        hashdb::tprint("Unexpected end of data error in scan_stream thread while reading label.\n");
+        std::stringstream ss;
+        ss << "Unexpected end of data error in unscanned data size "
+           << unscanned_array.size() << " index " << next_index
+           << " while reading label.\n";
+        hashdb::tprint(ss.str());
         continue;
       }
+      next_index += char_label_length;
 
       // scan
       const std::string json_response = job->scan_manager->find_hash_json(
@@ -183,12 +200,15 @@ namespace hashdb {
     return scan_thread_data->scan_queue.get_scanned();
   }
 
-  // wait until all unscanned input has finished processing and all
-  // scanned output is available for retrieval.
-  void scan_stream_t::flush() {
-    while (scan_thread_data->scan_queue.busy()) {
+  // return true if scan_stream is empty, may yield
+  bool scan_stream_t::empty() {
+    bool is_empty = scan_thread_data->scan_queue.empty();
+    if (!is_empty) {
+      // yield so caller can busy-wait with less waste
       sched_yield();
     }
+
+    return is_empty;
   }
 
   scan_stream_t::~scan_stream_t() {
@@ -200,11 +220,6 @@ namespace hashdb {
       if (status != 0) {
         std::cerr << "Error in threadpool join: " << strerror(status) << ".\n";
       }
-    }
-
-    // warn if data was left behind
-    if (!scan_thread_data->scan_queue.empty()) {
-      std::cerr << "Usage error in scan_stream: the stream was closed but more data was available.\n";
     }
 
     delete[] threads;

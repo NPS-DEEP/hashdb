@@ -19,11 +19,12 @@
 
 /**
  * \file
- * A simple non-blocking threadsafe scan queue that knows when the
- * queue is busy.
+ * A simple non-blocking threadsafe scan queue.
  *
- * To work right, every non-empty put_unscanned must be matched with
- * a put_scanned.
+ * Warns to stderr
+ *
+ * To correctly detect busy threads, every non-empty put_unscanned call
+ * must be matched with a put_scanned call.
  */
 
 #ifndef SCAN_QUEUE_HPP
@@ -32,10 +33,13 @@
 #include <string>
 #include <queue>
 #include <pthread.h>
-#include "tprint.hpp"
 
 // diagnostic
 //#define TEST_SCAN_QUEUE_HPP
+
+#ifdef TEST_SCAN_QUEUE_HPP
+#include "hashdb.hpp" // for bin_to_hex
+#endif
 
 namespace scan_stream {
 
@@ -73,9 +77,9 @@ class scan_queue_t {
   }
 
   ~scan_queue_t() {
-    if (busy()) {
+    if (!empty()) {
       // warn
-      hashdb::tprint("Processing error: scan queue was closed before processing completed.\n");
+      std::cerr << "Processing error: The scan_stream queue was closed but it was not empty.\n";
     }
     pthread_mutex_destroy(&M);
   }
@@ -88,7 +92,8 @@ class scan_queue_t {
     }
     std::string unscanned_data = unscanned.front();
 #ifdef TEST_SCAN_QUEUE_HPP
-    std::cerr << "get_unscanned: " << unscanned_data << "\n";
+    std::cerr << "get_unscanned: '" << unscanned_data
+              << "', " << hashdb::bin_to_hex(unscanned_data) << "\n";
 #endif
     unscanned.pop();
     unlock();
@@ -102,7 +107,8 @@ class scan_queue_t {
     }
     lock();
 #ifdef TEST_SCAN_QUEUE_HPP
-    std::cerr << "put_unscanned: " << unscanned_data << "\n";
+    std::cerr << "put_unscanned: '" << unscanned_data
+              << "', " << hashdb::bin_to_hex(unscanned_data) << "\n";
 #endif
     ++unscanned_submitted;
     unscanned.push(unscanned_data);
@@ -117,7 +123,8 @@ class scan_queue_t {
     }
     std::string scanned_data = scanned.front();
 #ifdef TEST_SCAN_QUEUE_HPP
-    std::cerr << "get_scanned: " << scanned_data << "\n";
+    std::cerr << "get_scanned: '" << scanned_data
+              << "', " << hashdb::bin_to_hex(scanned_data) << "\n";
 #endif
     scanned.pop();
     unlock();
@@ -128,7 +135,8 @@ class scan_queue_t {
     lock();
     ++scanned_submitted;
 #ifdef TEST_SCAN_QUEUE_HPP
-    std::cerr << "put_scanned: " << scanned_data << "\n";
+    std::cerr << "put_scanned: '" << scanned_data
+              << "', " << hashdb::bin_to_hex(scanned_data) << "\n";
 #endif
     if (scanned_data.size() == 0) {
       // drop the result
@@ -137,16 +145,6 @@ class scan_queue_t {
     }
     scanned.push(scanned_data);
     unlock();
-  }
-
-  bool busy() {
-    lock();
-    // Busy when unscanned input is available or processing is active.
-    // Unpulled scanned output does not count as busy.
-    const bool is_busy = unscanned.size() != 0 ||
-                         unscanned_submitted != scanned_submitted;
-    unlock();
-    return is_busy;
   }
 
   bool empty() {

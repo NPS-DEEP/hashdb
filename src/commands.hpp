@@ -798,8 +798,8 @@ class out_ptr_t {
       }
 
       // move forward
-      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
+      binary_hash = manager.next_hash(binary_hash);
     }
 
     // show totals
@@ -870,8 +870,8 @@ class out_ptr_t {
       }
 
       // move forward
-      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
+      binary_hash = manager.next_hash(binary_hash);
     }
 
     // say so if nothing was found
@@ -947,8 +947,8 @@ class out_ptr_t {
       }
 
       // move forward
-      binary_hash = manager.next_hash(binary_hash);
       progress_tracker.track_hash_data(source_offset_pairs->size());
+      binary_hash = manager.next_hash(binary_hash);
     }
     delete source_offset_pairs;
   }
@@ -1018,12 +1018,12 @@ class out_ptr_t {
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
 
-      // update progress tracker
-      progress_tracker.track();
-
       // add hash
       manager.insert_hash(random_binary_hash(), file_binary_hash,
                           i*byte_alignment, 0, "");
+
+      // update progress tracker
+      progress_tracker.track();
     }
   }
 
@@ -1102,7 +1102,7 @@ class out_ptr_t {
 
     // hash to use
     std::string binary_hash =
-                hashdb::hex_to_bin("8000000000000000000000000000000000");
+                   hashdb::hex_to_bin("80000000000000000000000000000000");
 
     // get start index for this run
     uint64_t start_index = manager.size_hashes();
@@ -1113,12 +1113,12 @@ class out_ptr_t {
     // insert count same hshes into the database
     for (uint64_t i=0; i<count; i++) {
 
-      // update progress tracker
-      progress_tracker.track();
-
       // add hash
       manager.insert_hash(binary_hash, file_binary_hash,
                           (i + start_index) * byte_alignment, 0, "");
+
+      // update progress tracker
+      progress_tracker.track();
     }
   }
 
@@ -1142,7 +1142,7 @@ class out_ptr_t {
 
     // hash to use
     std::string binary_hash =
-               hashdb::hex_to_bin("8000000000000000000000000000000000");
+                   hashdb::hex_to_bin("80000000000000000000000000000000");
 
     // scan same hash repeatedly
     for (uint64_t i=1; i<=count; ++i) {
@@ -1157,6 +1157,61 @@ class out_ptr_t {
 
       // update progress tracker
       progress_tracker.track();
+    }
+  }
+
+  // test_scan_stream
+  static void test_scan_stream(const std::string& hashdb_dir,
+                               const std::string& count_string,
+                               const hashdb::scan_mode_t scan_mode,
+                               const std::string& cmd) {
+
+    const size_t list_size = 10000;
+
+    // validate hashdb_dir path
+    require_hashdb_dir(hashdb_dir);
+
+    // convert count string to number
+    const uint64_t count = s_to_uint64(count_string);
+
+    // open manager
+    hashdb::scan_manager_t manager(hashdb_dir);
+
+    // open scan_stream
+    hashdb::scan_stream_t scan_stream(&manager, 16, scan_mode);
+
+    // start progress tracker
+    progress_tracker_t progress_tracker(hashdb_dir, list_size * count, cmd);
+
+    // hash to use
+    std::string binary_hash =
+                   hashdb::hex_to_bin("80000000000000000000000000000000");
+
+    // prepare the unscanned record of 10,000
+    std::stringstream ss;
+    for (size_t i=0; i<list_size; ++i) {
+      const uint16_t index_length = std::to_string(i).size();
+      ss << binary_hash;
+      ss.write(reinterpret_cast<const char*>(&index_length), sizeof(uint16_t));
+      ss << i;
+    }
+    const std::string unscanned(ss.str());
+
+    // put/get data
+    for (uint64_t i=1; i<=count; ++i) {
+      scan_stream.put(unscanned);
+      const std::string scanned = scan_stream.get();
+      if (scanned.size() > 0) {
+        progress_tracker.track_count(list_size);
+      }
+    }
+
+    // get data until processing is done
+    while (!scan_stream.empty()) {
+      const std::string scanned = scan_stream.get();
+      if (scanned.size() > 0) {
+        progress_tracker.track_count(list_size);
+      }
     }
   }
 }

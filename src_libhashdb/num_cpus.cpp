@@ -3,6 +3,7 @@
  * Return number of system cores.
  */
 
+#include <iostream>
 #include <config.h>
 // this process of getting WIN32 defined was inspired
 // from i686-w64-mingw32/sys-root/mingw/include/windows.h.
@@ -19,22 +20,27 @@
 #endif
 
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace hashdb {
 
-// from bulk_extractor/src/threadpool.cpp
 /* Return the number of CPUs we have on various architectures.
  * From http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
  */
 u_int numCPU()
 {
-    int numCPU=1;			// default
+
 #ifdef WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo( &sysinfo );
-    numCPU = sysinfo.dwNumberOfProcessors;
-#endif
-#if defined(HW_AVAILCPU) && defined(HW_NCPU)
+    int numCPU = sysinfo.dwNumberOfProcessors;
+
+#elif defined _SC_NPROCESSORS_ONLN   // linux, unistd.h
+    int numCPU = sysconf(_SC_NPROCESSORS_ONLN);
+
+#elif defined(HW_AVAILCPU) && defined(HW_NCPU) // others, not tested.
+
+    int numCPU=1;			// default
     int mib[4];
     size_t len=sizeof(numCPU);
 
@@ -55,10 +61,11 @@ u_int numCPU()
 	    numCPU = 1;
 	}
     }
+
+#else
+#error architecture not identified
 #endif
-#ifdef _SC_NPROCESSORS_ONLN
-    numCPU = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
+
     return numCPU;
 }
 } // end namespace hashdb

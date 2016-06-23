@@ -219,9 +219,6 @@ class adder_t {
       assert(0);
     }
 
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
-
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =
          source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
@@ -239,6 +236,9 @@ class adder_t {
         // already processed
       }
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     delete source_offset_pairs;
   }
@@ -260,9 +260,6 @@ class adder_t {
       // program error
       assert(0);
     }
-
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
 
     // add if in range
     if (source_offset_pairs->size() >= m &&
@@ -287,6 +284,9 @@ class adder_t {
       }
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
+
     delete source_offset_pairs;
   }
 
@@ -306,9 +306,6 @@ class adder_t {
       // program error
       assert(0);
     }
-
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
 
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =
@@ -341,6 +338,9 @@ class adder_t {
       }
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
+
     delete source_offset_pairs;
   }
 
@@ -360,9 +360,6 @@ class adder_t {
       // program error
       assert(0);
     }
-
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
 
     // process each source offset pair in hash
     for (source_offset_pairs_t::const_iterator it =
@@ -394,6 +391,9 @@ class adder_t {
         }
       }
     }
+
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs->size());
 
     delete source_offset_pairs;
   }

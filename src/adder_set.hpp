@@ -134,9 +134,6 @@ class adder_set_t {
       assert(0);
     }
 
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs_a->size());
- 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
@@ -177,6 +174,9 @@ class adder_set_t {
       delete source_offset_pairs_c;
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     delete source_offset_pairs_a;
     delete source_offset_pairs_b;
   }
@@ -196,9 +196,6 @@ class adder_set_t {
       assert(0);
     }
 
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs_a->size());
- 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
@@ -242,6 +239,9 @@ class adder_set_t {
       delete source_offset_pairs_c;
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     delete source_offset_pairs_a;
     delete source_offset_pairs_b;
   }
@@ -261,9 +261,6 @@ class adder_set_t {
       assert(0);
     }
 
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs_a->size());
- 
     // read hash data from B
     uint64_t entropy_b;
     std::string block_label_b;
@@ -300,6 +297,9 @@ class adder_set_t {
       }
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     delete source_offset_pairs_a;
     delete source_offset_pairs_b;
     delete source_offset_pairs_c;
@@ -320,9 +320,6 @@ class adder_set_t {
       assert(0);
     }
 
-    // track these hashes
-    tracker->track_hash_data(source_offset_pairs_a->size());
- 
     // read hash count from B
     size_t count = manager_b->find_hash_count(binary_hash);
     if (count == 0) {
@@ -348,6 +345,9 @@ class adder_set_t {
       }
     }
 
+    // track these hashes
+    tracker->track_hash_data(source_offset_pairs_a->size());
+ 
     delete source_offset_pairs_a;
   }
 
