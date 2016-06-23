@@ -692,6 +692,9 @@ namespace hashdb {
   /**
    * Provide a threaded streaming scan interface.  Use put to enqueue
    * arrays of scan input.  Use get to receive arrays of scan output.
+   *
+   * If a thread cannot properly parse unscanned data, it will emit a
+   * warning to stderr.
    */
   class scan_stream_t {
     private:
@@ -737,30 +740,27 @@ namespace hashdb {
      *       with the scan record.
      *     - A binary label associated with the scan record, of the
      *       length just indicated.
-     *
-     * Returns
-     *   "" if successful else reason if not.
      */
-    void put(const std::string& input_array);
+    void put(const std::string& unscanned_data);
 
     /**
      * Receive a string containing an array of records of matched scanned
      * data or "" if no data is available.
      *
      * Returns:
-     *   scanned_data - An array of records of matched scanned data
-     *     or "" if no data is available.  Each record conatins:
-     *     - A binary hash that matched, of length hash_size.
-     *     - A 2-byte unsigned integer in native-Endian format indicating
-     *       the length, in bytes, of the upcoming binary label associated
-     *       with the hash that matched.
-     *     - A binary label associated with the scan record, of the
-     *       length just indicated.
-     *     - A 4-byte unsigned integer in native-Endian format indicating
-     *       the length, in bytes, of the upcoming JSON text associated
-     *       with the hash that matched.
-     *     - JSON text formatted based on the scan mode selected, of the
-     *       length just indicated.
+     *   An array of records of matched scanned data or "" if no data
+     *   is available.  Each record conatins:
+     *   - A binary hash that matched, of length hash_size.
+     *   - A 2-byte unsigned integer in native-Endian format indicating
+     *     the length, in bytes, of the upcoming binary label associated
+     *     with the hash that matched.
+     *   - A binary label associated with the scan record, of the
+     *     length just indicated.
+     *   - A 4-byte unsigned integer in native-Endian format indicating
+     *     the length, in bytes, of the upcoming JSON text associated
+     *     with the hash that matched.
+     *   - JSON text formatted based on the scan mode selected, of the
+     *     length just indicated.
      */
     std::string get();
 
