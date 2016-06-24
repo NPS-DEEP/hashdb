@@ -339,7 +339,7 @@ namespace hashdb {
   void import_manager_t::insert_hash(const std::string& binary_hash,
                           const std::string& file_binary_hash,
                           const uint64_t file_offset,
-                          const uint64_t entropy,
+                          const float entropy,
                           const std::string& block_label) {
 
     uint64_t source_id;
@@ -382,10 +382,10 @@ namespace hashdb {
                                          document["block_hash"].GetString());
 
       // entropy (optional)
-      uint64_t entropy = 0;
+      float entropy = 0;
       if (document.HasMember("entropy")) {
-        if (document["entropy"].IsUint64()) {
-          entropy = document["entropy"].GetUint64();
+        if (document["entropy"].IsDouble()) {
+          entropy = document["entropy"].GetDouble();
         } else {
           return "Invalid entropy field";
         }
@@ -624,7 +624,7 @@ namespace hashdb {
                     const bool optimizing, const std::string& binary_hash) {
 
     // fields to hold the scan
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                   new hashdb::source_offset_pairs_t;
@@ -707,7 +707,7 @@ namespace hashdb {
   // find hash, return pairs as source_offset_pairs_t
   bool scan_manager_t::find_hash(
                const std::string& binary_hash,
-               uint64_t& entropy,
+               float& entropy,
                std::string& block_label,
                source_offset_pairs_t& source_offset_pairs) const {
 
@@ -768,7 +768,7 @@ namespace hashdb {
                const std::string& binary_hash) const {
 
     // hash fields
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                           new hashdb::source_offset_pairs_t;

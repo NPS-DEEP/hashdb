@@ -123,7 +123,7 @@ class adder_set_t {
   void intersect(const std::string& binary_hash) {
 
     // read hash data from A
-    uint64_t entropy_a;
+    float entropy_a;
     std::string block_label_a;
     source_offset_pairs_t* source_offset_pairs_a = new source_offset_pairs_t;
     bool found_hash_a = manager_a->find_hash(binary_hash,
@@ -135,7 +135,7 @@ class adder_set_t {
     }
 
     // read hash data from B
-    uint64_t entropy_b;
+    float entropy_b;
     std::string block_label_b;
     source_offset_pairs_t* source_offset_pairs_b = new source_offset_pairs_t;
     bool found_hash_b = manager_b->find_hash(binary_hash,
@@ -185,7 +185,7 @@ class adder_set_t {
   void intersect_hash(const std::string& binary_hash) {
 
     // read hash data from A
-    uint64_t entropy_a;
+    float entropy_a;
     std::string block_label_a;
     source_offset_pairs_t* source_offset_pairs_a = new source_offset_pairs_t;
     bool found_hash_a = manager_a->find_hash(binary_hash,
@@ -197,7 +197,7 @@ class adder_set_t {
     }
 
     // read hash data from B
-    uint64_t entropy_b;
+    float entropy_b;
     std::string block_label_b;
     source_offset_pairs_t* source_offset_pairs_b = new source_offset_pairs_t;
     bool found_hash_b = manager_b->find_hash(binary_hash,
@@ -250,7 +250,7 @@ class adder_set_t {
   void subtract(const std::string& binary_hash) {
 
     // read hash data from A
-    uint64_t entropy_a;
+    float entropy_a;
     std::string block_label_a;
     source_offset_pairs_t* source_offset_pairs_a = new source_offset_pairs_t;
     bool found_hash_a = manager_a->find_hash(binary_hash,
@@ -262,7 +262,7 @@ class adder_set_t {
     }
 
     // read hash data from B
-    uint64_t entropy_b;
+    float entropy_b;
     std::string block_label_b;
     source_offset_pairs_t* source_offset_pairs_b = new source_offset_pairs_t;
     manager_b->find_hash(binary_hash, entropy_b, block_label_b,
@@ -309,7 +309,7 @@ class adder_set_t {
   void subtract_hash(const std::string& binary_hash) {
 
     // read hash data from A
-    uint64_t entropy_a;
+    float entropy_a;
     std::string block_label_a;
     source_offset_pairs_t* source_offset_pairs_a = new source_offset_pairs_t;
     bool found_hash_a = manager_a->find_hash(binary_hash,

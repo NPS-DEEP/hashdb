@@ -1254,7 +1254,7 @@ Only an approximate count field is returned, and it is possible for the count to
 }
 \end{lstlisting}
 
-\subsection{Scan Data from Tools}
+\subsection{Scan Data Output from Tools}
 The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one line of output per match. This output consists of the Forensic Path (offset), a tab, the hash hexcode, a tab, the expanded hash JSON data, and a carriage return. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.\\
 
 \lstset{style=customfile}
@@ -1267,23 +1267,23 @@ sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
  "f7035a...", 512] }
 \end{lstlisting}
 
-\subsection{Scan Data from the \texttt{scan\_stream} Interface}
-The \verb+scan_steram+ interface returns JSON data for matched hashes in any of the scan data modes. The format of the output depends on the mode:
+\subsection{Scan Stream Interface Data}
+Scan stream interface data consists of packed binary strings of unscanned input data and packed binary strings of scanned output data. Each contains an array of data as follows:\\
 \begin{itemize}
-\item \textbf{Text Output}\\
-Text mode is intended for users who stream scan requests locally. Match output consists of the following:
+\item \textbf{unscanned data}
   \begin{itemize}
-  \item The input blob data converted to hexadecimal.
-  \item The JSON text.
-  \item An end of line mark.
+  \item A binary hash to scan for, of length \verb+hash_size+ bytes.
+  \item A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming binary label associated with the scan record.
+  \item A binary label associated with the scan record, of the length just indicated.
   \end{itemize}
-\item \textbf{Binary Output}\\
-Binary mode is intended for users who receive matches over a socket. Match data may be read in two steps: first read the 8-byte count, then read the count-sized data. Match output consists of the following:
+\item \textbf{scanned data}
   \begin{itemize}
-  \item An 8-byte output length field in architecture byte order, likely Little Endian, as opposed to Network Byte Order.
-  \item The hash data in binary form.
-  \item The blob data in binary form.
-  \item The JSON text.
+  \item A binary hash that matched, of length \verb+hash_size+ in bytes.
+  \item A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming binary label associated with the hash that matched.
+  \item A binary label associated with the scan record, of the length just indicated.
+  \item A 4-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming JSON text associated with the hash that matched.
+  \item JSON text formatted based on the scan mode selected, of the
+length just indicated.
   \end{itemize}
 \end{itemize}
 
@@ -1506,9 +1506,6 @@ To scan for hashes, open a scan manager, for example\\
 
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+
-\item \verb+error_message = scan_stream(in_fd, out_fd, hash_size, blob_size,+\\
-\verb+scan_mode, response_mode)+\\
-Scans from input stream and writes matches to output stream. Output information and syntax are based on selected stream modes.
 \item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
 Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
 \item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
@@ -1544,6 +1541,20 @@ Return sizes of internal data stores in JSON format.
 Return the number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
 \item \verb+size_sources = scan_manager.size_sources()+\\
 Return the number of sources in the database.
+\end{itemize}
+
+\subsection{Scan Stream}
+The scan stream interface is provided to allow rapid multi-threaded scans of lists of hashes. The interface accepts long binary strings of unscanned data and returns long binary strings of scanned data. The user must encode and decode this packed data. The user may wish to embed this stream inside a custom socket layer.
+
+\begin{itemize}
+\item \verb+scan_stream = scan_stream_t(scan_manager, hash_size, scan_mode)+\\
+Open a scan stream interface.
+\item \verb+scan_stream.put(unscanned_data)+\\
+Submit unscanned data for scanning.
+\item \verb+scanned_data = scan_stream.get()+\\
+Retrieve scanned data else "" if data is currently not available.
+\item \verb+is_empty = scan_stream.empty()+\\
+Return true if there is no scanned data available to retrieve, no unscanned data scheduled for scanning, and the scanner threads are not busy.
 \end{itemize}
 
 \subsection{Settings}

@@ -39,6 +39,8 @@
  *     imposed by NULL.
  *   * On insert, if the file offset is invalid, nothing changes and 0 is
  *     returned.
+ *   * Some entropy precision may be lost because entropy values are scaled
+ *     up by 100 and rounded to 2 decimal places for storage.
  */
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
@@ -67,6 +69,8 @@
 #include <pthread.h>
 #endif
 #include "mutex_lock.hpp"
+
+static const float entropy_scale = 100;
 
 namespace hashdb {
 
@@ -117,7 +121,7 @@ class lmdb_hash_data_manager_t {
   // write Type 1 context.data, use existing context.key, call mdb_put.
   int put_type1(hashdb::lmdb_context_t& context,
                 const uint64_t source_id, const uint64_t file_offset,
-                const uint64_t entropy, const std::string& block_label) {
+                const float entropy, const std::string& block_label) {
 
     // prepare Type 1 entry:
 
@@ -126,7 +130,10 @@ class lmdb_hash_data_manager_t {
       std::cerr << "file_offset, byte_alignment usage error\n";
       assert(0);
     }
-    uint64_t file_offset_index = file_offset / byte_alignment;
+    const uint64_t file_offset_index = file_offset / byte_alignment;
+
+    // calculate scaled entropy
+    const uint64_t scaled_entropy = entropy * entropy_scale;
 
     // make data with enough space for fields
     const size_t block_label_size = block_label.size();
@@ -136,7 +143,7 @@ class lmdb_hash_data_manager_t {
     // set fields
     p = lmdb_helper::encode_uint64_t(source_id, p);
     p = lmdb_helper::encode_uint64_t(file_offset_index, p);
-    p = lmdb_helper::encode_uint64_t(entropy, p);
+    p = lmdb_helper::encode_uint64_t(scaled_entropy, p);
     p = lmdb_helper::encode_uint64_t(block_label_size, p);
     std::memcpy(p, block_label.c_str(), block_label_size);
     p += block_label_size;
@@ -156,7 +163,7 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
   // parse Type 1 context.data into these parameters
   void decode_type1(hashdb::lmdb_context_t& context,
                     uint64_t& source_id, uint64_t& file_offset,
-                    uint64_t& entropy, std::string& block_label) const {
+                    float& entropy, std::string& block_label) const {
 
     // prepare to read Type 1 entry:
     const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
@@ -170,8 +177,12 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
     p = lmdb_helper::decode_uint64_t(p, file_offset_index);
     file_offset = file_offset_index * byte_alignment;
 
-    // hash data entropy
-    p = lmdb_helper::decode_uint64_t(p, entropy);
+    // scaled entropy
+    uint64_t scaled_entropy;
+    p = lmdb_helper::decode_uint64_t(p, scaled_entropy);
+
+    // entropy
+    entropy = scaled_entropy / entropy_scale;
 
     // read the hash data block_label size
     uint64_t block_label_size;
@@ -191,7 +202,7 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
 
   // write Type 2 context.data, use existing context.key, call mdb_put.
   int put_type2(hashdb::lmdb_context_t& context,
-                const uint64_t entropy, const std::string& block_label) {
+                const float entropy, const std::string& block_label) {
 
     // prepare Type 2 entry:
 
@@ -204,8 +215,11 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
     p[0] = 0;
     ++p;
 
+    // calculate scaled entropy
+    const uint64_t scaled_entropy = entropy * entropy_scale;
+
     // set fields
-    p = lmdb_helper::encode_uint64_t(entropy, p);
+    p = lmdb_helper::encode_uint64_t(scaled_entropy, p);
     p = lmdb_helper::encode_uint64_t(block_label_size, p);
     std::memcpy(p, block_label.c_str(), block_label_size);
     p += block_label_size;
@@ -225,7 +239,7 @@ print_mdb_val("hash_data_manager put_type2 data", context.data);
 
   // parse Type 2 context.data into these parameters
   void decode_type2(hashdb::lmdb_context_t& context,
-                    uint64_t& entropy, std::string& block_label) const {
+                    float& entropy, std::string& block_label) const {
 
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager decode_type2 key", context.key);
@@ -238,8 +252,12 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
     // move past the NULL byte
     ++p;
 
-    // hash data entropy
-    p = lmdb_helper::decode_uint64_t(p, entropy);
+    // scaled entropy
+    uint64_t scaled_entropy;
+    p = lmdb_helper::decode_uint64_t(p, scaled_entropy);
+
+    // entropy
+    entropy = scaled_entropy / entropy_scale;
 
     // read the hash data block_label size
     uint64_t block_label_size;
@@ -349,7 +367,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
   size_t insert(const std::string& binary_hash,
                 const uint64_t source_id,
                 const uint64_t file_offset,
-                const uint64_t entropy,
+                const float entropy,
                 const std::string& block_label,
                 hashdb::lmdb_changes_t& changes) {
 
@@ -425,7 +443,7 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         // existing entry is Type 1:
         uint64_t p_source_id;
         uint64_t p_file_offset;
-        uint64_t p_entropy;
+        float p_entropy;
         std::string p_block_label;
         decode_type1(context,
                      p_source_id, p_file_offset, p_entropy, p_block_label);
@@ -435,7 +453,8 @@ print_mdb_val("hash_data_manager insert found data", context.data);
                                file_offset == p_file_offset;
 
         // note if the data portion is the same
-        const bool data_same = entropy == p_entropy &&
+        const bool data_same = (int)(entropy*entropy_scale) ==
+                               (int)(p_entropy*entropy_scale) &&
                                block_label == p_block_label;
 
         // note if at max duplicates for type 1
@@ -517,10 +536,11 @@ print_mdb_val("hash_data_manager insert check data", context.data);
         size_t count = get_cursor_count(context) - 1;
 
         // check data and maybe change it
-        uint64_t p_entropy;
+        float p_entropy;
         std::string p_block_label;
         decode_type2(context, p_entropy, p_block_label);
-        const bool data_same = entropy == p_entropy &&
+        const bool data_same = (int)(entropy*entropy_scale) ==
+                               (int)(p_entropy*entropy_scale) &&
                                block_label == p_block_label;
         if (data_same) {
           // data same
@@ -567,7 +587,7 @@ print_mdb_val("hash_data_manager insert check data", context.data);
    * Read data for the hash.  False if the hash does not exist.
    */
   bool find(const std::string& binary_hash,
-            uint64_t& entropy,
+            float& entropy,
             std::string& block_label,
             id_offset_pairs_t& pairs) const {
 

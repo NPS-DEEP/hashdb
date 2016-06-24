@@ -367,7 +367,7 @@ namespace hashdb {
     void insert_hash(const std::string& binary_hash,
                      const std::string& file_binary_hash,
                      const uint64_t file_offset,
-                     const uint64_t entropy,
+                     const float entropy,
                      const std::string& block_label);
 
     /**
@@ -476,7 +476,7 @@ namespace hashdb {
      *   True if the hash is present, false if not.
      */
     bool find_hash(const std::string& binary_hash,
-                   uint64_t& entropy,
+                   float& entropy,
                    std::string& block_label,
                    source_offset_pairs_t& source_offset_pairs) const;
 #endif

@@ -40,6 +40,15 @@
   }                                                                          \
   //
 
+// fail if float not equal
+#define TEST_FLOAT_EQ( LHS, RHS )                                            \
+  if (!((int)(LHS*100) == (int)(RHS*100))) {                                                       \
+    std::cerr << "ERROR: " << __FILE__ << " line " << __LINE__               \
+              << ": value " << LHS << " != " << RHS << "\n";                 \
+    exit(1);                                                                 \
+  }                                                                          \
+  //
+
 // fail if equal
 #define TEST_NE( LHS, RHS )                                                  \
   if (LHS == RHS) {                                                          \

@@ -206,7 +206,7 @@ class adder_t {
   void add(const std::string& binary_hash) {
 
     // hash data
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
 
@@ -248,7 +248,7 @@ class adder_t {
                  size_t m, size_t n) {
 
     // hash data
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
 
@@ -294,7 +294,7 @@ class adder_t {
   void add_repository(const std::string& binary_hash) {
 
     // hash data
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
 
@@ -348,7 +348,7 @@ class adder_t {
   void add_non_repository(const std::string& binary_hash) {
 
     // hash data
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
 

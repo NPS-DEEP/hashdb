@@ -98,7 +98,7 @@ namespace hasher {
                                     job.buffer_size, i, job.block_size);
 
         // calculate entropy
-        uint64_t entropy = 0;
+        float entropy = 0;
         if (!job.disable_calculate_entropy) {
           entropy = entropy_calculator.calculate(job.buffer,
                                     job.buffer_size, i, job.block_size);

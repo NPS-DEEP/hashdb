@@ -203,7 +203,7 @@ class out_ptr_t {
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
                      const bool disable_recursive_processing,
-                     const bool disable_calculate_entropy,
+                     const float disable_calculate_entropy,
                      const bool disable_calculate_labels,
                      const std::string& cmd) {
 
@@ -755,7 +755,7 @@ class out_ptr_t {
                 new std::map<uint32_t, uint64_t>();
 
     // space for variables
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                         new hashdb::source_offset_pairs_t;
@@ -849,7 +849,7 @@ class out_ptr_t {
     bool any_found = false;
 
     // space for variables
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                      new hashdb::source_offset_pairs_t;
@@ -918,7 +918,7 @@ class out_ptr_t {
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // space for variables
-    uint64_t entropy;
+    float entropy;
     std::string block_label;
     hashdb::source_offset_pairs_t* source_offset_pairs =
                                        new hashdb::source_offset_pairs_t;

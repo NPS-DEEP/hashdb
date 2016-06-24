@@ -41,13 +41,13 @@ class entropy_calculator_t {
 
   private:
   typedef std::map<size_t, size_t>::const_iterator bucket_it_t;
-  uint64_t* const lookup_table;
+  float* const lookup_table;
 
   // do not allow copy or assignment
   entropy_calculator_t(const entropy_calculator_t&);
   entropy_calculator_t& operator=(const entropy_calculator_t&);
 
-  uint64_t calculate_private(const uint8_t* const buffer, const size_t count) {
+  float calculate_private(const uint8_t* const buffer, const size_t count) {
 
     // calculate entropy buckets
     std::map<size_t, size_t> buckets;
@@ -57,7 +57,7 @@ class entropy_calculator_t {
     }
 
     // sum the entropy from the buckets
-    uint64_t entropy = 0;
+    float entropy = 0;
     for (bucket_it_t it = buckets.begin(); it != buckets.end(); ++it) {
       entropy += lookup_table[it->second - 1];
     }
@@ -67,12 +67,12 @@ class entropy_calculator_t {
 
   public:
   entropy_calculator_t(const size_t block_size) :
-                   lookup_table(new uint64_t[block_size]) {
+                   lookup_table(new float[block_size]) {
 
     // compute entropy values for each slot
     for (size_t i=0; i< block_size; ++i) {
-      double p = (i+1.0)/block_size;
-      lookup_table[i] = ((-p * (log(p)/log(2.0))/6) *(1<<10));
+      float p = (i+1.0)/block_size;
+      lookup_table[i] = -p * (log2f(p));
     }
   }
 
@@ -81,10 +81,10 @@ class entropy_calculator_t {
   }
 
   // safely calculate block entropy by padding with zeros on overflow.
-  uint64_t calculate(const uint8_t* const buffer,
-                     const size_t buffer_size,
-                     const size_t offset,
-                     const size_t count) {
+  float calculate(const uint8_t* const buffer,
+                  const size_t buffer_size,
+                  const size_t offset,
+                  const size_t count) {
 
     if (offset + count <= buffer_size) {
       // calculate when not a buffer overrun
@@ -97,7 +97,7 @@ class entropy_calculator_t {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();
       ::memcpy (b, buffer+offset, buffer_size - offset);
-      size_t entropy = calculate_private(b, count);
+      float entropy = calculate_private(b, count);
       delete[] b;
       return entropy;
     }

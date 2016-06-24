@@ -240,7 +240,7 @@ void lmdb_hash_manager_count() {
 void lmdb_hash_data_manager() {
 
   // variables
-  uint64_t entropy;
+  float entropy;
   std::string block_label;
   id_offset_pairs_t id_offset_pairs;
   hashdb::lmdb_changes_t changes;
@@ -273,7 +273,7 @@ void lmdb_hash_data_manager() {
 
   // binary_0 there
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_EQ(entropy, 1);
+  TEST_FLOAT_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 1);
   it = id_offset_pairs.begin();
@@ -293,7 +293,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_already_present, 1);
   TEST_EQ(changes.hash_data_source_at_max, 0);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_EQ(entropy, 1);
+  TEST_FLOAT_EQ(entropy, 1);
   TEST_EQ(block_label, "bl");
   TEST_EQ(id_offset_pairs.size(), 1);
   it = id_offset_pairs.begin();
@@ -309,7 +309,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_EQ(entropy, 2);
+  TEST_FLOAT_EQ(entropy, 2);
   TEST_EQ(block_label, "bl2");
   TEST_EQ(id_offset_pairs.size(), 1);
   it = id_offset_pairs.begin();
@@ -325,7 +325,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_EQ(entropy, 2);
+  TEST_FLOAT_EQ(entropy, 2);
   TEST_EQ(block_label, "bl2");
   TEST_EQ(id_offset_pairs.size(), 2);
   it = id_offset_pairs.begin();
@@ -347,7 +347,7 @@ void lmdb_hash_data_manager() {
   TEST_EQ(changes.hash_data_source_already_present, 2);
   TEST_EQ(changes.hash_data_source_at_max, 0);
   TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_EQ(entropy, 3);
+  TEST_FLOAT_EQ(entropy, 3);
   TEST_EQ(block_label, "bl33");
   TEST_EQ(id_offset_pairs.size(), 3);
   it = id_offset_pairs.begin();
