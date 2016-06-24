@@ -379,7 +379,7 @@ namespace hashdb {
      *   Example hash syntax:
      *     {
      *       "block_hash": "c313ac...",
-     *       "entropy": 8,
+     *       "entropy": 2.5,
      *       "block_label": "W",
      *       "source_offset_pairs": ["b9e7...", 4096]
      *     }
@@ -493,7 +493,7 @@ namespace hashdb {
      *
      *     {
      *       "block_hash": "c313ac...",
-     *       "entropy": 8,
+     *       "entropy": 2.5,
      *       "block_label": "W",
      *       "source_offset_pairs": ["b9e7...", 4096]
      *     }
@@ -604,7 +604,7 @@ namespace hashdb {
      *     EXPANDED - always return all available data.  Example syntax:
      *       {
      *         "block_hash": "c313ac...",
-     *         "entropy": 8,
+     *         "entropy": 2.5,
      *         "block_label": "W",
      *         "source_list_id": 57,
      *         "sources": [{
