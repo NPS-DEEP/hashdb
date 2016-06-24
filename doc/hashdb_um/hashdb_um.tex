@@ -135,14 +135,15 @@ The first character on the line is the terminal prompt, and should not be typed.
   \end{itemize}
 \item The database has been retuned to improve scan and import speed:
   \begin{itemize}
-  \item Several tuned scan interfaces are available:
-    \begin{itemize}
-    \item \verb+find_expanded_hash_json+ scans for matches and returns complete match information in JSON format.  Matched sources and hashes are cached so that information is not reprinted in other matches.
-    \item \verb+find_hash+ returns match information in a data structure.
-    \item \verb+find_hash_count+ only returns a match count and does not take time to parse match information into a data structure.
-    \item \verb+find_approximate_hash_count+ is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
-    \end{itemize}
+  \item A compressed hash store has been added for extremely fast and compact approximate scan lookups.
   \item The Bloom filter has been removed in favor of the dense hash store.
+  \item Several scan modes are available, supporting various levels of verbosity and performance:
+    \begin{itemize}
+    \item \textbf{expanded} scans for matches and returns complete match information in JSON format.
+    \item \textbf{expanded optimized} scans for matches and returns complete match information in JSON format but matched sources and hashes are cached so that information is not reprinted in other matches.
+    \item \textbf{count} only returns a match count and does not take time to parse match information into a data structure.
+    \item \textbf{approximate count} is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
+    \end{itemize}
   \end{itemize}
 \item Ingest, image scan, and image read interfaces are added to \hdb. \bulk is no longer required to perform these functions.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
@@ -299,7 +300,7 @@ In the above instructions, \texttt{\textbf{demo.hdb}} is the empty database that
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import demo.hdb blacklist_files}
 \end{Verbatim} 
-This command, if executed successfully, will print \verb+import completed+, along with statistics indicating changes to the database.
+This command, if executed successfully, will print processing status followed by statistics indicating changes to the database.
 
 \item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklisted Kitty block hashes. This can be done using the Python interface, \sscope, or \bulk, but lets just use the \hdb tool:
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -408,7 +409,9 @@ Here we describe the data that \hdb stores with hashes and sources. How this dat
 
 \begin{itemize}
 \item \textbf{Entropy}\\
-We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. Unfortunately, data in blocks can be a member of many types of alphabets. \hdb uses one algorithm.  For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative. The entropy field is new to \hdb v3.
+We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb does not scale the calculated entropy. \hdb rounds entropy to three decimal places.\\
+
+Unfortunately, data in blocks can be a member of many types of alphabets. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
 \item \textbf{Block Label}\\
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
 \item \textbf{File Hash}\\
@@ -1397,19 +1400,24 @@ Statistics about hash database changes are reported on the console and to the lo
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example report of a database change from an import operation}, label=DatabaseChanges]
+# Processed 100000 of ?...
+# Processed 200000 of ?...
+# Processed 300000 of ?...
+# Processed 400000 of ?...
+# Processing 401687 of 401687 completed.
 # hashdb changes:
-#     hash_data_data_inserted: 401935
-#     hash_data_data_same: 195
-#     hash_data_source_inserted: 402130
-#     hash_prefix_inserted: 401653
-#     hash_suffix_inserted: 401935
-#     hash_count_changed: 149
+#     hash_data_data_inserted: 401599
+#     hash_data_data_changed: 3
+#     hash_data_data_same: 131
+#     hash_data_source_inserted: 401733
+#     hash_prefix_inserted: 401317
+#     hash_suffix_inserted: 401599
+#     hash_count_changed: 88
 #     hash_not_changed: 46
-#     source_data_inserted: 101
-#     source_id_inserted: 101
-#     source_id_already_present: 402231
-#     source_name_inserted: 101
-import completed.
+#     source_data_inserted: 88
+#     source_id_inserted: 88
+#     source_id_already_present: 401821
+#     source_name_inserted: 88
 \end{lstlisting}
 
 \begin{table}[!ht]
