@@ -41,25 +41,26 @@ class entropy_calculator_t {
 
   private:
   typedef std::map<size_t, size_t>::const_iterator bucket_it_t;
-  float* const lookup_table;
+  const size_t slots;
+  float* const lookup_table; // index 0 is not used
 
   // do not allow copy or assignment
   entropy_calculator_t(const entropy_calculator_t&);
   entropy_calculator_t& operator=(const entropy_calculator_t&);
 
-  float calculate_private(const uint8_t* const buffer, const size_t count) {
+  float calculate_private(const uint8_t* const buffer) const {
 
     // calculate entropy buckets
     std::map<size_t, size_t> buckets;
-    for (size_t i=0; i<count-1; i+=2) {
-      uint16_t element = (uint16_t)(buffer[i+0]<<0 | buffer[i+1]<<8);
+    for (size_t i=0; i<slots; i++) {
+      uint16_t element = (uint16_t)(buffer[i*2+0]<<0 | buffer[i*2+1]<<8);
       buckets[element] += 1;
     }
 
     // sum the entropy from the buckets
     float entropy = 0;
     for (bucket_it_t it = buckets.begin(); it != buckets.end(); ++it) {
-      entropy += lookup_table[it->second - 1];
+      entropy += lookup_table[it->second];
     }
 
     return entropy;
@@ -67,11 +68,12 @@ class entropy_calculator_t {
 
   public:
   entropy_calculator_t(const size_t block_size) :
-                   lookup_table(new float[block_size]) {
+                   slots(block_size / 2),
+                   lookup_table(new float[slots+1]) {
 
     // compute entropy values for each slot
-    for (size_t i=0; i< block_size; ++i) {
-      float p = (i+1.0)/block_size;
+    for (size_t i=1; i<= slots; ++i) {
+      float p = (float)i/slots;
       lookup_table[i] = -p * (log2f(p));
     }
   }
@@ -83,21 +85,20 @@ class entropy_calculator_t {
   // safely calculate block entropy by padding with zeros on overflow.
   float calculate(const uint8_t* const buffer,
                   const size_t buffer_size,
-                  const size_t offset,
-                  const size_t count) {
+                  const size_t offset) const {
 
-    if (offset + count <= buffer_size) {
+    if (offset + slots * 2 <= buffer_size) {
       // calculate when not a buffer overrun
-      return calculate_private(buffer + offset, count);
+      return calculate_private(buffer + offset);
     } else if (offset > buffer_size) {
       // program error
       assert(0);
       return 0; // for mingw
     } else {
       // make new buffer from old but zero-extended
-      uint8_t* b = new uint8_t[count]();
+      uint8_t* b = new uint8_t[slots*2]();
       ::memcpy (b, buffer+offset, buffer_size - offset);
-      float entropy = calculate_private(b, count);
+      float entropy = calculate_private(b);
       delete[] b;
       return entropy;
     }
