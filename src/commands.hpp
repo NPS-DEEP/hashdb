@@ -215,9 +215,7 @@ class out_ptr_t {
                     disable_calculate_entropy,
                     disable_calculate_labels,
                     cmd);
-    if (error_message.size() == 0) {
-      std::cout << "ingest completed.\n";
-    } else {
+    if (error_message.size() != 0) {
       std::cout << "Error: " << error_message << "\n";
     }
   }
@@ -250,7 +248,6 @@ class out_ptr_t {
     if (whitelist_manager != NULL) {
       delete whitelist_manager;
     }
-    std::cout << "import_tab completed.\n";
   }
 
   // import json
@@ -268,9 +265,6 @@ class out_ptr_t {
     // open the JSON file for reading
     in_ptr_t in_ptr(json_file);
     ::import_json(manager, progress_tracker, *in_ptr());
-
-    // done
-    std::cout << "import completed.\n";
   }
 
   // export json
@@ -288,16 +282,13 @@ class out_ptr_t {
     // open the JSON file for writing
     out_ptr_t out_ptr(json_file);
 
-    // write cmd
+    // print header to file
     *out_ptr() << "# command: '" << cmd << "'\n"
                << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // export the hashdb
     ::export_json_sources(manager, *out_ptr());
     ::export_json_hashes(manager, progress_tracker, *out_ptr());
-
-    // done
-    std::cout << "export completed.\n";
   }
 
   // ************************************************************
@@ -326,7 +317,6 @@ class out_ptr_t {
       adder.add(binary_hash);
       binary_hash = manager_a.next_hash(binary_hash);
     }
-    std::cout << "add completed.\n";
   }
 
   // add_multiple
@@ -633,9 +623,8 @@ class out_ptr_t {
     // open the hashes list file for reading
     in_ptr_t in_ptr(hashes_file);
 
-    // write cmd to stdout
-    std::cout << "# command: '" << cmd << "'\n"
-              << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
+    // print header information
+    print_header(cmd);
 
     // scan the list
     ::scan_list(manager, *in_ptr(), scan_mode);
