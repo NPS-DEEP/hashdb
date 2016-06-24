@@ -409,9 +409,9 @@ Here we describe the data that \hdb stores with hashes and sources. How this dat
 
 \begin{itemize}
 \item \textbf{Entropy}\\
-We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb does not scale the calculated entropy. \hdb rounds entropy to three decimal places.\\
+We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb does not scale the calculated entropy. \hdb rounds the calculated entropy value to three decimal places.\\
 
-Unfortunately, data in blocks can be a member of many types of alphabets. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
+Data in blocks can be a member of many types of alphabets, for example readable text or executable code. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
 \item \textbf{Block Label}\\
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
 \item \textbf{File Hash}\\
@@ -1025,9 +1025,11 @@ When importing, the new database of imported hashes is created in the output dir
 \hline
 \verb+hashdb_byte_alignment+ &512 & byte alignment, in bytes.  Scans and imports along sector boundaries.\\
 \hline
+\verb+hashdb_step_size+ &512 & step size, in bytes.  Scans and imports along this step value.\\
+\hline
 \verb+hashdb_scan_path+ & & The file path to a hash database to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
 \hline
-\verb+hashdb_import_repository_+ \verb+name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
+\verb+hashdb_repository_name+ & \verb+default_+ \verb+repository+ &Selects the repository name to attribute the import to.  Valid only in import mode.\\
 \hline
 \verb+hashdb_max_feature_file_+ \verb+lines+ & 0 &The maximum number of feature lines to record or 0 for no limit.  Valid only in scan mode.\\
 \hline

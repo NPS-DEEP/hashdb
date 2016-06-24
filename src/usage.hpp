@@ -106,7 +106,6 @@ void usage(const std::string& repository_name,
   << "    -w, --whitelist_dir\n"
   << "      The path to a whitelist hash database.  Hashes matching this database\n"
   << "      will be marked with a whitelist entropy flag.\n"
-  << "      will not be imported.\n"
   << "\n"
   << "    Parameters:\n"
   << "    <hashdb>       the hash database to insert the imported hashes into\n"
