@@ -283,7 +283,7 @@ class out_ptr_t {
 
     // resources
     hashdb::scan_manager_t manager(hashdb_dir);
-    progress_tracker_t progress_tracker(hashdb_dir, 0, cmd);
+    progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // open the JSON file for writing
     out_ptr_t out_ptr(json_file);
