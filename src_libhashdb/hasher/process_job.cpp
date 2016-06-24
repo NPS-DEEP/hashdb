@@ -101,7 +101,7 @@ namespace hasher {
         float entropy = 0;
         if (!job.disable_calculate_entropy) {
           entropy = entropy_calculator.calculate(job.buffer,
-                                    job.buffer_size, i, job.block_size);
+                                    job.buffer_size, i);
         }
 
         // calculate block label

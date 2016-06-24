@@ -95,17 +95,17 @@ def test_import_json():
 '{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
 '{"file_hash":"0011223344556677","filesize":6,"file_type":"fta","zero_count":7,"nonprobative_count":8,"name_pairs":["r1","f1"]}',
 '{"file_hash":"1111111111111111","filesize":9,"file_type":"ftc","zero_count":10,"nonprobative_count":11,"name_pairs":["r3","f3"]}',
-'{"block_hash":"2222222222222222","entropy":11.009,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
-'{"block_hash":"8899aabbccddeeff","entropy":12.509,"block_label":"bl2","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
-'{"block_hash":"ffffffffffffffff","entropy":13.259,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
+'{"block_hash":"2222222222222222","entropy":11.1259,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"8899aabbccddeeff","entropy":12.0,"block_label":"bl2","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'{"block_hash":"ffffffffffffffff","entropy":13.0,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
 
     expected_answer = ["#","#", \
 '{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
 '{"file_hash":"0011223344556677","filesize":6,"file_type":"fta","zero_count":7,"nonprobative_count":8,"name_pairs":["r1","f1"]}',
 '{"file_hash":"1111111111111111","filesize":9,"file_type":"ftc","zero_count":10,"nonprobative_count":11,"name_pairs":["r3","f3"]}',
-'{"block_hash":"2222222222222222","entropy":11.0,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
-'{"block_hash":"8899aabbccddeeff","entropy":12.5,"block_label":"bl2","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
-'{"block_hash":"ffffffffffffffff","entropy":13.25,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
+'{"block_hash":"2222222222222222","entropy":11.125,"block_label":"bl1","source_offset_pairs":["1111111111111111",4096]}',
+'{"block_hash":"8899aabbccddeeff","entropy":12.0,"block_label":"bl2","source_offset_pairs":["0000000000000000",0,"0011223344556677",0,"0011223344556677",512]}',
+'{"block_hash":"ffffffffffffffff","entropy":13.0,"block_label":"bl3","source_offset_pairs":["0011223344556677",1024]}']
 
     H.make_tempfile("temp_1.json", temp1_input)
     H.hashdb(["create", "temp_1.hdb"])

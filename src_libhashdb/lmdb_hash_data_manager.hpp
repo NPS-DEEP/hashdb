@@ -39,8 +39,8 @@
  *     imposed by NULL.
  *   * On insert, if the file offset is invalid, nothing changes and 0 is
  *     returned.
- *   * Some entropy precision may be lost because entropy values are scaled
- *     up by 100 and rounded to 2 decimal places for storage.
+ *   * Some entropy precision may be lost because entropy values are
+ *     stored as integers
  */
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
@@ -70,7 +70,7 @@
 #endif
 #include "mutex_lock.hpp"
 
-static const float entropy_scale = 100;
+static const float entropy_scale = 1000;
 
 namespace hashdb {
 
