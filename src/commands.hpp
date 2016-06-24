@@ -203,7 +203,7 @@ class out_ptr_t {
                      const std::string& repository_name,
                      const std::string& whitelist_dir,
                      const bool disable_recursive_processing,
-                     const float disable_calculate_entropy,
+                     const bool disable_calculate_entropy,
                      const bool disable_calculate_labels,
                      const std::string& cmd) {
 
