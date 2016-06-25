@@ -407,23 +407,33 @@ A significant problem when scanning for probative blocks is dealing with false p
 
 Here we describe the data that \hdb stores with hashes and sources. How this data is used to classify blocks as nonprobative is a complex issue. \hdb stores this data. It is up to post-processing tools such as \sscope to evaluate it.\\
 
+Data stored with sources:
 \begin{itemize}
+\item \textbf{File Hash}\\
+Matched source files are indexed by file hash (new to \hdb v3). The \sscope tool uses this value to visualize how specific source files are distributed across a media image.
+\item \textbf{File Size}\\
+The source file size indicates how big a source file is. The \sscope tool uses this value to know what percentage of a source file is matched in a scan.
+\item \textbf{File Type}\\
+This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces for classifying the file type.
+\item \textbf{File Zero Count}\\
+The zero count indicates the number of blocks in the source consisting completely of the 0 byte.  These blocks are skipped by the \hdb \verb+scan_stream+ and \verb+ingest+ commands and are not imported into the database or scanned for.
+\item \textbf{File Nonprobative Count}\\
+The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+ingest+ function, this value is set to the number of blocks that have been given a block label, indicating that the block is likely nonprobative.
+\item \textbf{Name Pairs}\\
+The name pairs identify the list of all source repository name and filename pairs associated with a source file as identified by the source file hash. When scanning, this list provides a comprehensive indication of what a hash match is a member of.
+\end{itemize}
+Data stored with hashes:
+\begin{itemize}
+\item \textbf{Block Hash}\\
+The block hash is the hash value calculated from a block of data. \hdb databases are populated with block hash values from sources. When scanning, block hash values are calculated from media images and are scanned for in a \hdb database.
 \item \textbf{Entropy}\\
 We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb does not scale the calculated entropy. \hdb rounds the calculated entropy value to three decimal places.\\
 
 Data in blocks can be a member of many types of alphabets, for example readable text or executable code. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
 \item \textbf{Block Label}\\
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
-\item \textbf{File Hash}\\
-Matched source files are indexed by file hash (new to \hdb v3). The \sscope tool uses this value to visualize how specific source files are distributed across a media image.
-\item \textbf{Repository Name and Filename}\\
-The list of repository names and filenames associated with a source file are provided, enabling a comprehensive indication of what a hash match is a member of.
-\item \textbf{Source File Size}\\
-The source file size indicates how big a source file is. The \sscope tool uses this value to know what percentage of a source file is matched in a scan.
-\item \textbf{Source File Type}\\
-This field stores information about the type of the source file. This field is not used by the \hdb Tool but is available through the \hdb API interfaces.
-\item \textbf{Source File Nonprobative Count}\\
-The nonprobative count indicates how many blocks of the source file are deemed nonprobative. In the \bulk \hdb scanner import function and in the \hdb tool \verb+ingest+ function, this value is set to the number of blocks that have been given a block label.
+\item \textbf{Source-Offset Pairs}\\
+  The list of source-offset pairs identify all sources the matched hash maps to, along with the offset in the sources where the match is located.
 \end{itemize}
 
 \subsection{Building a \hdb Database}

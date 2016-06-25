@@ -57,19 +57,19 @@
 
 namespace hasher {
 
-  // detect if block is all the same
-  inline bool all_same(const uint8_t* const buffer, const size_t buffer_size,
+  // detect if block is all zero
+  inline bool all_zero(const uint8_t* const buffer, const size_t buffer_size,
                        const size_t offset, const size_t p_count) {
 
     // number of bytes
     const size_t count =
           (offset + p_count <= buffer_size) ? p_count : buffer_size - offset;
     for (size_t i=offset+1; i < offset + count; ++i) {
-      if (buffer[i] != buffer[offset]) {
+      if (buffer[i] != 0) {
         return false;
       }
     }
-    return true;                        // all the same
+    return true;
   }
 
   // process INGEST job
@@ -88,7 +88,7 @@ namespace hasher {
       for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
         // skip if all the bytes are the same
-        if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+        if (all_zero(job.buffer, job.buffer_size, i, job.block_size)) {
           ++zero_count;
           continue;
         }
@@ -151,7 +151,7 @@ namespace hasher {
     for (size_t i=0; i < job.buffer_data_size; i+= job.step_size) {
 
       // skip if all the bytes are the same
-      if (all_same(job.buffer, job.buffer_size, i, job.block_size)) {
+      if (all_zero(job.buffer, job.buffer_size, i, job.block_size)) {
         ++zero_count;
         continue;
       }
