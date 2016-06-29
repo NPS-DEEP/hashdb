@@ -139,7 +139,10 @@ static int64_t get_filesize(int fd)
     /* if we are not using pread64, make sure that off_t is 8 bytes in size */
 #define pread64(d,buf,nbyte,offset) pread(d,buf,nbyte,offset)
     if(sizeof(off_t)!=8){
-	err(1,"Compiled with off_t==%d and no pread64 support.",(int)sizeof(off_t));
+        std::cerr << "Configuration error: hashdb was compiled with off_t=="
+                  << sizeof(off_t)
+                  << " and no pread64 support.\nAborting.";
+	exit(1);
     }
 #endif
 
