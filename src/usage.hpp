@@ -91,7 +91,8 @@ static void create() {
   const hashdb::settings_t settings;
 
   std::cout
-  << "create [options] <hashdb>\n"
+  << "create [-b <block size>] [-a <byte alignment>] [-m <max>]\n"
+  << "       [-t <hash prefix bits:hash suffix bytes>]\n"
   << "  Create a new <hashdb> hash database.\n"
   << "\n"
   << "  Options:\n"
@@ -675,7 +676,9 @@ void usage(const std::string& command) {
   else if (command == "test_scan_stream") test_scan_stream();
 
   // fail
-  else overview();
+  else {
+    std::cerr << "Error: unsupported command '" << command << "'.\n";
+  }
 }
 
 } // end namespace usage
