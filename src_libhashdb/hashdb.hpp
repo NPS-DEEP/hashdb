@@ -349,7 +349,7 @@ namespace hashdb {
     void insert_source_data(const std::string& file_binary_hash,
                             const uint64_t filesize,
                             const std::string& file_type,
-                            const uint64_t zero_size,
+                            const uint64_t zero_count,
                             const uint64_t nonprobative_count);
 
     /**
