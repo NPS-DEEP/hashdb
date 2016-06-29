@@ -849,7 +849,7 @@ namespace hashdb {
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
 
     // count
-    json_doc.AddMember("count", count, allocator);
+    json_doc.AddMember("count", (uint64_t)count, allocator);
 
     // write JSON text
     rapidjson::StringBuffer strbuf;
@@ -887,7 +887,8 @@ namespace hashdb {
     json_doc.AddMember("block_hash", v(block_hash, allocator), allocator);
 
     // approximate count
-    json_doc.AddMember("approximate_count", approximate_count, allocator);
+    json_doc.AddMember("approximate_count",
+                                  (uint64_t)approximate_count, allocator);
 
     // write JSON text
     rapidjson::StringBuffer strbuf;
