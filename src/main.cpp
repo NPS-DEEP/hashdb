@@ -567,7 +567,7 @@ void run_command() {
 
   // error
   } else {
-    std::cerr << "Error: unsupported command.\nAborting.\n";
+    std::cerr << "Error: unsupported command '" << command << "'.\nAborting.\n";
     exit(1);
   }
 }
