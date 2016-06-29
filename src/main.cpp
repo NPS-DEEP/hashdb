@@ -75,7 +75,7 @@ static const std::string default_whitelist_dir = "";
 static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // user-selected options
-static bool has_quiet = false;
+static bool has_help = false;
 static bool has_byte_alignment = false;
 static bool has_block_size = false;
 static bool has_step_size = false;
@@ -102,10 +102,6 @@ static std::vector<std::string> args;
 
 // helper functions
 void run_command();
-void usage() {
-  // usage.hpp
-  usage(default_repository_name, default_whitelist_dir);
-}
 
 // C++ string splitting code from http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
 // copied from bulk_extractor file support.cpp
@@ -178,7 +174,7 @@ int main(int argc,char **argv) {
 
   // manage error condition of no arguments
   if(argc==1) {
-      usage();
+      usage::overview();
       exit(1);
   }
 
@@ -195,7 +191,6 @@ int main(int argc,char **argv) {
       {"Help",                          no_argument, 0, 'H'},
       {"version",                       no_argument, 0, 'v'},
       {"Version",                       no_argument, 0, 'V'},
-      {"quiet",                         no_argument, 0, 'q'},
       {"byte_alignment",          required_argument, 0, 'a'},
       {"block_size",              required_argument, 0, 'b'},
       {"step_size",               required_argument, 0, 's'},
@@ -210,7 +205,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVqa:b:s:r:w:x:j:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVa:b:s:r:w:x:j:m:t:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -222,13 +217,11 @@ int main(int argc,char **argv) {
     }
     switch (ch) {
       case 'h': {	// help
-        usage();
-        exit(0);
+        has_help = true;
         break;
       }
       case 'H': {	// Help
-        usage();
-        exit(0);
+        has_help = true;
         break;
       }
       case 'v': {	// version
@@ -239,11 +232,6 @@ int main(int argc,char **argv) {
       case 'V': {	// Version
         std::cout << "hashdb " << PACKAGE_VERSION << "\n";
         exit(0);
-        break;
-      }
-
-      case 'q': {	// quiet mode
-        has_quiet = true;
         break;
       }
 
@@ -318,6 +306,12 @@ int main(int argc,char **argv) {
   argc -= optind;
   argv += optind;
 
+  // handle help requested without topic argument
+  if (has_help && argc < 1) {
+    usage::overview();
+    return 0;
+  }
+
   // get the command
   if (argc < 1) {
     std::cerr << "Error: a command must be provided.\n";
@@ -330,6 +324,12 @@ int main(int argc,char **argv) {
   // get any arguments as vector<string> args
   for (int i=0; i<argc; i++) {
     args.push_back(std::string(argv[i]));
+  }
+
+  // if a help topic was requested, provide that instead
+  if (has_help) {
+    usage::usage(command);
+    return 0;
   }
 
   // run the command
@@ -414,9 +414,8 @@ void check_params(const std::string& options, size_t param_count) {
   }
 }
 
-
-
 void run_command() {
+
   // new database
   if (command == "create") {
     check_params("bamt", 1);

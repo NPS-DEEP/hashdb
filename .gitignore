@@ -49,6 +49,7 @@ src/Makefile
 stamp-h
 stamp-h1
 build
+build_gcc
 win64
 *.exe
 *.pdf
