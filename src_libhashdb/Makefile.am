@@ -66,10 +66,15 @@ noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
 # may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
+# NOTE:
+# -fno-strict-aliasing removes gcc6 compiler optimization that results in runtime failure.
+# -fpermissive is added to permit compiling Homebrew gcc6.10 without error.
+# -Wno-bad-function-cast is added to prevent Homebrew gcc6.10 warnings.
+# -Wno-external-suffix is added to prevent Homebrew gcc6.10 warnings.
 liblmdb_la_CFLAGS = \
 	-pthread -fno-strict-aliasing \
-	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
-	-Wno-format-extra-args
+	-W -Wall -Wno-unused-parameter -Wno-bad-function-cast -Wuninitialized \
+	-Wno-external-suffix -Wno-format-extra-args
 
 liblmdb_la_LDFLAGS = -PIC
 
