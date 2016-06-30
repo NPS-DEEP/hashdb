@@ -27,7 +27,7 @@ namespace hashdb {
 /* Return the number of CPUs we have on various architectures.
  * From http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
  */
-u_int numCPU()
+int numCPU()
 {
 
 #ifdef WIN32

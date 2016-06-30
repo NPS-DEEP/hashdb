@@ -11,7 +11,7 @@ namespace hashdb {
 /**
  * Return the number of CPUs in the system.
  */
-u_int numCPU();
+int numCPU();
 
 } // end namespace hashdb
 
