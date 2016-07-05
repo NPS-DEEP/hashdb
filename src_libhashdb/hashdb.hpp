@@ -622,9 +622,9 @@ namespace hashdb {
      *       when suppressed:
      *       { "block_hash": "c313ac..." }
      *     COUNT_ONLY - Only return the count.  Example syntax:
-     *       { "block_hash": "c313ac...", "count": "1" }
+     *       { "block_hash": "c313ac...", "count": 1 }
      *     APPROXIMATE_COUNT - Return approximate count.  Example syntax:
-     *       { "block_hash": "c313ac...", "approximate_count": "1" }
+     *       { "block_hash": "c313ac...", "approximate_count": 1 }
      */
     std::string find_hash_json(const scan_mode_t scan_mode,
                                const std::string& binary_hash);
