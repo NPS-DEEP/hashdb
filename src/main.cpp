@@ -85,7 +85,7 @@ static bool has_disable_recursive_processing = false;
 static bool has_disable_calculate_entropy = false;
 static bool has_disable_calculate_labels = false;
 static bool has_json_scan_mode = false;
-static bool has_max_source_offset_pairs = false;
+static bool has_max_counts = false;
 static bool has_tuning = false;
 
 // option values
@@ -198,7 +198,7 @@ int main(int argc,char **argv) {
       {"whitelist_dir",           required_argument, 0, 'w'},
       {"disable_processing",      required_argument, 0, 'x'},
       {"json_scan_mode",          required_argument, 0, 'j'},
-      {"max_source_offset_pairs", required_argument, 0, 'm'},
+      {"max_counts",              required_argument, 0, 'm'},
       {"tuning",                  required_argument, 0, 't'},
 
       // end
@@ -276,9 +276,17 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'm': {	// max source file offset pairs
-        has_max_source_offset_pairs = true;
-        settings.max_source_offset_pairs = std::atoi(optarg);
+      case 'm': {	// max counts
+        has_max_counts = true;
+        std::vector<std::string> params = split(std::string(optarg), ':');
+
+        if (params.size() != 2) {
+          std::cerr << "Invalid value for max counts: '" << optarg << "'.  " << see_usage << "\n";
+          exit(1);
+        }
+
+        settings.max_count = std::atoi(params[0].c_str());
+        settings.max_sub_count = std::atoi(params[1].c_str());
         break;
       }
 
@@ -381,12 +389,12 @@ void check_options(const std::string& options) {
     std::cerr << "The -j JSON scan mode option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_source_offset_pairs && options.find("m") ==
+  if (has_max_counts && options.find("m") ==
       std::string::npos) {
-    std::cerr << "The -m max_source_offset_pairs option is not allowed for this command.\n";
+    std::cerr << "The -m max_counts option is not allowed for this command.\n";
     exit(1);
   }
-  if (has_max_source_offset_pairs && options.find("t") ==
+  if (has_tuning && options.find("t") ==
       std::string::npos) {
     std::cerr << "The -t tuning option is not allowed for this command.\n";
     exit(1);

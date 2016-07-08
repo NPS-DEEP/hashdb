@@ -106,10 +106,10 @@ inline uint8_t tohex(uint8_t c) {
 /**
  * Return hexadecimal representation of the binary string.
  */
-std::string bin_to_hex(const std::string& binary_hash) {
+std::string bin_to_hex(const std::string& binary_string) {
   std::stringstream ss;
-  for (size_t i=0; i<binary_hash.size(); i++) {
-    uint8_t c = binary_hash.c_str()[i];
+  for (size_t i=0; i<binary_string.size(); i++) {
+    uint8_t c = binary_string.c_str()[i];
     ss << tohex(c>>4) << tohex(c&0x0f);
   }
   return ss.str();

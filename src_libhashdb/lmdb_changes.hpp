@@ -39,12 +39,17 @@ class lmdb_changes_t {
 
   public:
   // hash_data
+/*zz fix doc before removing this.
   size_t hash_data_data_inserted;
   size_t hash_data_data_changed;
   size_t hash_data_data_same;
   size_t hash_data_source_inserted;
   size_t hash_data_source_already_present;
   size_t hash_data_source_at_max;
+*/
+  size_t hash_data_source_inserted;
+  size_t hash_data_offset_inserted;
+  size_t hash_data_data_changed;
 
   // hash
   size_t hash_prefix_inserted;
@@ -66,12 +71,9 @@ class lmdb_changes_t {
   size_t source_name_already_present;
 
   lmdb_changes_t() :
-            hash_data_data_inserted(0),
-            hash_data_data_changed(0),
-            hash_data_data_same(0),
             hash_data_source_inserted(0),
-            hash_data_source_already_present(0),
-            hash_data_source_at_max(0),
+            hash_data_offset_inserted(0),
+            hash_data_data_changed(0),
             hash_prefix_inserted(0),
             hash_suffix_inserted(0),
             hash_count_changed(0),
@@ -89,28 +91,17 @@ class lmdb_changes_t {
 
     os << "# hashdb changes:\n";
     // log changes
-    if (hash_data_data_inserted) {
-      os << "#     hash_data_data_inserted: " << hash_data_data_inserted << "\n";
-    }
-    if (hash_data_data_changed) {
-      os << "#     hash_data_data_changed: "
-         << hash_data_data_changed << "\n";
-    }
-    if (hash_data_data_same) {
-      os << "#     hash_data_data_same: "
-         << hash_data_data_same << "\n";
-    }
     if (hash_data_source_inserted) {
       os << "#     hash_data_source_inserted: "
          << hash_data_source_inserted<< "\n";
     }
-    if (hash_data_source_already_present) {
-      os << "#     hash_data_source_already_present: "
-         << hash_data_source_already_present<< "\n";
+    if (hash_data_offset_inserted) {
+      os << "#     hash_data_offset_inserted: "
+         << hash_data_offset_inserted<< "\n";
     }
-    if (hash_data_source_at_max) {
-      os << "#     hash_data_source_at_max: "
-         << hash_data_source_at_max<< "\n";
+    if (hash_data_data_changed) {
+      os << "#     hash_data_data_changed: "
+         << hash_data_data_changed << "\n";
     }
     if (hash_prefix_inserted) {
       os << "#     hash_prefix_inserted: " << hash_prefix_inserted<< "\n";
@@ -145,12 +136,9 @@ class lmdb_changes_t {
     if (source_name_already_present) {
       os << "#     source_name_already_present: " << source_name_already_present << "\n";
     }
-    if (hash_data_data_inserted == 0 &&
+    if (hash_data_source_inserted == 0 &&
+        hash_data_offset_inserted == 0 &&
         hash_data_data_changed == 0 &&
-        hash_data_data_same == 0 &&
-        hash_data_source_inserted == 0 &&
-        hash_data_source_already_present == 0 &&
-        hash_data_source_at_max == 0 &&
         hash_prefix_inserted == 0 &&
         hash_suffix_inserted == 0 &&
         hash_count_changed == 0 &&

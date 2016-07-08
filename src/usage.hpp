@@ -43,7 +43,8 @@ void overview() {
   << "       hashdb [options] <command> [<args>]\n"
   << "\n"
   << "New Database:\n"
-  << "  create [-b <block size>] [-a <byte alignment>] [-m <max>]\n"
+  << "  create [-b <block size>] [-a <byte alignment>]\n"
+  << "         [-m <max count:max sub-count>]\n"
   << "         [-t <hash prefix bits:hash suffix bytes>]\n"
   << "\n"
   << "Import/Export:\n"
@@ -91,7 +92,8 @@ static void create() {
   const hashdb::settings_t settings;
 
   std::cout
-  << "create [-b <block size>] [-a <byte alignment>] [-m <max>]\n"
+  << "create [-b <block size>] [-a <byte alignment>]\n"
+  << "       [-m <max count:max sub-count>]\n"
   << "       [-t <hash prefix bits:hash suffix bytes>]\n"
   << "  Create a new <hashdb> hash database.\n"
   << "\n"
@@ -101,9 +103,10 @@ static void create() {
   << "    (default " << settings.block_size << ")\n"
   << "  -a, --byte_alignment=<n>\n"
   << "    <byte_alignment>, in bytes, or 1 for any alignment (default " << settings.byte_alignment << ")\n"
-  << "  -m, --max_source_offset_pairs=<max>\n"
-  << "    The maximum number of source, file offset references to\n"
-  << "    store for a hash (default " << settings.max_source_offset_pairs << ")\n"
+  << "  -m, --max_counts=<max count:max sub-count>\n"
+  << "    The maximum number of source file offset references to store for a\n"
+  << "    hash and the maximum number of source file offset references associated\n"
+  << "    with a source to store for a hash (default " << settings.max_count << ":"<< settings.max_sub_count << ")\n"
   << "  -t, --tuning=<hash prefix bits:hash suffix bytes>\n"
   << "    The number of hash prefix bits and suffix bytes to use for\n"
   << "    optimizing hash storage (default " << settings.hash_prefix_bits << ":"

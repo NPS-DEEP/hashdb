@@ -45,9 +45,9 @@ for i in range(1500):
     else:
         m = 0
 
-    source_count = (m+4) * lookup[x] - 5
+    approximate_count = (m+4) * lookup[x] - 5
 
-    print("before: %d   after: %d   x: %d m:%d" % (i, source_count, x, m))
+    print("before: %d   after: %d   x: %d m:%d" % (i, approximate_count, x, m))
 */
 
 #ifndef LMDB_HASH_MANAGER_HPP
@@ -153,7 +153,7 @@ class lmdb_hash_manager_t {
     MUTEX_DESTROY(&M);
   }
 
-  void insert(const std::string& binary_hash, const size_t source_count,
+  void insert(const std::string& binary_hash, const size_t count,
               hashdb::lmdb_changes_t& changes) {
 
     // require valid binary_hash
@@ -163,7 +163,7 @@ class lmdb_hash_manager_t {
     }
 
     // ************************************************************
-    // make key and data from binary_hash and source_count
+    // make key and data from binary_hash and count
     // ************************************************************
     uint8_t key[num_prefix_bytes];
     uint8_t data[num_suffix_bytes + 1];  // allow 1 byte for count_encoding
@@ -189,7 +189,7 @@ class lmdb_hash_manager_t {
     }
 
     // append count encoding to data
-    data[num_suffix_bytes] = count_to_byte(source_count);
+    data[num_suffix_bytes] = count_to_byte(count);
 
     // ************************************************************
     // insert
@@ -331,7 +331,7 @@ print_mdb_val("hash_manager insert append data", context.data);
   }
 
   /**
-   * Find if hash is present, return approximate source count.
+   * Find if hash is present, return approximate count.
    */
   size_t find(const std::string& binary_hash) const {
 
@@ -419,10 +419,10 @@ print_mdb_val("hash_manager find data", context.data);
         }
 
         if (match == true) {
-          // extract approximate source_count then close context
-          size_t source_count = byte_to_count(p[i + num_suffix_bytes]);
+          // extract approximate count then close context
+          size_t approximate_count = byte_to_count(p[i + num_suffix_bytes]);
           context.close();
-          return source_count;
+          return approximate_count;
         }
       }
 
