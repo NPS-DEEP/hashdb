@@ -50,16 +50,31 @@ class adder_t {
   hashdb::import_manager_t* const manager_b;
   const std::string repository_name;
   progress_tracker_t* const tracker;
-  std::set<std::string>* const processed_sources;
-  std::set<std::string>* const repository_sources;
-  std::set<std::string>* const non_repository_sources;
+  std::set<std::string> preexisting_sources;
+  std::set<std::string> processed_sources;
+  std::set<std::string> repository_sources;
+  std::set<std::string> non_repository_sources;
 
   // do not allow copy or assignment
   adder_t(const adder_t&);
   adder_t& operator=(const adder_t&);
 
+  // identify all preexisting sources in B and skip them during processing
+  void load_preexisting_sources() {
+    std::string file_hash = manager_b->first_source();
+    while (file_hash != "") {
+      preexisting_sources.insert(file_hash);
+      file_hash = manager_b->next_source(file_hash);
+    }
+  }
+
+  // helper function
+  inline bool is_preexisting_source(const std::string& data) {
+    return (preexisting_sources.find(data) != preexisting_sources.end());
+  }
+
   // add source data
-  void add_source_data(const std::string& file_binary_hash) {
+  void add_source_data(const std::string& file_block_hash) {
     // source data
     uint64_t filesize = 0;
     std::string file_type = "";
@@ -68,24 +83,24 @@ class adder_t {
 
     // read
     bool found_source_data = manager_a->find_source_data(
-                                    file_binary_hash, filesize, file_type,
+                                    file_block_hash, filesize, file_type,
                                     zero_count, nonprobative_count);
     if (found_source_data == false) {
       assert(0);
     }
 
     // write
-    manager_b->insert_source_data(file_binary_hash, filesize, file_type,
+    manager_b->insert_source_data(file_block_hash, filesize, file_type,
                                   zero_count, nonprobative_count);
   }
 
   // add source names
-  void add_source_names(const std::string& file_binary_hash) {
+  void add_source_names(const std::string& file_block_hash) {
     hashdb::source_names_t* names = new hashdb::source_names_t;
 
     // read
     bool found_source_names = manager_a->find_source_names(
-                                                file_binary_hash, *names);
+                                                file_block_hash, *names);
     if (found_source_names == false) {
       assert(0);
     }
@@ -93,19 +108,19 @@ class adder_t {
     // write
     for (hashdb::source_names_t::const_iterator it = names->begin();
                                it != names->end(); ++it) {
-      manager_b->insert_source_name(file_binary_hash, it->first, it->second);
+      manager_b->insert_source_name(file_block_hash, it->first, it->second);
     }
 
     delete names;
   }
 
   // add repository source names
-  void add_repository_source_names(const std::string& file_binary_hash) {
+  void add_repository_source_names(const std::string& file_block_hash) {
     hashdb::source_names_t* names = new hashdb::source_names_t;
 
     // read
     bool found_source_names = manager_a->find_source_names(
-                                                file_binary_hash, *names);
+                                                file_block_hash, *names);
     if (found_source_names == false) {
       assert(0);
     }
@@ -114,7 +129,7 @@ class adder_t {
     for (hashdb::source_names_t::const_iterator it = names->begin();
                                it != names->end(); ++it) {
       if (it->first == repository_name) {
-        manager_b->insert_source_name(file_binary_hash, it->first, it->second);
+        manager_b->insert_source_name(file_block_hash, it->first, it->second);
       }
     }
 
@@ -122,12 +137,12 @@ class adder_t {
   }
 
   // add non-repository source names
-  void add_non_repository_source_names(const std::string& file_binary_hash) {
+  void add_non_repository_source_names(const std::string& file_block_hash) {
     hashdb::source_names_t* names = new hashdb::source_names_t;
 
     // read
     bool found_source_names = manager_a->find_source_names(
-                                                file_binary_hash, *names);
+                                                file_block_hash, *names);
     if (found_source_names == false) {
       assert(0);
     }
@@ -136,14 +151,14 @@ class adder_t {
     for (hashdb::source_names_t::const_iterator it = names->begin();
                                it != names->end(); ++it) {
       if (it->first != repository_name) {
-        manager_b->insert_source_name(file_binary_hash, it->first, it->second);
+        manager_b->insert_source_name(file_block_hash, it->first, it->second);
       }
     }
 
     delete names;
   }
 
-  void classify_repository_source(const std::string& file_binary_hash) {
+  void classify_repository_source(const std::string& file_block_hash) {
     hashdb::source_names_t* names = new hashdb::source_names_t;
 
     // repository_name must be defined
@@ -152,17 +167,17 @@ class adder_t {
     }
 
     // read names
-    manager_a->find_source_names(file_binary_hash, *names);
+    manager_a->find_source_names(file_block_hash, *names);
 
     // look for repository_name
     for (hashdb::source_names_t::const_iterator it = names->begin();
                                it != names->end(); ++it) {
       if (it->first == repository_name) {
         // the source has the repository name
-        repository_sources->insert(file_binary_hash);
+        repository_sources.insert(file_block_hash);
       } else {
         // the source has a non-repository name
-        non_repository_sources->insert(file_binary_hash);
+        non_repository_sources.insert(file_block_hash);
       }
     }
     delete names;
@@ -177,9 +192,11 @@ class adder_t {
                   manager_b(p_manager_b),
                   repository_name(""),
                   tracker(p_tracker),
-                  processed_sources(new sources_t),
-                  repository_sources(new sources_t),
-                  non_repository_sources(new sources_t) {
+                  preexisting_sources(),
+                  processed_sources(),
+                  repository_sources(),
+                  non_repository_sources() {
+    load_preexisting_sources();
   }
 
   // add A into B contingent on repository_name
@@ -191,70 +208,73 @@ class adder_t {
                   manager_b(p_manager_b),
                   repository_name(p_repository_name),
                   tracker(p_tracker),
-                  processed_sources(new sources_t),
-                  repository_sources(new sources_t),
-                  non_repository_sources(new sources_t) {
-  }
-
-  ~adder_t() {
-    delete processed_sources;
-    delete repository_sources;
-    delete non_repository_sources;
+                  preexisting_sources(),
+                  processed_sources(),
+                  repository_sources(),
+                  non_repository_sources() {
+    load_preexisting_sources();
   }
 
   // add hash and source information and do not re-add sources
-  void add(const std::string& binary_hash) {
+  void add(const std::string& block_hash) {
 
     // hash data
     float entropy;
     std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
-                                          *source_offset_pairs);
+    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+                                           count, *source_offsets);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source offset pair in hash
-    for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
+    // process each source in source_offsets
+    for (hashdb::source_offsets_t::const_iterator it =
+         source_offsets->begin(); it != source_offsets->end(); ++it) {
+
+      // skip preexisting sources
+      if (is_preexisting_source(it->file_hash)) {
+        continue;
+      }
 
       // add hash for source
-      manager_b->insert_hash(binary_hash, it->first, it->second,
-                             entropy, block_label);
+      manager_b->insert_hash(block_hash, entropy, block_label,
+                             it->file_hash, it->sub_count, it->file_offsets);
 
-      if (processed_sources->find(it->first) == processed_sources->end()) {
+      if (processed_sources.find(it->file_hash) == processed_sources.end()) {
         // add source information
-        add_source_data(it->first);
-        add_source_names(it->first);
-        processed_sources->insert(it->first);
+        add_source_data(it->file_hash);
+        add_source_names(it->file_hash);
+        processed_sources.insert(it->file_hash);
       } else {
         // already processed
       }
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
+    tracker->track_hash_data(source_offsets->size());
 
-    delete source_offset_pairs;
+    delete source_offsets;
   }
 
   // add hash and source information in count range and do not re-add sources
-  void add_range(const std::string& binary_hash,
+  void add_range(const std::string& block_hash,
                  size_t m, size_t n) {
 
     // hash data
     float entropy;
     std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
-                                          *source_offset_pairs);
+    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+                                           count, *source_offsets);
     // hash required
     if (!found_hash) {
       // program error
@@ -262,22 +282,26 @@ class adder_t {
     }
 
     // add if in range
-    if (source_offset_pairs->size() >= m &&
-        (n==0 || source_offset_pairs->size() <= n)) {
+    if (count >= m && (n==0 || count <= n)) {
 
-      // process each source offset pair in hash
-      for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
+      // process each source in source_offsets
+      for (hashdb::source_offsets_t::const_iterator it =
+           source_offsets->begin(); it != source_offsets->end(); ++it) {
+
+        // skip preexisting sources
+        if (is_preexisting_source(it->file_hash)) {
+          continue;
+        }
 
         // add hash for source
-        manager_b->insert_hash(binary_hash, it->first, it->second,
-                               entropy, block_label);
+        manager_b->insert_hash(block_hash, entropy, block_label,
+                             it->file_hash, it->sub_count, it->file_offsets);
 
-        if (processed_sources->find(it->first) == processed_sources->end()) {
+        if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
-          add_source_data(it->first);
-          add_source_names(it->first);
-          processed_sources->insert(it->first);
+          add_source_data(it->file_hash);
+          add_source_names(it->file_hash);
+          processed_sources.insert(it->file_hash);
         } else {
           // already processed
         }
@@ -285,53 +309,59 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
+    tracker->track_hash_data(source_offsets->size());
 
-    delete source_offset_pairs;
+    delete source_offsets;
   }
 
   // add hashes and source references when the repository name matches
-  void add_repository(const std::string& binary_hash) {
+  void add_repository(const std::string& block_hash) {
 
     // hash data
     float entropy;
     std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
-                                          *source_offset_pairs);
+    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+                                           count, *source_offsets);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source offset pair in hash
-    for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
+    // process each source in source_offsets
+    for (hashdb::source_offsets_t::const_iterator it =
+         source_offsets->begin(); it != source_offsets->end(); ++it) {
+
+      // skip preexisting sources
+      if (is_preexisting_source(it->file_hash)) {
+        continue;
+      }
 
       // make sure the source is classified as copied or skipped
-      if (processed_sources->find(it->first) == processed_sources->end() &&
-          non_repository_sources->find(it->first) == non_repository_sources->end()) {
+      if (processed_sources.find(it->file_hash) == processed_sources.end() &&
+          non_repository_sources.find(it->file_hash) == non_repository_sources.end()) {
 
         // not classified so classify it
-        classify_repository_source(it->first);
+        classify_repository_source(it->file_hash);
       }
 
       // only process sources matching repository_name
-      if (repository_sources->find(it->first) !=
-                              repository_sources->end()) {
+      if (repository_sources.find(it->file_hash) !=
+                              repository_sources.end()) {
 
         // add hash for source
-        manager_b->insert_hash(binary_hash, it->first, it->second,
-                               entropy, block_label);
+        manager_b->insert_hash(block_hash, entropy, block_label,
+                             it->file_hash, it->sub_count, it->file_offsets);
 
-        if (processed_sources->find(it->first) == processed_sources->end()) {
+        if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
-          add_source_data(it->first);
-          add_repository_source_names(it->first);
-          processed_sources->insert(it->first);
+          add_source_data(it->file_hash);
+          add_source_names(it->file_hash);
+          processed_sources.insert(it->file_hash);
         } else {
           // already processed
         }
@@ -339,53 +369,59 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
+    tracker->track_hash_data(source_offsets->size());
 
-    delete source_offset_pairs;
+    delete source_offsets;
   }
 
   // add hashes and source references when the repository name does not match
-  void add_non_repository(const std::string& binary_hash) {
+  void add_non_repository(const std::string& block_hash) {
 
     // hash data
     float entropy;
     std::string block_label;
-    source_offset_pairs_t* source_offset_pairs = new source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(binary_hash, entropy, block_label,
-                                          *source_offset_pairs);
+    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+                                           count, *source_offsets);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source offset pair in hash
-    for (source_offset_pairs_t::const_iterator it =
-         source_offset_pairs->begin(); it != source_offset_pairs->end(); ++it) {
+    // process each source in source_offsets
+    for (hashdb::source_offsets_t::const_iterator it =
+         source_offsets->begin(); it != source_offsets->end(); ++it) {
+
+      // skip preexisting sources
+      if (is_preexisting_source(it->file_hash)) {
+        continue;
+      }
 
       // make sure the source is classified as copied or skipped
-      if (processed_sources->find(it->first) == processed_sources->end() &&
-          non_repository_sources->find(it->first) == non_repository_sources->end()) {
+      if (processed_sources.find(it->file_hash) == processed_sources.end() &&
+          non_repository_sources.find(it->file_hash) == non_repository_sources.end()) {
 
         // not classified so classify it
-        classify_repository_source(it->first);
+        classify_repository_source(it->file_hash);
       }
 
       // process sources that have at least one non-matching repository_name
-      if (non_repository_sources->find(it->first) !=
-                              non_repository_sources->end()) {
+      if (non_repository_sources.find(it->file_hash) !=
+                              non_repository_sources.end()) {
 
         // add hash for source
-        manager_b->insert_hash(binary_hash, it->first, it->second,
-                               entropy, block_label);
+        manager_b->insert_hash(block_hash, entropy, block_label,
+                             it->file_hash, it->sub_count, it->file_offsets);
 
-        if (processed_sources->find(it->first) == processed_sources->end()) {
+        if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
-          add_source_data(it->first);
-          add_non_repository_source_names(it->first);
-          processed_sources->insert(it->first);
+          add_source_data(it->file_hash);
+          add_source_names(it->file_hash);
+          processed_sources.insert(it->file_hash);
         } else {
           // already processed
         }
@@ -393,9 +429,9 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offset_pairs->size());
+    tracker->track_hash_data(source_offsets->size());
 
-    delete source_offset_pairs;
+    delete source_offsets;
   }
 };
 

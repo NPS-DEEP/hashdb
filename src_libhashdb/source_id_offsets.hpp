@@ -45,6 +45,15 @@ struct source_id_offset_t {
               sub_count(p_sub_count),
               file_offsets(p_file_offsets) {
   }
+  bool operator<(const source_id_offset_t& that) const {
+    if (source_id < that.source_id) return true;
+    if (source_id > that.source_id) return false;
+
+    // the above should be sufficient but lets be complete
+    if (sub_count < that.sub_count) return true;
+    if (sub_count > that.sub_count) return false;
+    return (file_offsets > that.file_offsets);
+  }
 };
 
 typedef std::set<source_id_offset_t> source_id_offsets_t;

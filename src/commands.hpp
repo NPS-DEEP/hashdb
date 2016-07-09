@@ -740,14 +740,13 @@ class out_ptr_t {
     uint64_t total_distinct_hashes = 0;
 
     // hash histogram as <count, number of hashes with count>
-    std::map<uint32_t, uint64_t>* hash_histogram =
-                new std::map<uint32_t, uint64_t>();
+    std::map<uint32_t, uint64_t> hash_histogram;
 
     // space for variables
     float entropy;
     std::string block_label;
-    hashdb::source_offset_pairs_t* source_offset_pairs =
-                                        new hashdb::source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t source_offsets;
 
     // iterate over hashdb and set variables for calculating the histogram
     std::string binary_hash = manager.first_hash();
@@ -758,9 +757,8 @@ class out_ptr_t {
     }
 
     while (binary_hash.size() != 0) {
-      manager.find_hash(binary_hash, entropy, block_label,
-                            *source_offset_pairs);
-      uint64_t count = source_offset_pairs->size();
+      manager.find_hash(binary_hash, entropy, block_label, count,
+                        source_offsets);
       // update total hashes observed
       total_hashes += count;
       // update total distinct hashes
@@ -770,24 +768,25 @@ class out_ptr_t {
 
       // update hash_histogram information
       // look for existing entry
-      std::map<uint32_t, uint64_t>::iterator hash_histogram_it = hash_histogram->find(count);
-      if (hash_histogram_it == hash_histogram->end()) {
+      std::map<uint32_t, uint64_t>::iterator hash_histogram_it =
+                                              hash_histogram.find(count);
+      if (hash_histogram_it == hash_histogram.end()) {
 
         // this is the first hash found with this count value
         // so start a new element for it
-        hash_histogram->insert(std::pair<uint32_t, uint64_t>(count, 1));
+        hash_histogram.insert(std::pair<uint32_t, uint64_t>(count, 1));
 
       } else {
 
         // increment existing value for number of hashes with this count
         uint64_t old_number = hash_histogram_it->second;
-        hash_histogram->erase(count);
-        hash_histogram->insert(std::pair<uint32_t, uint64_t>(
+        hash_histogram.erase(count);
+        hash_histogram.insert(std::pair<uint32_t, uint64_t>(
                                            count, old_number + 1));
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offset_pairs->size());
+      progress_tracker.track_hash_data(source_offsets.size());
       binary_hash = manager.next_hash(binary_hash);
     }
 
@@ -797,15 +796,13 @@ class out_ptr_t {
 
     // show hash histogram as <count, number of hashes with count>
     std::map<uint32_t, uint64_t>::iterator hash_histogram_it2;
-    for (hash_histogram_it2 = hash_histogram->begin();
-         hash_histogram_it2 != hash_histogram->end(); ++hash_histogram_it2) {
+    for (hash_histogram_it2 = hash_histogram.begin();
+         hash_histogram_it2 != hash_histogram.end(); ++hash_histogram_it2) {
       std::cout << "{\"duplicates\":" << hash_histogram_it2->first
                 << ", \"distinct_hashes\":" << hash_histogram_it2->second
                 << ", \"total\":" << hash_histogram_it2->first *
                                  hash_histogram_it2->second << "}\n";
     }
-    delete hash_histogram;
-    delete source_offset_pairs;
   }
 
   // duplicates
@@ -840,16 +837,16 @@ class out_ptr_t {
     // space for variables
     float entropy;
     std::string block_label;
-    hashdb::source_offset_pairs_t* source_offset_pairs =
-                                     new hashdb::source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t source_offsets;
 
     // iterate over hashdb and set variables for finding duplicates
     std::string binary_hash = manager.first_hash();
 
     while (binary_hash.size() != 0) {
-      manager.find_hash(binary_hash, entropy, block_label,
-                                  *source_offset_pairs);
-      if (source_offset_pairs->size() == number) {
+      manager.find_hash(binary_hash, entropy, block_label, count,
+                                  source_offsets);
+      if (count == number) {
         // show hash with requested duplicates number
         std::string expanded_text = manager.find_hash_json(
                                                     scan_mode, binary_hash);
@@ -859,7 +856,7 @@ class out_ptr_t {
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offset_pairs->size());
+      progress_tracker.track_hash_data(source_offsets.size());
       binary_hash = manager.next_hash(binary_hash);
     }
 
@@ -868,8 +865,6 @@ class out_ptr_t {
       std::cout << "No hashes were found with this count.\n";
       return;
     }
-
-    delete source_offset_pairs;
   }
 
   // hash_table
@@ -909,8 +904,8 @@ class out_ptr_t {
     // space for variables
     float entropy;
     std::string block_label;
-    hashdb::source_offset_pairs_t* source_offset_pairs =
-                                       new hashdb::source_offset_pairs_t;
+    uint64_t count;
+    hashdb::source_offsets_t source_offsets;
 
     // look for hashes that belong to this source
     // get the first hash
@@ -918,14 +913,15 @@ class out_ptr_t {
     while (binary_hash.size() != 0) {
 
       // read hash data for the hash
-      manager.find_hash(binary_hash, entropy, block_label,
-                                                    *source_offset_pairs);
+      manager.find_hash(binary_hash, entropy, block_label, count,
+                                                    source_offsets);
 
-      // find references to this source
-      for (hashdb::source_offset_pairs_t::const_iterator it =
-                       source_offset_pairs->begin();
-                       it!= source_offset_pairs->end(); ++it) {
-        if (it->first == file_binary_hash) {
+      // find sources that match the source we are looking for
+      for (hashdb::source_offsets_t::const_iterator it =
+                       source_offsets.begin();
+                       it!= source_offsets.end(); ++it) {
+        if (it->file_hash == file_binary_hash) {
+
           // the source matches so print the hash and move on
           std::string expanded_text = manager.find_hash_json(
                                                     scan_mode, binary_hash);
@@ -936,10 +932,9 @@ class out_ptr_t {
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offset_pairs->size());
+      progress_tracker.track_hash_data(source_offsets.size());
       binary_hash = manager.next_hash(binary_hash);
     }
-    delete source_offset_pairs;
   }
 
   // read_bytes
@@ -1004,12 +999,20 @@ class out_ptr_t {
                                "add_random_filename");
     manager.insert_source_data(file_binary_hash, 0, "", 0, 0);
 
+    // get start index for this run
+    uint64_t start_index = manager.size_hashes();
+    if (start_index > 1) {
+      --start_index;
+    }
+
     // insert count random hshes into the database
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      manager.insert_hash(random_binary_hash(), file_binary_hash,
-                          i*byte_alignment, 0, "");
+      std::set<uint64_t> file_offsets;
+      file_offsets.insert((i + start_index) * byte_alignment);
+      manager.insert_hash(random_binary_hash(), 0.0, "",
+                          file_binary_hash, 1, file_offsets);
 
       // update progress tracker
       progress_tracker.track();
@@ -1103,8 +1106,10 @@ class out_ptr_t {
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      manager.insert_hash(binary_hash, file_binary_hash,
-                          (i + start_index) * byte_alignment, 0, "");
+      std::set<uint64_t> file_offsets;
+      file_offsets.insert((i + start_index) * byte_alignment);
+      manager.insert_hash(random_binary_hash(), 0.0, "",
+                          file_binary_hash, 1, file_offsets);
 
       // update progress tracker
       progress_tracker.track();

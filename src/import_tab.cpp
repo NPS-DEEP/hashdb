@@ -128,8 +128,10 @@ void import_tab(hashdb::import_manager_t& manager,
     manager.insert_source_name(file_binary_hash, repository_name, filename);
 
     // add block hash
-    manager.insert_hash(block_binary_hash, file_binary_hash, file_offset,
-                        0, whitelist_flag);
+    std::set<uint64_t> file_offsets;
+    file_offsets.insert(file_offset);
+    manager.insert_hash(block_binary_hash, 0.0, whitelist_flag,
+                        file_binary_hash, 1, file_offsets);
 
     // update progress tracker
     progress_tracker.track();

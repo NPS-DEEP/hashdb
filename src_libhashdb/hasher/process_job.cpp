@@ -115,8 +115,10 @@ namespace hasher {
         }
 
         // add block hash to DB
-        job.import_manager->insert_hash(block_hash, job.file_hash,
-                    job.file_offset+i, entropy, block_label);
+        std::set<uint64_t> file_offsets;
+        file_offsets.insert(job.file_offset+i);
+        job.import_manager->insert_hash(block_hash, entropy, block_label,
+                                        job.file_hash, 1, file_offsets);
       }
 
       // submit tracked source counts to the ingest tracker for final reporting

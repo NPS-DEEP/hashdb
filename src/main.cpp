@@ -157,7 +157,7 @@ static void set_disable_processing(const std::string& list) {
 static void set_scan_mode(const std::string& mode) {
   if (mode == "e") scan_mode = hashdb::scan_mode_t::EXPANDED;
   else if (mode == "o") scan_mode = hashdb::scan_mode_t::EXPANDED_OPTIMIZED;
-  else if (mode == "c") scan_mode = hashdb::scan_mode_t::COUNT_ONLY;
+  else if (mode == "c") scan_mode = hashdb::scan_mode_t::COUNT;
   else if (mode == "a") scan_mode = hashdb::scan_mode_t::APPROXIMATE_COUNT;
   else {
     std::cerr << "Invalid scan mode option: '" << mode

@@ -214,9 +214,9 @@ class lmdb_hash_data_manager_t {
     const size_t block_label_size = block_label.size();
 
     // allocate space
-    size_t size = 10 + 10 + (10 + block_label_size) + 10 + 10 +
-                  (10 * max_sub_count);
-    uint8_t* const data = new uint8_t[size];
+    size_t data_size = 10 + 10 + (10 + block_label_size) + 10 + 10 +
+                       (10 * max_sub_count);
+    uint8_t* const data = new uint8_t[data_size];
     uint8_t* p = data;
 
     // add source_id
@@ -413,8 +413,8 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
                  const file_offsets_t& file_offsets) {
 
     // allocate space
-    size_t size = 10 + 10 + (10 * max_sub_count);
-    uint8_t* const data = new uint8_t[size];
+    size_t data_size = 10 + 10 + (10 * max_sub_count);
+    uint8_t* const data = new uint8_t[data_size];
     uint8_t* p = data;
 
     // add source_id
@@ -485,6 +485,9 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
                 const file_offsets_t file_offsets,
                 hashdb::lmdb_changes_t& changes) {
 
+    // return total count when done
+    uint64_t count;
+
     // program error if source ID is 0 since NULL distinguishes between
     // type 1 and type 2 data.
     if (source_id == 0) {
@@ -492,8 +495,13 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
       assert(0);
     }
 
+    // key size
+    const size_t key_size = block_hash.size();
+    uint8_t* const key_start = static_cast<uint8_t*>(
+                 static_cast<void*>(const_cast<char*>(block_hash.c_str())));
+
     // require valid block_hash
-    if (block_hash.size() == 0) {
+    if (key_size == 0) {
       std::cerr << "Usage error: the block_hash value provided to insert is empty.\n";
       return 0;
     }
@@ -511,9 +519,8 @@ print_whole_mdb("hash_data_manager insert", context.cursor);
 #endif
 
     // set key
-    context.key.mv_size = block_hash.size();
-    context.key.mv_data =
-               static_cast<void*>(const_cast<char*>(block_hash.c_str()));
+    context.key.mv_size = key_size;
+    context.key.mv_data = key_start;
 
     // see if hash is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -526,6 +533,7 @@ print_whole_mdb("hash_data_manager insert", context.cursor);
                 sub_count, file_offsets);
       ++changes.hash_data_source_inserted;
       changes.hash_data_offset_inserted += sub_count;
+      count = sub_count;
 
     } else if (rc == 0) {
       // hash is already there
@@ -573,12 +581,14 @@ print_mdb_val("hash_data_manager insert found data", context.data);
           uint64_t total_sub_count = p_sub_count + sub_count;
           put_type1(context, source_id, entropy, block_label,
                     total_sub_count, p_file_offsets);
+          count = total_sub_count;
         } else {
           // write back Type 2 and two Type 3, the old and the new
           uint64_t total_count = p_sub_count + sub_count;
           put_type2(context, entropy, block_label, total_count);
           put_type3(context, p_source_id, p_sub_count, p_file_offsets);
           put_type3(context, source_id, sub_count, file_offsets);
+          count = total_count;
         }
 
       } else {
@@ -599,17 +609,18 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         delete_cursor_entry(context);
 
         // write back the updated Type 2 entry, setting the cursor
-        uint64_t total_sub_count = p_count + sub_count;
-        put_type2(context, entropy, block_label, total_sub_count);
+        uint64_t total_count = p_count + sub_count;
+        put_type2(context, entropy, block_label, total_count);
+        count = total_count;
 
         // replace the Type 3 entry containing this source ID
         // else add a new Type 3 entry for the new source ID
         while (true) {
-          // get Type 3 record
-          rc = mdb_cursor_next(context.cursor, &context.key, &context.data,
+          // get next Type 3 record
+          rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                               MDB_NEXT);
 
-          // see if the next is for the same hash
+          // see if next is for the same hash
           if (rc == MDB_NOTFOUND || context.key.mv_size != key_size ||
               memcmp(context.key.mv_data, key_start, key_size) != 0) {
 
@@ -707,7 +718,7 @@ print_whole_mdb("hash_data_manager find", context.cursor);
 
     // set key
     const size_t key_size = block_hash.size();
-    uint8_t* key_start = static_cast<uint8_t*>(
+    uint8_t* const key_start = static_cast<uint8_t*>(
                  static_cast<void*>(const_cast<char*>(block_hash.c_str())));
     context.key.mv_size = key_size;
     context.key.mv_data = key_start;
@@ -748,8 +759,8 @@ print_mdb_val("hash_data_manager find Type 1 data", context.data);
         uint64_t sub_count;
         file_offsets_t file_offsets;
         decode_type1(context, source_id, entropy, block_label,
-                     count, file_offsets);
-        const uint64_t sub_count = count;
+                     sub_count, file_offsets);
+        count = sub_count;
         source_id_offsets.insert(
                    source_id_offset_t(source_id, sub_count, file_offsets));
         context.close();
@@ -766,7 +777,7 @@ print_mdb_val("hash_data_manager find Type 2 data", context.data);
 
         // read Type 3 entries while data available and key matches
         while (true) {
-          rc = mdb_cursor_next(context.cursor, &context.key, &context.data,
+          rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                               MDB_NEXT);
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager find Type 3 key", context.key);
@@ -928,7 +939,7 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
   }
 
   /**
-   * Return next hash else "".  Error if no next.
+   * Return next hash value else "" if end.  Error if last is "" or invalid.
    */
   std::string next_hash(const std::string& block_hash) const {
 

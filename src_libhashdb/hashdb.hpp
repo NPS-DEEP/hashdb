@@ -61,6 +61,7 @@ namespace hashdb {
   // ************************************************************
   // typedefs
   // ************************************************************
+#ifndef SWIG
   // source_offset information
   struct source_offset_t {
     const std::string file_hash;
@@ -73,12 +74,22 @@ namespace hashdb {
           sub_count(p_sub_count),
           file_offsets(p_file_offsets) {
     }
+    bool operator<(const source_offset_t& that) const {
+      if (file_hash < that.file_hash) return true;
+      if (file_hash > that.file_hash) return false;
+
+      // the above should be sufficient but lets be complete
+      if (sub_count < that.sub_count) return true;
+      if (sub_count > that.sub_count) return false;
+      return (file_offsets > that.file_offsets);
+    }
   };
   typedef std::set<source_offset_t> source_offsets_t;
 
   // pair(repository_name, filename)
   typedef std::pair<std::string, std::string> source_name_t;
   typedef std::set<source_name_t>             source_names_t;
+#endif
 
   // ************************************************************
   // version of the hashdb library
@@ -133,7 +144,7 @@ namespace hashdb {
   enum scan_mode_t {EXPANDED,
                     EXPANDED_OPTIMIZED,
                     COUNT,
-                    PROBABLE_COUNT};
+                    APPROXIMATE_COUNT};
 
   // ************************************************************
   // misc support interfaces
@@ -371,6 +382,7 @@ namespace hashdb {
                             const uint64_t zero_count,
                             const uint64_t nonprobative_count);
 
+#ifndef SWIG
     /**
      * Insert or change the hash data associated with the block_hash.
      *
@@ -380,9 +392,9 @@ namespace hashdb {
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   file_hash - The MD5 hash of the source in binary form.
-     *   sub_count - The number of file offsets to add.
-     *   file_offsets - A list of byte offsets into the file where the
-     *     hash is located.  This list can be truncated.
+     *   sub_count - The number of file offsets to add for this file hash.
+     *   file_offsets - A list of byte offsets into the file hash where
+     *     the block hash is located.  This list can be truncated.
      */
     void insert_hash(const std::string& block_hash,
                      const float entropy,
@@ -390,6 +402,7 @@ namespace hashdb {
                      const std::string& file_hash,
                      const uint64_t sub_count,
                      const std::set<uint64_t> file_offsets);
+#endif
 
     /**
      * Import hash or source information from a JSON record.
@@ -421,12 +434,33 @@ namespace hashdb {
     std::string import_json(const std::string& json_string);
 
     /**
+     * Return the file_hash of the first source in the database.
+     *
+     * Returns:
+     *   file_hash if a first source is available else "" if DB
+     *   is empty.
+     */
+    std::string first_source() const;
+
+    /**
+     * Return the next source in the database.  Error if last_file_hash
+     *   does not exist.
+     *
+     * Parameters:
+     *   last_file_hash - The previous source file hash in binary form.
+     *
+     * Returns:
+     *   next file_hash if a next source is available else "" if at end.
+     */
+    std::string next_source(const std::string& file_hash) const;
+
+    /**
      * Return the sizes of LMDB databases in the data store.
      */
     std::string size() const;
 
     /**
-     * Return the number of hash records.
+     * Return the number of records in the hash data store.
      */
     size_t size_hashes() const;
 
