@@ -34,11 +34,9 @@
 #include "lmdb_source_name_manager.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_changes.hpp"
+#include "source_id_offsets.hpp"
 #include "../src_libhashdb/hashdb.hpp"
 #include "directory_helper.hpp"
-
-typedef std::pair<uint64_t, uint64_t> id_offset_pair_t;
-typedef std::set<id_offset_pair_t>    id_offset_pairs_t;
 
 typedef std::pair<std::string, std::string> source_name_t;
 typedef std::set<source_name_t>             source_names_t;
@@ -242,129 +240,177 @@ void lmdb_hash_data_manager() {
   // variables
   float entropy;
   std::string block_label;
-  id_offset_pairs_t id_offset_pairs;
+  uint64_t count;
+  std::set<uint64_t> file_offsets;
+  hashdb::source_id_offsets_t source_id_offsets;
   hashdb::lmdb_changes_t changes;
-  id_offset_pairs_t::const_iterator it;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_hash_data_manager_t manager(
-                                    hashdb_dir, hashdb::RW_NEW, 512, 100000);
+                            hashdb_dir, hashdb::RW_NEW, 512, 4, 3);
 
-  TEST_EQ(id_offset_pairs.size(), 0);
-
-  // binary_0 not there
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), 0);
+  // binary_0 not there, all fields reset
+  entropy=1.0;
+  block_label="bl",
+  count=1;
+  source_id_offsets.insert(hashdb::source_id_offset_t());
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), false);
+  TEST_FLOAT_EQ(entropy, 0.0);
+  TEST_EQ(block_label, "");
+  TEST_EQ(count, 0);
+  TEST_EQ(source_id_offsets.size(), 0);
   TEST_EQ(manager.find_count(binary_0), 0);
 
-  // invalid file offset
-  TEST_EQ(manager.insert(binary_0, 1, 513, 1, "bl", changes), 0);
-  TEST_EQ(changes.hash_data_data_inserted, 0);
+  // Attempt to insert an empty key.  A warning is sent to stderr.
+  TEST_EQ(manager.insert("", 1.0, "bl", 1, 2, file_offsets, changes), 0);
+
+  // set up file_offsets with an invalid and valid value
+  file_offsets.insert(513);
+  file_offsets.insert(1024);
+
+  // attempt to insert with invalid sub_count.  A warning is sent to stderr.
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 1, file_offsets, changes), 0);
+
+  // attempt to insert with an invalid file_offset.  warning sent to stderr.
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 2, file_offsets, changes), 0);
+
+  // done with 513
+  file_offsets.erase(513);
+
+  // Insert 1024 with sub_count=2.
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 2, file_offsets, changes), 2);
+  TEST_EQ(changes.hash_data_source_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 0);
-  TEST_EQ(changes.hash_data_source_inserted, 0);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
 
-  // insert binary_0
-  TEST_EQ(manager.insert(binary_0, 1, 512, 1, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-
-  // binary_0 there
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_FLOAT_EQ(entropy, 1);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.0);
   TEST_EQ(block_label, "bl");
-  TEST_EQ(id_offset_pairs.size(), 1);
-  it = id_offset_pairs.begin();
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 512);
-  TEST_EQ(manager.find_count(binary_0), 1);
+  TEST_EQ(count, 2);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 1);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 1024);
 
-  // binary_1 not there
-  TEST_EQ(manager.find(binary_1, entropy, block_label, id_offset_pairs), 0);
+  // add valid offset 512
+  file_offsets.insert(512); // 512 will go in front of 1024
 
-  // insert same hash, same source, same data
-  TEST_EQ(manager.insert(binary_0, 1, 512, 1, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
+  // Insert 512, re-insert 1024, use sub_count 4, and change data
+//zz  TEST_EQ(manager.insert(binary_0, 1.5, "bl2", 1, 4, file_offsets, changes), 6);
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 4, file_offsets, changes), 6);
+  TEST_EQ(changes.hash_data_source_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 2);
+  TEST_EQ(changes.hash_data_offset_already_present, 1);
+//zz  TEST_EQ(changes.hash_data_data_changed, 1);
+
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+//  TEST_FLOAT_EQ(entropy, 1.5);
+  TEST_FLOAT_EQ(entropy, 1.0);
+//  TEST_EQ(block_label, "bl2");
+  TEST_EQ(block_label, "bl");
+  TEST_EQ(count, 6);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 2);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 512);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 1024);
+
+  // Insert 2048, which will fit, and 4096, which will not fit max_sub_count=3
+  file_offsets.clear();
+  file_offsets.insert(2048);
+  file_offsets.insert(4096);
+  TEST_EQ(manager.insert(binary_0, 1.5, "bl2", 1, 2, file_offsets, changes), 8);
+  TEST_EQ(changes.hash_data_source_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 3);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 1);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_FLOAT_EQ(entropy, 1);
-  TEST_EQ(block_label, "bl");
-  TEST_EQ(id_offset_pairs.size(), 1);
-  it = id_offset_pairs.begin();
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 512);
 
-  // same hash, same source, different data
-  TEST_EQ(manager.insert(binary_0, 1, 512, 2, "bl2", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_FLOAT_EQ(entropy, 2);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.5);
   TEST_EQ(block_label, "bl2");
-  TEST_EQ(id_offset_pairs.size(), 1);
-  it = id_offset_pairs.begin();
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 512);
+  TEST_EQ(count, 8);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 3);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 2048);
 
-  // add same hash, new source, same data
-  TEST_EQ(manager.insert(binary_0, 1, 1024, 2, "bl2", changes), 2);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 2);
+  // Insert 2048, 4096 again.  2048 will be detected as present, 4096 will not.
+  TEST_EQ(manager.insert(binary_0, 1.5, "bl2", 1, 2, file_offsets, changes), 10);
+  TEST_EQ(changes.hash_data_source_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 3);
+  TEST_EQ(changes.hash_data_offset_already_present, 1);
+  TEST_EQ(changes.hash_data_data_changed, 0);
+
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.5);
+  TEST_EQ(block_label, "bl2");
+  TEST_EQ(count, 10);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 3);
+
+  // now check max_count=4 by using different source_id=2
+  // and 2048, 4096
+  // also check that data can change
+  TEST_EQ(manager.insert(binary_0, 1.5, "bl2", 2, 2, file_offsets, changes), 12);
   TEST_EQ(changes.hash_data_source_inserted, 2);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_FLOAT_EQ(entropy, 2);
-  TEST_EQ(block_label, "bl2");
-  TEST_EQ(id_offset_pairs.size(), 2);
-  it = id_offset_pairs.begin();
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 512);
-  ++it;
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 1024);
-  TEST_EQ(manager.find_count(binary_0), 2);
+  TEST_EQ(changes.hash_data_offset_inserted, 4);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
+  TEST_EQ(changes.hash_data_data_changed, 1);
 
-  // same hash, new source, different data
-  size_t count;
-  count = manager.insert(binary_0, 1, 2048, 3, "bl33", changes);
-  TEST_EQ(count, 3);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 2);
-  TEST_EQ(changes.hash_data_data_same, 2);
-  TEST_EQ(changes.hash_data_source_inserted, 3);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-  TEST_EQ(manager.find(binary_0, entropy, block_label, id_offset_pairs), true);
-  TEST_FLOAT_EQ(entropy, 3);
-  TEST_EQ(block_label, "bl33");
-  TEST_EQ(id_offset_pairs.size(), 3);
-  it = id_offset_pairs.begin();
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 512);
-  ++it;
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 1024);
-  ++it;
-  TEST_EQ(it->first, 1);
-  TEST_EQ(it->second, 2048);
-  TEST_EQ(manager.find_count(binary_0), 3);
-  
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.5);
+  TEST_EQ(block_label, "bl2");
+  TEST_EQ(count, 12);
+  TEST_EQ(source_id_offsets.size(), 2);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 3);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 512);
+  TEST_EQ(source_id_offsets.rbegin()->file_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.rbegin()->source_id, 2);
+  TEST_EQ(*(source_id_offsets.rbegin()->file_offsets.begin()), 2048);
+
+  // check binary_1 not there
+  TEST_EQ(manager.find(binary_1, entropy, block_label, count,
+                                             source_id_offsets), false);
+
+  // insert new binary_1, same source=1
+  TEST_EQ(manager.insert(binary_0, 2.0, "bl3", 1, 2, file_offsets, changes), 2);
+  TEST_EQ(changes.hash_data_source_inserted, 2);
+  TEST_EQ(changes.hash_data_offset_inserted, 4);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
+  TEST_EQ(changes.hash_data_data_changed, 0);
+
+  // find binary_0 with binary_1 present
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.5);
+  TEST_EQ(block_label, "bl2");
+  TEST_EQ(count, 12);
+
+  // find binary_1
+  TEST_EQ(manager.find(binary_1, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 2.0);
+  TEST_EQ(block_label, "bl3");
+  TEST_EQ(count, 2);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 2);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 2048);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 4096);
+
   // check iterator
-  count = manager.insert(binary_1, 2, 4096, 4, "bl4", changes);
-  TEST_EQ(count, 1);
-  TEST_EQ(changes.hash_data_data_inserted, 2);
   std::string binary_hash = manager.first_hash();
   TEST_EQ(binary_hash, binary_0)
   binary_hash = manager.next_hash(binary_hash);
@@ -372,139 +418,132 @@ void lmdb_hash_data_manager() {
   binary_hash = manager.next_hash(binary_hash);
   TEST_EQ(binary_hash, "")
 
-  // allow empty request
+  // allow empty next request
   binary_hash = manager.next_hash(binary_hash);
   TEST_EQ(binary_hash, "")
 
-  // allow invalid request
+  // allow invalid next request
   binary_hash = manager.next_hash(binary_26);
   TEST_EQ(binary_hash, "")
 
   // size
-  TEST_EQ(manager.size(), 5);
+  TEST_EQ(manager.size(), 4);
 }
 
-void lmdb_hash_data_manager_settings1() {
+// 1 total offset which cannot be added because no sub_offsets are allowed
+void lmdb_hash_data_manager_settings_1_0() {
+
+  // variables
+  float entropy;
+  std::string block_label;
+  uint64_t count;
+  std::set<uint64_t> file_offsets;
+  hashdb::source_id_offsets_t source_id_offsets;
   hashdb::lmdb_changes_t changes;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_hash_data_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 1);
+  hashdb::lmdb_hash_data_manager_t manager(
+                            hashdb_dir, hashdb::RW_NEW, 512, 1, 0);
 
-  // initial state
-  TEST_EQ(changes.hash_data_data_inserted, 0);
-  TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 0);
-  TEST_EQ(changes.hash_data_source_inserted, 0);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
+  // set up file_offsets
+  file_offsets.insert(0);
+  file_offsets.insert(512);
+  file_offsets.insert(1024);
 
-  // add hash data
-  TEST_EQ(manager.insert(binary_0, 1, 1, 1, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 0);
+  // Insert the file_offsets at source_id=1
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 3, file_offsets, changes), 3);
   TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-
-  // add same hash, same hash data, same source
-  TEST_EQ(manager.insert(binary_0, 1, 1, 1, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 0);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 1);
 
-  // add same hash, same hash data, different source at max
-  TEST_EQ(manager.insert(binary_0, 1, 2, 1, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.0);
+  TEST_EQ(block_label, "bl");
+  TEST_EQ(count, 3);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 0);
+
+  // Insert the file_offsets at source_id=2
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 3, file_offsets, changes), 6);
+  TEST_EQ(changes.hash_data_source_inserted, 2);
+  TEST_EQ(changes.hash_data_offset_inserted, 0);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 2);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 2);
 
-  // add same hash, different hash data, different source at max
-  size_t count = manager.insert(binary_0, 1, 3, 12, "bl2", changes);
-  TEST_EQ(count, 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 2);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 3);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.0);
+  TEST_EQ(block_label, "bl");
+  TEST_EQ(count, 6);
+  TEST_EQ(source_id_offsets.size(), 2);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 0);
+  TEST_EQ(source_id_offsets.rbegin()->source_id, 2);
+  TEST_EQ(source_id_offsets.rbegin()->file_offsets.size(), 0);
 }
 
-void lmdb_hash_data_manager_settings2() {
+// 0 total offsets so no sub_offsets can be added
+void lmdb_hash_data_manager_settings_0_1() {
+
+  // variables
+  float entropy;
+  std::string block_label;
+  uint64_t count;
+  std::set<uint64_t> file_offsets;
+  hashdb::source_id_offsets_t source_id_offsets;
   hashdb::lmdb_changes_t changes;
 
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_hash_data_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 2);
+  hashdb::lmdb_hash_data_manager_t manager(
+                            hashdb_dir, hashdb::RW_NEW, 512, 0, 1);
 
-  // initial state
-  TEST_EQ(changes.hash_data_data_inserted, 0);
-  TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 0);
-  TEST_EQ(changes.hash_data_source_inserted, 0);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
+  // set up file_offsets
+  file_offsets.insert(0);
+  file_offsets.insert(512);
+  file_offsets.insert(1024);
 
-  // add hash data and source
-  TEST_EQ(manager.insert(binary_0, 1, 1, 10, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 0);
+  // Insert the file_offsets at source_id=1
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 3, file_offsets, changes), 3);
   TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 0);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
-
-  // add same hash, same hash data, same source
-  TEST_EQ(manager.insert(binary_0, 1, 1, 10, "bl", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
+  TEST_EQ(changes.hash_data_offset_inserted, 0);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
   TEST_EQ(changes.hash_data_data_changed, 0);
-  TEST_EQ(changes.hash_data_data_same, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 1);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
 
-  // add same hash, different hash data, same source
-  TEST_EQ(manager.insert(binary_0, 1, 1, 12, "bl2", changes), 1);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 1);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.0);
+  TEST_EQ(block_label, "bl");
+  TEST_EQ(count, 3);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 0);
 
-  // add same hash, same hash data, different source
-  TEST_EQ(manager.insert(binary_0, 1, 2, 12, "bl2", changes), 2);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 2);
+  // Insert the file_offsets at source_id=2
+  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 3, file_offsets, changes), 6);
   TEST_EQ(changes.hash_data_source_inserted, 2);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 0);
+  TEST_EQ(changes.hash_data_offset_inserted, 0);
+  TEST_EQ(changes.hash_data_offset_already_present, 0);
+  TEST_EQ(changes.hash_data_data_changed, 0);
 
-  // add same hash, same hash data, different source above max
-  TEST_EQ(manager.insert(binary_0, 1, 3, 12, "bl2", changes), 2);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-  TEST_EQ(changes.hash_data_data_same, 3);
-  TEST_EQ(changes.hash_data_source_inserted, 2);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 1);
-
-  // add same hash, different hash data, different source above max
-  TEST_EQ(manager.insert(binary_0, 1, 3, 13, "bl33", changes), 2);
-  TEST_EQ(changes.hash_data_data_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 2);
-  TEST_EQ(changes.hash_data_data_same, 3);
-  TEST_EQ(changes.hash_data_source_inserted, 2);
-  TEST_EQ(changes.hash_data_source_already_present, 2);
-  TEST_EQ(changes.hash_data_source_at_max, 2);
+  // find binary_0
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_FLOAT_EQ(entropy, 1.0);
+  TEST_EQ(block_label, "bl");
+  TEST_EQ(count, 3);
+  TEST_EQ(source_id_offsets.size(), 2);
+  TEST_EQ(source_id_offsets.begin()->source_id, 1);
+  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 0);
+  TEST_EQ(source_id_offsets.rbegin()->source_id, 2);
+  TEST_EQ(source_id_offsets.rbegin()->file_offsets.size(), 0);
 }
 
 // ************************************************************
@@ -733,8 +772,8 @@ int main(int argc, char* argv[]) {
 
   // lmdb_hash_data_manager
   lmdb_hash_data_manager();
-  lmdb_hash_data_manager_settings1();
-  lmdb_hash_data_manager_settings2();
+  lmdb_hash_data_manager_settings_1_0();
+  lmdb_hash_data_manager_settings_0_1();
 
   // source ID manager
   lmdb_source_id_manager();

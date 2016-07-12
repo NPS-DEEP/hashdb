@@ -26,6 +26,7 @@
 #define SOURCE_ID_OFFSETS_HPP
 
 #include <string>
+#include <set>
 #include <cstdint>
 
 namespace hashdb {

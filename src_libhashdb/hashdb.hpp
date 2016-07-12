@@ -40,7 +40,7 @@
 // version of the hashdb library
 // ************************************************************
 /**
- * Version of the hashdb library, same as hashdb::version.
+ * Version of the hashdb library, outside hashdb namespace.
  */
 extern "C"
 const char* hashdb_version();
@@ -59,7 +59,17 @@ namespace hashdb {
   class locked_member_t;
 
   // ************************************************************
-  // typedefs
+  // version of the hashdb library
+  // ************************************************************
+  /**
+   * Version of the hashdb library.
+ * Version of the hashdb library, inside hashdb namespace.
+   */
+  extern "C"
+  const char* version();
+
+  // ************************************************************
+  // source offsets
   // ************************************************************
 #ifndef SWIG
   // source_offset information
@@ -69,20 +79,8 @@ namespace hashdb {
     const std::set<uint64_t> file_offsets;
     source_offset_t(const std::string& p_file_hash,
                     const uint64_t p_sub_count,
-                    const std::set<uint64_t> p_file_offsets) :
-          file_hash(p_file_hash),
-          sub_count(p_sub_count),
-          file_offsets(p_file_offsets) {
-    }
-    bool operator<(const source_offset_t& that) const {
-      if (file_hash < that.file_hash) return true;
-      if (file_hash > that.file_hash) return false;
-
-      // the above should be sufficient but lets be complete
-      if (sub_count < that.sub_count) return true;
-      if (sub_count > that.sub_count) return false;
-      return (file_offsets > that.file_offsets);
-    }
+                    const std::set<uint64_t> p_file_offsets);
+    bool operator<(const source_offset_t& that) const;
   };
   typedef std::set<source_offset_t> source_offsets_t;
 
@@ -90,15 +88,6 @@ namespace hashdb {
   typedef std::pair<std::string, std::string> source_name_t;
   typedef std::set<source_name_t>             source_names_t;
 #endif
-
-  // ************************************************************
-  // version of the hashdb library
-  // ************************************************************
-  /**
-   * Version of the hashdb library.
-   */
-  extern "C"
-  const char* version();
 
   // ************************************************************
   // settings

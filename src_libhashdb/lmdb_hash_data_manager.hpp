@@ -46,7 +46,7 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 
-//#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -54,6 +54,7 @@
 #include "lmdb_context.hpp"
 #include "lmdb_changes.hpp"
 #include "source_id_offsets.hpp"
+#include "tprint.hpp"
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -110,6 +111,7 @@ class lmdb_hash_data_manager_t {
   }
 
   // encode file offsets into bytes at p
+  // At this layer, invalid byte alignment is fatal.
   uint8_t* encode_file_offsets(uint8_t* p, const uint64_t sub_count,
                                const file_offsets_t& file_offsets) const {
 
@@ -117,31 +119,29 @@ class lmdb_hash_data_manager_t {
     p = lmdb_helper::encode_uint64_t(sub_count, p);
 
     // add file offsets
-    uint64_t added = 0;
+    size_t count_encoded = 0;
     for (file_offsets_t::const_iterator it = file_offsets.begin();
           it != file_offsets.end(); ++it) {
 
       // stop adding if at a max_count
-      if (sub_count + added > max_count) {
+      if (sub_count + count_encoded > max_count) {
         break;
       }
 
       // stop adding if at a max sub_count
-      if (added > max_sub_count) {
+      if (count_encoded > max_sub_count) {
         break;
       }
 
-      // add if valid file_offset
+      // add file_offset else fail if invalid
       const uint64_t file_offset = *it;
       if (file_offset % byte_alignment == 0) {
         // valid file offset
         const uint64_t file_offset_index = file_offset / byte_alignment;
         p = lmdb_helper::encode_uint64_t(file_offset_index, p);
+        ++count_encoded;
       } else {
-        // invalid file offset so warn and do not encode it
-        std::cerr << "Usage error: file offset " << file_offset
-                  << " does not fit evenly along step size " << byte_alignment
-                  << ".\n";
+        assert(0);
       }
     }
     return p;
@@ -173,13 +173,13 @@ class lmdb_hash_data_manager_t {
     return sub_count;
   }
 
-  // add file offsets A to B
-  void add_file_offsets(const file_offsets_t& more_file_offsets, 
-                        file_offsets_t& file_offsets) const {
+  // add file offsets A to B, removing any bad alignment
+  void add_file_offsets(const file_offsets_t& source_file_offsets, 
+                        file_offsets_t& destination_file_offsets) const {
 
-    for (file_offsets_t::const_iterator it = more_file_offsets.begin();
-          it != more_file_offsets.end(); ++it) {
-      file_offsets.insert(*it);
+    for (file_offsets_t::const_iterator it = source_file_offsets.begin();
+          it != source_file_offsets.end(); ++it) {
+      destination_file_offsets.insert(*it);
     }
   }
 
@@ -204,6 +204,7 @@ class lmdb_hash_data_manager_t {
  */
 
   // write Type 1 context.data, use existing context.key, put must work.
+  // Return actual number of file offsets encoded.
   void put_type1(hashdb::lmdb_context_t& context,
                  const uint64_t source_id,
                  const float entropy,
@@ -407,6 +408,7 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
  *         source_id, sub_count, 0+ file_offsets
  */
   // write Type 3 context.data, use existing context.key, move cursor.
+  // Return actual number of file offsets encoded.
   void put_type3(hashdb::lmdb_context_t& context,
                  const uint64_t source_id,
                  const uint64_t sub_count,
@@ -495,7 +497,7 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
       assert(0);
     }
 
-    // key size
+    // get key size
     const size_t key_size = block_hash.size();
     uint8_t* const key_start = static_cast<uint8_t*>(
                  static_cast<void*>(const_cast<char*>(block_hash.c_str())));
@@ -504,6 +506,30 @@ print_mdb_val("hash_data_manager put_type3 data", context.data);
     if (key_size == 0) {
       std::cerr << "Usage error: the block_hash value provided to insert is empty.\n";
       return 0;
+    }
+
+    // require sub_count >= size of file_offsets
+    if (sub_count < file_offsets.size()) {
+      std::stringstream ss;
+      ss << "Usage error: sub_count " << sub_count
+         << " provided is less than file_offsets " << file_offsets.size()
+         << " provided.  Insert request aborted.\n";
+      tprint(ss.str());
+      return 0;
+    }
+
+    // require that all provided file_offsets are valid
+    for (file_offsets_t::const_iterator it = file_offsets.begin();
+          it != file_offsets.end(); ++it) {
+      if (*it % byte_alignment != 0) {
+        // invalid file offset so warn and do not add anything
+        std::stringstream ss;
+        ss << "Usage error: file offset " << *it 
+           << " does not fit evenly along step size " << byte_alignment
+           << ".  Insert request aborted.\n";
+        tprint(ss.str());
+        return 0;
+      }
     }
 
     MUTEX_LOCK(&M);
@@ -532,7 +558,7 @@ print_whole_mdb("hash_data_manager insert", context.cursor);
       put_type1(context, source_id, entropy, block_label,
                 sub_count, file_offsets);
       ++changes.hash_data_source_inserted;
-      changes.hash_data_offset_inserted += sub_count;
+      changes.hash_data_offset_inserted += file_offsets.size();
       count = sub_count;
 
     } else if (rc == 0) {
@@ -550,43 +576,56 @@ print_mdb_val("hash_data_manager insert found data", context.data);
 
       // find the existing entry type
       if (static_cast<uint8_t*>(context.data.mv_data)[0] != 0) {
-        // Type 1
+        // replace Type 1
 
-        // read the existing Type 1 entry into p_* fields:
-        uint64_t p_source_id;
-        float p_entropy;
-        std::string p_block_label;
-        uint64_t p_sub_count;
-        file_offsets_t p_file_offsets;
-        decode_type1(context, p_source_id, p_entropy, p_block_label,
-                     p_sub_count, p_file_offsets);
+        // read the existing Type 1 entry into existing_* fields:
+        uint64_t existing_source_id;
+        float existing_entropy;
+        std::string existing_block_label;
+        uint64_t existing_sub_count;
+        file_offsets_t existing_file_offsets;
+        decode_type1(context, existing_source_id,
+                     existing_entropy, existing_block_label,
+                     existing_sub_count, existing_file_offsets);
 
         // delete the existing Type 1 entry
         delete_cursor_entry(context);
 
         // write back Type 1 or Type 2 and two Type 3
-        if (source_id == p_source_id) {
+        if (source_id == existing_source_id) {
 
           // Type 1
 
           // note if metadata differs
-          if (metadata_differs(entropy, p_entropy, block_label,p_block_label)) {
+          if (metadata_differs(entropy, existing_entropy,
+                               block_label, existing_block_label)) {
             ++changes.hash_data_data_changed;
           }
 
-          // add new file_offsets
-          add_file_offsets(file_offsets, p_file_offsets);
+          // add new file_offsets, tracking change
+          const size_t size_before = existing_file_offsets.size();
+          add_file_offsets(file_offsets, existing_file_offsets);
+          const size_t size_after = existing_file_offsets.size();
+          const size_t offsets_inserted = size_after - size_before;
+          const size_t already_present = file_offsets.size()
+                                               + size_before - size_after;
+          changes.hash_data_offset_inserted += offsets_inserted;
+          changes.hash_data_offset_already_present += already_present;
 
           // write back Type 1
-          uint64_t total_sub_count = p_sub_count + sub_count;
+          uint64_t total_sub_count = existing_sub_count + sub_count;
+std::stringstream ss;
+ss << "pt1.total_sub_count " << total_sub_count << ", " << " a: " << size_before << " b: " << file_offsets.size() << " after: " << size_after << "\n";
+tprint(ss.str());
           put_type1(context, source_id, entropy, block_label,
-                    total_sub_count, p_file_offsets);
+                    total_sub_count, existing_file_offsets);
           count = total_sub_count;
         } else {
           // write back Type 2 and two Type 3, the old and the new
-          uint64_t total_count = p_sub_count + sub_count;
+          uint64_t total_count = existing_sub_count + sub_count;
           put_type2(context, entropy, block_label, total_count);
-          put_type3(context, p_source_id, p_sub_count, p_file_offsets);
+          put_type3(context, existing_source_id, existing_sub_count,
+                                                 existing_file_offsets);
           put_type3(context, source_id, sub_count, file_offsets);
           count = total_count;
         }
@@ -594,14 +633,16 @@ print_mdb_val("hash_data_manager insert found data", context.data);
       } else {
         // Type 2
 
-        // read the existing Type 2 entry into p_* fields
-        float p_entropy;
-        std::string p_block_label;
-        uint64_t p_count;
-        decode_type2(context, p_entropy, p_block_label, p_count);
+        // read the existing Type 2 entry into existing_* fields
+        float existing_entropy;
+        std::string existing_block_label;
+        uint64_t existing_count;
+        decode_type2(context, existing_entropy, existing_block_label,
+                                                           existing_count);
 
         // note if metadata differs
-        if (metadata_differs(entropy, p_entropy, block_label, p_block_label)) {
+        if (metadata_differs(entropy, existing_entropy, block_label,
+                                                   existing_block_label)) {
           ++changes.hash_data_data_changed;
         }
 
@@ -609,7 +650,7 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         delete_cursor_entry(context);
 
         // write back the updated Type 2 entry, setting the cursor
-        uint64_t total_count = p_count + sub_count;
+        uint64_t total_count = existing_count + sub_count;
         put_type2(context, entropy, block_label, total_count);
         count = total_count;
 
@@ -640,28 +681,36 @@ print_mdb_val("hash_data_manager insert found data", context.data);
           const uint8_t* const p_start =
                           static_cast<uint8_t*>(context.data.mv_data);
           const uint8_t* p = p_start;
-          uint64_t p_source_id;
-          p = lmdb_helper::decode_uint64_t(p, p_source_id);
+          uint64_t existing_source_id;
+          p = lmdb_helper::decode_uint64_t(p, existing_source_id);
 
           // see if the source ID matches
-          if (p_source_id == source_id) {
+          if (existing_source_id == source_id) {
 
             // match
 
             // read the remainder of the Type3 record
-            file_offsets_t p_file_offsets;
-            const uint64_t p_sub_count = decode_file_offsets(
-                           p, p_start + context.data.mv_size, p_file_offsets);
+            file_offsets_t existing_file_offsets;
+            const uint64_t existing_sub_count = decode_file_offsets(
+                           p, p_start + context.data.mv_size,
+                           existing_file_offsets);
 
             // delete the existing Type 3 entry
             delete_cursor_entry(context);
 
-            // add new file_offsets
-            add_file_offsets(file_offsets, p_file_offsets);
+            // add new file_offsets, tracking change
+            const size_t size_before = existing_file_offsets.size();
+            add_file_offsets(file_offsets, existing_file_offsets);
+            const size_t size_after = existing_file_offsets.size();
+            const size_t offsets_inserted = size_after - size_before;
+            const size_t already_present = file_offsets.size()
+                                               + size_before - size_after;
+            changes.hash_data_offset_inserted += offsets_inserted;
+            changes.hash_data_offset_already_present += already_present;
 
             // put in the replacement Type 3 entry
-            put_type3(context, p_source_id,
-                      p_sub_count + sub_count, file_offsets);
+            put_type3(context, existing_source_id,
+                      existing_sub_count + sub_count, file_offsets);
             break;
           }
         }

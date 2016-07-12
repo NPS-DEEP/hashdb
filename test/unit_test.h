@@ -42,7 +42,7 @@
 
 // fail if float not equal
 #define TEST_FLOAT_EQ( LHS, RHS )                                            \
-  if (!((int)(LHS*100) == (int)(RHS*100))) {                                                       \
+  if (!((int)(LHS*1000) == (int)(RHS*1000))) {                               \
     std::cerr << "ERROR: " << __FILE__ << " line " << __LINE__               \
               << ": value " << LHS << " != " << RHS << "\n";                 \
     exit(1);                                                                 \
