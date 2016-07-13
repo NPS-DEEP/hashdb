@@ -49,7 +49,6 @@ class lmdb_changes_t {
 */
   size_t hash_data_source_inserted;
   size_t hash_data_offset_inserted;
-  size_t hash_data_offset_already_present;
   size_t hash_data_data_changed;
 
   // hash
@@ -74,7 +73,6 @@ class lmdb_changes_t {
   lmdb_changes_t() :
             hash_data_source_inserted(0),
             hash_data_offset_inserted(0),
-            hash_data_offset_already_present(0),
             hash_data_data_changed(0),
             hash_prefix_inserted(0),
             hash_suffix_inserted(0),
@@ -100,10 +98,6 @@ class lmdb_changes_t {
     if (hash_data_offset_inserted) {
       os << "#     hash_data_offset_inserted: "
          << hash_data_offset_inserted<< "\n";
-    }
-    if (hash_data_offset_already_present) {
-      os << "#     hash_data_offset_already_present: "
-         << hash_data_offset_already_present<< "\n";
     }
     if (hash_data_data_changed) {
       os << "#     hash_data_data_changed: "
@@ -144,7 +138,6 @@ class lmdb_changes_t {
     }
     if (hash_data_source_inserted == 0 &&
         hash_data_offset_inserted == 0 &&
-        hash_data_offset_already_present == 0 &&
         hash_data_data_changed == 0 &&
         hash_prefix_inserted == 0 &&
         hash_suffix_inserted == 0 &&
