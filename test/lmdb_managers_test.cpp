@@ -262,7 +262,6 @@ void lmdb_hash_data_manager_empty() {
   TEST_EQ(block_label, "");
   TEST_EQ(count, 0);
   TEST_EQ(source_id_offsets.size(), 0);
-  TEST_EQ(manager.find_count(binary_0), 0);
 
   // Attempt to insert an empty key.  A warning is sent to stderr.
   TEST_EQ(manager.insert("", 1.0, "bl", 1, 2, file_offsets, changes), 0);
@@ -282,7 +281,10 @@ void lmdb_hash_data_manager_empty() {
   TEST_EQ(block_label, "");
   TEST_EQ(count, 0);
   TEST_EQ(source_id_offsets.size(), 0);
-  TEST_EQ(manager.find_count(binary_0), 0);
+
+  // iterator
+  TEST_EQ(manager.first_hash(), "");
+
 }
 
 // test Type 1
@@ -377,13 +379,6 @@ void lmdb_hash_data_manager_type1() {
   TEST_EQ(block_label, "bl2");
   TEST_EQ(count, 10);
   TEST_EQ(source_id_offsets.size(), 1);
-/* zz makes 12 come out as 0
-  file_offsets.insert(4096*2);
-  file_offsets.insert(4096*3);
-  file_offsets.insert(4096*4);
-  file_offsets.insert(4096*5);
-  file_offsets.insert(4096*6);
-*/
   TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 3);
 }
 
@@ -473,68 +468,6 @@ void lmdb_hash_data_manager_type1_1_0() {
   TEST_EQ(source_id_offsets.size(), 1);
   TEST_EQ(source_id_offsets.begin()->source_id, 1);
   TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 0);
-}
-
-// test Type 2
-void lmdb_hash_data_manager_type2() {
-
-  // variables
-  float entropy;
-  std::string block_label;
-  uint64_t count;
-  std::set<uint64_t> file_offsets;
-  hashdb::source_id_offsets_t source_id_offsets;
-  hashdb::lmdb_changes_t changes;
-
-  // create new manager
-  make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_hash_data_manager_t manager(
-                            hashdb_dir, hashdb::RW_NEW, 512, 4, 3);
-
-  // set up file_offsets
-  file_offsets.insert(512);
-  file_offsets.insert(1024);
-
-  // Insert offset 512, 1024 with sub_count=2.
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 2, file_offsets, changes), 2);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_offset_inserted, 1);
-  TEST_EQ(changes.hash_data_data_changed, 0);
-
-  // find binary_0
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
-                                             source_id_offsets), true);
-  TEST_FLOAT_EQ(entropy, 1.0);
-  TEST_EQ(block_label, "bl");
-  TEST_EQ(count, 2);
-  TEST_EQ(source_id_offsets.size(), 1);
-  TEST_EQ(source_id_offsets.begin()->source_id, 1);
-  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 2);
-  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 512);
-  TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 1024);
-
-  // add 2048, 4096
-  file_offsets.insert(2048);
-  file_offsets.insert(4096);
-
-  // Re-insert 512, 1024, add 2048, 4096, use sub_count 4, and change data
-  // 4096 will not fit because max_sub_count=3
-  TEST_EQ(manager.insert(binary_0, 1.5, "bl2", 1, 4, file_offsets, changes), 6);
-  TEST_EQ(changes.hash_data_source_inserted, 1);
-  TEST_EQ(changes.hash_data_offset_inserted, 3);
-  TEST_EQ(changes.hash_data_data_changed, 1);
-
-  // find binary_0
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
-                                             source_id_offsets), true);
-  TEST_FLOAT_EQ(entropy, 1.5);
-  TEST_EQ(block_label, "bl2");
-  TEST_EQ(count, 6);
-  TEST_EQ(source_id_offsets.size(), 1);
-  TEST_EQ(source_id_offsets.begin()->source_id, 1);
-  TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 2);
-  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 512);
-  TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 2048);
 }
 
 // test Type 2 and Type 3
@@ -657,6 +590,40 @@ void lmdb_hash_data_manager_type2_and_type3() {
   TEST_EQ(it->source_id, 3);
   TEST_EQ(it->sub_count, 1);
   TEST_EQ(it->file_offsets.size(), 0);
+}
+
+void lmdb_hash_data_manager_count_and_iterator() {
+
+  // create new manager
+  make_new_hashdb_dir(hashdb_dir);
+  hashdb::lmdb_hash_data_manager_t manager(
+                            hashdb_dir, hashdb::RW_NEW, 512, 2, 1);
+
+  // set up file_offsets
+  std::set<uint64_t> file_offsets;
+  file_offsets.insert(512*1);
+  file_offsets.insert(512*2);
+
+  // count in Type 1
+  hashdb::lmdb_changes_t changes;
+  manager.insert(binary_1, 0.0, "", 1, 10, file_offsets, changes);
+
+  // count in Type 2
+  manager.insert(binary_2, 0.0, "", 2, 5, file_offsets, changes);
+  manager.insert(binary_2, 0.0, "", 3, 15, file_offsets, changes);
+
+  // find_count
+  TEST_EQ(manager.find_count(binary_0), 0);
+  TEST_EQ(manager.find_count(binary_1), 10);
+  TEST_EQ(manager.find_count(binary_2), 20);
+
+  // iterator
+  std::string block_hash = manager.first_hash();
+  TEST_EQ(block_hash, binary_1);
+  block_hash = manager.next_hash(block_hash);
+  TEST_EQ(block_hash, binary_2);
+  block_hash = manager.next_hash(block_hash);
+  TEST_EQ(block_hash, "");
 }
 
 // ************************************************************
@@ -889,6 +856,7 @@ int main(int argc, char* argv[]) {
   lmdb_hash_data_manager_type1_0_1();
   lmdb_hash_data_manager_type1_1_0();
   lmdb_hash_data_manager_type2_and_type3();
+  lmdb_hash_data_manager_count_and_iterator();
 
   // source ID manager
   lmdb_source_id_manager();

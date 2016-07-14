@@ -99,19 +99,6 @@ class lmdb_hash_data_manager_t {
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
   lmdb_hash_data_manager_t& operator=(const lmdb_hash_data_manager_t&);
 
-/*
-  // delete element at current cursor
-  void delete_cursor_entry(hashdb::lmdb_context_t& context) {
-    int rc = mdb_cursor_del(context.cursor, 0);
-
-    // the removal must work
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-  }
-*/
-
   // move cursor to first entry of current key
   void cursor_to_first_current(hashdb::lmdb_context_t& context) {
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
@@ -268,29 +255,14 @@ class lmdb_hash_data_manager_t {
             block_label1 != block_label2);
   }
 
-/*
- * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
- *
- * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, offsets_stored
- *
- * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
- */
-
-  // write Type 1 context.data, use existing context.key, put must work.
-  // Return actual number of file offsets encoded.
-  void put_type1(hashdb::lmdb_context_t& context, const unsigned int flags,
-                 const uint64_t source_id,
-                 const float entropy,
-                 const std::string& block_label,
-                 const uint64_t sub_count,
-                 const file_offsets_t& file_offsets) {
+  std::string encode_type1(const uint64_t source_id,
+                           const float entropy,
+                           const std::string& block_label,
+                           const uint64_t sub_count,
+                           const file_offsets_t& file_offsets) {
 
     const size_t block_label_size = block_label.size();
-
-    // allocate space
+    // space for encoding
     size_t data_size = 10 + 10 + (10 + block_label_size) + 10 + 10 +
                        (10 * max_sub_count);
     uint8_t* const data = new uint8_t[data_size];
@@ -311,35 +283,110 @@ class lmdb_hash_data_manager_t {
     // add sub_count and file offsets
     p = encode_file_offsets(p, sub_count, file_offsets);
 
-    // store data at new key
-    context.data.mv_size = p - data;
-    context.data.mv_data = data;
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager put_type1 key", context.key);
-print_mdb_val("hash_data_manager put_type1 data", context.data);
-#endif
-    int rc = mdb_cursor_put(context.cursor,
-                            &context.key, &context.data, flags);
-
-    // put must work
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-
+    std::string encoding(reinterpret_cast<const char*>(data), p - data);
     delete[] data;
+    return encoding;
   }
 
-/*
- * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
- *
- * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, offsets_stored
- *
- * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
- */
+  std::string encode_type2(const float entropy,
+                           const std::string& block_label,
+                           const uint64_t count,
+                           const uint64_t offsets_stored) {
+
+    // make data with enough space for fields
+    const size_t block_label_size = block_label.size();
+    uint8_t data[1 + 10 + (10 + block_label_size) + 10];
+    uint8_t* p = data;
+
+    // add NULL byte
+    p[0] = 0;
+    ++p;
+
+    // calculate scaled entropy
+    const uint64_t scaled_entropy = entropy * entropy_scale;
+
+    // set fields
+    p = lmdb_helper::encode_uint64_t(scaled_entropy, p);
+    p = lmdb_helper::encode_uint64_t(block_label_size, p);
+    std::memcpy(p, block_label.c_str(), block_label_size);
+    p += block_label_size;
+    p = lmdb_helper::encode_uint64_t(count, p);
+    p = lmdb_helper::encode_uint64_t(offsets_stored, p);
+
+    std::string encoding(reinterpret_cast<const char*>(data), p - data);
+    return encoding;
+  }
+
+  std::string encode_type3(const uint64_t source_id,
+                           const uint64_t sub_count,
+                           const file_offsets_t& file_offsets) {
+
+    // allocate space
+    size_t data_size = 10 + 10 + (10 * max_sub_count);
+    uint8_t* const data = new uint8_t[data_size];
+    uint8_t* p = data;
+
+    // add source_id
+    p = lmdb_helper::encode_uint64_t(source_id, p);
+
+    // add count and file offsets
+    p = encode_file_offsets(p, sub_count, file_offsets);
+
+    std::string encoding(reinterpret_cast<const char*>(data), p - data);
+    delete[] data;
+    return encoding;
+  }
+
+  // write the enocding.  Key must be valid.
+  void write_encoding(hashdb::lmdb_context_t& context,
+                      const std::string& data_string) {
+
+    // put in a new record in this key set
+    context.data.mv_size = data_string.size();
+    context.data.mv_data = static_cast<uint8_t*>(
+             static_cast<void*>(const_cast<char*>(data_string.c_str())));
+    int rc = mdb_cursor_put(context.cursor, &context.key, &context.data,
+                            MDB_NODUPDATA);
+    if (rc != 0) assert(0);
+  }
+
+  // overwrite the record at the cursor, try to optimize
+  void overwrite_encoding(hashdb::lmdb_context_t& context,
+                          const std::string& data_string) {
+
+    if (context.data.mv_size == data_string.size()) {
+      // replace in place
+      context.data.mv_data = static_cast<uint8_t*>(
+               static_cast<void*>(const_cast<char*>(data_string.c_str())));
+      int rc = mdb_cursor_put(context.cursor, &context.key, &context.data,
+                              MDB_CURRENT);
+      if (rc != 0) assert(0);
+
+    } else {
+      // different size so delete and write new
+
+      // get copy of key
+      const std::string key_string(
+                       reinterpret_cast<const char*>(context.key.mv_data),
+                       context.key.mv_size);
+
+      // delete at cursor
+      int rc = mdb_cursor_del(context.cursor, 0);
+      if (rc != 0) assert(0);
+
+      // write replacement record
+      context.key.mv_size = key_string.size();
+      context.key.mv_data = static_cast<uint8_t*>(
+               static_cast<void*>(const_cast<char*>(key_string.c_str())));
+      context.data.mv_size = data_string.size();
+      context.data.mv_data = static_cast<uint8_t*>(
+               static_cast<void*>(const_cast<char*>(data_string.c_str())));
+      rc = mdb_cursor_put(context.cursor, &context.key, &context.data,
+                          MDB_NODUPDATA);
+      if (rc != 0) assert(0);
+    }
+  }
+
   // parse Type 1 context.data into these parameters
   void decode_type1(hashdb::lmdb_context_t& context,
                     uint64_t& source_id,
@@ -349,6 +396,10 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
                     file_offsets_t& file_offsets
                    ) const {
 
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_mdb_val("hash_data_manager decode_type1 key", context.key);
+print_mdb_val("hash_data_manager decode_type1 data", context.data);
+#endif
     // clear any existing offsets
     file_offsets.clear();
 
@@ -376,61 +427,6 @@ print_mdb_val("hash_data_manager put_type1 data", context.data);
     // read sub_count and file offsets
     sub_count = decode_file_offsets(p, p_start + context.data.mv_size,
                                     file_offsets);
-  }
-
-/*
- * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
- *
- * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, offsets_stored
- *
- * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
- */
-  // write Type 2 context.data, use existing context.key, set cursor.
-  void put_type2(hashdb::lmdb_context_t& context, const unsigned int flags,
-                 const float entropy,
-                 const std::string& block_label, const uint64_t count,
-                 const uint64_t offsets_stored) {
-
-    // prepare Type 2 entry:
-
-    // make data with enough space for fields
-    const size_t block_label_size = block_label.size();
-    uint8_t data[1 + 10 + (10 + block_label_size) + 10];
-    uint8_t* p = data;
-
-    // add NULL byte
-    p[0] = 0;
-    ++p;
-
-    // calculate scaled entropy
-    const uint64_t scaled_entropy = entropy * entropy_scale;
-
-    // set fields
-    p = lmdb_helper::encode_uint64_t(scaled_entropy, p);
-    p = lmdb_helper::encode_uint64_t(block_label_size, p);
-    std::memcpy(p, block_label.c_str(), block_label_size);
-    p += block_label_size;
-    p = lmdb_helper::encode_uint64_t(count, p);
-    p = lmdb_helper::encode_uint64_t(offsets_stored, p);
-
-    // store data at new key
-    context.data.mv_size = p - data;
-    context.data.mv_data = data;
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager put_type2 key", context.key);
-print_mdb_val("hash_data_manager put_type2 data", context.data);
-#endif
-    int rc = mdb_cursor_put(context.cursor,
-                            &context.key, &context.data, flags);
-
-    // put must work
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
   }
 
   // parse Type 2 context.data into these parameters
@@ -480,53 +476,6 @@ print_mdb_val("hash_data_manager decode_type2 data", context.data);
     }
   }
 
-/*
- * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
- *
- * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, offsets_stored
- *
- * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
- */
-  // write Type 3 context.data, use existing context.key, move cursor.
-  // Return actual number of file offsets encoded.
-  void put_type3(hashdb::lmdb_context_t& context, const unsigned int flags,
-                 const uint64_t source_id,
-                 const uint64_t sub_count,
-                 const file_offsets_t& file_offsets) {
-
-    // allocate space
-    size_t data_size = 10 + 10 + (10 * max_sub_count);
-    uint8_t* const data = new uint8_t[data_size];
-    uint8_t* p = data;
-
-    // add source_id
-    p = lmdb_helper::encode_uint64_t(source_id, p);
-
-    // add count and file offsets
-    p = encode_file_offsets(p, sub_count, file_offsets);
-
-    // store data at new key
-    context.data.mv_size = p - data;
-    context.data.mv_data = data;
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager put_type3 key", context.key);
-print_mdb_val("hash_data_manager put_type3 data", context.data);
-#endif
-    int rc = mdb_cursor_put(context.cursor,
-                            &context.key, &context.data, flags);
-
-    // put must work
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-
-    delete[] data;
-  }
-
   // parse Type 3 context.data into these parameters
   void decode_type3(hashdb::lmdb_context_t& context,
                     uint64_t& source_id,
@@ -550,7 +499,6 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
                                     file_offsets);
   }
 
-
   // new Type 1
   uint64_t insert_new_type1(hashdb::lmdb_context_t& context,
                             const uint64_t source_id,
@@ -565,9 +513,11 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     size_t offsets_added = add_file_offsets(
                                     file_offsets, addable_file_offsets, 0);
 
+    // encode Type 1
+    std::string encoding = encode_type1(source_id, entropy, block_label,
+                                        sub_count, addable_file_offsets);
     // write Type 1
-    put_type1(context, MDB_NODUPDATA, source_id, entropy, block_label,
-              sub_count, addable_file_offsets);
+    write_encoding(context, encoding);
 
     // log changes
     ++changes.hash_data_source_inserted;
@@ -603,20 +553,21 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
       ++changes.hash_data_data_changed;
     }
 
-    // add new file_offsets, no existing offsets stored
+    // add new file_offsets to existing offsets
     size_t offsets_added = add_file_offsets(file_offsets,
-                                   existing_file_offsets, 0);
-
-    // track changes
-    changes.hash_data_offset_inserted += offsets_added;
+                      existing_file_offsets, existing_file_offsets.size());
 
     // replace Type 1 at cursor
-    uint64_t total_sub_count = existing_sub_count + sub_count;
-    put_type1(context, MDB_CURRENT, source_id, entropy, block_label,
-              total_sub_count, existing_file_offsets);
+    uint64_t combinded_sub_count = existing_sub_count + sub_count;
+    std::string encoding = encode_type1(source_id, entropy, block_label,
+                                  combinded_sub_count, existing_file_offsets);
+    overwrite_encoding(context, encoding);
+
+    // log changes
+    changes.hash_data_offset_inserted += offsets_added;
 
     // return new total count
-    return total_sub_count;
+    return combinded_sub_count;
   }
 
   // new Type 2 and two new Type 3 from old Type 1
@@ -647,21 +598,24 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
 
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
-    size_t offsets_added = add_file_offsets(
-                                    file_offsets, addable_file_offsets, 0);
-
-    // track changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += offsets_added;
+    size_t offsets_added = add_file_offsets(file_offsets,
+                      addable_file_offsets, existing_file_offsets.size());
 
     // replace Type 1 with Type 2 and write back two new Type 3
     uint64_t total_count = existing_sub_count + sub_count;
-    put_type2(context, MDB_CURRENT, entropy, block_label, total_count,
-              existing_file_offsets.size() + offsets_added);
-    put_type3(context, MDB_NODUPDATA, existing_source_id, existing_sub_count,
-                                           existing_file_offsets);
-    put_type3(context, MDB_NODUPDATA, source_id, sub_count,
-                                           addable_file_offsets);
+    std::string encoding;
+    encoding = encode_type2(entropy, block_label, total_count,
+                            existing_file_offsets.size() + offsets_added);
+    overwrite_encoding(context, encoding);
+    encoding = encode_type3(existing_source_id, existing_sub_count,
+                            existing_file_offsets);
+    write_encoding(context, encoding);
+    encoding = encode_type3(source_id, sub_count, addable_file_offsets);
+    write_encoding(context, encoding);
+
+    // log changes
+    ++changes.hash_data_source_inserted;
+    changes.hash_data_offset_inserted += offsets_added;
 
     // return new total count
     return total_count;
@@ -696,18 +650,20 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     size_t offsets_added = add_file_offsets(file_offsets, addable_file_offsets,
                                             existing_offsets_stored);
 
-    // track changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += offsets_added;
-
     // write back the updated Type 2 entry
     uint64_t total_count = existing_count + sub_count;
-    put_type2(context, MDB_CURRENT, entropy, block_label, total_count,
-              existing_offsets_stored + offsets_added);
+    std::string encoding;
+    encoding = encode_type2(entropy, block_label, total_count,
+                            existing_offsets_stored + offsets_added);
+    overwrite_encoding(context, encoding);
 
     // write the new Type 3 entry
-    put_type3(context, MDB_NODUPDATA, source_id, sub_count,
-              addable_file_offsets);
+    encoding = encode_type3(source_id, sub_count, addable_file_offsets);
+    write_encoding(context, encoding);
+
+    // log changes
+    ++changes.hash_data_source_inserted;
+    changes.hash_data_offset_inserted += offsets_added;
 
     // return new total count
     return total_count;
@@ -730,6 +686,11 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     decode_type3(context, existing_source_id, existing_sub_count,
                  existing_file_offsets);
 
+    // validate usage
+    if (source_id != existing_source_id) {
+      assert(0);
+    }
+
     // move the cursor back to the Type 2 entry
     cursor_to_first_current(context);
 
@@ -750,17 +711,17 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
     size_t offsets_added = add_file_offsets(existing_file_offsets,
-                             addable_file_offsets, existing_offsets_stored);
-
-    // track changes
-    changes.hash_data_offset_inserted += offsets_added;
+             addable_file_offsets, existing_offsets_stored
+             - existing_file_offsets.size()) - existing_file_offsets.size();
 
     // replace the updated Type 2 entry
     uint64_t total_count = existing_count + sub_count;
-    put_type2(context, MDB_CURRENT, entropy, block_label, total_count,
-              existing_offsets_stored + offsets_added);
+    std::string encoding;
+    encoding = encode_type2(entropy, block_label, total_count,
+                            existing_offsets_stored + offsets_added);
+    overwrite_encoding(context, encoding);
 
-    // move cursor back to the Type 3 entry
+    // move cursor forward to the correct Type 3 entry
     bool worked = cursor_to_type3(context, source_id);
     if (!worked) {
       // program error
@@ -768,7 +729,12 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     }
 
     // replace the updated Type 3 entry
-    put_type3(context, MDB_CURRENT, source_id, sub_count, addable_file_offsets);
+    encoding = encode_type3(source_id, existing_sub_count + sub_count,
+                            addable_file_offsets);
+    overwrite_encoding(context, encoding);
+
+    // track changes
+    changes.hash_data_offset_inserted += offsets_added;
 
     // return new total count
     return total_count;
@@ -868,7 +834,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     hashdb::lmdb_context_t context(env, true, true);
     context.open();
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_whole_mdb("hash_data_manager insert", context.cursor);
+print_whole_mdb("hash_data_manager insert begin", context.cursor);
 #endif
 
     // set key
@@ -942,6 +908,9 @@ print_mdb_val("hash_data_manager insert found data", context.data);
       assert(0);
       return 0; // for mingw
     }
+#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+print_whole_mdb("hash_data_manager insert end", context.cursor);
+#endif
 
     context.close();
     MUTEX_UNLOCK(&M);
@@ -951,16 +920,6 @@ print_mdb_val("hash_data_manager insert found data", context.data);
   /**
    * Read data for the hash.  False if the hash does not exist.
    */
-/*
- * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
- *
- * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, offsets_stored
- *
- * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
- */
   bool find(const std::string& block_hash,
             float& entropy,
             std::string& block_label,
