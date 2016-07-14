@@ -626,6 +626,39 @@ void lmdb_hash_data_manager_count_and_iterator() {
   TEST_EQ(block_hash, "");
 }
 
+void lmdb_hash_data_manager_many_offsets() {
+
+  hashdb::lmdb_changes_t changes;
+  std::set<uint64_t> file_offsets;
+  float entropy;
+  std::string block_label;
+  uint64_t count;
+  hashdb::source_id_offsets_t source_id_offsets;
+  hashdb::source_id_offsets_t::const_iterator it;
+
+  // create new manager
+  make_new_hashdb_dir(hashdb_dir);
+  hashdb::lmdb_hash_data_manager_t manager(
+                            hashdb_dir, hashdb::RW_NEW, 512, 2000, 2000);
+
+  for (int i=0; i< 3000; ++i) {
+    file_offsets.clear();
+    file_offsets.insert(512*i);
+    manager.insert(binary_0, 0.0, "", 1, 1, file_offsets, changes);
+  }
+
+  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+                                             source_id_offsets), true);
+  TEST_EQ(count, 3000);
+  TEST_EQ(source_id_offsets.size(), 1);
+  it = source_id_offsets.begin();
+  TEST_EQ(it->source_id, 1);
+  TEST_EQ(it->sub_count, 2000);
+  TEST_EQ(*(it->file_offsets.begin()), 512*0)
+  TEST_EQ(*(it->file_offsets.rbegin()), 512*1999)
+}
+
+
 // ************************************************************
 // lmdb_source_id_manager
 // ************************************************************
@@ -857,6 +890,7 @@ int main(int argc, char* argv[]) {
   lmdb_hash_data_manager_type1_1_0();
   lmdb_hash_data_manager_type2_and_type3();
   lmdb_hash_data_manager_count_and_iterator();
+  lmdb_hash_data_manager_many_offsets();
 
   // source ID manager
   lmdb_source_id_manager();
