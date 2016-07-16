@@ -363,6 +363,7 @@ void lmdb_hash_data_manager_type1() {
   TEST_EQ(count, 8);
   TEST_EQ(source_id_offsets.size(), 1);
   TEST_EQ(source_id_offsets.begin()->file_offsets.size(), 3);
+  TEST_EQ(*(source_id_offsets.begin()->file_offsets.begin()), 512*1);
   TEST_EQ(*(source_id_offsets.begin()->file_offsets.rbegin()), 512*3);
 
   // Insert 512*3, 512*4 again.
@@ -626,7 +627,7 @@ void lmdb_hash_data_manager_count_and_iterator() {
   TEST_EQ(block_hash, "");
 }
 
-void lmdb_hash_data_manager_many_offsets() {
+void lmdb_hash_data_manager_maximums() {
 
   hashdb::lmdb_changes_t changes;
   std::set<uint64_t> file_offsets;
@@ -639,25 +640,44 @@ void lmdb_hash_data_manager_many_offsets() {
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
   hashdb::lmdb_hash_data_manager_t manager(
-                            hashdb_dir, hashdb::RW_NEW, 512, 2000, 2000);
+                            hashdb_dir, hashdb::RW_NEW, 512, 60, 55);
 
-  for (int i=0; i< 3000; ++i) {
+  // max offsets
+  for (int i=0; i<100; ++i) {
     file_offsets.clear();
     file_offsets.insert(512*i);
     manager.insert(binary_0, 0.0, "", 1, 1, file_offsets, changes);
+    manager.insert(binary_0, 0.0, "", 2, 1, file_offsets, changes);
   }
 
   TEST_EQ(manager.find(binary_0, entropy, block_label, count,
                                              source_id_offsets), true);
-  TEST_EQ(count, 3000);
-  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(count, 200);
+  TEST_EQ(source_id_offsets.size(), 2);
   it = source_id_offsets.begin();
   TEST_EQ(it->source_id, 1);
-  TEST_EQ(it->sub_count, 2000);
-  TEST_EQ(*(it->file_offsets.begin()), 512*0)
-  TEST_EQ(*(it->file_offsets.rbegin()), 512*1999)
-}
+  TEST_EQ(it->sub_count, 100);
+  TEST_EQ(it->file_offsets.size(), 50);
+  ++it;
+  TEST_EQ(it->source_id, 2);
+  TEST_EQ(it->sub_count, 100);
+  TEST_EQ(it->file_offsets.size(), 50);
 
+  // max block_label length, Type 1
+  file_offsets.clear();
+  file_offsets.insert(512*0);
+  manager.insert(binary_1, 0.0, "0123456789a", 1, 1, file_offsets, changes);
+  manager.find(binary_1, entropy, block_label, count, source_id_offsets);
+  TEST_EQ(source_id_offsets.size(), 1);
+  TEST_EQ(block_label, "0123456789");
+
+  // max block_label length, Type 2
+  manager.insert(binary_1, 0.0, "0123456789a", 2, 1, file_offsets, changes);
+  manager.find(binary_1, entropy, block_label, count, source_id_offsets);
+  TEST_EQ(source_id_offsets.size(), 2);
+  TEST_EQ(block_label, "0123456789");
+  TEST_EQ(block_label, "0123456789");
+}
 
 // ************************************************************
 // lmdb_source_id_manager
@@ -890,7 +910,7 @@ int main(int argc, char* argv[]) {
   lmdb_hash_data_manager_type1_1_0();
   lmdb_hash_data_manager_type2_and_type3();
   lmdb_hash_data_manager_count_and_iterator();
-  lmdb_hash_data_manager_many_offsets();
+  lmdb_hash_data_manager_maximums();
 
   // source ID manager
   lmdb_source_id_manager();

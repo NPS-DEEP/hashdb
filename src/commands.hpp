@@ -1108,7 +1108,7 @@ class out_ptr_t {
       // add hash
       std::set<uint64_t> file_offsets;
       file_offsets.insert((i + start_index) * byte_alignment);
-      manager.insert_hash(random_binary_hash(), 0.0, "",
+      manager.insert_hash(binary_hash, 0.0, "",
                           file_binary_hash, 1, file_offsets);
 
       // update progress tracker
