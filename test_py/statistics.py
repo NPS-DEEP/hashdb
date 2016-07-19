@@ -7,8 +7,8 @@ import helpers as H
 def test_size():
     # hash stores
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0011223344556677", "source_offset_pairs":["0000000000000000", 0]}',
-'{"block_hash":"00112233556677", "source_offset_pairs":["0000000000000000", 512]}'])
+'{"block_hash":"0011223344556677", "source_offsets":["0000000000000000", 1, [0]]}',
+'{"block_hash":"00112233556677", "source_offsets":["0000000000000000", 1, [512]]}'])
     expected_answer = [
 '{"hash_data_store":2, "hash_store":1, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
@@ -55,18 +55,18 @@ def test_sources():
 
 def test_histogram():
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
-'{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
-'{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])
+'{"block_hash":"0000000000000000", "source_offsets":[]}',
+'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
+'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
 
     returned_answer = H.hashdb(["histogram", "temp_1.hdb"])
     H.lines_equals(returned_answer, [
-'# hashdb-Version',
-'# command_line: ../src/hashdb histogram temp_1.hdb',
+'# command: ',
+'# hashdb-Version: ',
 '{"total_hashes": 3, "total_distinct_hashes": 1}',
 '{"duplicates":1, "distinct_hashes":1, "total":1}',
 '{"duplicates":2, "distinct_hashes":1, "total":2}',
-'# Processing index 2 of 2 completed.',
+'# Processing 2 of 2 completed.',
 ''])
 
 def test_duplicates():
@@ -74,52 +74,52 @@ def test_duplicates():
     # hash 1... has one source with one pair.
     # hash 2... has one source with two pairs.
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
-'{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
-'{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])
+'{"block_hash":"0000000000000000", "source_offsets":[]}',
+'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
+'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
 
     # zero
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "0"])
     H.lines_equals(returned_answer, [
+'# command: ',
 '# hashdb-Version: ',
-'# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
-'Processing index 4 of 4 completed.',
+'# Processing 2 of 2 completed.',
 ''])
 
     # one
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "1"])
     H.lines_equals(returned_answer, [
+'# command: ',
 '# hashdb-Version: ',
-'# command_line: ../src/hashdb duplicates temp_1.hdb 1',
-'1111111111111111	{"block_hash":"1111111111111111","entropy":0.0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0]}',
-'Processing index 4 of 4 completed.',
+'1111111111111111	{"block_hash":"1111111111111111","entropy":0.0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",1,[0]]}',
+'# Processing 2 of 2 completed.',
 ''])
 
     # two
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "2"])
     H.lines_equals(returned_answer, [
+'# command: ',
 '# hashdb-Version: ',
-'# command_line: ../src/hashdb duplicates temp_1.hdb 2',
-'2222222222222222	{"block_hash":"2222222222222222","entropy":0.0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}',
-'# Processing index 4 of 4 completed.',
+'2222222222222222	{"block_hash":"2222222222222222","entropy":0.0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",2,[0,512]]}',
+'# Processing 2 of 2 completed.',
 ''])
 
     # three
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "3"])
     H.lines_equals(returned_answer, [
+'# command: ',
 '# hashdb-Version: ',
-'# command_line: ../src/hashdb duplicates temp_1.hdb 0',
 'No hashes were found with this count.',
-'Processing index 4 of 4 completed.',
+'# Processing 2 of 2 completed.',
 ''])
 
 def test_hash_table():
     # note that the first hash doesn't go in at all, next goes in once, last goes in twice.
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offset_pairs":[]}',
-'{"block_hash":"1111111111111111", "source_offset_pairs":["0000000000000000", 0]}',
-'{"block_hash":"2222222222222222", "source_offset_pairs":["0000000000000000", 0,"0000000000000000",512]}'])
+'{"block_hash":"0000000000000000", "source_offsets":[]}',
+'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
+'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
 
     # no match
     returned_answer = H.hashdb(["hash_table", "temp_1.hdb", "0011223344556677"])
@@ -130,11 +130,11 @@ def test_hash_table():
     # two matches
     returned_answer = H.hashdb(["hash_table", "temp_1.hdb", "0000000000000000"])
     H.lines_equals(returned_answer, [
+'# command: ',
 '# hashdb-Version: ',
-'# command_line: ../src/hashdb hash_table temp_1.hdb 0000000000000000',
-'1111111111111111	{"block_hash":"1111111111111111","entropy":0.0,"block_label":"","source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offset_pairs":["0000000000000000",0]}',
-'2222222222222222	{"block_hash":"2222222222222222","entropy":0.0,"block_label":"","source_list_id":1696784233,"sources":[],"source_offset_pairs":["0000000000000000",0,"0000000000000000",512]}',
-'# Processing index 4 of 4 completed.',
+'1111111111111111	{"block_hash":"1111111111111111","entropy":0.0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",1,[0]]}',
+'2222222222222222	{"block_hash":"2222222222222222","entropy":0.0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[],"source_offsets":["0000000000000000",2,[0,512]]}',
+'# Processing 2 of 2 completed.',
 ''])
 
 if __name__=="__main__":

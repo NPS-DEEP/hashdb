@@ -21,7 +21,7 @@ def test_import_tab1():
     H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     returned_answer = H.read_file("temp_1.json")
-    expected_answer = ["#","#",
+    expected_answer = ["# command: ","# hashdb-Version: ",
 '{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_1.tab","temp_1.tab"]}',
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_1.tab","temp_1.tab"]}',
 '{"file_hash":"1111111111111111","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_1.tab","temp_1.tab"]}',
@@ -44,7 +44,7 @@ def test_import_tab2():
     H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
 
     returned_answer = H.read_file("temp_1.json")
-    expected_answer = ["#","#", \
+    expected_answer = ["# command: ","# hashdb-Version: ", \
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["r","temp_1.tab"]}',
 '{"block_hash":"8899aabbccddeeff","entropy":0.0,"block_label":"","source_offsets":["0011223344556677",1,[0]]}'
 ]
@@ -75,7 +75,7 @@ def test_import_tab3():
     H.hashdb(["export", "temp_2.hdb", "temp_2.json"])
 
     returned_answer = H.read_file("temp_2.json")
-    expected_answer = ["#","#", \
+    expected_answer = ["# command: ","# hashdb-Version: ", \
 '{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
 '{"file_hash":"1111111111111111","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["temp_2.tab","temp_2.tab"]}',
@@ -102,7 +102,7 @@ def test_import_json():
 ]
 
     expected_answer = [
-"#","#",
+"# command: ","# hashdb-Version: ",
 '{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
 '{"file_hash":"0011223344556677","filesize":6,"file_type":"fta","zero_count":7,"nonprobative_count":8,"name_pairs":["r1","f1"]}',
 '{"file_hash":"1111111111111111","filesize":9,"file_type":"ftc","zero_count":10,"nonprobative_count":11,"name_pairs":["r3","f3"]}',

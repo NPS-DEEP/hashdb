@@ -15,7 +15,7 @@ json_db1 = [
 ]
 
 json_out1 = [
-'#', '#',
+'# command: ', '# hashdb-Version: ',
 '{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
 '{"file_hash":"0011223344556677","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["repository1","temp_1.tab"]}',
 '{"file_hash":"1111111111111111","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["repository1","temp_1.tab","repository2","second_temp_1.tab"]}',
@@ -67,7 +67,7 @@ def test_add_multiple():
 '{"file_hash":"22","filesize":2,"file_type":"ft2","zero_count":16,"nonprobative_count":222,"name_pairs":["rn2","fn2"]}',
 '{"block_hash":"22222222","entropy":202.0,"block_label":"bl2","source_offsets":["22",1,[1024]]}']
     json3_db3 = [
-'#','#',
+'# command: ','# hashdb-Version: ',
 '{"file_hash":"11","filesize":1,"file_type":"ft1","zero_count":15,"nonprobative_count":111,"name_pairs":["rn1","fn1"]}',
 '{"file_hash":"22","filesize":2,"file_type":"ft2","zero_count":16,"nonprobative_count":222,"name_pairs":["rn2","fn2"]}',
 '{"block_hash":"11111111","entropy":101.0,"block_label":"bl1","source_offsets":["11",1,[1024]]}',

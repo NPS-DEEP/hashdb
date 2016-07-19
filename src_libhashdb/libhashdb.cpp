@@ -860,14 +860,12 @@ namespace hashdb {
     uint64_t unused_count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
-std::cerr << "export_hash_json.a block_hash " << bin_to_hex(block_hash) << "\n";
     // scan
     bool found_hash = find_hash(block_hash, entropy, block_label, unused_count,
                                 *source_offsets);
 
     std::string json_hash_string;
     if (found_hash) {
-std::cerr << "export_hash_json.b\n";
 
       // prepare JSON
       rapidjson::Document json_doc;
@@ -913,7 +911,6 @@ std::cerr << "export_hash_json.b\n";
     } else {
       // clear the source offset pairs string
       json_hash_string = "";
-std::cerr << "export_hash_json.c\n";
     }
 
     delete source_offsets;

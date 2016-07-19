@@ -62,7 +62,7 @@ def _bad_list(a,b):
         print("'%s'" % line.strip())
     raise ValueError("list mismatch")
 
-# length must be the same, but comments may differ
+# length must be the same, but specific comments may differ
 def lines_equals(a,b):
     # length differs
     if len(a) != len(b) or len(a) == 0:
@@ -70,9 +70,11 @@ def lines_equals(a,b):
         _bad_list(a,b)
     # lines differ
     for item_a, item_b in zip(a, b):
-        if len(item_a) != 0 and len(item_b) != 0 and \
-           item_a[0] != '#' and item_b[0] != '#' and \
-                                   item_a.strip() != item_b.strip():
+        if item_a[:11] == '# command: ' and item_b[:11] == '# command: ':
+            continue
+        if item_a[:18] == '# hashdb-Version: ' and item_b[:18] == '# hashdb-Version: ':
+            continue
+        if item_a.strip() != item_b.strip():
             print("mismatch:\na: '" + item_a.strip() + "',\nb:'" + item_b.strip() + "'")
             _bad_list(a,b)
 

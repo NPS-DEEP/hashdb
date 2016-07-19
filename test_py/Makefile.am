@@ -19,6 +19,8 @@
 
 # This file assists in testing and timing analysis.
 
+# To run an individual test: make check TESTS='scan.py'
+
 python_tests = \
 	new_database.py \
 	import_export.py \

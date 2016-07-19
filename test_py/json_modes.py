@@ -6,7 +6,7 @@ import helpers as H
 
 json_data = ["#","#", \
 '{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}',
-'{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","source_offset_pairs":["0011223344556677",0]}'
+'{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","source_offsets":["0011223344556677",1,[0]]}'
 ]
 
 # test all modes using the scan_list command
@@ -28,8 +28,8 @@ def test_json_modes():
     H.lines_equals(returned_answer, [
 '# command: ',
 '# hashdb-Version: ',
-'fp1	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offset_pairs":["0011223344556677",0]}',
-'fp2	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offset_pairs":["0011223344556677",0]}',
+'fp1	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","count":1,"source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offsets":["0011223344556677",1,[0]]}',
+'fp2	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","count":1,"source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offsets":["0011223344556677",1,[0]]}',
 '# scan_list completed.',
 ''
 ])
@@ -39,7 +39,7 @@ def test_json_modes():
     H.lines_equals(returned_answer, [
 '# command: ',
 '# hashdb-Version: ',
-'fp1	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offset_pairs":["0011223344556677",0]}',
+'fp1	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","entropy":8.0,"block_label":"bl2","count":1,"source_list_id":2343118327,"sources":[{"file_hash":"0011223344556677","filesize":1,"file_type":"fta","zero_count":20,"nonprobative_count":2,"name_pairs":["r1","f1"]}],"source_offsets":["0011223344556677",1,[0]]}',
 'fp2	8899aabbccddeeff	{"block_hash":"8899aabbccddeeff"}',
 '# scan_list completed.',
 ''
@@ -91,7 +91,7 @@ def test_json_commands():
 '# command: ',
 '# hashdb-Version: ',
 '8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","count":1}',
-'# Processing index 1 of 1 completed.',
+'# Processing 1 of 1 completed.',
 ''
 ])
 
@@ -101,14 +101,14 @@ def test_json_commands():
 '# command: ',
 '# hashdb-Version: ',
 '8899aabbccddeeff	{"block_hash":"8899aabbccddeeff","count":1}',
-'# Processing index 1 of 1 completed.',
+'# Processing 1 of 1 completed.',
 ''
 ])
 
     # scan_random: nothing returned but accepts -j
     returned_answer = H.hashdb(["scan_random", "-j", "c", "temp_1.hdb", "1"])
     H.lines_equals(returned_answer, [
-'# Processing index 1 of 1 completed.',
+'# Processing 1 of 1 completed.',
 ''
 ])
 
@@ -116,7 +116,7 @@ def test_json_commands():
     returned_answer = H.hashdb(["scan_same", "-j", "c", "temp_1.hdb", "1"])
     H.lines_equals(returned_answer, [
 'Match not found, hash 80000000000000000000000000000000:',
-'# Processing index 1 of 1 completed.',
+'# Processing 1 of 1 completed.',
 ''
 ])
 

@@ -46,7 +46,7 @@
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
 #define LMDB_HASH_DATA_MANAGER_HPP
 
-#define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
+// #define DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 
 #include "file_modes.h"
 #include "lmdb.h"
@@ -838,7 +838,6 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
                 const uint64_t sub_count,
                 const file_offsets_t file_offsets,
                 hashdb::lmdb_changes_t& changes) {
-std::cerr << "insert.a\n";
 
     // program error if source ID is 0 since NULL distinguishes between
     // type 1 and type 2 data.
@@ -858,7 +857,6 @@ std::cerr << "insert.a\n";
       return 0;
     }
 
-std::cerr << "insert.b\n";
     // require sub_count >= size of file_offsets
     if (sub_count < file_offsets.size()) {
       std::stringstream ss;
@@ -869,7 +867,6 @@ std::cerr << "insert.b\n";
       return 0;
     }
 
-std::cerr << "insert.c\n";
     // require that all provided file_offsets are valid
     for (file_offsets_t::const_iterator it = file_offsets.begin();
           it != file_offsets.end(); ++it) {
@@ -884,7 +881,6 @@ std::cerr << "insert.c\n";
       }
     }
 
-std::cerr << "insert.d\n";
     // warn if block_label will get truncated
     if (block_label.size() > max_lmdb_block_label_size) {
       // invalid file offset so warn and do not add anything
@@ -895,7 +891,6 @@ std::cerr << "insert.d\n";
       tprint(std::cerr, ss.str());
     }
 
-std::cerr << "insert.e\n";
     MUTEX_LOCK(&M);
 
     // maybe grow the DB
