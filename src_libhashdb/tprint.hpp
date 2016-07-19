@@ -7,10 +7,11 @@
 #define TPRINT_HPP
 
 #include <string>
+#include <ostream>
 
 namespace hashdb {
 
-  void tprint(const std::string& text);
+  void tprint(std::ostream& os, const std::string& text);
 
 }
 

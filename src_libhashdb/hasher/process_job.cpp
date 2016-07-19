@@ -172,7 +172,7 @@ namespace hasher {
         ss << job.file_offset + i << "\t"
            << hashdb::bin_to_hex(block_hash) << "\t"
            << json_string << "\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cout, ss.str());
       }
     }
 

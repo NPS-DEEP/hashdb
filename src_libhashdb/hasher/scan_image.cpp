@@ -121,7 +121,7 @@ namespace hashdb {
       ss << "# Scanning from byte " << offset
          << " of " << file_reader.filesize
          << "\n";
-      hashdb::tprint(ss.str());
+      hashdb::tprint(std::cout, ss.str());
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
@@ -217,9 +217,9 @@ namespace hashdb {
                                     job_queue);
     if (success.size() > 0) {
       std::stringstream ss;
-      ss << "error while scanning file " << file_reader.filename
+      ss << "# Error while scanning file " << file_reader.filename
          << ", " << file_reader.error_message << "\n";
-      hashdb::tprint(ss.str());
+      hashdb::tprint(std::cout, ss.str());
     }
 
     // done

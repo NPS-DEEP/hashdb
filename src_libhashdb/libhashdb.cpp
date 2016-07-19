@@ -238,13 +238,25 @@ namespace hashdb {
           file_offsets(p_file_offsets) {
     }
   bool source_offset_t::operator<(const source_offset_t& that) const {
-    if (file_hash < that.file_hash) return true;
-    if (file_hash > that.file_hash) return false;
 
-    // the above should be sufficient but lets be complete
-    if (sub_count < that.sub_count) return true;
-    if (sub_count > that.sub_count) return false;
-    return (file_offsets > that.file_offsets);
+    /*
+    // users may not want to see this warning, but keep it for testing
+    if (file_hash == that.file_hash && sub_count != that.sub_count) {
+      // match but sub_count is wrong
+      std::cerr << "database integrity warning: sub_count values " << sub_count
+                << " and " << that.sub_count << " do not match for source "
+                << bin_to_hex(file_hash) << ".\n";
+    }
+    */
+
+    return (file_hash < that.file_hash);
+    if (file_hash == that.file_hash) {
+      // matched by file_hash
+      return true;
+    } else {
+      // not matched by file_hash
+      return false;
+    }
   }
 
   // ************************************************************
@@ -254,10 +266,10 @@ namespace hashdb {
          settings_version(settings_t::CURRENT_SETTINGS_VERSION),
          byte_alignment(512),
          block_size(512),
-         max_count(100000),               // 100,000
-         max_sub_count(1000),             // 1,000
-         hash_prefix_bits(28),            // for 2^28
-         hash_suffix_bytes(3) {           // for 2^(3*8)
+         max_count(100000),      // arbitrary max
+         max_sub_count(50),      // LMDB max
+         hash_prefix_bits(28),   // for 2^28 prefix possibilities
+         hash_suffix_bytes(3) {  // for 2^(3*8) suffix possibilities
   }
 
   std::string settings_t::settings_string() const {
@@ -325,6 +337,10 @@ namespace hashdb {
                           const std::string& file_hash,
                           const std::string& repository_name,
                           const std::string& filename) {
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: insert_source_name called with empty file_hash\n";
+      return;
+    }
     uint64_t source_id;
     bool is_new_id = lmdb_source_id_manager->insert(file_hash, *changes,
                                                     source_id);
@@ -345,6 +361,10 @@ namespace hashdb {
                           const std::string& file_type,
                           const uint64_t zero_count,
                           const uint64_t nonprobative_count) {
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: insert_source_data called with empty file_hash\n";
+      return;
+    }
     uint64_t source_id;
     lmdb_source_id_manager->insert(file_hash, *changes, source_id);
     lmdb_source_data_manager->insert(source_id, file_hash,
@@ -357,6 +377,15 @@ namespace hashdb {
                           const std::string& file_hash,
                           const uint64_t sub_count,
                           std::set<uint64_t> file_offsets) {
+
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: insert_hash called with empty block_hash\n";
+      return;
+    }
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: insert_hash called with empty file_hash\n";
+      return;
+    }
 
     uint64_t source_id;
     bool is_new_id = lmdb_source_id_manager->insert(file_hash, *changes,
@@ -427,7 +456,7 @@ namespace hashdb {
       for (rapidjson::SizeType i = 0; i+2 < json_source_offsets.Size(); i+=3) {
 
         // source hash
-        if (!json_source_offsets[i].IsString()) {
+        if (!json_source_offsets[i+0].IsString()) {
           delete source_offsets;
           return "Invalid source hash in source_offsets";
         }
@@ -443,7 +472,11 @@ namespace hashdb {
 
         // the file offsets
         std::set<uint64_t> file_offsets;
-        const rapidjson::Value& json_file_offsets = document["source_offsets"];
+        if (!json_source_offsets[i+2].IsArray()) {
+          delete source_offsets;
+          return "Invalid sub_count in source_offsets";
+        }
+        const rapidjson::Value& json_file_offsets = json_source_offsets[i+2];
         for (rapidjson::SizeType j=0; j<json_file_offsets.Size(); ++j) {
 
           // file offset
@@ -758,13 +791,20 @@ namespace hashdb {
                uint64_t& count,
                source_offsets_t& source_offsets) const {
 
+    // clear fields
+    entropy = 0;
+    block_label = "";
+    count = 0;
+    source_offsets.clear();
+
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: find_hash called with empty block_hash\n";
+      return false;
+    }
+
     // first check hash store
     if (lmdb_hash_manager->find(block_hash) == 0) {
       // hash is not present so return false
-      entropy = 0;
-      block_label = "";
-      count = 0;
-      source_offsets.clear();
       return false;
     }
 
@@ -817,15 +857,17 @@ namespace hashdb {
     // hash fields
     float entropy;
     std::string block_label;
-    uint64_t count;
+    uint64_t unused_count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
+std::cerr << "export_hash_json.a block_hash " << bin_to_hex(block_hash) << "\n";
     // scan
-    bool found_hash = find_hash(block_hash, entropy, block_label, count,
+    bool found_hash = find_hash(block_hash, entropy, block_label, unused_count,
                                 *source_offsets);
 
     std::string json_hash_string;
     if (found_hash) {
+std::cerr << "export_hash_json.b\n";
 
       // prepare JSON
       rapidjson::Document json_doc;
@@ -837,7 +879,6 @@ namespace hashdb {
       json_doc.AddMember("block_hash", v(hex_block_hash, allocator), allocator);
       json_doc.AddMember("entropy", entropy, allocator);
       json_doc.AddMember("block_label", v(block_label, allocator), allocator);
-      json_doc.AddMember("count", count, allocator);
 
       // put in source_offsets as triplets of file hash, sub_count, offset list
       rapidjson::Value json_source_offsets(rapidjson::kArrayType);
@@ -872,6 +913,7 @@ namespace hashdb {
     } else {
       // clear the source offset pairs string
       json_hash_string = "";
+std::cerr << "export_hash_json.c\n";
     }
 
     delete source_offsets;
@@ -881,6 +923,12 @@ namespace hashdb {
   // find hash count
   size_t scan_manager_t::find_hash_count(
                                     const std::string& block_hash) const {
+
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: find_hash_count called with empty block_hash\n";
+      return 0;
+    }
+
     return lmdb_hash_data_manager->find_count(block_hash);
   }
 
@@ -918,6 +966,11 @@ namespace hashdb {
 
   size_t scan_manager_t::find_approximate_hash_count(
                                     const std::string& block_hash) const {
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: find_approximate_hash_count called with empty block_hash\n";
+      return 0;
+    }
+
     return lmdb_hash_manager->find(block_hash);
   }
 
@@ -962,6 +1015,11 @@ namespace hashdb {
                         uint64_t& zero_count,
                         uint64_t& nonprobative_count) const {
 
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: find_source_data called with empty file_hash\n";
+      return false;
+    }
+
     // read source_id
     uint64_t source_id;
     bool has_id = lmdb_source_id_manager->find(file_hash, source_id);
@@ -991,6 +1049,11 @@ namespace hashdb {
 
   bool scan_manager_t::find_source_names(const std::string& file_hash,
                          source_names_t& source_names) const {
+
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: find_source_names called with empty file_hash\n";
+      return false;
+    }
 
     // read source_id
     uint64_t source_id;
@@ -1069,6 +1132,10 @@ namespace hashdb {
   }
 
   std::string scan_manager_t::next_hash(const std::string& block_hash) const {
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: next_hash called with empty block_hash\n";
+      return "";
+    }
     return lmdb_hash_data_manager->next_hash(block_hash);
   }
 
@@ -1077,6 +1144,10 @@ namespace hashdb {
   }
 
   std::string scan_manager_t::next_source(const std::string& file_hash) const {
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: next_source called with empty file_hash\n";
+      return "";
+    }
     return lmdb_source_id_manager->next_source(file_hash);
   }
 

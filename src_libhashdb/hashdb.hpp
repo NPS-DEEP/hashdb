@@ -80,6 +80,11 @@ namespace hashdb {
     source_offset_t(const std::string& p_file_hash,
                     const uint64_t p_sub_count,
                     const std::set<uint64_t> p_file_offsets);
+    /**
+     * Only the file hash is compared.  If they are the same, the sub_count
+     * should match.  Because file_offsets are truncated, the set of offsets
+     * is expected to not always match.
+     */
     bool operator<(const source_offset_t& that) const;
   };
   typedef std::set<source_offset_t> source_offsets_t;

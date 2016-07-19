@@ -37,10 +37,6 @@
 #include <vector>
 #include <map>
 
-typedef std::pair<std::string, uint64_t> source_offset_pair_t;
-typedef std::set<source_offset_pair_t> source_offset_pairs_t;
-typedef std::set<std::string> sources_t;
-
 class adder_set_t {
   private:
 
@@ -162,7 +158,10 @@ class adder_set_t {
           continue;
         }
 
+std::cerr << "zz source_offsets " << hashdb::bin_to_hex(it_a->file_hash)
+          << "\n";
         if (source_offsets_b.find(*it_a) != source_offsets_b.end()) {
+std::cerr << "zz source_offsets.b\n";
           // in A and B so put into C
           manager_c->insert_hash(binary_hash, entropy_a, block_label_a,
                         it_a->file_hash, it_a->sub_count, it_a->file_offsets);

@@ -102,7 +102,7 @@ class scan_tracker_t {
          << " of " << bytes_total
          << " bytes completed (" << bytes_done * 100 / bytes_total
          << "%)\n";
-      hashdb::tprint(ss.str());
+      hashdb::tprint(std::cout, ss.str());
 
       // next milestone
       bytes_reported_done += INCREMENT;

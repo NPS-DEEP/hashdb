@@ -137,7 +137,7 @@ namespace hashdb {
            << " offset " << offset
            << " size " << file_reader.filesize
            << "\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cout, ss.str());
 
         // read into b2
         size_t b2_bytes_read = 0;
@@ -214,7 +214,7 @@ namespace hashdb {
          << " offset " << offset
          << " size " << file_reader.filesize
          << "\n";
-      hashdb::tprint(ss.str());
+      hashdb::tprint(std::cout, ss.str());
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
@@ -361,20 +361,20 @@ namespace hashdb {
             std::stringstream ss;
             ss << "# Error while importing file " << file_reader.filename
                << ", " << file_reader.error_message << "\n";
-            hashdb::tprint(ss.str());
+            hashdb::tprint(std::cout, ss.str());
           }
 
         } else {
           std::stringstream ss;
           ss << "# Skipping file " << file_reader.filename
              << " size " << file_reader.filesize << "\n";
-          hashdb::tprint(ss.str());
+          hashdb::tprint(std::cout, ss.str());
         }
       } else {
         // this file could not be opened
         std::stringstream ss;
         ss << "# Unable to import file: " << file_reader.error_message << "\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cout, ss.str());
       }
     }
 

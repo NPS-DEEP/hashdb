@@ -27,12 +27,13 @@ namespace hashdb {
 
 static pthread_mutex_t M = PTHREAD_MUTEX_INITIALIZER;
 
-void tprint(const std::string& text) {
+void tprint(std::ostream& os, const std::string& text) {
   // lock must work
   if(pthread_mutex_lock(&M)) {
     assert(0);
   }
-  std::cout << text << std::flush;
+  os << text;
+  os.flush();
   pthread_mutex_unlock(&M);
 }
 

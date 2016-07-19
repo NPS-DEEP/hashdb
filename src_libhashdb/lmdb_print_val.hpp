@@ -35,7 +35,7 @@ namespace hashdb {
 
   // print MDB_val size and bytes in hex
   void print_mdb_val(const std::string& name, const MDB_val& val) {
-    std::cerr << name << ": " << hashdb::bin_to_hex(
+    std::cerr << name << ", " << val.mv_data << ": " << hashdb::bin_to_hex(
          std::string(static_cast<char*>(val.mv_data), val.mv_size)) << "\n";
   }
 

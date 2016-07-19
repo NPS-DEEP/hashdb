@@ -93,7 +93,7 @@ static void* run(void* const arg) {
         ss << "Unexpected end of data error in unscanned data size "
            << unscanned_array.size() << " index " << next_index
            << " while reading hash.\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cerr, ss.str());
         continue;
       }
       next_index += job->hash_size;
@@ -109,7 +109,7 @@ static void* run(void* const arg) {
         ss << "Unexpected end of data error in unscanned data size "
            << unscanned_array.size() << " index " << next_index
            << " while reading label length.\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cerr, ss.str());
         continue;
       }
       next_index += sizeof(uint16_t);
@@ -123,7 +123,7 @@ static void* run(void* const arg) {
         ss << "Unexpected end of data error in unscanned data size "
            << unscanned_array.size() << " index " << next_index
            << " while reading label.\n";
-        hashdb::tprint(ss.str());
+        hashdb::tprint(std::cerr, ss.str());
         continue;
       }
       next_index += char_label_length;

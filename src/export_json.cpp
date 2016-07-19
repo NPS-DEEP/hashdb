@@ -46,12 +46,11 @@
 void export_json_sources(const hashdb::scan_manager_t& manager,
                          std::ostream& os) {
 
-  std::string file_binary_hash = manager.first_source();
-  while (file_binary_hash.size() != 0) {
+  std::string file_hash = manager.first_source();
+  while (file_hash.size() != 0) {
 
     // get source data
-    std::string json_source_string = manager.export_source_json(
-                                                       file_binary_hash);
+    std::string json_source_string = manager.export_source_json(file_hash);
 
     // program error
     if (json_source_string.size() == 0) {
@@ -61,7 +60,7 @@ void export_json_sources(const hashdb::scan_manager_t& manager,
     os << json_source_string << "\n";
 
     // next
-    file_binary_hash = manager.next_source(file_binary_hash);
+    file_hash = manager.next_source(file_hash);
   }
 }
 
@@ -69,22 +68,33 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
                         progress_tracker_t& progress_tracker,
                         std::ostream& os) {
 
-  std::string binary_hash = manager.first_hash();
-  while (binary_hash.size() != 0) {
+  // space for variables in order to use the tracker
+  std::string block_hash;
+  float entropy;
+  std::string block_label;
+  uint64_t count;
+  hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+
+  block_hash = manager.first_hash();
+  while (block_hash.size() != 0) {
 
     // get hash data
-    std::string json_hash_string = manager.export_hash_json(binary_hash);
+    std::string json_hash_string = manager.export_hash_json(block_hash);
 
     // program error
     if (json_hash_string.size() == 0) {
       assert(0);
     }
 
+    // emit the JSON
     os << json_hash_string << "\n";
 
+    // update the progress tracker, this accurate approach is expensive
+    manager.find_hash(block_hash, entropy, block_label, count, *source_offsets);
+    progress_tracker.track_hash_data(source_offsets->size());
+
     // next
-    progress_tracker.track_hash_data(manager.find_hash_count(binary_hash));
-    binary_hash = manager.next_hash(binary_hash);
+    block_hash = manager.next_hash(block_hash);
   }
 }
 

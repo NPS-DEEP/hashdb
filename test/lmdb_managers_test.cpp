@@ -676,7 +676,6 @@ void lmdb_hash_data_manager_maximums() {
   manager.find(binary_1, entropy, block_label, count, source_id_offsets);
   TEST_EQ(source_id_offsets.size(), 2);
   TEST_EQ(block_label, "0123456789");
-  TEST_EQ(block_label, "0123456789");
 }
 
 // ************************************************************

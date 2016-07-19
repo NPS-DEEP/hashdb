@@ -39,10 +39,6 @@
 #include <vector>
 #include <map>
 
-typedef std::pair<std::string, uint64_t> source_offset_pair_t;
-typedef std::set<source_offset_pair_t> source_offset_pairs_t;
-typedef std::set<std::string> sources_t;
-
 class adder_t {
   private:
 
@@ -360,7 +356,7 @@ class adder_t {
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
           add_source_data(it->file_hash);
-          add_source_names(it->file_hash);
+          add_repository_source_names(it->file_hash);
           processed_sources.insert(it->file_hash);
         } else {
           // already processed
@@ -420,7 +416,7 @@ class adder_t {
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
           add_source_data(it->file_hash);
-          add_source_names(it->file_hash);
+          add_non_repository_source_names(it->file_hash);
           processed_sources.insert(it->file_hash);
         } else {
           // already processed

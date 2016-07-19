@@ -125,7 +125,7 @@ namespace hasher {
     *out_buf = new (std::nothrow) uint8_t[potential_uncompressed_size]();
     if (*out_buf == NULL) {
       // comment that the buffer acquisition request failed
-      hashdb::tprint("# bad memory allocation in zip uncompression");
+      hashdb::tprint(std::cout, "# bad memory allocation in zip uncompression");
       return "bad memory allocation in zip uncompression";
     }
 
