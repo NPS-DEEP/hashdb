@@ -171,7 +171,7 @@ namespace hashdb {
     const size_t parts_total = (file_reader.filesize + (BUFFER_DATA_SIZE - 1)) /
                                BUFFER_DATA_SIZE;
 
-    // add source file to ingest_tracker
+    // add source file information to ingest_tracker
     const bool source_added = ingest_tracker.add_source(file_hash,
                            file_reader.filesize, file_type, parts_total);
 
@@ -192,6 +192,7 @@ namespace hashdb {
                  block_size,
                  file_hash,
                  file_reader.filename,
+                 file_reader.filesize,
                  0,      // file_offset
                  disable_recursive_processing,
                  disable_calculate_entropy,
@@ -207,14 +208,6 @@ namespace hashdb {
     for (uint64_t offset = BUFFER_DATA_SIZE;
          offset < file_reader.filesize;
          offset += BUFFER_DATA_SIZE) {
-
-      // print status
-      std::stringstream ss;
-      ss << "# Processing file " << file_reader.filename
-         << " offset " << offset
-         << " size " << file_reader.filesize
-         << "\n";
-      hashdb::tprint(std::cout, ss.str());
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
@@ -245,6 +238,7 @@ namespace hashdb {
                  block_size,
                  file_hash,
                  file_reader.filename,
+                 file_reader.filesize,
                  offset,  // file_offset
                  disable_recursive_processing,
                  disable_calculate_entropy,
@@ -319,7 +313,7 @@ namespace hashdb {
       return error_message;
     }
 
-    // calculate the total number of buffers that will be processed
+    // calculate the total number of bytes that will be processed
     uint64_t total_bytes = calculate_total_bytes(filenames);
 
     // create the ingest_tracker
@@ -333,7 +327,9 @@ namespace hashdb {
     // get the number of CPUs
     const size_t num_cpus = hashdb::numCPU();
 
-    // create the job queue to hold more jobs than threads
+    // create the job queue to hold 2X more jobs than threads
+    // Note: 2X is arbitrary.  The idea is to always have work available
+    // but not to unnecessarily fill up RAM with buffers.
     hasher::job_queue_t* job_queue = new hasher::job_queue_t(num_cpus * 2);
 
     // create the threadpool that will process jobs until job_queue.is_done

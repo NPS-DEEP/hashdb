@@ -138,6 +138,7 @@ namespace hasher {
                    parent_job.block_size,
                    recursed_file_hash,
                    recursed_filename,
+                   uncompressed_size, // file size is buffer_size
                    0,                 // file_offset
                    parent_job.disable_recursive_processing,
                    parent_job.disable_calculate_entropy,
@@ -171,6 +172,7 @@ namespace hasher {
                    parent_job.step_size,
                    parent_job.block_size,
                    recursed_filename,
+                   uncompressed_size, // file size is buffer_size
                    0,                 // file_offset
                    parent_job.disable_recursive_processing,
                    parent_job.scan_mode,

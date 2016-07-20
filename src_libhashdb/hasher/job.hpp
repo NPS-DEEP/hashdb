@@ -54,6 +54,7 @@ class job_t {
         const size_t p_block_size,
         const std::string p_file_hash,
         const std::string p_filename,
+        const uint64_t p_filesize,
         const uint64_t p_file_offset,
         const bool p_disable_recursive_processing,
         const bool p_disable_calculate_entropy,
@@ -76,6 +77,7 @@ class job_t {
                    block_size(p_block_size),
                    file_hash(p_file_hash),
                    filename(p_filename),
+                   filesize(p_filesize),
                    file_offset(p_file_offset),
                    disable_recursive_processing(p_disable_recursive_processing),
                    disable_calculate_entropy(p_disable_calculate_entropy),
@@ -106,6 +108,7 @@ class job_t {
   const size_t block_size;
   const std::string file_hash;
   const std::string filename;
+  const uint64_t filesize;
   const uint64_t file_offset;
   const bool disable_recursive_processing;
   const bool disable_calculate_entropy;
@@ -129,6 +132,7 @@ class job_t {
         const size_t p_block_size,
         const std::string p_file_hash,
         const std::string p_filename,
+        const uint64_t p_filesize,
         const uint64_t p_file_offset,
         const bool p_disable_recursive_processing,
         const bool p_disable_calculate_entropy,
@@ -152,6 +156,7 @@ class job_t {
                      p_block_size,
                      p_file_hash,
                      p_filename,
+                     p_filesize,
                      p_file_offset,
                      p_disable_recursive_processing,
                      p_disable_calculate_entropy,
@@ -172,6 +177,7 @@ class job_t {
         const size_t p_step_size,
         const size_t p_block_size,
         const std::string p_filename,
+        const uint64_t p_filesize,
         const uint64_t p_file_offset,
         const bool p_disable_recursive_processing,
         const hashdb::scan_mode_t p_scan_mode,
@@ -193,6 +199,7 @@ class job_t {
                      p_block_size,
                      "",   // file hash
                      p_filename,
+                     p_filesize,
                      p_file_offset,
                      p_disable_recursive_processing,
                      false, // disable_calculate_entropy

@@ -242,8 +242,8 @@ class lmdb_hash_data_manager_t {
         // warn that the added offset is a duplicate
         std::stringstream ss;
         ss << "Usage error: A file offset " << *it
-           << " has been added more than once for a source."
-           << "  Count values may no longer be accurate.\n";
+           << " has been added more than once for a source.\n"
+           << "Count values are no longer accurate for this database.\n";
         tprint(std::cerr, ss.str());
       }
     }

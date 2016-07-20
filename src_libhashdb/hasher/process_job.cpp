@@ -75,6 +75,14 @@ namespace hasher {
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
 
+    // print status
+    std::stringstream ss;
+    ss << "# Ingesting " << job.filename
+       << " offset " << job.file_offset
+       << " size " << job.filesize
+       << "\n";
+    hashdb::tprint(std::cout, ss.str());
+
     if (!job.disable_ingest_hashes) {
       // get hash calculator object
       hasher::hash_calculator_t hash_calculator;
@@ -127,11 +135,12 @@ namespace hasher {
     }
 
     // submit bytes processed to the ingest tracker for final reporting
-    if (job.recursion_depth == 0 && !job.disable_ingest_hashes) {
+    if (job.recursion_depth == 0) {
       job.ingest_tracker->track_bytes(job.buffer_data_size);
     }
 
-    // recursively find and process any uncompressible data
+    // recursively find and process any uncompressible data in order to
+    // record their source names
     if (!job.disable_recursive_processing) {
       process_recursive(job);
     }
@@ -143,6 +152,14 @@ namespace hasher {
 
   // process SCAN job
   static void process_scan_job(const hasher::job_t& job) {
+
+    // print status
+    std::stringstream ss;
+    ss << "# Scanning " << job.filename
+       << " offset " << job.file_offset
+       << " size " << job.filesize
+       << "\n";
+    hashdb::tprint(std::cout, ss.str());
 
     size_t zero_count = 0;
 
@@ -168,11 +185,11 @@ namespace hasher {
 
       if (json_string.size() > 0) {
         // offset <tab> file <tab> json
-        std::stringstream ss;
-        ss << job.file_offset + i << "\t"
+        std::stringstream ss2;
+        ss2 << job.file_offset + i << "\t"
            << hashdb::bin_to_hex(block_hash) << "\t"
            << json_string << "\n";
-        hashdb::tprint(std::cout, ss.str());
+        hashdb::tprint(std::cout, ss2.str());
       }
     }
 

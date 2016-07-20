@@ -102,6 +102,7 @@ namespace hashdb {
                  step_size,
                  block_size,
                  file_reader.filename,
+                 file_reader.filesize,
                  0,      // file_offset
                  process_embedded_data,
                  scan_mode,
@@ -115,13 +116,6 @@ namespace hashdb {
     for (uint64_t offset = BUFFER_DATA_SIZE;
          offset < file_reader.filesize;
          offset += BUFFER_DATA_SIZE) {
-
-      // print status
-      std::stringstream ss;
-      ss << "# Scanning from byte " << offset
-         << " of " << file_reader.filesize
-         << "\n";
-      hashdb::tprint(std::cout, ss.str());
 
       // create b2 to read into
       uint8_t* b2 = new (std::nothrow) uint8_t[BUFFER_SIZE]();
@@ -149,6 +143,7 @@ namespace hashdb {
                  step_size,
                  block_size,
                  file_reader.filename,
+                 file_reader.filesize,
                  offset,  // file_offset
                  process_embedded_data,
                  scan_mode,

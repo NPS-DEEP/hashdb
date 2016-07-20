@@ -68,6 +68,7 @@ class ingest_tracker_t {
     
   hashdb::import_manager_t* const import_manager;
   std::map<std::string, source_data_t> source_data_map;
+  std::set<std::string> preexisting_sources;
   const uint64_t bytes_total;
   uint64_t bytes_done;
   uint64_t bytes_reported_done;
@@ -87,15 +88,26 @@ class ingest_tracker_t {
     pthread_mutex_unlock(&M);
   }
 
+  // identify all preexisting sources to skip loading their block hashes
+  void identify_preexisting_sources() {
+    std::string file_hash = import_manager->first_source();
+    while (file_hash != "") {
+      preexisting_sources.insert(file_hash);
+      file_hash = import_manager->next_source(file_hash);
+    }
+  }
+
   public:
   ingest_tracker_t(hashdb::import_manager_t* const p_import_manager,
                    const size_t p_bytes_total) :
                import_manager(p_import_manager),
                source_data_map(),
+               preexisting_sources(),
                bytes_total(p_bytes_total),
                bytes_done(0),
                bytes_reported_done(0),
                M() {
+    identify_preexisting_sources();
     if(pthread_mutex_init(&M,NULL)) {
       std::cerr << "Error obtaining mutex.\n";
       assert(0);
@@ -106,19 +118,22 @@ class ingest_tracker_t {
     pthread_mutex_destroy(&M);
   }
 
+  // true so record if added, else false if already there
   bool add_source(const std::string& file_hash, const uint64_t filesize,
                   const std::string& file_type, const size_t parts_total) {
     lock();
-    if (source_data_map.find(file_hash) != source_data_map.end()) {
+    if (preexisting_sources.find(file_hash) != preexisting_sources.end() ||
+        source_data_map.find(file_hash) != source_data_map.end()) {
       // already added
       unlock();
       return false;
-    }
-    // add this source
-    source_data_map.insert(std::pair<std::string, source_data_t>(
+    } else {
+      // add this new source
+      source_data_map.insert(std::pair<std::string, source_data_t>(
              file_hash, source_data_t(filesize, file_type, parts_total)));
-    unlock();
-    return true;
+      unlock();
+      return true;
+    }
   }
 
   void track_source(const std::string& file_hash,
