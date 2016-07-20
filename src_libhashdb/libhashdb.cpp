@@ -768,7 +768,7 @@ namespace hashdb {
              it->file_offsets.begin(); it2 != it->file_offsets.end(); ++it2) {
           json_file_offsets.PushBack(*it2, allocator);
         }
-        json_source_offsets.PushBack(json_file_offsets, allocator); //zzzzzzz
+        json_source_offsets.PushBack(json_file_offsets, allocator);
         
       }
       json_doc.AddMember("source_offsets", json_source_offsets, allocator);
@@ -897,7 +897,7 @@ namespace hashdb {
              it->file_offsets.begin(); it2 != it->file_offsets.end(); ++it2) {
           json_file_offsets.PushBack(*it2, allocator);
         }
-        json_source_offsets.PushBack(json_file_offsets, allocator); //zzzzzzz
+        json_source_offsets.PushBack(json_file_offsets, allocator);
         
       }
       json_doc.AddMember("source_offsets", json_source_offsets, allocator);

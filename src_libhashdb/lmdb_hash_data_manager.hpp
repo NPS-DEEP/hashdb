@@ -386,13 +386,12 @@ print_mdb_val("hash_data_manager write_encoding data", context.data);
                           const std::string& key,
                           const uint8_t* const data, const size_t data_size) {
 
-/*
-zzzzzzzzzzzzzz put back
-    if (context.key.mv_size == key_size && context.data.mv_size == data_size) {
+    if (context.key.mv_size == key.size() &&
+                                    context.data.mv_size == data_size) {
       // replace in place
       context.key.mv_data = static_cast<uint8_t*>(
-             static_cast<void*>(const_cast<char*>(key)));
-      context.data.mv_data = static_cast<uint8_t*>(data);
+             static_cast<void*>(const_cast<char*>(key.c_str())));
+      context.data.mv_data = const_cast<uint8_t*>(data);
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager overwriting key", context.key);
 print_mdb_val("hash_data_manager overwriting data", context.data);
@@ -405,8 +404,6 @@ print_mdb_val("hash_data_manager overwriting data", context.data);
       }
 
     } else {
-*/
-
 
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 print_mdb_val("hash_data_manager deleting key", context.key);
@@ -421,11 +418,8 @@ print_mdb_val("hash_data_manager deleting data", context.data);
 
       // write replacement record
       write_encoding(context, key, data, data_size);
-/*
     }
-*/
   }
-
 
   // parse Type 1 context.data into these parameters
   void decode_type1(hashdb::lmdb_context_t& context,
