@@ -510,7 +510,7 @@ This file contains the settings requested by the user when the block hash databa
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
 {"settings_version":3, "byte_alignment":512, "block_size":512,
-"max_id_offset_pairs":100000, "hash_prefix_bits":28,
+"max_count":100000, "max_sub_count":50, "hash_prefix_bits":28,
 "hash_suffix_bytes":3}
 \end{Verbatim}
 \endgroup
@@ -1226,19 +1226,22 @@ The returned JSON data contains all the information about a matched hash and the
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON block hash expanded data output from a scan match, with line breaks added for readability}, label=JSONScanDataExpanded]
 {
-  "block_hash": "3b6b477d391f73f67c101e2141dbb17",
-  "entropy": 2.0,
-  "block_label": "W",
-  "source_list_id": 57,
-  "sources": [{
-    "file_hash": "f7035a...",
-    "filesize": 800,
-    "file_type": "exe",
-    "zero_count":1,
-    "nonprobative_count": 2,
-    "name_pairs": ["repository1", "filename1", "repo2", "f2"]
+  "block_hash":"1d7379fd4d5cf676a9d4de1e48337e71",
+  "entropy":4.880000114440918,
+  "block_label":"",
+  "count":1,
+  "source_list_id":1193146442,
+  "sources":[{
+    "file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5",
+    "filesize":1549288,
+    "file_type":"",
+    "zero_count":0,
+    "nonprobative_count":10,
+    "name_pairs":[
+      "/home/bdallen/KittyMaterial",
+      "/home/bdallen/KittyMaterial/HighQuality/DSC00003.JPG"]
   }],
-  "source_offset_pairs": ["f7035a...", 0, "f7035a...", 512]
+  "source_offsets":["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]
 }
 \end{lstlisting}
 
@@ -1251,27 +1254,29 @@ The returned JSON data contains all the information about a matched hash and the
 \hline \hline
 \textbf{Field} & \textbf{Meaning} \\
 \hline
+\verb+block_hash+ & The hexdigest hash of the block\\
+\hline
 \verb+entropy+ & The entropy value calculated for the block\\
 \hline
 \verb+block_label+ & A label describing the type of data within the block\\
 \hline
-\verb+source_list_id+ & A source list ID which is a CRC of the associated source file hashes associated with the block hash\\
+\verb+source_list_id+ & A source list ID calculated as a CRC of the source file hashes associated with the block hash\\
 \hline
-\verb+sources+ & An array of source data for each source matching the hash\\
+\verb+sources+ & An array of source data for each matching source\\
 \hline
-\verb+file_hash+ & The hexdigest of the source file containing the block hash\\
+\verb+file_hash+ & The hexdigest hash of a matching source\\
 \hline
-\verb+filesize+ & The size, in bytes, of the source file\\
+\verb+filesize+ & The size, in bytes, of a matching source\\
 \hline
-\verb+file_type+ & A classification of what type of file the source file is\\
+\verb+file_type+ & A classification of what type of file a matching source is\\
 \hline
-\verb+zero_count+ & The number of blocks in the source that have all bytes in the block equal to zero\\
+\verb+zero_count+ & The number of blocks in a matching source that have all bytes in the block equal to zero\\
 \hline
-\verb+nonprobative_count+ & The number of blocks in the source that are considered to be nonprobative\\
+\verb+nonprobative_count+ & The number of blocks in a matching source that are considered to be nonprobative\\
 \hline
-\verb+name_pairs+ & An array of repository name, filename pairs associated with this source\\
+\verb+name_pairs+ & An array of repository name, filename pairs associated with a matching source\\
 \hline
-\verb+source_offset_pairs+ & An array of the source file hash, source file offset pairs associated with this block hash\\
+\verb+source_offsets+ & An array of source offset information consisting of triplets of source hash, sub-count, and any recorded offsets for each matching source\\
 \hline
 \end{tabular}
 \end{table}
@@ -1306,12 +1311,13 @@ The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
-8000	3b6b477d391f73f67c1c01e2141dbb17    {"hash": "3b6b477d391f73f67c1
-c01e2141dbb17", "entropy": 2.0, "block_label": "W", "source_list_id": 57, "
-sources": [{ "file_hash": "f7035a...", "filesize": 800, "file_type": "exe
-", "zero_count": 1, "nonprobative_count": 2, "name_pairs": ["repository1"
-, "filename1", "repo2", "f2"] }], "source_offset_pairs": ["f7035a...", 0,
- "f7035a...", 512] }
+2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":"1d7379fd4d
+5cf676a9d4de1e48337e71","entropy":4.880000114440918,"block_label":"","cou
+nt":1,"source_list_id":1193146442,"sources":[{"file_hash":"1dd00f2e51aeeb
+e7541cea4ade2e20b5","filesize":1549288,"file_type":"","zero_count":0,"non
+probative_count":10,"name_pairs":["/home/bdallen/KittyMaterial","/home/bd
+allen/KittyMaterial/HighQuality/DSC00003.JPG"]}],"source_offsets":["1dd00
+f2e51aeebe7541cea4ade2e20b5",1,[0]]}
 \end{lstlisting}
 
 \subsection{Scan Stream Interface Data}
@@ -1319,18 +1325,17 @@ Scan stream interface data consists of packed binary strings of unscanned input 
 \begin{itemize}
 \item \textbf{unscanned data}
   \begin{itemize}
-  \item A binary hash to scan for, of length \verb+hash_size+ bytes.
-  \item A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming binary label associated with the scan record.
-  \item A binary label associated with the scan record, of the length just indicated.
+  \item \textbf{hash} A binary hash to scan for, of length \verb+hash_size+ bytes.
+  \item \textbf{label length} A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the binary label associated with the scan record.
+  \item \textbf{label} A binary label associated with the scan record.
   \end{itemize}
 \item \textbf{scanned data}
   \begin{itemize}
-  \item A binary hash that matched, of length \verb+hash_size+ in bytes.
-  \item A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming binary label associated with the hash that matched.
-  \item A binary label associated with the scan record, of the length just indicated.
-  \item A 4-byte unsigned integer in native-Endian format indicating the length, in bytes, of the upcoming JSON text associated with the hash that matched.
-  \item JSON text formatted based on the scan mode selected, of the
-length just indicated.
+  \item \textbf{hash} A binary hash that matched, of length \verb+hash_size+ in bytes.
+  \item \textbf{label length} A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the binary label associated with the hash that matched.
+  \item \textbf{label} A binary label associated with the scan record.
+  \item \textbf{JSON length} A 4-byte unsigned integer in native-Endian format indicating the length, in bytes, of the JSON text associated with the hash that matched.
+  \item \textbf{JSON} The JSON text formatted based on the scan mode selected.
   \end{itemize}
 \end{itemize}
 
@@ -1391,11 +1396,11 @@ The \verb+histogram+ command shows the density of hash duplicates across a hash 
 \hline \hline
 \textbf{Field} & \textbf{Meaning} \\
 \hline
-\verb+duplicates+ & The count of source, file offset pairs stored\\
+\verb+duplicates+ & The total count of file offsets identified for each source for the hash value\\
 \hline
 \verb+distinct_hashes+ & The number of distinct hashes in the database with this duplicates count\\
 \hline
-\verb+total+ & The total number of hashes represented by this entry, specifically, \verb+duplicates+$*$\verb+distinct_hashes+\\
+\verb+total+ & The total number of hashes represented by this entry, specifically, \verb+duplicates+ $*$ \verb+distinct_hashes+\\
 \hline
 \end{tabular}
 \end{table}
@@ -1448,19 +1453,17 @@ Statistics about hash database changes are reported on the console and to the lo
 # Processed 200000 of ?...
 # Processed 300000 of ?...
 # Processed 400000 of ?...
-# Processing 401687 of 401687 completed.
+# Processing 401686 of 401686 completed.
 # hashdb changes:
-#     hash_data_data_inserted: 401599
-#     hash_data_data_changed: 3
-#     hash_data_data_same: 131
-#     hash_data_source_inserted: 401733
-#     hash_prefix_inserted: 401317
-#     hash_suffix_inserted: 401599
-#     hash_count_changed: 88
+#     hash_data_source_inserted: 401713
+#     hash_data_offset_inserted: 401732
+#     hash_prefix_inserted: 401316
+#     hash_suffix_inserted: 401598
+#     hash_count_changed: 69
 #     hash_not_changed: 46
 #     source_data_inserted: 88
 #     source_id_inserted: 88
-#     source_id_already_present: 401821
+#     source_id_already_present: 401801
 #     source_name_inserted: 88
 \end{lstlisting}
 
@@ -1474,17 +1477,11 @@ Statistics about hash database changes are reported on the console and to the lo
 \hline
 
 % hash_data
-\verb+hash_data_data_inserted+ &  Number of hash data records inserted.\\
+\verb+hash_data_source_inserted+ &  Number of hash data source entries inserted, where one or more source entries are inserted for each hash inserted.\\
 \hline
-\verb+hash_data_data_changed+ &  Number of hash data records changed.\\
+\verb+hash_data_offset_inserted+ &  Total number of file offsets that were actually inserted.\\
 \hline
-\verb+hash_data_data_same+ &  Number of hash data records provided but same.\\
-\hline
-\verb+hash_data_source_inserted+ &  Number of hash data source, offset pairs inserted.\\
-\hline
-\verb+hash_data_source_already_+ \verb+present+ &  Number of hash data source, offset pairs provided but same\\
-\hline
-\verb+hash_data_source_at_max+ &  Number of hash data source, offset pairs dropped because of max pair limit.\\
+\verb+hash_data_data_changed+ &  Number of hash data records that changed.\\
 \hline
 
 % hash
@@ -1536,20 +1533,28 @@ For information on installing the \hdb interfaces, please see \textbf{\Autoref{O
 To import hash and source data, open an import manager, for example\\
 \verb+{manager = import_manager_t("hashdb.hdb", "create my DB")+. Then use import functions to add data. Information in the log file will be added when the import manager closes. The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
 \begin{itemize}
-\item \verb+manager = import_manager_t(hashdb_dir, cmd)+
-\item \verb+manager.insert_source_name(file_binary_hash, repository_name, filename)+
-\item \verb+manager.insert_source_data(file_binary_hash, filesize, file_type,+\\
-\verb+zero_count, nonprobative_count)+
-\item \verb+manager.insert_hash(binary_hash, file_binary_hash, file_offset,+\\
-\verb+entropy, block_label)+
+\item \verb+manager = import_manager_t(hashdb_dir, command_string)+\\
+Open the import manager. \verb+command_string+ will be written to the log file.
+\item \verb+manager.insert_source_name(file_hash, repository_name, filename)+\\
+Register the repository name, filename pair to the file hash.
+\item \verb+manager.insert_source_data(file_hash, filesize, file_type,+\\
+\verb+zero_count, nonprobative_count)+\\
+Set the source parameters for the file hash.
+\item \verb+manager.insert_hash(block_hash, entropy, block_label, file_hash,+\\
+\verb+sub_count, file_offsets)+\\
+Set hash parameters and add source count information.
 \item \verb+error_message = manager.import_json(json_string)+\\
 Import hash or source, return \verb+error_message+ or "" for no error.
-\item \verb+data_sizes = manager.size()+
-Return number of entries in LMDB databases.
+\item \verb+first_file_hash = scan_manager.first_source()+\\
+Access sources that have already been imported.
+\item \verb+file_hash = scan_manager.next_source(file_hash)+\\
+Access sources that have already been imported.
+\item \verb+data_sizes = manager.size()+\\
+Return JSON text indicating the number of entries in the LMDB databases.
 \item \verb+size_t size_hashes()+\\
-Return number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+Return number of hash data store records in the database, which will be more than the number of different hash values actually imported if duplicate hash values are imported from multiple sources.
 \item \verb+size_t size_sources()+\\
-Return number of sources.
+Return the number of sources in the database, which can include sources from decompressed content.
 \end{itemize}
 
 \subsection{Scan}
@@ -1557,42 +1562,42 @@ To scan for hashes, open a scan manager, for example\\
 \verb+manager = scan_manager_t("hashdb.hdb")+. Then use functions to find hash and source information. Functions that return less information run faster than functions that return more. Scan functions provide read-only access to hash and data stores.
 
 \begin{itemize}
-\item \verb+scan_manager = scan_manager_t(hashdb_dir)+
-\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(binary_hash)+\\
+\item \verb+scan_manager = scan_manager_t(hashdb_dir)+\\
+Open the scan manager.
+\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(block_hash)+\\
 Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
-\item \verb+bool find_hash(binary_hash, &entropy, &block_label, &source_offset_pairs_t)+\\
+\item \verb+bool find_hash(block_hash, &entropy, &block_label, &count, source_offsets)+\\
 C++ only. Find hash, obtain fields related to hash on match.
-\item \verb+json_text = export_hash_json(binary_hash)+\\
+\item \verb+json_text = export_hash_json(block_hash)+\\
 Export hash information for the given binary hash else "" if not there.
-\item \verb+json_text= export_source_json(file_binary_hash)+\\
+\item \verb+json_text= export_source_json(file_hash)+\\
 Export source information for the given source else "" if not there.
-\item \verb+count = scan_manager.find_hash_count(binary_hash)+\\
-Return the source, offset pair count for the hash.
-\item \verb+json_text = scan_manager.find_hash_count_json(binary_hash)+\\
-Export the hash count in JSON format for the given binary hash else "" if not there.
-\item \verb+approximate_count = scan_manager.find_approximate_hash_count(binary_hash)+\\
-This is the fastest scan function. It returns an approximate source, offset pair count for the hash, and can be wrong.
-\item \verb+json_text = scan_manager.find_approximate_hash_count_json(binary_hash)+\\
-Export the approximate hash count in JSON format for the given binary hash else "" if not there.
-\item \verb+has_source_data = scan_manager.find_source_data(file_binary_hash,+\\
+\item \verb+count = scan_manager.find_hash_count(block_hash)+\\
+Return the total count of offsets associated with the hash.
+\item \verb+approximate_count = scan_manager.find_approximate_hash_count(block_hash)+\\
+This is the fastest scan function. It returns an approximate total count of offsets associated with the hash, and can be wrong.
+\item \verb+has_source_data = scan_manager.find_source_data(file_hash,+\\
 \verb+filesize, file_type, zero_count, nonprobative_count)+\\
-C++ syntax. Return information about the source.
-\item \verb+has_source_data, filesize, file_type, zero_count, nonprobative_count =+\\
-\verb+scan_manager.find_source_data(file_binary_hash)+\\
-Python syntax. Return information about the source.
-\item \verb+has_source_names = scan_manager.find_source_names(file_binary_hash,+\\
+C++ only. Return information about the source.
+\item \verb+has_source_names = scan_manager.find_source_names(file_hash,+\\
 \verb+&source_names_t)+\\
 C++ only. Retrieve the source names for this source or "" on no match.
-\item \verb+first_binary_hash = scan_manager.first_hash()+
-\item \verb+next_binary_hash = scan_manager.next_hash(binary_hash)+
-\item \verb+first_file_binary_hash = scan_manager.first_source()+
-\item \verb+file_binary_hash = scan_manager.next_source(file_binary_hash)+
+\item \verb+json_text = scan_manager.find_hash_json(scan_mode, block_hash)+\\
+Find and return JSON text about the match or "" on no match. Text returned depends on the scan mode.
+\item \verb+first_block_hash = scan_manager.first_hash()+\\
+Access hashes that have already been imported.
+\item \verb+next_block_hash = scan_manager.next_hash(block_hash)+\\
+Access hashes that have already been imported.
+\item \verb+first_file_hash = scan_manager.first_source()+\\
+Access sources that have already been imported.
+\item \verb+file_hash = scan_manager.next_source(file_hash)+\\
+Access sources that have already been imported.
 \item \verb+db_sizes = scan_manager.size()+\\
 Return sizes of internal data stores in JSON format.
 \item \verb+size_hashes = scan_manager.size_hashes()+\\
-Return the number of hash records in the database, which is typically more than the number of source, offset pairs in the database.
+Return the number of hash data store records in the database, which will be more than the number of different hash values actually imported if duplicate hash values are imported from multiple sources.
 \item \verb+size_sources = scan_manager.size_sources()+\\
-Return the number of sources in the database.
+Return the number of sources in the database, which can include sources from decompressed content.
 \end{itemize}
 
 \subsection{Scan Stream}
@@ -1614,8 +1619,8 @@ Holds \hdb settings.
 
 \begin{itemize}
 \item \verb+settings = settings_t()+\\
-Obtain default settings. Configurable setting parameters are: \verb+settings_version,+\\
-\verb+byte_alignment, block_size, max_source_offset_pairs, hash_prefix_bits,+\\
+Obtain default settings. The configurable setting parameters are: \verb+settings_version,+\\
+\verb+byte_alignment, block_size, max_count, max_sub_count, hash_prefix_bits,+\\
 \verb+hash_suffix_bytes+.
 \item \verb+settings_string = settings.settings_string()+\\
 Return setting values in JSON format.
@@ -1649,7 +1654,7 @@ Query settings else false and reason for failure.
 \verb+disable_calculate_labels, command_string)+\\
 Calculate and import hashes from path to \hdb. Can disable recursive processing, calculating entropy, and calculating labels.
 \item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
-\verb+disable_recursive_processing)+\\
+\verb+disable_recursive_processing, scan_mode)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
 \item \verb+error_message = read_bytes(media_image_file, forensic_path, count, &bytes)+\\
 C++ syntax.  Read bytes at numeric offset from a media image file.
@@ -1661,13 +1666,14 @@ C++ syntax.  Read bytes at numeric offset from a media image file.
 Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \end{itemize}
 
-\subsubsection{Data Types}
+\subsection{Data Types}
 
-The following data types are defined for the C++ interface:
+The following data types are defined:
 
 \begin{itemize}
-\item \verb+source_offset_pair_t: typedef pair<file_binary_hash, file_offset> id_offset_pair_t+
-\item \verb+source_offset_pairs_t: typedef set<source_offset_pair_t> source_offset_pairs_t+
+\item \verb+scan_mode_t+ enumerator defines JSON scan output modes: \verb+EXPANDED+, \verb+EXPANDED_OPTIMIZED+, \verb+COUNT+, and \verb+APPROXIMATE_COUNT+.
+\item \verb+source_offset_t+ class holds offset information for a source, specifically, \verb+file_hash+, \verb+sub_count+, and \verb+std::set<uint64_t> file_offsets+.
+\item \verb+source_offsets_t: typedef set<source_offset_t> source_offsets_t+
 \item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
 \item \verb+source_names_t: typedef set<source_name_t> source_names_t+
 \end{itemize}
@@ -1677,7 +1683,7 @@ The following data types are defined for the C++ interface:
 This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind the optimization settings and options provided by \hdb.\\
 
 \subsection{LMDB Hash Store}
-The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Information Store} to be sure the hash actually exists.\\
+The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Data Store} to be sure the hash actually exists.\\
 
 The \textit{LMDB Hash Store} is a hybrid B-Tree and List store:
 \begin{itemize}
@@ -1688,26 +1694,40 @@ The \textit{LMDB Hash Store} is a hybrid B-Tree and List store:
 The \textit{LMDB Hash Store} uses two tuning parameters, hash prefix bits and hash suffix bytes, to minimize data store size and maximize lookup speed.  These parameters are described in \textbf{\Autoref{Settings}}.\\
 
 
-\subsection{LMDB Hash Information Store}
-The \textit{LMDB Hash Information Store} is a store of all hashes and their associated data and source information:
+\subsection{LMDB Hash Data Store}
+The \textit{LMDB Hash Data Store} is a store of all hashes and their associated data and source information:
 
 \begin{itemize}
 \item The \verb+key+ portion consists of a block hash, in binary.
-\item The \verb+value+ portion contains metadata fields about the hash plus a list of locations in sources where the block was identified.  Specifically, the \verb+value+ portion consists of:
+\item The \verb+value+ portion contains information about the hash, sources, and offsets into the sources where the blocks are identified. Although the total count and the source sub-count of offsets is not bound, no more than 50 actual offsets can be stored per source.  There are three types of value records:
   \begin{itemize}
+  \item \textbf{Type 1} only one entry for this hash:\\
+\verb-source_id, entropy, block_label, sub_count, 0+ file_offsets-
+  \item \textbf{Type 2} first line of multi-entry hash:\\
+\verb-NULL, entropy, block_label, count, count_stored-
+  \item \textbf{Type 3} remaining lines of multi-entry hash:\\
+\verb-source_id, sub_count, 0+ file_offsets-
+  \end{itemize}
+Fields in the \verb+value+ portion are:
+  \begin{itemize}
+  \item \verb+source_id+ A source ID integer that maps to a source file hash. Any file offsets in this record relate to this source.
   \item \verb+entropy+ The calculated entropy for the block.
   \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
-  \item A list of source IDs and file offset pairs indicating places where the block was identified.
+  \item \verb+sub_count+ The number of times this block has been seen in this source. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
+  \item \verb+count+ The total number of times this block has been seen in all the sources. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
+  \item \verb-0+ file_offsets- Zero or more file offsets associated with this source. Offsets actually stored depends on \verb+max_count+, \verb+max_sub_count+, and the hardcoded limit of 50 offsets per source. When stored, file offset indexes are stored rather than file offsets in order to save space. These indexes are calculated by dividing file offsets by \verb+byte_alignment+.
+  \item \verb+NULL+ A NULL byte distinguishes Type 1 records from Type 2. Note that Type 3 records are distinguished as following Type 1 going forward until the \verb+key+ changes.
+  \item \verb+count_stored+ This field is used internally for efficiently recognizing when \verb+max_count+ has been reached.
   \end{itemize}
 \end{itemize}
 
-The \textit{LMDB Hash Data Store} uses two tuning parameters, \verb+max_id_offset_pairs+ and \verb+block_size+ to minimize data store size.  These parameters are described in \textbf{\Autoref{Settings}}.\\
+The \textit{LMDB Hash Data Store} uses three tuning parameters to minimize data store size: \verb+max_count+, \verb+max_sub_count+, and \verb+block_size+.  These parameters are described in \textbf{\Autoref{Settings}}.\\
 
 \subsection{LMDB Source ID Store}
-The \textit{LMDB Source ID Store} maps source file hash values to source IDs.  Although the user never sees source IDs, we use source IDs in the \textit{LMDB Source ID Store}, \textit{LMDB Source Data Store}, and the \textit{LMDB Hash Information Store} because they are significantly shorter than source file hashes.  We wouldn't need source IDs if we didn't make this optimization.
+The \textit{LMDB Source ID Store} maps source file hash values to source IDs.  Although the user never sees source IDs, we use source IDs in the \textit{LMDB Source ID Store}, \textit{LMDB Source Data Store}, and the \textit{LMDB Hash Data Store} because they are significantly shorter than source file hashes.  We wouldn't need source IDs if we didn't make this optimization.
 
 \begin{itemize}
-\item The \verb+key+ is the \verb+file_binary_hash+.
+\item The \verb+key+ is the \verb+file_hash+.
 \item The \verb+value+ is the \verb+source_id+.
 \end{itemize}
 
@@ -1717,7 +1737,7 @@ The \textit{LMDB Source Data Store} holds all the metadata about sources:
 \item The \verb+key+ is the \verb+source_id+.
 \item The \verb+value+ consists of these fields:
   \begin{itemize}
-  \item \verb+file_binary_hash+ The source file hash associated with this source ID, in binary.
+  \item \verb+file_hash+ The source file hash associated with this source ID, in binary.
   \item \verb+filesize+ The size of the source file, in bytes.
   \item \verb+file_type+ A label indicating the type of the file, user defined.
   \item \verb+zero_count+ The number of blocks in the source that have all bytes in the block equal to zero.

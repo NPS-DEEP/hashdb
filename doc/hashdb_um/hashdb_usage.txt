@@ -1,389 +1,451 @@
 hashdb Version 3.0.0-alpha-6
-Usage: hashdb [-h|--help] [-v|-V|--version] [-q|--quiet]
-              [options] <command> [<args>]
+Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
+       hashdb [-h <command>]
+       hashdb [options] <command> [<args>]
 
-  -h, --help         print this message
-  -v, -V, --version, --Version    print version number
-  -q, --quiet        quiet mode
-
-hashdb supports the following commands:
-
-New database:
-  create [options] <hashdb>
-    Create a new <hashdb> hash database.
-
-    Options:
-    -b, --block_size=<block size>
-      <block size>, in bytes, or use 0 for no restriction
-      (default 512)
-    -a, --byte_alignment=<n>
-      <byte_alignment>, in bytes, or 1 for any alignment (default 512)
-    -m, --max_source_offset_pairs=<max>
-      The maximum number of source, file offset references to
-      store for a hash (default 100000)
-    -t, --tuning=<hash prefix bits:hash suffix bytes>
-      The number of hash prefix bits and suffix bytes to use for
-      optimizing hash storage (default 28:3)
-
-    Parameters:
-    <hashdb>   the file path to the new hash database to create
+New Database:
+  create [-b <block size>] [-a <byte alignment>]
+         [-m <max count:max sub-count>]
+         [-t <hash prefix bits:hash suffix bytes>] <hashdb>
 
 Import/Export:
   ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
          [-x <rel>] <hashdb.hdb> <import directory>
-    Import hashes recursively from <import directory> into hash database
-      <hashdb>.
-
-    Options:
-    -r, --repository_name=<repository name>
-      The repository name to use for the set of hashes being imported.
-      (default is "repository_" followed by the <import directory> path).
-    -w, --whitelist_dir
-      The path to a whitelist hash database.  Hashes matching this database
-      will be marked with a whitelist entropy flag.
-    -s, --step_size
-      The step size to move along while calculating hashes.  Step size must
-      be divisible by the byte alignment defined in the database.
-    -x, --disable_processing
-      Disable further processing:
-        r disables recursively processing embedded data.
-        e disables calculating entropy.
-        l disables calculating block labels.
-
-    Parameters:
-    <import dir>   the directory to recursively import from
-    <hashdb>       the hash database to insert the imported hashes into
-
   import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
-    Import hashes from file <tab file> into hash database <hashdb>.
-
-    Options:
-    -r, --repository_name=<repository name>
-      The repository name to use for the set of hashes being imported.
-      (default is "repository_" followed by the <import directory> path).
-    -w, --whitelist_dir
-      The path to a whitelist hash database.  Hashes matching this database
-      will be marked with a whitelist entropy flag.
-
-    Parameters:
-    <hashdb>       the hash database to insert the imported hashes into
-    <NIST file>    the NIST file to import hashes from
-
   import <hashdb> <json file>
-    Import hashes from file <json file> into hash database <hashdb>.
-
-    Parameters:
-    <hashdb>       the hash database to insert the imported hashes into
-    <json file>    the JSON file to import hashes from
-
   export <hashdb> <json file>
-    Export hashes from hash database <hashdb> into file <json file>.
 
-    Parameters:
-    <hashdb>       the hash database to export
-    <json file>    the JSON file to export the hash database into.
-
-Database manipulation:
+Database Manipulation:
   add <source hashdb> <destination hashdb>
-    Copy hashes from the <source hashdb> to the <destination hashdb>.
-
-    Parameters:
-    <source hashdb>       the source hash database to copy hashes from
-    <destination hashdb>  the destination hash database to copy hashes into
-
   add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Perform a union add of <source hashdb 1> and <source hashdb 2>
-    into the <destination hashdb>.
-
-    Parameters:
-    <source hashdb 1>     a hash database to copy hashes from
-    <source hashdb 2>     a second hash database to copy hashes from
-    <destination hashdb>  the destination hash database to copy hashes into
-
   add_repository <source hashdb> <destination hashdb> <repository name>
-    Copy hashes from the <source hashdb> to the <destination hashdb>
-    when the <repository name> matches.
-
-    Parameters:
-    <source hashdb>       the source hash database to copy hashes from
-    <destination hashdb>  the destination hash database to copy hashes into
-    <repository name>     the repository name to match when adding hashes
-
   add_range <source hashdb> <destination hashdb> <m:n>
-    Copy the hashes from the <source hashdb> to the <destination hashdb>
-    that have source reference count values between m and n.
-
-    Parameters:
-    <source hashdb>       the hash database to copy hashes from that have a
-                          source count within range m and n
-    <destination hashdb>  the hash database to copy hashes to when the
-                          source count is within range m and n
-    <m:n>                 the minimum and maximum count value range in which
-                          hashes will be copied
-
   intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copy hashes that are common to both <source hashdb 1> and
-    <source hashdb 2> into <destination hashdb>.  Hashes and their sources
-    must match.
-
-    Parameters:
-    <source hashdb 1>     a hash databases to copy the intersection of
-    <source hashdb 2>     a second hash databases to copy the intersection of
-    <destination hashdb>  the destination hash database to copy the
-                          intersection of exact matches into
-
   intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copy hashes that are common to both <source hashdb 1> and
-    <source hashdb 2> into <destination hashdb>.  Hashes match when hash
-    values match, even if their associated source repository name and
-    filename do not match.
-
-    Parameters:
-    <source hashdb 1>     a hash databases to copy the intersection of
-    <source hashdb 2>     a second hash databases to copy the intersection of
-    <destination hashdb>  the destination hash database to copy the
-                          intersection of hashes into
-
   subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
-    into <destination hashdb>.  Hashes and their sources must match.
-
-    Parameters:
-    <source hashdb 1>     the hash database containing hash values to be
-                          added if they are not also in the other database
-    <source hashdb 2>     the hash database containing the hash values that
-                          will not be added
-    <destination hashdb>  the hash database to add the difference of the
-                          exact matches into
-
   subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
-    Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
-    into <destination hashdb>.  Hashes match when hash values match, even if
-    their associated source repository name and filename do not match.
-
-    Parameters:
-    <source hashdb 1>     the hash database containing hash values to be
-                          added if they are not also in the other database
-    <source hashdb 2>     the hash database containing the hash values that
-                          will not be added
-    <destination hashdb>  the hash database to add the difference of the
-                          hashes into
-
   subtract_repository <source hashdb> <destination hashdb> <repository name>
-    Copy hashes from the <source hashdb> to the <destination hashdb>
-    when the <repository name> does not match.
-
-    Parameters:
-    <source hashdb>       the source hash database to copy hashes from
-    <destination hashdb>  the destination hash database to copy hashes into
-    <repository name>     the repository name to exclude when adding hashes
 
 Scan:
   scan_list [-j e|o|c|a] <hashdb> <hash list file>
-    Scan hash database <hashdb> for hashes in <hash list file> and print out
-    matches.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-    -x, --disable_processing
-      Disable further processing:
-        r disables recursively processing embedded data.
-
-    Parameters:
-    <hashdb>          the file path to the hash database to use as the
-                      lookup source
-    <hashes file>     the file containing hash values to scan for
-
   scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
-    Scan hash database <hashdb> for the specified <hash value> and print
-    out matches.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-
-    Parameters:
-    <hashdb>          the file path to the hash database to use as the
-                      lookup source
-    <hex block hash>  the hash value to scan for
-
   scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
-    Scan hash database <hashdb> for hashes in <media image> and print out
-    matches.
-
-    Options:
-    -s, --step_size
-      The step size to move along while calculating hashes.  Step size must
-      be divisible by the byte alignment defined in the database.
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-    -x, --disable_processing
-      Disable further processing:
-        r disables recursively processing embedded data.
-
-    Parameters:
-    <hashdb>          the file path to the hash database to use as the
-                      lookup source
-    <media image>     the media image file to scan for matching block hashes
 
 Statistics:
   size <hashdb>
-    Print the sizes of the database tables inside the given <hashdb> database.
-
-    Parameters:
-    <hashdb>       the hash database to print size information for
-
-  sources <hashdb>
-    Print source information indicating where the hashes in the <hashdb>
-    came from.
-
-    Parameters:
-    <hashdb>       the hash database to print all the repository name,
-                   filename source information for
-
   histogram <hashdb>
-    Print the histogram of hashes for the given <hashdb> database.
-
-    Parameters:
-    <hashdb>       the hash database to print the histogram of hashes for
-
   duplicates [-j e|o|c|a] <hashdb> <number>
-    Print the hashes in the given <hashdb> database that are sourced the
-    given <number> of times.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-
-    Parameters:
-    <hashdb>       the hash database to print duplicate hashes about
-    <number>       the requested number of duplicate hashes
-
   hash_table [-j e|o|c|a] <hashdb> <hex file hash>
-    Print hashes from the given <hashdb> database that are associated with
-    the <source_id> source index.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-
-    Parameters:
-    <hashdb>              the hash database to print hashes from
-    <hex file hash>       the file hash of the source to print hashes for
-
   read_bytes <media image> <offset> <count>
-    Print <count> number of raw bytes starting at the specified <offset> in
-    the <media image> file.
 
-    Parameters:
-    <media image>  the media image file to print raw bytes from
-    <offset>       the offset in the media image file to read from
-    <count>        the number of raw bytes to read
-
-Performance analysis:
+Performance Analysis:
   add_random <hashdb> <hex file hash> <count>
-    Add <count> randomly generated hashes into hash database <hashdb>.
-    Write performance data in the database's log.txt file.
-
-    Options:
-    -r, --repository=<repository name>
-      The repository name to use for the set of hashes being added.
-      (default is "repository_add_random").
-
-    Parameters:
-    <hashdb>       the hash database to add randomly generated hashes into
-    <hex file hash>the file hash of the source to print hashes for
-    <count>        the number of randomly generated hashes to add
-
   scan_random <hashdb> <count>
-    Scan for random hashes in the <hashdb> database.  Write performance
-    data in the database's log.txt file.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-
-    Parameters:
-    <hashdb>       the hash database to scan
-    <count>        the number of randomly generated hashes to scan for
-
   add_same <hashdb> <hex file hash> <count>
-    Add <count> MD5 hashes of value 0x800000... into hash database <hashdb>.
-    Write performance data in the database's log.txt file.
-
-    Options:
-    -r, --repository=<repository name>
-      The repository name to use for the set of hashes being added.
-      (default is "repository_add_same").
-
-    Parameters:
-    <hashdb>       the hash database to add hashes of the same value into
-    <hex file hash>the file hash of the source to print hashes for
-    <count>        the number of hashes of the same value to add
-
   scan_same <hashdb> <count>
-    Scan for the same hash value in the <hashdb> database.  Write
-    performance data in the database's log.txt file.
-
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
-
-    Parameters:
-    <hashdb>       the hash database to scan
-    <count>        the number of randomly generated hashes to scan for
-
   test_scan_stream <hashdb> <count>
-    Run <count> scan_stream requests, where each request contains 10K MD5
-    hashes of value 0x800000....  Write performance data in the database's
-    log.txt file.
 
-    Options:
-    -j, --json_scan_mode
-      The JSON scan mode selects optimization and output (default is o):
-        e return expanded output.
-        o return expanded output optimized to not repeat hash and source
-          information.
-        c return hash duplicates count
-        a return approximate hash duplicates count
+New Database:
+create [-b <block size>] [-a <byte alignment>]
+       [-m <max count:max sub-count>]
+       [-t <hash prefix bits:hash suffix bytes>] <hashdb>
+  Create a new <hashdb> hash database.
 
-    Parameters:
-    <hashdb>       the hash database to scan
-    <count>        the number of scan requests to issue
+  Options:
+  -b, --block_size=<block size>
+    <block size>, in bytes, or use 0 for no restriction
+    (default 512)
+  -a, --byte_alignment=<n>
+    <byte_alignment>, in bytes, or 1 for any alignment (default 512)
+  -m, --max_counts=<max count:max sub-count>
+    The maximum number of source file offset references to store for a
+    hash and the maximum number of source file offset references associated
+    with a source to store for a hash (default 100000:50)
+  -t, --tuning=<hash prefix bits:hash suffix bytes>
+    The number of hash prefix bits and suffix bytes to use for
+    optimizing hash storage (default 28:3)
 
+  Parameters:
+  <hashdb>   the file path to the new hash database to create
+
+Import/Export:
+ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
+       [-x <rel>] <hashdb.hdb> <import directory>
+  Import hashes recursively from <import directory> into hash database
+    <hashdb>.
+
+  Options:
+  -r, --repository_name=<repository name>
+    The repository name to use for the set of hashes being imported.
+    (default is "repository_" followed by the <import directory> path).
+  -w, --whitelist_dir
+    The path to a whitelist hash database.  Hashes matching this database
+    will be marked with a whitelist entropy flag.
+  -s, --step_size
+    The step size to move along while calculating hashes.  Step size must
+    be divisible by the byte alignment defined in the database.
+  -x, --disable_processing
+    Disable further processing:
+      r disables recursively processing embedded data.
+      e disables calculating entropy.
+      l disables calculating block labels.
+
+  Parameters:
+  <import dir>   the directory to recursively import from
+  <hashdb>       the hash database to insert the imported hashes into
+import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
+  Import hashes from file <tab file> into hash database <hashdb>.
+
+  Options:
+  -r, --repository_name=<repository name>
+    The repository name to use for the set of hashes being imported.
+    (default is "repository_" followed by the <import directory> path).
+  -w, --whitelist_dir
+    The path to a whitelist hash database.  Hashes matching this database
+    will be marked with a whitelist entropy flag.
+
+  Parameters:
+  <hashdb>       the hash database to insert the imported hashes into
+  <NIST file>    the NIST file to import hashes from
+import <hashdb> <json file>
+  Import hashes from file <json file> into hash database <hashdb>.
+
+  Parameters:
+  <hashdb>       the hash database to insert the imported hashes into
+  <json file>    the JSON file to import hashes from
+export <hashdb> <json file>
+  Export hashes from hash database <hashdb> into file <json file>.
+
+  Parameters:
+  <hashdb>       the hash database to export
+  <json file>    the JSON file to export the hash database into.
+
+Database Manipulation:
+add <source hashdb> <destination hashdb>
+  Copy hashes from the <source hashdb> to the <destination hashdb>.
+
+  Parameters:
+  <source hashdb>       the source hash database to copy hashes from
+  <destination hashdb>  the destination hash database to copy hashes into
+add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
+  Perform a union add of <source hashdb 1> and <source hashdb 2>
+  into the <destination hashdb>.
+
+  Parameters:
+  <source hashdb 1>     a hash database to copy hashes from
+  <source hashdb 2>     a second hash database to copy hashes from
+  <destination hashdb>  the destination hash database to copy hashes into
+add_repository <source hashdb> <destination hashdb> <repository name>
+  Copy hashes from the <source hashdb> to the <destination hashdb>
+  when the <repository name> matches.
+
+  Parameters:
+  <source hashdb>       the source hash database to copy hashes from
+  <destination hashdb>  the destination hash database to copy hashes into
+  <repository name>     the repository name to match when adding hashes
+add_range <source hashdb> <destination hashdb> <m:n>
+  Copy the hashes from the <source hashdb> to the <destination hashdb>
+  that have source reference count values between m and n.
+
+  Parameters:
+  <source hashdb>       the hash database to copy hashes from that have a
+                        source count within range m and n
+  <destination hashdb>  the hash database to copy hashes to when the
+                        source count is within range m and n
+  <m:n>                 the minimum and maximum count value range in which
+                        hashes will be copied
+intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
+  Copy hashes that are common to both <source hashdb 1> and
+  <source hashdb 2> into <destination hashdb>.  Hashes and their sources
+  must match.
+
+  Parameters:
+  <source hashdb 1>     a hash databases to copy the intersection of
+  <source hashdb 2>     a second hash databases to copy the intersection of
+  <destination hashdb>  the destination hash database to copy the
+                        intersection of exact matches into
+intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+  Copy hashes that are common to both <source hashdb 1> and
+  <source hashdb 2> into <destination hashdb>.  Hashes match when hash
+  values match, even if their associated source repository name and
+  filename do not match.
+
+  Parameters:
+  <source hashdb 1>     a hash databases to copy the intersection of
+  <source hashdb 2>     a second hash databases to copy the intersection of
+  <destination hashdb>  the destination hash database to copy the
+                        intersection of hashes into
+subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
+  Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
+  into <destination hashdb>.  Hashes and their sources must match.
+
+  Parameters:
+  <source hashdb 1>     the hash database containing hash values to be
+                        added if they are not also in the other database
+  <source hashdb 2>     the hash database containing the hash values that
+                        will not be added
+  <destination hashdb>  the hash database to add the difference of the
+                        exact matches into
+subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+  Copy hashes that are in <souce hashdb 1> and not in <source hashdb 2>
+  into <destination hashdb>.  Hashes match when hash values match, even if
+  their associated source repository name and filename do not match.
+
+  Parameters:
+  <source hashdb 1>     the hash database containing hash values to be
+                        added if they are not also in the other database
+  <source hashdb 2>     the hash database containing the hash values that
+                        will not be added
+  <destination hashdb>  the hash database to add the difference of the
+                        hashes into
+subtract_repository <source hashdb> <destination hashdb> <repository name>
+  Copy hashes from the <source hashdb> to the <destination hashdb>
+  when the <repository name> does not match.
+
+  Parameters:
+  <source hashdb>       the source hash database to copy hashes from
+  <destination hashdb>  the destination hash database to copy hashes into
+  <repository name>     the repository name to exclude when adding hashes
+
+Scan:
+scan_list [-j e|o|c|a] <hashdb> <hash list file>
+  Scan hash database <hashdb> for hashes in <hash list file> and print out
+  matches.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+  -x, --disable_processing
+    Disable further processing:
+      r disables recursively processing embedded data.
+
+  Parameters:
+  <hashdb>          the file path to the hash database to use as the
+                    lookup source
+  <hashes file>     the file containing hash values to scan for
+scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
+  Scan hash database <hashdb> for the specified <hash value> and print
+  out matches.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>          the file path to the hash database to use as the
+                    lookup source
+  <hex block hash>  the hash value to scan for
+scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
+  Scan hash database <hashdb> for hashes in <media image> and print out
+  matches.
+
+  Options:
+  -s, --step_size
+    The step size to move along while calculating hashes.  Step size must
+    be divisible by the byte alignment defined in the database.
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+  -x, --disable_processing
+    Disable further processing:
+      r disables recursively processing embedded data.
+
+  Parameters:
+  <hashdb>          the file path to the hash database to use as the
+                    lookup source
+  <media image>     the media image file to scan for matching block hashes
+
+Statistics:
+size <hashdb>
+  Print the sizes of the database tables inside the given <hashdb> database.
+
+  Parameters:
+  <hashdb>       the hash database to print size information for
+sources <hashdb>
+  Print source information indicating where the hashes in the <hashdb>
+  came from.
+
+  Parameters:
+  <hashdb>       the hash database to print all the repository name,
+                 filename source information for
+histogram <hashdb>
+  Print the histogram of hashes for the given <hashdb> database.
+
+  Parameters:
+  <hashdb>       the hash database to print the histogram of hashes for
+duplicates [-j e|o|c|a] <hashdb> <number>
+  Print the hashes in the given <hashdb> database that are sourced the
+  given <number> of times.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>       the hash database to print duplicate hashes about
+  <number>       the requested number of duplicate hashes
+hash_table [-j e|o|c|a] <hashdb> <hex file hash>
+  Print hashes from the given <hashdb> database that are associated with
+  the <source_id> source index.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>              the hash database to print hashes from
+  <hex file hash>       the file hash of the source to print hashes for
+read_bytes <media image> <offset> <count>
+  Print <count> number of raw bytes starting at the specified <offset> in
+  the <media image> file.
+
+  Parameters:
+  <media image>  the media image file to print raw bytes from
+  <offset>       the offset in the media image file to read from
+  <count>        the number of raw bytes to read
+
+Performance Analysis:
+add_random <hashdb> <hex file hash> <count>
+  Add <count> randomly generated hashes into hash database <hashdb>.
+  Write performance data in the database's log.txt file.
+
+  Options:
+  -r, --repository=<repository name>
+    The repository name to use for the set of hashes being added.
+    (default is "repository_add_random").
+
+  Parameters:
+  <hashdb>       the hash database to add randomly generated hashes into
+  <hex file hash>the file hash of the source to print hashes for
+  <count>        the number of randomly generated hashes to add
+scan_random <hashdb> <count>
+  Scan for random hashes in the <hashdb> database.  Write performance
+  data in the database's log.txt file.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>       the hash database to scan
+  <count>        the number of randomly generated hashes to scan for
+add_same <hashdb> <hex file hash> <count>
+  Add <count> MD5 hashes of value 0x800000... into hash database <hashdb>.
+  Write performance data in the database's log.txt file.
+
+  Options:
+  -r, --repository=<repository name>
+    The repository name to use for the set of hashes being added.
+    (default is "repository_add_same").
+
+  Parameters:
+  <hashdb>       the hash database to add hashes of the same value into
+  <hex file hash>the file hash of the source to print hashes for
+  <count>        the number of hashes of the same value to add
+scan_same <hashdb> <count>
+  Scan for the same hash value in the <hashdb> database.  Write
+  performance data in the database's log.txt file.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>       the hash database to scan
+  <count>        the number of randomly generated hashes to scan for
+test_scan_stream <hashdb> <count>
+  Run <count> scan_stream requests, where each request contains 10K MD5
+  hashes of value 0x800000....  Write performance data in the database's
+  log.txt file.
+
+  Options:
+  -j, --json_scan_mode
+    The JSON scan mode selects optimization and output (default is o):
+      e return expanded output.
+      o return expanded output optimized to not repeat hash and source
+        information.
+      c return hash duplicates count
+      a return approximate hash duplicates count
+
+  Parameters:
+  <hashdb>       the hash database to scan
+  <count>        the number of scan requests to issue
+Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
+       hashdb [-h <command>]
+       hashdb [options] <command> [<args>]
+
+New Database:
+  create [-b <block size>] [-a <byte alignment>]
+         [-m <max count:max sub-count>]
+         [-t <hash prefix bits:hash suffix bytes>] <hashdb>
+
+Import/Export:
+  ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
+         [-x <rel>] <hashdb.hdb> <import directory>
+  import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
+  import <hashdb> <json file>
+  export <hashdb> <json file>
+
+Database Manipulation:
+  add <source hashdb> <destination hashdb>
+  add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
+  add_repository <source hashdb> <destination hashdb> <repository name>
+  add_range <source hashdb> <destination hashdb> <m:n>
+  intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
+  intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+  subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
+  subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
+  subtract_repository <source hashdb> <destination hashdb> <repository name>
+
+Scan:
+  scan_list [-j e|o|c|a] <hashdb> <hash list file>
+  scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
+  scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
+
+Statistics:
+  size <hashdb>
+  histogram <hashdb>
+  duplicates [-j e|o|c|a] <hashdb> <number>
+  hash_table [-j e|o|c|a] <hashdb> <hex file hash>
+  read_bytes <media image> <offset> <count>
+
+Performance Analysis:
+  add_random <hashdb> <hex file hash> <count>
+  scan_random <hashdb> <count>
+  add_same <hashdb> <hex file hash> <count>
+  scan_same <hashdb> <count>
+  test_scan_stream <hashdb> <count>

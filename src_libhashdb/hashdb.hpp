@@ -62,8 +62,7 @@ namespace hashdb {
   // version of the hashdb library
   // ************************************************************
   /**
-   * Version of the hashdb library.
- * Version of the hashdb library, inside hashdb namespace.
+   * Version of the hashdb library, inside hashdb namespace.
    */
   extern "C"
   const char* version();

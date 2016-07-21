@@ -809,7 +809,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="682.62176"
+     inkscape:cx="688.27862"
      inkscape:cy="104.61609"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -831,7 +831,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1022,22 +1022,22 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="258.25934"
+       x="246.25934"
        y="657.26111"
        id="text5598-2-6-9-2"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-5-8-3-7"
-         x="258.25934"
+         x="246.25934"
          y="657.26111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start">Byte 2100</tspan><tspan
          sodipodi:role="line"
-         x="258.25934"
+         x="246.25934"
          y="677.51111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         id="tspan4611">Forensic path 1000-zip-2100</tspan><tspan
+         id="tspan4611">Forensic path &quot;1000-zip-2100&quot;</tspan><tspan
          sodipodi:role="line"
-         x="258.25934"
+         x="246.25934"
          y="697.76111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start"
          id="tspan3556-4-9" /></text>

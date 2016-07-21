@@ -39,14 +39,6 @@ class lmdb_changes_t {
 
   public:
   // hash_data
-/*zz fix doc before removing this.
-  size_t hash_data_data_inserted;
-  size_t hash_data_data_changed;
-  size_t hash_data_data_same;
-  size_t hash_data_source_inserted;
-  size_t hash_data_source_already_present;
-  size_t hash_data_source_at_max;
-*/
   size_t hash_data_source_inserted;
   size_t hash_data_offset_inserted;
   size_t hash_data_data_changed;
