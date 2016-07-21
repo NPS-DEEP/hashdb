@@ -656,10 +656,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="471.32656"
+     inkscape:cx="474.15499"
      inkscape:cy="261.84295"
      inkscape:document-units="px"
-     inkscape:current-layer="g4074-0-1"
+     inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1198"
      inkscape:window-height="1128"
@@ -742,7 +742,7 @@
        transform="translate(-250.3158,-503.46003)" />
     <g
        id="g3300"
-       transform="translate(719.83472,-890.95456)">
+       transform="translate(776.06012,-882.12613)">
       <path
          id="path4096"
          style="fill:#4c7472;fill-opacity:1;fill-rule:evenodd;stroke:none"
@@ -750,7 +750,7 @@
          inkscape:connector-curvature="0" />
       <path
          id="path4098"
-         style="fill:none;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         style="fill:none;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
          d="m -180.42652,1110.8357 103.736255,0 0,92.5 c -51.865005,0 -51.865005,35.5875 -103.736255,17.7875 l 0,-110.2875 z m 8.54625,0 0,-11.9875 103.027505,0 0,93.075 c -3.91625,0 -7.8375,0.6375 -7.8375,0.6375 m -87.156255,-93.7125 0,-11.7 103.920005,0 0,92.7875 c -4.4625,0 -8.92625,0.475 -8.92625,0.475"
          inkscape:connector-curvature="0" />
       <g
@@ -767,7 +767,7 @@
                sodipodi:role="line"
                y="0"
                x="0 9.7740002 18.198 30.996"
-               style="font-size:18px;font-variant:normal;font-weight:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri">Raw</tspan>
+               style="font-variant:normal;font-weight:normal;font-size:18px;font-family:Calibri;-inkscape-font-specification:Calibri;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none">Raw</tspan>
           </text>
         </g>
       </g>
@@ -785,7 +785,7 @@
                sodipodi:role="line"
                y="0"
                x="0 15.39 24.354 33.804001 37.98"
-               style="font-size:18px;font-variant:normal;font-weight:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri">Media</tspan>
+               style="font-variant:normal;font-weight:normal;font-size:18px;font-family:Calibri;-inkscape-font-specification:Calibri;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none">Media</tspan>
           </text>
         </g>
       </g>
@@ -836,7 +836,7 @@
     </g>
     <g
        id="g3328"
-       transform="translate(540.22959,-999.84914)">
+       transform="translate(588.31285,-1011.1628)">
       <path
          id="path4372"
          style="fill:#4c7472;fill-opacity:1;fill-rule:evenodd;stroke:none"
@@ -849,7 +849,7 @@
          inkscape:connector-curvature="0" />
       <path
          id="path4376"
-         style="fill:none;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         style="fill:none;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
          d="m -22.926515,1252.0232 c 0,7.9375 -28.6,14.375 -63.875,14.375 -35.277505,0 -63.875005,-6.4375 -63.875005,-14.375 0,-7.9375 28.5975,-14.375 63.875005,-14.375 35.275,0 63.875,6.4375 63.875,14.375 z m 0,0 0,86.25 c 0,7.9388 -28.6,14.375 -63.875,14.375 -35.277505,0 -63.875005,-6.4362 -63.875005,-14.375 l 0,-86.25"
          inkscape:connector-curvature="0" />
       <g
@@ -890,7 +890,7 @@
     </g>
     <g
        id="g3396"
-       transform="translate(168.29142,-828.72914)">
+       transform="translate(164.29142,-828.72914)">
       <path
          id="path4370"
          style="fill:#5b9bd5;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -917,7 +917,7 @@
            id="g4456">
           <path
              id="path4462"
-             style="fill:none;stroke:#41719c;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+             style="fill:none;stroke:#41719c;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
              d="m 487.6,212.9 0,-24.2 4.5,0 -9,-9 -9,9 4.5,0 0,24.2 9,0 z"
              inkscape:connector-curvature="0" />
         </g>
@@ -1306,47 +1306,6 @@
                style="font-size:18.02499962px;font-variant:normal;font-weight:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
                y="-280.01999"
                id="tspan4833">Match</tspan>
-          </text>
-        </g>
-      </g>
-    </g>
-    <g
-       transform="translate(651.0378,-784.75035)"
-       id="g4746-3">
-      <path
-         id="path4068-9-7"
-         style="fill:#4c7472;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         d="m 29.573485,1149.3982 98.749995,0 0,-103.25 -98.749995,0 0,103.25 z"
-         inkscape:connector-curvature="0" />
-      <path
-         id="path4070-2-0"
-         style="fill:none;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
-         d="m 29.573485,1149.3982 98.749995,0 0,-103.25 -98.749995,0 0,103.25 z"
-         inkscape:connector-curvature="0" />
-      <g
-         transform="matrix(1.25,0,0,-1.25,-180.30152,1451.7732)"
-         id="g4072-3-7">
-        <g
-           clip-path="url(#clipPath4076-5-8)"
-           id="g4074-0-15">
-          <text
-             id="text4080-6-82"
-             transform="matrix(1,0,0,-1,189.6,288.02)"
-             x="17.989794"
-             y="0"
-             style="text-align:center;text-anchor:middle">
-            <tspan
-               id="tspan4082-3-1"
-               sodipodi:role="line"
-               x="17.989794"
-               style="font-size:18.02499962px;font-variant:normal;font-weight:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
-               y="0">JSON</tspan>
-            <tspan
-               sodipodi:role="line"
-               x="17.989794"
-               style="font-size:18.02499962px;font-variant:normal;font-weight:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Calibri;-inkscape-font-specification:Calibri"
-               y="22.53125"
-               id="tspan4702-40">Data</tspan>
           </text>
         </g>
       </g>

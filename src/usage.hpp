@@ -45,7 +45,7 @@ void overview() {
   << "New Database:\n"
   << "  create [-b <block size>] [-a <byte alignment>]\n"
   << "         [-m <max count:max sub-count>]\n"
-  << "         [-t <hash prefix bits:hash suffix bytes>]\n"
+  << "         [-t <hash prefix bits:hash suffix bytes>] <hashdb>\n"
   << "\n"
   << "Import/Export:\n"
   << "  ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]\n"
@@ -94,7 +94,7 @@ static void create() {
   std::cout
   << "create [-b <block size>] [-a <byte alignment>]\n"
   << "       [-m <max count:max sub-count>]\n"
-  << "       [-t <hash prefix bits:hash suffix bytes>]\n"
+  << "       [-t <hash prefix bits:hash suffix bytes>] <hashdb>\n"
   << "  Create a new <hashdb> hash database.\n"
   << "\n"
   << "  Options:\n"

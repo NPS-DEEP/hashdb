@@ -56,10 +56,10 @@ basicstyle=\footnotesize\ttfamily, frame=single, float=htpb}
 \subsection {Overview of \hdb}
 \hdb is a tool that can be used to find data in raw media using cryptographic hashes calculated from blocks of data. It is a useful forensic investigation tool for tasks such as malware detection, child exploitation detection or corporate espionage investigations. The tool provides several capabilities that include:
 \begin{itemize}
-\item Creating hash databases of MD5 block hashes, as opposed to file hashes.
+\item Creating hash databases of MD5 block hashes.
 \item Importing block hash values.
 \item Scanning the hash database for matching hash values.
-\item Providing the source information for hash values. 
+\item Providing source information for hash values. 
 \end{itemize}
 
 Using \hdb, a forensic investigator can take a known set of blacklisted media and generate a hash database. The investigator can then use the hash database to search against raw media for blacklisted information. For example, given a known set of malware, an investigator can generate a sector hash database representing that malware. The investigator can then search a given corpus for fragments of that malware and identify the specific malware content in the corpus.\\
@@ -69,7 +69,7 @@ Using \hdb, a forensic investigator can take a known set of blacklisted media an
 \hdb provides an advantage when working with hard disks and operating systems that fragment data into discontiguous blocks yet still sector-align media. This is because scans are performed along sector boundaries. Because \hdb works at the block resolution, it can find part of a file when the rest of the file is missing, such as with a large video file where only part of the video is on disk. \hdb can also be used to analyze network traffic (such as that captured by \textbf{tcpflow}).  Finally, \hdb can identify artifacts that are sub-file, such as embedded content in a \texttt{.pdf} document.\\
 
 \hdb stores cryptographic hashes (along with their source information) that have been calculated from hash blocks. It also provides the capability to scan other media for hash matches.
-This manual describes uses cases for the \hdb tools, including usage with \aut, \sscope, \bulk, and the \hdb Python and C++ libraries, and demonstrates how users can take full advantage of all of its capabilities.
+This manual includes uses cases for the \hdb tools, including usage with \aut, \sscope, \bulk, and the \hdb Python and C++ libraries, and demonstrates how users can take full advantage of all of its capabilities.
 
 \subsection{Intended Audience}
 This Users Manual is intended to be useful to new, intermediate and experienced users of \hdb. It provides an in-depth review of the functionality included in \hdb and shows how to access and utilize features through command line operation of the tool. This manual includes working examples with links to the input data used, giving users the opportunity to work through the examples and utilize all aspects of the system.  This manual also introduces Forensic tools that use \hdb.\\
@@ -124,19 +124,21 @@ The first character on the line is the terminal prompt, and should not be typed.
   \end{itemize}
 \item Bulky output from scans has been significantly reduced:
   \begin{itemize}
-  \item Information about matched sources and hashes are returned only once and are not reprinted if a source or hash is matched again.
   \item Information is returned in the more condensed JSON format rather than in XML.
+  \item Source offsets are presented as lists in one record rather than repeating hash and source information for each offset.
+  \item Additionally, an optimization mode is available where information about matched sources and hashes are returned only once and are not reprinted if a source or hash is matched again.
   \end{itemize}
 \item A complete \hdb API is now available for C++ and Python.
   \begin{itemize}
   \item A scan interface supports scan functions and functions for reading all hash and source information.
   \item An import interface supports functions for importing hash and source information.
-  \item Free functions support access to settings and higher-layer capabilities.
+  \item Additional interfaces support access to settings and higher-layer capabilities.
   \end{itemize}
 \item The database has been retuned to improve scan and import speed:
   \begin{itemize}
   \item A compressed hash store has been added for extremely fast and compact approximate scan lookups.
   \item The Bloom filter has been removed in favor of the dense hash store.
+  \item The hash data store contains lists of source offsets for each source rather than one entry per source offset, reducing its size.
   \item Several scan modes are available, supporting various levels of verbosity and performance:
     \begin{itemize}
     \item \textbf{expanded} scans for matches and returns complete match information in JSON format.
@@ -145,7 +147,7 @@ The first character on the line is the terminal prompt, and should not be typed.
     \item \textbf{approximate count} is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
     \end{itemize}
   \end{itemize}
-\item Ingest, image scan, and image read interfaces are added to \hdb. \bulk is no longer required to perform these functions.
+\item \hdb can now read images, scan images, and ingest sources directly.  \bulk is no longer required to perform these functions.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
 \end{itemize}
 
@@ -177,7 +179,7 @@ Steps for installing \hdb on Windows and one flavor of Linux are described here.
 For information on installing \sscope and \bulk tools which use \hdb, Please see \textbf{\Autoref{OtherTools}}.\\
 
 \subsubsection{Installing on Windows}
-Windows users should download the Windows Installer for \hdb. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number (1.1.1 as of publication of this manual).\\
+Windows users should download the Windows Installer for \hdb. The file to download is located at \url{http://digitalcorpora.org/downloads/hashdb} and is called \texttt{hashdb-x.y.} \texttt{z-windowsinstaller.exe} where x.y.z is the latest version number.\\
 
 You should close all Command windows before running the installation executable. Windows will not be able to find the \hdb tools in a Command window if any are open during the installation process. If you do not do this before installation, simply close all Command windows after installation. When you re-open, Windows should be able to find \hdb.\\
 
@@ -206,10 +208,10 @@ Installs the following files onto the desktop at \verb+Users\Public\Desktop+:
   A small test program for helping to validate and diagnose the installation of \verb+hashdb.py+ and \verb+hashdb.py+. This file may be delted.
   \end{itemize}
 
-Suggestions for managing these files include:
+Suggestions for managing these files placed on the public desktop include:
   \begin{itemize}
-  \item Move these files to your working directory so that they can be found by your Python program.
-  \item Move these files to another directory and set \verb+PATH+ to include the path to \verb+_hashdb.pyd+ and set \verb+PYTHONPATH+ to include the path to \verb+hashdb.py+.
+  \item Move them to your working directory so that they can be found by your Python program.
+  \item Move them to another directory and set \verb+PATH+ to include the path to \verb+_hashdb.pyd+ and set \verb+PYTHONPATH+ to include the path to \verb+hashdb.py+.
   \end{itemize}
 \end{itemize}
 
@@ -223,7 +225,7 @@ Suggestions for managing these files include:
 \hdb is now installed on your system can be run from the command line.\\
 
 \subsubsection{Installing on Linux or Mac}
-This section describes steps for installing \hdb on a Fedora 23 system and is intended to illustrate the installation process.  For steps on installing \hdb to other flavors of Linux or for MacOS, and for installing specific configurations, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
+This section describes steps for installing \hdb on a Fedora system and is intended to illustrate the installation process.  For steps on installing \hdb to other flavors of Linux or for MacOS, and for installing specific configurations, please refer to the installation page on the \hdb Wiki at \url{https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb}.\\
 
 Before compiling \hdb for your platform, you may need to install other packages on your system which \hdb requires to compile cleanly and with a full set of capabilities.\\
 
@@ -256,7 +258,7 @@ Then, in the newly created \textit{hashdb-x.y.z} directory, run the following co
 \end{Verbatim}
 \hdb is now installed on your system and can be run from the command line. \\
 
-Note: sudo is not required. If you do not wish to use sudo,  build and install \hdb and \bulk in your own space at ``\$HOME/local'' using the following commands:
+Note: sudo is not required. If you do not wish to use sudo,  build and install \hdb in your own space at ``\$HOME/local'' using the following commands:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{./configure --prefix=$HOME/local/ --exec-prefix=$HOME/local CPPFLAGS=-}
 \textbf{                         I$HOME/local/include/ LDFLAGS=-L$HOME/local/lib/}
@@ -287,7 +289,7 @@ The \hdb Python interface can be made available by typing:
 which provides access the installed \verb+python.py+ and \verb+_python.so+ resources, respectively.\\
 
 \subsubsection{Quickstart Guide}
-The following steps provide a very brief introduction to running your new installation of \hdb. 
+The following steps provide a very brief introduction to running your new installation of \hdb. Steps include creating a demo database and scanning for matching hashes. 
 \begin{enumerate}
 \item Navigate to the directory where you would like to create a hash database. Then, to run \hdb from the command line, type the following instructions: 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -296,13 +298,13 @@ The following steps provide a very brief introduction to running your new instal
 
 In the above instructions, \texttt{\textbf{demo.hdb}} is the empty database that will be created with default database settings.
 
-\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}:
+\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}. After downloading this, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb import demo.hdb blacklist_files}
+\verbbf{hashdb import demo.hdb KittyMaterial.json}
 \end{Verbatim} 
 This command, if executed successfully, will print processing status followed by statistics indicating changes to the database.
 
-\item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklisted Kitty block hashes. This can be done using the Python interface, \sscope, or \bulk, but lets just use the \hdb tool:
+\item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklist block hashes from the Kitty demo:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb scan_image demo.hdb jo-favorites-usb-2009-12-11.E01}
 \end{Verbatim} 
@@ -311,12 +313,14 @@ With this image and dataset, the first block hash matched is at media image offs
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0.5,
-"block_label":"","source_list_id":1193146442,"sources":
+2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":
+"1d7379fd4d5cf676a9d4de1e48337e71","entropy":4.880000114440918,
+"block_label":"","count":1,"source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
-"file_type":"","zero_count":1,"nonprobative_count":10,"name_pairs":
-["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
-"source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
+"file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
+["/home/bdallen/KittyMaterial","/home/bdallen/KittyMaterial/
+HighQuality/DSC00003.JPG"]}],"source_offsets":
+["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
 \end{Verbatim}
 \endgroup
 
@@ -365,9 +369,9 @@ We build a hash database of blacklist data by importing block hashes
 from blacklist files, copying from other hash databases,
 or importing from other sources using data prepared in JSON format.\\
 
-Each block hash in the database contains one or more source, file offset pairs indicating a source and location within the source where the hash is located.  If a block is duplicated within a source, then several source, file offset pairs will be stored for that hash.  If a block hash is also found in another source, then source, file offset pair(s) from that source will also be stored for that hash. Block hashes with many source, file offset pairs tend to contain non-probative data.\\
+Each block hash in the database contains one or more file offsets for one or more sources indicating a source and location within the source where the hash is located.  If a block is found several times for a source, then several offsets will be recorded for that source. If a block is found in more than one source, then more than one source will contain offset information for each source. Block hashes with many source offsets tend to contain non-probative data.\\
 
-\subsection{Repositories}
+\subsection{Repository Names}
 Blacklist data may come from multiple sources called ``repositories''. \hdb tracks repository names in order to know what categories blacklist data belongs to. When importing into a database, users may provide repository names specific to balcklist categories or cases, or allow \hdb to select default values.  When scanning, hashes may match sources from several repositories.\\
 
 \subsection{Forensic Data}
@@ -432,8 +436,15 @@ We calculate the entropy of data blocks and use this value to help estimate that
 Data in blocks can be a member of many types of alphabets, for example readable text or executable code. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
 \item \textbf{Block Label}\\
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
-\item \textbf{Source-Offset Pairs}\\
-  The list of source-offset pairs identify all sources the matched hash maps to, along with the offset in the sources where the match is located.
+\item \textbf{Count}\\
+The count indicates the total number of source offsets matching a given block. High count values are likely to be nonprobative.
+\item \textbf{Source Offsets}\\
+The list of source offset information provides offset information for each source related to the block:
+  \begin{itemize}
+  \item The \textbf{file hash} of the associated block.
+  \item The \textbf{sub-count} of offsets attributed by the given source.
+  \item The list of \textbf{file offsets} where the block is found in the given source. Long lists are truncated to conserve space.
+  \end{itemize}
 \end{itemize}
 
 \subsection{Building a \hdb Database}
@@ -507,34 +518,34 @@ This file contains the settings requested by the user when the block hash databa
 \item \texttt{log.txt} \\
 Every time a command is run that changes the content of the database, information about the change is appended to this log.  Each entry includes the command name, information about \hdb including the command typed and how \hdb was compiled, information about the operating system \hdb was just run on, timestamps indicating how much time the command took, and the specific \hdb changes applied.\\
 
-Listing \ref{logfile} shows an example log file containing two entries, one for when the hash database was created, and one for when data was imported into the database.
+Listing \ref{logfile} shows an example log file containing two entries, one for when the hash database was created, and one for when data was ingested into the database.
 
 \lstset{style=customfile}
-\begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase import entry, label=logfile]
+\begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase ingest entry, label=logfile]
 # command: "hashdb create KittyMaterial.hdb"
-# hashdb version: 3.0.0-alpha-1
+# hashdb version: 3.0.0-alpha-6
 # username: bdallen
-# start time 2016-04-07T19:20:06Z
-{"name":"begin","delta":"0.000386","total":"0.000386"}
-{"name":"end","delta":"0.000013","total":"0.000403"}
-# command: "hashdb import KittyMaterial.hdb KittyMaterial.json"
-# hashdb version: 3.0.0-alpha-1
+# start time 2016-07-20T17:02:12Z
+{"name":"begin","delta":"0.000394","total":"0.000395"}
+{"name":"end","delta":"0.000018","total":"0.000422"}
+# command: "hashdb ingest KittyMaterial.hdb/ /home/bdallen/KittyMaterial"
+# hashdb version: 3.0.0-alpha-6
 # username: bdallen
-# start time 2016-04-07T19:20:23Z
-{"name":"begin","delta":"0.000387","total":"0.000387"}
+# start time 2016-07-20T17:02:31Z
+{"name":"begin","delta":"0.000353","total":"0.000353"}
 # hashdb changes:
-#     hash_data_data_inserted: 401935
-#     hash_data_data_same: 195
-#     hash_data_source_inserted: 402130
-#     hash_prefix_inserted: 401653
-#     hash_suffix_inserted: 401935
-#     hash_count_changed: 149
+#     hash_data_source_inserted: 401713
+#     hash_data_offset_inserted: 401732
+#     hash_prefix_inserted: 401316
+#     hash_suffix_inserted: 401598
+#     hash_count_changed: 88
 #     hash_not_changed: 46
-#     source_data_inserted: 101
-#     source_id_inserted: 101
-#     source_id_already_present: 402231
-#     source_name_inserted: 101
-{"name":"end","delta":"2.608494","total":"2.608885"}
+#     source_data_inserted: 88
+#     source_data_changed: 88
+#     source_id_inserted: 88
+#     source_id_already_present: 401820
+#     source_name_inserted: 88
+{"name":"end","delta":"8.475596","total":"8.475958"}
 \end{lstlisting}
 
 
@@ -547,14 +558,17 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 Function and performance of a \hdb database is set using configurable settings:
 
 \begin{itemize}
-\item \textbf{Block size}\\
-The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.
-
 \item \textbf{Byte alignment}\\
 Byte alignment is an optimization parameter created to help reduce the size of the database. To be optimal, this value should be large, but it must be divisible by the step size used when importing hashes. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to, specifically, 512.
 
-\item \textbf{Max source, offset pairs}\\
-The maximum number of source, offset pairs to store for a given hash, default 100,000. Each pair identifies a location in a source where this hash is located. If source information is not interesting when there are many sources, offset pairs associated with a hash, use a low value to prevent storing extra entries.
+\item \textbf{Block size}\\
+The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.
+
+\item \textbf{Max count}\\
+The maximum number of source offsets to store for a single hash value, default 100,000. If source information is not interesting, use a low value or even 0 to not store any actual source offset values.
+
+\item \textbf{Max sub-count}\\
+The maximum number of source offsets to store for each source contributing to a single hash value, default 50. If source information is not interesting, use a low value or even 0 to not store any actual source offset values. Due to internal design limitations associated with LMDB, the largest maximum allowed is 50.
 
 \item \textbf{Hash prefix bits}\\
 The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.
@@ -587,7 +601,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-m <max source offset pairs>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-m <max count:max sub-count>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
 \hline
 \end{tabular}
 \end{table}
@@ -604,7 +618,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline
 \textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{byte\_alignment} & Specifies the byte alignment in bytes used to calculate hashes along. Default is 512 bytes.  \\
 \hline
-\textbf{\texttt{-m}} & \verb+--max_source_offset_pairs=+\textit{max source offset pairs} & Specifies the maximum number of source, source offset pairs allowed. 0 value indicates there is no limit. Default is 0.\\
+\textbf{\texttt{-m}} & \verb+--max_counts=+\textit{max count:max sub-count} & Specifies the maximum number of total offsets and sub-offsets allowed for a hash.\\
 \hline
 \textbf{\texttt{-t}} & \verb+--tuning=+\textit{prefix bits:suffix bytes} & Specifies the number of prefix bits and suffix bytes to use for compacting the database.\\
 \hline
@@ -623,10 +637,10 @@ To create an (empty) hash database named \textbf{\texttt{demo.hdb}}, type the fo
 The above command will create a database with all of the default hash database settings. Most users will not need to change these settings.
 Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create --max\_source\_offset\_pairs=20 demo.hdb}
-\verbbf{hashdb create -m 20 demo.hdb}
+\verbbf{hashdb create --max\_counts=100:10 demo.hdb}
+\verbbf{hashdb create -m 100:10 demo.hdb}
 \end{Verbatim}
-The above two commands produce identical results, creating the database \texttt{demo.hdb} that will accept a maximum of 20 source, offset pairs per hash.\\
+The above two commands produce identical results, creating the database \texttt{demo.hdb} that will record a maximum of 10 offsets per source but no more than 100 offsets total across multiple sources.\\
 \end{itemize}
 
 \subsection{Importing and Exporting}
@@ -818,16 +832,18 @@ This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E0
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"entropy":0.5,
-"block_label":"","source_list_id":1193146442,"sources":
+2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":
+"1d7379fd4d5cf676a9d4de1e48337e71","entropy":4.880000114440918,
+"block_label":"","count":1,"source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
-"file_type":"","zero_count":1,"nonprobative_count":10,"name_pairs":
-["default_repository","KittyMaterial/HighQuality/DSC00003.JPG"]}],
-"source_offset_pairs":["1dd00f2e51aeebe7541cea4ade2e20b5",0]}
+"file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
+["/home/bdallen/KittyMaterial","/home/bdallen/KittyMaterial/
+HighQuality/DSC00003.JPG"]}],"source_offsets":
+["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
 \end{Verbatim}
 \endgroup
 
-Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as blocks of zeros or metadata header blocks from files that are otherwise unique. Database manipulation commands,
+Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as number tables or metadata header blocks from files that are otherwise unique. Database manipulation commands,
 \textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
@@ -1093,6 +1109,21 @@ Many of the \hdb commands and API interfaces require or emit data.
 This section describes the syntax used and required by \hdb
 commands and API interfaces.
 
+\subsection{General Output Conventions}
+
+\begin{itemize}
+\item \textbf{Expected output}\\
+Expected output is printed to \verb+stdout+, for example the \hdb \verb+create+ command will respond with \verb+New database created+.
+\item \textbf{JSON output}\\
+All JSON output is printed to \verb+stdout+.
+\item \textbf{Status}\\
+Some commands generate status information. This information is prefixed with a \verb+#+ character and a space, and may be treated as a comment. For example the \hdb \verb+ingest+ command will produce status including files processed, progress, and changes made to the database. The comment identifier separates status from JSON content.
+\item \textbf{Errors}\\
+Errors are is printed to \verb+stderr+, for example the \hdb \verb+create+ command might fail with the message \verb+Unable to create new hashdb database at path+.
+\item \textbf{Warnings}\\
+Warnings are printed to \verb+stderr+. Warnings may result when a command cannot fully complete, for example when JSON input syntax is invalid or when part of an input file cannot be read.
+\end{itemize}
+
 \subsection{Tab-delimited Import File}
 \label{TabFile}
 The \verb+import_tab+ command imports hashes from tab delimited files.
@@ -1118,12 +1149,13 @@ Source data defines information about a source. Source data is identified by the
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON source data used during import/export}, label=JSONSourceData]
 {
-  "file_hash":"fac7051447c781b69125994c5d125637",
-  "filesize":8000,
-  "file_type":"exe",
-  "zero_count":1,
-  "nonprobative_count":4,
-  "name_pairs":["repository1","filename1","repo2","f2"]
+  "file_hash":"3bf06fd991c312bd852c5f7b84d78174",
+  "filesize":5712046,
+  "file_type":"",
+  "zero_count":3860,
+  "nonprobative_count":32,
+  "name_pairs":["/home/bdallen/KittyMaterial",
+                "/home/bdallen/KittyMaterial/Cat.mov"]}
 }
 \end{lstlisting}
 
@@ -1157,10 +1189,10 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON block hash data used during import/export}, label=JSONBlockHashData]
 {
-  "block_hash":"3b6b477d391f73f67c1c01e2141dbb17",
-  "entropy":2.0,
-  "block_label":"W",
-  "source_offset_pairs":["fac7051447c781b69125994c5d125637", 4096]
+  "block_hash":"1d7379fd4d5cf676a9d4de1e48337e71",
+  "entropy":4.880000114440918,
+  "block_label":"",
+  "source_offsets":["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
 }
 \end{lstlisting}
 
@@ -1179,7 +1211,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
-\verb+source_offset_pairs+ & An array of source file hash, source file offset pairs associated with this block hash\\
+\verb+source_offsets+ & Information about source offsets for each source associated with this block hash\\
 \hline
 \end{tabular}
 \end{table}
