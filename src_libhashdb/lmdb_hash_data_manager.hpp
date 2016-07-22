@@ -180,7 +180,7 @@ class lmdb_hash_data_manager_t {
     p = lmdb_helper::decode_uint64_t(p, source_id);
 
     // read must finish before end of data record
-    if (p - p_start >= context.data.mv_size) {
+    if (p >= p_start + context.data.mv_size) {
       std::cerr << "data decode error in LMDB hash data store\n";
       assert(0);
     }
@@ -288,12 +288,11 @@ class lmdb_hash_data_manager_t {
     p = encode_file_offsets(p, sub_count, file_offsets);
 
     // check bounds
-    const size_t size = p - data;
-    if (size > max_lmdb_data_size) {
+    if (p > data + max_lmdb_data_size) {
       assert(0);
     }
 
-    return size;
+    return p - data;
   }
 
   size_t encode_type2(const float entropy,
@@ -324,12 +323,11 @@ class lmdb_hash_data_manager_t {
     p = lmdb_helper::encode_uint64_t(count_stored, p);
 
     // check bounds
-    const size_t size = p - data;
-    if (size > max_lmdb_data_size) {
+    if (p > data + max_lmdb_data_size) {
       assert(0);
     }
 
-    return size;
+    return p - data;
   }
 
   size_t encode_type3(const uint64_t source_id,
@@ -347,12 +345,11 @@ class lmdb_hash_data_manager_t {
     p = encode_file_offsets(p, sub_count, file_offsets);
 
     // check bounds
-    const size_t size = p - data;
-    if (size > max_lmdb_data_size) {
+    if (p > static_cast<uint8_t*>(data + max_lmdb_data_size)) {
       assert(0);
     }
 
-    return size;
+    return p - data;
   }
 
   // write the enocding.  Key must be valid.

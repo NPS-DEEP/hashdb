@@ -65,24 +65,29 @@ libhashdb_la_LIBADD = liblmdb.la
 noinst_LTLIBRARIES = liblmdb.la
 liblmdb_la_SOURCES = $(LMDB_INCS)
 
-# NOTE: LMDB breaks when compiled with Homebrew gcc6.10 with options:
+# NOTE: LMDB breaks when compiled with Homebrew gcc6.10 with these options:
 # -fno-strict-aliasing removes gcc6 compiler optimization that results in runtime failure.
-# -fpermissive is added to permit compiling Homebrew gcc6.10 without error.
-# -Wno-bad-function-cast is added to prevent Homebrew gcc6.10 warnings.
-# -Wno-external-suffix is added to prevent Homebrew gcc6.10 warnings.
-# NOTE: Mac configuration compiled with Homebrew gcc6.10 currently fails.
-
-# may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
-liblmdb_la_CFLAGS = \
-	-pthread -fno-strict-aliasing \
-	-W -Wall -Wno-unused-parameter -Wno-bad-function-cast -Wuninitialized \
-	-Wno-external-suffix -Wno-format-extra-args
+# -fpermissive to suppress error.
+# -Wno-bad-function-cast to suppress warnings.
+# -Wno-external-suffix is added to suppress warnings.
 
 # may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
 liblmdb_la_CFLAGS = \
 	-pthread -fno-strict-aliasing \
 	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
-	-Wno-format-extra-args
+	-Wno-external-suffix -Wno-format-extra-args
+
+## may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
+#liblmdb_la_CFLAGS = \
+#	-pthread -fno-strict-aliasing \
+#	-W -Wall -Wno-unused-parameter -Wno-bad-function-cast -Wuninitialized \
+#	-Wno-external-suffix -Wno-format-extra-args
+
+## may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
+#liblmdb_la_CFLAGS = \
+#	-pthread -fno-strict-aliasing \
+#	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
+#	-Wno-format-extra-args
 
 liblmdb_la_LDFLAGS = -PIC
 
