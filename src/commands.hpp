@@ -61,7 +61,7 @@ void create_if_new(const std::string& hashdb_dir,
   error_message = hashdb::read_settings(from_hashdb_dir, settings);
   if (error_message.size() != 0) {
     // bad since from_hashdb_dir is not valid
-    std::cout << "Error: " << error_message << "\n";
+    std::cerr << "Error: " << error_message << "\n";
     exit(1);
   }
 
@@ -69,7 +69,7 @@ void create_if_new(const std::string& hashdb_dir,
   error_message = hashdb::create_hashdb(hashdb_dir, settings, command_string);
   if (error_message.size() != 0) {
     // bad since from_hashdb_dir is not valid
-    std::cout << "Error: " << error_message << "\n";
+    std::cerr << "Error: " << error_message << "\n";
     exit(1);
   }
 }
@@ -80,7 +80,7 @@ static void require_hashdb_dir(const std::string& hashdb_dir) {
   hashdb::settings_t settings;
   error_message = hashdb::read_settings(hashdb_dir, settings);
   if (error_message.size() != 0) {
-    std::cout << "Error: " << error_message << "\n";
+    std::cerr << "Error: " << error_message << "\n";
     exit(1);
   }
 }
@@ -123,7 +123,7 @@ class in_ptr_t {
     } else {
       std::ifstream* inf = new std::ifstream(in_filename.c_str());
       if (!inf->is_open()) {
-        std::cout << "Error: Cannot open " << in_filename
+        std::cerr << "Error: Cannot open " << in_filename
                   << ": " << strerror(errno) << "\n";
         exit(1);
       }
@@ -157,7 +157,7 @@ class out_ptr_t {
     } else {
       std::ofstream* outf = new std::ofstream(out_filename.c_str());
       if (!outf->is_open()) {
-        std::cout << "Error: Cannot open " << out_filename
+        std::cerr << "Error: Cannot open " << out_filename
                   << ": " << strerror(errno) << "\n";
         exit(1);
       }
@@ -189,7 +189,8 @@ class out_ptr_t {
   if (error_message.size() == 0) {
       std::cout << "New database created.\n";
     } else {
-      std::cout << "Error: " << error_message << "\n";
+      std::cerr << "Error: " << error_message << "\n";
+      exit(1);
     }
   }
 
@@ -216,7 +217,8 @@ class out_ptr_t {
                     disable_calculate_labels,
                     cmd);
     if (error_message.size() != 0) {
-      std::cout << "Error: " << error_message << "\n";
+      std::cerr << "Error: " << error_message << "\n";
+      exit(1);
     }
   }
 
@@ -683,7 +685,8 @@ class out_ptr_t {
     if (error_message.size() == 0) {
       std::cout << "# scan_image completed.\n";
     } else {
-      std::cout << "Error: " << error_message << "\n";
+      std::cerr << "Error: " << error_message << "\n";
+      exit(1);
     }
   }
 
@@ -978,7 +981,7 @@ class out_ptr_t {
     hashdb::settings_t settings;
     std::string error_message = hashdb::read_settings(hashdb_dir, settings);
     if (error_message.size() != 0) {
-      std::cout << "Error: " << error_message << "\n";
+      std::cerr << "Error: " << error_message << "\n";
       exit(1);
     }
 
@@ -1074,7 +1077,7 @@ class out_ptr_t {
     hashdb::settings_t settings;
     std::string error_message = hashdb::read_settings(hashdb_dir, settings);
     if (error_message.size() != 0) {
-      std::cout << "Error: " << error_message << "\n";
+      std::cerr << "Error: " << error_message << "\n";
       exit(1);
     }
 
