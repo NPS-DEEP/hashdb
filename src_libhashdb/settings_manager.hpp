@@ -58,7 +58,7 @@ namespace hashdb {
     // open settings file
     std::ifstream in(filename.c_str());
     if (!in.is_open()) {
-      return "Unable to open settings file at Path '" + hashdb_dir + "'.";
+      return "Unable to open settings file at Path '" + filename + "'.";
     }
 
     // find and read the first line of content
@@ -72,17 +72,17 @@ namespace hashdb {
     in.close();
     if (line.size() == 0) {
       // no first line
-      return "Empty settings file at path '" + hashdb_dir + "'.";
+      return "Empty settings file at path '" + filename + "'.";
     }
 
     // parse settings into a JSON DOM document
     rapidjson::Document document;
     if (document.Parse(line.c_str()).HasParseError()) {
 
-      return "Invalid settings file at path '" + hashdb_dir + "'.";
+      return "Invalid settings file at path '" + filename + "'.";
     }
     if (!document.IsObject()) {
-      return "Invalid JSON in settings file at path '" + hashdb_dir + "'.";
+      return "Invalid JSON in settings file at path '" + filename + "'.";
     }
 
     // make sure all the parts are there
@@ -112,7 +112,7 @@ namespace hashdb {
 
     } else {
       return "Missing JSON settings in settings file at path '"
-             + hashdb_dir + "'.";
+             + filename + "'.";
     }
 
     // settings version must be compatible
