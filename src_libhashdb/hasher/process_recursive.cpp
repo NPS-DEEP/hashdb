@@ -155,7 +155,7 @@ namespace hasher {
         break;
       }
 
-      // this is similar to scan_image.cpp
+      // this is similar to scan_media.cpp
       case hasher::job_type_t::SCAN: {
 
         // calculate the parent file offset
@@ -166,7 +166,7 @@ namespace hasher {
         const std::string recursed_filename = make_recursed_filename(
                   parent_job.filename, parent_file_offset, compression_name);
 
-        job_t* recursed_scan_image_job = job_t::new_scan_job(
+        job_t* recursed_scan_media_job = job_t::new_scan_job(
                    parent_job.scan_manager,
                    parent_job.scan_tracker,
                    parent_job.step_size,
@@ -182,8 +182,8 @@ namespace hasher {
                    parent_job.max_recursion_depth,
                    parent_job.recursion_depth + 1);
 
-        // run the new recursed scan image job
-        process_job(*recursed_scan_image_job);
+        // run the new recursed scan media job
+        process_job(*recursed_scan_media_job);
         break;
       }
     }

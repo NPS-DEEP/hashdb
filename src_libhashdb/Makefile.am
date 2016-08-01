@@ -71,23 +71,17 @@ liblmdb_la_SOURCES = $(LMDB_INCS)
 # -Wno-bad-function-cast to suppress warnings.
 # -Wno-external-suffix is added to suppress warnings.
 
-# may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
-liblmdb_la_CFLAGS = \
-	-pthread -fno-strict-aliasing \
-	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
-	-Wno-external-suffix -Wno-format-extra-args
-
 ## may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
 #liblmdb_la_CFLAGS = \
 #	-pthread -fno-strict-aliasing \
 #	-W -Wall -Wno-unused-parameter -Wno-bad-function-cast -Wuninitialized \
 #	-Wno-external-suffix -Wno-format-extra-args
 
-## may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
-#liblmdb_la_CFLAGS = \
-#	-pthread -fno-strict-aliasing \
-#	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
-#	-Wno-format-extra-args
+# may remove -fno-strict-aliasing in future if LMDB gets fixed to allow removal
+liblmdb_la_CFLAGS = \
+	-pthread -fno-strict-aliasing \
+	-W -Wall -Wno-unused-parameter -Wbad-function-cast -Wuninitialized \
+	-Wno-format-extra-args
 
 liblmdb_la_LDFLAGS = -PIC
 
@@ -121,8 +115,8 @@ HASHER_INCS = \
 	hasher/process_job.hpp \
 	hasher/process_recursive.cpp \
 	hasher/process_recursive.hpp \
-	hasher/read_bytes.cpp \
-	hasher/scan_image.cpp \
+	hasher/read_media.cpp \
+	hasher/scan_media.cpp \
 	hasher/scan_tracker.hpp \
 	hasher/single_file_reader.hpp \
 	hasher/threadpool.hpp \

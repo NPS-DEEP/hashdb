@@ -60,34 +60,34 @@ binary_string = hashdb.hex_to_bin("0000000000000000")
 hex_string = hashdb.bin_to_hex(binary_string)
 str_equals(hex_string, "0000000000000000")
 
-# support function: ingest, scan_image: not tested
+# support function: ingest, scan_media: not tested
 
-# support function: read_bytes
-# setup for read_bytes, end with EOF
+# support function: read_media
+# setup for read_media, end with EOF
 temp_in = open("temp_in.bin", "w")
 in_bytes = struct.pack('5s', '\0\0a\0\0')
 temp_in.write(in_bytes)
 temp_in.close()
 
-# read_bytes using numeric offset
-error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 0, 10)
+# read_media using numeric offset
+error_message, bytes_read = hashdb.read_media("temp_in.bin", 0, 10)
 str_equals(error_message,"")
 str_equals(bytes_read, b'\0\0a\0\0')
-error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 2, 2)
+error_message, bytes_read = hashdb.read_media("temp_in.bin", 2, 2)
 str_equals(error_message,"")
 str_equals(bytes_read, b'a\0')
-error_message, bytes_read = hashdb.read_bytes("temp_in.bin", 10, 10)
+error_message, bytes_read = hashdb.read_media("temp_in.bin", 10, 10)
 str_equals(error_message,"")
 str_equals(bytes_read, b'')
-error_message, bytes_read = hashdb.read_bytes("temp_invalid_fileanme", 10, 10)
+error_message, bytes_read = hashdb.read_media("temp_invalid_fileanme", 10, 10)
 bool_equals(len(error_message) > 0, True)
 str_equals(bytes_read, b'')
 
-# read_bytes using forensic path
-error_message, bytes_read = hashdb.read_bytes("temp_in.bin", "0", 10)
+# read_media using forensic path
+error_message, bytes_read = hashdb.read_media("temp_in.bin", "0", 10)
 str_equals(error_message,"")
 str_equals(bytes_read, b'\0\0a\0\0')
-error_message, bytes_read = hashdb.read_bytes("temp_in.bin", "0-zip-0", 10)
+error_message, bytes_read = hashdb.read_media("temp_in.bin", "0-zip-0", 10)
 str_equals(error_message,"zip region too small")
 str_equals(bytes_read, "")
 

@@ -83,7 +83,7 @@ def test_json_commands():
 ''
 ])
 
-    # scan_image: skip
+    # scan_media: skip
 
     # duplicates
     returned_answer = H.hashdb(["duplicates", "-j", "c", "temp_1.hdb", "1"])

@@ -68,14 +68,15 @@ void overview() {
   << "Scan:\n"
   << "  scan_list [-j e|o|c|a] <hashdb> <hash list file>\n"
   << "  scan_hash [-j e|o|c|a] <hashdb> <hex block hash>\n"
-  << "  scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>\n"
+  << "  scan_media [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>\n"
   << "\n"
   << "Statistics:\n"
   << "  size <hashdb>\n"
   << "  histogram <hashdb>\n"
   << "  duplicates [-j e|o|c|a] <hashdb> <number>\n"
   << "  hash_table [-j e|o|c|a] <hashdb> <hex file hash>\n"
-  << "  read_bytes <media image> <offset> <count>\n"
+  << "  read_media <media image> <offset> <count>\n"
+  << "  read_media_size <media image>\n"
   << "\n"
   << "Performance Analysis:\n"
   << "  add_random <hashdb> <hex file hash> <count>\n"
@@ -366,9 +367,9 @@ void scan_hash() {
   ;
 }
 
-void scan_image() {
+void scan_media() {
   std::cout
-  << "scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>\n"
+  << "scan_media [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>\n"
   << "  Scan hash database <hashdb> for hashes in <media image> and print out\n"
   << "  matches.\n"
   << "\n"
@@ -469,9 +470,9 @@ static void hash_table() {
   ;
 }
 
-static void read_bytes() {
+static void read_media() {
   std::cout
-  << "read_bytes <media image> <offset> <count>\n"
+  << "read_media <media image> <offset> <count>\n"
   << "  Print <count> number of raw bytes starting at the specified <offset> in\n"
   << "  the <media image> file.\n"
   << "\n"
@@ -479,6 +480,16 @@ static void read_bytes() {
   << "  <media image>  the media image file to print raw bytes from\n"
   << "  <offset>       the offset in the media image file to read from\n"
   << "  <count>        the number of raw bytes to read\n"
+  ;
+}
+
+static void read_media_size() {
+  std::cout
+  << "read_media_size <media image>\n"
+  << "  Print the size, in bytes, of the media image file.\n"
+  << "\n"
+  << "  Parameters:\n"
+  << "  <media image>  the media image file to print the size of\n"
   ;
 }
 
@@ -613,7 +624,7 @@ static void all() {
   std::cout << "\nScan:\n";
   scan_list();
   scan_hash();
-  scan_image();
+  scan_media();
 
   // Statistics
   std::cout << "\nStatistics:\n";
@@ -622,7 +633,8 @@ static void all() {
   histogram();
   duplicates();
   hash_table();
-  read_bytes();
+  read_media();
+  read_media_size();
 
   // Performance Analysis
   std::cout << "\nPerformance Analysis:\n";
@@ -661,7 +673,7 @@ void usage(const std::string& command) {
   // Scan
   else if (command == "scan_list") scan_list();
   else if (command == "scan_hash") scan_hash();
-  else if (command == "scan_image") scan_image();
+  else if (command == "scan_media") scan_media();
 
   // Statistics
   else if (command == "size") size();
@@ -669,7 +681,8 @@ void usage(const std::string& command) {
   else if (command == "histogram") histogram();
   else if (command == "duplicates") duplicates();
   else if (command == "hash_table") hash_table();
-  else if (command == "read_bytes") read_bytes();
+  else if (command == "read_media") read_media();
+  else if (command == "read_media_size") read_media_size();
 
   // Performance Analysis
   else if (command == "add_random") add_random();

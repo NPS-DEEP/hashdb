@@ -250,7 +250,7 @@ LIBS="-lcrypto $LIBS"
 #LIBS="-lcrypto -lpthread $LIBS"
 
 ################################################################
-# LIBEWF is required for ingest and scan image interfaces
+# LIBEWF is required for ingest and scan media interfaces
 AC_CHECK_HEADER([libewf.h])
 AC_CHECK_LIB([ewf], libewf_handle_read_random)
 

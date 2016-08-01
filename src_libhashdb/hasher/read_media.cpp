@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Read raw bytes from a media image.
+ * Media accessors, specifically, read_media and read_media_size.
  */
 #include <config.h>
 // this process of getting WIN32 defined was inspired
@@ -54,20 +54,20 @@
 namespace hashdb {
 
   // convenience function to
-  // read bytes from image starting at offset.
-  std::string read_bytes(const std::string& image_filename,
+  // read bytes from media starting at offset.
+  std::string read_media(const std::string& media_filename,
                          const uint64_t offset,
                          const uint64_t count,
                          std::string& bytes) {
     std::stringstream ss;
     ss << offset;
-    return read_bytes(image_filename, ss.str(), count, bytes);
+    return read_media(media_filename, ss.str(), count, bytes);
   }
 
-  // read count bytes at forensic path in image.
+  // read count bytes at forensic path in media.
   // Two example paths are 1000 and 1000-zip-0.
   // Return "" and reason on failure.
-  std::string read_bytes(const std::string& image_filename,
+  std::string read_media(const std::string& media_filename,
                          const std::string& forensic_path,
                          const uint64_t count,
                          std::string& bytes) {
@@ -83,15 +83,15 @@ namespace hashdb {
     // get file offset into in_offset
     std::vector<std::string>::const_iterator it = parts.begin();
     if (it == parts.end()) {
-      return "invalid forensic path, image offset expected";
+      return "invalid forensic path, media offset expected";
     }
-    uint64_t image_offset = 0;
+    uint64_t media_offset = 0;
     std::istringstream iss(*it);
-    iss >> image_offset;
+    iss >> media_offset;
 
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
-                                                           image_filename));
+                                                           media_filename));
     if (file_reader.error_message.size() > 0) {
       // the file failed to open
       return file_reader.error_message;
@@ -107,7 +107,7 @@ namespace hashdb {
 
     // read into from_buf
     const std::string read_error_message =
-            file_reader.read(image_offset, from_buf, from_size, &from_size);
+            file_reader.read(media_offset, from_buf, from_size, &from_size);
     if (read_error_message != "") {
       delete[] from_buf;
       return read_error_message;
@@ -173,5 +173,23 @@ namespace hashdb {
     delete[] from_buf;
     return "";
   }
+
+  // read size, in bytes, of the given media
+  std::string read_media_size(const std::string& media_filename,
+                              uint64_t& size) {
+
+    // open the file reader
+    const hasher::file_reader_t file_reader(hasher::utf8_to_native(
+                                                           media_filename));
+    if (file_reader.error_message.size() > 0) {
+      // the file failed to open
+      size = 0;
+      return file_reader.error_message;
+    }
+
+    size = file_reader.filesize;
+    return "";
+  }
+
 } // end namespace hashdb
 

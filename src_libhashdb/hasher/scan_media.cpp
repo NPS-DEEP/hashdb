@@ -157,10 +157,10 @@ namespace hashdb {
   }
 
   // ************************************************************
-  // scan_image
+  // scan_media
   // ************************************************************
-  std::string scan_image(const std::string& hashdb_dir,
-                         const std::string& image_filename,
+  std::string scan_media(const std::string& hashdb_dir,
+                         const std::string& media_filename,
                          const size_t step_size,
                          const bool process_embedded_data,
                          const hashdb::scan_mode_t scan_mode) {
@@ -186,7 +186,7 @@ namespace hashdb {
 
     // open the file reader
     const hasher::file_reader_t file_reader(hasher::utf8_to_native(
-                                                           image_filename));
+                                                           media_filename));
     if (file_reader.error_message.size() > 0) {
       // the file failed to open
       return file_reader.error_message;

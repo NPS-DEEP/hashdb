@@ -147,7 +147,7 @@ The first character on the line is the terminal prompt, and should not be typed.
     \item \textbf{approximate count} is fast because it does not read the hash information store when there is a match, but it can have false positives in its matching and in its count.
     \end{itemize}
   \end{itemize}
-\item \hdb can now read images, scan images, and ingest sources directly.  \bulk is no longer required to perform these functions.
+\item \hdb can now read media images, scan media images, and ingest sources directly.  \bulk is no longer required to perform these functions.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
 \end{itemize}
 
@@ -298,17 +298,17 @@ The following steps provide a very brief introduction to running your new instal
 
 In the above instructions, \texttt{\textbf{demo.hdb}} is the empty database that will be created with default database settings.
 
-\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial/import}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}. After downloading this, type the following:
+\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}. After downloading this, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import demo.hdb KittyMaterial.json}
 \end{Verbatim} 
 This command, if executed successfully, will print processing status followed by statistics indicating changes to the database.
 
-\item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklist block hashes from the Kitty demo:
+\item Next, scan a media image for matching hashes. In this example, lets scan the demo media image available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains blacklist block hashes from the Kitty demo:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb scan_image demo.hdb jo-favorites-usb-2009-12-11.E01}
+\verbbf{hashdb scan_media demo.hdb jo-favorites-usb-2009-12-11.E01}
 \end{Verbatim} 
-With this image and dataset, the first block hash matched is at media image offset \verb+2543104+ for hash \verb+1d7379fd4d5cf676a9d4de1e48337e71+:
+With this media and dataset, the first block hash matched is at offset \verb+2543104+ for hash \verb+1d7379fd4d5cf676a9d4de1e48337e71+:
 
 \begingroup
 \footnotesize
@@ -773,7 +773,7 @@ Add a database to another database but only when the repository name does not ma
 
 \subsection{Scan Services}
 \label{ScanServices}
-\hdb can be used to determine if a file, directory or disk image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content.
+\hdb can be used to determine if a file, directory or media image has content that matches previously identified content. This capability can be used, for example, to determine if a set of files contains a specific file excerpt or if a media image contains a video fragment. Forensic investigators can use this feature to search for blacklisted content.
 Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Scan service options are shown in Table \ref{tab:ScanOptions}.\\
 
 \begin{table}[!ht]
@@ -788,7 +788,7 @@ Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Scan 
 \hline
 \textbf{scan\_hash} & \verb+scan_hash [-j e|o|c|a] <hashdb>+ \verb+<hash value>+ & Scans the hashdb for the specified hash value and prints out whether it matches\\
 \hline
-\textbf{scan\_image} & \verb+scan_image+ \verb+[-s <step size>] [-j e|o|c|a]+ \verb+[-x <r>] <hashdb> <media image>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches.\\
+\textbf{scan\_media} & \verb+scan_media+ \verb+[-s <step size>] [-j e|o|c|a]+ \verb+[-x <r>] <hashdb> <media media>+ & Scans the hashdb for hashes that match hashes in the media image and prints out matches.\\
 \hline
 \end{tabular}
 \end{table}
@@ -815,8 +815,8 @@ Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Scan 
 Scan for hashes in the list. List input syntax is described in \textbf{\autoref{ScanListInputFile}}. Scan output is described in \textbf{\autoref{ScanData}}. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
 \item \textbf{scan\_hash}\\
 Scan for the specified hash. The hash to scan for must be provided in hexadecimal format.
-\item \textbf{scan\_image}\\
-Scan the specified image for matching hashes.
+\item \textbf{scan\_media}\\
+Scan the specified media image for matching hashes.
 
 \textbf{Example}\\
 To scan, first identify the media that you would like to scan. For this example, we download and use the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains matching Kitty material.\\
@@ -825,7 +825,7 @@ Then identify the existing hash database that will be used to search for hash va
 
 Finally, run the \hdb scan command to scan for blocks in the media that match block hashes in the database:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb scan_image demo.hdb jo-favorites-usb-2009-12-11.E01 > matches.json}
+\verbbf{hashdb scan_media demo.hdb jo-favorites-usb-2009-12-11.E01 > matches.json}
 \end{Verbatim}
 This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E01+ and try to match the values found in the local database \texttt{\textbf{demo.hdb}}, putting match data in file \verb+matches.json+.  An example match might look like this:
 
@@ -846,7 +846,7 @@ HighQuality/DSC00003.JPG"]}],"source_offsets":
 Users may be put off by the quantity of matches incurred by low-entropy data in their databases such as number tables or metadata header blocks from files that are otherwise unique. Database manipulation commands,
 \textbf{\autoref{DatabaseManipulation}}, can mitigate this, for example:
 \begin{itemize}
-\item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system images and the NSRL.
+\item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system media images and the NSRL.
 \item Alternatively, use the ``add\_range'' command to copy all hash values that have been imported some number of times, for example, exactly once.
 \end{itemize}
 
@@ -874,7 +874,7 @@ Statistics options are shown in Table \ref{tab:StatisticsOptions}.
 \hline
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source.\\
 \hline
-\textbf{read\_bytes} & \verb+read_bytes <image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given forensic path.\\
+\textbf{read\_media} & \verb+read_media <media image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given forensic path.\\
 \hline
 \end{tabular}
 \end{table}
@@ -917,7 +917,7 @@ To obtain a list of hashes in \texttt{example.hdb} associated with the source fi
 \verbbf{hashdb hash_table example.hdb 16d75027533b0a5ab900089a244384a0}
 \end{Verbatim}
 
-\item \textbf{read\_bytes}\\
+\item \textbf{read\_media}\\
 Prints raw bytes from the given media image. Note that these bytes are often not printable.
 \end{itemize}
 
@@ -1007,7 +1007,7 @@ The path to the \hdb database to scan against must be configured:
 \end{enumerate}
 
 \subsection{\bulk}
-\bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
+\bulk is an open source digital forensics tool that extracts features such as email addresses, credit card numbers, URLs and other types of information from digital evidence files. It operates on disk media images, files or a directory of files and extracts useful information without parsing the file system or file system structures.  For more information on how to use \bulk for a wide variety of applications, refer to the separate publication \textit{The \bulk Users Manual} available at \url{http://digitalcorpora.org/downloads/bulk_extractor/BEUsersManual.pdf} \cite{beusersguide}.\\
 
 In particular, a \hdb \bulk scanner is available which may be used to import block hashes into a new hash database and to scan for hashes against an existing hash database.
 Currently, \hdb requires a newer build of \bulk than is available on the \bulk site.
@@ -1028,9 +1028,9 @@ When importing, the new database of imported hashes is created in the output dir
 \hline
 \textbf{import files} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 -R my_directory+ & Import hashes from directory into outdir1/hashdb.hdb\\
 \hline
-\textbf{import image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_image1+ & Import hashes from image into outdir1/hashdb.hdb\\
+\textbf{import media} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=import+ \verb+-o outdir1 my_media_image1+ & Import hashes from media image into outdir1/hashdb.hdb\\
 \hline
-\textbf{scan image} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_image+ & Scan image for hashes matching hashes in outdir1/hashdb.hdb\\
+\textbf{scan media} & \verb+bulk_extractor -E hashdb+ \verb+-S hashdb_mode=scan+ \verb+-S hashdb_scan_path+ \verb+=outdir1/hashdb.hdb -o outdir2+ \verb+my_media_image2+ & Scan media image for hashes matching hashes in outdir1/hashdb.hdb\\
 \hline
 \end{tabular}
 \end{table}
@@ -1079,9 +1079,9 @@ Other software programs can use these APIs to access database capabilities. The 
 \label{bulkextractorSection}
 The \bulk \textit{hashdb} scanner allows users to query for fragments of previously encountered hash values and populate a hash database with hash values. Options that control the \textit{hashdb} scanner are provided to \bulk using the ``-S name=value'' command line parameters. When \bulk executes, the parameters are sent directly to the scanner.\\
 
-For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from the disk image \texttt{my\_image} to a hash database:
+For example, the following command runs the \bulk \textit{hashdb} scanner in import mode and adds hash values calculated from disk media image \texttt{my\_media\_image} to a hash database:
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{bulk_extractor -e hashdb -o outputDir -S hashdb_mode=import my_image}
+\verbbf{bulk_extractor -e hashdb -o outputDir -S hashdb_mode=import my_media_image}
 \end{Verbatim}
 Note, \bulk will place feature file and other output not relevant to the \hdb application in the ``outputDir'' directory. When using the import command, the output directory will contain a newly created hash database called \texttt{hashdb.hdb}. That database can then be copied or added to a hash database in another location.
 
@@ -1411,8 +1411,8 @@ The \verb+duplicates+ command prints JSON data associated with hashes with a spe
 \subsection{Hash Table}
 The \verb+hash_table+ command prints JSON data associated with a file hash as shown in Listing \ref{JSONScanDataExpanded} and described in Table \ref{tab:JSONScanDataExpanded}.\\
 
-\subsection{Read Bytes}
-The \verb+read_bytes+ command prints raw binary bytes from an image file. It is intended that this output be consumed by other tools since raw binary data is typically unreadable.\\
+\subsection{Read Media}
+The \verb+read_media+ command prints raw binary bytes from a media image file. It is intended that this output be consumed by other tools since raw binary data is typically unreadable.\\
 
 \subsection{Timing}
 \hdb provides timing data in JSON format for use with timing analysis. Python scripts may use this output to produce performance plots. An example timestamp entry is shown in Listing \ref{JSONTimingData}. Fields are described in Table \ref{tab:JSONTimingData}.\\
@@ -1653,17 +1653,21 @@ Query settings else false and reason for failure.
 \verb+whitelist_dir, disable_recursive_processing, disable_calculate_entropy,+\\
 \verb+disable_calculate_labels, command_string)+\\
 Calculate and import hashes from path to \hdb. Can disable recursive processing, calculating entropy, and calculating labels.
-\item \verb+error_message = scan_image(hashdb_dir, media_image_file, step_size,+\\
+\item \verb+error_message = scan_media(hashdb_dir, media_image_file, step_size,+\\
 \verb+disable_recursive_processing, scan_mode)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
-\item \verb+error_message = read_bytes(media_image_file, forensic_path, count, &bytes)+\\
+\item \verb+error_message = read_media(media_image_file, forensic_path, count, &bytes)+\\
 C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+error_message, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+\item \verb+error_message, bytes_media = read_media(media_image_file, forensic_path, count)+\\
 Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
-\item \verb+error_message = read_bytes(media_image_file, offset, count, &bytes)+\\
+\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
 C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+error_message, bytes_read = read_bytes(media_image_file, forensic_path, count)+\\
+\item \verb+error_message, bytes_read = read_media(media_image_file, forensic_path, count)+\\
 Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
+\item \verb+error_message = read_media_size(media_image_file, &size)+\\
+C++ syntax.  Read media image file size.
+\item \verb+error_message, size = read_media_size(media_image_file)+\\
+Python syntax. Read media image file size.
 \end{itemize}
 
 \subsection{Data Types}

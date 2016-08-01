@@ -522,9 +522,9 @@ void run_command() {
     check_params("j", 2);
     commands::scan_hash(args[0], args[1], scan_mode, cmd);
 
-  } else if (command == "scan_image") {
+  } else if (command == "scan_media") {
     check_params("sRj", 2);
-    commands::scan_image(args[0], args[1], step_size,
+    commands::scan_media(args[0], args[1], step_size,
                          has_disable_recursive_processing, scan_mode, cmd);
 
   // statistics
@@ -548,9 +548,13 @@ void run_command() {
     check_params("j", 2);
     commands::hash_table(args[0], args[1], scan_mode, cmd);
 
-  } else if (command == "read_bytes") {
+  } else if (command == "read_media") {
     check_params("", 3);
-    commands::read_bytes(args[0], args[1], args[2]);
+    commands::read_media(args[0], args[1], args[2]);
+
+  } else if (command == "read_media_size") {
+    check_params("", 1);
+    commands::read_media_size(args[0]);
 
   // performance analysis
   } else if (command == "add_random") {

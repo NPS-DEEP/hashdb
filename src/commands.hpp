@@ -667,8 +667,8 @@ class out_ptr_t {
     }
   }
 
-  // scan_image
-  static void scan_image(const std::string& hashdb_dir,
+  // scan_media
+  static void scan_media(const std::string& hashdb_dir,
                          const std::string& media_image_filename,
                          const size_t step_size,
                          const bool disable_recursive_processing,
@@ -679,11 +679,11 @@ class out_ptr_t {
     print_header(cmd);
 
     // scan
-    std::string error_message = hashdb::scan_image(hashdb_dir,
+    std::string error_message = hashdb::scan_media(hashdb_dir,
                              media_image_filename, step_size,
                              disable_recursive_processing, scan_mode);
     if (error_message.size() == 0) {
-      std::cout << "# scan_image completed.\n";
+      std::cout << "# scan_media completed.\n";
     } else {
       std::cerr << "Error: " << error_message << "\n";
       exit(1);
@@ -940,8 +940,8 @@ class out_ptr_t {
     }
   }
 
-  // read_bytes
-  static void read_bytes(const std::string& media_image_filename,
+  // read_media
+  static void read_media(const std::string& media_image_filename,
                          const std::string& forensic_path,
                          const std::string& count_string) {
 
@@ -950,12 +950,30 @@ class out_ptr_t {
 
     // read the bytes
     std::string bytes;
-    std::string error_message = hashdb::read_bytes(
+    std::string error_message = hashdb::read_media(
                          media_image_filename, forensic_path, count, bytes);
 
     if (error_message.size() == 0) {
       // print the bytes to stdout
       std::cout << bytes << std::flush;
+    } else {
+      // print the error to stderr
+      std::cerr << "Error: " << error_message << "\n";
+      exit(1);
+    }
+  }
+
+  // read_media_size
+  static void read_media_size(const std::string& media_image_filename) {
+
+    // read the media size
+    uint64_t media_size;
+    std::string error_message = hashdb::read_media_size(
+                         media_image_filename, media_size);
+
+    if (error_message.size() == 0) {
+      // print the bytes to stdout
+      std::cout << media_size << "\n";
     } else {
       // print the error to stderr
       std::cerr << "Error: " << error_message << "\n";

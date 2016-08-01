@@ -243,7 +243,7 @@ namespace hashdb {
    * Returns:
    *   "" if successful else reason if not.
    */
-  std::string scan_image(const std::string& hashdb_dir,
+  std::string scan_media(const std::string& hashdb_dir,
                      const std::string& media_image_file,
                      const size_t step_size,
                      const bool disable_recursive_processing,
@@ -260,12 +260,13 @@ namespace hashdb {
    *   forensic_path - The offset into the media image file.
    *     Example forensic paths include "1000" and "1000-zip-0".
    *   count - The number of bytes to read.
+   *   bytes - The raw bytes read.
    *
    * Returns:
    *   "" if successful else reason if not.
    */
 
-  std::string read_bytes(const std::string& media_image_file,
+  std::string read_media(const std::string& media_image_file,
                          const std::string& forensic_path,
                          const uint64_t count,
 #ifndef SWIG
@@ -286,11 +287,12 @@ namespace hashdb {
    *   forensic_path - The offset into the media image file.
    *     Example forensic paths include "1000" and "1000-zip-0".
    *   count - The number of bytes to read.
+   *   bytes - The raw bytes read.
    *
    * Returns:
    *   "" if successful else reason if not.
    */
-  std::string read_bytes(const std::string& media_image_file,
+  std::string read_media(const std::string& media_image_file,
                          const uint64_t offset,
                          const uint64_t count,
 #ifndef SWIG
@@ -299,6 +301,26 @@ namespace hashdb {
                          std::string& OUTPUT // bytes
 #endif
                         );
+
+  /**
+   * Read the size of the media image file.  Files with EWF extensions
+   * (.E01 files) are recognized as media images.
+   *
+   * Parameters:
+   *   media_image_file - Path to a media image file, which can be a
+   *     raw file or an E01 file.
+   *   size - The size, in bytes, of the media image.
+   *
+   * Returns:
+   *   "" if successful else reason if not.
+   */
+  std::string read_media_size(const std::string& media_image_file,
+#ifndef SWIG
+                              uint64_t& size
+#else
+                              uint64_t& OUTPUT // bytes
+#endif
+                             );
 
   // ************************************************************
   // import
