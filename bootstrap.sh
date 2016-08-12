@@ -1,5 +1,4 @@
 #!/bin/sh
-# Hopefully you checked out with git clone git@github.com:simsong/hashdb.git
 
 # have automake do an initial population iff necessary
 if [ ! -e config.guess -o ! -e config.sub -o ! -e install-sh -o ! -e missing ]; then

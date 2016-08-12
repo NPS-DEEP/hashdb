@@ -1,14 +1,8 @@
 \begin{footnotesize}
 %\begin{small}
-\textbf{General Usage} \\
-\begin{tabular}{p{3.6 in} p{3.0 in}}
-\texttt{hashdb <command> <options> <args>} & \\
-\end{tabular}
-\\
-\\
 \textbf{New Database} \\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
-\hangindent=2em \texttt{create [-b <block size>] [-a <byte alignment>] [-m <max count, max sub-count>] [-t <hash prefix bits:hash suffix bytes>] <hashdb.hdb>} &
+\hangindent=2em \texttt{create [-b <block size>] [-a <byte alignment>] [-m <max count:max sub-count>] [-t <hash prefix bits:hash suffix bytes>] <hashdb.hdb>} &
 Create a new hash database.\\
 \end{tabular}
 \\
@@ -44,7 +38,7 @@ Export hash database data in JSON format.\\
 \begin{tabular}{p{3.6 in} p{3.0 in}}
 \texttt{scan\_list [-j e|o|c|a] <hashdb.hdb> <hashes file>} & Scan hashes file for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count.\\
 \texttt{scan\_hash [-j e|o|c|a] <hashdb.hdb> <hex block hash>} & Scan for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count.\\
-\hangindent=2em\texttt{scan\_image [-s <step size>] [-j e|o|c|a] [-x r] <hashdb.hdb> <media image file>} & Scan media image for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count. Can disable \textbf{r}ecursion.\\
+\hangindent=2em\texttt{scan\_media [-s <step size>] [-j e|o|c|a] [-x r] <hashdb.hdb> <media image file>} & Scan media image for hash match, return \textbf{e}xpanded, expanded \textbf{o}ptimized, \textbf{c}ount only, or \textbf{a}pproximate count. Can disable \textbf{r}ecursion.\\
 \end{tabular}
 \\
 \\
@@ -55,7 +49,8 @@ Export hash database data in JSON format.\\
 \texttt{histogram <hashdb.hdb>} & Print hash distribution.\\
 \texttt{duplicates [-j e|o|c|a] <hashdb.hdb> <number>} & Print hashes sourced the given number of times.\\
 \texttt{hash\_table [-j e|o|c|a] <hashdb.hdb> <hex file hash>} & Print hashes associated with the source file hash.\\
-\texttt{read\_bytes <image file> <offset> <count>} & Print raw bytes from the image file.\\
+\texttt{read\_media <media image file> <offset> <count>} & Print raw bytes from the media image file.\\
+\texttt{read\_media\_size <media image file>} & Print the size of the media image file.\\
 \end{tabular}
 \\
 \\
@@ -72,8 +67,8 @@ Export hash database data in JSON format.\\
 %\begin{tabular}{p{5.8 in} l}
 \begin{tabular}{p{5.6 in} p{2 in}}
 \texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 -R my\_import\_dir} & Import directory.\\
-\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 my\_media\_image} & Import image.\\
-\hangindent=2em\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path= outdir1/hashdb.hdb -o outdir2 my\_image2} & Scan image.\\
+\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=import -o outdir1 my\_media\_image} & Import media image.\\
+\hangindent=2em\texttt{bulk\_extractor -E hashdb -S hashdb\_mode=scan -S hashdb\_scan\_path= outdir1/hashdb.hdb -o outdir2 my\_media\_image2} & Scan media image.\\
 \end{tabular}
 \end{footnotesize}
 %\end{small}

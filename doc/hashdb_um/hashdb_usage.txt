@@ -1,4 +1,4 @@
-hashdb Version 3.0.0-alpha-6
+hashdb Version 3.0.0-alpha-7
 Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
        hashdb [-h <command>]
        hashdb [options] <command> [<args>]
@@ -29,14 +29,15 @@ Database Manipulation:
 Scan:
   scan_list [-j e|o|c|a] <hashdb> <hash list file>
   scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
-  scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
+  scan_media [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
 
 Statistics:
   size <hashdb>
   histogram <hashdb>
   duplicates [-j e|o|c|a] <hashdb> <number>
   hash_table [-j e|o|c|a] <hashdb> <hex file hash>
-  read_bytes <media image> <offset> <count>
+  read_media <media image> <offset> <count>
+  read_media_size <media image>
 
 Performance Analysis:
   add_random <hashdb> <hex file hash> <count>
@@ -245,7 +246,7 @@ scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
   <hashdb>          the file path to the hash database to use as the
                     lookup source
   <hex block hash>  the hash value to scan for
-scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
+scan_media [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
   Scan hash database <hashdb> for hashes in <media image> and print out
   matches.
 
@@ -319,7 +320,7 @@ hash_table [-j e|o|c|a] <hashdb> <hex file hash>
   Parameters:
   <hashdb>              the hash database to print hashes from
   <hex file hash>       the file hash of the source to print hashes for
-read_bytes <media image> <offset> <count>
+read_media <media image> <offset> <count>
   Print <count> number of raw bytes starting at the specified <offset> in
   the <media image> file.
 
@@ -327,6 +328,11 @@ read_bytes <media image> <offset> <count>
   <media image>  the media image file to print raw bytes from
   <offset>       the offset in the media image file to read from
   <count>        the number of raw bytes to read
+read_media_size <media image>
+  Print the size, in bytes, of the media image file.
+
+  Parameters:
+  <media image>  the media image file to print the size of
 
 Performance Analysis:
 add_random <hashdb> <hex file hash> <count>
@@ -404,48 +410,3 @@ test_scan_stream <hashdb> <count>
   Parameters:
   <hashdb>       the hash database to scan
   <count>        the number of scan requests to issue
-Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
-       hashdb [-h <command>]
-       hashdb [options] <command> [<args>]
-
-New Database:
-  create [-b <block size>] [-a <byte alignment>]
-         [-m <max count:max sub-count>]
-         [-t <hash prefix bits:hash suffix bytes>] <hashdb>
-
-Import/Export:
-  ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
-         [-x <rel>] <hashdb.hdb> <import directory>
-  import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
-  import <hashdb> <json file>
-  export <hashdb> <json file>
-
-Database Manipulation:
-  add <source hashdb> <destination hashdb>
-  add_multiple <source hashdb 1> <source hashdb 2> <destination hashdb>
-  add_repository <source hashdb> <destination hashdb> <repository name>
-  add_range <source hashdb> <destination hashdb> <m:n>
-  intersect <source hashdb 1> <source hashdb 2> <destination hashdb>
-  intersect_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
-  subtract <source hashdb 1> <source hashdb 2> <destination hashdb>
-  subtract_hash <source hashdb 1> <source hashdb 2> <destination hashdb>
-  subtract_repository <source hashdb> <destination hashdb> <repository name>
-
-Scan:
-  scan_list [-j e|o|c|a] <hashdb> <hash list file>
-  scan_hash [-j e|o|c|a] <hashdb> <hex block hash>
-  scan_image [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
-
-Statistics:
-  size <hashdb>
-  histogram <hashdb>
-  duplicates [-j e|o|c|a] <hashdb> <number>
-  hash_table [-j e|o|c|a] <hashdb> <hex file hash>
-  read_bytes <media image> <offset> <count>
-
-Performance Analysis:
-  add_random <hashdb> <hex file hash> <count>
-  scan_random <hashdb> <count>
-  add_same <hashdb> <hex file hash> <count>
-  scan_same <hashdb> <count>
-  test_scan_stream <hashdb> <count>

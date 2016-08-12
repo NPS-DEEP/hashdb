@@ -31,7 +31,7 @@
  *   or scan for block hashes. The hashdb scanner in bulk_extractor uses
  *   libhashdb to search for previously identified blocks of data.
  *
- * Please see the hashdb home page at <https://github.com/simsong/hashdb/wiki>.
+ * Please see the hashdb home page at <https://github.com/NPS-DEEP/hashdb/wiki>.
  */
 
 #include <config.h>
