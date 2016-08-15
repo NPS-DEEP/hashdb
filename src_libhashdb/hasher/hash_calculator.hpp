@@ -1,11 +1,17 @@
 /*
- * Adapted from dfxml/src/hash_t.h
+ * Adapted from https://github.com/simsong/dfxml/blob/master/src/hash_t.h.
  *
- * hash calculator for md5 and other algorithms supported by openssl.
+ * This class provides the interfaces for calculating the block hashes
+ * and source file hashes for hashdb.  This class provides two approaches
+ * for calculating a hash value: 1) all at once using calculate(), and 2)
+ * by calling init(), update(), and final().
  *
- * Usage: calculate else init, update, and final.
+ * This class calculates MD5 hashes by initializing md_context with
+ * "EVP_md5()".  Other hash algorithms may be used, instead, by replacing
+ * this with, for example, "EVP_sha1()".  Please see openssl/evp.h for
+ * hash algorithms supported by OpenSSL.
  *
- * This file is public domain
+ * This file is public domain.
  */
 
 #ifndef HASH_CALCULATOR_HPP
@@ -57,6 +63,11 @@ class hash_calculator_t {
   hash_calculator_t(const hash_calculator_t&);
   hash_calculator_t& operator=(const hash_calculator_t&);
 
+  /**
+   * Calculate a hash from count bytes in buffer starting at offset.
+   * If the buffer is too small to hash the requested count bytes, 
+   * then bytes of value zero are hashed for the remaining count.
+   */
   std::string calculate(const uint8_t* const buffer,
                         const size_t buffer_size,
                         const size_t offset,
@@ -100,6 +111,9 @@ class hash_calculator_t {
                        static_cast<size_t>(md_len));
   }
 
+  /**
+   * Begin a hash calculation.
+   */
   void init() {
 
     // program error if already engaged
@@ -113,6 +127,9 @@ class hash_calculator_t {
     EVP_DigestInit_ex(md_context, md, NULL);
   }
 
+  /**
+   * Update a hash calculation.
+   */
   void update(uint8_t* const buffer,
               const size_t buffer_size,
               const size_t offset,
@@ -139,6 +156,9 @@ class hash_calculator_t {
     }
   }
 
+  /**
+   * Finalize and obtain the hash value of a hash calculation.
+   */
   std::string final() {
 
     // program error if not engaged

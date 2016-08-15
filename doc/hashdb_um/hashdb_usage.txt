@@ -1,4 +1,4 @@
-hashdb Version 3.0.0-alpha-7
+hashdb Version 3.0.0-alpha-8
 Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
        hashdb [-h <command>]
        hashdb [options] <command> [<args>]
@@ -365,7 +365,7 @@ scan_random <hashdb> <count>
   <hashdb>       the hash database to scan
   <count>        the number of randomly generated hashes to scan for
 add_same <hashdb> <hex file hash> <count>
-  Add <count> MD5 hashes of value 0x800000... into hash database <hashdb>.
+  Add <count> block hashes of value 0x800000... into hash database <hashdb>.
   Write performance data in the database's log.txt file.
 
   Options:
@@ -394,7 +394,7 @@ scan_same <hashdb> <count>
   <hashdb>       the hash database to scan
   <count>        the number of randomly generated hashes to scan for
 test_scan_stream <hashdb> <count>
-  Run <count> scan_stream requests, where each request contains 10K MD5
+  Run <count> scan_stream requests, where each request contains 10K block
   hashes of value 0x800000....  Write performance data in the database's
   log.txt file.
 

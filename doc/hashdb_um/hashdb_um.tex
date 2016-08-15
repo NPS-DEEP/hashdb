@@ -1760,6 +1760,13 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
   \end{itemize}
 \end{itemize}
 
+\section{Alternate Configurations}
+\begin{itemize}
+\item \textbf{Alternate Hash Algorithm}\\
+By default, \hdb is compiled to calculate MD5 hashes. hashdb can be recompiled to use other encryption algorithms, please see source code file\\
+\verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
+\end{itemize}
+
 \bibliographystyle{acm} 
 \bibliography{references}
 

@@ -370,7 +370,7 @@ namespace hashdb {
      * source.
      *
      * Parameters:
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *   repository_name - A repository name to attribute the sources to.
      *   filename - The name of the source file.
      */
@@ -383,7 +383,7 @@ namespace hashdb {
      * Insert or change source data.
      *
      * Parameters:
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
      *   zero_count - The count of blocks skipped because they only
@@ -406,7 +406,7 @@ namespace hashdb {
      *   entropy - A numeric entropy value for the associated block.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *   sub_count - The number of file offsets to add for this file hash.
      *   file_offsets - A list of byte offsets into the file hash where
      *     the block hash is located.  This list can be truncated.
@@ -577,7 +577,7 @@ namespace hashdb {
      * JSON file_hash export text else "" if file hash is not there.
      *
      * Parameters:
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *
      * Returns:
      *   JSON file hash export text if file hash is present, false
@@ -624,7 +624,7 @@ namespace hashdb {
      * Find source data for the given source ID, false on no source ID.
      *
      * Parameters:
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *   filesize - The size of the source, in bytes.
      *   file_type - A string representing the type of the file.
      *   zero_count - The count of blocks skipped because they only
@@ -654,7 +654,7 @@ namespace hashdb {
      * Find source names for the given source ID, false on no source ID.
      *
      * Parameters:
-     *   file_hash - The MD5 hash of the source in binary form.
+     *   file_hash - The file hash of the source file in binary form.
      *   source_names - Set of pairs of repository_name, filename
      *     attributed to this source ID.
      *

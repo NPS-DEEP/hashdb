@@ -536,7 +536,7 @@ static void scan_random() {
 static void add_same() {
   std::cout
   << "add_same <hashdb> <hex file hash> <count>\n"
-  << "  Add <count> MD5 hashes of value 0x800000... into hash database <hashdb>.\n"
+  << "  Add <count> block hashes of value 0x800000... into hash database <hashdb>.\n"
   << "  Write performance data in the database's log.txt file.\n"
   << "\n"
   << "  Options:\n"
@@ -575,7 +575,7 @@ static void scan_same() {
 static void test_scan_stream() {
   std::cout
   << "test_scan_stream <hashdb> <count>\n"
-  << "  Run <count> scan_stream requests, where each request contains 10K MD5\n"
+  << "  Run <count> scan_stream requests, where each request contains 10K block\n"
   << "  hashes of value 0x800000....  Write performance data in the database's\n"
   << "  log.txt file.\n"
   << "\n"
