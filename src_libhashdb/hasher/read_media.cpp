@@ -123,6 +123,7 @@ namespace hashdb {
       // read into new to_buf
       uint8_t* to_buf = NULL;
       size_t to_size = 0;
+
       if (compression_type == "zip") {
         std::string error_message = hasher::new_from_zip(
                                           from_buf, from_size, from_offset,
@@ -132,6 +133,17 @@ namespace hashdb {
           delete[] from_buf;
           return error_message;
         }
+
+      } else if (compression_type == "gzip") {
+        std::string error_message = hasher::new_from_gzip(
+                                          from_buf, from_size, from_offset,
+                                          &to_buf, &to_size);
+        if (error_message != "") {
+          // error in gzip decompression
+          delete[] from_buf;
+          return error_message;
+        }
+
       } else {
         // unrecognized compression type
         delete[] from_buf;

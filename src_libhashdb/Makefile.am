@@ -120,7 +120,8 @@ HASHER_INCS = \
 	hasher/scan_tracker.hpp \
 	hasher/single_file_reader.hpp \
 	hasher/threadpool.hpp \
-	hasher/uncompress.cpp \
+	hasher/uncompress_gzip.cpp \
+	hasher/uncompress_zip.cpp \
 	hasher/uncompress.hpp
 
 SCAN_STREAM_INCS = \

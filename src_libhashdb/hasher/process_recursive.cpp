@@ -191,6 +191,7 @@ namespace hasher {
 
   void process_recursive(const hasher::job_t& job) {
 
+std::cerr << "process_recursive.a\n";
     // impose max recursion depth
     if (job.recursion_depth >= 7) {
       // too much recursive depth
@@ -198,9 +199,10 @@ namespace hasher {
     }
 
     // scan each byte for a compression signature, stop before end
-    for (size_t i=0; i+100 < job.buffer_data_size; ++i) {
+    for (size_t i=0; i < job.buffer_data_size; ++i) {
 
       if (zip_signature(job.buffer, job.buffer_size, i)) {
+std::cerr << "process_recursive.b\n";
 
         // inflate and recurse
         uint8_t* out_buf;
@@ -212,18 +214,21 @@ namespace hasher {
           recurse(job, i, "zip", out_buf, out_size);
         }
 
-/*
-      } else if (gzip_signature(job.buffer+i)) {
+      } else if (gzip_signature(job.buffer, job.buffer_size, i)) {
+std::cerr << "process_recursive.c\n";
 
         // inflate and recurse
-        uint8_t** out_buf;
-        size_t* out_size;
-        new_from_gzip(job.filename, job.buffer, job.buffer_size, i,
-                     *out_buf, *out_size);
-        recurse(job, i, "gzip", *out_buf, *out_size);
-*/
+        uint8_t* out_buf;
+        size_t out_size;
+        std::string error_message = new_from_gzip(
+                                           job.buffer, job.buffer_size, i,
+                                           &out_buf, &out_size);
+        if (error_message == "") {
+std::cerr << "process_recursive.d\n";
+          recurse(job, i, "gzip", out_buf, out_size);
+std::cerr << "process_recursive.e\n";
+        }
       }
-
     }
   }
 } // end namespace hasher

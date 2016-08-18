@@ -65,7 +65,7 @@ namespace hasher {
            (uint32_t)(b[2]<<16) | (uint32_t)(b[3]<<24);
   }
 
-  // always returns new out_buf, even if empty
+  // return new out_buf else error text
   std::string new_from_zip(const uint8_t* const in_buf,
                            const size_t in_size,
                            const size_t in_offset,
@@ -79,7 +79,6 @@ namespace hasher {
     // validate the buffer range
     if (in_size < in_offset + 30) {
       // nothing to do
-      *out_buf = new uint8_t[0]();
       return "zip region too small";
     }
 
@@ -92,7 +91,6 @@ namespace hasher {
 
     // validate name length
     if (name_len == 0 || name_len > zip_name_len_max) {
-      *out_buf = new uint8_t[0]();
       return "invalid zip metadata";
     }
 
@@ -101,7 +99,6 @@ namespace hasher {
 
     // offset must be inside the buffer
     if (compressed_offset >= in_size) {
-      *out_buf = new uint8_t[0]();
       return "zip read request outside data range";
     }
 
@@ -117,7 +114,6 @@ namespace hasher {
     
     // skip if uncompressed size is too small
     if (potential_uncompressed_size < uncompressed_size_min) {
-      *out_buf = new uint8_t[0]();
       return "zip uncompress size too small";
     }
 
@@ -154,8 +150,10 @@ namespace hasher {
 
     } else {
 
-      // comment that zlib inflate failed
-      return "zlib inflate failed";
+      // inflate failed
+      delete[] *out_buf;
+      *out_buf = NULL;
+      return "zip zlib inflate failed";
     }
   }
 } // end namespace hasher

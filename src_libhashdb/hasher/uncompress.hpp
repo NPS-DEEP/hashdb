@@ -32,7 +32,7 @@ namespace hasher {
   // zip
   inline bool zip_signature(const uint8_t* const b, const size_t b_size,
                      const size_t offset) {
-    // do not let this overflow.
+    // minimum local file header size for ZIP, do not let this overflow.
     if (offset + 30 > b_size) {
       return false;
     }
@@ -41,12 +41,34 @@ namespace hasher {
             b[offset+2]==0x03 && b[offset+3]==0x04);
   }
 
-  // return a new buffer which must be deleted, successful or not.
+  // Get a new out_buff which must be deleted, successful or not.
+  // Return "" else reason for error.
   std::string new_from_zip(const uint8_t* const in_buf,
                            const size_t in_size,
                            const size_t in_offset,
                            uint8_t** out_buf,
                            size_t* out_size);
+
+  // gzip
+  inline bool gzip_signature(const uint8_t* const b, const size_t b_size,
+                     const size_t offset) {
+    // minimum header for GZIP, do not let this overflow.
+    if (offset + 18 > b_size) {
+      return false;
+    }
+
+    return (b[offset+0]==0x1f && b[offset+1]==0x8b &&
+            b[offset+2]==0x08 && (b[offset+8]==0x00 ||
+            b[offset+8]==0x02 || b[offset+8]==0x04));
+  }
+
+  // Get a new out_buff which must be deleted, successful or not.
+  // Return "" else reason for error.
+  std::string new_from_gzip(const uint8_t* const in_buf,
+                            const size_t in_size,
+                            const size_t in_offset,
+                            uint8_t** out_buf,
+                            size_t* out_size);
 
 } // end namespace hasher
 

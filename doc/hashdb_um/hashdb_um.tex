@@ -267,26 +267,25 @@ Note: sudo is not required. If you do not wish to use sudo,  build and install \
 \end{Verbatim}
 
 \textbf{Run \hdb}\\
-When installed as administrator, the \hdb tool should automatically be accessible. The \hdb Python interface can be made available by typing:
+When installed as administrator, the \hdb tool should automatically be accessible. When installed as a user, the \hdb tool can be made available by typing:
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{export PATH=$HOME/local/bin:$PATH}
+\end{Verbatim}
+
+\textbf{Import the Python \hdb Module}\\
+To use the Python \hdb module, your shell must have access to the installed \verb+python.py+ and \verb+_python.so+ resources.\\
+
+When installed as administrator, the \hdb Python interface can be made available by typing:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{export PYTHONPATH=/usr/local/lib/python2.7/site-packages:/usr/local/}
 \textbf{                         lib64/python2.7/site-packages}
 \end{Verbatim}
 
-which provides access the installed \verb+python.py+ and \verb+_python.so+ resources, respectively.\\
-
-When installed as a user, the \hdb tool can be made available by typing:
-\begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{export PATH=$HOME/local/bin:$PATH}
-\end{Verbatim}
-
-The \hdb Python interface can be made available by typing:
+When installed as a user, the \hdb Python interface can be made available by typing:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{export PYTHONPATH=~/local/lib/python2.7/site-packages:~/local/lib64/}
 \textbf{                         python2.7/site-packages}
 \end{Verbatim}
-
-which provides access the installed \verb+python.py+ and \verb+_python.so+ resources, respectively.\\
 
 \subsubsection{Quickstart Guide}
 The following steps provide a very brief introduction to running your new installation of \hdb. Steps include creating a demo database and scanning for matching hashes. 
@@ -1763,7 +1762,7 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
 \section{Alternate Configurations}
 \begin{itemize}
 \item \textbf{Alternate Hash Algorithm}\\
-By default, \hdb is compiled to calculate MD5 hashes. hashdb can be recompiled to use other encryption algorithms, please see source code file\\
+By default, \hdb is compiled to calculate MD5 hashes. \hdb can be recompiled to use other encryption algorithms, please see source code file\\
 \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
 \end{itemize}
 
