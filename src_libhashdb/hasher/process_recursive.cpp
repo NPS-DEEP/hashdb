@@ -191,7 +191,6 @@ namespace hasher {
 
   void process_recursive(const hasher::job_t& job) {
 
-std::cerr << "process_recursive.a\n";
     // impose max recursion depth
     if (job.recursion_depth >= 7) {
       // too much recursive depth
@@ -202,7 +201,6 @@ std::cerr << "process_recursive.a\n";
     for (size_t i=0; i < job.buffer_data_size; ++i) {
 
       if (zip_signature(job.buffer, job.buffer_size, i)) {
-std::cerr << "process_recursive.b\n";
 
         // inflate and recurse
         uint8_t* out_buf;
@@ -215,7 +213,6 @@ std::cerr << "process_recursive.b\n";
         }
 
       } else if (gzip_signature(job.buffer, job.buffer_size, i)) {
-std::cerr << "process_recursive.c\n";
 
         // inflate and recurse
         uint8_t* out_buf;
@@ -224,9 +221,7 @@ std::cerr << "process_recursive.c\n";
                                            job.buffer, job.buffer_size, i,
                                            &out_buf, &out_size);
         if (error_message == "") {
-std::cerr << "process_recursive.d\n";
           recurse(job, i, "gzip", out_buf, out_size);
-std::cerr << "process_recursive.e\n";
         }
       }
     }

@@ -124,20 +124,25 @@ def test_ingest():
     H.rm_tempdir("temp_1.hdb")
     H.hashdb(["create", "temp_1.hdb"])
     H.hashdb(["ingest", "temp_1.hdb", "temp_1_media"])
-    returned_answer = H.hashdb(["export", "temp_1.hdb", "-"])
+    returned_answer = H.hashdb(["size", "temp_1.hdb"])
     H.lines_equals(returned_answer, [
-'# command: ', '# hashdb-Version: ',
-'{"file_hash":"3987c7a5bdae192e485f4d813d732891","filesize":21,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-666-zip"]}',
-'{"file_hash":"40dc7e419c3722c2b0e87e227c51cc4a","filesize":12,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-872-gzip"]}',
-'{"file_hash":"63750f9c54bf17c589466d924257a929","filesize":917,"file_type":"","zero_count":1,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media"]}',
-'{"file_hash":"de3fe827ce5077cc479b93c1146f07d7","filesize":21,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-600-zip"]}',
-'{"block_hash":"06d2d08afcbd948f6f033d3b249dde4f","entropy":4.038000106811523,"block_label":"H","source_offsets":["63750f9c54bf17c589466d924257a929",1,[512]]}',
-'{"block_hash":"11e6c76f7ae1c4642bd51a4275ead6a2","entropy":0.40400001406669619,"block_label":"HM","source_offsets":["de3fe827ce5077cc479b93c1146f07d7",1,[0]]}',
-'{"block_hash":"18d8dfaa993bf04fc3257fddc10b7548","entropy":0.2199999988079071,"block_label":"HM","source_offsets":["40dc7e419c3722c2b0e87e227c51cc4a",1,[0]]}',
-'{"block_hash":"480ca749a0bfacec96579151c8f85e95","entropy":0.40400001406669619,"block_label":"HM","source_offsets":["3987c7a5bdae192e485f4d813d732891",1,[0]]}',
-'# Processing 4 of 4 completed.',
+'{"hash_data_store":4, "hash_store":4, "source_data_store":4, "source_id_store":4, "source_name_store":4}',
 ''
 ])
+#    returned_answer = H.hashdb(["export", "temp_1.hdb", "-"])
+#    H.lines_equals(returned_answer, [
+#'# command: ', '# hashdb-Version: ',
+#'{"file_hash":"3987c7a5bdae192e485f4d813d732891","filesize":21,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-666-zip"]}',
+#'{"file_hash":"40dc7e419c3722c2b0e87e227c51cc4a","filesize":12,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-872-gzip"]}',
+#'{"file_hash":"63750f9c54bf17c589466d924257a929","filesize":917,"file_type":"","zero_count":1,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media"]}',
+#'{"file_hash":"de3fe827ce5077cc479b93c1146f07d7","filesize":21,"file_type":"","zero_count":0,"nonprobative_count":1,"name_pairs":["temp_1_media","temp_1_media-600-zip"]}',
+#'{"block_hash":"06d2d08afcbd948f6f033d3b249dde4f","entropy":4.038000106811523,"block_label":"H","source_offsets":["63750f9c54bf17c589466d924257a929",1,[512]]}',
+#'{"block_hash":"11e6c76f7ae1c4642bd51a4275ead6a2","entropy":0.40400001406669619,"block_label":"HM","source_offsets":["de3fe827ce5077cc479b93c1146f07d7",1,[0]]}',
+#'{"block_hash":"18d8dfaa993bf04fc3257fddc10b7548","entropy":0.2199999988079071,"block_label":"HM","source_offsets":["40dc7e419c3722c2b0e87e227c51cc4a",1,[0]]}',
+#'{"block_hash":"480ca749a0bfacec96579151c8f85e95","entropy":0.40400001406669619,"block_label":"HM","source_offsets":["3987c7a5bdae192e485f4d813d732891",1,[0]]}',
+#'# Processing 4 of 4 completed.',
+#''
+#])
 
 if __name__=="__main__":
     test_import_tab1()
