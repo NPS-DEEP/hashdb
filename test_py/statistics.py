@@ -137,12 +137,66 @@ def test_hash_table():
 '# Processing 2 of 2 completed.',
 ''])
 
+def test_media():
+    # create media to read
+    H.make_temp_media("temp_1_media")
+
+    # read embedded filename in zip header
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "630", "13"])
+    H.lines_equals(returned_answer, ["temp_0_file_1"])
+
+    # read zip 1
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "600-zip-0", "50"])
+    H.lines_equals(returned_answer, ["temp_0_file_1 content"])
+
+    # read zip 2
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "666-zip-0", "50"])
+    H.lines_equals(returned_answer, ["temp_0_file_2 content"])
+
+    # read gzip
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "872-gzip-0", "50"])
+    H.lines_equals(returned_answer, ["gzip content"])
+
+    # read partial zip 1
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "600-zip-3", "10"])
+    H.lines_equals(returned_answer, ["p_0_file_1"])
+
+    # read partial gzip
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "872-gzip-3", "5"])
+    H.lines_equals(returned_answer, ["p con"])
+
+    # read out of range
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "1000000000", "50"])
+    H.lines_equals(returned_answer, [""])
+
+    # read out of range zip 1
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "600-zip-100", "50"])
+    H.lines_equals(returned_answer, [""])
+
+    # read out of range gzip
+    returned_answer = H.hashdb(["read_media", "temp_1_media",
+                                "872-gzip-100", "50"])
+    H.lines_equals(returned_answer, [""])
+
+    # read media size
+    returned_answer = H.hashdb(["read_media_size", "temp_1_media"])
+    H.lines_equals(returned_answer, ["917", ""])
+
 if __name__=="__main__":
     test_size()
     test_sources()
     test_histogram()
     test_duplicates()
     test_hash_table()
+    test_media()
 
     print("Test Done.")
 

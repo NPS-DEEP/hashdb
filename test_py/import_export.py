@@ -129,6 +129,7 @@ def test_ingest():
 '{"hash_data_store":4, "hash_store":4, "source_data_store":4, "source_id_store":4, "source_name_store":4}',
 ''
 ])
+# NOTE: cannot use this because timestamp is always different.
 #    returned_answer = H.hashdb(["export", "temp_1.hdb", "-"])
 #    H.lines_equals(returned_answer, [
 #'# command: ', '# hashdb-Version: ',
