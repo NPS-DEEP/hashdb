@@ -359,7 +359,7 @@ Once the database is populated, \hdb can export content from the database in JSO
 	\label{fig:defaultHashInterval}
 \end{figure}
 
-As an optimization, \hdb provides a byte alignment setting. The byte alignment value must be divisible by the step size. The default configuration with 512 for step size, block size, and byte alignment is shown in Figure \ref{fig:defaultHashInterval}. Byte alignment is described in \textbf{\autoref{Settings}}.\\
+As an optimization, \hdb provides a byte alignment setting. The byte alignment value must be divisible by the step size. The default configuration with 512 for step size, block size, and byte alignment is shown in Figure \ref{fig:defaultHashInterval}. Byte alignment is described in \textbf{\autoref{DBSettings}}.\\
 
 \subsection{Blacklist Data}
 Blacklist data is the data we scan against to determine whether forensic data
@@ -384,8 +384,11 @@ Direct analysis such as that provided by the \sscope tool
 may be used to see the exact content at that location.
 \sscope is available at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}.
 
+\subsection{Recursive Extraction}
+The \hdb \verb+ingest+, \verb+scan_media+, and \verb+read_media+ commands support recursive extraction, meaning that they can recursively decompress compressed content. For \verb+ingest+, the result is that compressed data is uncompressed and submitted as a new file to be ingested. For \verb+scan_media+, the result is that compressed data is uncompressed and scanned. For \verb+read_media+, the forensic path is interpreted and the uncompressed content is returned. The recursive path to embedded data is called a forensic path. \hdb currently decompresses \textbf{zip} and \textbf{gzip} encodings.
+
 \subsection{Forensic Path}
-A forensic path is a byte offset into a media image. However, when recursive mode is used to uncompress data, the forensic path includes information for pointing to uncompressed data and also the compression algorithm used to reach that data. An example forensic path of \texttt{1000-zip-2100} at filename \texttt{myfile-100-zip} extracted from filename \texttt{myfile} is shown in Figure \ref{fig:forensicPath}.\\
+A forensic path is a byte offset into a media image. However, when data is uncompressed using recursive extraction, the forensic path includes information for pointing to uncompressed data and the compression algorithm used to reach that data. An example forensic path of \texttt{1000-zip-2100} at filename \texttt{myfile-100-zip} extracted from filename \texttt{myfile} is shown in Figure \ref{fig:forensicPath}.\\
 
 \begin{figure}
 	\center
@@ -503,7 +506,7 @@ These files include several data store directories and files, a settings file, a
 The \texttt{lmdb store} files encode all the block hashes, source files, and related information that are in the database. These filenames start with the prefix \verb+lmdb+.
 
 \item \texttt{settings.json} \\
-This file contains the settings requested by the user when the block hash database was created. Settings are described in \textbf{\autoref{Settings}}. This file also contains the internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb. The \texttt{settings.json} file with the default settings looks like this:
+This file contains the settings requested by the user when the block hash database was created. Database settings are described in \textbf{\autoref{DBSettings}}. This file also contains the internal \hdb settings version used to help \hdb identify whether a database is compatible with this version of \hdb. The \texttt{settings.json} file with the default settings looks like this:
 
 \begingroup
 \footnotesize
@@ -552,8 +555,8 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 \verb+timestamp.json+ is not formally part of the \hdb database.  It is created by the \hdb tool performance analysis commands described in \textbf{\autoref{PerformanceAnalysis}}. This file is replaced rather than appended to. Timestamp syntax is described in \textbf{\Autoref{InputOutputSyntax}}.
 \end{itemize}
 
-\subsection{Settings}
-\label{Settings}
+\subsection{Database Settings}
+\label{DBSettings}
 Function and performance of a \hdb database is set using configurable settings:
 
 \begin{itemize}
@@ -591,7 +594,7 @@ For a \hdb quick reference summary, please see \textbf{\autoref{QuickReference}}
 \label{Creating}
 A hash database must be created before hashes can be added to it.
 Syntax for creating a hash database is shown in Table \ref{tab:createDatabase}.
-Configurable settings associated with the database is shown in Table \ref{tab:hashDBSettings} and described in \textbf{\Autoref{Settings}}.\\
+Configurable settings associated with the database is shown in Table \ref{tab:hashDBSettings} and described in \textbf{\Autoref{DBSettings}}.\\
 \begin{table}[!ht]
 \centering
 \caption{Command for Creating Hash Databases}
@@ -607,7 +610,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 
 \begin{table}[!ht]
 \centering
-\caption{Settings for New Databases}
+\caption{Database Settings}
 \label{tab:hashDBSettings}
 \begin{tabular}{|p{1.5 cm}|p{8 cm}|p{4 cm}|}
 \hline \hline
@@ -1694,7 +1697,7 @@ The \textit{LMDB Hash Store} is a hybrid B-Tree and List store:
 \item The \verb+value+ portion consists of a list of the last few bytes of the hash, with enough bytes so that the bits of the hash in the \verb+key+ and the bytes of the hash in the \verb+value+ collectively identify the hash as present with a sufficiently low false positive rate.
 \end{itemize}
 
-The \textit{LMDB Hash Store} uses two tuning parameters, hash prefix bits and hash suffix bytes, to minimize data store size and maximize lookup speed.  These parameters are described in \textbf{\Autoref{Settings}}.\\
+The \textit{LMDB Hash Store} uses two tuning parameters, hash prefix bits and hash suffix bytes, to minimize data store size and maximize lookup speed.  These parameters are described in \textbf{\Autoref{DBSettings}}.\\
 
 
 \subsection{LMDB Hash Data Store}
@@ -1724,7 +1727,7 @@ Fields in the \verb+value+ portion are:
   \end{itemize}
 \end{itemize}
 
-The \textit{LMDB Hash Data Store} uses three tuning parameters to minimize data store size: \verb+max_count+, \verb+max_sub_count+, and \verb+block_size+.  These parameters are described in \textbf{\Autoref{Settings}}.\\
+The \textit{LMDB Hash Data Store} uses three tuning parameters to minimize data store size: \verb+max_count+, \verb+max_sub_count+, and \verb+block_size+.  These parameters are described in \textbf{\Autoref{DBSettings}}.\\
 
 \subsection{LMDB Source ID Store}
 The \textit{LMDB Source ID Store} maps source file hash values to source IDs.  Although the user never sees source IDs, we use source IDs in the \textit{LMDB Source ID Store}, \textit{LMDB Source Data Store}, and the \textit{LMDB Hash Data Store} because they are significantly shorter than source file hashes.  We wouldn't need source IDs if we didn't make this optimization.
