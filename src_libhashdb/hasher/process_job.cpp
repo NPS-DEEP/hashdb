@@ -72,16 +72,46 @@ namespace hasher {
     return true;
   }
 
+  static void print_status(const hasher::job_t& job) {
+    // print job_type, file with recursion path, offset, and filesize
+    std::stringstream ss;
+
+    // job type
+    switch(job.job_type) {
+      case hasher::job_type_t::INGEST: {
+        ss << "# Ingesting ";
+        break;
+      }
+      case hasher::job_type_t::SCAN: {
+        ss << "# Scanning ";
+        break;
+      }
+      default:
+        assert(0);
+    }
+
+    // filename
+    ss << job.filename;
+
+    // any recursion path
+    if  (job.recursion_path != "") {
+      ss << "-" << job.recursion_path;
+    }
+
+    // offset and size
+    ss << " offset " << job.file_offset
+       << " size " << job.filesize
+       << "\n";
+
+    hashdb::tprint(std::cout, ss.str());
+  }
+
+
   // process INGEST job
   static void process_ingest_job(const hasher::job_t& job) {
 
     // print status
-    std::stringstream ss;
-    ss << "# Ingesting " << job.filename
-       << " offset " << job.file_offset
-       << " size " << job.filesize
-       << "\n";
-    hashdb::tprint(std::cout, ss.str());
+    print_status(job);
 
     if (!job.disable_ingest_hashes) {
       // get hash calculator object
@@ -154,12 +184,7 @@ namespace hasher {
   static void process_scan_job(const hasher::job_t& job) {
 
     // print status
-    std::stringstream ss;
-    ss << "# Scanning " << job.filename
-       << " offset " << job.file_offset
-       << " size " << job.filesize
-       << "\n";
-    hashdb::tprint(std::cout, ss.str());
+    print_status(job);
 
     size_t zero_count = 0;
 
@@ -185,23 +210,23 @@ namespace hasher {
 
       if (json_string.size() > 0) {
         // match so print offset <tab> file <tab> json
-        std::stringstream ss2;
+        std::stringstream ss;
         if (job.recursion_path != "") {
           // prepend recursion path before offset
-          ss2 << job.recursion_path << "-";
+          ss << job.recursion_path << "-";
         }
 
         // add the offset
-        ss2 << job.file_offset + i << "\t";
+        ss << job.file_offset + i << "\t";
 
         // add the block hash
-        ss2 << hashdb::bin_to_hex(block_hash) << "\t";
+        ss << hashdb::bin_to_hex(block_hash) << "\t";
 
         // add the json text and a newline
-        ss2 << json_string << "\n";
+        ss << json_string << "\n";
 
         // print it
-        hashdb::tprint(std::cout, ss2.str());
+        hashdb::tprint(std::cout, ss.str());
       }
     }
 
