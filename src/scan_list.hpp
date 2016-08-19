@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Scan for hashes in file where lines are "<forensic path><tab><hex hash>".
+ * Scan for hashes in file where lines are "<label><tab><hex hash>".
  * Comment lines are forwarded to output.
  */
 

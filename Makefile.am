@@ -15,3 +15,5 @@ SUBDIRS = src_libhashdb src doc $(SRC_WIN_DIR) test $(TEST_PY_DIR) \
 
 RELEASE	     = $(PACKAGE)-$(VERSION)
 
+EXTRA_DIST = TESTS
+

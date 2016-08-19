@@ -1,11 +1,12 @@
 Not all tests are automated.
 
 * To run most tests, type "make check" in the build directory.
-* To run memory analysis tests, after "make install", run memory_analysis.sh.
+* To run memory analysis tests, after "make install", run memory_analysis.sh,
+  then inspect temp_vg.out.  Look for "Error", "Aborting", and leak reports.
 * To run python binding tests, configure access to the hashdb module
   as described in the installation instructions, then run
   python_bindings/test_hashdb.py.
-* To validate the distribution, type "make check".
+* To validate the distribution, type "make distcheck" in the build directory.
 
 Some tests may leave residue in the local directory in files named temp_*.
 

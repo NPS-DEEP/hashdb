@@ -19,10 +19,7 @@
 
 # This file assists in building test programs.
 
-EXTRA_DIST = \
-	directory_helper.hpp \
-	unit_test.h \
-	vg.supp
+EXTRA_DIST = vg.supp memory_analysis.sh
 
 check_PROGRAMS = \
 	lmdb_managers_test
@@ -41,6 +38,11 @@ AM_CPPFLAGS = \
 
 LDADD = ../src_libhashdb/libhashdb.la
 
+LMDB_MANAGERS_TEST_INCS = \
+	directory_helper.hpp \
+	unit_test.h \
+	lmdb_managers_test.cpp
+
 clean-local:
 	rm -rf temp_*
 
@@ -53,7 +55,7 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-lmdb_managers_test_SOURCES = lmdb_managers_test.cpp
+lmdb_managers_test_SOURCES = $(LMDB_MANAGERS_TEST_INCS)
 
 .PHONY: run_tests_valgrind
 

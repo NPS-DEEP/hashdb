@@ -19,7 +19,7 @@
 
 /**
  * \file
- * Scan for hashes in file where lines are "<forensic path><tab><hex hash>".
+ * Scan for hashes in file where lines are "<label><tab><hex hash>".
  * Comment lines are forwarded to output.
  */
 
@@ -68,8 +68,8 @@ void scan_list(hashdb::scan_manager_t& manager, std::istream& in,
       continue;
     }
 
-    // get forensic path
-    std::string forensic_path = line.substr(0, tab_index1);
+    // get label
+    std::string label = line.substr(0, tab_index1);
 
     // get block hash
     std::string block_hashdigest_string = line.substr(tab_index1+1);
@@ -84,7 +84,7 @@ void scan_list(hashdb::scan_manager_t& manager, std::istream& in,
     const std::string expanded_text = manager.find_hash_json(
                                               scan_mode, block_binary_hash);
     if (expanded_text.size() != 0) {
-      std::cout << forensic_path << "\t"
+      std::cout << label << "\t"
                 << block_hashdigest_string << "\t"
                 << expanded_text << std::endl;
     }

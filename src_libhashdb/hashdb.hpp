@@ -250,15 +250,14 @@ namespace hashdb {
                      const hashdb::scan_mode_t scan_mode);
 
   /**
-   * Read raw bytes at the forensic path in the media image file.  Files
+   * Read raw bytes at the media offset in the media image file.  Files
    * with EWF extensions (.E01 files) are recognized as media images.
-   * Example forensic paths are "1000" and "1000-zip-0".
+   * Example media offsets are "1000" and "1000-zip-0".
    *
    * Parameters:
    *   media_image_file - Path to a media image file, which can be a
    *     raw file or an E01 file.
-   *   forensic_path - The offset into the media image file.
-   *     Example forensic paths include "1000" and "1000-zip-0".
+   *   media_offset - The offset into the media image file.
    *   count - The number of bytes to read.
    *   bytes - The raw bytes read.
    *
@@ -267,7 +266,7 @@ namespace hashdb {
    */
 
   std::string read_media(const std::string& media_image_file,
-                         const std::string& forensic_path,
+                         const std::string& media_offset,
                          const uint64_t count,
 #ifndef SWIG
                          std::string& bytes
@@ -279,13 +278,13 @@ namespace hashdb {
   /**
    * Read raw bytes at the given offset in the media image file.  Files
    * with EWF extensions (.E01 files) are recognized as media images.
+   * Example media offsets are "1000" and "1000-zip-0".
    *
    * Parameters:
    *   media_image_file - Path to a media image file, which can be a
    *     raw file or an E01 file.
    *   offset - The offset into the media image file.
-   *   forensic_path - The offset into the media image file.
-   *     Example forensic paths include "1000" and "1000-zip-0".
+   *   media_offset - The offset into the media image file.
    *   count - The number of bytes to read.
    *   bytes - The raw bytes read.
    *

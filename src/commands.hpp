@@ -942,7 +942,7 @@ class out_ptr_t {
 
   // read_media
   static void read_media(const std::string& media_image_filename,
-                         const std::string& forensic_path,
+                         const std::string& media_offset,
                          const std::string& count_string) {
 
     // convert count string to number
@@ -951,7 +951,7 @@ class out_ptr_t {
     // read the bytes
     std::string bytes;
     std::string error_message = hashdb::read_media(
-                         media_image_filename, forensic_path, count, bytes);
+                         media_image_filename, media_offset, count, bytes);
 
     if (error_message.size() == 0) {
       // print the bytes to stdout

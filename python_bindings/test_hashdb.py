@@ -7,12 +7,6 @@
 # test Python version
 # ############################################################
 import sys
-import hashdb
-import shutil
-import struct
-import io
-import os
-
 # require Python version 2.7
 if sys.version_info.major != 2 and sys.version_info.minor != 7:
     print("Error: Invalid Python version: 2.7 is required.")
@@ -24,6 +18,12 @@ if sys.maxsize != 2**63 - 1:
     print("Error: 64-bit Python is required.")
     print("found %d but expected %d" % (sys.maxsize, 2**64))
     sys.exit(1)
+
+import hashdb
+import shutil
+import struct
+import io
+import os
 
 # require equality, adapted from ../test_py/helpers.py
 def str_equals(a,b):
@@ -83,7 +83,7 @@ error_message, bytes_read = hashdb.read_media("temp_invalid_fileanme", 10, 10)
 bool_equals(len(error_message) > 0, True)
 str_equals(bytes_read, b'')
 
-# read_media using forensic path
+# read_media using media offset
 error_message, bytes_read = hashdb.read_media("temp_in.bin", "0", 10)
 str_equals(error_message,"")
 str_equals(bytes_read, b'\0\0a\0\0')
