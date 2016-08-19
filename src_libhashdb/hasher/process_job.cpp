@@ -184,11 +184,23 @@ namespace hasher {
               job.scan_manager->find_hash_json(job.scan_mode, block_hash);
 
       if (json_string.size() > 0) {
-        // offset <tab> file <tab> json
+        // match so print offset <tab> file <tab> json
         std::stringstream ss2;
-        ss2 << job.file_offset + i << "\t"
-           << hashdb::bin_to_hex(block_hash) << "\t"
-           << json_string << "\n";
+        if (job.recursion_path != "") {
+          // prepend recursion path before offset
+          ss2 << job.recursion_path << "-";
+        }
+
+        // add the offset
+        ss2 << job.file_offset + i << "\t";
+
+        // add the block hash
+        ss2 << hashdb::bin_to_hex(block_hash) << "\t";
+
+        // add the json text and a newline
+        ss2 << json_string << "\n";
+
+        // print it
         hashdb::tprint(std::cout, ss2.str());
       }
     }

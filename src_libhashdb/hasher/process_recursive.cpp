@@ -61,14 +61,20 @@
 
 namespace hasher {
 
-  static std::string make_recursed_filename(
-                const std::string& parent_filename,
-                const uint64_t parent_file_offset,
+  static std::string append_recursion_path(
+                const std::string& existing_recursion,
+                const uint64_t file_offset,
                 const std::string& compression_name) {
+
     std::stringstream ss;
-    ss << parent_filename<< "-"
-       << parent_file_offset << "-"
-       << compression_name;
+
+    // append any existing parent recursion and a separator
+    if (existing_recursion != "") {
+      ss << existing_recursion << "-";
+    }
+
+    // append this recursion offset and compression name
+    ss << file_offset << "-" << compression_name;
     return ss.str();
   }
 
@@ -107,11 +113,16 @@ namespace hasher {
         const uint64_t parent_file_offset = (parent_job.recursion_depth == 0)
                ? parent_job.file_offset + relative_offset : relative_offset;
 
-        // calculate the recursed filename
-        const std::string recursed_filename = make_recursed_filename(
-                   parent_job.filename, parent_file_offset, compression_name);
+        // calculate the recursion path
+        const std::string recursion_path = append_recursion_path(
+              parent_job.recursion_path, parent_file_offset, compression_name);
 
-        // store the source repository name and filename
+        // calculate the recursed filename
+        std::stringstream ss;
+        ss << parent_job.filename << "-" << recursion_path;
+        const std::string recursed_filename(ss.str());
+
+        // store the source repository name and recursed filename
         parent_job.import_manager->insert_source_name(recursed_file_hash,
                    parent_job.repository_name, recursed_filename);
 
@@ -137,7 +148,7 @@ namespace hasher {
                    parent_job.step_size,
                    parent_job.block_size,
                    recursed_file_hash,
-                   recursed_filename,
+                   parent_job.filename,
                    uncompressed_size, // file size is buffer_size
                    0,                 // file_offset
                    parent_job.disable_recursive_processing,
@@ -148,7 +159,8 @@ namespace hasher {
                    uncompressed_size, // buffer_size
                    uncompressed_size, // buffer_data_size
                    parent_job.max_recursion_depth,
-                   parent_job.recursion_depth + 1);
+                   parent_job.recursion_depth + 1,
+                   recursion_path);
 
         // run the new recursed ingest job
         process_job(*recursed_ingest_job);
@@ -162,16 +174,16 @@ namespace hasher {
         const uint64_t parent_file_offset = (parent_job.recursion_depth == 0)
                ? parent_job.file_offset + relative_offset : relative_offset;
 
-        // calculate the recursed filename
-        const std::string recursed_filename = make_recursed_filename(
-                  parent_job.filename, parent_file_offset, compression_name);
+        // calculate the recursion path
+        const std::string recursion_path = append_recursion_path(
+              parent_job.recursion_path, parent_file_offset, compression_name);
 
         job_t* recursed_scan_media_job = job_t::new_scan_job(
                    parent_job.scan_manager,
                    parent_job.scan_tracker,
                    parent_job.step_size,
                    parent_job.block_size,
-                   recursed_filename,
+                   parent_job.filename,
                    uncompressed_size, // file size is buffer_size
                    0,                 // file_offset
                    parent_job.disable_recursive_processing,
@@ -180,7 +192,8 @@ namespace hasher {
                    uncompressed_size, // buffer_size
                    uncompressed_size, // buffer_data_size
                    parent_job.max_recursion_depth,
-                   parent_job.recursion_depth + 1);
+                   parent_job.recursion_depth + 1,
+                   recursion_path);
 
         // run the new recursed scan media job
         process_job(*recursed_scan_media_job);

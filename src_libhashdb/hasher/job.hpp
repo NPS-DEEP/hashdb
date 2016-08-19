@@ -65,7 +65,8 @@ class job_t {
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t p_recursion_depth) :
+        const size_t p_recursion_depth,
+        const std::string p_recursion_path) :
                    job_type(p_job_type),
                    import_manager(p_import_manager),
                    ingest_tracker(p_ingest_tracker),
@@ -89,6 +90,7 @@ class job_t {
                    buffer_data_size(p_buffer_data_size),
                    max_recursion_depth(p_max_recursion_depth),
                    recursion_depth(p_recursion_depth),
+                   recursion_path(p_recursion_path),
                    error_message("") {
   }
 
@@ -120,6 +122,7 @@ class job_t {
   const size_t buffer_data_size;
   const size_t max_recursion_depth;
   const size_t recursion_depth;
+  const std::string recursion_path;
   std::string error_message;
 
   // ingest
@@ -142,7 +145,8 @@ class job_t {
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t p_recursion_depth) {
+        const size_t p_recursion_depth,
+        const std::string p_recursion_path) {
 
     return new job_t(
                      job_type_t::INGEST,
@@ -167,7 +171,8 @@ class job_t {
                      p_buffer_size,
                      p_buffer_data_size,
                      p_max_recursion_depth,
-                     p_recursion_depth);
+                     p_recursion_depth,
+                     p_recursion_path);
   }
 
   // scan
@@ -185,7 +190,8 @@ class job_t {
         const size_t p_buffer_size,
         const size_t p_buffer_data_size,
         const size_t p_max_recursion_depth,
-        const size_t p_recursion_depth) {
+        const size_t p_recursion_depth,
+        const std::string p_recursion_path) {
 
     return new job_t(
                      job_type_t::SCAN,
@@ -210,7 +216,8 @@ class job_t {
                      p_buffer_size,
                      p_buffer_data_size,
                      p_max_recursion_depth,
-                     p_recursion_depth);
+                     p_recursion_depth,
+                     p_recursion_path);
   }
 };
 
