@@ -73,7 +73,7 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
   float entropy;
   std::string block_label;
   uint64_t count;
-  hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+  hashdb::source_offsets_t source_offsets;
 
   block_hash = manager.first_hash();
   while (block_hash.size() != 0) {
@@ -90,8 +90,8 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
     os << json_hash_string << "\n";
 
     // update the progress tracker, this accurate approach is expensive
-    manager.find_hash(block_hash, entropy, block_label, count, *source_offsets);
-    progress_tracker.track_hash_data(source_offsets->size());
+    manager.find_hash(block_hash, entropy, block_label, count, source_offsets);
+    progress_tracker.track_hash_data(source_offsets.size());
 
     // next
     block_hash = manager.next_hash(block_hash);
