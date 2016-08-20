@@ -14,7 +14,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="forensic_path.svg">
+   sodipodi:docname="recursion_path.svg">
   <defs
      id="defs4">
     <marker
@@ -809,7 +809,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="459.17602"
+     inkscape:cx="409.93238"
      inkscape:cy="104.61609"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -867,16 +867,16 @@
        id="rect4735-0-7-6"
        width="349.35242"
        height="52.367573"
-       x="74.051064"
-       y="731.8728" />
+       x="78.051064"
+       y="737.8728" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-2)"
-       d="m 99.343638,718.63375 c 42.816672,-41.16714 42.816672,-41.16714 42.816672,-41.16714 l 0,0 0,0"
+       d="m 99.343638,724.63375 c 42.816672,-41.16714 42.816672,-41.16714 42.816672,-41.16714 l 0,0 0,0"
        id="path4802-9-5"
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.78126091px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-93)"
-       d="m 160.58682,717.75652 c 0,-36.25405 0,-36.25405 0,-36.25405 l 0,0 0,0"
+       d="m 160.58682,723.75652 c 0,-36.25405 0,-36.25405 0,-36.25405 l 0,0 0,0"
        id="path4802-9-9"
        inkscape:connector-curvature="0" />
     <path
@@ -895,7 +895,7 @@
          id="tspan5600-5"
          x="-121.10794"
          y="562.64929"
-         style="font-size:22.5px">File &quot;myfile&quot;</tspan><tspan
+         style="font-size:22.5px">Filename &quot;myfile&quot;</tspan><tspan
          sodipodi:role="line"
          x="-121.10794"
          y="582.89929"
@@ -973,72 +973,72 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="159.44507"
-       y="658.87201"
+       y="660.87201"
        id="text5598-1-8"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          x="159.44507"
-         y="658.87201"
+         y="660.87201"
          id="tspan7802-8"
          style="font-size:22.5px">zip</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-2-0)"
-       d="m 221.81531,721.07015 c -41.16714,-42.81667 -41.16714,-42.81667 -41.16714,-42.81667 l 0,0 0,0"
+       d="m 221.81531,727.07015 c -41.16714,-42.81667 -41.16714,-42.81667 -41.16714,-42.81667 l 0,0 0,0"
        id="path4802-9-5-2"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="248.76633"
-       y="765.29462"
+       x="252.76633"
+       y="771.29462"
        id="text9018-8"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan9020-3"
-         x="248.76633"
-         y="765.29462">------------------</tspan></text>
+         x="252.76633"
+         y="771.29462">------------------</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:Padauk;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="-51.173889"
-       y="754.72375"
+       x="-71.173889"
+       y="760.72375"
        id="text5598-2-9"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-5-0"
-         x="-51.173889"
-         y="754.72375"
-         style="font-size:22.5px">File &quot;myfile-1000-zip&quot;</tspan><tspan
+         x="-71.173889"
+         y="760.72375"
+         style="font-size:22.5px">Filename &quot;myfile-1000-zip&quot;</tspan><tspan
          sodipodi:role="line"
-         x="-51.173889"
-         y="774.97375"
+         x="-71.173889"
+         y="780.97375"
          style="font-size:22.5px"
-         id="tspan3665">File hash =b362...</tspan></text>
+         id="tspan3665">File hash = b362...</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.78126091px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-93-5)"
-       d="m 346.8938,721.99308 c 0,-36.25405 0,-36.25405 0,-36.25405 l 0,0 0,0"
+       d="m 346.8938,727.99308 c 0,-36.25405 0,-36.25405 0,-36.25405 l 0,0 0,0"
        id="path4802-9-9-7"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="276.25934"
-       y="657.26111"
+       y="663.26111"
        id="text5598-2-6-9-2"
        sodipodi:linespacing="89.999998%"><tspan
          sodipodi:role="line"
          id="tspan5600-5-8-3-7"
          x="276.25934"
-         y="657.26111"
+         y="663.26111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start">Byte 2100</tspan><tspan
          sodipodi:role="line"
          x="276.25934"
-         y="677.51111"
+         y="683.51111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         id="tspan4611">Forensic path &quot;1000-zip-2100&quot;</tspan><tspan
+         id="tspan4611">Recursion path &quot;1000-zip-2100&quot;</tspan><tspan
          sodipodi:role="line"
          x="276.25934"
-         y="697.76111"
+         y="703.76111"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5px;line-height:89.99999762%;font-family:Padauk;-inkscape-font-specification:'Padauk, Normal';text-align:start;writing-mode:lr-tb;text-anchor:start"
          id="tspan3556-4-9" /></text>
   </g>

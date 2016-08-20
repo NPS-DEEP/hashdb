@@ -385,16 +385,28 @@ may be used to see the exact content at that location.
 \sscope is available at \url{https://github.com/NPS-DEEP/NPS-SectorScope/wiki}.
 
 \subsection{Recursive Extraction}
-The \hdb \verb+ingest+, \verb+scan_media+, and \verb+read_media+ commands support recursive extraction, meaning that they can recursively decompress compressed content. For \verb+ingest+, the result is that compressed data is uncompressed and submitted as a new file to be ingested. For \verb+scan_media+, the result is that compressed data is uncompressed and scanned. For \verb+read_media+, the forensic path is interpreted and the uncompressed content is returned. The recursive path to embedded data is called a forensic path. \hdb currently decompresses \textbf{zip} and \textbf{gzip} encodings.
+The \hdb \verb+ingest+, \verb+scan_media+, and \verb+read_media+ commands support recursive extraction, meaning that they can recursively decompress compressed content. For \verb+ingest+, the result is that compressed source data is uncompressed and submitted as a new file to be ingested. For \verb+scan_media+, the result is that compressed media is recursively uncompressed and scanned. For \verb+read_media+, the media image offset is recursively interpreted and the uncompressed content is returned. \hdb currently decompresses \textbf{zip} and \textbf{gzip} encodings.
 
-\subsection{Forensic Path}
-A forensic path is a byte offset into a media image. However, when data is uncompressed using recursive extraction, the forensic path includes information for pointing to uncompressed data and the compression algorithm used to reach that data. An example forensic path of \texttt{1000-zip-2100} at filename \texttt{myfile-100-zip} extracted from filename \texttt{myfile} is shown in Figure \ref{fig:forensicPath}.\\
+\subsection{Recursion Path}
+Typically, an offset points directly to a byte in a source file or a media image. But when data is decompressed or recursively decompressed, it includes a recursion path to reach the decompressed data. An offset consists of the following:
+\begin{itemize}
+\item The byte offset into the data, specifically, a source file or media image.
+\item Zero or more recursion path sequences, from out to in, consisting of:
+  \begin{itemize}
+  \item A delimiter (\textbf{-}).
+  \item The uncompression algorithm, such as \textbf{zip}.
+  \item A delimiter (\textbf{-}).
+  \item The byte offset into the uncompressed data.
+  \end{itemize}
+\end{itemize}
+
+Example byte offset 2100 at recursion path \verb+1000-zip-2100+ within uncompressed data obtained by unzipping data starting at byte 1000 of file \verb+myfile+ is shown in Figure \ref{fig:recursionPath}.
 
 \begin{figure}
 	\center
-	\includegraphics[scale=.45]{drawings/forensic_path}
-	\caption{Example forensic path to an extracted file}
-	\label{fig:forensicPath}
+	\includegraphics[scale=.45]{drawings/recursion_path}
+	\caption{Example of new file \texttt{myfile-100-zip} uncompressed from file \texttt{myfile}}
+	\label{fig:recursionPath}
 \end{figure}
 
 \subsection{File Hash}
@@ -876,7 +888,7 @@ Statistics options are shown in Table \ref{tab:StatisticsOptions}.
 \hline
 \textbf{hash\_table} & \verb+hash_table <hashdb>+ \verb+<hex file hash>+ &  Prints hashes associated with the specified source.\\
 \hline
-\textbf{read\_media} & \verb+read_media <media image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given forensic path.\\
+\textbf{read\_media} & \verb+read_media <media image file>+ \verb+<offset> <count>+ &  Prints count raw bytes from a media image file starting at the given offset.\\
 \hline
 \end{tabular}
 \end{table}
@@ -1309,7 +1321,7 @@ Only an approximate count field is returned, and it is possible for the count to
 \end{lstlisting}
 
 \subsection{Scan Data Output from Tools}
-The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one line of output per match. This output consists of the Forensic Path (offset), a tab, the hash hexcode, a tab, the expanded hash JSON data, and a carriage return. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.\\
+The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one line of output per match. This output consists of the byte offset, which may include a recursion path, a tab, the hash hexcode, a tab, the expanded hash JSON data, and a carriage return. An example of a scan match is shown in Listing \ref{ScanDataWithPath}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
@@ -1346,14 +1358,14 @@ Scan stream interface data consists of packed binary strings of unscanned input 
 The \verb+scan_list+ command scans a list of hashes for matches.  Valid lines of input may be:
 \begin{itemize}
 \item Comment lines starting with \verb+#+.  Comment lines are forwarded to output.
-\item Hash lines to scan against, where each line consists of a Forensic Path followed by a tab followed by the hash hexcode.
+\item Hash lines to scan against, where each line consists of an offset followed by a tab followed by the hash hexcode.
 \end{itemize}
 An example scan list input file is shown in Listing \ref{ScanListFile}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example scan list input file}, label=ScanListFile]
 # Scan list input file
-# <Forensic Path> <tab> <block hash hexdigest>
+# <offset> <tab> <block hash hexdigest>
 0	3b6b477d391f73f67c1c01e2141dbb17
 512	89a170b6b9a948d21d1d6ee1e7cdc467
 1024	f58a09656658c6b41e244b4a6091592c
@@ -1658,14 +1670,14 @@ Calculate and import hashes from path to \hdb. Can disable recursive processing,
 \item \verb+error_message = scan_media(hashdb_dir, media_image_file, step_size,+\\
 \verb+disable_recursive_processing, scan_mode)+\\
 Scan the media image for matches, writing match data to \verb+stdout+.
-\item \verb+error_message = read_media(media_image_file, forensic_path, count, &bytes)+\\
-C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+error_message, bytes_media = read_media(media_image_file, forensic_path, count)+\\
-Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
-C++ syntax.  Read bytes at numeric offset from a media image file.
-\item \verb+error_message, bytes_read = read_media(media_image_file, forensic_path, count)+\\
-Python syntax. Read bytes at forensic path from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
+C++ syntax.  Read bytes at a numeric offset from a media image file.
+\item \verb+error_message, bytes_media = read_media(media_image_file, offset, count)+\\
+Python syntax. Read bytes at a string offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
+\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
+C++ syntax.  Read bytes at a numeric offset from a media image file.
+\item \verb+error_message, bytes_read = read_media(media_image_file, offset, count)+\\
+Python syntax. Read bytes at a string offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
 \item \verb+error_message = read_media_size(media_image_file, &size)+\\
 C++ syntax.  Read media image file size.
 \item \verb+error_message, size = read_media_size(media_image_file)+\\
