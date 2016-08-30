@@ -140,6 +140,7 @@ static bool monotonic_trait(const uint8_t* const buffer, const size_t size) {
     } else if (offset > buffer_size) {
       // program error
       assert(0);
+      return ""; // for mingw
     } else {
       // make new buffer from old but zero-extended
       uint8_t* b = new uint8_t[count]();
