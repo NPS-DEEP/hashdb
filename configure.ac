@@ -139,6 +139,8 @@ AC_ARG_ENABLE([address-sanitizer], AS_HELP_STRING([--enable-address-sanitizer], 
 ################################################################
 # PTHREAD support
 # With special nods to compiling under mingw
+AC_CHECK_HEADERS([pthread.h],[],[AC_MSG_ERROR([pthread headers are required])])
+AC_CHECK_LIB([pthread],[pthread_create],[],[AC_MSG_ERROR([Could not find pthread library])])
 
 case $host in
  *mingw*)
@@ -147,7 +149,6 @@ case $host in
   CPPFLAGS="-DPTW32_STATIC_LIB $CPPFLAGS"
   CXXFLAGS="$CXXFLAGS -mthreads -pthread "
   LDFLAGS="$LDFLAGS -mthreads -pthread "
-#  LDFLAGS="$LDFLAGS -mthreads -pthread -Wl,--no-undefined "
   AC_DEFINE(HAVE_PTHREAD,1,[Defined to POSIX threads for mingw])
  ;;
  *)
@@ -160,15 +161,12 @@ case $host in
               CFLAGS="  $PTHREAD_CFLAGS $CFLAGS"
               CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS "
               CC="$PTHREAD_CC"],
-            [AC_MSG_ERROR(bulk_extractor requires pthreads)])
+            [AC_MSG_ERROR([pthread support required])])
 esac
 
 AC_MSG_NOTICE([After pthread test, CFLAGS: $CFLAGS])
 AC_MSG_NOTICE([After pthread test, CXXFLAGS: $CXXFLAGS])
 AC_MSG_NOTICE([After pthread test, LDFLAGS: $LDFLAGS])
-
-AC_CHECK_HEADERS([pthread.h])
-AC_CHECK_LIB([pthreadGC2],[pthread_create])
 
 ################################################################
 ##
@@ -194,39 +192,18 @@ AC_TYPE_INT64_T
 AC_SYS_LARGEFILE
 AC_SYS_POSIX_TERMIOS
 
-
-#################################################################
-############### drop optimization flags and add -g if requested ################
-#if test x"${AFF_NOOPT}" != "x" ; then
-#   with_noopt="yes";
-#fi
-#
-#if test "${with_opt}" = "no" ; then
-#  CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O[[0-9]]//`             # note the double quoting!
-#  CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O[[0-9]]//`
-#else
-#  # If we are not stripping the optimizer, add fortify source
-#  CFLAGS="  $CFLAGS   -D_FORTIFY_SOURCE=2 "
-#  CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=2 "
-#
-#  # and increase optimizer from -O2 to -O3 if not explicitly forbidden
-#  if test "${with_o3}" != "no" ; then
-#      CFLAGS=`echo   -g "$CFLAGS"   | sed s/-O2/-O3/`             # note the double quoting!
-#      CXXFLAGS=`echo -g "$CXXFLAGS" | sed s/-O2/-O3/`
-#  fi
-#fi
-
 ################################################################
 ## zlib is required for zip, gzip recursive decompression
 ## and for ssl and crypto for mingw
-AC_CHECK_LIB([z], [inflate],[LIBS="-lz $LIBS"], [AC_MSG_ERROR([Could not find zlib library])])
+AC_CHECK_LIB([z], [inflate],[], [AC_MSG_ERROR([Could not find zlib library])])
 
 ################################################################
 ## OpenSSL Support is required for md5 hash
 AC_CHECK_HEADERS([openssl/aes.h openssl/bio.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/pem.h openssl/rand.h openssl/rsa.h openssl/sha.h openssl/pem.h openssl/x509.h])
 # OpenSSL has been installed under at least two different names...
-AC_CHECK_LIB([crypto],[EVP_get_digestbyname])	
-AC_CHECK_LIB([ssl],[SSL_library_init])
+# note that crypto requires zlib
+AC_CHECK_LIB([crypto],[EVP_get_digestbyname],[],[AC_MSG_ERROR([Could not find crypto library])])	
+AC_CHECK_LIB([ssl],[SSL_library_init],[],[AC_MSG_ERROR([Could not find ssl library])])
 AC_CHECK_FUNCS([EVP_get_digestbyname],,
 	AC_MSG_ERROR([SSL/OpenSSL support required]))
 
@@ -237,22 +214,10 @@ if test  x"$mingw" != x"yes";  then
   AC_CHECK_HEADERS([sys/mman.h],,[AC_MSG_ERROR([mmap support required])])
 fi
 
-#AC_CHECK_FUNCS([printf getrusage err errx warn warnx mmap],,[AC_MSG_WARN([Not all requested functions are available: printf, getrusage...])])
-#AC_CHECK_HEADERS([err.h sys/mman.h sys/resource.h unistd.h],,[AC_MSG_WARN([Not all requested headers are available: err.h, sys/mman.h, ...])])
-#PTHREAD: AC_CHECK_HEADERS([pthread.h],,[AC_MSG_ERROR([pthread headers are required])])
-
-# note that crypto requires zlib
-AC_CHECK_LIB([crypto],[EVP_Digest],[],[AC_MSG_ERROR([Could not find crypto library])])
-LIBS="-lcrypto $LIBS"
-
-#PTHREAD: AC_CHECK_LIB([pthread],[pthread_mutexattr_settype],[],[AC_MSG_ERROR([Could not find pthread library])])
-#LIBS="-lssl -lcrypto -lpthread $LIBS"
-#LIBS="-lcrypto -lpthread $LIBS"
-
 ################################################################
 # LIBEWF is required for ingest and scan media interfaces
 AC_CHECK_HEADER([libewf.h])
-AC_CHECK_LIB([ewf], libewf_handle_read_random)
+AC_CHECK_LIB([ewf], libewf_handle_read_random, [], [AC_MSG_ERROR([Could not find libewf])])
 
 ################################################################
 # Should we disable optimization?
@@ -268,14 +233,6 @@ AC_CHECK_LIB([stdc++],[main])
 AC_CHECK_LIB([sicudt],[main])
 AC_CHECK_HEADER([unicode/ucnv.h])
 AC_SEARCH_LIBS([uset_close], [sicuuc])
-AC_CHECK_LIB([sicuuc],[main])
-#AC_CHECK_HEADER([lightgrep/api.h])
-#AC_CHECK_LIB([lightgrep], [lg_create_pattern])
-
-#AC_CHECK_HEADERS([regex.h tre/tre.h])
-#AC_CHECK_LIB([regex],[regcomp])
-#AC_CHECK_LIB([tre],[tre_regcomp])
-#AC_CHECK_FUNCS([regcomp tre_regcomp tre_version])
 
 ################################################################
 ## support required by print_environment.hpp
