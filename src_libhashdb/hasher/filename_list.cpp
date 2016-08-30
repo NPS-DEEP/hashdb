@@ -302,7 +302,8 @@ std::string filename_list(const std::string& filename, filenames_t* files) {
     DIR *dir= opendir(path.c_str());
     if (dir == NULL) {
       std::stringstream ss;
-      ss << "falure in opendir reading path " << path;
+      ss << "falure in opendir reading path " << path
+         << ", " << strerror(errno);
       return ss.str();
     }
 
