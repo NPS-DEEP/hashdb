@@ -1225,7 +1225,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
-\verb+source_offsets+ & Information about source offsets for each source associated with this block hash\\
+\verb+source_offsets+ & An array of source offset information consisting of triplets of source hash, sub-count, and any recorded offsets for each matching source\\
 \hline
 \end{tabular}
 \end{table}
