@@ -37,5 +37,11 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
                         progress_tracker_t& progress_tracker,
                         std::ostream& os);
 
+void export_json_range(const hashdb::scan_manager_t& manager,
+                       const std::string& begin_hexcode,
+                       const std::string& end_hexcode,
+                       progress_tracker_t& progress_tracker,
+                       std::ostream& os);
+
 #endif
 

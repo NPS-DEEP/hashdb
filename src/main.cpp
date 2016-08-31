@@ -457,6 +457,10 @@ void run_command() {
     check_params("", 2);
     commands::export_json(args[0], args[1], cmd);
 
+  } else if (command == "export_range") {
+    check_params("", 4);
+    commands::export_json_range(args[0], args[1], args[2], args[3], cmd);
+
   // database manipulation
   } else if (command == "add") {
     check_params("", 2);

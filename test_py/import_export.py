@@ -119,6 +119,35 @@ def test_import_json():
     returned_answer = H.read_file("temp_2.json")
     H.lines_equals(returned_answer, expected_answer)
 
+# test import JSON range
+def test_export_json_range():
+    H.rm_tempdir("temp_1.hdb")
+    H.rm_tempfile("temp_1.json")
+    H.rm_tempfile("temp_2.json")
+
+    temp1_input = [
+'{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
+'{"file_hash":"0011223344556677","filesize":6,"file_type":"fta","zero_count":7,"nonprobative_count":8,"name_pairs":["r1","f1"]}',
+'{"file_hash":"1111111111111111","filesize":9,"file_type":"ftc","zero_count":10,"nonprobative_count":11,"name_pairs":["r3","f3"]}',
+'{"block_hash":"2222222222222222","entropy":11.1259,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
+'{"block_hash":"8899aabbccddeeff","entropy":12.0,"block_label":"bl2","source_offsets":["0000000000000000",1,[0],"0011223344556677",2,[0,512]]}',
+'{"block_hash":"ffffffffffffffff","entropy":13.0,"block_label":"bl3","source_offsets":["0011223344556677",1,[1024]]}'
+]
+
+    expected_answer = [
+"# command: ","# hashdb-Version: ",
+'{"block_hash":"2222222222222222","entropy":11.125,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
+'{"file_hash":"1111111111111111","filesize":9,"file_type":"ftc","zero_count":10,"nonprobative_count":11,"name_pairs":["r3","f3"]}'
+]
+
+    H.make_tempfile("temp_1.json", temp1_input)
+    H.hashdb(["create", "temp_1.hdb"])
+    H.hashdb(["import", "temp_1.hdb", "temp_1.json"])
+    H.hashdb(["export_range", "temp_1.hdb", "temp_2.json", "00", "80"])
+
+    returned_answer = H.read_file("temp_2.json")
+    H.lines_equals(returned_answer, expected_answer)
+
 def test_ingest():
     H.make_temp_media("temp_1_media")
     H.rm_tempdir("temp_1.hdb")
@@ -150,6 +179,7 @@ if __name__=="__main__":
     test_import_tab2()
     test_import_tab3()
     test_import_json()
+    test_export_json_range()
     test_ingest()
     print("Test Done.")
 

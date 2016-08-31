@@ -680,6 +680,8 @@ and through the use of the import capability provided by the \hdb library API (d
 \hline
 \textbf{export} & \verb+export <hashdb.hdb>+ \verb+<hashdb.json>+& Exports the hash database to the JSON file. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming to \verb+stdout+.\\
 \hline
+\textbf{export\_range} & \verb+export_range <hashdb.hdb>+ \verb+<hashdb.json>+ \verb+<begin hex block hash>+ \verb+<end hex block hash>+& Exports block hashes in range to the JSON file. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming to \verb+stdout+.\\
+\hline
 \end{tabular}
 \end{table}
 
@@ -728,6 +730,11 @@ Imports values from the tab-delimited file into the hash database. Note that tab
 Imports values from an exported database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}.
 \item \textbf{export}\\
 Exports values from a \hdb block hash database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}.
+\item \textbf{export\_range}\\
+Exports block hash values within the range and the source data associated with these block hashes from a \hdb block hash database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}. The following example exports everything in \verb+demo.json+ to file \verb+example.json+.
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{hashdb export_range demo.hdb demo.json 00 ffffffffffffffffffffffffffffffff}
+\end{Verbatim}
 \end{itemize}
 
 \subsection{Database Manipulation}
@@ -1116,6 +1123,9 @@ Users can export hashes from a hash database to a JSON export file using the ``e
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb export demo.hdb demo.json}
 \end{Verbatim}
+
+\subsection{Sharding Hash Databases}
+A block hash database may be sharded into multiple separate databases by using the ``export\_range'' command and then importing each range into individual shard databases.
 
 \section{\hdb Input/Output Syntax}
 \label{InputOutputSyntax}

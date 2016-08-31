@@ -98,3 +98,69 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
   }
 }
 
+void export_json_range(const hashdb::scan_manager_t& manager,
+                       const std::string& begin_block_hash,
+                       const std::string& end_block_hash,
+                       progress_tracker_t& progress_tracker,
+                       std::ostream& os) {
+
+  // the subset of cited sources to export
+  std::set<std::string> source_hashes;
+
+  // space for variables in order to use the tracker
+  std::string block_hash;
+  float entropy;
+  std::string block_label;
+  uint64_t count;
+  hashdb::source_offsets_t source_offsets;
+
+  // export the block hashes that are in range
+  block_hash = manager.first_hash();
+  while (block_hash.size() != 0) {
+
+    manager.find_hash(block_hash, entropy, block_label, count, source_offsets);
+
+    if (block_hash >= begin_block_hash && block_hash <= end_block_hash) {
+      // process the block hash since it is in range
+
+      // get JSON hash data
+      std::string json_hash_string = manager.export_hash_json(block_hash);
+
+      // program error
+      if (json_hash_string.size() == 0) {
+        assert(0);
+      }
+
+      // emit the JSON
+      os << json_hash_string << "\n";
+
+      // note the sources involved
+      for (hashdb::source_offsets_t::const_iterator it = source_offsets.begin();
+           it != source_offsets.end(); ++it) {
+        source_hashes.insert(it->file_hash);
+      }
+    }
+
+    // update the progress tracker
+    progress_tracker.track_hash_data(source_offsets.size());
+
+    // next
+    block_hash = manager.next_hash(block_hash);
+  }
+
+  // export the cited sources
+  for (std::set<std::string>::const_iterator it2 = source_hashes.begin();
+       it2 != source_hashes.end(); ++it2) {
+
+    // get source data
+    std::string json_source_string = manager.export_source_json(*it2);
+
+    // program error
+    if (json_source_string.size() == 0) {
+      assert(0);
+    }
+
+    os << json_source_string << "\n";
+  }
+}
+
