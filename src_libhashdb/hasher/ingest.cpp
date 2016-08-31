@@ -65,11 +65,25 @@ namespace hashdb {
 
     // iterate over files
     uint64_t total_bytes = 0;
+    int i = 0;
     for (hasher::filenames_t::const_iterator it=filenames.begin();
                                            it != filenames.end(); ++it) {
+
+      // maybe print status
+      if (++i % 1000 == 0) {
+        std::cout << "# Reading size of file " << i
+                  << " of " << filenames.size() << " ...\n";
+      }
+
+      // append size to total
       const hasher::file_reader_t file_reader(*it);
       total_bytes += file_reader.filesize;
     }
+
+    if (i > 1000) {
+        std::cout << "# Done reading file sizes, total size is " << total_bytes << "\n";
+      }
+
     return total_bytes;
   }
 
