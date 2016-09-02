@@ -591,6 +591,33 @@ The number of bits of the hash prefix to use as the key in the store. The idea i
 The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.
 \end{itemize}
 
+\subsection{Maintaining Database Integrity}
+Although a \hdb hash database can become damaged, approaches may be used to avoid risk of loss. This section describes hazards, risks, safety provisions, and recommendations for preserving database integrity.\\
+
+Use of database manipulation commands and import commands can easily result in incorrect source frequency count values for block hashes. The count value is correctly maintained when ingesting sources and when adding new block hashes to a database. \hdb is unable to correctly estimate count values when adding or ingesting hash values that are already present in the destination database. So if maintaining correct count values matters, do not import or use database manipulation commands when hash values overlap.\\
+
+You can audit what has happened to a database by viewing the log file, see \textbf{\autoref{ContentsOfDB}}. If the audit log indicates that database manipulations have been applied and hash ranges overlap, then count values are likely to be larger than they should be.\\
+
+If an operation is modifying a database, specifically, adding data to it, and the operation is aborted, transactions not flushed to disk will be lost, an end timestamp will not be present in the log file, and the database will be left functional but incomplete. Re-running the aborted operation will not cause the operation to fully complete.\\
+
+To summarize:
+\begin{itemize}
+\item If accurate count values are required, please back up your database and be careful about what commands you run.  Inspect your database log to ensure that each change completed and that each change applied was acceptable. Recall that actions such as \verb+add_multiple+ can be valid if databases being added do not have overlapping block hash values. As a safeguard, \hdb will print the following warning message if it detects that a change could have compromised a count value:
+
+\begingroup
+\footnotesize
+\begin{Verbatim}[fontfamily=courier]
+Merge detected.  Count values are no longer accurate for this database.
+\end{Verbatim}
+\endgroup
+
+\item If accurate count values are not required, use import and database manipulation commands as desired, but expect count values to be high and to see a warning message that count values will no longer be accurate.
+
+\item
+If your usage does not require completeness, feel free to abort commands that change databases, but expect that destination data will be incomplete even if the command is re-run.
+
+\end{itemize}
+
 \section {Running the \hdb Tool}
 \label{Running}
 The core capabilities provided by \hdb involve creating and maintaining a database of hash values and scanning media for those hash values. To perform those tasks, \hdb users need to start by building a database (if an existing database is not available for use).
