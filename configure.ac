@@ -216,8 +216,12 @@ fi
 
 ################################################################
 # LIBEWF is required for ingest and scan media interfaces
+# Newer LIBEWF requires bz2
 AC_CHECK_HEADER([libewf.h])
 AC_CHECK_LIB([ewf], libewf_handle_read_random, [], [AC_MSG_ERROR([Could not find libewf])])
+if test  x"$mingw" != x"yes";  then
+  AC_CHECK_LIB([bz2], BZ2_bzlibVersion, [], [AC_MSG_ERROR([Could not find bz2])])
+fi
 
 ################################################################
 # Should we disable optimization?
