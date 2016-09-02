@@ -91,6 +91,7 @@ class lmdb_hash_data_manager_t {
   const uint32_t max_count;
   const uint32_t max_sub_count;
   MDB_env* env;
+  bool merge_detected;
 
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;                  // mutext
@@ -216,7 +217,7 @@ class lmdb_hash_data_manager_t {
   // duplicate offsets.  Return count added.
   uint64_t add_file_offsets(const file_offsets_t& source_file_offsets, 
                             file_offsets_t& destination_file_offsets,
-                            const size_t count_stored) const {
+                            const size_t count_stored) {
 
     size_t sub_count_stored = 0;
     for (file_offsets_t::const_iterator it = source_file_offsets.begin();
@@ -239,12 +240,13 @@ class lmdb_hash_data_manager_t {
         // the file offset was added
         ++sub_count_stored;
       } else {
-        // warn that the added offset is a duplicate
-        std::stringstream ss;
-        ss << "Usage error: A file offset " << *it
-           << " has been added more than once for a source.\n"
-           << "Count values are no longer accurate for this database.\n";
-        tprint(std::cerr, ss.str());
+        // the added offset is a duplicate so warn but only once
+        if (merge_detected == false) {
+          std::stringstream ss;
+          ss << "Merge detected.  Count values are no longer accurate for this database.\n";
+          tprint(std::cerr, ss.str());
+          merge_detected = true;
+        }
       }
     }
     return sub_count_stored;
@@ -795,6 +797,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
                       ? max_lmdb_sub_count : p_max_sub_count),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
+       merge_detected(false),
        M() {
 
     MUTEX_INIT(&M);
