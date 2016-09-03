@@ -289,40 +289,19 @@ class out_ptr_t {
                << "# hashdb-Version: " << PACKAGE_VERSION << "\n";
 
     // export the hashdb
-    ::export_json_sources(manager, *out_ptr());
     ::export_json_hashes(manager, progress_tracker, *out_ptr());
+    ::export_json_sources(manager, *out_ptr());
   }
 
-  // export_range json
+  // export json range
   static void export_json_range(const std::string& hashdb_dir,
                                 const std::string& json_file,
-                                const std::string& begin_hex_block_hash,
-                                const std::string& end_hex_block_hash,
+                                const std::string& begin_block_hash,
+                                const std::string& end_block_hash,
                                 const std::string& cmd) {
 
     // validate hashdb_dir path
     require_hashdb_dir(hashdb_dir);
-
-    // get the binary hash
-    std::string begin_block_hash = hashdb::hex_to_bin(begin_hex_block_hash);
-    std::string end_block_hash = hashdb::hex_to_bin(end_hex_block_hash);
-
-    // reject invalid input
-    if (begin_block_hash == "") {
-      std::cerr << "Error: Invalid begin hex block hash: '"
-                << begin_hex_block_hash << "'\n";
-      exit(1);
-    }
-    if (end_block_hash == "") {
-      std::cerr << "Error: Invalid end hex block hash: '"
-                << end_hex_block_hash << "'\n";
-      exit(1);
-    }
-    if (begin_block_hash >= end_block_hash) {
-      std::cerr << "Error: Invalid input, end value is not greater than "
-                << "begin value.\n";
-      exit(1);
-    }
 
     // resources
     hashdb::scan_manager_t manager(hashdb_dir);

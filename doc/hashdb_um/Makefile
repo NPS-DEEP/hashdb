@@ -10,7 +10,7 @@ QUICK_REFERENCE_FILES = hashdb_quick_reference.tex \
 
 all: hashdb_um.pdf hashdb_quick_reference.pdf
 
-hashdb_um.pdf: $(UM_FILES)
+hashdb_um.pdf: $(UM_FILES) hashdb_quick_reference_text.tex
 	cd drawings; make
 	pdflatex hashdb_um.tex
 	pdflatex hashdb_um.tex

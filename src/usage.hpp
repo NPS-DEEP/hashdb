@@ -52,9 +52,7 @@ void overview() {
   << "         [-x <rel>] <hashdb.hdb> <import directory>\n"
   << "  import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>\n"
   << "  import <hashdb> <json file>\n"
-  << "  export <hashdb> <json file>\n"
-  << "  export_range <hashdb> <json file> <begin hex block hash> <end hex block\n"
-  << "               hash>\n"
+  << "  export [-p <begin:end>] <hashdb> <json file>\n"
   << "\n"
   << "Database Manipulation:\n"
   << "  add <source hashdb> <destination hashdb>\n"
@@ -182,27 +180,17 @@ static void import() {
 
 static void export_json() {
   std::cout
-  << "export <hashdb> <json file>\n"
+  << "export [-p <begin:end>] <hashdb> <json file>\n"
   << "  Export hashes from hash database <hashdb> into file <json file>.\n"
+  << "\n"
+  << "  Options:\n"
+  << "  -p, --part_range=<begin:end>\n"
+  << "    The part of the hash database to export, from begin hex block hash to\n"
+  << "    end hex block hash.  The entire hash database is exported by default.\n"
   << "\n"
   << "  Parameters:\n"
   << "  <hashdb>       the hash database to export\n"
-  << "  <json file>    the JSON file to export the hash database into.\n"
-  ;
-}
-
-static void export_json_range() {
-  std::cout
-  << "export_range <hashdb> <json file> <begin hex block hash> <end hex block\n"
-  << "             hash>\n"
-  << "  Export hashes in the specified range from hash database <hashdb>\n"
-  << "  into file <json file>.\n"
-  << "\n"
-  << "  Parameters:\n"
-  << "  <hashdb>                the hash database to export\n"
-  << "  <json file>             the JSON file to export the hash database into.\n"
-  << "  <begin hex block hash>  the beginning of the block hash range.\n"
-  << "  <end hex block hash>    the end of the block hash range.\n"
+  << "  <json file>    the JSON file to export the hash database into\n"
   ;
 }
 
@@ -624,7 +612,6 @@ static void all() {
   import_tab();
   import();
   export_json();
-  export_json_range();
 
   // Database Manipulation
   std::cout << "\nDatabase Manipulation:\n";

@@ -17,8 +17,8 @@ echo "1122334455667788	99aabbccddeeff	1" > temp_vg.tab
 $RUN import_tab temp_vg.hdb temp_vg.tab 2>> temp_vg.out
 $RUN ingest temp_vg.hdb temp_vg.tab 2>> temp_vg.out
 $RUN export temp_vg.hdb temp_vg.json 2>> temp_vg.out
+$RUN export -p 00:ffffffffffffffff temp_vg.hdb temp_vg.json 2>> temp_vg.out
 $RUN import temp_vg.hdb temp_vg.json 2>> temp_vg.out
-$RUN export_range temp_vg.hdb temp_vg.json 00 ffffffffffffffff 2>> temp_vg.out
 
 # Database Manipulation
 $RUN add temp_vg.hdb temp_vg2.hdb 2>> temp_vg.out

@@ -87,6 +87,7 @@ static bool has_disable_calculate_labels = false;
 static bool has_json_scan_mode = false;
 static bool has_max_counts = false;
 static bool has_tuning = false;
+static bool has_part_range = false;
 
 // option values
 hashdb::settings_t settings;
@@ -94,6 +95,8 @@ static std::string repository_name = default_repository_name;
 static std::string whitelist_dir = default_whitelist_dir;
 static size_t step_size = settings.block_size;
 static hashdb::scan_mode_t scan_mode = hashdb::scan_mode_t::EXPANDED_OPTIMIZED;
+static std::string begin_block_hash = "";
+static std::string end_block_hash = "";
 
 // arguments
 static std::string cmd= "";         // the command line invocation text
@@ -200,12 +203,13 @@ int main(int argc,char **argv) {
       {"json_scan_mode",          required_argument, 0, 'j'},
       {"max_counts",              required_argument, 0, 'm'},
       {"tuning",                  required_argument, 0, 't'},
+      {"part_range",              required_argument, 0, 'p'},
 
       // end
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVa:b:s:r:w:x:j:m:t:",
+    int ch = getopt_long(argc, argv, "hHvVa:b:s:r:w:x:j:m:t:p:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -304,6 +308,37 @@ int main(int argc,char **argv) {
         break;
       }
 
+      case 'p': {	// hash part range as begin:end hex block hash
+        has_part_range = true;
+        std::vector<std::string> params = split(std::string(optarg), ':');
+
+        if (params.size() != 2) {
+          std::cerr << "Error: Invalid block hash part range: '"
+                    << optarg << "'.  " << see_usage << "\n";
+          exit(1);
+        }
+        begin_block_hash = hashdb::hex_to_bin(params[0]);
+        end_block_hash = hashdb::hex_to_bin(params[1]);
+
+        // reject invalid input
+        if (begin_block_hash == "") {
+          std::cerr << "Error: Invalid block hash begin value for part range: '"
+                    << params[0] << "'\n";
+          exit(1);
+        }
+        if (end_block_hash == "") {
+          std::cerr << "Error: Invalid block hash end value for part range: '"
+                    << params[1] << "'\n";
+          exit(1);
+        }
+        if (begin_block_hash >= end_block_hash) {
+          std::cerr << "Error: Invalid block hash range input for part range, "
+                    << "end value is not greater than begin value.\n";
+          exit(1);
+        }
+        break;
+      }
+
       default:
 //        std::cerr << "unexpected command character " << ch << "\n";
         exit(1);
@@ -399,6 +434,11 @@ void check_options(const std::string& options) {
     std::cerr << "The -t tuning option is not allowed for this command.\n";
     exit(1);
   }
+  if (has_part_range && options.find("p") ==
+      std::string::npos) {
+    std::cerr << "The -p part range option is not allowed for this command.\n";
+    exit(1);
+  }
 
   // fail if block size is incompatible with byte alignment
   if (settings.byte_alignment == 0 ||
@@ -454,12 +494,13 @@ void run_command() {
     commands::import_json(args[0], args[1], cmd);
 
   } else if (command == "export") {
-    check_params("", 2);
-    commands::export_json(args[0], args[1], cmd);
-
-  } else if (command == "export_range") {
-    check_params("", 4);
-    commands::export_json_range(args[0], args[1], args[2], args[3], cmd);
+    check_params("p", 2);
+    if (has_part_range) {
+      commands::export_json_range(args[0], args[1],
+                                  begin_block_hash, end_block_hash, cmd);
+    } else {
+      commands::export_json(args[0], args[1], cmd);
+    }
 
   // database manipulation
   } else if (command == "add") {

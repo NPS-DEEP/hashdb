@@ -13,9 +13,7 @@ Import/Export:
          [-x <rel>] <hashdb.hdb> <import directory>
   import_tab [-r <repository name>] [-w <whitelist.hdb>] <hashdb> <tab file>
   import <hashdb> <json file>
-  export <hashdb> <json file>
-  export_range <hashdb> <json file> <begin hex block hash> <end hex block
-               hash>
+  export [-p <begin:end>] <hashdb> <json file>
 
 Database Manipulation:
   add <source hashdb> <destination hashdb>
@@ -116,22 +114,17 @@ import <hashdb> <json file>
   Parameters:
   <hashdb>       the hash database to insert the imported hashes into
   <json file>    the JSON file to import hashes from
-export <hashdb> <json file>
+export [-p <begin:end>] <hashdb> <json file>
   Export hashes from hash database <hashdb> into file <json file>.
+
+  Options:
+  -p, --part_range=<begin:end>
+    The part of the hash database to export, from begin hex block hash to
+    end hex block hash.  The entire hash database is exported by default.
 
   Parameters:
   <hashdb>       the hash database to export
-  <json file>    the JSON file to export the hash database into.
-export_range <hashdb> <json file> <begin hex block hash> <end hex block
-             hash>
-  Export hashes in the specified range from hash database <hashdb>
-  into file <json file>.
-
-  Parameters:
-  <hashdb>                the hash database to export
-  <json file>             the JSON file to export the hash database into.
-  <begin hex block hash>  the beginning of the block hash range.
-  <end hex block hash>    the end of the block hash range.
+  <json file>    the JSON file to export the hash database into
 
 Database Manipulation:
 add <source hashdb> <destination hashdb>
