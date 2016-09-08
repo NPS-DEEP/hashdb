@@ -371,12 +371,12 @@ namespace hashdb {
                filesize, file_type, zero_count, nonprobative_count, *changes);
   }
 
+  // add whether file hash is present or not, used during ingest
   void import_manager_t::insert_hash(const std::string& block_hash,
                           const float entropy,
                           const std::string& block_label,
                           const std::string& file_hash,
-                          const uint64_t sub_count,
-                          std::set<uint64_t> file_offsets) {
+                          const uint64_t file_offset) {
 
     if (block_hash.size() == 0) {
       std::cerr << "Error: insert_hash called with empty block_hash\n";
@@ -391,10 +391,47 @@ namespace hashdb {
     bool is_new_id = lmdb_source_id_manager->insert(file_hash, *changes,
                                                     source_id);
 
-    // insert hash into hash manager and hash data manager
+    // insert hash into hash data manager and hash manager
     const size_t count = lmdb_hash_data_manager->insert(
                  block_hash, entropy, block_label,
+                 source_id,  file_offset, *changes);
+    lmdb_hash_manager->insert(block_hash, count, *changes);
+
+    // If the source ID is new then add a blank source data record just to keep
+    // from breaking the reverse look-up done in scan_manager_t.
+    if (is_new_id == true) {
+      lmdb_source_data_manager->insert(source_id, file_hash, 0, "", 0, 0,
+                                       *changes);
+    }
+  }
+
+  // add only if file hash is not present, use during merge
+  void import_manager_t::merge_hash(const std::string& block_hash,
+                                    const float entropy,
+                                    const std::string& block_label,
+                                    const std::string& file_hash,
+                                    const uint64_t sub_count,
+                                    const std::set<uint64_t> file_offsets) {
+
+    if (block_hash.size() == 0) {
+      std::cerr << "Error: insert_hash called with empty block_hash\n";
+      return;
+    }
+    if (file_hash.size() == 0) {
+      std::cerr << "Error: insert_hash called with empty file_hash\n";
+      return;
+    }
+
+    uint64_t source_id;
+    bool is_new_id = lmdb_source_id_manager->insert(file_hash, *changes,
+                                                    source_id);
+
+    // merge hash into hash data manager
+    const size_t count = lmdb_hash_data_manager->merge(
+                 block_hash, entropy, block_label,
                  source_id, sub_count, file_offsets, *changes);
+
+    // insert hash into hash manager
     lmdb_hash_manager->insert(block_hash, count, *changes);
 
     // If the source ID is new then add a blank source data record just to keep
@@ -489,8 +526,8 @@ namespace hashdb {
         }
 
         // add hash data for this source triplet
-        insert_hash(block_hash, entropy, block_label,
-                    file_hash, sub_count, file_offsets);
+        merge_hash(block_hash, entropy, block_label,
+                   file_hash, sub_count, file_offsets);
       }
 
       delete source_offsets;

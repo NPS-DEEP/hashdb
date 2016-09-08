@@ -1056,10 +1056,9 @@ class out_ptr_t {
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      std::set<uint64_t> file_offsets;
-      file_offsets.insert((i + start_index) * byte_alignment);
+      const uint64_t file_offset = (i + start_index) * byte_alignment;
       manager.insert_hash(random_binary_hash(), 0.0, "",
-                          file_binary_hash, 1, file_offsets);
+                          file_binary_hash, file_offset);
 
       // update progress tracker
       progress_tracker.track();
@@ -1153,10 +1152,8 @@ class out_ptr_t {
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      std::set<uint64_t> file_offsets;
-      file_offsets.insert((i + start_index) * byte_alignment);
-      manager.insert_hash(binary_hash, 0.0, "",
-                          file_binary_hash, 1, file_offsets);
+      const uint64_t file_offset = (i + start_index) * byte_alignment;
+      manager.insert_hash(binary_hash, 0.0, "", file_binary_hash, file_offset);
 
       // update progress tracker
       progress_tracker.track();

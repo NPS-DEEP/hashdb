@@ -239,8 +239,8 @@ class adder_t {
       }
 
       // add hash for source
-      manager_b->insert_hash(block_hash, entropy, block_label,
-                             it->file_hash, it->sub_count, it->file_offsets);
+      manager_b->merge_hash(block_hash, entropy, block_label,
+                            it->file_hash, it->sub_count, it->file_offsets);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
         // add source information
@@ -290,8 +290,8 @@ class adder_t {
         }
 
         // add hash for source
-        manager_b->insert_hash(block_hash, entropy, block_label,
-                             it->file_hash, it->sub_count, it->file_offsets);
+        manager_b->merge_hash(block_hash, entropy, block_label,
+                              it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -350,8 +350,8 @@ class adder_t {
                               repository_sources.end()) {
 
         // add hash for source
-        manager_b->insert_hash(block_hash, entropy, block_label,
-                             it->file_hash, it->sub_count, it->file_offsets);
+        manager_b->merge_hash(block_hash, entropy, block_label,
+                              it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -410,8 +410,8 @@ class adder_t {
                               non_repository_sources.end()) {
 
         // add hash for source
-        manager_b->insert_hash(block_hash, entropy, block_label,
-                             it->file_hash, it->sub_count, it->file_offsets);
+        manager_b->merge_hash(block_hash, entropy, block_label,
+                              it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information

@@ -396,9 +396,31 @@ namespace hashdb {
                             const uint64_t zero_count,
                             const uint64_t nonprobative_count);
 
+    /**
+     * Insert or change the hash data associated with the block_hash.
+     * Use this during ingest where the file offset is guaranteed to
+     * be new.
+     *
+     * Parameters:
+     *   block_hash - The block hash in binary form.
+     *   entropy - A numeric entropy value for the associated block.
+     *   block_label - Text indicating the type of the block or "" for
+     *     no label.
+     *   file_hash - The file hash of the source file in binary form.
+     *   file_offset - The byte offset into the file hash where the
+     *     block hash is located.  A warning is printed if this file
+     *     offset is already present for the file_hash.
+     */
+    void insert_hash(const std::string& block_hash,
+                     const float entropy,
+                     const std::string& block_label,
+                     const std::string& file_hash,
+                     const uint64_t file_offset);
+
 #ifndef SWIG
     /**
      * Insert or change the hash data associated with the block_hash.
+     * Use this when merging existing sets of file offsets.
      *
      * Parameters:
      *   block_hash - The block hash in binary form.
@@ -409,13 +431,14 @@ namespace hashdb {
      *   sub_count - The number of file offsets to add for this file hash.
      *   file_offsets - A list of byte offsets into the file hash where
      *     the block hash is located.  This list can be truncated.
+     *     This list may or may not already be there.
      */
-    void insert_hash(const std::string& block_hash,
-                     const float entropy,
-                     const std::string& block_label,
-                     const std::string& file_hash,
-                     const uint64_t sub_count,
-                     const std::set<uint64_t> file_offsets);
+    void merge_hash(const std::string& block_hash,
+                    const float entropy,
+                    const std::string& block_label,
+                    const std::string& file_hash,
+                    const uint64_t sub_count,
+                    const std::set<uint64_t> file_offsets);
 #endif
 
     /**

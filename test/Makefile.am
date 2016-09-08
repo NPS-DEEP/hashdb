@@ -22,7 +22,8 @@
 EXTRA_DIST = vg.supp memory_analysis.sh
 
 check_PROGRAMS = \
-	lmdb_managers_test
+	lmdb_other_managers_test \
+	lmdb_hash_data_managers_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -38,10 +39,15 @@ AM_CPPFLAGS = \
 
 LDADD = ../src_libhashdb/libhashdb.la
 
-LMDB_MANAGERS_TEST_INCS = \
+LMDB_HASH_DATA_MANAGER_TEST_INCS = \
 	directory_helper.hpp \
 	unit_test.h \
-	lmdb_managers_test.cpp
+	lmdb_hash_data_manager_test.cpp
+
+LMDB_OTHER_MANAGERS_TEST_INCS = \
+	directory_helper.hpp \
+	unit_test.h \
+	lmdb_other_managers_test.cpp
 
 clean-local:
 	rm -rf temp_*
@@ -55,7 +61,8 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
-lmdb_managers_test_SOURCES = $(LMDB_MANAGERS_TEST_INCS)
+lmdb_managers_test_SOURCES = $(LMDB_HASH_DATA_MANAGER_TEST_INCS) \
+                             $(LMDB_OTHER_MANAGERS_TEST_INCS)
 
 .PHONY: run_tests_valgrind
 

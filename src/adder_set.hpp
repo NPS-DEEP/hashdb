@@ -160,7 +160,7 @@ class adder_set_t {
 
         if (source_offsets_b.find(*it_a) != source_offsets_b.end()) {
           // in A and B so put into C
-          manager_c->insert_hash(binary_hash, entropy_a, block_label_a,
+          manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
                         it_a->file_hash, it_a->sub_count, it_a->file_offsets);
 
           if (processed_sources.find(it_a->file_hash) == processed_sources.end()) {
@@ -228,7 +228,7 @@ class adder_set_t {
         }
 
         // add hash for source
-        manager_c->insert_hash(binary_hash, entropy_a, block_label_a,
+        manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -291,7 +291,7 @@ class adder_set_t {
       }
 
       // add hash for source
-      manager_c->insert_hash(binary_hash, entropy_a, block_label_a,
+      manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -340,7 +340,7 @@ class adder_set_t {
         }
 
         // add hash for source
-        manager_c->insert_hash(binary_hash, entropy_a, block_label_a,
+        manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
