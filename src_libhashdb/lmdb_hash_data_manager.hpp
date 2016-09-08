@@ -215,8 +215,8 @@ class lmdb_hash_data_manager_t {
   // Add file offset A to offsets list B as maximums allow.  Warn when
   // attempting to add duplicate offsets.  Return count added to offsets list.
   uint64_t insert_file_offset(const uint64_t source_file_offset,
-                              file_offsets_t& destination_file_offsets,
                               const size_t count_stored,
+                              file_offsets_t& destination_file_offsets,
                               hashdb::lmdb_changes_t& changes) {
 
     // stop adding if at a max_count
@@ -224,7 +224,7 @@ class lmdb_hash_data_manager_t {
       return 0;
     }
 
-    // stop adding if at a max sub_count
+    // stop adding if at a max_sub_count
     if (destination_file_offsets.size() >= max_sub_count) {
       return 0;
     }
@@ -242,54 +242,13 @@ class lmdb_hash_data_manager_t {
     }
   }
 
-  // Only merge when B is empty.
-  // Add file offsets A to B as maximums allow.
-  // Return count added to list.
-//zzold
-  uint64_t merge_file_offsets(const size_t source_sub_count,
-                              const file_offsets_t& source_file_offsets, 
-                              const size_t destination_sub_count,
-                              file_offsets_t& destination_file_offsets,
-                              const size_t count_stored,
-                              hashdb::lmdb_changes_t& changes) {
-
-    if (destination_sub_count != 0) {
-      // program error
-      assert(0);
-    }
-
-    // copy source to destination as maximums allow
-    size_t sub_count_stored = 0;
-    for (file_offsets_t::const_iterator it = source_file_offsets.begin();
-          it != source_file_offsets.end(); ++it) {
-
-      // stop adding if at a max_count
-      if (sub_count_stored + count_stored >= max_count) {
-        break;
-      }
-
-      // stop adding if at a max sub_count
-      if (destination_file_offsets.size() >= max_sub_count) {
-        break;
-      }
-
-      // add the offset
-      destination_file_offsets.insert(*it);
-
-      // the file offset was added
-      ++sub_count_stored;
-    }
-    return sub_count_stored;
-  }
-
   // prepare addable file offsets
-  uint64_t merge_file_offsets(const size_t sub_count,
-                              const file_offsets_t& file_offsets, 
+  uint64_t merge_file_offsets(const file_offsets_t& file_offsets, 
                               const size_t count_stored,
                               file_offsets_t& addable_file_offsets,
                               hashdb::lmdb_changes_t& changes) {
 
-    // check usage
+    // destination must be empty
     if (addable_file_offsets.size() != 0) {
       assert(0);
     }
@@ -304,7 +263,7 @@ class lmdb_hash_data_manager_t {
         break;
       }
 
-      // stop adding if at a max sub_count
+      // stop adding if at a max_sub_count
       if (addable_file_offsets.size() >= max_sub_count) {
         break;
       }
@@ -613,7 +572,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
     const size_t sub_count_stored = insert_file_offset(file_offset,
-                                           addable_file_offsets, 0, changes);
+                                           0, addable_file_offsets, changes);
 
     // encode Type 1
     uint8_t data[max_lmdb_data_size];
@@ -659,7 +618,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
 
     // add new file_offset to existing offsets
     const size_t sub_count_stored = insert_file_offset(file_offset,
-             existing_file_offsets, existing_file_offsets.size(), changes);
+             existing_file_offsets.size(), existing_file_offsets, changes);
 
     // replace Type 1 at cursor
     uint64_t new_sub_count = existing_sub_count + 1;
@@ -704,7 +663,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // new set of addable file offsets for the new source
     file_offsets_t addable_file_offsets;
     size_t sub_count_stored = insert_file_offset(file_offset,
-             addable_file_offsets, existing_file_offsets.size(), changes);
+             existing_file_offsets.size(), addable_file_offsets, changes);
 
     // replace Type 1 with Type 2 and write back two new Type 3
     uint64_t new_count = existing_sub_count + 1;
@@ -739,31 +698,31 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
                             const uint64_t file_offset,
                             hashdb::lmdb_changes_t& changes) {
 
-    // read the existing Type 2 entry into existing2_* fields
-    float existing2_entropy;
-    std::string existing2_block_label;
-    uint64_t existing2_count;
-    uint64_t existing2_count_stored;
-    decode_type2(context, existing2_entropy, existing2_block_label,
-                                 existing2_count, existing2_count_stored);
+    // read the existing Type 2 entry into existing_* fields
+    float existing_entropy;
+    std::string existing_block_label;
+    uint64_t existing_count;
+    uint64_t existing_count_stored;
+    decode_type2(context, existing_entropy, existing_block_label,
+                                 existing_count, existing_count_stored);
 
     // note if metadata differs
-    if (metadata_differs(entropy, existing2_entropy, block_label,
-                                                   existing2_block_label)) {
+    if (metadata_differs(entropy, existing_entropy, block_label,
+                                                   existing_block_label)) {
       ++changes.hash_data_data_changed;
     }
 
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
     size_t sub_count_stored = insert_file_offset(file_offset,
-                  addable_file_offsets, existing2_count_stored, changes);
+                  existing_count_stored, addable_file_offsets, changes);
 
     // write back the updated Type 2 entry
-    uint64_t new_count = existing2_count + 1;
+    uint64_t new_count = existing_count + 1;
     uint8_t data[max_lmdb_data_size];
     size_t data_size;
     data_size = encode_type2(entropy, block_label, new_count,
-                             existing2_count_stored + sub_count_stored, data);
+                             existing_count_stored + sub_count_stored, data);
     overwrite_encoding(context, block_hash, data, data_size);
 
     // write the new Type 3 entry
@@ -818,11 +777,9 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
       ++changes.hash_data_data_changed;
     }
 
-    // add file_offsets to existing_file_offsets
-    size_t existing_sub_count_stored = existing_file_offsets.size();
-    size_t sub_count_stored = insert_file_offset(
-            file_offset, existing_file_offsets,
-             existing2_count_stored - existing_sub_count_stored, changes);
+    // add file_offset to existing_file_offsets
+    size_t sub_count_stored = insert_file_offset(file_offset,
+             existing2_count_stored, existing_file_offsets, changes);
 
     // replace the updated Type 2 entry
     uint64_t new_count = existing2_count + 1;
@@ -867,7 +824,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
     const size_t sub_count_stored = merge_file_offsets(
-                  sub_count, file_offsets, 0, addable_file_offsets, changes);
+                  file_offsets, 0, addable_file_offsets, changes);
 
     // encode Type 1
     uint8_t data[max_lmdb_data_size];
@@ -957,7 +914,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
     size_t sub_count_stored = merge_file_offsets(
-            sub_count, file_offsets, existing_file_offsets.size(),
+            file_offsets, existing_file_offsets.size(),
             addable_file_offsets, changes);
 
     // replace Type 1 with Type 2 and write back two new Type 3
@@ -1008,7 +965,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
 
     // get the set of addable file offsets
     file_offsets_t addable_file_offsets;
-    size_t sub_count_stored = merge_file_offsets(sub_count, file_offsets,
+    size_t sub_count_stored = merge_file_offsets(file_offsets,
                   existing2_count_stored, addable_file_offsets, changes);
 
     // write back the updated Type 2 entry
