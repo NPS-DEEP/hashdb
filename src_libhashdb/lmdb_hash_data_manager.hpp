@@ -62,6 +62,7 @@
 #include <string>
 #include <set>
 #include <cassert>
+#include <math.h>
 #ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
 #include "lmdb_print_val.hpp"
 #endif
@@ -72,7 +73,7 @@
 #endif
 #include "mutex_lock.hpp"
 
-static const float entropy_scale = 1000; // for 3 decimal points of precision
+static const float entropy_scale = 1000; // for 3 decimal places of precision
 static const size_t max_lmdb_data_size = 511; // imposed by LMDB
 static const size_t max_lmdb_block_label_size = 10;
 static const size_t max_lmdb_sub_count = 50;
@@ -303,7 +304,7 @@ class lmdb_hash_data_manager_t {
     p = lmdb_helper::encode_uint64_t(source_id, p);
 
     // add scaled entropy
-    const uint64_t scaled_entropy = entropy * entropy_scale;
+    const uint64_t scaled_entropy = round(entropy * entropy_scale);
     p = lmdb_helper::encode_uint64_t(scaled_entropy, p);
 
     // add block_label size and block_label
@@ -339,7 +340,7 @@ class lmdb_hash_data_manager_t {
     ++p;
 
     // calculate scaled entropy
-    const uint64_t scaled_entropy = entropy * entropy_scale;
+    const uint64_t scaled_entropy = round(entropy * entropy_scale);
 
     // set fields
     p = lmdb_helper::encode_uint64_t(scaled_entropy, p);

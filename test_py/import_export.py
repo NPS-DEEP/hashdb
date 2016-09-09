@@ -93,7 +93,7 @@ def test_import_json():
     H.rm_tempfile("temp_2.json")
 
     temp1_input = [
-'{"block_hash":"2222222222222222","entropy":11.1259,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
+'{"block_hash":"2222222222222222","entropy":11.1246,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
 '{"block_hash":"8899aabbccddeeff","entropy":12.0,"block_label":"bl2","source_offsets":["0000000000000000",1,[0],"0011223344556677",2,[0,512]]}',
 '{"block_hash":"ffffffffffffffff","entropy":13.0,"block_label":"bl3","source_offsets":["0011223344556677",1,[1024]]}',
 '{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
@@ -126,7 +126,7 @@ def test_export_json_hash_partition_range():
     H.rm_tempfile("temp_2.json")
 
     temp1_input = [
-'{"block_hash":"2222222222222222","entropy":11.1259,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
+'{"block_hash":"2222222222222222","entropy":11.1246,"block_label":"bl1","source_offsets":["1111111111111111",2,[4096]]}',
 '{"block_hash":"8899aabbccddeeff","entropy":12.0,"block_label":"bl2","source_offsets":["0000000000000000",1,[0],"0011223344556677",2,[0,512]]}',
 '{"block_hash":"ffffffffffffffff","entropy":13.0,"block_label":"bl3","source_offsets":["0011223344556677",1,[1024]]}',
 '{"file_hash":"0000000000000000","filesize":3,"file_type":"ftb","zero_count":4,"nonprobative_count":5,"name_pairs":["r2","f2"]}',
