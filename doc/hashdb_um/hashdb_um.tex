@@ -538,16 +538,16 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase ingest entry, label=logfile]
 # command: "hashdb create KittyMaterial.hdb"
-# hashdb version: 3.0.0-alpha-6
+# hashdb version: 3.0.0-alpha-9
 # username: bdallen
-# start time 2016-07-20T17:02:12Z
-{"name":"begin","delta":"0.000394","total":"0.000395"}
-{"name":"end","delta":"0.000018","total":"0.000422"}
-# command: "hashdb ingest KittyMaterial.hdb/ /home/bdallen/KittyMaterial"
-# hashdb version: 3.0.0-alpha-6
+# start time 2016-09-08T22:57:49Z
+{"name":"begin","delta":"0.000365","total":"0.000365"}
+{"name":"end","delta":"0.000018","total":"0.000392"}
+# command: "hashdb ingest KittyMaterial.hdb ../KittyMaterial"
+# hashdb version: 3.0.0-alpha-9
 # username: bdallen
-# start time 2016-07-20T17:02:31Z
-{"name":"begin","delta":"0.000353","total":"0.000353"}
+# start time 2016-09-08T22:58:07Z
+{"name":"begin","delta":"0.000326","total":"0.000326"}
 # hashdb changes:
 #     hash_data_source_inserted: 401713
 #     hash_data_offset_inserted: 401732
@@ -560,7 +560,7 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 #     source_id_inserted: 88
 #     source_id_already_present: 401820
 #     source_name_inserted: 88
-{"name":"end","delta":"8.475596","total":"8.475958"}
+{"name":"end","delta":"9.397511","total":"9.397846"}
 \end{lstlisting}
 
 
@@ -593,31 +593,13 @@ The number of bytes of the hash suffix to store in the set of values of hash suf
 \end{itemize}
 
 \subsection{Maintaining Database Integrity}
-Although a \hdb hash database can become damaged, approaches may be used to avoid risk of loss. This section describes hazards, risks, safety provisions, and recommendations for preserving database integrity.\\
+A \hdb hash database can be damaged when operations that modify it are aborted. Re-running the operation may not fully add missing data. Although some data may be lost, the database should remain operational.\\
 
-Use of database manipulation commands and import commands can easily result in incorrect source frequency count values for block hashes. The count value is correctly maintained when ingesting sources and when adding new block hashes to a database. \hdb is unable to correctly estimate count values when adding or ingesting hash values that are already present in the destination database. So if maintaining correct count values matters, do not import or use database manipulation commands when hash values overlap.\\
+A \hdb hash database can also be damaged by running a command that should not have been run such as ingesting incorrect files or adding an incorrect database. Some operations can be ``rolled out'' using database manipulation commands.\\
 
-You can audit what has happened to a database by viewing the log file, see \textbf{\autoref{ContentsOfDB}}. If the audit log indicates that database manipulations have been applied and hash ranges overlap, then count values are likely to be larger than they should be.\\
+Each \hdb hash database includes an audit log file that records all commands issued that modify that database. You may inspect this audit log to verify that all issued commands are acceptable and that all issued commands have completed. Audit log files are described in \textbf{\autoref{ContentsOfDB}}.\\
 
-If an operation is modifying a database, specifically, adding data to it, and the operation is aborted, transactions not flushed to disk will be lost, an end timestamp will not be present in the log file, and the database will be left functional but incomplete. Re-running the aborted operation will not cause the operation to fully complete.\\
-
-To summarize:
-\begin{itemize}
-\item If accurate count values are required, please back up your database and be careful about what commands you run.  Inspect your database log to ensure that each change completed and that each change applied was acceptable. Recall that actions such as \verb+add_multiple+ can be valid if databases being added do not have overlapping block hash values. As a safeguard, \hdb will print the following warning message if it detects that a change could have compromised a count value:
-
-\begingroup
-\footnotesize
-\begin{Verbatim}[fontfamily=courier]
-Merge detected.  Count values are no longer accurate for this database.
-\end{Verbatim}
-\endgroup
-
-\item If accurate count values are not required, use import and database manipulation commands as desired, but expect count values to be high and to see a warning message that count values will no longer be accurate.
-
-\item
-If your usage does not require completeness, feel free to abort commands that change databases, but expect that destination data will be incomplete even if the command is re-run.
-
-\end{itemize}
+Please backup databases that cannot readily be recreated.
 
 \section {Running the \hdb Tool}
 \label{Running}
@@ -1518,11 +1500,12 @@ Statistics about hash database changes are reported on the console and to the lo
 #     hash_data_offset_inserted: 401732
 #     hash_prefix_inserted: 401316
 #     hash_suffix_inserted: 401598
-#     hash_count_changed: 69
+#     hash_count_changed: 88
 #     hash_not_changed: 46
 #     source_data_inserted: 88
+#     source_data_changed: 88
 #     source_id_inserted: 88
-#     source_id_already_present: 401801
+#     source_id_already_present: 401820
 #     source_name_inserted: 88
 \end{lstlisting}
 
@@ -1538,9 +1521,13 @@ Statistics about hash database changes are reported on the console and to the lo
 % hash_data
 \verb+hash_data_source_inserted+ &  Number of hash data source entries inserted, where one or more source entries are inserted for each hash inserted.\\
 \hline
-\verb+hash_data_offset_inserted+ &  Total number of file offsets that were actually inserted.\\
+\verb+hash_data_offset_inserted+ &  Total number of file offset values that were actually recorded.\\
 \hline
 \verb+hash_data_data_changed+ &  Number of hash data records that changed.\\
+\hline
+\verb+hash_data_duplicate_off+- \verb+set_detected+ &  Number of file offset values already present in insert, should be zero.\\
+\hline
+\verb+hash_data_mismatched_sub_+ \verb+count_detected+ &  Number of mismatched sub-count values in merge, should be zero.\\
 \hline
 
 % hash
