@@ -127,11 +127,11 @@ class adder_set_t {
   void intersect(const std::string& binary_hash) {
 
     // read hash data from A
-    float entropy_a;
+    uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
     hashdb::source_offsets_t source_offsets_a;
-    bool found_hash_a = manager_a->find_hash(binary_hash, entropy_a,
+    bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
                                  block_label_a, count_a, source_offsets_a);
     // hash required
     if (!found_hash_a) {
@@ -140,11 +140,11 @@ class adder_set_t {
     }
 
     // read hash data from B
-    float entropy_b;
+    uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
     hashdb::source_offsets_t source_offsets_b;
-    bool found_hash_b = manager_b->find_hash(binary_hash, entropy_b,
+    bool found_hash_b = manager_b->find_hash(binary_hash, k_entropy_b,
                                  block_label_b, count_b, source_offsets_b);
     if (found_hash_b) {
 
@@ -160,7 +160,7 @@ class adder_set_t {
 
         if (source_offsets_b.find(*it_a) != source_offsets_b.end()) {
           // in A and B so put into C
-          manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
+          manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
                         it_a->file_hash, it_a->sub_count, it_a->file_offsets);
 
           if (processed_sources.find(it_a->file_hash) == processed_sources.end()) {
@@ -183,11 +183,11 @@ class adder_set_t {
   void intersect_hash(const std::string& binary_hash) {
 
     // read hash data from A
-    float entropy_a;
+    uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
     hashdb::source_offsets_t source_offsets_a;
-    bool found_hash_a = manager_a->find_hash(binary_hash, entropy_a,
+    bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
                                  block_label_a, count_a, source_offsets_a);
     // hash required
     if (!found_hash_a) {
@@ -196,11 +196,11 @@ class adder_set_t {
     }
 
     // read hash data from B
-    float entropy_b;
+    uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
     hashdb::source_offsets_t source_offsets_b;
-    bool found_hash_b = manager_b->find_hash(binary_hash, entropy_b,
+    bool found_hash_b = manager_b->find_hash(binary_hash, k_entropy_b,
                                  block_label_b, count_b, source_offsets_b);
     if (found_hash_b) {
 
@@ -228,7 +228,7 @@ class adder_set_t {
         }
 
         // add hash for source
-        manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
+        manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -250,11 +250,11 @@ class adder_set_t {
   void subtract(const std::string& binary_hash) {
 
     // read hash data from A
-    float entropy_a;
+    uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
     hashdb::source_offsets_t source_offsets_a;
-    bool found_hash_a = manager_a->find_hash(binary_hash, entropy_a,
+    bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
                                  block_label_a, count_a, source_offsets_a);
     // hash required
     if (!found_hash_a) {
@@ -263,11 +263,11 @@ class adder_set_t {
     }
 
     // read hash data from B
-    float entropy_b;
+    uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
     hashdb::source_offsets_t source_offsets_b;
-    manager_b->find_hash(binary_hash, entropy_b,
+    manager_b->find_hash(binary_hash, k_entropy_b,
                                  block_label_b, count_b, source_offsets_b);
  
     // put sources in A and not in B into C
@@ -291,7 +291,7 @@ class adder_set_t {
       }
 
       // add hash for source
-      manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
+      manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -312,11 +312,11 @@ class adder_set_t {
   void subtract_hash(const std::string& binary_hash) {
 
     // read hash data from A
-    float entropy_a;
+    uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
     hashdb::source_offsets_t source_offsets_a;
-    bool found_hash_a = manager_a->find_hash(binary_hash, entropy_a,
+    bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
                                  block_label_a, count_a, source_offsets_a);
     // hash required
     if (!found_hash_a) {
@@ -340,7 +340,7 @@ class adder_set_t {
         }
 
         // add hash for source
-        manager_c->merge_hash(binary_hash, entropy_a, block_label_a,
+        manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
                         it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {

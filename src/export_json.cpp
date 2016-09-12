@@ -70,7 +70,7 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
 
   // space for variables in order to use the tracker
   std::string block_hash;
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_offsets_t source_offsets;
@@ -90,7 +90,8 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
     os << json_hash_string << "\n";
 
     // update the progress tracker, this accurate approach is expensive
-    manager.find_hash(block_hash, entropy, block_label, count, source_offsets);
+    manager.find_hash(block_hash, k_entropy, block_label,
+                      count, source_offsets);
     progress_tracker.track_hash_data(source_offsets.size());
 
     // next
@@ -109,7 +110,7 @@ void export_json_range(const hashdb::scan_manager_t& manager,
 
   // space for variables in order to use the tracker
   std::string block_hash;
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_offsets_t source_offsets;
@@ -118,7 +119,8 @@ void export_json_range(const hashdb::scan_manager_t& manager,
   block_hash = manager.first_hash();
   while (block_hash.size() != 0) {
 
-    manager.find_hash(block_hash, entropy, block_label, count, source_offsets);
+    manager.find_hash(block_hash, k_entropy, block_label,
+                      count, source_offsets);
 
     if (block_hash >= begin_block_hash && block_hash <= end_block_hash) {
       // process the block hash since it is in range

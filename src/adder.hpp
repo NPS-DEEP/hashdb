@@ -215,13 +215,13 @@ class adder_t {
   void add(const std::string& block_hash) {
 
     // hash data
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+    bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
                                            count, *source_offsets);
     // hash required
     if (!found_hash) {
@@ -239,7 +239,7 @@ class adder_t {
       }
 
       // add hash for source
-      manager_b->merge_hash(block_hash, entropy, block_label,
+      manager_b->merge_hash(block_hash, k_entropy, block_label,
                             it->file_hash, it->sub_count, it->file_offsets);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -263,13 +263,13 @@ class adder_t {
                  size_t m, size_t n) {
 
     // hash data
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+    bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
                                            count, *source_offsets);
     // hash required
     if (!found_hash) {
@@ -290,7 +290,7 @@ class adder_t {
         }
 
         // add hash for source
-        manager_b->merge_hash(block_hash, entropy, block_label,
+        manager_b->merge_hash(block_hash, k_entropy, block_label,
                               it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -314,13 +314,13 @@ class adder_t {
   void add_repository(const std::string& block_hash) {
 
     // hash data
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+    bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
                                            count, *source_offsets);
     // hash required
     if (!found_hash) {
@@ -350,7 +350,7 @@ class adder_t {
                               repository_sources.end()) {
 
         // add hash for source
-        manager_b->merge_hash(block_hash, entropy, block_label,
+        manager_b->merge_hash(block_hash, k_entropy, block_label,
                               it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
@@ -374,13 +374,13 @@ class adder_t {
   void add_non_repository(const std::string& block_hash) {
 
     // hash data
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // get hash data from A
-    bool found_hash = manager_a->find_hash(block_hash, entropy, block_label,
+    bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
                                            count, *source_offsets);
     // hash required
     if (!found_hash) {
@@ -410,7 +410,7 @@ class adder_t {
                               non_repository_sources.end()) {
 
         // add hash for source
-        manager_b->merge_hash(block_hash, entropy, block_label,
+        manager_b->merge_hash(block_hash, k_entropy, block_label,
                               it->file_hash, it->sub_count, it->file_offsets);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {

@@ -89,7 +89,7 @@ void check_changes(const hashdb::lmdb_changes_t& changes,
 void test_empty() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -101,15 +101,15 @@ void test_empty() {
                             hashdb_dir, hashdb::RW_NEW, 512, 0, 0);
 
   // attempt to insert an empty key.  A warning is sent to stderr.
-  TEST_EQ(manager.insert("", 1.0, "bl", 1, 0, changes), 0);
+  TEST_EQ(manager.insert("", 1000, "bl", 1, 0, changes), 0);
 
   // attempt to insert with an invalid file_offset.  warning sent to stderr.
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 513, changes), 0);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 513, changes), 0);
 
   // check that binary_0 is not there
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), false);
-  TEST_FLOAT_EQ(entropy, 0.0);
+  TEST_FLOAT_EQ(k_entropy, 0);
   TEST_EQ(block_label, "");
   TEST_EQ(count, 0);
   TEST_EQ(source_id_offsets.size(), 0);
@@ -127,7 +127,7 @@ void test_empty() {
 void test_max_3_2() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -139,15 +139,15 @@ void test_max_3_2() {
                             hashdb_dir, hashdb::RW_NEW, 512, 3, 2);
 
   // fill up lists
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*0, changes), 1);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 2);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*2, changes), 3);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*3, changes), 4);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*4, changes), 5);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*5, changes), 6);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*6, changes), 7);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*7, changes), 8);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*8, changes), 9);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*0, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*2, changes), 3);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*3, changes), 4);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*4, changes), 5);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*5, changes), 6);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*6, changes), 7);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*7, changes), 8);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*8, changes), 9);
 
 //  changes.hash_data_source_inserted
 //  changes.hash_data_offset_inserted
@@ -159,7 +159,7 @@ void test_max_3_2() {
   check_changes(changes,2,3,0,0,0);
 
   // check counts
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), true);
   hashdb::source_id_offsets_t::const_iterator it = source_id_offsets.begin();
   TEST_EQ(it->source_id, 1);
@@ -179,7 +179,7 @@ void test_max_3_2() {
 void test_max_2_3() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -191,21 +191,21 @@ void test_max_2_3() {
                             hashdb_dir, hashdb::RW_NEW, 512, 2, 3);
 
   // fill up lists
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*0, changes), 1);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 2);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*2, changes), 3);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*3, changes), 4);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*4, changes), 5);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*5, changes), 6);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*6, changes), 7);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*7, changes), 8);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*8, changes), 9);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*0, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*2, changes), 3);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*3, changes), 4);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*4, changes), 5);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*5, changes), 6);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*6, changes), 7);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*7, changes), 8);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*8, changes), 9);
 
   // validate changes
   check_changes(changes,2,2,0,0,0);
 
   // check counts
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), true);
   hashdb::source_id_offsets_t::const_iterator it = source_id_offsets.begin();
   TEST_EQ(it->source_id, 1);
@@ -224,7 +224,7 @@ void test_max_2_3() {
 void test_max_1_0() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -236,14 +236,14 @@ void test_max_1_0() {
                             hashdb_dir, hashdb::RW_NEW, 512, 1, 0);
 
   // add data
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*0, changes), 1);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*0, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*0, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*0, changes), 2);
 
   // validate changes
   check_changes(changes,2,0,0,0,0);
 
   // check counts
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), true);
   hashdb::source_id_offsets_t::const_iterator it = source_id_offsets.begin();
   TEST_EQ(it->source_id, 1);
@@ -258,7 +258,7 @@ void test_max_1_0() {
 void test_max_0_1() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -270,14 +270,14 @@ void test_max_0_1() {
                             hashdb_dir, hashdb::RW_NEW, 512, 0, 1);
 
   // add data
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*0, changes), 1);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 2, 512*0, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*0, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 2, 512*0, changes), 2);
 
   // validate changes
   check_changes(changes,2,0,0,0,0);
 
   // check counts
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), true);
   hashdb::source_id_offsets_t::const_iterator it = source_id_offsets.begin();
   TEST_EQ(it->source_id, 1);
@@ -300,7 +300,7 @@ void test_insert_type1() {
                             hashdb_dir, hashdb::RW_NEW, 512, 10, 10);
 
   // insert something
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 1);
 
 //  changes.hash_data_source_inserted
 //  changes.hash_data_offset_inserted
@@ -312,19 +312,19 @@ void test_insert_type1() {
   check_changes(changes,1,1,0,0,0);
 
   // insert same offset
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 2);
   check_changes(changes,1,1,0,1,0);
 
   // insert same offset, different data
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 1, 512*1, changes), 3);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 1, 512*1, changes), 3);
   check_changes(changes,1,1,1,2,0);
 
   // insert second offset, same data
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 1, 512*2, changes), 4);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 1, 512*2, changes), 4);
   check_changes(changes,1,2,1,2,0);
 
   // insert third offset, different data
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*3, changes), 5);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*3, changes), 5);
   check_changes(changes,1,3,2,2,0);
 }
 
@@ -343,7 +343,7 @@ void test_merge_type1() {
   file_offsets_1.insert(512*1);
   hashdb::file_offsets_t file_offsets_2;
   file_offsets_2.insert(512*2);
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 1, 10, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 1, 10, file_offsets_1, changes),
                         10);
 
 //  changes.hash_data_source_inserted
@@ -356,27 +356,27 @@ void test_merge_type1() {
   check_changes(changes,1,1,0,0,0);
 
   // merge same, nothing happens
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 1, 10, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 1, 10, file_offsets_1, changes),
                         10);
   check_changes(changes,1,1,0,0,0);
 
   // merge same, different data
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 1, 10, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 1, 10, file_offsets_1, changes),
                         10);
   check_changes(changes,1,1,1,0,0);
 
   // merge unused different offset, same sub_count, no change
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 1, 10, file_offsets_2, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 1, 10, file_offsets_2, changes),
                         10);
   check_changes(changes,1,1,1,0,0);
 
   // invalid merge, mismatched sub_count
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 1, 9, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 1, 9, file_offsets_1, changes),
                         10);
   check_changes(changes,1,1,1,0,1);
 
   // invalid merge, mismatched sub_count, data changed
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 1, 9, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 1, 9, file_offsets_1, changes),
                         10);
   check_changes(changes,1,1,2,0,2);
 }
@@ -391,7 +391,7 @@ void test_merge_type1() {
 void test_insert_type2_type3() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -403,33 +403,33 @@ void test_insert_type2_type3() {
                             hashdb_dir, hashdb::RW_NEW, 512, 10, 10);
 
   // start with type1
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 1);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 1);
   check_changes(changes,1,1,0,0,0);
 
   // transition type1 to type2 and two type3 with data change
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 2, 512*1, changes), 2);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 2, 512*1, changes), 2);
   check_changes(changes,2,2,1,0,0);
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 2, 512*1, changes), 3);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 2, 512*1, changes), 3);
   check_changes(changes,2,2,1,1,0);
 
   // type2 data change, same offset
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 1, 512*1, changes), 4);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 1, 512*1, changes), 4);
   check_changes(changes,2,2,2,2,0);
 
   // add third type3
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 3, 512*1, changes), 5);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 3, 512*1, changes), 5);
   check_changes(changes,3,3,2,2,0);
-  TEST_EQ(manager.insert(binary_0, 1.0, "bl", 3, 512*1, changes), 6);
+  TEST_EQ(manager.insert(binary_0, 1000, "bl", 3, 512*1, changes), 6);
   check_changes(changes,3,3,2,3,0);
 
   // add fourth type3 with data change
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 4, 512*1, changes), 7);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 4, 512*1, changes), 7);
   check_changes(changes,4,4,3,3,0);
-  TEST_EQ(manager.insert(binary_0, 2.0, "bl", 4, 512*1, changes), 8);
+  TEST_EQ(manager.insert(binary_0, 2000, "bl", 4, 512*1, changes), 8);
   check_changes(changes,4,4,3,4,0);
 
   // validate storage
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                        source_id_offsets), true);
   TEST_EQ(count, 8);
   TEST_EQ(source_id_offsets.size(), 4);
@@ -445,7 +445,7 @@ void test_insert_type2_type3() {
 void test_merge_type2_type3() {
 
   // variables
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -462,52 +462,52 @@ void test_merge_type2_type3() {
   file_offsets_2.insert(512*2);
 
   // start with type1
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 1, 10, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 1, 10, file_offsets_1, changes),
                         10);
   check_changes(changes,1,1,0,0,0);
 
   // transition type1 to type2 and 2 type3 with data change
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 2, 20, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 2, 20, file_offsets_1, changes),
                         30);
   check_changes(changes,2,2,1,0,0);
 
   // no change
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 2, 20, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 2, 20, file_offsets_1, changes),
                         30);
   check_changes(changes,2,2,1,0,0);
 
   // add third type3
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 3, 30, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 3, 30, file_offsets_1, changes),
                         60);
   check_changes(changes,3,3,1,0,0);
 
   // no change
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 3, 30, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 3, 30, file_offsets_1, changes),
                         60);
   check_changes(changes,3,3,1,0,0);
 
   // add fourth type3 with data change
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 4, 5, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 4, 5, file_offsets_1, changes),
                         65);
   check_changes(changes,4,4,2,0,0);
 
   // no change
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 4, 5, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 4, 5, file_offsets_1, changes),
                         65);
   check_changes(changes,4,4,2,0,0);
 
   // mismatched sub_count on type3
-  TEST_EQ(manager.merge(binary_0, 1.0, "bl", 1, 2, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 1000, "bl", 1, 2, file_offsets_1, changes),
                         65);
   check_changes(changes,4,4,2,0,8);
 
   // mismatched sub_count with data change on type3
-  TEST_EQ(manager.merge(binary_0, 2.0, "bl", 1, 2, file_offsets_1, changes),
+  TEST_EQ(manager.merge(binary_0, 2000, "bl", 1, 2, file_offsets_1, changes),
                         65);
   check_changes(changes,4,4,3,0,16);
 
   // validate storage
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                        source_id_offsets), true);
   TEST_EQ(count, 65);
   TEST_EQ(source_id_offsets.size(), 4);
@@ -516,7 +516,7 @@ void test_merge_type2_type3() {
 void test_maximums() {
   hashdb::lmdb_changes_t changes;
   std::set<uint64_t> file_offsets;
-  float entropy;
+  uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
   hashdb::source_id_offsets_t source_id_offsets;
@@ -529,16 +529,16 @@ void test_maximums() {
 
   // install offsets for source 1
   for (int i=0; i<100; ++i) {
-    manager.insert(binary_0, 0.0, "", 1, 512*i, changes);
+    manager.insert(binary_0, 0, "", 1, 512*i, changes);
   }
 
   // install offsets for source 2
   for (int i=0; i<100; ++i) {
-    manager.insert(binary_0, 0.0, "", 2, 512*i, changes);
+    manager.insert(binary_0, 0, "", 2, 512*i, changes);
   }
 
   // test max offsets stored
-  TEST_EQ(manager.find(binary_0, entropy, block_label, count,
+  TEST_EQ(manager.find(binary_0, k_entropy, block_label, count,
                                              source_id_offsets), true);
   TEST_EQ(count, 200);
   TEST_EQ(source_id_offsets.size(), 2);
@@ -552,14 +552,14 @@ void test_maximums() {
   TEST_EQ(it->file_offsets.size(), 10);
 
   // test max block_label length, Type 1
-  manager.insert(binary_1, 0.0, "0123456789a", 1, 512*0, changes);
-  manager.find(binary_1, entropy, block_label, count, source_id_offsets);
+  manager.insert(binary_1, 0, "0123456789a", 1, 512*0, changes);
+  manager.find(binary_1, k_entropy, block_label, count, source_id_offsets);
   TEST_EQ(source_id_offsets.size(), 1);
   TEST_EQ(block_label, "0123456789");
 
   // test max block_label length, Type 2
-  manager.insert(binary_1, 0.0, "0123456789a", 2, 512*0, changes);
-  manager.find(binary_1, entropy, block_label, count, source_id_offsets);
+  manager.insert(binary_1, 0, "0123456789a", 2, 512*0, changes);
+  manager.find(binary_1, k_entropy, block_label, count, source_id_offsets);
   TEST_EQ(source_id_offsets.size(), 2);
   TEST_EQ(block_label, "0123456789");
 }
@@ -578,11 +578,11 @@ void test_other_manager_functions() {
 
   // count in Type 1
   hashdb::lmdb_changes_t changes;
-  manager.merge(binary_1, 0.0, "", 1, 10, file_offsets, changes);
+  manager.merge(binary_1, 0, "", 1, 10, file_offsets, changes);
 
   // count in Type 2
-  manager.merge(binary_2, 0.0, "", 2, 5, file_offsets, changes);
-  manager.merge(binary_2, 0.0, "", 3, 15, file_offsets, changes);
+  manager.merge(binary_2, 0, "", 2, 5, file_offsets, changes);
+  manager.merge(binary_2, 0, "", 3, 15, file_offsets, changes);
 
   // find_count
   TEST_EQ(manager.find_count(binary_0), 0);

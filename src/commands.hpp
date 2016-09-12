@@ -772,7 +772,7 @@ class out_ptr_t {
     std::map<uint32_t, uint64_t> hash_histogram;
 
     // space for variables
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t source_offsets;
@@ -786,7 +786,7 @@ class out_ptr_t {
     }
 
     while (binary_hash.size() != 0) {
-      manager.find_hash(binary_hash, entropy, block_label, count,
+      manager.find_hash(binary_hash, k_entropy, block_label, count,
                         source_offsets);
       // update total hashes observed
       total_hashes += count;
@@ -864,7 +864,7 @@ class out_ptr_t {
     bool any_found = false;
 
     // space for variables
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t source_offsets;
@@ -873,7 +873,7 @@ class out_ptr_t {
     std::string binary_hash = manager.first_hash();
 
     while (binary_hash.size() != 0) {
-      manager.find_hash(binary_hash, entropy, block_label, count,
+      manager.find_hash(binary_hash, k_entropy, block_label, count,
                                   source_offsets);
       if (count == number) {
         // show hash with requested duplicates number
@@ -931,7 +931,7 @@ class out_ptr_t {
     progress_tracker_t progress_tracker(hashdb_dir, manager.size_hashes(), cmd);
 
     // space for variables
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t source_offsets;
@@ -942,7 +942,7 @@ class out_ptr_t {
     while (binary_hash.size() != 0) {
 
       // read hash data for the hash
-      manager.find_hash(binary_hash, entropy, block_label, count,
+      manager.find_hash(binary_hash, k_entropy, block_label, count,
                                                     source_offsets);
 
       // find sources that match the source we are looking for

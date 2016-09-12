@@ -403,7 +403,8 @@ namespace hashdb {
      *
      * Parameters:
      *   block_hash - The block hash in binary form.
-     *   entropy - A numeric entropy value for the associated block.
+     *   k_entropy - An entropy value for the associated block, scaled
+     *     up by 1,000 for three decimal place precision.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   file_hash - The file hash of the source file in binary form.
@@ -412,7 +413,7 @@ namespace hashdb {
      *     offset is already present for the file_hash.
      */
     void insert_hash(const std::string& block_hash,
-                     const float entropy,
+                     const uint64_t k_entropy,
                      const std::string& block_label,
                      const std::string& file_hash,
                      const uint64_t file_offset);
@@ -424,7 +425,8 @@ namespace hashdb {
      *
      * Parameters:
      *   block_hash - The block hash in binary form.
-     *   entropy - A numeric entropy value for the associated block.
+     *   k_entropy - An entropy value for the associated block, scaled
+     *     up by 1,000 for three decimal place precision.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   file_hash - The file hash of the source file in binary form.
@@ -434,7 +436,7 @@ namespace hashdb {
      *     This list may or may not already be there.
      */
     void merge_hash(const std::string& block_hash,
-                    const float entropy,
+                    const uint64_t k_entropy,
                     const std::string& block_label,
                     const std::string& file_hash,
                     const uint64_t sub_count,
@@ -450,7 +452,7 @@ namespace hashdb {
      *   Example hash syntax:
      *     {
      *       "block_hash": "c313ac...",
-     *       "entropy": 2.5,
+     *       "k_entropy": 2500,
      *       "block_label": "W",
      *       "source_offsets": ["b9e7...", 2, [0, 4096]]
      *     }
@@ -558,7 +560,8 @@ namespace hashdb {
      *
      * Parameters:
      *   block_hash - The block hash in binary form.
-     *   entropy - A numeric entropy value for the associated block.
+     *   k_entropy - An entropy value for the associated block, scaled
+     *     up by 1,000 for three decimal place precision.
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   count - The total count of file offsets related to this hash.
@@ -569,7 +572,7 @@ namespace hashdb {
      *   True if the hash is present, false if not.
      */
     bool find_hash(const std::string& block_hash,
-                   float& entropy,
+                   uint64_t& k_entropy,
                    std::string& block_label,
                    uint64_t& count,
                    source_offsets_t& source_offsets) const;
@@ -587,7 +590,7 @@ namespace hashdb {
      *
      *     {
      *       "block_hash": "c313ac...",
-     *       "entropy": 2.5,
+     *       "k_entropy": 2500,
      *       "block_label": "W",
      *       "count": 2,
      *       "source_offsets": ["b9e7...", 2, [0, 4096]]
@@ -701,7 +704,7 @@ namespace hashdb {
      *     EXPANDED - always return all available data.  Example syntax:
      *       {
      *         "block_hash": "c313ac...",
-     *         "entropy": 2.5,
+     *         "k_entropy": 2500,
      *         "block_label": "W",
      *         "count": 2,
      *         "source_list_id": 57,

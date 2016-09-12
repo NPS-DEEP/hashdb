@@ -373,7 +373,7 @@ namespace hashdb {
 
   // add whether file hash is present or not, used during ingest
   void import_manager_t::insert_hash(const std::string& block_hash,
-                          const float entropy,
+                          const uint64_t k_entropy,
                           const std::string& block_label,
                           const std::string& file_hash,
                           const uint64_t file_offset) {
@@ -393,7 +393,7 @@ namespace hashdb {
 
     // insert hash into hash data manager and hash manager
     const size_t count = lmdb_hash_data_manager->insert(
-                 block_hash, entropy, block_label,
+                 block_hash, k_entropy, block_label,
                  source_id,  file_offset, *changes);
     lmdb_hash_manager->insert(block_hash, count, *changes);
 
@@ -407,7 +407,7 @@ namespace hashdb {
 
   // add only if file hash is not present, use during merge
   void import_manager_t::merge_hash(const std::string& block_hash,
-                                    const float entropy,
+                                    const uint64_t k_entropy,
                                     const std::string& block_label,
                                     const std::string& file_hash,
                                     const uint64_t sub_count,
@@ -428,7 +428,7 @@ namespace hashdb {
 
     // merge hash into hash data manager
     const size_t count = lmdb_hash_data_manager->merge(
-                 block_hash, entropy, block_label,
+                 block_hash, k_entropy, block_label,
                  source_id, sub_count, file_offsets, *changes);
 
     // insert hash into hash manager
@@ -464,12 +464,12 @@ namespace hashdb {
                                          document["block_hash"].GetString());
 
       // entropy (optional)
-      float entropy = 0;
-      if (document.HasMember("entropy")) {
-        if (document["entropy"].IsDouble()) {
-          entropy = document["entropy"].GetDouble();
+      uint64_t k_entropy = 0;
+      if (document.HasMember("k_entropy")) {
+        if (document["k_entropy"].IsUint64()) {
+          k_entropy = document["k_entropy"].GetUint64();
         } else {
-          return "Invalid entropy field";
+          return "Invalid k_entropy field";
         }
       }
 
@@ -526,7 +526,7 @@ namespace hashdb {
         }
 
         // add hash data for this source triplet
-        merge_hash(block_hash, entropy, block_label,
+        merge_hash(block_hash, k_entropy, block_label,
                    file_hash, sub_count, file_offsets);
       }
 
@@ -726,14 +726,14 @@ namespace hashdb {
                     const bool optimizing, const std::string& block_hash) {
 
     // fields to hold the scan
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // scan
     bool matched = scan_manager_t::find_hash(block_hash,
-                           entropy, block_label, count, *source_offsets);
+                           k_entropy, block_label, count, *source_offsets);
 
     // done if no match
     if (matched == false) {
@@ -754,7 +754,7 @@ namespace hashdb {
     if (!optimizing || hashes->locked_insert(block_hash)) {
 
       // add entropy
-      json_doc.AddMember("entropy", entropy, allocator);
+      json_doc.AddMember("k_entropy", k_entropy, allocator);
 
       // add block_label
       json_doc.AddMember("block_label", v(block_label, allocator), allocator);
@@ -823,13 +823,13 @@ namespace hashdb {
   // find hash, return associated hash and source data
   bool scan_manager_t::find_hash(
                const std::string& block_hash,
-               float& entropy,
+               uint64_t& k_entropy,
                std::string& block_label,
                uint64_t& count,
                source_offsets_t& source_offsets) const {
 
     // clear fields
-    entropy = 0;
+    k_entropy = 0;
     block_label = "";
     count = 0;
     source_offsets.clear();
@@ -848,7 +848,7 @@ namespace hashdb {
     // hash may be present so read hash using hash data manager
     hashdb::source_id_offsets_t* source_id_offsets =
                 new hashdb::source_id_offsets_t;
-    bool has_hash = lmdb_hash_data_manager->find(block_hash, entropy,
+    bool has_hash = lmdb_hash_data_manager->find(block_hash, k_entropy,
                                   block_label, count, *source_id_offsets);
     if (has_hash) {
       // build source_offset from source_id_offset
@@ -892,14 +892,14 @@ namespace hashdb {
                const std::string& block_hash) const {
 
     // hash fields
-    float entropy;
+    uint64_t k_entropy;
     std::string block_label;
     uint64_t unused_count;
     hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
 
     // scan
-    bool found_hash = find_hash(block_hash, entropy, block_label, unused_count,
-                                *source_offsets);
+    bool found_hash = find_hash(block_hash, k_entropy, block_label,
+                                unused_count, *source_offsets);
 
     std::string json_hash_string;
     if (found_hash) {
@@ -912,7 +912,7 @@ namespace hashdb {
       // put in hash data
       std::string hex_block_hash = hashdb::bin_to_hex(block_hash);
       json_doc.AddMember("block_hash", v(hex_block_hash, allocator), allocator);
-      json_doc.AddMember("entropy", entropy, allocator);
+      json_doc.AddMember("k_entropy", k_entropy, allocator);
       json_doc.AddMember("block_label", v(block_label, allocator), allocator);
 
       // put in source_offsets as triplets of file hash, sub_count, offset list

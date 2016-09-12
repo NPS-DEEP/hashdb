@@ -136,9 +136,9 @@ namespace hasher {
                                     job.buffer_size, i, job.block_size);
 
         // calculate entropy
-        float entropy = 0;
+        uint64_t k_entropy = 0;
         if (!job.disable_calculate_entropy) {
-          entropy = entropy_calculator.calculate(job.buffer,
+          k_entropy = entropy_calculator.calculate(job.buffer,
                                     job.buffer_size, i);
         }
 
@@ -153,7 +153,7 @@ namespace hasher {
         }
 
         // add block hash to DB
-        job.import_manager->insert_hash(block_hash, entropy, block_label,
+        job.import_manager->insert_hash(block_hash, k_entropy, block_label,
                                         job.file_hash, job.file_offset+i);
       }
 

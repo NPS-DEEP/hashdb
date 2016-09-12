@@ -25,12 +25,15 @@
  * The entropy is calculated over one block of size block_size.
  *
  * The entropy is calculated for 16-bit alphabet elements.
+ *
+ * The entropy returned is calculated entropy * 1,000 rounded into an integer.
  */
 
 #ifndef ENTROPY_CALCULATOR_HPP
 #define ENTROPY_CALCULATOR_HPP
 #include <tgmath.h>
 #include <stdint.h>
+#include <cmath>
 #include <cstring>
 #include <cstdlib>
 #include <map>
@@ -48,7 +51,7 @@ class entropy_calculator_t {
   entropy_calculator_t(const entropy_calculator_t&);
   entropy_calculator_t& operator=(const entropy_calculator_t&);
 
-  float calculate_private(const uint8_t* const buffer) const {
+  uint64_t calculate_private(const uint8_t* const buffer) const {
 
     // calculate entropy buckets
     std::map<size_t, size_t> buckets;
@@ -63,7 +66,7 @@ class entropy_calculator_t {
       entropy += lookup_table[it->second];
     }
 
-    return entropy;
+    return round(entropy * 1000);
   }
 
   public:
@@ -83,7 +86,8 @@ class entropy_calculator_t {
   }
 
   // safely calculate block entropy by padding with zeros on overflow.
-  float calculate(const uint8_t* const buffer,
+  // Returns entropy * 1,000 as an int for 3 decimal precision.
+  uint64_t calculate(const uint8_t* const buffer,
                   const size_t buffer_size,
                   const size_t offset) const {
 
@@ -100,7 +104,7 @@ class entropy_calculator_t {
       ::memcpy (b, buffer+offset, buffer_size - offset);
       float entropy = calculate_private(b);
       delete[] b;
-      return entropy;
+      return round(entropy * 1000);
     }
   }
 };
