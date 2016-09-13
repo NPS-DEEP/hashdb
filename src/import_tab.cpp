@@ -55,6 +55,9 @@ void import_tab(hashdb::import_manager_t& manager,
                 progress_tracker_t& progress_tracker,
                 std::istream& in) {
 
+  // only import file hashes that are new to the session
+  std::set<std::string> importable_sources;
+
   std::string line;
   size_t line_number = 0;
   while(getline(in, line)) {
@@ -88,6 +91,23 @@ void import_tab(hashdb::import_manager_t& manager,
     if (file_binary_hash.size() == 0) {
       std::cerr << "file hexdigest is invalid on line " << line_number
                 << ": '" << line << "', '" << file_hash_string << "'\n";
+      continue;
+    }
+
+    // skip the file hash if it was preexisting else identify it as importable
+    if (importable_sources.find(file_binary_hash) == importable_sources.end()) {
+      // the file hash has not been seen yet so see if it is preexisting
+      if (manager.has_source(file_binary_hash)) {
+        // the file is preexisting so skip it
+        continue;
+      } else {
+        // the file hash is new so identify it as importable
+        importable_sources.insert(file_binary_hash);
+      }
+    }
+
+    // skip the file hash if it has not been identified as importable
+    if (importable_sources.find(file_binary_hash) == importable_sources.end()) {
       continue;
     }
 

@@ -98,9 +98,17 @@ import_manager = hashdb.import_manager_t("temp_1.hdb", "insert test data")
 import_manager.insert_source_name("tttttttt", "rn1", "fn1")
 import_manager.insert_source_name("tttttttt", "rn2", "fn2")
 import_manager.insert_source_data("tttttttt", 100, "ft1", 11, 1)
+import_manager.insert_hash("vvvvvvvv", 8000, "a_blocklabel","wwwwwwww", 512)
 import_manager.import_json('{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","source_offsets":["7373737373737373",1,[512]]}')
 import_manager.import_json('"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]')
-str_equals(import_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
+bool_equals(import_manager.has_source("tttttttt"), True)
+first_binary_source = import_manager.first_source()
+str_equals(hashdb.bin_to_hex(first_binary_source), "7373737373737373")
+next_binary_source = import_manager.next_source(first_binary_source)
+str_equals(hashdb.bin_to_hex(next_binary_source), "7474747474747474")
+str_equals(import_manager.size(), '{"hash_data_store":2, "hash_store":2, "source_data_store":3, "source_id_store":3, "source_name_store":2}')
+str_equals(import_manager.size_hashes(), 2)
+str_equals(import_manager.size_sources(), 3)
 import_manager = None
 
 # ############################################################
@@ -136,10 +144,8 @@ first_binary_hash = scan_manager.first_hash()
 str_equals(hashdb.bin_to_hex(first_binary_hash), "6868686868686868")
 
 next_binary_hash = scan_manager.next_hash(first_binary_hash)
+next_binary_hash = scan_manager.next_hash(next_binary_hash)
 str_equals(hashdb.bin_to_hex(next_binary_hash), "")
-
-## next after end is invalid and currently calls assert which is extreme.
-#next_binary_hash = scan_manager.next_hash(next_binary_hash)
 
 first_binary_source = scan_manager.first_source()
 str_equals(hashdb.bin_to_hex(first_binary_source), "7373737373737373")
@@ -148,11 +154,12 @@ next_binary_source = scan_manager.next_source(first_binary_source)
 str_equals(hashdb.bin_to_hex(next_binary_source), "7474747474747474")
 
 next_binary_source = scan_manager.next_source(next_binary_source)
+next_binary_source = scan_manager.next_source(next_binary_source)
 str_equals(hashdb.bin_to_hex(next_binary_source), "")
 
-str_equals(scan_manager.size(), '{"hash_data_store":1, "hash_store":1, "source_data_store":2, "source_id_store":2, "source_name_store":2}')
-int_equals(scan_manager.size_hashes(), 1)
-int_equals(scan_manager.size_sources(), 2)
+str_equals(scan_manager.size(), '{"hash_data_store":2, "hash_store":2, "source_data_store":3, "source_id_store":3, "source_name_store":2}')
+int_equals(scan_manager.size_hashes(), 2)
+int_equals(scan_manager.size_sources(), 3)
 
 def temp_out_equals(a):
     infile = open("temp_out", "r")

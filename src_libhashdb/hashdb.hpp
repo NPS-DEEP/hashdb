@@ -473,6 +473,14 @@ namespace hashdb {
     std::string import_json(const std::string& json_string);
 
     /**
+     * See if the file hash is in the database.
+     *
+     * Returns:
+     *   true if the file hash is in the database.
+     */
+    bool has_source(const std::string& file_hash) const;
+
+    /**
      * Return the file_hash of the first source in the database.
      *
      * Returns:

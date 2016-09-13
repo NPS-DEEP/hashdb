@@ -623,6 +623,11 @@ namespace hashdb {
     }
   }
 
+  bool import_manager_t::has_source(const std::string& file_hash) const {
+    uint64_t source_id;
+    return lmdb_source_id_manager->find(file_hash, source_id);
+  }
+
   std::string import_manager_t::first_source() const {
     return lmdb_source_id_manager->first_source();
   }
@@ -1118,9 +1123,9 @@ namespace hashdb {
     json_doc.SetObject();
 
     // get source data
-    bool has_source = find_source_data(file_hash, filesize,
+    bool has_source_data = find_source_data(file_hash, filesize,
                                  file_type, zero_count, nonprobative_count);
-    if (!has_source) {
+    if (!has_source_data) {
       return "";
     }
 

@@ -86,6 +86,35 @@ def test_import_tab3():
 
     H.lines_equals(returned_answer, expected_answer)
 
+# test preexisting source file detection
+def test_import_tab4():
+    H.rm_tempdir("temp_1.hdb")
+    H.hashdb(["create", "temp_1.hdb"])
+    H.make_tempfile("temp_1.tab", [
+          "# <file hash> <tab> <block hash> <tab> <index>",
+          "0000000000000000	8888888888888888	1",
+          "0000000000000000	8888888888888888	2"])
+    H.hashdb(["import_tab", "-rr", "temp_1.hdb", "temp_1.tab"])
+    H.make_tempfile("temp_2.tab", [
+          "# <file hash> <tab> <block hash> <tab> <index>",
+          "0000000000000000	8888888888888888	1",
+          "0000000000000000	8888888888888888	2",
+          "0000000000000000	8888888888888888	3",
+          "1111111111111111	8888888888888888	1",
+          "1111111111111111	8888888888888888	2"])
+    H.hashdb(["import_tab", "-rr", "temp_1.hdb", "temp_2.tab"])
+
+    H.hashdb(["export", "temp_1.hdb", "temp_1.json"])
+
+    returned_answer = H.read_file("temp_1.json")
+    expected_answer = [
+"# command: ","# hashdb-Version: ",
+'{"block_hash":"8888888888888888","k_entropy":0,"block_label":"","source_offsets":["0000000000000000",2,[0,512],"1111111111111111",2,[0,512]]}',
+'{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["r","temp_1.tab"]}',
+'{"file_hash":"1111111111111111","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":["r","temp_2.tab"]}'
+]
+    H.lines_equals(returned_answer, expected_answer)
+
 # test import JSON
 def test_import_json():
     H.rm_tempdir("temp_1.hdb")
@@ -178,6 +207,7 @@ if __name__=="__main__":
     test_import_tab1()
     test_import_tab2()
     test_import_tab3()
+    test_import_tab4()
     test_import_json()
     test_export_json_hash_partition_range()
     test_ingest()
