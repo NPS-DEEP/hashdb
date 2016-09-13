@@ -298,7 +298,7 @@ The following steps provide a very brief introduction to running your new instal
 
 In the above instructions, \texttt{\textbf{demo.hdb}} is the empty database that will be created with default database settings.
 
-\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial}. But rather than downloading these files and importing them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}. After downloading this, type the following:
+\item Next, import data into the database. In this example, lets import hashes from the Kitty Material demo dataset available at \url{http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/KittyMaterial}. But rather than downloading these files and ingesting them, lets just import the pre-made \verb+KittyMaterial.json+ data available at \url{http://digitalcorpora.org/downloads/hashdb/demo/KittyMaterial.json}. After downloading this, type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb import demo.hdb KittyMaterial.json}
 \end{Verbatim} 
@@ -314,7 +314,7 @@ With this media and dataset, the first block hash matched is at offset \verb+254
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
 2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":
-"1d7379fd4d5cf676a9d4de1e48337e71","entropy":4.880000114440918,
+"1d7379fd4d5cf676a9d4de1e48337e71","k_entropy":4880,
 "block_label":"","count":1,"source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
 "file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
@@ -446,7 +446,7 @@ Data stored with hashes:
 \item \textbf{Block Hash}\\
 The block hash is the hash value calculated from a block of data. \hdb databases are populated with block hash values from sources. When scanning, block hash values are calculated from media images and are scanned for in a \hdb database.
 \item \textbf{Entropy}\\
-We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb does not scale the calculated entropy. \hdb rounds the calculated entropy value to three decimal places.\\
+We calculate the entropy of data blocks and use this value to help estimate that the block may be nonprobative. Blocks with a low entropy value are often nonprobative. \hdb calculates the Shannon entropy of blocks using an alphabet of $2^{16}$ values. \hdb provides entropy as \verb+k_entropy+, entropy scaled up by $1,000$ so that it can be managed as an integer. Divide \verb+k_entropy+ by $1,000$ to obtain actual entropy with three decimal place precision.\\
 
 Data in blocks can be a member of many types of alphabets, for example readable text or executable code. For improved results, we recommend considering the type of data along with the calculated entropy when estimating that a block may be nonprobative.
 \item \textbf{Block Label}\\
@@ -871,7 +871,7 @@ This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E0
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
 2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":
-"1d7379fd4d5cf676a9d4de1e48337e71","entropy":4.880000114440918,
+"1d7379fd4d5cf676a9d4de1e48337e71","k_entropy":4880,
 "block_label":"","count":1,"source_list_id":1193146442,"sources":
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
 "file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
@@ -1231,7 +1231,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \begin{lstlisting}[float, caption={Example JSON block hash data used during import/export}, label=JSONBlockHashData]
 {
   "block_hash":"1d7379fd4d5cf676a9d4de1e48337e71",
-  "entropy":4.880000114440918,
+  "k_entropy":4880,
   "block_label":"",
   "source_offsets":["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
 }
@@ -1248,7 +1248,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_hash+ & A block hash hexdigest\\
 \hline
-\verb+entropy+ & The entropy value calculated for the block\\
+\verb+k_entropy+ & The entropy value calculated for the block, scaled up by $1,000$\\
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
@@ -1268,7 +1268,7 @@ The returned JSON data contains all the information about a matched hash and the
 \begin{lstlisting}[float, caption={Example JSON block hash expanded data output from a scan match, with line breaks added for readability}, label=JSONScanDataExpanded]
 {
   "block_hash":"1d7379fd4d5cf676a9d4de1e48337e71",
-  "entropy":4.880000114440918,
+  "k_entropy":4880,
   "block_label":"",
   "count":1,
   "source_list_id":1193146442,
@@ -1297,7 +1297,7 @@ The returned JSON data contains all the information about a matched hash and the
 \hline
 \verb+block_hash+ & The hexdigest hash of the block\\
 \hline
-\verb+entropy+ & The entropy value calculated for the block\\
+\verb+k_entropy+ & The entropy value calculated for the block, scaled up by $1,000$\\
 \hline
 \verb+block_label+ & A label describing the type of data within the block\\
 \hline
@@ -1353,12 +1353,12 @@ The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example output from a scan match}, label=ScanDataWithPath]
 2543104	1d7379fd4d5cf676a9d4de1e48337e71	{"block_hash":"1d7379fd4d
-5cf676a9d4de1e48337e71","entropy":4.880000114440918,"block_label":"","cou
-nt":1,"source_list_id":1193146442,"sources":[{"file_hash":"1dd00f2e51aeeb
-e7541cea4ade2e20b5","filesize":1549288,"file_type":"","zero_count":0,"non
-probative_count":10,"name_pairs":["/home/bdallen/KittyMaterial","/home/bd
-allen/KittyMaterial/HighQuality/DSC00003.JPG"]}],"source_offsets":["1dd00
-f2e51aeebe7541cea4ade2e20b5",1,[0]]}
+5cf676a9d4de1e48337e71","k_entropy":4880,"block_label":"","count":1,"sour
+ce_list_id":1193146442,"sources":[{"file_hash":"1dd00f2e51aeeb e7541cea4a
+de2e20b5","filesize":1549288,"file_type":"","zero_count":0,"nonprobative_
+count":10,"name_pairs":["/home/bdallen/KittyMaterial","/home/bdallen/Kitt
+yMaterial/HighQuality/DSC00003.JPG"]}],"source_offsets":["1dd00f2e51aeebe
+7541cea4ade2e20b5",1,[0]]}
 \end{lstlisting}
 
 \subsection{Scan Stream Interface Data}
@@ -1490,10 +1490,10 @@ Statistics about hash database changes are reported on the console and to the lo
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example report of a database change from an import operation}, label=DatabaseChanges]
-# Processed 100000 of ?...
-# Processed 200000 of ?...
-# Processed 300000 of ?...
-# Processed 400000 of ?...
+# Processing 100000 of ?...
+# Processing 200000 of ?...
+# Processing 300000 of ?...
+# Processing 400000 of ?...
 # Processing 401686 of 401686 completed.
 # hashdb changes:
 #     hash_data_source_inserted: 401713
@@ -1586,7 +1586,7 @@ Register the repository name, filename pair to the file hash.
 \item \verb+manager.insert_source_data(file_hash, filesize, file_type,+\\
 \verb+zero_count, nonprobative_count)+\\
 Set the source parameters for the file hash.
-\item \verb+manager.insert_hash(block_hash, entropy, block_label, file_hash,+\\
+\item \verb+manager.insert_hash(block_hash, k_entropy, block_label, file_hash,+\\
 \verb+sub_count, file_offsets)+\\
 Set hash parameters and add source count information.
 \item \verb+error_message = manager.import_json(json_string)+\\
@@ -1612,7 +1612,7 @@ To scan for hashes, open a scan manager, for example\\
 Open the scan manager.
 \item \verb+json_hash_string = scan_manager.find_expanded_hash_json(block_hash)+\\
 Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
-\item \verb+bool find_hash(block_hash, &entropy, &block_label, &count, source_offsets)+\\
+\item \verb+bool find_hash(block_hash, &k_entropy, &block_label, &count, source_offsets)+\\
 C++ only. Find hash, obtain fields related to hash on match.
 \item \verb+json_text = export_hash_json(block_hash)+\\
 Export hash information for the given binary hash else "" if not there.
@@ -1752,17 +1752,17 @@ The \textit{LMDB Hash Data Store} is a store of all hashes and their associated 
 \item The \verb+value+ portion contains information about the hash, sources, and offsets into the sources where the blocks are identified. Although the total count and the source sub-count of offsets is not bound, no more than 50 actual offsets can be stored per source.  There are three types of value records:
   \begin{itemize}
   \item \textbf{Type 1} only one entry for this hash:\\
-\verb-source_id, entropy, block_label, sub_count, 0+ file_offsets-
+\verb-source_id, k_entropy, block_label, sub_count, 0+ file_offsets-
   \item \textbf{Type 2} first line of multi-entry hash:\\
-\verb-NULL, entropy, block_label, count, count_stored-
+\verb-NULL, k_entropy, block_label, count, count_stored-
   \item \textbf{Type 3} remaining lines of multi-entry hash:\\
 \verb-source_id, sub_count, 0+ file_offsets-
   \end{itemize}
 Fields in the \verb+value+ portion are:
   \begin{itemize}
   \item \verb+source_id+ A source ID integer that maps to a source file hash. Any file offsets in this record relate to this source.
-  \item \verb+entropy+ The calculated entropy for the block.
-  \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
+  \item \verb+k_entropy+ The calculated entropy for the block, scaled up by $1,000$.
+  \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+k_entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
   \item \verb+sub_count+ The number of times this block has been seen in this source. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
   \item \verb+count+ The total number of times this block has been seen in all the sources. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
   \item \verb-0+ file_offsets- Zero or more file offsets associated with this source. Offsets actually stored depends on \verb+max_count+, \verb+max_sub_count+, and the hardcoded limit of 50 offsets per source. When stored, file offset indexes are stored rather than file offsets in order to save space. These indexes are calculated by dividing file offsets by \verb+byte_alignment+.
@@ -1791,7 +1791,7 @@ The \textit{LMDB Source Data Store} holds all the metadata about sources:
   \item \verb+filesize+ The size of the source file, in bytes.
   \item \verb+file_type+ A label indicating the type of the file, user defined.
   \item \verb+zero_count+ The number of blocks in the source that have all bytes in the block equal to zero.
-  \item \verb+nonprobative_count+ The number of block hashes stored for this source which are considered to be nonprobative.  Users may wish to set the \verb+nonprobative_count+ value based on the \verb+entropy+ and \verb+block_label+ values of each block in the source.
+  \item \verb+nonprobative_count+ The number of block hashes stored for this source which are considered to be nonprobative.  Users may wish to set the \verb+nonprobative_count+ value based on the \verb+k_entropy+ and \verb+block_label+ values of each block in the source.
   \end{itemize}
 \end{itemize}
 
