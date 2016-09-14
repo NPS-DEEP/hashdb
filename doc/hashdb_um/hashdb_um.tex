@@ -649,8 +649,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{create}\\
+\subsubsection{\texttt{create}}
 Create a new hash database configured with provided or default settings.\\
 
 \textbf{Example}\\
@@ -665,7 +664,6 @@ Users can specify either the option and value or the verbose option value for ea
 \verbbf{hashdb create -m 100:10 demo.hdb}
 \end{Verbatim}
 The above two commands produce identical results, creating the database \texttt{demo.hdb} that will record a maximum of 10 offsets per source but no more than 100 offsets total across multiple sources.\\
-\end{itemize}
 
 \subsection{Importing and Exporting}
 Hash databases may be imported to in several ways.  Syntax for commands that import and export hashes is shown in Table \ref{tab:importExport}. Import and export options are shown in Table \ref{tab:ImportExportOptions}.\\
@@ -682,7 +680,7 @@ and through the use of the import capability provided by the \hdb library API (d
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-x <rel>]+ \verb+ <hashdb.hdb> <source directory>+& Computes and imports block hashes from files under the source directory into the hash database as directed by options.\\
+\textbf{ingest} & \verb+ingest [-r <repository name>]+ \verb+[-w <whitelist.hdb>]+ \verb+[-s <step size>] [-x <rel>]+ \verb+ <hashdb.hdb> <source directory>+& Computes and ingests block hashes from files under the source directory into the hash database as directed by options.\\
 \hline
 \textbf{import\_tab} & \verb+import_tab [-r <repository name>]+ \verb+<hashdb.hdb>+ \verb+<tab.txt>+& Imports values from the tab-delimited file into the hash database. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
 \hline
@@ -714,9 +712,8 @@ and through the use of the import capability provided by the \hdb library API (d
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{ingest}\\
-Computes and and imports hashes from files under the source directory, including files in subdirectories. Files with \verb+.E01+ extensions are treated as E01 files.\\
+\subsubsection{\texttt{ingest}}
+The \verb+ingest+ command computes and ingests hashes from files under the source directory, including files in subdirectories. Files with \verb+.E01+ extensions are treated as E01 files. If some of the content to be ingested already exists, specifically, if block hashes have already been ingested for a given file hash, it will not be ingested again, but the filename and repository name will be stored to cite the source reference.\\
 
 \textbf{Example}\\
 To import block hashes from a directory of blacklist sources, type the following command:
@@ -734,15 +731,16 @@ Users may prefer to run statistical commands such as this to get information abo
 \verbbf{hashdb size demo.hdb}
 \end{Verbatim}
 
-\item \textbf{import\_tab}\\
-Imports values from the tab-delimited file into the hash database. Note that tab-delimited files are expected to contain block hashes calculated from 512-byte blocks along 512-byte boundaries. Tab-delimited files are described in \textbf{\autoref{TabFile}}.\\
+\subsubsection{\texttt{import\_tab}}
+The \verb+import_tab+ command imports values from the tab-delimited file into the hash database. Note that tab-delimited files are expected to contain block hashes calculated from 512-byte blocks along 512-byte boundaries. Tab-delimited files are described in \textbf{\autoref{TabFile}}.\\
 
-This command is likely to be discontinued in a future release of \hdb.
+\hdb checks to see if the source file has already been imported and does not import block hashes from sources imported in previous sessions.\\
 
-\item \textbf{import}\\
-Imports values from an exported database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}.
-\item \textbf{export}\\
-Exports values from a \hdb block hash database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}. The following example exports everything in database \verb+demo.hdb+ to file, \verb+demo.json+:
+\subsubsection{\texttt{import}}
+The \verb+import+ command imports values from an exported database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}. If source information for a block hash is already present, it will not be re-imported.
+
+\subsubsection{\texttt{export}}
+The \verb+export+ command exports values or a range of values from a \hdb block hash database. Data is in JSON format as described in \textbf{\autoref{ImportExportSyntax}}. The following example exports everything in database \verb+demo.hdb+ to file, \verb+demo.json+:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb export demo.hdb demo.json}
 \end{Verbatim}
@@ -752,7 +750,6 @@ This example exports everything in database \verb+demo.hdb+ in two parts:
 \verbbf{hashdb export -p 00:80 demo.hdb demo_part_1.json}
 \verbbf{hashdb export -p 80:ffffffffffffffffffffffffffffffff demo.hdb demo_part_2.json}
 \end{Verbatim}
-\end{itemize}
 
 \subsection{Database Manipulation}
 \label{DatabaseManipulation}
@@ -788,26 +785,24 @@ Destination databases are created if they do not exist yet.
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{add}\\
+\subsubsection{\texttt{add}}
 Add a database to another database.
-\item \textbf{add\_multiple}\\
-Add multiple databases into a destination database.
-\item \textbf{add\_repository}\\
-Add a database to another database but only when the repository name matches.
-\item \textbf{add\_range}\\
-Add a database to another database but only when the hash source count falls within the given range.
-\item \textbf{intersect}\\
-Add hashes to a destination database when the hash and source are common.
-\item \textbf{intersect\_hash}\\
-Add hashes to a destination database when the hash is common, even if the referenced sources are different.
-\item \textbf{subtract}\\
-Add hashes to a destination database when the hash and source is in the first database but not in the second.
-\item \textbf{subtract\_hash}\\
-Add hashes to a destination database when the hash is in the first database but not in the second, even if the referenced sources are different.
-\item \textbf{subtract\_repository}\\
-Add a database to another database but only when the repository name does not match.
-\end{itemize}
+\subsubsection{\texttt{add\_multiple}}
+Add multiple databases into a destination database. This can be faster than using add multiple times because the destination is built in lexicographical order.
+\subsubsection{\texttt{add\_repository}}
+Add a database to another database but only when the repository name matches. Use this to copy everything belonging to a repository to a new database.
+\subsubsection{\texttt{add\_range}}
+Add a database to another database but only when the hash source count falls within the given range. Use this to isolate hashes that appear with a certain frequency or to remove hashes that are too popular.
+\subsubsection{\texttt{intersect}}
+Add hashes to a destination database when the hash and source are common. Use this to find the intersection between two databases.
+\subsubsection{\texttt{intersect\_hash}}
+Add hashes to a destination database when the hash is common, even if the referenced sources are different. Use this to find hashes that intersect between two databases even if their sources do not intersect.
+\subsubsection{\texttt{subtract}}
+Add hashes to a destination database when the hash and source is in the first database but not in the second. Use this to ensure that hashes in the second database do not appear in the new destination database.
+\subsubsection{\texttt{subtract\_hash}}
+Add hashes to a destination database when the hash is in the first database but not in the second, even if the referenced sources are different. Use this to ensure that hashes in the second database do not appear in the new destination database even when the sources are different.
+\subsubsection{\texttt{subtract\_repository}}
+Add a database to another database but only when the repository name does not match. Use this to ensure that hashes in the new destination database do not include the repository being subtracted. If information is also contributed from another repository, the information will still be copied but the reference to the removed repository will not be copied.
 
 \subsection{Scan Services}
 \label{ScanServices}
@@ -848,13 +843,12 @@ Syntax for scan service commands is shown in Table \ref{tab:scanServices}. Scan 
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{scan\_list}\\
-Scan for hashes in the list. List input syntax is described in \textbf{\autoref{ScanListInputFile}}. Scan output is described in \textbf{\autoref{ScanData}}. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
-\item \textbf{scan\_hash}\\
+\subsubsection{\texttt{scan\_list}}
+Scan for hashes in the list of hashes. List input syntax is described in \textbf{\autoref{ScanListInputFile}}. Scan output is described in \textbf{\autoref{ScanData}}. This command accepts a dash (\verb+-+) as a filename to allow terminal streaming from \verb+stdin+.\\
+\subsubsection{\texttt{scan\_hash}}
 Scan for the specified hash. The hash to scan for must be provided in hexadecimal format.
-\item \textbf{scan\_media}\\
-Scan the specified media image for matching hashes.
+\subsubsection{\texttt{scan\_media}}
+Scan the specified media image for matching hashes.\\
 
 \textbf{Example}\\
 To scan, first identify the media that you would like to scan. For this example, we download and use the demo media image available at \url{ http://digitalcorpora.org/corpora/scenarios/2009-m57-patents/drives-redacted/jo-favorites-usb-2009-12-11.E01} which contains matching Kitty material.\\
@@ -886,8 +880,6 @@ Users may be put off by the quantity of matches incurred by low-entropy data in 
 \begin{itemize}
 \item Use the ``subtract'' command to remove known whitelist data created from sources such as ``brand new'' operating system media images and the NSRL.
 \item Alternatively, use the ``add\_range'' command to copy all hash values that have been imported some number of times, for example, exactly once.
-\end{itemize}
-
 \end{itemize}
 
 \subsection{Statistics}
@@ -930,24 +922,26 @@ Statistics options are shown in Table \ref{tab:StatisticsOptions}.
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{size}\\
-Prints size information about the given database.
+\subsubsection{\texttt{size}}
+Prints size information about the given database. Size values are specific to the underlying database storage implementation and indicate how large the parts of the database are.\\
 
 To find the size of various data stores in hash database \texttt{example.hdb},
 type the following:
 \begin{Verbatim}[commandchars=\\\{\}]
 \verbbf{hashdb size examle.hdb}
 \end{Verbatim}
-The above command prints the size of various data stores within the database in JSON format.\\
+The above command prints the size of various data stores within the database in JSON format.
 
-\item \textbf{sources}\\
+\subsubsection{\texttt{sources}}
 Prints out all source file references that have contributed to this database including repository names and filenames.
-\item \textbf{histogram}\\
-Prints a hash distribution of the hashes in the given database, see \textbf{\autoref{Histogram}} for syntax.
-\item \textbf{duplicates}\\
+
+\subsubsection{\texttt{histogram}}
+Prints a hash distribution of the hashes in the given database, see \textbf{\autoref{Histogram}} for output syntax.
+
+\subsubsection{\texttt{duplicates}}
+
 Prints out hashes in the database that are sourced the given number of times.
-\item \textbf{hash\_table}\\
+\subsubsection{\texttt{hash\_table}}
 Prints out hashes associated with the specified source identified by the source file hexdigest.
 
 To obtain a list of hashes in \texttt{example.hdb} associated with the source file identified by hexcode \texttt{16d75027533b0a5ab900089a244384a0}, type the following:
@@ -955,9 +949,8 @@ To obtain a list of hashes in \texttt{example.hdb} associated with the source fi
 \verbbf{hashdb hash_table example.hdb 16d75027533b0a5ab900089a244384a0}
 \end{Verbatim}
 
-\item \textbf{read\_media}\\
+\subsubsection{\texttt{read\_media}}
 Prints raw bytes from the given media image. Note that these bytes are often not printable.
-\end{itemize}
 
 \subsection{Performance Analysis}
 \label{PerformanceAnalysis}
@@ -995,16 +988,14 @@ Performance analysis commands for analyzing \hdb performance are shown in Table 
 \end{tabular}
 \end{table}
 
-\begin{itemize}
-\item \textbf{add\_random}\\
+\subsubsection{\texttt{add\_random}}
 Add random hashes, leaving timing data in \verb+log.xml+.
-\item \textbf{scan\_random}\\
-Scan random hashes, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode impacts timing.
-\item \textbf{add\_same}\\
+\subsubsection{\texttt{scan\_random}}
+Scan random hashes, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode used impacts timing.
+\subsubsection{\texttt{add\_same}}
 Add the same hash, leaving timing data in \verb+log.xml+.
-\item \textbf{scan\_same}\\
-Scan the same hash, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode impacts timing.
-\end{itemize}
+\subsubsection{\texttt{scan\_same}}
+Scan the same hash, leaving timing data in \verb+log.xml+. Although this command does not produce output, the scan mode used impacts timing.
 
 \section{Tools that use \hdb}
 \label{OtherTools}
@@ -1132,7 +1123,7 @@ Note, \bulk will place feature file and other output not relevant to the \hdb ap
 \end{Verbatim}
 Whenever a database is created or updated, \hdb updates the file \texttt{log.xml}, found in the database's directory with information about the actions performed.\\
 
-After each command to change a database, statistics about the changes are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changeStatistics} shows all of the statistics tracked in the log file along with their meaning. The value of each statistic is the number of times the event happened during the command.\\
+After each command that changes a database, statistics are writen in the \texttt{log.xml} file and to \texttt{stdout}. Table \ref{tab:changesTracked} shows all of the changes tracked in the log file along with their meaning. The value of each change statistic is the number of times the event happened during the command.\\
 
 
 \subsection{Exporting Hash Databases}
@@ -1364,13 +1355,13 @@ yMaterial/HighQuality/DSC00003.JPG"]}],"source_offsets":["1dd00f2e51aeebe
 \subsection{Scan Stream Interface Data}
 Scan stream interface data consists of packed binary strings of unscanned input data and packed binary strings of scanned output data. Each contains an array of data as follows:\\
 \begin{itemize}
-\item \textbf{unscanned data}
+\item \textbf{unscanned input data}
   \begin{itemize}
   \item \textbf{hash} A binary hash to scan for, of length \verb+hash_size+ bytes.
   \item \textbf{label length} A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the binary label associated with the scan record.
   \item \textbf{label} A binary label associated with the scan record.
   \end{itemize}
-\item \textbf{scanned data}
+\item \textbf{scanned output data}
   \begin{itemize}
   \item \textbf{hash} A binary hash that matched, of length \verb+hash_size+ in bytes.
   \item \textbf{label length} A 2-byte unsigned integer in native-Endian format indicating the length, in bytes, of the binary label associated with the hash that matched.
@@ -1486,7 +1477,7 @@ The \verb+read_media+ command prints raw binary bytes from a media image file. I
 \end{table}
 
 \subsection{Database Changes}
-Statistics about hash database changes are reported on the console and to the log file inside the hash database. These statistics show specific changes made to stores within the hash database and also changes not made because conditions were not met. An example change report is shown in Listing \ref{DatabaseChanges}. Changes with a count of zero are not reported. The complete set of statistics tracked is shown in Table \ref{tab:changeStatistics}.
+Statistics about hash database changes are reported on the console and to the log file inside the hash database. These statistics show specific changes made to stores within the hash database and also changes not made because conditions were not met. An example change report is shown in Listing \ref{DatabaseChanges}. Changes with a count of zero are not reported. Changes tracked are summarized in Table \ref{tab:changesTracked} and discussed further in \textbf{\autoref{LMDBDataStores}}.\\
 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example report of a database change from an import operation}, label=DatabaseChanges]
@@ -1511,53 +1502,53 @@ Statistics about hash database changes are reported on the console and to the lo
 
 \begin{table}[!ht]
 \centering
-\caption{Database Changes Resulting from Commands that Manipulate Hash Databases}
-\label{tab:changeStatistics}
+\caption{Database changes resulting from commands that manipulate hash databases}
+\label{tab:changesTracked}
 \begin{tabular}{|p{5 cm}|p{8.8 cm}|}
 \hline \hline
 \textbf{Statistic} & \textbf{Meaning} \\
 \hline
 
 % hash_data
-\verb+hash_data_source_inserted+ &  Number of hash data source entries inserted, where one or more source entries are inserted for each hash inserted.\\
+\verb+hash_data_source_inserted+ &  Number of hash data source entries inserted\\
 \hline
-\verb+hash_data_offset_inserted+ &  Total number of file offset values that were actually recorded.\\
+\verb+hash_data_offset_inserted+ &  Number of file offset values actually recorded\\
 \hline
 \verb+hash_data_data_changed+ &  Number of hash data records that changed.\\
 \hline
-\verb+hash_data_duplicate_off+- \verb+set_detected+ &  Number of file offset values already present in insert, should be zero.\\
+\verb+hash_data_duplicate_off+- \verb+set_detected+ &  Number of file offset values already present, should be zero\\
 \hline
-\verb+hash_data_mismatched_sub_+ \verb+count_detected+ &  Number of mismatched sub-count values in merge, should be zero.\\
+\verb+hash_data_mismatched_sub_+ \verb+count_detected+ &  Number of mismatched sub-count values in merge, should be zero\\
 \hline
 
 % hash
-\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted.\\
+\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted\\
 \hline
-\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted.\\
+\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted\\
 \hline
-\verb+hash_count_changed+ &  Number of hash count changes were applied.\\
+\verb+hash_count_changed+ &  Number of hash count changes were applied\\
 \hline
-\verb+hash_not_changed+ &  Number of hash and count values provided but same.\\
+\verb+hash_not_changed+ &  Number of hash and count values provided but same\\
 \hline
 
 % source data
-\verb+source_data_inserted+ &  Number of source data records inserted.\\
+\verb+source_data_inserted+ &  Number of source data records inserted\\
 \hline
-\verb+source_data_changed+ &  Number of source data records changed.\\
+\verb+source_data_changed+ &  Number of source data records changed\\
 \hline
-\verb+source_data_same+ &  Number of source data records provided but same.\\
+\verb+source_data_same+ &  Number of source data records provided but same\\
 \hline
 
 % source_id
-\verb+source_id_inserted+ &  Number of source ID records inserted.\\
+\verb+source_id_inserted+ &  Number of source ID records inserted\\
 \hline
-\verb+source_id_already_present+ &  Number of source ID records provided but already present.\\
+\verb+source_id_already_present+ &  Number of source ID records provided but already present\\
 \hline
 
 % source_name
-\verb+source_name_inserted+ &  Number of source names inserted.\\
+\verb+source_name_inserted+ &  Number of source names inserted\\
 \hline
-\verb+source_name_already_+ \verb+present+ &  Number of source names provided but already present.\\
+\verb+source_name_already_+ \verb+present+ &  Number of source names provided but already present\\
 \hline
 \end{tabular}
 \end{table}
@@ -1575,31 +1566,97 @@ To use the Python interfaces, load the \verb+hashdb+ module.
 
 For information on installing the \hdb interfaces, please see \textbf{\Autoref{Obtaining}}.  For further details on syntax and usage, please see \hdb header file \texttt{hashdb.hpp} in \textbf{\Autoref{hashdbapi}}. Python users may also want to reference the Python interface test module in the source code at \verb+hashdb/python_bindings/test_hashdb.py+.\\
 
+\subsection{Data Types}
+
+C++ and Python use the following data type:
+\begin{itemize}
+\item The \verb+scan_mode_t+ enumerator defines JSON scan output modes: \verb+EXPANDED+, \verb+EXPANDED_OPTIMIZED+, \verb+COUNT+, and \verb+APPROXIMATE_COUNT+.
+\end{itemize}
+
+Interfaces specific to C++ also use the following data types:
+\begin{itemize}
+\item The \verb+source_offset_t+ class holds offset information for a source, specifically, \verb+file_hash+, \verb+sub_count+, and \verb+std::set<uint64_t> file_offsets+.
+\item \verb+source_offsets_t: typedef set<source_offset_t> source_offsets_t+
+\item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
+\item \verb+source_names_t: typedef set<source_name_t> source_names_t+
+\end{itemize}
+
+\subsection{Settings}
+Holds \hdb settings.
+
+\begin{itemize}
+\item \verb+settings = settings_t()+\\
+Obtain default settings. The configurable setting parameters are: \verb+settings_version,+\\
+\verb+byte_alignment, block_size, max_count, max_sub_count, hash_prefix_bits,+\\
+\verb+hash_suffix_bytes+.
+\item \verb+settings_string = settings.settings_string()+\\
+Return setting values in JSON format.
+\end{itemize}
+
+\subsection{Support Functions}
+Support functions provide miscellaneous support and are not part of a class.
+\begin{itemize}
+\item \verb+version = version()+\\
+Return the \hdb version.
+\item \verb+version = hashdb_version()+\\
+Return the \hdb version, same as \verb+version+.
+\item \verb+error_message = create_hashdb(hashdb_dir, settings, command_string)+\\
+Create a hash database given settings. Return "" else reason for failure.
+\item \verb+error_message = read_settings(hashdb_dir, &settings)+\\
+Query settings else false and reason for failure.
+\item \verb+binary_string = hex_to_bin(hex_string)+
+\item \verb+hex_string = bin_to_hex(binary_string)+
+\item \verb+error_message = ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
+\verb+whitelist_dir, disable_recursive_processing, disable_calculate_entropy,+\\
+\verb+disable_calculate_labels, command_string)+\\
+Calculate and import hashes from path to \hdb. Can disable recursive processing, calculating entropy, and calculating labels.
+\item \verb+error_message = scan_media(hashdb_dir, media_image_file, step_size,+\\
+\verb+disable_recursive_processing, scan_mode)+\\
+Scan the media image for matches, writing match data to \verb+stdout+.
+\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
+C++ syntax.  Read bytes at a string offset from a media image file.
+\item \verb+error_message, bytes_media = read_media(media_image_file, offset, count)+\\
+Python syntax. Read bytes at a string offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
+\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
+C++ syntax.  Read bytes at a numeric offset from a media image file.
+\item \verb+error_message, bytes_read = read_media(media_image_file, offset, count)+\\
+Python syntax. Read bytes at a numeric offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
+\item \verb+error_message = read_media_size(media_image_file, &size)+\\
+C++ syntax.  Read media image file size.
+\item \verb+error_message, size = read_media_size(media_image_file)+\\
+Python syntax. Read media image file size.
+\end{itemize}
+
 \subsection{Import}
 To import hash and source data, open an import manager, for example\\
 \verb+{manager = import_manager_t("hashdb.hdb", "create my DB")+. Then use import functions to add data. Information in the log file will be added when the import manager closes. The contents of log files is described in \textbf{\autoref{ContentsOfDB}}.\\
 \begin{itemize}
-\item \verb+manager = import_manager_t(hashdb_dir, command_string)+\\
+\item \verb+import_manager = import_manager_t(hashdb_dir, command_string)+\\
 Open the import manager. \verb+command_string+ will be written to the log file.
-\item \verb+manager.insert_source_name(file_hash, repository_name, filename)+\\
+\item \verb+import_manager.insert_source_name(file_hash, repository_name, filename)+\\
 Register the repository name, filename pair to the file hash.
-\item \verb+manager.insert_source_data(file_hash, filesize, file_type,+\\
+\item \verb+import_manager.insert_source_data(file_hash, filesize, file_type,+\\
 \verb+zero_count, nonprobative_count)+\\
 Set the source parameters for the file hash.
-\item \verb+manager.insert_hash(block_hash, k_entropy, block_label, file_hash,+\\
+\item \verb+import_manager.insert_hash(block_hash, k_entropy, block_label, file_hash,+\\
 \verb+sub_count, file_offsets)+\\
-Set hash parameters and add source count information.
-\item \verb+error_message = manager.import_json(json_string)+\\
+Set hash parameters and add source count information for a new hash.
+\item \verb+import_manager.merge_hash(block_hash, k_entropy, block_label, file_hash,+\\
+\verb+sub_count, file_offsets)+\\
+C++ only. Set hash parameters and add source count information for a complete set of source information for a hash.
+\item \verb+error_message = import_manager.import_json(json_string)+\\
 Import hash or source, return \verb+error_message+ or "" for no error.
-\item \verb+first_file_hash = scan_manager.first_source()+\\
+\item \verb+has_source = import_manager.has_source(file_hash)+\\
+See if the source is already present.
+\item \verb+first_file_hash = import_manager.first_source()+\\
 Access sources that have already been imported.
-\item \verb+file_hash = scan_manager.next_source(file_hash)+\\
+\item \verb+file_hash = import_manager.next_source(file_hash)+\\
 Access sources that have already been imported.
-\item \verb+data_sizes = manager.size()+\\
+\item \verb+data_sizes = import_manager.size()+\\
 Return JSON text indicating the number of entries in the LMDB databases.
-\item \verb+size_t size_hashes()+\\
+\item \verb+size_t import_manager.size_hashes()+\\
 Return number of hash data store records in the database, which will be more than the number of different hash values actually imported if duplicate hash values are imported from multiple sources.
-\item \verb+size_t size_sources()+\\
+\item \verb+size_t import_manager.size_sources()+\\
 Return the number of sources in the database, which can include sources from decompressed content.
 \end{itemize}
 
@@ -1610,13 +1667,11 @@ To scan for hashes, open a scan manager, for example\\
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+\\
 Open the scan manager.
-\item \verb+json_hash_string = scan_manager.find_expanded_hash_json(block_hash)+\\
-Find and return JSON text about the hash and its sources. Hash and source information is not returned twice. For example on a second hash match, the returned JSON will only contain the \verb+block_hash+ field. Returns "" on no match.
-\item \verb+bool find_hash(block_hash, &k_entropy, &block_label, &count, source_offsets)+\\
+\item \verb+bool scan_manager.find_hash(block_hash, &k_entropy, &block_label, &count,+ \verb+source_offsets)+\\
 C++ only. Find hash, obtain fields related to hash on match.
-\item \verb+json_text = export_hash_json(block_hash)+\\
+\item \verb+json_text = scan_manager.export_hash_json(block_hash)+\\
 Export hash information for the given binary hash else "" if not there.
-\item \verb+json_text= export_source_json(file_hash)+\\
+\item \verb+json_text = scan_manager.export_source_json(file_hash)+\\
 Export source information for the given source else "" if not there.
 \item \verb+count = scan_manager.find_hash_count(block_hash)+\\
 Return the total count of offsets associated with the hash.
@@ -1624,7 +1679,11 @@ Return the total count of offsets associated with the hash.
 This is the fastest scan function. It returns an approximate total count of offsets associated with the hash, and can be wrong.
 \item \verb+has_source_data = scan_manager.find_source_data(file_hash,+\\
 \verb+filesize, file_type, zero_count, nonprobative_count)+\\
-C++ only. Return information about the source.
+C++ interface. Return information about the source.
+\item \verb+has_source_data, filesize, file_type, zero_count, nonprobative_count+\\
+\verb+= scan_manager.find_source_data(file_hash, filesize, file_type, zero_count,+\\
+\verb+nonprobative_count)+\\
+Python interface. Return information about the source.
 \item \verb+has_source_names = scan_manager.find_source_names(file_hash,+\\
 \verb+&source_names_t)+\\
 C++ only. Retrieve the source names for this source or "" on no match.
@@ -1660,18 +1719,6 @@ Retrieve scanned data else "" if data is currently not available.
 Return true if there is no scanned data available to retrieve, no unscanned data scheduled for scanning, and the scanner threads are not busy.
 \end{itemize}
 
-\subsection{Settings}
-Holds \hdb settings.
-
-\begin{itemize}
-\item \verb+settings = settings_t()+\\
-Obtain default settings. The configurable setting parameters are: \verb+settings_version,+\\
-\verb+byte_alignment, block_size, max_count, max_sub_count, hash_prefix_bits,+\\
-\verb+hash_suffix_bytes+.
-\item \verb+settings_string = settings.settings_string()+\\
-Return setting values in JSON format.
-\end{itemize}
-
 \subsection{Timestamp}
 Provide timestamp support.
 
@@ -1682,55 +1729,9 @@ Create a timestamp object.
 Create a named timestamp and provide time and delta from the last stamp time in JSON format.
 \end{itemize}
 
-\subsection{Support Functions}
-Support functions provide miscellaneous support and are not part of a class.
-\begin{itemize}
-\item \verb+version = version()+\\
-Return the \hdb version.
-\item \verb+version = hashdb_version()+\\
-Return the \hdb version, same as \verb+version+.
-\item \verb+error_message = create_hashdb(hashdb_dir, settings, command_string)+\\
-Create a hash database given settings. Return "" else reason for failure.
-\item \verb+error_message = read_settings(hashdb_dir, &settings)+\\
-Query settings else false and reason for failure.
-\item \verb+binary_string = hex_to_bin(hex_string)+
-\item \verb+hex_string = bin_to_hex(binary_string)+
-\item \verb+error_message = ingest(hashdb_dir, ingest_path, step_size, repository_name,+\\
-\verb+whitelist_dir, disable_recursive_processing, disable_calculate_entropy,+\\
-\verb+disable_calculate_labels, command_string)+\\
-Calculate and import hashes from path to \hdb. Can disable recursive processing, calculating entropy, and calculating labels.
-\item \verb+error_message = scan_media(hashdb_dir, media_image_file, step_size,+\\
-\verb+disable_recursive_processing, scan_mode)+\\
-Scan the media image for matches, writing match data to \verb+stdout+.
-\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
-C++ syntax.  Read bytes at a numeric offset from a media image file.
-\item \verb+error_message, bytes_media = read_media(media_image_file, offset, count)+\\
-Python syntax. Read bytes at a string offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
-\item \verb+error_message = read_media(media_image_file, offset, count, &bytes)+\\
-C++ syntax.  Read bytes at a numeric offset from a media image file.
-\item \verb+error_message, bytes_read = read_media(media_image_file, offset, count)+\\
-Python syntax. Read bytes at a string offset from a media image file, for example \verb+1000+ or \verb+1000-zip-0+.
-\item \verb+error_message = read_media_size(media_image_file, &size)+\\
-C++ syntax.  Read media image file size.
-\item \verb+error_message, size = read_media_size(media_image_file)+\\
-Python syntax. Read media image file size.
-\end{itemize}
-
-\subsection{Data Types}
-
-The following data types are defined:
-
-\begin{itemize}
-\item \verb+scan_mode_t+ enumerator defines JSON scan output modes: \verb+EXPANDED+, \verb+EXPANDED_OPTIMIZED+, \verb+COUNT+, and \verb+APPROXIMATE_COUNT+.
-\item \verb+source_offset_t+ class holds offset information for a source, specifically, \verb+file_hash+, \verb+sub_count+, and \verb+std::set<uint64_t> file_offsets+.
-\item \verb+source_offsets_t: typedef set<source_offset_t> source_offsets_t+
-\item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
-\item \verb+source_names_t: typedef set<source_name_t> source_names_t+
-\end{itemize}
-
 \section{LMDB Data Stores}
 \label{LMDBDataStores}
-This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind the optimization settings and options provided by \hdb.\\
+This section provides details of how LMDB data stores are managed within a \hdb database. This technical information is provided to give context behind the optimization settings and options provided by \hdb and to explain the meaning of changes reported in the change log.\\
 
 \subsection{LMDB Hash Store}
 The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Data Store} to be sure the hash actually exists.\\
@@ -1806,11 +1807,64 @@ The \textit{LMDB Source Name Store} multimap maps source IDs to source names.  T
   \end{itemize}
 \end{itemize}
 
+\subsection{Data Store Changes}
+The following changes are logged when a \hdb operation modifies data stores within a hash database:
+\begin{itemize}
+
+% hash_data
+\item \verb+hash_data_source_inserted+\\
+Incremented once for each source added to a hash. Not incremented when a source for a hash already exists.
+\item \verb+hash_data_offset_inserted+\\
+Incremented once for each file offset value actually recorded. Not incremented when a file offset is not recorded because the count recorded for the hash has reached max count or the sub-count for the hash has reached max sub-count. Note that file offset count and sub-count values are tracked regardless of whether file offset values are actually recorded.
+\item \verb+hash_data_data_changed+\\
+Incremented when the data fields for a hash change. This should never happen unless a custom version of \hdb is built that calculates different data values, specifically, different block labels or entropy algorithm, and is used with a database containing values that were calculated differently.
+\item \verb+hash_data_duplicate_offset_detected+\\
+Incremented when an offset is recorded for a source for a hash more than once. This should never happen. This can happen when API users incorrectly call import manager \verb+insert_hash+ more than once for the same source file offset.
+\item \verb+hash_data_mismatched_sub_count_detected+\\
+Incremented when adding a source sub-count when a different source sub-count already exists. This should never happen. This can happen when an offset sub-count for a source is wrong because its import operation did not complete. The increment value is equal to the difference in sub-count values between the disagreeing data.
+
+% hash
+\item \verb+hash_prefix_inserted+\\
+Incremented each time a new hash prefix is inserted. Not incremented if the hash prefix already exists.
+\item \verb+hash_suffix_inserted+\\
+Incremented each time a new hash suffix is inserted. Not incremented if the hash suffix already exists.
+\item \verb+hash_count_changed+\\
+Incremented each time an approximate hash count changes from one value to another. The approximate hash count is encoded in one byte. This encoding changes less frequently as the actual hash count value increases.
+\item \verb+hash_not_changed+\\
+Incremented each time an insert is attempted but there is no change because the approximate hash count stays at the same value.
+
+% source data
+\item \verb+source_data_inserted+\\
+Incremented each time a new source data record is created.
+\item \verb+source_data_changed+\\
+Incremented each time an existing source data record is changed.
+\item \verb+source_data_same+\\
+Incremented each time an existing source data is submitted to be inserted but there is no change because the source data is already there and is the same.
+
+% source_id
+\item \verb+source_id_inserted+\\
+Incremented each time a new source ID record is created.
+\item \verb+source_id_already_present+\\
+Incremented each time a source ID record is submitted to be inserted but there is no change because the record is already there.
+
+% source_name
+\item \verb+source_name_inserted+\\
+Incremented each time a new source filename, repository name pair is inserted.
+\item \verb+source_name_already_present+
+Incremented each time a source filename, repository name pair is submitted but not stored because the name pair is already present.
+\end{itemize}
+
 \section{Alternate Configurations}
+By default, \hdb is compiled to calculate MD5 hashes. \hdb can be recompiled to use other encryption algorithms or even other artifacts:
+
+, please see source code file \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
 \begin{itemize}
 \item \textbf{Alternate Hash Algorithm}\\
-By default, \hdb is compiled to calculate MD5 hashes. \hdb can be recompiled to use other encryption algorithms, please see source code file\\
-\verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
+\hdb calculates block hashes using OpenSSL. If OpenSSL supports your hash algorithm, replace it with yours.  For example if you want SHA1, replace \verb+EVP_md5()+ with \verb+EVP_sha1()+ in source code file \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+ and recompile.
+\item \textbf{Alternate Artifacts}\\
+\hdb can be refitted to manage artifacts other than hashes. For example \hdb can be refitted to store and search for email addresses. Specifically, replace code that iterates through buffers and calculates block hashes with code that iterates through buffers and finds your artifact.\\
+
+For optimal performance, we recommend that you do not store your artifact as-is. Artifact key values should be relatively randomly distributed and not hundreds of bytes long. To achieve this, we recommend hashing your artifact with something like CRC64, and storing and scanning for the CRC hash value of the artifact.
 \end{itemize}
 
 \bibliographystyle{acm} 
