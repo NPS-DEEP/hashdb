@@ -6,8 +6,6 @@ EXTRA_DIST = \
 	build_installer.nsi \
 	EnvVarUpdate.nsi
 
-PDFDOCS = hashdbUsersManual.pdf
-
 EXES = hashdb.exe
 
 HASHDBVERSION=`grep ^AC_INIT $(top_srcdir)/configure.ac | awk -F, '{print $$2;}' | sed 's/ //'`
