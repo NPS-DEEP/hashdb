@@ -1,5 +1,5 @@
                      Announcing hashdb 3.0.0
-                       September 13, 2016
+                       September 14, 2016
 
                           RELEASE NOTES
 
