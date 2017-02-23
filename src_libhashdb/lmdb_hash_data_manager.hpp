@@ -24,13 +24,15 @@
  * lmdb_hash_data_manager_t supports three types of data fields:
  *
  * Type 1: only one entry for this hash:
- *         source_id, entropy, block_label, sub_count, 0+ file_offsets
+ *         source_id, entropy, block_label, 2-byte sub_count up to
+ *         65535, do not wrap, 2-byte buffer 0x00 to allow transition
+ *         to Type 2.
  *
  * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, count, count_stored
+ *         NULL, entropy, block_label, 4-byte count, do not wrap.
  *
  * Type 3: remaining lines of multi-entry hash:
- *         source_id, sub_count, 0+ file_offsets
+ *         source_id, 2-byte sub_count up to 65535, do not wrap.
  *
  * NOTES:
  *   * Source ID must be > 0 because this field also distinguishes between
@@ -41,6 +43,7 @@
  *     higher layer.
  *   * Entropy precision is lost because entropy values are stored as
  *     integers, see entropy_scale.
+ *
  */
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
@@ -74,7 +77,6 @@
 
 static const size_t max_lmdb_data_size = 511; // imposed by LMDB
 static const size_t max_lmdb_block_label_size = 10;
-static const size_t max_lmdb_sub_count = 50;
 
 namespace hashdb {
 
@@ -87,8 +89,6 @@ class lmdb_hash_data_manager_t {
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
   const uint32_t byte_alignment;
-  const uint32_t max_count;
-  const uint32_t max_sub_count;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -1079,17 +1079,15 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
   // ************************************************************
 
   /**
-   * Insert hash with accompanying data.  Overwrite data if there
-   * and changed.  Return updated source count.
+   * Insert hash with accompanying data.  Warn if data present but different.
+   * Return updated source count.
    *
-   * Use when inserting a new file offset.  Changes updated if
-   * the file offset for the given source ID already exists.
+   * Use when counting source occurrences for this hash.
    */
   size_t insert(const std::string& block_hash,
                 const uint64_t k_entropy,
                 const std::string& block_label,
                 const uint64_t source_id,
-                const uint64_t file_offset,
                 hashdb::lmdb_changes_t& changes) {
 
     // program error if source ID is 0 since NULL distinguishes between
@@ -1107,17 +1105,6 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     // require valid block_hash
     if (key_size == 0) {
       std::cerr << "Usage error: the block_hash value provided to insert is empty.\n";
-      return 0;
-    }
-
-    // require that the provided file_offset is valid
-    if (file_offset % byte_alignment != 0) {
-      // invalid file offset so warn and do not add anything
-      std::stringstream ss;
-      ss << "Usage error: file offset " << file_offset
-         << " does not fit evenly along step size " << byte_alignment
-         << ".  Insert request aborted.\n";
-      tprint(std::cerr, ss.str());
       return 0;
     }
 
@@ -1158,7 +1145,7 @@ print_whole_mdb("hash_data_manager insert begin", context.cursor);
       // new Type 1
       count = insert_new_type1(context, block_hash,
                                source_id, k_entropy, block_label,
-                               file_offset, changes);
+                               changes);
 
     } else if (rc == 0) {
       // hash is already there
@@ -1179,37 +1166,32 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         // existing entry is Type 1
 
         // see if source_id is the same
-        uint64_t existing_source_id;
-        decode_source_id(context, existing_source_id);
+        const uint64_t existing_source_id = decode_source_id(
+                                       hashdb::lmdb_context_t& context);
 
         if (source_id == existing_source_id) {
-          // update Type 1
-          count = insert_update_type1(context, block_hash,
-                                      source_id, k_entropy, block_label,
-                                      file_offset, changes);
+          // increment Type 1, check mismatch
+          increment_type1(context, source_id, k_entropy, block_label, changes);
 
         } else {
-          // new Type 2 and two new Type 3
-          count = insert_new_type2(context, block_hash,
-                                   source_id, k_entropy, block_label,
-                                   file_offset, changes);
+          // split type 1 into type 2 and type 3, check mismatch
+          split_type1(context, source_id, k_entropy, block_label, changes);
         }
+
       } else {
 
         // existing entry is Type 2
+        // increment type 2, check mismatch
+        increment_type2(context, source_id, k_entropy, block_label, changes);
 
         // look for matching Type 3
         bool worked = cursor_to_type3(context, source_id);
         if (worked) {
-          // update Type 2 and update Type 3
-          count = insert_update_type3(context, block_hash,
-                                      source_id, k_entropy, block_label,
-                                      file_offset, changes);
+          // increment Type 3 at cursor
+          count = increment_type3(context, changes);
         } else {
-          // update Type 2 and insert new Type 3
-          count = insert_new_type3(context, block_hash,
-                                   source_id, k_entropy, block_label,
-                                   file_offset, changes);
+          // insert new Type 3
+          count = insert_new_type3(context, source_id, changes);
         }
       }
 
@@ -1395,7 +1377,8 @@ print_whole_mdb("hash_data_manager merge end", context.cursor);
   }
 
   /**
-   * Read data for the hash.  False if the hash does not exist.
+   * Read data for the hash.  If the hash does not exist return false
+   * and empty fields.
    */
   bool find(const std::string& block_hash,
             uint64_t& k_entropy,

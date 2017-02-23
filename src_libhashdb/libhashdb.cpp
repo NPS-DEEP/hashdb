@@ -213,8 +213,7 @@ namespace hashdb {
     }
 
     // create new LMDB stores
-    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW, settings.byte_alignment,
-                             settings.max_count, settings.max_sub_count);
+    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW, settings.byte_alignment);
     lmdb_hash_manager_t(hashdb_dir, RW_NEW,
                   settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
@@ -266,8 +265,6 @@ namespace hashdb {
          settings_version(settings_t::CURRENT_SETTINGS_VERSION),
          byte_alignment(512),
          block_size(512),
-         max_count(100000),      // arbitrary max
-         max_sub_count(50),      // LMDB max
          hash_prefix_bits(28),   // for 2^28 prefix possibilities
          hash_suffix_bytes(3) {  // for 2^(3*8) suffix possibilities
   }
@@ -277,8 +274,6 @@ namespace hashdb {
     ss << "{\"settings_version\":" << settings_version
        << ", \"byte_alignment\":" << byte_alignment
        << ", \"block_size\":" << block_size
-       << ", \"max_count\":" << max_count
-       << ", \"max_sub_count\":" << max_sub_count
        << ", \"hash_prefix_bits\":" << hash_prefix_bits
        << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
        << "}";
@@ -306,7 +301,7 @@ namespace hashdb {
 
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY,
-           settings.byte_alignment, settings.max_count, settings.max_sub_count);
+            settings.byte_alignment);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -675,7 +670,7 @@ namespace hashdb {
 
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, READ_ONLY,
-           settings.byte_alignment, settings.max_count, settings.max_sub_count);
+           settings.byte_alignment);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
            settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,

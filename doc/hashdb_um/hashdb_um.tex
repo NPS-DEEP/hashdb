@@ -151,6 +151,13 @@ The first character on the line is the terminal prompt, and should not be typed.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
 \end{itemize}
 
+\subsection{Changes Over the \hdb v3.0.0 Release}
+\hdb Version 3.0.1 provides a bug fix that manifests when building large databases on systems with insufficient memory. In Linux, the bug is that the swap store becomes exhausted, resulting in program termination.
+\begin{itemize}
+\item 
+\end{itemize}
+
+
 \subsection{Licensing}
 \hdb code is provided with the following notice:\\
 \fbox{\begin{minipage}{37em}
@@ -525,8 +532,7 @@ This file contains the settings requested by the user when the block hash databa
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
 {"settings_version":3, "byte_alignment":512, "block_size":512,
-"max_count":100000, "max_sub_count":50, "hash_prefix_bits":28,
-"hash_suffix_bytes":3}
+"hash_prefix_bits":28, "hash_suffix_bytes":3}
 \end{Verbatim}
 \endgroup
 
@@ -579,12 +585,6 @@ Byte alignment is an optimization parameter created to help reduce the size of t
 \item \textbf{Block size}\\
 The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.
 
-\item \textbf{Max count}\\
-The maximum number of source offsets to store for a single hash value, default 100,000. If source information is not interesting, use a low value or even 0 to not store any actual source offset values.
-
-\item \textbf{Max sub-count}\\
-The maximum number of source offsets to store for each source contributing to a single hash value, default 50. If source information is not interesting, use a low value or even 0 to not store any actual source offset values. Due to internal design limitations associated with LMDB, the largest maximum allowed is 50.
-
 \item \textbf{Hash prefix bits}\\
 The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.
 
@@ -625,7 +625,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-m <max count:max sub-count>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
 \hline
 \end{tabular}
 \end{table}
@@ -641,8 +641,6 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored and scanned against. Default is 512 bytes.  \\
 \hline
 \textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{byte\_alignment} & Specifies the byte alignment in bytes used to calculate hashes along. Default is 512 bytes.  \\
-\hline
-\textbf{\texttt{-m}} & \verb+--max_counts=+\textit{max count:max sub-count} & Specifies the maximum number of total offsets and sub-offsets allowed for a hash.\\
 \hline
 \textbf{\texttt{-t}} & \verb+--tuning=+\textit{prefix bits:suffix bytes} & Specifies the number of prefix bits and suffix bytes to use for compacting the database.\\
 \hline
@@ -660,10 +658,10 @@ To create an (empty) hash database named \textbf{\texttt{demo.hdb}}, type the fo
 The above command will create a database with all of the default hash database settings. Most users will not need to change these settings.
 Users can specify either the option and value or the verbose option value for each parameter along with the create command, as in:\\
 \begin{Verbatim}[commandchars=\\\{\}]
-\verbbf{hashdb create --max\_counts=100:10 demo.hdb}
-\verbbf{hashdb create -m 100:10 demo.hdb}
+\verbbf{hashdb create --block\_size=4096 demo.hdb}
+\verbbf{hashdb create -b 4096 demo.hdb}
 \end{Verbatim}
-The above two commands produce identical results, creating the database \texttt{demo.hdb} that will record a maximum of 10 offsets per source but no more than 100 offsets total across multiple sources.\\
+The above two commands produce identical results, creating the database \texttt{demo.hdb} to expect a block size of 4096 bytes.\\
 
 \subsection{Importing and Exporting}
 Hash databases may be imported to in several ways.  Syntax for commands that import and export hashes is shown in Table \ref{tab:importExport}. Import and export options are shown in Table \ref{tab:ImportExportOptions}.\\
@@ -1587,8 +1585,7 @@ Holds \hdb settings.
 \begin{itemize}
 \item \verb+settings = settings_t()+\\
 Obtain default settings. The configurable setting parameters are: \verb+settings_version,+\\
-\verb+byte_alignment, block_size, max_count, max_sub_count, hash_prefix_bits,+\\
-\verb+hash_suffix_bytes+.
+\verb+byte_alignment, block_size, hash_prefix_bits, hash_suffix_bytes+.
 \item \verb+settings_string = settings.settings_string()+\\
 Return setting values in JSON format.
 \end{itemize}

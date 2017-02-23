@@ -79,10 +79,10 @@ void overview() {
   << "  read_media_size <media image>\n"
   << "\n"
   << "Performance Analysis:\n"
-  << "  add_random <hashdb> <hex file hash> <count>\n"
-  << "  scan_random <hashdb> <count>\n"
-  << "  add_same <hashdb> <hex file hash> <count>\n"
-  << "  scan_same <hashdb> <count>\n"
+  << "  add_random <hashdb> <count>\n"
+  << "  scan_random [-j e|o|c|a] <hashdb> <count>\n"
+  << "  add_same <hashdb> <count>\n"
+  << "  scan_same [-j e|o|c|a] <hashdb> <count>\n"
   << "  test_scan_stream <hashdb> <count>\n"
   ;
 }
@@ -501,7 +501,7 @@ static void read_media_size() {
 // Performance Analysis
 static void add_random() {
   std::cout
-  << "add_random <hashdb> <hex file hash> <count>\n"
+  << "add_random <hashdb> <count>\n"
   << "  Add <count> randomly generated hashes into hash database <hashdb>.\n"
   << "  Write performance data in the database's log.txt file.\n"
   << "\n"
@@ -512,14 +512,13 @@ static void add_random() {
   << "\n"
   << "  Parameters:\n"
   << "  <hashdb>       the hash database to add randomly generated hashes into\n"
-  << "  <hex file hash>the file hash of the source to print hashes for\n"
   << "  <count>        the number of randomly generated hashes to add\n"
   ;
 }
 
 static void scan_random() {
   std::cout
-  << "scan_random <hashdb> <count>\n"
+  << "scan_random [-j e|o|c|a] <hashdb> <count>\n"
   << "  Scan for random hashes in the <hashdb> database.  Write performance\n"
   << "  data in the database's log.txt file.\n"
   << "\n"
@@ -540,7 +539,7 @@ static void scan_random() {
 
 static void add_same() {
   std::cout
-  << "add_same <hashdb> <hex file hash> <count>\n"
+  << "add_same <hashdb> <count>\n"
   << "  Add <count> block hashes of value 0x800000... into hash database <hashdb>.\n"
   << "  Write performance data in the database's log.txt file.\n"
   << "\n"
@@ -551,14 +550,13 @@ static void add_same() {
   << "\n"
   << "  Parameters:\n"
   << "  <hashdb>       the hash database to add hashes of the same value into\n"
-  << "  <hex file hash>the file hash of the source to print hashes for\n"
   << "  <count>        the number of hashes of the same value to add\n"
   ;
 }
 
 static void scan_same() {
   std::cout
-  << "scan_same <hashdb> <count>\n"
+  << "scan_same [-j e|o|c|a] <hashdb> <count>\n"
   << "  Scan for the same hash value in the <hashdb> database.  Write\n"
   << "  performance data in the database's log.txt file.\n"
   << "\n"

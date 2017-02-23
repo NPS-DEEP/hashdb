@@ -104,10 +104,6 @@ namespace hashdb {
    *   byte_alignment - Minimal step size of data, in bytes.  Blocks must
    *     align to this.
    *   block_size - Size, in bytes, of data blocks.
-   *   max_count - The maximum number of source offsets to store for a
-   *     single hash value.
-   *   max_sub_count - The maximum number of source offsets to store
-   *     single source associated with a hash value.
    *   hash_prefix_bits - The number of hash prefix bits to use as the
    *     key in the optimized hash storage.
    *   hash_suffix_bytes - The number of hash suffix bytes to use as the
@@ -120,8 +116,6 @@ namespace hashdb {
     uint32_t settings_version;
     uint32_t byte_alignment;
     uint32_t block_size;
-    uint32_t max_count;
-    uint32_t max_sub_count;
     uint32_t hash_prefix_bits;
     uint32_t hash_suffix_bytes;
     settings_t();

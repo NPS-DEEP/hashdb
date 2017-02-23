@@ -85,7 +85,6 @@ static bool has_disable_recursive_processing = false;
 static bool has_disable_calculate_entropy = false;
 static bool has_disable_calculate_labels = false;
 static bool has_json_scan_mode = false;
-static bool has_max_counts = false;
 static bool has_tuning = false;
 static bool has_part_range = false;
 
@@ -280,20 +279,6 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'm': {	// max counts
-        has_max_counts = true;
-        std::vector<std::string> params = split(std::string(optarg), ':');
-
-        if (params.size() != 2) {
-          std::cerr << "Invalid value for max counts: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-
-        settings.max_count = std::atoi(params[0].c_str());
-        settings.max_sub_count = std::atoi(params[1].c_str());
-        break;
-      }
-
       case 't': {	// tuning hash_prefix_bits:hash_suffix_bytes
         has_tuning = true;
         std::vector<std::string> params = split(std::string(optarg), ':');
@@ -422,11 +407,6 @@ void check_options(const std::string& options) {
   }
   if (has_disable_calculate_labels && options.find("j") == std::string::npos) {
     std::cerr << "The -j JSON scan mode option is not allowed for this command.\n";
-    exit(1);
-  }
-  if (has_max_counts && options.find("m") ==
-      std::string::npos) {
-    std::cerr << "The -m max_counts option is not allowed for this command.\n";
     exit(1);
   }
   if (has_tuning && options.find("t") ==

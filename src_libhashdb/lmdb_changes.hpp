@@ -41,7 +41,7 @@ class lmdb_changes_t {
   // hash_data
   size_t hash_data_source_inserted;
   size_t hash_data_offset_inserted;
-  size_t hash_data_data_changed;
+  size_t hash_data_mismatched_data_detected;
   size_t hash_data_duplicate_offset_detected;
   size_t hash_data_mismatched_sub_count_detected;
 
@@ -67,7 +67,7 @@ class lmdb_changes_t {
   lmdb_changes_t() :
             hash_data_source_inserted(0),
             hash_data_offset_inserted(0),
-            hash_data_data_changed(0),
+            hash_data_mismatched_data_detected(0),
             hash_data_duplicate_offset_detected(0),
             hash_data_mismatched_sub_count_detected(0),
             hash_prefix_inserted(0),
@@ -95,9 +95,9 @@ class lmdb_changes_t {
       os << "#     hash_data_offset_inserted: "
          << hash_data_offset_inserted<< "\n";
     }
-    if (hash_data_data_changed) {
-      os << "#     hash_data_data_changed: "
-         << hash_data_data_changed << "\n";
+    if (hash_data_mismatched_data_detected) {
+      os << "#     hash_data_mismatched_data_detected: "
+         << hash_data_mismatched_data_detected << "\n";
     }
     if (hash_data_duplicate_offset_detected) {
       os << "#     hash_data_duplicate_offset_detected: "
@@ -142,7 +142,7 @@ class lmdb_changes_t {
     }
     if (hash_data_source_inserted == 0 &&
         hash_data_offset_inserted == 0 &&
-        hash_data_data_changed == 0 &&
+        hash_data_mismatched_data_detected == 0 &&
         hash_data_duplicate_offset_detected== 0 &&
         hash_data_mismatched_sub_count_detected== 0 &&
         hash_prefix_inserted == 0 &&
