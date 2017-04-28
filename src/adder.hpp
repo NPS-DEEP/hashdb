@@ -218,20 +218,21 @@ class adder_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                   new hashdb::source_sub_counts_t;
 
     // get hash data from A
     bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
-                                           count, *source_offsets);
+                                           count, *source_sub_counts);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source in source_offsets
-    for (hashdb::source_offsets_t::const_iterator it =
-         source_offsets->begin(); it != source_offsets->end(); ++it) {
+    // process each source in source_sub_counts
+    for (hashdb::source_sub_counts_t::const_iterator it =
+         source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
       // skip preexisting sources
       if (is_preexisting_source(it->file_hash)) {
@@ -240,7 +241,7 @@ class adder_t {
 
       // add hash for source
       manager_b->merge_hash(block_hash, k_entropy, block_label,
-                            it->file_hash, it->sub_count, it->file_offsets);
+                            it->file_hash, it->sub_count);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
         // add source information
@@ -253,9 +254,9 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets->size());
+    tracker->track_hash_data(source_sub_counts->size());
 
-    delete source_offsets;
+    delete source_sub_counts;
   }
 
   // add hash and source information in count range and do not re-add sources
@@ -266,11 +267,12 @@ class adder_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                     new hashdb::source_sub_counts_t;
 
     // get hash data from A
     bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
-                                           count, *source_offsets);
+                                           count, *source_sub_counts);
     // hash required
     if (!found_hash) {
       // program error
@@ -280,9 +282,9 @@ class adder_t {
     // add if in range
     if (count >= m && (n==0 || count <= n)) {
 
-      // process each source in source_offsets
-      for (hashdb::source_offsets_t::const_iterator it =
-           source_offsets->begin(); it != source_offsets->end(); ++it) {
+      // process each source in source_sub_counts
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
         // skip preexisting sources
         if (is_preexisting_source(it->file_hash)) {
@@ -291,7 +293,7 @@ class adder_t {
 
         // add hash for source
         manager_b->merge_hash(block_hash, k_entropy, block_label,
-                              it->file_hash, it->sub_count, it->file_offsets);
+                              it->file_hash, it->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -305,9 +307,9 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets->size());
+    tracker->track_hash_data(source_sub_counts->size());
 
-    delete source_offsets;
+    delete source_sub_counts;
   }
 
   // add hashes and source references when the repository name matches
@@ -317,20 +319,21 @@ class adder_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                 new hashdb::source_sub_counts_t;
 
     // get hash data from A
     bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
-                                           count, *source_offsets);
+                                           count, *source_sub_counts);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source in source_offsets
-    for (hashdb::source_offsets_t::const_iterator it =
-         source_offsets->begin(); it != source_offsets->end(); ++it) {
+    // process each source in source_sub_counts
+    for (hashdb::source_sub_counts_t::const_iterator it =
+         source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
       // skip preexisting sources
       if (is_preexisting_source(it->file_hash)) {
@@ -351,7 +354,7 @@ class adder_t {
 
         // add hash for source
         manager_b->merge_hash(block_hash, k_entropy, block_label,
-                              it->file_hash, it->sub_count, it->file_offsets);
+                              it->file_hash, it->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -365,9 +368,9 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets->size());
+    tracker->track_hash_data(source_sub_counts->size());
 
-    delete source_offsets;
+    delete source_sub_counts;
   }
 
   // add hashes and source references when the repository name does not match
@@ -377,20 +380,21 @@ class adder_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                      new hashdb::source_sub_counts_t;
 
     // get hash data from A
     bool found_hash = manager_a->find_hash(block_hash, k_entropy, block_label,
-                                           count, *source_offsets);
+                                           count, *source_sub_counts);
     // hash required
     if (!found_hash) {
       // program error
       assert(0);
     }
 
-    // process each source in source_offsets
-    for (hashdb::source_offsets_t::const_iterator it =
-         source_offsets->begin(); it != source_offsets->end(); ++it) {
+    // process each source in source_sub_counts
+    for (hashdb::source_sub_counts_t::const_iterator it =
+         source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
       // skip preexisting sources
       if (is_preexisting_source(it->file_hash)) {
@@ -411,7 +415,7 @@ class adder_t {
 
         // add hash for source
         manager_b->merge_hash(block_hash, k_entropy, block_label,
-                              it->file_hash, it->sub_count, it->file_offsets);
+                              it->file_hash, it->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -425,9 +429,9 @@ class adder_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets->size());
+    tracker->track_hash_data(source_sub_counts->size());
 
-    delete source_offsets;
+    delete source_sub_counts;
   }
 };
 

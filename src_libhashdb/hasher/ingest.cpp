@@ -293,14 +293,6 @@ namespace hashdb {
       return error_message;
     }
 
-    // make sure step size is compatible with byte alignment
-    if (step_size % settings.byte_alignment != 0) {
-      std::stringstream ss;
-      ss << "Invalid byte alignment: step size " << step_size
-         << " does not align with byte alignment " << settings.byte_alignment;
-      return ss.str();
-    }
-
     // make sure file or directory at ingest_path is readable
     if (access(hashdb_dir.c_str(), F_OK) != 0) {
       return "Invalid ingest path '" + ingest_path + "'.";

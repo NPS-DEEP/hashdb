@@ -130,9 +130,9 @@ class adder_set_t {
     uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
-    hashdb::source_offsets_t source_offsets_a;
+    hashdb::source_sub_counts_t source_sub_counts_a;
     bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
-                                 block_label_a, count_a, source_offsets_a);
+                                 block_label_a, count_a, source_sub_counts_a);
     // hash required
     if (!found_hash_a) {
       // program error
@@ -143,14 +143,14 @@ class adder_set_t {
     uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
-    hashdb::source_offsets_t source_offsets_b;
+    hashdb::source_sub_counts_t source_sub_counts_b;
     bool found_hash_b = manager_b->find_hash(binary_hash, k_entropy_b,
-                                 block_label_b, count_b, source_offsets_b);
+                                 block_label_b, count_b, source_sub_counts_b);
     if (found_hash_b) {
 
       // go through source offsets in A and look for matches in B
-      for (hashdb::source_offsets_t::const_iterator it_a =
-         source_offsets_a.begin(); it_a != source_offsets_a.end();
+      for (hashdb::source_sub_counts_t::const_iterator it_a =
+         source_sub_counts_a.begin(); it_a != source_sub_counts_a.end();
          ++it_a) {
 
         // skip preexisting sources
@@ -158,10 +158,10 @@ class adder_set_t {
           continue;
         }
 
-        if (source_offsets_b.find(*it_a) != source_offsets_b.end()) {
+        if (source_sub_counts_b.find(*it_a) != source_sub_counts_b.end()) {
           // in A and B so put into C
           manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                        it_a->file_hash, it_a->sub_count, it_a->file_offsets);
+                                it_a->file_hash, it_a->sub_count);
 
           if (processed_sources.find(it_a->file_hash) == processed_sources.end()) {
             // add source information
@@ -176,7 +176,7 @@ class adder_set_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets_a.size());
+    tracker->track_hash_data(source_sub_counts_a.size());
   }
 
   // add A and B into C when A and B hash is common
@@ -186,9 +186,9 @@ class adder_set_t {
     uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
-    hashdb::source_offsets_t source_offsets_a;
+    hashdb::source_sub_counts_t source_sub_counts_a;
     bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
-                                 block_label_a, count_a, source_offsets_a);
+                                 block_label_a, count_a, source_sub_counts_a);
     // hash required
     if (!found_hash_a) {
       // program error
@@ -199,27 +199,27 @@ class adder_set_t {
     uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
-    hashdb::source_offsets_t source_offsets_b;
+    hashdb::source_sub_counts_t source_sub_counts_b;
     bool found_hash_b = manager_b->find_hash(binary_hash, k_entropy_b,
-                                 block_label_b, count_b, source_offsets_b);
+                                 block_label_b, count_b, source_sub_counts_b);
     if (found_hash_b) {
 
       // union sources A and B into C
-      hashdb::source_offsets_t source_offsets_c;
-      for (hashdb::source_offsets_t::const_iterator it_a =
-           source_offsets_a.begin(); it_a != source_offsets_a.end();
+      hashdb::source_sub_counts_t source_sub_counts_c;
+      for (hashdb::source_sub_counts_t::const_iterator it_a =
+           source_sub_counts_a.begin(); it_a != source_sub_counts_a.end();
            ++it_a) {
-        source_offsets_c.insert(*it_a);
+        source_sub_counts_c.insert(*it_a);
       }
-      for (hashdb::source_offsets_t::const_iterator it_b =
-           source_offsets_b.begin(); it_b != source_offsets_b.end();
+      for (hashdb::source_sub_counts_t::const_iterator it_b =
+           source_sub_counts_b.begin(); it_b != source_sub_counts_b.end();
            ++it_b) {
-        source_offsets_c.insert(*it_b);
+        source_sub_counts_c.insert(*it_b);
       }
 
       // copy union of sources
-      for (hashdb::source_offsets_t::const_iterator it =
-           source_offsets_c.begin(); it != source_offsets_c.end();
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts_c.begin(); it != source_sub_counts_c.end();
            ++it) {
 
         // skip preexisting sources
@@ -229,7 +229,7 @@ class adder_set_t {
 
         // add hash for source
         manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                        it->file_hash, it->sub_count, it->file_offsets);
+                              it_a->file_hash, it_a->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -243,7 +243,7 @@ class adder_set_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets_a.size());
+    tracker->track_hash_data(source_sub_counts_a.size());
   }
 
   // add A into C when A hash and source is not in B
@@ -253,9 +253,9 @@ class adder_set_t {
     uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
-    hashdb::source_offsets_t source_offsets_a;
+    hashdb::source_sub_counts_t source_sub_counts_a;
     bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
-                                 block_label_a, count_a, source_offsets_a);
+                                 block_label_a, count_a, source_sub_counts_a);
     // hash required
     if (!found_hash_a) {
       // program error
@@ -266,23 +266,23 @@ class adder_set_t {
     uint64_t k_entropy_b;
     std::string block_label_b;
     uint64_t count_b;
-    hashdb::source_offsets_t source_offsets_b;
+    hashdb::source_sub_counts_t source_sub_counts_b;
     manager_b->find_hash(binary_hash, k_entropy_b,
-                                 block_label_b, count_b, source_offsets_b);
+                                 block_label_b, count_b, source_sub_counts_b);
  
     // put sources in A and not in B into C
-    hashdb::source_offsets_t source_offsets_c;
-    for (hashdb::source_offsets_t::const_iterator it_a =
-         source_offsets_a.begin(); it_a != source_offsets_a.end();
+    hashdb::source_sub_counts_t source_sub_counts_c;
+    for (hashdb::source_sub_counts_t::const_iterator it_a =
+         source_sub_counts_a.begin(); it_a != source_sub_counts_a.end();
          ++it_a) {
-      if (source_offsets_b.find(*it_a) == source_offsets_b.end()) {
-        source_offsets_c.insert(*it_a);
+      if (source_sub_counts_b.find(*it_a) == source_sub_counts_b.end()) {
+        source_sub_counts_c.insert(*it_a);
       }
     }
 
     // copy sources in A that were not subtracted
-    for (hashdb::source_offsets_t::const_iterator it =
-         source_offsets_c.begin(); it != source_offsets_c.end();
+    for (hashdb::source_sub_counts_t::const_iterator it =
+         source_sub_counts_c.begin(); it != source_sub_counts_c.end();
          ++it) {
 
       // skip preexisting sources
@@ -292,7 +292,7 @@ class adder_set_t {
 
       // add hash for source
       manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                        it->file_hash, it->sub_count, it->file_offsets);
+                            it_a->file_hash, it_a->sub_count);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
         // add source information
@@ -305,7 +305,7 @@ class adder_set_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets_a.size());
+    tracker->track_hash_data(source_sub_counts_a.size());
   }
 
   // add A into C when A hash is not in B
@@ -315,9 +315,9 @@ class adder_set_t {
     uint64_t k_entropy_a;
     std::string block_label_a;
     uint64_t count_a;
-    hashdb::source_offsets_t source_offsets_a;
+    hashdb::source_sub_counts_t source_sub_counts_a;
     bool found_hash_a = manager_a->find_hash(binary_hash, k_entropy_a,
-                                 block_label_a, count_a, source_offsets_a);
+                                 block_label_a, count_a, source_sub_counts_a);
     // hash required
     if (!found_hash_a) {
       // program error
@@ -330,8 +330,8 @@ class adder_set_t {
       // hash not in B so copy to C
 
       // copy A sources
-      for (hashdb::source_offsets_t::const_iterator it =
-           source_offsets_a.begin(); it != source_offsets_a.end();
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts_a.begin(); it != source_sub_counts_a.end();
            ++it) {
 
         // skip preexisting sources
@@ -341,7 +341,7 @@ class adder_set_t {
 
         // add hash for source
         manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                        it->file_hash, it->sub_count, it->file_offsets);
+                              it_a->file_hash, it_a->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -355,7 +355,7 @@ class adder_set_t {
     }
 
     // track these hashes
-    tracker->track_hash_data(source_offsets_a.size());
+    tracker->track_hash_data(source_sub_counts_a.size());
   }
 
 };

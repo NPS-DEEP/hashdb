@@ -19,11 +19,11 @@
 
 /**
  * \file
- * Provide structure for storing source count and file offsets.
+ * Provide structure for storing source ID and sub_count pairs.
  */
 
-#ifndef SOURCE_ID_OFFSETS_HPP
-#define SOURCE_ID_OFFSETS_HPP
+#ifndef SOURCE_ID_SUB_COUNTS_HPP
+#define SOURCE_ID_SUB_COUNTS_HPP
 
 #include <string>
 #include <set>
@@ -31,33 +31,27 @@
 
 namespace hashdb {
 
-typedef std::set<uint64_t> file_offsets_t;
-
-struct source_id_offset_t {
+struct source_id_sub_count_t {
   uint64_t source_id;
   uint64_t sub_count;
-  file_offsets_t file_offsets;
-  source_id_offset_t() : source_id(0), sub_count(0), file_offsets() {
+  source_id_sub_count_t() : source_id(0), sub_count(0) {
   }
-  source_id_offset_t(uint64_t p_source_id,
-                     uint64_t p_sub_count,
-                     file_offsets_t p_file_offsets) :
+  source_id_sub_count_t(uint64_t p_source_id,
+                     uint64_t p_sub_count) :
               source_id(p_source_id),
-              sub_count(p_sub_count),
-              file_offsets(p_file_offsets) {
+              sub_count(p_sub_count) {
   }
-  bool operator<(const source_id_offset_t& that) const {
+  bool operator<(const source_id_sub_count_t& that) const {
     if (source_id < that.source_id) return true;
     if (source_id > that.source_id) return false;
 
     // the above should be sufficient but lets be complete
     if (sub_count < that.sub_count) return true;
-    if (sub_count > that.sub_count) return false;
-    return (file_offsets > that.file_offsets);
+    return false;
   }
 };
 
-typedef std::set<source_id_offset_t> source_id_offsets_t;
+typedef std::set<source_id_sub_count_t> source_id_sub_counts_t;
 
 } // end namespace hashdb
 

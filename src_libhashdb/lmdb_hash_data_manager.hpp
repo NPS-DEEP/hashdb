@@ -55,7 +55,7 @@
 #include "lmdb_context.hpp"
 #include "lmdb_changes.hpp"
 #include "lmdb_hash_data_support.hpp"
-#include "source_id_offsets.hpp"
+#include "source_id_sub_counts.hpp"
 #include "tprint.hpp"
 #include <vector>
 #include <unistd.h>
@@ -76,16 +76,41 @@
 
 namespace hashdb {
 
-  // see if data differs
-  static void check_mismatch(const uint64_t k_entropy1,
-                             const uint64_t k_entropy2,
-                             const std::string& block_label1,
-                             const std::string& block_label2,
-                             lmdb_changes_t& changes) const {
-    if (k_entropy1 != k_entropy2 || block_label1 != block_label2) {
-      ++changes.zzzz;
-    }
+// see if data differs
+inline bool mismatched_data(const uint64_t k_entropy1,
+                            const uint64_t k_entropy2,
+                            const std::string& block_label1,
+                            const std::string& block_label2) {
+  return (k_entropy1 != k_entropy2 || block_label1 != block_label2);
+}
+
+// see if sub_countdiffers
+inline bool mismatched_sub_count(const uint64_t sub_count1,
+                                 const uint64_t sub_count2) {
+  return (sub_count1 != sub_count2);
+}
+
+// add or clip
+inline uint64_t add2(const uint64_t a, const uint64_t b) {
+  return (a+b>0xffff) ? 0xffff : a+b;
+}
+inline uint64_t add4(const uint64_t a, const uint64_t b) {
+  return (a+b>0xffffffff) ? 0xffffffff : a+b;
+}
+
+// maybe truncate block_label
+static std::string truncate_block_label(std::string block_label) {
+  if (block_label.size() > hashdb::max_block_label_size) {
+    // truncate and warn
+    std::stringstream ss;
+    ss << "Invalid block_label length " << block_label.size()
+       << " is greater than " << hashdb::max_block_label_size
+       << " and is truncated.\n";
+    hashdb::tprint(std::cerr, ss.str());
+    block_label.resize(hashdb::max_block_label_size);
   }
+  return block_label;
+}
 
 class lmdb_hash_data_manager_t {
 
@@ -106,10 +131,7 @@ class lmdb_hash_data_manager_t {
 
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
-                           const hashdb::file_mode_type_t p_file_mode,
-                           const uint32_t p_byte_alignment,
-                           const uint32_t p_max_count,
-                           const uint32_t p_max_sub_count) :
+                           const hashdb::file_mode_type_t p_file_mode) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
@@ -138,7 +160,7 @@ class lmdb_hash_data_manager_t {
    */
   size_t insert(const std::string& block_hash,
                 const uint64_t k_entropy,
-                std::string block_label,
+                const std::string& p_block_label,
                 const uint64_t source_id,
                 hashdb::lmdb_changes_t& changes) {
 
@@ -160,16 +182,8 @@ class lmdb_hash_data_manager_t {
       return 0;
     }
 
-    // warn if block_label will get truncated
-    if (block_label.size() > max_block_label_size) {
-      // invalid file offset so warn and do not add anything
-      std::stringstream ss;
-      ss << "Invalid block_label length " << block_label.size()
-         << " is greater than " << max_block_label_size
-         << " and is truncated.\n";
-      tprint(std::cerr, ss.str());
-      block_label.resize(max_block_label_size);
-    }
+    // maybe truncate block_label
+    const std::string block_label = truncate_block_label(p_block_label);
 
     MUTEX_LOCK(&M);
 
@@ -187,18 +201,17 @@ print_whole_mdb("hash_data_manager insert begin", context.cursor);
     context.key.mv_size = key_size;
     context.key.mv_data = key_start;
 
+    // return new count when done
+    uint64_t count;
+
     // see if hash is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    // return new count when done
-    uint64_t count;
-
     if (rc == MDB_NOTFOUND) {
       // new Type 1
-      count = insert_new_type1(context, block_hash,
-                               source_id, k_entropy, block_label,
-                               changes);
+      new_type1(context, block_hash, k_entropy, block_label, source_id, 1);
+      count = 1;
 
     } else if (rc == 0) {
       // hash is already there
@@ -218,34 +231,73 @@ print_mdb_val("hash_data_manager insert found data", context.data);
 
         // existing entry is Type 1
 
-        // see if source_id is the same
-        const uint64_t existing_source_id = decode_source_id(
-                                       hashdb::lmdb_context_t& context);
+        // read type 1
+        uint64_t existing_k_entropy;
+        std::string existing_block_label;
+        uint64_t existing_source_id;
+        uint64_t existing_sub_count;
+        decode_type1(context, existing_k_entropy, existing_block_label,
+                     existing_source_id, existing_sub_count);
 
+        // check for mismatched data
+        if (mismatched_data(k_entropy, existing_k_entropy,
+                            block_label, existing_block_label)) {
+          ++changes.hash_data_mismatched_data_detected;
+        }
+
+        // see if source_id is the same
         if (source_id == existing_source_id) {
-          // increment Type 1, check mismatch
-          increment_type1(context, source_id, k_entropy, block_label, changes);
+          // increment Type 1
+          replace_type1(context, block_hash, existing_k_entropy,
+                        existing_block_label, source_id,
+                        add2(existing_sub_count,1));
 
         } else {
-          // split type 1 into type 2 and type 3, check mismatch
-          split_type1(context, source_id, k_entropy, block_label, changes);
+          // split type 1 into type 2 and two type 3
+          replace_type2(context, block_hash, existing_k_entropy,
+                        existing_block_label, add2(existing_sub_count,1));
+          new_type3(context, block_hash, existing_source_id,
+                    existing_sub_count);
+          new_type3(context, block_hash, source_id, 1);
         }
+
+        // for type 1, new count is existing_sub_count + 1
+        count = add2(existing_sub_count, 1);
 
       } else {
 
         // existing entry is Type 2
-        // increment type 2, check mismatch
-        increment_type2(context, source_id, k_entropy, block_label, changes);
 
-        // look for matching Type 3
-        bool worked = cursor_to_type3(context, source_id);
-        if (worked) {
-          // increment Type 3 at cursor
-          count = increment_type3(context, changes);
-        } else {
-          // insert new Type 3
-          count = insert_new_type3(context, source_id, changes);
+        // read type 2
+        uint64_t existing_k_entropy;
+        std::string existing_block_label;
+        uint64_t existing_count;
+        decode_type2(context, existing_k_entropy, existing_block_label,
+                     existing_count);
+
+        // check for mismatched data
+        if (mismatched_data(k_entropy, existing_k_entropy,
+                            block_label, existing_block_label)) {
+          ++changes.hash_data_mismatched_data_detected;
         }
+
+        // increment count at type 2
+        replace_type2(context, block_hash, existing_k_entropy,
+                      existing_block_label, add4(existing_count,1));
+
+        // look for existing type 3
+        uint64_t existing_sub_count;
+        if (cursor_to_type3(context, source_id, existing_sub_count)) {
+          // increment sub_count at type 3
+          replace_type3(context, block_hash, source_id,
+                        add2(existing_sub_count,1));
+        } else {
+          // new type 3
+          new_type3(context, block_hash, source_id, 1);
+        }
+
+        // for type 2, new count is existing_count + 1
+        count = add4(existing_count,1);
       }
 
     } else {
@@ -258,6 +310,9 @@ print_mdb_val("hash_data_manager insert found data", context.data);
 print_whole_mdb("hash_data_manager insert end", context.cursor);
 #endif
 
+    // insert is always accepted
+    ++changes.hash_data_inserted;
+
     context.close();
     MUTEX_UNLOCK(&M);
     return count;
@@ -267,17 +322,14 @@ print_whole_mdb("hash_data_manager insert end", context.cursor);
   // merge
   // ************************************************************
   /**
-   * Merge hash with accompanying data.  Overwrite data if there
-   * and changed.  Add source and offsets if source is not there.
-   * Warn and leave alone if source is there and sub_count is different.
+   * Merge hash with accompanying data.  Warn if data present but different.
    * Return updated source count.
    */
   size_t merge(const std::string& block_hash,
                const uint64_t k_entropy,
-               std::string block_label,
+               const std::string& p_block_label,
                const uint64_t source_id,
                const uint64_t sub_count,
-               const file_offsets_t file_offsets,
                hashdb::lmdb_changes_t& changes) {
 
     // program error if source ID is 0 since NULL distinguishes between
@@ -298,40 +350,8 @@ print_whole_mdb("hash_data_manager insert end", context.cursor);
       return 0;
     }
 
-    // require sub_count >= size of file_offsets
-    if (sub_count < file_offsets.size()) {
-      std::stringstream ss;
-      ss << "Usage error: sub_count " << sub_count
-         << " provided is less than file_offsets " << file_offsets.size()
-         << " provided.  Insert request aborted.\n";
-      tprint(std::cerr, ss.str());
-      return 0;
-    }
-
-    // require that all provided file_offsets are valid
-    for (file_offsets_t::const_iterator it = file_offsets.begin();
-          it != file_offsets.end(); ++it) {
-      if (*it % byte_alignment != 0) {
-        // invalid file offset so warn and do not add anything
-        std::stringstream ss;
-        ss << "Usage error: file offset " << *it 
-           << " does not fit evenly along step size " << byte_alignment
-           << ".  Insert request aborted.\n";
-        tprint(std::cerr, ss.str());
-        return 0;
-      }
-    }
-
-    // warn if block_label will get truncated
-    if (block_label.size() > max_block_label_size) {
-      // invalid file offset so warn and do not add anything
-      std::stringstream ss;
-      ss << "Invalid block_label length " << block_label.size()
-         << " is greater than " << max_block_label_size
-         << " and is truncated.\n";
-      tprint(std::cerr, ss.str());
-      block_label.resize(max_block_label_size);
-    }
+    // maybe truncate block_label
+    const std::string block_label = truncate_block_label(p_block_label);
 
     MUTEX_LOCK(&M);
 
@@ -349,18 +369,19 @@ print_whole_mdb("hash_data_manager merge begin", context.cursor);
     context.key.mv_size = key_size;
     context.key.mv_data = key_start;
 
+    // return new count when done
+    uint64_t count;
+
     // see if hash is already there
     int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_SET_KEY);
 
-    // return new count when done
-    uint64_t count;
-
     if (rc == MDB_NOTFOUND) {
       // new Type 1
-      count = merge_new_type1(context, block_hash,
-                              source_id, k_entropy, block_label,
-                              sub_count, file_offsets, changes);
+      new_type1(context, block_hash, k_entropy, block_label, source_id,
+                sub_count);
+      changes.hash_data_merged += add2(sub_count,0);
+      count = add2(sub_count,0);
 
     } else if (rc == 0) {
       // hash is already there
@@ -380,38 +401,89 @@ print_mdb_val("hash_data_manager merge found data", context.data);
 
         // existing entry is Type 1
 
-        // see if source_id is the same
+        // read type 1
+        uint64_t existing_k_entropy;
+        std::string existing_block_label;
         uint64_t existing_source_id;
-        decode_source_id(context, existing_source_id);
+        uint64_t existing_sub_count;
+        decode_type1(context, existing_k_entropy, existing_block_label,
+                     existing_source_id, existing_sub_count);
 
+        // check for mismatched data
+        if (mismatched_data(k_entropy, existing_k_entropy,
+                            block_label, existing_block_label)) {
+          ++changes.hash_data_mismatched_data_detected;
+        }
+
+        // see if source_id is the same
         if (source_id == existing_source_id) {
-          // update Type 1
-          count = merge_update_type1(context, block_hash,
-                                     source_id, k_entropy, block_label,
-                                     sub_count, changes);
+
+          // check for mismatched sub_count
+          if (mismatched_sub_count(sub_count, existing_sub_count)) {
+            ++changes.hash_data_mismatched_sub_count_detected;
+          }
+
+          // merged before, no change
+          ++changes.hash_data_merged_same += sub_count;
 
         } else {
-          // new Type 2 and two new Type 3
-          count = merge_new_type2(context, block_hash,
-                                  source_id, k_entropy, block_label,
-                                  sub_count, file_offsets, changes);
+          // split type 1 into type 2 and two type 3
+          replace_type2(context, block_hash, existing_k_entropy,
+                        existing_block_label,
+                        add2(existing_sub_count,sub_count));
+          new_type3(context, block_hash, existing_source_id,
+                    existing_sub_count);
+          new_type3(context, block_hash, source_id, sub_count);
+
+          changes.hash_data_merged += sub_count;
         }
+
+        // for type 1, new count is existing_sub_count + sub_count
+        count = add2(existing_sub_count,sub_count);
+
       } else {
 
         // existing entry is Type 2
 
-        // look for matching Type 3
-        bool worked = cursor_to_type3(context, source_id);
-        if (worked) {
-          // update Type 2 and update Type 3
-          count = merge_update_type3(context, block_hash,
-                                     source_id, k_entropy, block_label,
-                                     sub_count, changes);
+        // read type 2
+        uint64_t existing_k_entropy;
+        std::string existing_block_label;
+        uint64_t existing_count;
+        decode_type2(context, existing_k_entropy, existing_block_label,
+                     existing_count);
+
+        // check for mismatched data
+        if (mismatched_data(k_entropy, existing_k_entropy,
+                            block_label, existing_block_label)) {
+          ++changes.hash_data_mismatched_data_detected;
+        }
+
+        // look for existing type 3
+        uint64_t existing_sub_count;
+        if (cursor_to_type3(context, source_id, existing_sub_count)) {
+
+          // existing type 3 was merged before, no change
+
+          // check for mismatched sub_count
+          if (mismatched_sub_count(sub_count, existing_sub_count)) {
+            ++changes.hash_data_mismatched_sub_count_detected;
+          }
+          count = existing_sub_count;
+          ++changes.hash_data_merged_same += sub_count;
+
         } else {
-          // update Type 2 and merge new Type 3
-          count = merge_new_type3(context, block_hash,
-                                  source_id, k_entropy, block_label,
-                                  sub_count, file_offsets, changes);
+          // new type 3
+
+          // add sub_count to type 2
+          cursor_to_first_current(context);
+          replace_type2(context, block_hash, existing_k_entropy,
+                        existing_block_label, add4(existing_count,sub_count));
+
+          // new type 3 for new souce_id
+          new_type3(context, block_hash, source_id, sub_count);
+
+          count = add4(existing_count,sub_count);
+          changes.hash_data_merged += sub_count;
         }
       }
 
@@ -430,6 +502,9 @@ print_whole_mdb("hash_data_manager merge end", context.cursor);
     return count;
   }
 
+  // ************************************************************
+  // find
+  // ************************************************************
   /**
    * Read data for the hash.  If the hash does not exist return false
    * and empty fields.
@@ -438,13 +513,13 @@ print_whole_mdb("hash_data_manager merge end", context.cursor);
             uint64_t& k_entropy,
             std::string& block_label,
             uint64_t& count,
-            source_id_offsets_t& source_id_offsets) const {
+            source_id_sub_counts_t& source_id_sub_counts) const {
 
     // clear any previous values
     k_entropy = 0;
     block_label = "";
     count = 0;
-    source_id_offsets.clear();
+    source_id_sub_counts.clear();
 
     // require valid block_hash
     if (block_hash.size() == 0) {
@@ -500,12 +575,9 @@ print_mdb_val("hash_data_manager find Type 1 data", context.data);
 #endif
         uint64_t source_id;
         uint64_t sub_count;
-        file_offsets_t file_offsets;
-        decode_type1(context, source_id, k_entropy, block_label,
-                     sub_count, file_offsets);
-        count = sub_count;
-        source_id_offsets.insert(
-                   source_id_offset_t(source_id, sub_count, file_offsets));
+        decode_type1(context, k_entropy, block_label, source_id, sub_count);
+        source_id_sub_counts.insert(source_id_sub_count_t(source_id,
+                                                          sub_count));
         context.close();
         return true;
 
@@ -516,8 +588,7 @@ print_mdb_val("hash_data_manager find Type 2 key", context.key);
 print_mdb_val("hash_data_manager find Type 2 data", context.data);
 #endif
         // read the existing Type 2 entry into returned fields
-        uint64_t count_stored;
-        decode_type2(context, k_entropy, block_label, count, count_stored);
+        decode_type2(context, k_entropy, block_label, count);
 
         // read Type 3 entries while data available and key matches
         while (true) {
@@ -544,12 +615,11 @@ print_mdb_val("hash_data_manager find Type 3 data", context.data);
           // read Type 3
           uint64_t source_id;
           uint64_t sub_count;
-          file_offsets_t file_offsets;
-          decode_type3(context, source_id, sub_count, file_offsets);
+          decode_type3(context, source_id, sub_count);
 
           // add the LMDB hash data
-          source_id_offsets.insert(
-                   source_id_offset_t(source_id, sub_count, file_offsets));
+          source_id_sub_counts.insert(source_id_sub_count_t(source_id,
+                                                            sub_count));
         }
 
         context.close();
@@ -567,6 +637,9 @@ print_mdb_val("hash_data_manager find Type 3 data", context.data);
     return false; // for mingw
   }
 
+  // ************************************************************
+  // find_count
+  // ************************************************************
   /**
    * Return source count for this hash.
    */
@@ -609,25 +682,23 @@ print_mdb_val("hash_data_manager find Type 3 data", context.data);
         // Type 1
 
         // read the existing Type 1 entry into fields:
-        uint64_t source_id;
         uint64_t k_entropy;
         std::string block_label;
+        uint64_t source_id;
         uint64_t sub_count;
-        file_offsets_t file_offsets;
-        decode_type1(context, source_id, k_entropy, block_label,
-                     sub_count, file_offsets);
+        decode_type1(context, k_entropy, block_label, source_id, sub_count);
 
         context.close();
-        const uint64_t count = sub_count;
-        return count;
+        return sub_count;
 
       } else {
         // Type 2
+
+        // read the existing Type 2 entry into fields:
         uint64_t k_entropy;
         std::string block_label;
         uint64_t count;
-        uint64_t count_stored;
-        decode_type2(context, k_entropy, block_label, count, count_stored);
+        decode_type2(context, k_entropy, block_label, count);
 
         context.close();
         return count;
@@ -641,6 +712,9 @@ print_mdb_val("hash_data_manager find Type 3 data", context.data);
     }
   }
 
+  // ************************************************************
+  // first_hash
+  // ************************************************************
   /**
    * Return first hash else "".
    */
@@ -677,6 +751,9 @@ print_mdb_val("hash_data_manager find_begin data", context.data);
     }
   }
 
+  // ************************************************************
+  // next_hash
+  // ************************************************************
   /**
    * Return next hash value else "" if end.  Error if last is "" or invalid.
    */

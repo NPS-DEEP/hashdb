@@ -775,7 +775,7 @@ class out_ptr_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t source_offsets;
+    hashdb::source_sub_counts_t source_sub_counts;
 
     // iterate over hashdb and set variables for calculating the histogram
     std::string binary_hash = manager.first_hash();
@@ -787,7 +787,7 @@ class out_ptr_t {
 
     while (binary_hash.size() != 0) {
       manager.find_hash(binary_hash, k_entropy, block_label, count,
-                        source_offsets);
+                        source_sub_counts);
       // update total hashes observed
       total_hashes += count;
       // update total distinct hashes
@@ -815,7 +815,7 @@ class out_ptr_t {
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offsets.size());
+      progress_tracker.track_hash_data(source_sub_counts.size());
       binary_hash = manager.next_hash(binary_hash);
     }
 
@@ -867,14 +867,14 @@ class out_ptr_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t source_offsets;
+    hashdb::source_sub_counts_t source_sub_counts;
 
     // iterate over hashdb and set variables for finding duplicates
     std::string binary_hash = manager.first_hash();
 
     while (binary_hash.size() != 0) {
       manager.find_hash(binary_hash, k_entropy, block_label, count,
-                                  source_offsets);
+                                  source_sub_counts);
       if (count == number) {
         // show hash with requested duplicates number
         std::string expanded_text = manager.find_hash_json(
@@ -885,7 +885,7 @@ class out_ptr_t {
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offsets.size());
+      progress_tracker.track_hash_data(source_sub_counts.size());
       binary_hash = manager.next_hash(binary_hash);
     }
 
@@ -934,7 +934,7 @@ class out_ptr_t {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t source_offsets;
+    hashdb::source_sub_counts_t source_sub_counts;
 
     // look for hashes that belong to this source
     // get the first hash
@@ -943,12 +943,12 @@ class out_ptr_t {
 
       // read hash data for the hash
       manager.find_hash(binary_hash, k_entropy, block_label, count,
-                                                    source_offsets);
+                                                    source_sub_counts);
 
       // find sources that match the source we are looking for
-      for (hashdb::source_offsets_t::const_iterator it =
-                       source_offsets.begin();
-                       it!= source_offsets.end(); ++it) {
+      for (hashdb::source_sub_counts_t::const_iterator it =
+                       source_sub_counts.begin();
+                       it!= source_sub_counts.end(); ++it) {
         if (it->file_hash == file_binary_hash) {
 
           // the source matches so print the hash and move on
@@ -961,7 +961,7 @@ class out_ptr_t {
       }
 
       // move forward
-      progress_tracker.track_hash_data(source_offsets.size());
+      progress_tracker.track_hash_data(source_sub_counts.size());
       binary_hash = manager.next_hash(binary_hash);
     }
   }
@@ -1056,9 +1056,7 @@ class out_ptr_t {
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      const uint64_t file_offset = (i + start_index) * byte_alignment;
-      manager.insert_hash(random_binary_hash(), 0.0, "",
-                          file_binary_hash, file_offset);
+      manager.insert_hash(random_binary_hash(), 0.0, "", file_binary_hash);
 
       // update progress tracker
       progress_tracker.track();
@@ -1152,8 +1150,7 @@ class out_ptr_t {
     for (uint64_t i=0; i<count; i++) {
 
       // add hash
-      const uint64_t file_offset = (i + start_index) * byte_alignment;
-      manager.insert_hash(binary_hash, 0.0, "", file_binary_hash, file_offset);
+      manager.insert_hash(binary_hash, 0.0, "", file_binary_hash);
 
       // update progress tracker
       progress_tracker.track();

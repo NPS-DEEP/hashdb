@@ -55,7 +55,6 @@
 #include "file_modes.h"
 #include "settings_manager.hpp"
 #include "lmdb_hash_data_manager.hpp"
-#include "source_id_offsets.hpp"
 #include "lmdb_hash_manager.hpp"
 #include "lmdb_source_data_manager.hpp"
 #include "lmdb_source_id_manager.hpp"
@@ -153,12 +152,12 @@ namespace hashdb {
   }
 
   static uint32_t calculate_crc(
-                       const hashdb::source_offsets_t& source_offsets) {
+                       const hashdb::source_sub_counts_t& source_sub_counts) {
 
     // calculate the CRC for the sources
     uint32_t crc = 0;
-    for (hashdb::source_offsets_t::const_iterator it = source_offsets.begin();
-         it != source_offsets.end(); ++it) {
+    for (hashdb::source_sub_counts_t::const_iterator it =
+         source_sub_counts.begin(); it != source_sub_counts.end(); ++it) {
       crc = hashdb::crc32(crc, static_cast<uint8_t*>(static_cast<void*>(
                           const_cast<char*>((*it).file_hash.c_str()))),
                           it->file_hash.size());
@@ -213,7 +212,7 @@ namespace hashdb {
     }
 
     // create new LMDB stores
-    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW, settings.byte_alignment);
+    lmdb_hash_data_manager_t(hashdb_dir, RW_NEW);
     lmdb_hash_manager_t(hashdb_dir, RW_NEW,
                   settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
@@ -227,35 +226,15 @@ namespace hashdb {
   }
 
   // ************************************************************
-  // source offsets
+  // source sub_counts
   // ************************************************************
-  source_offset_t::source_offset_t(const std::string& p_file_hash,
-                    const uint64_t p_sub_count,
-                    const std::set<uint64_t> p_file_offsets) :
+  source_sub_count_t::source_sub_count_t(const std::string& p_file_hash,
+                    const uint64_t p_sub_count) :
           file_hash(p_file_hash),
-          sub_count(p_sub_count),
-          file_offsets(p_file_offsets) {
+          sub_count(p_sub_count) {
     }
-  bool source_offset_t::operator<(const source_offset_t& that) const {
-
-    /*
-    // users may not want to see this warning, but keep it for testing
-    if (file_hash == that.file_hash && sub_count != that.sub_count) {
-      // match but sub_count is wrong
-      std::cerr << "database integrity warning: sub_count values " << sub_count
-                << " and " << that.sub_count << " do not match for source "
-                << bin_to_hex(file_hash) << ".\n";
-    }
-    */
-
+  bool source_sub_count_t::operator<(const source_sub_count_t& that) const {
     return (file_hash < that.file_hash);
-    if (file_hash == that.file_hash) {
-      // matched by file_hash
-      return true;
-    } else {
-      // not matched by file_hash
-      return false;
-    }
   }
 
   // ************************************************************
@@ -263,7 +242,6 @@ namespace hashdb {
   // ************************************************************
   settings_t::settings_t() :
          settings_version(settings_t::CURRENT_SETTINGS_VERSION),
-         byte_alignment(512),
          block_size(512),
          hash_prefix_bits(28),   // for 2^28 prefix possibilities
          hash_suffix_bytes(3) {  // for 2^(3*8) suffix possibilities
@@ -272,7 +250,6 @@ namespace hashdb {
   std::string settings_t::settings_string() const {
     std::stringstream ss;
     ss << "{\"settings_version\":" << settings_version
-       << ", \"byte_alignment\":" << byte_alignment
        << ", \"block_size\":" << block_size
        << ", \"hash_prefix_bits\":" << hash_prefix_bits
        << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
@@ -300,8 +277,8 @@ namespace hashdb {
     hashdb::settings_t settings = private_read_settings(hashdb_dir);
 
     // open managers
-    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, RW_MODIFY,
-            settings.byte_alignment);
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
+                                                          RW_MODIFY);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
             settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -370,8 +347,7 @@ namespace hashdb {
   void import_manager_t::insert_hash(const std::string& block_hash,
                           const uint64_t k_entropy,
                           const std::string& block_label,
-                          const std::string& file_hash,
-                          const uint64_t file_offset) {
+                          const std::string& file_hash) {
 
     if (block_hash.size() == 0) {
       std::cerr << "Error: insert_hash called with empty block_hash\n";
@@ -389,7 +365,7 @@ namespace hashdb {
     // insert hash into hash data manager and hash manager
     const size_t count = lmdb_hash_data_manager->insert(
                  block_hash, k_entropy, block_label,
-                 source_id,  file_offset, *changes);
+                 source_id, *changes);
     lmdb_hash_manager->insert(block_hash, count, *changes);
 
     // If the source ID is new then add a blank source data record just to keep
@@ -405,8 +381,7 @@ namespace hashdb {
                                     const uint64_t k_entropy,
                                     const std::string& block_label,
                                     const std::string& file_hash,
-                                    const uint64_t sub_count,
-                                    const std::set<uint64_t> file_offsets) {
+                                    const uint64_t sub_count) {
 
     if (block_hash.size() == 0) {
       std::cerr << "Error: insert_hash called with empty block_hash\n";
@@ -424,7 +399,7 @@ namespace hashdb {
     // merge hash into hash data manager
     const size_t count = lmdb_hash_data_manager->merge(
                  block_hash, k_entropy, block_label,
-                 source_id, sub_count, file_offsets, *changes);
+                 source_id, sub_count, *changes);
 
     // insert hash into hash manager
     lmdb_hash_manager->insert(block_hash, count, *changes);
@@ -478,54 +453,38 @@ namespace hashdb {
         }
       }
 
-      // source_offsets:[]
-      if (!document.HasMember("source_offsets") ||
-                    !document["source_offsets"].IsArray()) {
-        return "Invalid source_offsets field";
+      // source_sub_counts:[]
+      if (!document.HasMember("source_sub_counts") ||
+                    !document["source_sub_counts"].IsArray()) {
+        return "Invalid source_sub_counts field";
       }
-      const rapidjson::Value& json_source_offsets = document["source_offsets"];
-      hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
-      for (rapidjson::SizeType i = 0; i+2 < json_source_offsets.Size(); i+=3) {
+      const rapidjson::Value& json_source_sub_counts =
+                                        document["source_sub_counts"];
+      hashdb::source_sub_counts_t* source_sub_counts =
+                                        new hashdb::source_sub_counts_t;
+      for (rapidjson::SizeType i = 0;
+           i+1 < json_source_sub_counts.Size(); i+=2) {
 
         // source hash
-        if (!json_source_offsets[i+0].IsString()) {
-          delete source_offsets;
-          return "Invalid source hash in source_offsets";
+        if (!json_source_sub_counts[i+0].IsString()) {
+          delete source_sub_counts;
+          return "Invalid source hash in source_sub_counts";
         }
         const std::string file_hash = hashdb::hex_to_bin(
-                                         json_source_offsets[i].GetString());
+                                        json_source_sub_counts[i].GetString());
 
         // sub_count
-        if (!json_source_offsets[i+1].IsUint64()) {
-          delete source_offsets;
-          return "Invalid sub_count in source_offsets";
+        if (!json_source_sub_counts[i+1].IsUint64()) {
+          delete source_sub_counts;
+          return "Invalid sub_count in source_sub_counts";
         }
-        const uint64_t sub_count = json_source_offsets[i+1].GetUint64();
+        const uint64_t sub_count = json_source_sub_counts[i+1].GetUint64();
 
-        // the file offsets
-        std::set<uint64_t> file_offsets;
-        if (!json_source_offsets[i+2].IsArray()) {
-          delete source_offsets;
-          return "Invalid sub_count in source_offsets";
-        }
-        const rapidjson::Value& json_file_offsets = json_source_offsets[i+2];
-        for (rapidjson::SizeType j=0; j<json_file_offsets.Size(); ++j) {
-
-          // file offset
-          if (!json_file_offsets[j].IsUint64()) {
-            delete source_offsets;
-            return "Invalid file offset in source_offsets";
-          }
-          const uint64_t file_offset = json_file_offsets[j].GetUint64();
-          file_offsets.insert(file_offset);
-        }
-
-        // add hash data for this source triplet
-        merge_hash(block_hash, k_entropy, block_label,
-                   file_hash, sub_count, file_offsets);
+        // add hash data for this source and source sub_count
+        merge_hash(block_hash, k_entropy, block_label, file_hash, sub_count);
       }
 
-      delete source_offsets;
+      delete source_sub_counts;
       return "";
 
     } else if (document.HasMember("file_hash")) {
@@ -669,8 +628,8 @@ namespace hashdb {
     hashdb::settings_t settings = private_read_settings(hashdb_dir);
 
     // open managers
-    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir, READ_ONLY,
-           settings.byte_alignment);
+    lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
+                                                          READ_ONLY);
     lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
            settings.hash_prefix_bits, settings.hash_suffix_bytes);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
@@ -729,15 +688,16 @@ namespace hashdb {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                           new hashdb::source_sub_counts_t;
 
     // scan
     bool matched = scan_manager_t::find_hash(block_hash,
-                           k_entropy, block_label, count, *source_offsets);
+                           k_entropy, block_label, count, *source_sub_counts);
 
     // done if no match
     if (matched == false) {
-      delete source_offsets;
+      delete source_sub_counts;
       return "";
     }
 
@@ -763,16 +723,15 @@ namespace hashdb {
       json_doc.AddMember("count", count, allocator);
 
       // add source_list_id
-      uint32_t crc = calculate_crc(*source_offsets);
+      uint32_t crc = calculate_crc(*source_sub_counts);
       json_doc.AddMember("source_list_id", crc, allocator);
 
       // the sources array
       rapidjson::Value json_sources(rapidjson::kArrayType);
 
       // add each source object
-      for (hashdb::source_offsets_t::const_iterator it =
-                      source_offsets->begin();
-                      it != source_offsets->end(); ++it) {
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
         if (!optimizing || sources->locked_insert(it->file_hash)) {
 
           // create a json_source object for the json_sources array
@@ -786,32 +745,25 @@ namespace hashdb {
       }
       json_doc.AddMember("sources", json_sources, allocator);
 
-      // add source_offsets as triplets of file hash, sub_count, offset list
-      rapidjson::Value json_source_offsets(rapidjson::kArrayType);
+      // add source_sub_counts as pairs of file hash, sub_count
+      rapidjson::Value json_source_sub_counts(rapidjson::kArrayType);
 
-      for (hashdb::source_offsets_t::const_iterator it =
-           source_offsets->begin(); it != source_offsets->end(); ++it) {
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
         // file hash
-        json_source_offsets.PushBack(
+        json_source_sub_counts.PushBack(
                    v(hashdb::bin_to_hex(it->file_hash), allocator), allocator);
 
         // sub_count
-        json_source_offsets.PushBack(it->sub_count, allocator);
+        json_source_sub_counts.PushBack(it->sub_count, allocator);
 
-        // file offset array
-        rapidjson::Value json_file_offsets(rapidjson::kArrayType);
-        for (std::set<uint64_t>::const_iterator it2 =
-             it->file_offsets.begin(); it2 != it->file_offsets.end(); ++it2) {
-          json_file_offsets.PushBack(*it2, allocator);
-        }
-        json_source_offsets.PushBack(json_file_offsets, allocator);
-        
       }
-      json_doc.AddMember("source_offsets", json_source_offsets, allocator);
+      json_doc.AddMember("source_sub_counts", json_source_sub_counts,
+                         allocator);
     }
 
-    delete source_offsets;
+    delete source_sub_counts;
 
     // return JSON text
     rapidjson::StringBuffer strbuf;
@@ -826,13 +778,13 @@ namespace hashdb {
                uint64_t& k_entropy,
                std::string& block_label,
                uint64_t& count,
-               source_offsets_t& source_offsets) const {
+               source_sub_counts_t& source_sub_counts) const {
 
     // clear fields
     k_entropy = 0;
     block_label = "";
     count = 0;
-    source_offsets.clear();
+    source_sub_counts.clear();
 
     if (block_hash.size() == 0) {
       std::cerr << "Error: find_hash called with empty block_hash\n";
@@ -846,14 +798,15 @@ namespace hashdb {
     }
 
     // hash may be present so read hash using hash data manager
-    hashdb::source_id_offsets_t* source_id_offsets =
-                new hashdb::source_id_offsets_t;
+    hashdb::source_id_sub_counts_t* source_id_sub_counts =
+                new hashdb::source_id_sub_counts_t;
     bool has_hash = lmdb_hash_data_manager->find(block_hash, k_entropy,
-                                  block_label, count, *source_id_offsets);
+                                  block_label, count, *source_id_sub_counts);
     if (has_hash) {
-      // build source_offset from source_id_offset
-      for (hashdb::source_id_offsets_t::const_iterator it =
-           source_id_offsets->begin(); it != source_id_offsets->end(); ++it) {
+      // build source_sub_count from source_id_sub_count
+      for (hashdb::source_id_sub_counts_t::const_iterator it =
+           source_id_sub_counts->begin(); it != source_id_sub_counts->end();
+           ++it) {
 
         // space for unused returned source variables
         std::string file_hash;
@@ -873,16 +826,16 @@ namespace hashdb {
           assert(0);
         }
 
-        // add the source offsets
-        source_offsets.insert(hashdb::source_offset_t(
-                               file_hash, it->sub_count, it->file_offsets));
+        // add the source sub_counts
+        source_sub_counts.insert(hashdb::source_sub_count_t(file_hash,
+                                                            it->sub_count));
       }
-      delete source_id_offsets;
+      delete source_id_sub_counts;
       return true;
 
     } else {
       // no action, lmdb_hash_data_manager.find clears out fields
-      delete source_id_offsets;
+      delete source_id_sub_counts;
       return false;
     }
   }
@@ -895,11 +848,12 @@ namespace hashdb {
     uint64_t k_entropy;
     std::string block_label;
     uint64_t unused_count;
-    hashdb::source_offsets_t* source_offsets = new hashdb::source_offsets_t;
+    hashdb::source_sub_counts_t* source_sub_counts =
+                                new hashdb::source_sub_counts_t;
 
     // scan
     bool found_hash = find_hash(block_hash, k_entropy, block_label,
-                                unused_count, *source_offsets);
+                                unused_count, *source_sub_counts);
 
     std::string json_hash_string;
     if (found_hash) {
@@ -915,29 +869,22 @@ namespace hashdb {
       json_doc.AddMember("k_entropy", k_entropy, allocator);
       json_doc.AddMember("block_label", v(block_label, allocator), allocator);
 
-      // put in source_offsets as triplets of file hash, sub_count, offset list
-      rapidjson::Value json_source_offsets(rapidjson::kArrayType);
+      // put in source_sub_counts as pairs of file hash, sub_count
+      rapidjson::Value json_source_sub_counts(rapidjson::kArrayType);
 
-      for (hashdb::source_offsets_t::const_iterator it =
-           source_offsets->begin(); it != source_offsets->end(); ++it) {
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts->begin(); it != source_sub_counts->end(); ++it) {
 
         // file hash
-        json_source_offsets.PushBack(
+        json_source_sub_counts.PushBack(
                    v(hashdb::bin_to_hex(it->file_hash), allocator), allocator);
 
         // sub_count
-        json_source_offsets.PushBack(it->sub_count, allocator);
+        json_source_sub_counts.PushBack(it->sub_count, allocator);
 
-        // file offset array
-        rapidjson::Value json_file_offsets(rapidjson::kArrayType);
-        for (std::set<uint64_t>::const_iterator it2 =
-             it->file_offsets.begin(); it2 != it->file_offsets.end(); ++it2) {
-          json_file_offsets.PushBack(*it2, allocator);
-        }
-        json_source_offsets.PushBack(json_file_offsets, allocator);
-        
       }
-      json_doc.AddMember("source_offsets", json_source_offsets, allocator);
+      json_doc.AddMember("source_sub_counts", json_source_sub_counts,
+                         allocator);
 
       // write JSON text
       rapidjson::StringBuffer strbuf;
@@ -946,11 +893,11 @@ namespace hashdb {
       json_hash_string = strbuf.GetString();
 
     } else {
-      // clear the source offset pairs string
+      // not found
       json_hash_string = "";
     }
 
-    delete source_offsets;
+    delete source_sub_counts;
     return json_hash_string;
   }
 

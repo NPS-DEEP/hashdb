@@ -73,7 +73,7 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
   uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
-  hashdb::source_offsets_t source_offsets;
+  hashdb::source_sub_counts_t source_sub_counts;
 
   block_hash = manager.first_hash();
   while (block_hash.size() != 0) {
@@ -91,8 +91,8 @@ void export_json_hashes(const hashdb::scan_manager_t& manager,
 
     // update the progress tracker, this accurate approach is expensive
     manager.find_hash(block_hash, k_entropy, block_label,
-                      count, source_offsets);
-    progress_tracker.track_hash_data(source_offsets.size());
+                      count, source_sub_counts);
+    progress_tracker.track_hash_data(source_sub_counts.size());
 
     // next
     block_hash = manager.next_hash(block_hash);
@@ -113,14 +113,14 @@ void export_json_range(const hashdb::scan_manager_t& manager,
   uint64_t k_entropy;
   std::string block_label;
   uint64_t count;
-  hashdb::source_offsets_t source_offsets;
+  hashdb::source_sub_counts_t source_sub_counts;
 
   // export the block hashes that are in range
   block_hash = manager.first_hash();
   while (block_hash.size() != 0) {
 
     manager.find_hash(block_hash, k_entropy, block_label,
-                      count, source_offsets);
+                      count, source_sub_counts);
 
     if (block_hash >= begin_block_hash && block_hash <= end_block_hash) {
       // process the block hash since it is in range
@@ -137,14 +137,14 @@ void export_json_range(const hashdb::scan_manager_t& manager,
       os << json_hash_string << "\n";
 
       // note the sources involved
-      for (hashdb::source_offsets_t::const_iterator it = source_offsets.begin();
-           it != source_offsets.end(); ++it) {
+      for (hashdb::source_sub_counts_t::const_iterator it =
+           source_sub_counts.begin(); it != source_sub_counts.end(); ++it) {
         source_hashes.insert(it->file_hash);
       }
     }
 
     // update the progress tracker
-    progress_tracker.track_hash_data(source_offsets.size());
+    progress_tracker.track_hash_data(source_sub_counts.size());
 
     // next
     block_hash = manager.next_hash(block_hash);

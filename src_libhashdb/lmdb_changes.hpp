@@ -39,10 +39,10 @@ class lmdb_changes_t {
 
   public:
   // hash_data
-  size_t hash_data_source_inserted;
-  size_t hash_data_offset_inserted;
+  size_t hash_data_inserted;
+  size_t hash_data_merged;
+  size_t hash_data_merged_same;
   size_t hash_data_mismatched_data_detected;
-  size_t hash_data_duplicate_offset_detected;
   size_t hash_data_mismatched_sub_count_detected;
 
   // hash
@@ -65,10 +65,10 @@ class lmdb_changes_t {
   size_t source_name_already_present;
 
   lmdb_changes_t() :
-            hash_data_source_inserted(0),
-            hash_data_offset_inserted(0),
+            hash_data_inserted(0),
+            hash_data_merged(0),
+            hash_data_merged_same(0),
             hash_data_mismatched_data_detected(0),
-            hash_data_duplicate_offset_detected(0),
             hash_data_mismatched_sub_count_detected(0),
             hash_prefix_inserted(0),
             hash_suffix_inserted(0),
@@ -87,21 +87,21 @@ class lmdb_changes_t {
 
     os << "# hashdb changes:\n";
     // log changes
-    if (hash_data_source_inserted) {
-      os << "#     hash_data_source_inserted: "
-         << hash_data_source_inserted<< "\n";
+    if (hash_data_inserted) {
+      os << "#     hash_data_inserted: "
+         << hash_data_inserted<< "\n";
     }
-    if (hash_data_offset_inserted) {
-      os << "#     hash_data_offset_inserted: "
-         << hash_data_offset_inserted<< "\n";
+    if (hash_data_merged) {
+      os << "#     hash_data_merged: "
+         << hash_data_merged<< "\n";
+    }
+    if (hash_data_merged_same) {
+      os << "#     hash_data_merged_same: "
+         << hash_data_merged_same<< "\n";
     }
     if (hash_data_mismatched_data_detected) {
       os << "#     hash_data_mismatched_data_detected: "
          << hash_data_mismatched_data_detected << "\n";
-    }
-    if (hash_data_duplicate_offset_detected) {
-      os << "#     hash_data_duplicate_offset_detected: "
-         << hash_data_duplicate_offset_detected << "\n";
     }
     if (hash_data_mismatched_sub_count_detected) {
       os << "#     hash_data_mismatched_sub_count_detected: "
@@ -140,11 +140,11 @@ class lmdb_changes_t {
     if (source_name_already_present) {
       os << "#     source_name_already_present: " << source_name_already_present << "\n";
     }
-    if (hash_data_source_inserted == 0 &&
-        hash_data_offset_inserted == 0 &&
+    if (hash_data_inserted == 0 &&
+        hash_data_merged == 0 &&
+        hash_data_merged_same == 0 &&
         hash_data_mismatched_data_detected == 0 &&
-        hash_data_duplicate_offset_detected== 0 &&
-        hash_data_mismatched_sub_count_detected== 0 &&
+        hash_data_mismatched_sub_count_detected == 0 &&
         hash_prefix_inserted == 0 &&
         hash_suffix_inserted == 0 &&
         hash_count_changed == 0 &&

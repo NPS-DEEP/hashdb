@@ -140,6 +140,8 @@ LIBHASHDB_INCS = \
 	lmdb_changes.hpp \
 	lmdb_context.hpp \
 	lmdb_hash_data_manager.hpp \
+	lmdb_hash_data_support.cpp \
+	lmdb_hash_data_support.hpp \
 	lmdb_hash_manager.hpp \
 	lmdb_helper.h \
 	lmdb_print_val.hpp \
@@ -154,7 +156,6 @@ LIBHASHDB_INCS = \
 	num_cpus.hpp \
 	print_environment.hpp \
 	settings_manager.hpp \
-	source_id_offsets.hpp \
 	tprint.cpp \
 	tprint.hpp
 

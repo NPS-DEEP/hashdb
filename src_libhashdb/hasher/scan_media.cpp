@@ -175,14 +175,6 @@ namespace hashdb {
       return error_message;
     }
 
-    // make sure step size is compatible with byte alignment
-    if (step_size % settings.byte_alignment != 0) {
-      std::stringstream ss;
-      ss << "Invalid byte alignment: step size " << step_size
-         << " does not align with byte alignment " << settings.byte_alignment;
-      return ss.str();
-    }
-
     // open scan manager
     hashdb::scan_manager_t scan_manager(hashdb_dir);
 

@@ -154,7 +154,7 @@ namespace hasher {
 
         // add block hash to DB
         job.import_manager->insert_hash(block_hash, k_entropy, block_label,
-                                        job.file_hash, job.file_offset+i);
+                                        job.file_hash);
       }
 
       // submit tracked source counts to the ingest tracker for final reporting

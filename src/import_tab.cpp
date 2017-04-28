@@ -22,6 +22,10 @@
  * Provides the service of importing hash data from a file formatted
  * using tab delimited fields, specifically:
  * <file hash>\t<block hash>\t<block offset>\n
+ *
+ * Note that block offset is not used.  All block hashes for new file
+ * hashes are imported.  All block hashes for pre-existing file hashes
+ * are ignored.
  */
 
 #include <config.h>
@@ -44,9 +48,6 @@
 #include "../src_libhashdb/hashdb.hpp"
 #include "s_to_uint64.hpp"
 #include "progress_tracker.hpp"
-
-// tab specification defines sector size
-static const uint32_t sector_size = 512;
 
 void import_tab(hashdb::import_manager_t& manager,
                 const std::string& repository_name,
@@ -121,17 +122,7 @@ void import_tab(hashdb::import_manager_t& manager,
       continue;
     }
 
-    // get file offset
-    size_t sector_index;
-    sector_index = s_to_uint64(line.substr(tab_index2 + 1));
-    if (sector_index == 0) {
-      // index starts at 1 so 0 is invalid
-      std::cerr << "Invalid sector index on line " << line_number
-                << ": '" << line << "', '"
-                << line.substr(tab_index2 + 1) << "'\n";
-      continue;
-    }
-    uint64_t file_offset = (sector_index - 1) * sector_size;
+    // skip the file offset
 
     // mark with "w" if in whitelist
     std::string whitelist_flag = "";
@@ -149,7 +140,7 @@ void import_tab(hashdb::import_manager_t& manager,
 
     // add block hash
     manager.insert_hash(block_binary_hash, 0.0, whitelist_flag,
-                        file_binary_hash, file_offset);
+                        file_binary_hash);
 
     // update progress tracker
     progress_tracker.track();

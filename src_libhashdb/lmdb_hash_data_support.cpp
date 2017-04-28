@@ -44,6 +44,7 @@
 
 #include "lmdb.h"
 #include "lmdb_helper.h"
+#include "lmdb_hash_data_support.hpp"
 #include "lmdb_context.hpp"
 #include "tprint.hpp"
 #include <unistd.h>
@@ -69,7 +70,7 @@ inline uint8_t* put1(uint8_t* p, uint64_t n) {
   *p = static_cast<uint8_t>(n);
   return p+1;
 }
-inline uint8_t* get1(uint8_t* p, &n) {
+inline const uint8_t* get1(const uint8_t* const p, uint64_t &n) {
   n = p[0];
   return p+1;
 }
@@ -82,7 +83,7 @@ inline uint8_t* put2(uint8_t* p, uint64_t n) {
   p[1] = static_cast<uint8_t>(n >> 8);
   return p+2;
 }
-inline uint8_t* get2(uint8_t* p, &n) {
+inline const uint8_t* get2(const uint8_t* const p, uint64_t &n) {
   n = p[0] | (p[1]>>8);
   return p+2;
 }
@@ -97,18 +98,19 @@ inline uint8_t* put4(uint8_t* p, uint64_t n) {
   p[3] = static_cast<uint8_t>((n >> 24) & 0xff);
   return p+4;
 }
-inline uint8_t* get4(uint8_t* p, &n) {
+inline const uint8_t* get4(const uint8_t* const p, uint64_t &n) {
   n = p[0] | (p[1]>>8) | (p[2]>>16) | (p[3]>>24);
   return p+4;
 }
 
 // encode Type 1 record
-static size_t encode_type1(uint64_t k_entropy,
+static size_t encode_type1(const uint64_t k_entropy,
                            const std::string& block_label,
-                           uint64_t source_id,
-                           uint64_t sub_count,
+                           const uint64_t source_id,
+                           const uint64_t sub_count,
                            uint8_t* const p_buf) {
 
+  const size_t block_label_size = block_label.size();
   if (block_label.size() > max_block_label_size) {
     std::cerr << "block_label too large: " << block_label << "\n";
     assert(0);
@@ -140,11 +142,12 @@ static size_t encode_type1(uint64_t k_entropy,
 }
 
 // encode Type 2 record
-static size_t encode_type2(uint64_t k_entropy,
+static size_t encode_type2(const uint64_t k_entropy,
                            const std::string& block_label,
-                           uint64_t count,
+                           const uint64_t count,
                            uint8_t* const p_buf) {
 
+  const size_t block_label_size = block_label.size();
   if (block_label.size() > max_block_label_size) {
     std::cerr << "block_label too large: " << block_label << "\n";
     assert(0);
@@ -164,7 +167,7 @@ static size_t encode_type2(uint64_t k_entropy,
   p = put4(p, count);
 
   // check bounds
-  if (p - p_buf > type2_max_size) {
+  if (p - p_buf > type1_max_size) {
     assert(0);
   }
 
@@ -271,9 +274,11 @@ namespace hashdb {
     }
   }
 
-  // move cursor forward from Type 2 to correct Type 3 else false and rewind
+  // Move cursor forward from Type 2 to correct Type 3 else false and rewind.
+  // Return sub_count.
   bool cursor_to_type3(hashdb::lmdb_context_t& context,
-                       const uint64_t source_id) {
+                       const uint64_t source_id,
+                       uint64_t& sub_count) {
 
     while (true) {
       // get next Type 3 record
@@ -281,15 +286,18 @@ namespace hashdb {
                               MDB_NEXT_DUP);
 
       if (rc == 0) {
-        uint64_t next_source_id;
-        decode_type3_source_id(context, next_source_id);
-        if (source_id == next_source_id) {
+        uint64_t existing_source_id;
+        uint64_t existing_sub_count;
+        decode_type3(context, existing_source_id, existing_sub_count);
+        if (existing_source_id == source_id) {
+          sub_count = existing_sub_count;
           return true;
         }
       } else if (rc == MDB_NOTFOUND) {
         // back up cursor to Type 2
         rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
                             MDB_FIRST_DUP);
+        sub_count = 0;
         return false;
       } else {
         // invalid rc
@@ -331,7 +339,7 @@ print_mdb_val("hash_data_support decode_type1 data", context.data);
     p = lmdb_helper::decode_uint64_t(p, source_id);
 
     // read sub_count
-    p = get2(p, sub_count)
+    p = get2(p, sub_count);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
@@ -368,7 +376,7 @@ print_mdb_val("hash_data_support decode_type2 data", context.data);
     p += block_label_size;
 
     // read count
-    p = get4(p, count)
+    p = get4(p, count);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
@@ -395,7 +403,7 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
     p = lmdb_helper::decode_uint64_t(p, source_id);
 
     // read sub_count
-    p = get2(p, sub_count)
+    p = get2(p, sub_count);
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
@@ -407,13 +415,13 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
   // write new Type 1 record, key must be valid
   void new_type1(hashdb::lmdb_context_t& context,
                  const std::string& key,
-                 uint64_t k_entropy,
+                 const uint64_t k_entropy,
                  const std::string& block_label,
-                 uint64_t source_id,
-                 uint64_t sub_count) {
+                 const uint64_t source_id,
+                 const uint64_t sub_count) {
 
     // space for encoding
-    const uint8_t* p_buf = data[type1_max_size];
+    uint8_t p_buf[type1_max_size];
 
     // encode type1
     const size_t size = encode_type1(k_entropy, block_label,
@@ -426,29 +434,29 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
   // write new Type 3 record, key must be valid
   void new_type3(hashdb::lmdb_context_t& context,
                  const std::string& key,
-                 uint64_t source_id,
-                 uint64_t sub_count) {
+                 const uint64_t source_id,
+                 const uint64_t sub_count) {
 
     // space for encoding
-    const uint8_t* p_buf = data[type3_max_size];
+    uint8_t p_buf[type3_max_size];
 
     // encode type3
     const size_t size = encode_type3(source_id, sub_count, p_buf);
 
     // write
-    write_record(context, key, p_buf, p - p_buf);
+    write_record(context, key, p_buf, size);
   }
 
   // replace Type 1 record at cursor
   void replace_type1(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t k_entropy,
+                     const uint64_t k_entropy,
                      const std::string& block_label,
-                     uint64_t source_id,
-                     uint64_t sub_count) {
+                     const uint64_t source_id,
+                     const uint64_t sub_count) {
 
     // space for encoding
-    const uint8_t* p_buf = data[type1_max_size];
+    uint8_t p_buf[type1_max_size];
 
     // encode type1
     const size_t size = encode_type1(k_entropy, block_label,
@@ -461,12 +469,12 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
   // replace Type 2 record at cursor
   void replace_type2(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t k_entropy,
+                     const uint64_t k_entropy,
                      const std::string& block_label,
-                     uint64_t count) {
+                     const uint64_t count) {
 
     // space for encoding that can replace old type1
-    const uint8_t* p_buf = data[type1_max_size];
+    uint8_t p_buf[type1_max_size];
 
     // encode type1
     const size_t size = encode_type2(k_entropy, block_label, count, p_buf);
@@ -478,11 +486,11 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
   // replace Type 3 record at cursor
   void replace_type3(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t& source_id,
-                     uint64_t& sub_count) {
+                     const uint64_t& source_id,
+                     const uint64_t& sub_count) {
 
     // space for encoding
-    const uint8_t* p_buf = data[type3_max_size];
+    uint8_t p_buf[type3_max_size];
 
     // encode type3
     const size_t size = encode_type3(source_id, sub_count, p_buf);
@@ -492,6 +500,4 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
   }
 
 } // end namespace hashdb
-
-#endif
 

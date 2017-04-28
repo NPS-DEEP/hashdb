@@ -68,25 +68,22 @@ namespace hashdb {
   const char* version();
 
   // ************************************************************
-  // source offsets
+  // source sub_counts
   // ************************************************************
 #ifndef SWIG
-  // source_offset information
-  struct source_offset_t {
+  // source_sub_count information
+  struct source_sub_count_t {
     const std::string file_hash;
     const uint64_t sub_count;
-    const std::set<uint64_t> file_offsets;
-    source_offset_t(const std::string& p_file_hash,
-                    const uint64_t p_sub_count,
-                    const std::set<uint64_t> p_file_offsets);
+    source_sub_count_t(const std::string& p_file_hash,
+                       const uint64_t p_sub_count);
     /**
      * Only the file hash is compared.  If they are the same, the sub_count
-     * should match.  Because file_offsets are truncated, the set of offsets
-     * is expected to not always match.
+     * should match.
      */
-    bool operator<(const source_offset_t& that) const;
+    bool operator<(const source_sub_count_t& that) const;
   };
-  typedef std::set<source_offset_t> source_offsets_t;
+  typedef std::set<source_sub_count_t> source_sub_counts_t;
 
   // pair(repository_name, filename)
   typedef std::pair<std::string, std::string> source_name_t;
@@ -101,8 +98,6 @@ namespace hashdb {
    *
    * Attributes:
    *   settings_version - The version of the settings record
-   *   byte_alignment - Minimal step size of data, in bytes.  Blocks must
-   *     align to this.
    *   block_size - Size, in bytes, of data blocks.
    *   hash_prefix_bits - The number of hash prefix bits to use as the
    *     key in the optimized hash storage.
@@ -111,10 +106,9 @@ namespace hashdb {
    */
   struct settings_t {
 #ifndef SWIG
-    static const uint32_t CURRENT_SETTINGS_VERSION = 3;
+    static const uint32_t CURRENT_SETTINGS_VERSION = 4;
 #endif
     uint32_t settings_version;
-    uint32_t byte_alignment;
     uint32_t block_size;
     uint32_t hash_prefix_bits;
     uint32_t hash_suffix_bytes;
@@ -402,15 +396,11 @@ namespace hashdb {
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   file_hash - The file hash of the source file in binary form.
-     *   file_offset - The byte offset into the file hash where the
-     *     block hash is located.  A warning is printed if this file
-     *     offset is already present for the file_hash.
      */
     void insert_hash(const std::string& block_hash,
                      const uint64_t k_entropy,
                      const std::string& block_label,
-                     const std::string& file_hash,
-                     const uint64_t file_offset);
+                     const std::string& file_hash);
 
 #ifndef SWIG
     /**
@@ -425,16 +415,12 @@ namespace hashdb {
      *     no label.
      *   file_hash - The file hash of the source file in binary form.
      *   sub_count - The number of file offsets to add for this file hash.
-     *   file_offsets - A list of byte offsets into the file hash where
-     *     the block hash is located.  This list can be truncated.
-     *     This list may or may not already be there.
      */
     void merge_hash(const std::string& block_hash,
                     const uint64_t k_entropy,
                     const std::string& block_label,
                     const std::string& file_hash,
-                    const uint64_t sub_count,
-                    const std::set<uint64_t> file_offsets);
+                    const uint64_t sub_count);
 #endif
 
     /**
@@ -448,7 +434,7 @@ namespace hashdb {
      *       "block_hash": "c313ac...",
      *       "k_entropy": 2500,
      *       "block_label": "W",
-     *       "source_offsets": ["b9e7...", 2, [0, 4096]]
+     *       "source_sub_counts": ["b9e7...", 2]
      *     }
      *
      *   Example source syntax:
@@ -567,8 +553,8 @@ namespace hashdb {
      *   block_label - Text indicating the type of the block or "" for
      *     no label.
      *   count - The total count of file offsets related to this hash.
-     *   source_offsets - Set of source sub-counts and file offsets for
-     *     each source associated with this hash.
+     *   source_sub_counts - Set of source and source sub-counts for each
+     *     source associated with this hash.
      *
      * Returns:
      *   True if the hash is present, false if not.
@@ -577,7 +563,7 @@ namespace hashdb {
                    uint64_t& k_entropy,
                    std::string& block_label,
                    uint64_t& count,
-                   source_offsets_t& source_offsets) const;
+                   source_sub_counts_t& source_sub_counts) const;
 #endif
 
     /**
@@ -595,7 +581,7 @@ namespace hashdb {
      *       "k_entropy": 2500,
      *       "block_label": "W",
      *       "count": 2,
-     *       "source_offsets": ["b9e7...", 2, [0, 4096]]
+     *       "source_sub_counts": ["b9e7...", 2]
      *     }
      */
     std::string export_hash_json(const std::string& block_hash) const;
@@ -629,7 +615,7 @@ namespace hashdb {
      *   block_hash - The block hash in binary form.
      *
      * Returns:
-     *   The count of source and offset entries associated with this hash.
+     *   The total count of file offsets related to this hash.
      */
     size_t find_hash_count(const std::string& block_hash) const;
 
@@ -641,7 +627,7 @@ namespace hashdb {
      *   block_hash - The block hash in binary form.
      *
      * Returns:
-     *   The count of source and offset entries expected to be associated
+     *   The count of file offset entries expected to be associated
      *   with this hash.  This value can be wrong because there can be
      *   collisions with truncated hash values.
      */
@@ -718,7 +704,7 @@ namespace hashdb {
      *           "nonprobative_count": 2,
      *           "names": ["repository1", "filename1", "repo2", "f2"]
      *         }],
-     *         "source_offsets": ["b9e7...", 2, [0, 4096]]
+     *         "source_sub_counts": ["b9e7...", 2]
      *       }
      *     EXPANDED_OPTIMIZED - return all available data the first time
      *       but suppress hash and source data after.  Example syntax

@@ -29,18 +29,21 @@
 
 #include <unistd.h>
 #include <string>
+#include "lmdb_context.hpp"
 
 namespace hashdb {
 
   // MAX
-  const int max_block_label_size;
+  extern const int max_block_label_size;
 
   // move cursor to first entry of current key
   void cursor_to_first_current(hashdb::lmdb_context_t& context);
 
-  // move cursor forward from Type 2 to correct Type 3 else false and rewind
+  // Move cursor forward from Type 2 to correct Type 3 else false and rewind.
+  // Return sub_count.
   bool cursor_to_type3(hashdb::lmdb_context_t& context,
-                       const uint64_t source_id);
+                       const uint64_t source_id,
+                       uint64_t& sub_count);
 
   // parse Type 1 context.data into these parameters
   void decode_type1(hashdb::lmdb_context_t& context,
@@ -63,37 +66,37 @@ namespace hashdb {
   // write new Type 1 record, key must be valid
   void new_type1(hashdb::lmdb_context_t& context,
                  const std::string& key,
-                 uint64_t k_entropy,
+                 const uint64_t k_entropy,
                  const std::string& block_label,
-                 uint64_t source_id,
-                 uint64_t sub_count);
+                 const uint64_t source_id,
+                 const uint64_t sub_count);
 
   // write new Type 3 record, key must be valid
   void new_type3(hashdb::lmdb_context_t& context,
                  const std::string& key,
-                 uint64_t& source_id,
-                 uint64_t& sub_count);
+                 const uint64_t& source_id,
+                 const uint64_t& sub_count);
 
   // replace Type 1 record at cursor
   void replace_type1(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t k_entropy,
+                     const uint64_t k_entropy,
                      const std::string& block_label,
-                     uint64_t source_id,
-                     uint64_t sub_count);
+                     const uint64_t source_id,
+                     const uint64_t sub_count);
 
-  // replace Type 2 record at cursor
+  // replace Type 2 record at cursor, maybe over discontinued type 1
   void replace_type2(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t k_entropy,
+                     const uint64_t k_entropy,
                      const std::string& block_label,
-                     uint64_t count);
+                     const uint64_t count);
 
   // replace Type 3 record at cursor
   void replace_type3(hashdb::lmdb_context_t& context,
                      const std::string& key,
-                     uint64_t& source_id,
-                     uint64_t& sub_count);
+                     const uint64_t& source_id,
+                     const uint64_t& sub_count);
 
 } // end namespace hashdb
 

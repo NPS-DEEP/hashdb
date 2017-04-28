@@ -88,8 +88,6 @@ namespace hashdb {
     // make sure all the parts are there
     if (document.HasMember("settings_version")
         && document["settings_version"].IsUint64()
-        && document.HasMember("byte_alignment")
-        && document["byte_alignment"].IsUint64()
         && document.HasMember("block_size")
         && document["block_size"].IsUint64()
         && document.HasMember("hash_prefix_bits")
@@ -99,7 +97,6 @@ namespace hashdb {
 
       // parse the values
       settings.settings_version = document["settings_version"].GetUint64();
-      settings.byte_alignment = document["byte_alignment"].GetUint64();
       settings.block_size = document["block_size"].GetUint64();
       settings.hash_prefix_bits = document["hash_prefix_bits"].GetUint64();
       settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
