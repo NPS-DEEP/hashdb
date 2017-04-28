@@ -25,7 +25,7 @@
  *
  * Type 1: only one entry for this hash:
  *         source_id, entropy, block_label, 2-byte sub_count up to
- *         65535, do not wrap, 2-byte buffer 0x00 to allow transition
+ *         65535, do not wrap, 2-byte buffer 0x0000 to allow transition
  *         to Type 2.
  *
  * Type 2: first line of multi-entry hash:
@@ -39,11 +39,9 @@
  *     type 1 and Type 2 data.
  *   * LMDB sorts Type 2 before Type 3 records because of the NULL byte
  *     in type 2.
- *   * On insert, asserts if the file offset is invalid.  Validate at a
- *     higher layer.
- *   * Entropy precision is lost because entropy values are stored as
+ *   * Some entropy precision is lost because entropy values are stored as
  *     integers, see entropy_scale.
- *
+ *   * Count and sub_count fields clip at 0xffffffff and 0xffff, respectively.
  */
 
 #ifndef LMDB_HASH_DATA_MANAGER_HPP
@@ -56,6 +54,7 @@
 #include "lmdb_helper.h"
 #include "lmdb_context.hpp"
 #include "lmdb_changes.hpp"
+#include "lmdb_hash_data_support.hpp"
 #include "source_id_offsets.hpp"
 #include "tprint.hpp"
 #include <vector>
@@ -75,20 +74,24 @@
 #endif
 #include "mutex_lock.hpp"
 
-static const size_t max_lmdb_data_size = 511; // imposed by LMDB
-static const size_t max_lmdb_block_label_size = 10;
-
 namespace hashdb {
 
-// ************************************************************
-// LMDB hash data manager
-// ************************************************************
+  // see if data differs
+  static void check_mismatch(const uint64_t k_entropy1,
+                             const uint64_t k_entropy2,
+                             const std::string& block_label1,
+                             const std::string& block_label2,
+                             lmdb_changes_t& changes) const {
+    if (k_entropy1 != k_entropy2 || block_label1 != block_label2) {
+      ++changes.zzzz;
+    }
+  }
+
 class lmdb_hash_data_manager_t {
 
   private:
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
-  const uint32_t byte_alignment;
   MDB_env* env;
 
 #ifdef HAVE_PTHREAD
@@ -101,942 +104,6 @@ class lmdb_hash_data_manager_t {
   lmdb_hash_data_manager_t(const lmdb_hash_data_manager_t&);
   lmdb_hash_data_manager_t& operator=(const lmdb_hash_data_manager_t&);
 
-  // move cursor to first entry of current key
-  void cursor_to_first_current(hashdb::lmdb_context_t& context) {
-    int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_FIRST_DUP);
-
-    // the move must work
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-  }
-
-  // move cursor forward from Type 2 to correct Type 3 else false and rewind
-  bool cursor_to_type3(hashdb::lmdb_context_t& context,
-                       const uint64_t source_id) {
-
-    while (true) {
-      // get next Type 3 record
-      int rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                              MDB_NEXT_DUP);
-
-      if (rc == 0) {
-        uint64_t next_source_id;
-        decode_source_id(context, next_source_id);
-        if (source_id == next_source_id) {
-          return true;
-        }
-      } else if (rc == MDB_NOTFOUND) {
-        // back up cursor to Type 2
-        rc = mdb_cursor_get(context.cursor, &context.key, &context.data,
-                            MDB_FIRST_DUP);
-        return false;
-      } else {
-        // invalid rc
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
-    }
-  }
-
-  // encode file offsets into bytes at p
-  // At this layer, invalid byte alignment is fatal.
-  uint8_t* encode_file_offsets(uint8_t* p,
-                               const uint64_t sub_count,
-                               const file_offsets_t& file_offsets) const {
-
-    // encode the sub_count
-    p = lmdb_helper::encode_uint64_t(sub_count, p);
-
-    // encode file offsets
-    for (file_offsets_t::const_iterator it = file_offsets.begin();
-          it != file_offsets.end(); ++it) {
-
-      // encode file_offset else fail if invalid
-      const uint64_t file_offset = *it;
-      if (file_offset % byte_alignment == 0) {
-        // valid file offset
-        const uint64_t file_offset_index = file_offset / byte_alignment;
-        p = lmdb_helper::encode_uint64_t(file_offset_index, p);
-      } else {
-        assert(0);
-      }
-    }
-    return p;
-  }
-
-  // decode source ID from Type 1 or Type 3
-  void decode_source_id(hashdb::lmdb_context_t& context,
-                    uint64_t& source_id) {
-
-    // prepare to read Type 1 or Type 3 entry:
-    const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
-    const uint8_t* p = p_start;
-
-    // source ID
-    p = lmdb_helper::decode_uint64_t(p, source_id);
-
-    // read must finish before end of data record
-    if (p >= p_start + context.data.mv_size) {
-      std::cerr << "data decode error in LMDB hash data store\n";
-      assert(0);
-    }
-  }
-
-  // read sub_count and append file offsets, require data record alignment
-  uint64_t decode_file_offsets(const uint8_t* p, const uint8_t* const p_end,
-                               file_offsets_t& file_offsets) const {
-
-    // read sub_count
-    uint64_t sub_count;
-    p = lmdb_helper::decode_uint64_t(p, sub_count);
-
-    // read 0+ file offsets
-    while (p < p_end) {
-
-      // file offset
-      uint64_t file_offset_index;
-      p = lmdb_helper::decode_uint64_t(p, file_offset_index);
-      file_offsets.insert(file_offset_index * byte_alignment);
-    }
-
-    // read must align to data record
-    if (p != p_end) {
-      std::cerr << "data decode error in LMDB hash data store\n";
-      assert(0);
-    }
-
-    return sub_count;
-  }
-
-  // Add file offset A to offsets list B as maximums allow.  Warn when
-  // attempting to add duplicate offsets.  Return count added to offsets list.
-  uint64_t insert_file_offset(const uint64_t source_file_offset,
-                              const size_t count_stored,
-                              file_offsets_t& destination_file_offsets,
-                              hashdb::lmdb_changes_t& changes) {
-
-    // stop adding if at a max_count
-    if (count_stored >= max_count) {
-      return 0;
-    }
-
-    // stop adding if at a max_sub_count
-    if (destination_file_offsets.size() >= max_sub_count) {
-      return 0;
-    }
-
-    // add the offset
-    std::pair<file_offsets_t::const_iterator, bool> pair =
-                       destination_file_offsets.insert(source_file_offset);
-    if (pair.second == true) {
-      // the file offset was added
-      return 1;
-    } else {
-      // the file offset was not added because it was already there
-      ++changes.hash_data_duplicate_offset_detected;
-      return 0;
-    }
-  }
-
-  // prepare addable file offsets
-  uint64_t merge_file_offsets(const file_offsets_t& file_offsets, 
-                              const size_t count_stored,
-                              file_offsets_t& addable_file_offsets,
-                              hashdb::lmdb_changes_t& changes) {
-
-    // destination must be empty
-    if (addable_file_offsets.size() != 0) {
-      assert(0);
-    }
-
-    // copy to addable as maximums allow
-    size_t sub_count_stored = 0;
-    for (file_offsets_t::const_iterator it = file_offsets.begin();
-          it != file_offsets.end(); ++it) {
-
-      // stop adding if at a max_count
-      if (sub_count_stored + count_stored >= max_count) {
-        break;
-      }
-
-      // stop adding if at a max_sub_count
-      if (addable_file_offsets.size() >= max_sub_count) {
-        break;
-      }
-
-      // add the offset
-      addable_file_offsets.insert(*it);
-
-      // the file offset was added
-      ++sub_count_stored;
-    }
-    return sub_count_stored;
-  }
-
-  // see if metadata differs
-  bool metadata_differs(const uint64_t k_entropy1,
-                        const uint64_t k_entropy2,
-                        const std::string& block_label1,
-                        const std::string& block_label2) const {
-    return (k_entropy1 != k_entropy2 || block_label1 != block_label2);
-  }
-
-  size_t encode_type1(const uint64_t source_id,
-                      const uint64_t k_entropy,
-                      const std::string& block_label,
-                      const uint64_t sub_count,
-                      const file_offsets_t& file_offsets,
-                      uint8_t* const data) {
-
-    const size_t block_label_size =
-                (block_label.size() > max_lmdb_block_label_size)
-                 ? max_lmdb_block_label_size : block_label.size();
-    // space for encoding
-    uint8_t* p = data;
-
-    // add source_id
-    p = lmdb_helper::encode_uint64_t(source_id, p);
-
-    // add scaled entropy
-    p = lmdb_helper::encode_uint64_t(k_entropy, p);
-
-    // add block_label size and block_label
-    p = lmdb_helper::encode_uint64_t(block_label_size, p);
-    std::memcpy(p, block_label.c_str(), block_label_size);
-    p += block_label_size;
-
-    // add sub_count and file offsets
-    p = encode_file_offsets(p, sub_count, file_offsets);
-
-    // check bounds
-    if (p > data + max_lmdb_data_size) {
-      assert(0);
-    }
-
-    return p - data;
-  }
-
-  size_t encode_type2(const uint64_t k_entropy,
-                      const std::string& block_label,
-                      const uint64_t count,
-                      const uint64_t count_stored,
-                      uint8_t* const data) {
-
-    const size_t block_label_size =
-                (block_label.size() > max_lmdb_block_label_size)
-                 ? max_lmdb_block_label_size : block_label.size();
-    // space for encoding
-    uint8_t* p = data;
-
-    // add NULL byte
-    p[0] = 0;
-    ++p;
-
-    // set fields
-    p = lmdb_helper::encode_uint64_t(k_entropy, p);
-    p = lmdb_helper::encode_uint64_t(block_label_size, p);
-    std::memcpy(p, block_label.c_str(), block_label_size);
-    p += block_label_size;
-    p = lmdb_helper::encode_uint64_t(count, p);
-    p = lmdb_helper::encode_uint64_t(count_stored, p);
-
-    // check bounds
-    if (p > data + max_lmdb_data_size) {
-      assert(0);
-    }
-
-    return p - data;
-  }
-
-  size_t encode_type3(const uint64_t source_id,
-                      const uint64_t sub_count,
-                      const file_offsets_t& file_offsets,
-                      uint8_t* const data) {
-
-    // allocate space
-    uint8_t* p = data;
-
-    // add source_id
-    p = lmdb_helper::encode_uint64_t(source_id, p);
-
-    // add count and file offsets
-    p = encode_file_offsets(p, sub_count, file_offsets);
-
-    // check bounds
-    if (p > static_cast<uint8_t*>(data + max_lmdb_data_size)) {
-      assert(0);
-    }
-
-    return p - data;
-  }
-
-  // write the enocding.  Key must be valid.
-  void write_encoding(hashdb::lmdb_context_t& context,
-                      const std::string& key,
-                      const uint8_t* const data, const size_t data_size) {
-
-    // set key and data
-    context.key.mv_size = key.size();
-    context.key.mv_data = static_cast<uint8_t*>(
-             static_cast<void*>(const_cast<char*>(key.c_str())));
-    context.data.mv_size = data_size;
-    context.data.mv_data = const_cast<uint8_t*>(data);
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager write_encoding key", context.key);
-print_mdb_val("hash_data_manager write_encoding data", context.data);
-#endif
-
-    int rc = mdb_cursor_put(context.cursor, &context.key, &context.data,
-                            MDB_NODUPDATA);
-    if (rc != 0) {
-      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-      assert(0);
-    }
-  }
-
-
-  // overwrite the record at the cursor, try to optimize
-  void overwrite_encoding(hashdb::lmdb_context_t& context,
-                          const std::string& key,
-                          const uint8_t* const data, const size_t data_size) {
-
-    if (context.key.mv_size == key.size() &&
-                                    context.data.mv_size == data_size) {
-      // replace in place
-      context.key.mv_data = static_cast<uint8_t*>(
-             static_cast<void*>(const_cast<char*>(key.c_str())));
-      context.data.mv_data = const_cast<uint8_t*>(data);
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager overwriting key", context.key);
-print_mdb_val("hash_data_manager overwriting data", context.data);
-#endif
-      int rc = mdb_cursor_put(context.cursor, &context.key, &context.data,
-                              MDB_CURRENT);
-      if (rc != 0) {
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
-
-    } else {
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager deleting key", context.key);
-print_mdb_val("hash_data_manager deleting data", context.data);
-#endif
-      // delete record at cursor
-      int rc = mdb_cursor_del(context.cursor, 0);
-      if (rc != 0) {
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        assert(0);
-      }
-
-      // write replacement record
-      write_encoding(context, key, data, data_size);
-    }
-  }
-
-  // parse Type 1 context.data into these parameters
-  void decode_type1(hashdb::lmdb_context_t& context,
-                    uint64_t& source_id,
-                    uint64_t& k_entropy,
-                    std::string& block_label,
-                    uint64_t& sub_count,
-                    file_offsets_t& file_offsets
-                   ) const {
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager decode_type1 key", context.key);
-print_mdb_val("hash_data_manager decode_type1 data", context.data);
-#endif
-    // clear any existing offsets
-    file_offsets.clear();
-
-    // prepare to read Type 1 entry:
-    const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
-    const uint8_t* p = p_start;
-
-    // read source ID
-    p = lmdb_helper::decode_uint64_t(p, source_id);
-
-    // read scaled entropy
-    p = lmdb_helper::decode_uint64_t(p, k_entropy);
-
-    // read the hash data block_label size
-    uint64_t block_label_size;
-    p = lmdb_helper::decode_uint64_t(p, block_label_size);
-
-    // read the hash data block_label
-    block_label =
-       std::string(reinterpret_cast<const char*>(p), block_label_size);
-    p += block_label_size;
-
-    // read sub_count and file offsets
-    sub_count = decode_file_offsets(p, p_start + context.data.mv_size,
-                                    file_offsets);
-  }
-
-  // parse Type 2 context.data into these parameters
-  void decode_type2(hashdb::lmdb_context_t& context,
-                    uint64_t& k_entropy,
-                    std::string& block_label,
-                    uint64_t& count,
-                    uint64_t& count_stored) const {
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager decode_type2 key", context.key);
-print_mdb_val("hash_data_manager decode_type2 data", context.data);
-#endif
-    // prepare to read Type 2 entry:
-    const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
-    const uint8_t* p = p_start;
-
-    // move past the NULL byte
-    ++p;
-
-    // scaled entropy
-    p = lmdb_helper::decode_uint64_t(p, k_entropy);
-
-    // read the hash data block_label size
-    uint64_t block_label_size;
-    p = lmdb_helper::decode_uint64_t(p, block_label_size);
-
-    // read the hash data block_label
-    block_label =
-       std::string(reinterpret_cast<const char*>(p), block_label_size);
-    p += block_label_size;
-
-    // read count
-    p = lmdb_helper::decode_uint64_t(p, count);
-
-    // read count_stored
-    p = lmdb_helper::decode_uint64_t(p, count_stored);
-
-    // read must align to data record
-    if (p != p_start + context.data.mv_size) {
-      std::cerr << "data decode error in LMDB hash data store\n";
-      assert(0);
-    }
-  }
-
-  // parse Type 3 context.data into these parameters
-  void decode_type3(hashdb::lmdb_context_t& context,
-                    uint64_t& source_id,
-                    uint64_t& sub_count,
-                    file_offsets_t& file_offsets) const {
-
-#ifdef DEBUG_LMDB_HASH_DATA_MANAGER_HPP
-print_mdb_val("hash_data_manager decode_type3 key", context.key);
-print_mdb_val("hash_data_manager decode_type3 data", context.data);
-#endif
-    // prepare to read Type 3 entry:
-    const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
-    const uint8_t* p = p_start;
-
-    // source ID
-    p = lmdb_helper::decode_uint64_t(p, source_id);
-
-    // sub_count
-    file_offsets.clear();
-    sub_count = decode_file_offsets(p, p_start + context.data.mv_size,
-                                    file_offsets);
-  }
-
-  // ************************************************************
-  // insert into type
-  // ************************************************************
-  // new Type 1
-  uint64_t insert_new_type1(hashdb::lmdb_context_t& context,
-                            const std::string& block_hash,
-                            const uint64_t source_id,
-                            const uint64_t k_entropy,
-                            const std::string& block_label,
-                            const uint64_t file_offset,
-                            hashdb::lmdb_changes_t& changes) {
-
-    // get the set of addable file offsets
-    file_offsets_t addable_file_offsets;
-    const size_t sub_count_stored = insert_file_offset(file_offset,
-                                           0, addable_file_offsets, changes);
-
-    // encode Type 1
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size = encode_type1(source_id, k_entropy, block_label,
-                                    1, // sub_count
-                                    addable_file_offsets, data);
-    // write Type 1
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return 1;
-  }
-
-  // updated Type 1
-  // cursor must be at Type 1
-  uint64_t insert_update_type1(hashdb::lmdb_context_t& context,
-                               const std::string& block_hash,
-                               const uint64_t source_id,
-                               const uint64_t k_entropy,
-                               const std::string& block_label,
-                               const uint64_t file_offset,
-                               hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 1 entry into existing_* fields:
-    uint64_t existing_source_id;
-    uint64_t existing_k_entropy;
-    std::string existing_block_label;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type1(context, existing_source_id,
-                 existing_k_entropy, existing_block_label,
-                 existing_sub_count, existing_file_offsets);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing_k_entropy,
-                         block_label, existing_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // add new file_offset to existing offsets
-    const size_t sub_count_stored = insert_file_offset(file_offset,
-             existing_file_offsets.size(), existing_file_offsets, changes);
-
-    // replace Type 1 at cursor
-    uint64_t new_sub_count = existing_sub_count + 1;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size = encode_type1(source_id, k_entropy, block_label,
-                                new_sub_count, existing_file_offsets, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_sub_count;
-  }
-
-  // new Type 2 and two new Type 3 from old Type 1
-  // cursor must be at Type 1
-  uint64_t insert_new_type2(hashdb::lmdb_context_t& context,
-                            const std::string& block_hash,
-                            const uint64_t source_id,
-                            const uint64_t k_entropy,
-                            const std::string& block_label,
-                            const uint64_t file_offset,
-                            hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 1 entry into existing_* fields:
-    uint64_t existing_source_id;
-    uint64_t existing_k_entropy;
-    std::string existing_block_label;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type1(context, existing_source_id,
-                 existing_k_entropy, existing_block_label,
-                 existing_sub_count, existing_file_offsets);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing_k_entropy,
-                         block_label, existing_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // new set of addable file offsets for the new source
-    file_offsets_t addable_file_offsets;
-    size_t sub_count_stored = insert_file_offset(file_offset,
-             existing_file_offsets.size(), addable_file_offsets, changes);
-
-    // replace Type 1 with Type 2 and write back two new Type 3
-    uint64_t new_count = existing_sub_count + 1;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size;
-    data_size = encode_type2(k_entropy, block_label, new_count,
-                    existing_file_offsets.size() + sub_count_stored, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-    data_size = encode_type3(existing_source_id, existing_sub_count,
-                             existing_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-    data_size = encode_type3(source_id,
-                             1, // sub_count
-                             addable_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_count;
-  }
-
-  // new Type 3
-  // cursor must be at Type 2
-  uint64_t insert_new_type3(hashdb::lmdb_context_t& context,
-                            const std::string& block_hash,
-                            const uint64_t source_id,
-                            const uint64_t k_entropy,
-                            const std::string& block_label,
-                            const uint64_t file_offset,
-                            hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 2 entry into existing_* fields
-    uint64_t existing_k_entropy;
-    std::string existing_block_label;
-    uint64_t existing_count;
-    uint64_t existing_count_stored;
-    decode_type2(context, existing_k_entropy, existing_block_label,
-                                 existing_count, existing_count_stored);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing_k_entropy, block_label,
-                                                   existing_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // get the set of addable file offsets
-    file_offsets_t addable_file_offsets;
-    size_t sub_count_stored = insert_file_offset(file_offset,
-                  existing_count_stored, addable_file_offsets, changes);
-
-    // write back the updated Type 2 entry
-    uint64_t new_count = existing_count + 1;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size;
-    data_size = encode_type2(k_entropy, block_label, new_count,
-                             existing_count_stored + sub_count_stored, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-
-    // write the new Type 3 entry
-    data_size = encode_type3(source_id, 1, // sub_count
-                             addable_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_count;
-  }
-
-  // updated Type 3
-  // cursor must be at Type 3 where source ID matched
-  uint64_t insert_update_type3(hashdb::lmdb_context_t& context,
-                               const std::string& block_hash,
-                               const uint64_t source_id,
-                               const uint64_t k_entropy,
-                               const std::string& block_label,
-                               const uint64_t file_offset,
-                               hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 3 entry into existing_* fields
-    uint64_t existing_source_id;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type3(context, existing_source_id, existing_sub_count,
-                 existing_file_offsets);
-
-    // validate usage
-    if (source_id != existing_source_id) {
-      assert(0);
-    }
-
-    // move the cursor back to the Type 2 entry
-    cursor_to_first_current(context);
-
-    // read the existing Type 2 entry into existing2_* fields
-    uint64_t existing2_k_entropy;
-    std::string existing2_block_label;
-    uint64_t existing2_count;
-    uint64_t existing2_count_stored;
-    decode_type2(context, existing2_k_entropy, existing2_block_label,
-                                   existing2_count, existing2_count_stored);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing2_k_entropy, block_label,
-                                                   existing2_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // add file_offset to existing_file_offsets
-    size_t sub_count_stored = insert_file_offset(file_offset,
-             existing2_count_stored, existing_file_offsets, changes);
-
-    // replace the updated Type 2 entry
-    uint64_t new_count = existing2_count + 1;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size;
-    data_size = encode_type2(k_entropy, block_label, new_count,
-                             existing2_count_stored + sub_count_stored, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-
-    // move cursor forward to the correct Type 3 entry
-    bool worked = cursor_to_type3(context, source_id);
-    if (!worked) {
-      // program error
-      assert(0);
-    }
-
-    // replace the updated Type 3 entry
-    data_size = encode_type3(source_id, existing_sub_count + 1,
-                            existing_file_offsets, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-
-    // track changes
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_count;
-  }
-
-  // ************************************************************
-  // merge into type
-  // ************************************************************
-  // merge new Type 1
-  uint64_t merge_new_type1(hashdb::lmdb_context_t& context,
-                           const std::string& block_hash,
-                           const uint64_t source_id,
-                           const uint64_t k_entropy,
-                           const std::string& block_label,
-                           const uint64_t sub_count,
-                           const file_offsets_t file_offsets,
-                           hashdb::lmdb_changes_t& changes) {
-
-    // get the set of addable file offsets
-    file_offsets_t addable_file_offsets;
-    const size_t sub_count_stored = merge_file_offsets(
-                  file_offsets, 0, addable_file_offsets, changes);
-
-    // encode Type 1
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size = encode_type1(source_id, k_entropy, block_label,
-                                    sub_count, addable_file_offsets, data);
-    // write Type 1
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return sub_count;
-  }
-
-  // updated Type 1
-  // cursor must be at Type 1
-  uint64_t merge_update_type1(hashdb::lmdb_context_t& context,
-                              const std::string& block_hash,
-                              const uint64_t source_id,
-                              const uint64_t k_entropy,
-                              const std::string& block_label,
-                              const uint64_t sub_count,
-                              hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 1 entry into existing_* fields:
-    uint64_t existing_source_id;
-    uint64_t existing_k_entropy;
-    std::string existing_block_label;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type1(context, existing_source_id,
-                 existing_k_entropy, existing_block_label,
-                 existing_sub_count, existing_file_offsets);
-
-    // replace Type 1 at cursor if metadata differs
-    if (metadata_differs(k_entropy, existing_k_entropy,
-                         block_label, existing_block_label)) {
-
-      uint8_t data[max_lmdb_data_size];
-      size_t data_size = encode_type1(source_id, k_entropy, block_label,
-                           existing_sub_count, existing_file_offsets, data);
-      overwrite_encoding(context, block_hash, data, data_size);
-      ++changes.hash_data_data_changed;
-    }
-
-    // warn if the offset sub_count values are not equivalent
-    if (sub_count != existing_sub_count) {
-      changes.hash_data_mismatched_sub_count_detected +=
-                  (sub_count > existing_sub_count) ?
-                  sub_count - existing_sub_count :
-                  existing_sub_count - sub_count;
-    }
-
-    // return unchanged existing total count
-    return existing_sub_count;
-  }
-
-  // new Type 2 and two new Type 3 from old Type 1
-  // cursor must be at Type 1
-  uint64_t merge_new_type2(hashdb::lmdb_context_t& context,
-                           const std::string& block_hash,
-                           const uint64_t source_id,
-                           const uint64_t k_entropy,
-                           const std::string& block_label,
-                           const uint64_t sub_count,
-                           const file_offsets_t file_offsets,
-                           hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 1 entry into existing_* fields:
-    uint64_t existing_source_id;
-    uint64_t existing_k_entropy;
-    std::string existing_block_label;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type1(context, existing_source_id,
-                 existing_k_entropy, existing_block_label,
-                 existing_sub_count, existing_file_offsets);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing_k_entropy,
-                         block_label, existing_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // get the set of addable file offsets
-    file_offsets_t addable_file_offsets;
-    size_t sub_count_stored = merge_file_offsets(
-            file_offsets, existing_file_offsets.size(),
-            addable_file_offsets, changes);
-
-    // replace Type 1 with Type 2 and write back two new Type 3
-    uint64_t new_count = existing_sub_count + sub_count;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size;
-    data_size = encode_type2(k_entropy, block_label, new_count,
-                    existing_file_offsets.size() + sub_count_stored, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-    data_size = encode_type3(existing_source_id, existing_sub_count,
-                             existing_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-    data_size = encode_type3(source_id, sub_count, addable_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_count;
-  }
-
-  // new Type 3
-  // cursor must be at Type 2
-  uint64_t merge_new_type3(hashdb::lmdb_context_t& context,
-                           const std::string& block_hash,
-                           const uint64_t source_id,
-                           const uint64_t k_entropy,
-                           const std::string& block_label,
-                           const uint64_t sub_count,
-                           const file_offsets_t file_offsets,
-                           hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 2 entry into existing2_* fields
-    uint64_t existing2_k_entropy;
-    std::string existing2_block_label;
-    uint64_t existing2_count;
-    uint64_t existing2_count_stored;
-    decode_type2(context, existing2_k_entropy, existing2_block_label,
-                                 existing2_count, existing2_count_stored);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing2_k_entropy, block_label,
-                                                   existing2_block_label)) {
-      ++changes.hash_data_data_changed;
-    }
-
-    // get the set of addable file offsets
-    file_offsets_t addable_file_offsets;
-    size_t sub_count_stored = merge_file_offsets(file_offsets,
-                  existing2_count_stored, addable_file_offsets, changes);
-
-    // write back the updated Type 2 entry
-    uint64_t new_count = existing2_count + sub_count;
-    uint8_t data[max_lmdb_data_size];
-    size_t data_size;
-    data_size = encode_type2(k_entropy, block_label, new_count,
-                             existing2_count_stored + sub_count_stored, data);
-    overwrite_encoding(context, block_hash, data, data_size);
-
-    // write the new Type 3 entry
-    data_size = encode_type3(source_id, sub_count, addable_file_offsets, data);
-    write_encoding(context, block_hash, data, data_size);
-
-    // log changes
-    ++changes.hash_data_source_inserted;
-    changes.hash_data_offset_inserted += sub_count_stored;
-
-    // return new total count
-    return new_count;
-  }
-
-  // updated Type 3
-  // cursor must be at Type 3 where source ID matched
-  uint64_t merge_update_type3(hashdb::lmdb_context_t& context,
-                              const std::string& block_hash,
-                              const uint64_t source_id,
-                              const uint64_t k_entropy,
-                              const std::string& block_label,
-                              const uint64_t sub_count,
-                              hashdb::lmdb_changes_t& changes) {
-
-    // read the existing Type 3 entry into existing_* fields
-    uint64_t existing_source_id;
-    uint64_t existing_sub_count;
-    file_offsets_t existing_file_offsets;
-    decode_type3(context, existing_source_id, existing_sub_count,
-                 existing_file_offsets);
-
-    // validate usage
-    if (source_id != existing_source_id) {
-      assert(0);
-    }
-
-    // move the cursor back to the Type 2 entry
-    cursor_to_first_current(context);
-
-    // read the existing Type 2 entry into existing2_* fields
-    uint64_t existing2_k_entropy;
-    std::string existing2_block_label;
-    uint64_t existing2_count;
-    uint64_t existing2_count_stored;
-    decode_type2(context, existing2_k_entropy, existing2_block_label,
-                                   existing2_count, existing2_count_stored);
-
-    // note if metadata differs
-    if (metadata_differs(k_entropy, existing2_k_entropy, block_label,
-                                                   existing2_block_label)) {
-
-      // replace the updated Type 2 entry
-      uint8_t data[max_lmdb_data_size];
-      size_t data_size;
-      data_size = encode_type2(k_entropy, block_label, existing2_count,
-                               existing2_count_stored, data);
-      overwrite_encoding(context, block_hash, data, data_size);
-      ++changes.hash_data_data_changed;
-
-
-    }
-
-    // the sub_count values should be equivalent
-    if (sub_count != existing_sub_count) {
-      // warn if the offset sub_count values are not equivalent
-      changes.hash_data_mismatched_sub_count_detected +=
-                  (sub_count > existing_sub_count) ?
-                  sub_count - existing_sub_count :
-                  existing_sub_count - sub_count;
-    }
-
-    // return the unchanged existing total count
-    return existing2_count;
-  }
-
   public:
   lmdb_hash_data_manager_t(const std::string& p_hashdb_dir,
                            const hashdb::file_mode_type_t p_file_mode,
@@ -1045,26 +112,11 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
                            const uint32_t p_max_sub_count) :
        hashdb_dir(p_hashdb_dir),
        file_mode(p_file_mode),
-       byte_alignment(p_byte_alignment),
-       max_count(p_max_count),
-       max_sub_count((p_max_sub_count > max_lmdb_sub_count)
-                      ? max_lmdb_sub_count : p_max_sub_count),
        env(lmdb_helper::open_env(hashdb_dir + "/lmdb_hash_data_store",
                                                                 file_mode)),
        M() {
 
     MUTEX_INIT(&M);
-
-    // require valid parameters
-    if (byte_alignment == 0) {
-      std::cerr << "invalid hash data store configuration\n";
-      assert(0);
-    }
-    if (p_max_sub_count > max_lmdb_sub_count) {
-      std::cerr << "Invalid hash data store configuration: max_sub_count "
-                << p_max_sub_count << " cannot be greater than "
-                << max_lmdb_sub_count << " and is truncated.\n";
-    }
   }
 
   ~lmdb_hash_data_manager_t() {
@@ -1086,7 +138,7 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
    */
   size_t insert(const std::string& block_hash,
                 const uint64_t k_entropy,
-                const std::string& block_label,
+                std::string block_label,
                 const uint64_t source_id,
                 hashdb::lmdb_changes_t& changes) {
 
@@ -1109,13 +161,14 @@ print_mdb_val("hash_data_manager decode_type3 data", context.data);
     }
 
     // warn if block_label will get truncated
-    if (block_label.size() > max_lmdb_block_label_size) {
+    if (block_label.size() > max_block_label_size) {
       // invalid file offset so warn and do not add anything
       std::stringstream ss;
       ss << "Invalid block_label length " << block_label.size()
-         << " is greater than " << max_lmdb_block_label_size
+         << " is greater than " << max_block_label_size
          << " and is truncated.\n";
       tprint(std::cerr, ss.str());
+      block_label.resize(max_block_label_size);
     }
 
     MUTEX_LOCK(&M);
@@ -1221,7 +274,7 @@ print_whole_mdb("hash_data_manager insert end", context.cursor);
    */
   size_t merge(const std::string& block_hash,
                const uint64_t k_entropy,
-               const std::string& block_label,
+               std::string block_label,
                const uint64_t source_id,
                const uint64_t sub_count,
                const file_offsets_t file_offsets,
@@ -1270,13 +323,14 @@ print_whole_mdb("hash_data_manager insert end", context.cursor);
     }
 
     // warn if block_label will get truncated
-    if (block_label.size() > max_lmdb_block_label_size) {
+    if (block_label.size() > max_block_label_size) {
       // invalid file offset so warn and do not add anything
       std::stringstream ss;
       ss << "Invalid block_label length " << block_label.size()
-         << " is greater than " << max_lmdb_block_label_size
+         << " is greater than " << max_block_label_size
          << " and is truncated.\n";
       tprint(std::cerr, ss.str());
+      block_label.resize(max_block_label_size);
     }
 
     MUTEX_LOCK(&M);
