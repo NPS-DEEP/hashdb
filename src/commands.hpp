@@ -1029,8 +1029,6 @@ class out_ptr_t {
       exit(1);
     }
 
-    const uint64_t byte_alignment = settings.byte_alignment;
-
     // initialize random seed
     srand (time(NULL));
 
@@ -1121,8 +1119,6 @@ class out_ptr_t {
       std::cerr << "Error: " << error_message << "\n";
       exit(1);
     }
-
-    const uint64_t byte_alignment = settings.byte_alignment;
 
     // open manager
     hashdb::import_manager_t manager(hashdb_dir, cmd);

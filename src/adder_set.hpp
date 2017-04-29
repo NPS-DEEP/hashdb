@@ -229,7 +229,7 @@ class adder_set_t {
 
         // add hash for source
         manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                              it_a->file_hash, it_a->sub_count);
+                              it->file_hash, it->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information
@@ -292,7 +292,7 @@ class adder_set_t {
 
       // add hash for source
       manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                            it_a->file_hash, it_a->sub_count);
+                            it->file_hash, it->sub_count);
 
       if (processed_sources.find(it->file_hash) == processed_sources.end()) {
         // add source information
@@ -341,7 +341,7 @@ class adder_set_t {
 
         // add hash for source
         manager_c->merge_hash(binary_hash, k_entropy_a, block_label_a,
-                              it_a->file_hash, it_a->sub_count);
+                              it->file_hash, it->sub_count);
 
         if (processed_sources.find(it->file_hash) == processed_sources.end()) {
           // add source information

@@ -76,7 +76,6 @@ static const std::string see_usage = "Please type 'hashdb -h' for usage.";
 
 // user-selected options
 static bool has_help = false;
-static bool has_byte_alignment = false;
 static bool has_block_size = false;
 static bool has_step_size = false;
 static bool has_repository_name = false;
@@ -193,7 +192,6 @@ int main(int argc,char **argv) {
       {"Help",                          no_argument, 0, 'H'},
       {"version",                       no_argument, 0, 'v'},
       {"Version",                       no_argument, 0, 'V'},
-      {"byte_alignment",          required_argument, 0, 'a'},
       {"block_size",              required_argument, 0, 'b'},
       {"step_size",               required_argument, 0, 's'},
       {"repository_name",         required_argument, 0, 'r'},
@@ -208,7 +206,7 @@ int main(int argc,char **argv) {
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVa:b:s:r:w:x:j:m:t:p:",
+    int ch = getopt_long(argc, argv, "hHvVb:s:r:w:x:j:m:t:p:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -238,19 +236,13 @@ int main(int argc,char **argv) {
         break;
       }
 
-      case 'a': {	// byte alignment
-        has_byte_alignment = true;
-        settings.byte_alignment = std::atoi(optarg);
-        break;
-      }
-
       case 'b': {	// block size
         has_block_size = true;
         settings.block_size = std::atoi(optarg);
         break;
       }
 
-      case 's': {	// block size
+      case 's': {	// step size
         has_step_size = true;
         step_size = std::atoi(optarg);
         break;
@@ -373,10 +365,6 @@ int main(int argc,char **argv) {
 
 void check_options(const std::string& options) {
   // fail if an option is not in the options set
-  if (has_byte_alignment && options.find("a") == std::string::npos) {
-    std::cerr << "The -a byte_alignment option is not allowed for this command.\n";
-    exit(1);
-  }
   if (has_block_size && options.find("b") == std::string::npos) {
     std::cerr << "The -b block_size option is not allowed for this command.\n";
     exit(1);
@@ -417,17 +405,6 @@ void check_options(const std::string& options) {
   if (has_part_range && options.find("p") ==
       std::string::npos) {
     std::cerr << "The -p part range option is not allowed for this command.\n";
-    exit(1);
-  }
-
-  // fail if block size is incompatible with byte alignment
-  if (settings.byte_alignment == 0 ||
-      (settings.block_size % settings.byte_alignment) != 0) {
-    std::cerr << "Incompatible values for block size: "
-              << settings.block_size
-              << " and byte alignment: " << settings.byte_alignment
-              << ".  block size must be divisible by byte alignment.\n"
-              << see_usage << "\n";
     exit(1);
   }
 }
