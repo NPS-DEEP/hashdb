@@ -22,6 +22,7 @@
 EXTRA_DIST = vg.supp memory_analysis.sh
 
 check_PROGRAMS = \
+	rocksdb_test \
 	lmdb_other_managers_test \
 	lmdb_hash_data_manager_test
 
@@ -61,6 +62,8 @@ run_tests_valgrind:
 # ############################################################
 # tests
 # ############################################################
+rocksdb_test_LDADD=/usr/local/lib/librocksdb.a /usr/local/lib/libzstd.a
+rocksdb_test_SOURCES = rocksdb_test.cpp
 lmdb_other_managers_test_SOURCES = $(LMDB_OTHER_MANAGERS_TEST_INCS)
 lmdb_hash_data_manager_test_SOURCES = $(LMDB_HASH_DATA_MANAGER_TEST_INCS)
 
