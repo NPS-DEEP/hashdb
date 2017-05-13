@@ -24,8 +24,8 @@
  * then reports it using the logger.
  */
 
-#ifndef LMDB_CHANGES_HPP
-#define LMDB_CHANGES_HPP
+#ifndef CHANGES_HPP
+#define CHANGES_HPP
 
 #include <sstream>
 #include <iostream>
@@ -35,7 +35,7 @@ namespace hashdb {
 /**
  * Holds state about changes applied to the hash database.
  */
-class lmdb_changes_t {
+class changes_t {
 
   public:
   // hash_data
@@ -64,7 +64,7 @@ class lmdb_changes_t {
   size_t source_name_inserted;
   size_t source_name_already_present;
 
-  lmdb_changes_t() :
+  changes_t() :
             hash_data_inserted(0),
             hash_data_merged(0),
             hash_data_merged_same(0),
@@ -164,7 +164,7 @@ class lmdb_changes_t {
 } // end namespace hashdb
 
 inline std::ostream& operator<<(std::ostream& os,
-                         const class hashdb::lmdb_changes_t& changes) {
+                         const class hashdb::changes_t& changes) {
   changes.report_changes(os);
   return os;
 }
