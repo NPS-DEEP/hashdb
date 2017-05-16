@@ -143,6 +143,7 @@ LIBHASHDB_INCS = \
 	lmdb_hash_data_support.cpp \
 	lmdb_hash_data_support.hpp \
 	lmdb_hash_manager.hpp \
+	lmdb_helper.cpp \
 	lmdb_helper.h \
 	lmdb_print_val.hpp \
 	lmdb_source_data_manager.hpp \

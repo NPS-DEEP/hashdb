@@ -57,9 +57,11 @@
 #include "lmdb_print_val.hpp"
 #endif
 
-const int max_block_label_size = 10;
-static const int type1_max_size = 10+1+max_block_label_size+10+2;
-static const int type3_max_size = 10+2;
+namespace hashdb {
+
+const size_t max_block_label_size = 10;
+static const size_t type1_max_size = 10+1+max_block_label_size+10+2;
+static const size_t type3_max_size = 10+2;
 
 // put and get fixed-width numbers
 inline uint8_t* put1(uint8_t* p, uint64_t n) {
@@ -133,7 +135,7 @@ static size_t encode_type1(const uint64_t k_entropy,
   p = put2(p, sub_count);
 
   // check bounds
-  if (p - p_buf > type1_max_size) {
+  if (p > p_buf + type1_max_size) {
     assert(0);
   }
 
@@ -167,7 +169,7 @@ static size_t encode_type2(const uint64_t k_entropy,
   p = put4(p, count);
 
   // check bounds
-  if (p - p_buf > type1_max_size) {
+  if (p > p_buf + type1_max_size) {
     assert(0);
   }
 
@@ -189,7 +191,7 @@ static size_t encode_type3(uint64_t source_id,
   p = put2(p, sub_count);
 
   // check bounds
-  if (p - p_buf > type3_max_size) {
+  if (p > p_buf + type3_max_size) {
     assert(0);
   }
 
@@ -259,8 +261,6 @@ print_mdb_val("hash_data_support replace_record data", context.data);
     assert(0);
   }
 }
-
-namespace hashdb {
 
   // move cursor to first entry of current key
   void cursor_to_first_current(hashdb::lmdb_context_t& context) {

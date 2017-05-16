@@ -34,7 +34,7 @@
 namespace hashdb {
 
   // MAX
-  extern const int max_block_label_size;
+  extern const size_t max_block_label_size;
 
   // move cursor to first entry of current key
   void cursor_to_first_current(hashdb::lmdb_context_t& context);
@@ -74,8 +74,8 @@ namespace hashdb {
   // write new Type 3 record, key must be valid
   void new_type3(hashdb::lmdb_context_t& context,
                  const std::string& key,
-                 const uint64_t& source_id,
-                 const uint64_t& sub_count);
+                 const uint64_t source_id,
+                 const uint64_t sub_count);
 
   // replace Type 1 record at cursor
   void replace_type1(hashdb::lmdb_context_t& context,
