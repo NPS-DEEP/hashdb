@@ -17,34 +17,27 @@
 //
 // Released into the public domain on February 25, 2013 by Bruce Allen.
 
-#ifndef ROCKS_DB_MERGE_HPP
-#define ROCKS_DB_MERGE_HPP
+/**
+ * \file
+ * Open or create a DB.  Offer resources.
+ */
 
-#include <string>
-#include <stdint.h>
+#include <config.h>
+#include <rocksdb/status.h>
 
-namespace hashdb {
 
-class source_id_merge_t : public AssociativeMergeOperator {
+namespace hdb {
 
-  private:
-  changes_t* changes;
-
-  // do not allow copy or assignment
-  source_id_merge_t(const source_id_merge_t&) = delete;
-  source_id_merge_t& operator=(const source_id_merge_t&) = delete;
-
-  public:
-  source_id_merge_t(changes_t p_changes);
-  virtual bool Merge(
-    const Slice& key,
-    const Slice* existing_value,
-    const Slice& value,
-    std::string* new_value,
-    Logger* logger) const override {
+static std::string db_status(const rocksdb::Status& s) {
+  if (s.ok()) {
+    return "";
+  } else if (s.toString() == nullptr) {
+    // not OK but no text
+    return "non-zero status"
+  } else {
+    return std::string(s.toString());
   }
-};
+}
 
-
-#endif
+} // end namespace
 

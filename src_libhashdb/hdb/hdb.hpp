@@ -29,21 +29,10 @@
 #include <rocksdb/options.h>
 #include <rocksdb/merge_operator.h>
 
-#ifndef DB_HPP
-#define DB_HPP
+#ifndef HDB_HPP
+#define HDB_HPP
 
-namespace hashdb {
-
-static std::string db_status(const rocksdb::Status& s) {
-  if (s.ok()) {
-    return "";
-  } else if (s.toString() == nullptr) {
-    // not OK but no text
-    return "non-zero status"
-  } else {
-    return std::string(s.toString());
-  }
-}
+namespace hdb {
 
 class db_t {
 
@@ -230,7 +219,7 @@ class db_t {
   }
 };
 
-} // end namespace hashdb
+} // end namespace hdb
 
 #endif
 

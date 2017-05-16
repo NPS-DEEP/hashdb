@@ -30,5 +30,7 @@
 #include <string>
 #include <cassert>
 
-class source_id_merge {
+namespace hdb {
+
+class source_name_merge {
 
