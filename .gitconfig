@@ -1,0 +1,7 @@
+[user]
+	name= Bruce Allen
+	email = bdallen@nps.edu
+[core]
+	editor = gvim
+[push]
+	default = simple
