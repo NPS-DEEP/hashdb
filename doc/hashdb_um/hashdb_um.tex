@@ -152,11 +152,11 @@ The first character on the line is the terminal prompt, and should not be typed.
 \end{itemize}
 
 \subsection{Changes Over the \hdb v3.0.0 Release}
-\hdb Version 3.0.1 provides a bug fix that manifests when building large databases on systems with insufficient memory. In Linux, the bug is that the swap store becomes exhausted, resulting in program termination.
+\hdb Version 3.1.0 provides a halting bug fix that manifests when building large databases. The halt is a result of heap space exhaustion due to excessive page allocations in LMDB resulting from increasing record sizes on existing records. \hdb v2.0.0 does not increase record size and does not manifest this bug. This bug results in program termination. The fix replaces changed records in-place without changing record size.  To accomplish this, we change the data store as follows:
 \begin{itemize}
-\item 
+\item \hdb no longer stores source offset values in the hash data store.  These values were used to identify where a block hash is located within a source.  This information may be obtained by reexamining the source file.  As a result of this change, the byte alignment parameter seen when creating a new database is no longer required and is discontinued.
+\item \hdb no longer stores hash suffix values in a list in the hash store.  Instead, the hash prefix is longer and is hard-coded to 7 bytes.  In a database of one billion hashes, this will result in a false positive rate of one in 72 million.  Recall that the hash store is an approximate store and that complete hashes are stored in the hash data store.
 \end{itemize}
-
 
 \subsection{Licensing}
 \hdb code is provided with the following notice:\\
@@ -625,7 +625,7 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \hline \hline
 \textbf{Command} & \textbf{Usage} & \textbf{Description} \\
 \hline
-\textbf{create} & \verb+create [-b <block size>]+ \verb+[-a <byte alignment>]+ \verb+[-t <hash prefix bits:hash+ \verb+suffix bytes>]+ \verb+<hashdb.hdb>+ & Creates a new hash database with the given configuration settings.\\
+\textbf{create} & \verb+create [-b <block size>]+ \verb+<hashdb.hdb>+ & Creates a new hash database.\\
 \hline
 \end{tabular}
 \end{table}
@@ -639,10 +639,6 @@ Configurable settings associated with the database is shown in Table \ref{tab:ha
 \textbf{Option} & \textbf{Verbose Option} & \textbf{Specification} \\
 \hline
 \textbf{\texttt{-b}} & \verb+--block_size=+\textit{block\_size} & Specifies the block size in bytes used to generate the hashes that will be stored and scanned against. Default is 512 bytes.  \\
-\hline
-\textbf{\texttt{-a}} & \verb+--byte_alignment=+\textit{byte\_alignment} & Specifies the byte alignment in bytes used to calculate hashes along. Default is 512 bytes.  \\
-\hline
-\textbf{\texttt{-t}} & \verb+--tuning=+\textit{prefix bits:suffix bytes} & Specifies the number of prefix bits and suffix bytes to use for compacting the database.\\
 \hline
 \end{tabular}
 \end{table}
