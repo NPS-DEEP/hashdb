@@ -34,7 +34,7 @@
 #include "lmdb_source_name_manager.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_changes.hpp"
-#include "source_id_offsets.hpp"
+#include "source_id_sub_counts.hpp"
 #include "../src_libhashdb/hashdb.hpp"
 #include "directory_helper.hpp"
 

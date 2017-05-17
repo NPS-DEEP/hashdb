@@ -248,21 +248,19 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         // see if source_id is the same
         if (source_id == existing_source_id) {
           // increment Type 1
+          count = add2(existing_sub_count, 1);
           replace_type1(context, block_hash, existing_k_entropy,
-                        existing_block_label, source_id,
-                        add2(existing_sub_count,1));
+                        existing_block_label, source_id, count);
 
         } else {
           // split type 1 into type 2 and two type 3
+          count = add4(existing_sub_count, 1);
           replace_type2(context, block_hash, existing_k_entropy,
-                        existing_block_label, add2(existing_sub_count,1));
+                        existing_block_label, count);
           new_type3(context, block_hash, existing_source_id,
                     existing_sub_count);
           new_type3(context, block_hash, source_id, 1);
         }
-
-        // for type 1, new count is existing_sub_count + 1
-        count = add2(existing_sub_count, 1);
 
       } else {
 
@@ -282,8 +280,9 @@ print_mdb_val("hash_data_manager insert found data", context.data);
         }
 
         // increment count at type 2
+        count = add4(existing_count,1);
         replace_type2(context, block_hash, existing_k_entropy,
-                      existing_block_label, add4(existing_count,1));
+                      existing_block_label, count);
 
         // look for existing type 3
         uint64_t existing_sub_count;
@@ -295,9 +294,6 @@ print_mdb_val("hash_data_manager insert found data", context.data);
           // new type 3
           new_type3(context, block_hash, source_id, 1);
         }
-
-        // for type 2, new count is existing_count + 1
-        count = add4(existing_count,1);
       }
 
     } else {
@@ -380,8 +376,8 @@ print_whole_mdb("hash_data_manager merge begin", context.cursor);
       // new Type 1
       new_type1(context, block_hash, k_entropy, block_label, source_id,
                 sub_count);
-      changes.hash_data_merged += add2(sub_count,0);
       count = add2(sub_count,0);
+      ++changes.hash_data_merged;
 
     } else if (rc == 0) {
       // hash is already there
@@ -424,22 +420,21 @@ print_mdb_val("hash_data_manager merge found data", context.data);
           }
 
           // merged before, no change
-          ++changes.hash_data_merged_same += sub_count;
+          ++changes.hash_data_merged_same;
+
+          count = existing_sub_count;
 
         } else {
           // split type 1 into type 2 and two type 3
+          count = add4(existing_sub_count,sub_count);
           replace_type2(context, block_hash, existing_k_entropy,
-                        existing_block_label,
-                        add2(existing_sub_count,sub_count));
+                        existing_block_label, count);
           new_type3(context, block_hash, existing_source_id,
                     existing_sub_count);
           new_type3(context, block_hash, source_id, sub_count);
 
-          changes.hash_data_merged += sub_count;
+          ++changes.hash_data_merged;
         }
-
-        // for type 1, new count is existing_sub_count + sub_count
-        count = add2(existing_sub_count,sub_count);
 
       } else {
 
@@ -468,22 +463,22 @@ print_mdb_val("hash_data_manager merge found data", context.data);
           if (mismatched_sub_count(sub_count, existing_sub_count)) {
             ++changes.hash_data_mismatched_sub_count_detected;
           }
-          count = existing_sub_count;
-          ++changes.hash_data_merged_same += sub_count;
+          count = existing_count;
+          ++changes.hash_data_merged_same;
 
         } else {
           // new type 3
 
           // add sub_count to type 2
+          count = add4(existing_count,sub_count);
           cursor_to_first_current(context);
           replace_type2(context, block_hash, existing_k_entropy,
-                        existing_block_label, add4(existing_count,sub_count));
+                        existing_block_label, count);
 
           // new type 3 for new souce_id
           new_type3(context, block_hash, source_id, sub_count);
 
-          count = add4(existing_count,sub_count);
-          changes.hash_data_merged += sub_count;
+          ++changes.hash_data_merged;
         }
       }
 
@@ -578,6 +573,7 @@ print_mdb_val("hash_data_manager find Type 1 data", context.data);
         decode_type1(context, k_entropy, block_label, source_id, sub_count);
         source_id_sub_counts.insert(source_id_sub_count_t(source_id,
                                                           sub_count));
+        count = sub_count;
         context.close();
         return true;
 

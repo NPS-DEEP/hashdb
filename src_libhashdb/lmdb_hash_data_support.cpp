@@ -61,6 +61,7 @@ namespace hashdb {
 
 const size_t max_block_label_size = 10;
 static const size_t type1_max_size = 10+1+max_block_label_size+10+2;
+// not used: static const size_t type2_max_size = 10+1+max_block_label_size+4;
 static const size_t type3_max_size = 10+2;
 
 // put and get fixed-width numbers
@@ -78,21 +79,21 @@ inline const uint8_t* get1(const uint8_t* const p, uint64_t &n) {
 }
 inline uint8_t* put2(uint8_t* p, uint64_t n) {
   if (n > 0xffff) {
-    std::cerr << "put2 error: " << n << "\n";
-    assert(0);
+    std::cerr << "Usage error: lmdb_hash_data_support put2 sub_count " << n << "\n";
+    n=0xffff;
   }
   p[0] = static_cast<uint8_t>(n & 0xff);
   p[1] = static_cast<uint8_t>(n >> 8);
   return p+2;
 }
 inline const uint8_t* get2(const uint8_t* const p, uint64_t &n) {
-  n = p[0] | (p[1]>>8);
+  n = p[0] | (p[1]<<8);
   return p+2;
 }
 inline uint8_t* put4(uint8_t* p, uint64_t n) {
   if (n > 0xffffffff) {
-    std::cerr << "put4 error: " << n << "\n";
-    assert(0);
+    std::cerr << "Usage error: lmdb_hash_data_support put4 sub_count " << n << "\n";
+    n=0xffffffff;
   }
   p[0] = static_cast<uint8_t>(n & 0xff);
   p[1] = static_cast<uint8_t>((n >> 8) & 0xff);
@@ -101,7 +102,7 @@ inline uint8_t* put4(uint8_t* p, uint64_t n) {
   return p+4;
 }
 inline const uint8_t* get4(const uint8_t* const p, uint64_t &n) {
-  n = p[0] | (p[1]>>8) | (p[2]>>16) | (p[3]>>24);
+  n = p[0] | (p[1]<<8) | (p[2]<<16) | (p[3]<<24);
   return p+4;
 }
 
@@ -120,6 +121,12 @@ static size_t encode_type1(const uint64_t k_entropy,
 
   uint8_t* p = p_buf;
 
+  // add source_id
+  p = lmdb_helper::encode_uint64_t(source_id, p);
+
+  // add sub_count
+  p = put2(p, sub_count);
+
   // add scaled entropy
   p = lmdb_helper::encode_uint64_t(k_entropy, p);
 
@@ -128,11 +135,15 @@ static size_t encode_type1(const uint64_t k_entropy,
   std::memcpy(p, block_label.c_str(), block_label_size);
   p += block_label_size;
 
-  // add source_id
-  p = lmdb_helper::encode_uint64_t(source_id, p);
-
-  // add sub_count
-  p = put2(p, sub_count);
+  // add padding to allow transition to type2
+  if (source_id < 0x4000) {
+    *p = 0;
+    ++p;
+  }
+  if (source_id < 0x80) {
+    *p = 0;
+    ++p;
+  }
 
   // check bounds
   if (p > p_buf + type1_max_size) {
@@ -156,6 +167,10 @@ static size_t encode_type2(const uint64_t k_entropy,
   }
 
   uint8_t* p = p_buf;
+
+  // add type2 identifier, type2 starts with 0x00
+  *p = 0;
+  p++;
 
   // add scaled entropy
   p = lmdb_helper::encode_uint64_t(k_entropy, p);
@@ -233,13 +248,16 @@ static void replace_record(hashdb::lmdb_context_t& context,
 
   // validate size
   if (key.size() != context.key.mv_size) {
-    std::cerr << "write_record wrong key size\n";
+    std::cerr << "write_record wrong key size " << key.size()
+              << ", " << context.key.mv_size << "\n";
     assert(0);
   } else if (match_size && context.data.mv_size != data_size) {
-    std::cerr << "write_record mismatch size\n";
+    std::cerr << "write_record mismatch size " << context.data.mv_size
+              << ", " << data_size << "\n";
     assert(0);
   } else if (!match_size && context.data.mv_size < data_size) {
-    std::cerr << "write_record larger size\n";
+    std::cerr << "write_record larger size " << context.data.mv_size
+              << ", " << data_size << "\n";
     assert(0);
   }
 
@@ -323,6 +341,12 @@ print_mdb_val("hash_data_support decode_type1 data", context.data);
     const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
     const uint8_t* p = p_start;
 
+    // read source ID
+    p = lmdb_helper::decode_uint64_t(p, source_id);
+
+    // read sub_count
+    p = get2(p, sub_count);
+
     // read scaled entropy
     p = lmdb_helper::decode_uint64_t(p, k_entropy);
 
@@ -335,11 +359,21 @@ print_mdb_val("hash_data_support decode_type1 data", context.data);
        std::string(reinterpret_cast<const char*>(p), block_label_size);
     p += block_label_size;
 
-    // read source ID
-    p = lmdb_helper::decode_uint64_t(p, source_id);
-
-    // read sub_count
-    p = get2(p, sub_count);
+    // compensate for padding
+    if (source_id < 0x4000) {
+      if (*p != 0) {
+        std::cerr << "data decode padding error1 in LMDB hash data store\n";
+        assert(0);
+      }
+      ++p;
+    }
+    if (source_id < 0x80) {
+      if (*p != 0) {
+        std::cerr << "data decode padding error1 in LMDB hash data store\n";
+        assert(0);
+      }
+      ++p;
+    }
 
     // read must align to data record
     if (p != p_start + context.data.mv_size) {
@@ -363,6 +397,13 @@ print_mdb_val("hash_data_support decode_type2 data", context.data);
     const uint8_t* const p_start = static_cast<uint8_t*>(context.data.mv_data);
     const uint8_t* p = p_start;
 
+    // expect type2 identifier, type2 starts with 0x00
+    if (*p != 0) {
+      std::cerr << "data decode identifier error in LMDB hash data store\n";
+      assert(0);
+    }
+    p++;
+
     // read scaled entropy
     p = lmdb_helper::decode_uint64_t(p, k_entropy);
 
@@ -378,8 +419,8 @@ print_mdb_val("hash_data_support decode_type2 data", context.data);
     // read count
     p = get4(p, count);
 
-    // read must align to data record
-    if (p != p_start + context.data.mv_size) {
+    // read must fit within data record
+    if (p > p_start + context.data.mv_size) {
       std::cerr << "data decode error in LMDB hash data store\n";
       assert(0);
     }
@@ -480,7 +521,7 @@ print_mdb_val("hash_data_support decode_type3 data", context.data);
     const size_t size = encode_type2(k_entropy, block_label, count, p_buf);
 
     // write
-    replace_record(context, key, p_buf, size, true);
+    replace_record(context, key, p_buf, size, false);
   }
 
   // replace Type 3 record at cursor
