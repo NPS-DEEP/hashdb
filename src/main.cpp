@@ -198,15 +198,13 @@ int main(int argc,char **argv) {
       {"whitelist_dir",           required_argument, 0, 'w'},
       {"disable_processing",      required_argument, 0, 'x'},
       {"json_scan_mode",          required_argument, 0, 'j'},
-      {"max_counts",              required_argument, 0, 'm'},
-      {"tuning",                  required_argument, 0, 't'},
       {"part_range",              required_argument, 0, 'p'},
 
       // end
       {0,0,0,0}
     };
 
-    int ch = getopt_long(argc, argv, "hHvVb:s:r:w:x:j:m:t:p:",
+    int ch = getopt_long(argc, argv, "hHvVb:s:r:w:x:j:m:p:",
                          long_options, &option_index);
     if (ch == -1) {
       // no more arguments
@@ -268,20 +266,6 @@ int main(int argc,char **argv) {
       case 'j': {	// select JSON mode
         has_json_scan_mode = true;
         set_scan_mode(std::string(optarg));
-        break;
-      }
-
-      case 't': {	// tuning hash_prefix_bits:hash_suffix_bytes
-        has_tuning = true;
-        std::vector<std::string> params = split(std::string(optarg), ':');
-
-        if (params.size() != 2) {
-          std::cerr << "Invalid value for tuning: '" << optarg << "'.  " << see_usage << "\n";
-          exit(1);
-        }
-
-        settings.hash_prefix_bits = std::atoi(params[0].c_str());
-        settings.hash_suffix_bytes = std::atoi(params[1].c_str());
         break;
       }
 

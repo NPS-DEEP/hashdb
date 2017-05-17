@@ -28,10 +28,6 @@
 #include <cstdio>
 #include "unit_test.h"
 #include "lmdb_hash_data_manager.hpp"
-#include "lmdb_hash_manager.hpp"
-#include "lmdb_source_data_manager.hpp"
-#include "lmdb_source_id_manager.hpp"
-#include "lmdb_source_name_manager.hpp"
 #include "lmdb_helper.h"
 #include "lmdb_changes.hpp"
 #include "source_id_sub_counts.hpp"

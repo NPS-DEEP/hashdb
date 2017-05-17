@@ -99,10 +99,6 @@ namespace hashdb {
    * Attributes:
    *   settings_version - The version of the settings record
    *   block_size - Size, in bytes, of data blocks.
-   *   hash_prefix_bits - The number of hash prefix bits to use as the
-   *     key in the optimized hash storage.
-   *   hash_suffix_bytes - The number of hash suffix bytes to use as the
-   *     value in the optimized hash storage.
    */
   struct settings_t {
 #ifndef SWIG
@@ -110,8 +106,6 @@ namespace hashdb {
 #endif
     uint32_t settings_version;
     uint32_t block_size;
-    uint32_t hash_prefix_bits;
-    uint32_t hash_suffix_bytes;
     settings_t();
     std::string settings_string() const;
   };

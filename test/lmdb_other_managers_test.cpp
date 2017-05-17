@@ -42,9 +42,9 @@ typedef std::pair<std::string, std::string> source_name_t;
 typedef std::set<source_name_t>             source_names_t;
 
 static const std::string hashdb_dir = "temp_dir_lmdb_managers_test.hdb";
-static const std::string binary_0(hashdb::hex_to_bin(
+static const std::string binary_00(hashdb::hex_to_bin(
                                   "00000000000000000000000000000000"));
-static const std::string binary_1(hashdb::hex_to_bin(
+static const std::string binary_01(hashdb::hex_to_bin(
                                   "00000000000000000000000000000001"));
 static const std::string binary_2(hashdb::hex_to_bin(
                                   "00000000000000000000000000000002"));
@@ -78,56 +78,47 @@ void make_new_hashdb_dir(std::string p_hashdb_dir) {
 void lmdb_hash_manager_create() {
   // create new manager
   make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW);
 }
 
 // run after create
 void lmdb_hash_manager_write() {
-  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_MODIFY, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_MODIFY);
   hashdb::lmdb_changes_t changes;
 
   // find when empty
-  TEST_EQ(manager.find(binary_0), 0);
+  TEST_EQ(manager.find(binary_00), 0);
 
   // add
-  manager.insert(binary_0, 1, changes);
-  TEST_EQ(changes.hash_prefix_inserted, 1);
-  TEST_EQ(changes.hash_suffix_inserted, 1);
+  manager.insert(binary_00, 1, changes);
+  TEST_EQ(changes.hash_inserted, 1);
   TEST_EQ(changes.hash_count_changed, 0);
-  TEST_EQ(changes.hash_not_changed, 0);
-  TEST_EQ(manager.find(binary_0), 1);
+  TEST_EQ(changes.hash_count_not_changed, 0);
+  TEST_EQ(manager.find(binary_00), 1);
 
   // re-add same
-  manager.insert(binary_0, 1, changes);
-  TEST_EQ(changes.hash_prefix_inserted, 1);
-  TEST_EQ(changes.hash_suffix_inserted, 1);
+  manager.insert(binary_00, 1, changes);
+  TEST_EQ(changes.hash_inserted, 1);
   TEST_EQ(changes.hash_count_changed, 0);
-  TEST_EQ(changes.hash_not_changed, 1);
-  TEST_EQ(manager.find(binary_0), 1);
+  TEST_EQ(changes.hash_count_not_changed, 1);
+  TEST_EQ(manager.find(binary_00), 1);
 
   // change count
-  manager.insert(binary_0, 2, changes);
-  TEST_EQ(changes.hash_prefix_inserted, 1);
-  TEST_EQ(changes.hash_suffix_inserted, 1);
+  manager.insert(binary_00, 2, changes);
+  TEST_EQ(changes.hash_inserted, 1);
   TEST_EQ(changes.hash_count_changed, 1);
-  TEST_EQ(changes.hash_not_changed, 1);
-  TEST_EQ(manager.find(binary_0), 2);
+  TEST_EQ(changes.hash_count_not_changed, 1);
+  TEST_EQ(manager.find(binary_00), 2);
 
-  // check prefix-suffix split
-  TEST_EQ(manager.find(binary_1), 0);
+  // check that similar prefix, different suffix is equivalent
+  TEST_EQ(manager.find(binary_01), 2);
 
-  // add more
-  manager.insert(binary_1, 1, changes);
-  manager.insert(binary_12, 1, changes);
-  manager.insert(binary_13, 1, changes);
-  manager.insert(binary_14, 1, changes);
-  TEST_EQ(manager.find(binary_0), 2);
-  TEST_EQ(manager.find(binary_1), 1);
-  TEST_EQ(manager.find(binary_12), 1);
-  TEST_EQ(manager.find(binary_13), 1);
-  TEST_EQ(manager.find(binary_14), 1);
-  TEST_EQ(manager.find(binary_15), 0);
-  TEST_EQ(manager.find(binary_26), 0);
+  // check that different prefix, same suffix is different
+  TEST_EQ(manager.find(binary_10), 0);
+
+  // add another
+  manager.insert(binary_26, 1, changes);
+  TEST_EQ(manager.find(binary_26), 1);
 
   // size
   TEST_EQ(manager.size(), 2);
@@ -135,100 +126,26 @@ void lmdb_hash_manager_write() {
 
 // run after read
 void lmdb_hash_manager_read() {
-  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::READ_ONLY, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::READ_ONLY);
 
   // find
-  TEST_EQ(manager.find(binary_0), 2);
-  TEST_EQ(manager.find(binary_1), 1);
-  TEST_EQ(manager.find(binary_12), 1);
-  TEST_EQ(manager.find(binary_13), 1);
-  TEST_EQ(manager.find(binary_14), 1);
-  TEST_EQ(manager.find(binary_15), 0);
-  TEST_EQ(manager.find(binary_26), 0);
+  TEST_EQ(manager.find(binary_00), 2);
+  TEST_EQ(manager.find(binary_01), 2);
+  TEST_EQ(manager.find(binary_12), 0);
+  TEST_EQ(manager.find(binary_26), 1);
   // size
   TEST_EQ(manager.size(), 2);
-}
-
-// test with various values for prefix bits and suffix bytes
-// Also: enable the DEBUG flag in lmdb_helper.h and observe proper compressed
-// encodings.
-void lmdb_hash_manager_settings() {
-  make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_changes_t changes;
-
-  {
-  } { // 1 prefix bit, no suffix
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
-    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-
-    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("7fffffffffffffffffffffffffffffff")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-
-  } { // demonstrate that the db is cleared
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
-    TEST_EQ(manager.size(), 0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
-
-  } { // 1 prefix bit, no suffix, demonstrate adding 0 instead of 1
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 0);
-    manager.insert(hashdb::hex_to_bin("00000000000000000000000000000000"), 1, changes);
-
-    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("7fffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("8fffffffffffffffffffffffffffffff")),0);
-
-  } { // 2 prefix bits, no suffix
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 2, 0);
-
-    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("cfffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("c0000000000000000000000000000000")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("40000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("80000000000000000000000000000000")),0);
-
-  } { // 1 prefix bit, 1 suffix byte
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 1, 1);
-
-    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-
-    TEST_EQ(manager.find(hashdb::hex_to_bin("00000000000000000000000000000000")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("800000000000000000000000000000ff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("700000000000000000000000000000ff")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("800000000000000000000000000000fe")),0);
-
-  } { // 9 prefix bits, 2 suffix bytes
-    make_new_hashdb_dir(hashdb_dir);
-    hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 9, 2);
-
-    manager.insert(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff"), 1, changes);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ffffffffffffffffffffffffffffffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ffff000000000000000000000000ffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ff80000000000000000000000000ffff")),1);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ff00000000000000000000000000ffff")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ff800000000000000000000000007fff")),0);
-    TEST_EQ(manager.find(hashdb::hex_to_bin("ff80000000000000000000000000ff7f")),0);
-  }
 }
 
 // test corner-case values for count
 void lmdb_hash_manager_count() {
   make_new_hashdb_dir(hashdb_dir);
-  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW, 28, 3);
+  hashdb::lmdb_hash_manager_t manager(hashdb_dir, hashdb::RW_NEW);
   hashdb::lmdb_changes_t changes;
-  manager.insert(binary_0, 1494, changes);
-  TEST_EQ(manager.find(binary_0), 1370);
-  manager.insert(binary_0, 1495, changes);
-  TEST_EQ(manager.find(binary_0), 1495);
+  manager.insert(binary_00, 1494, changes);
+  TEST_EQ(manager.find(binary_00), 1370);
+  manager.insert(binary_00, 1495, changes);
+  TEST_EQ(manager.find(binary_00), 1495);
 }
 
 // ************************************************************
@@ -251,36 +168,36 @@ void lmdb_source_id_manager() {
   TEST_EQ(file_binary_hash, "");
 
   // search when empty
-  did_find = manager.find(binary_0, source_id);
+  did_find = manager.find(binary_00, source_id);
   TEST_EQ(did_find, false);
   TEST_EQ(source_id, 0)
 
   // add items
-  did_insert = manager.insert(binary_0, changes, source_id);
+  did_insert = manager.insert(binary_00, changes, source_id);
   TEST_EQ(did_insert, true);
   TEST_EQ(source_id, 1);
   TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(changes.source_id_already_present, 0);
 
-  did_insert = manager.insert(binary_0, changes, source_id);
+  did_insert = manager.insert(binary_00, changes, source_id);
   TEST_EQ(did_insert, false);
   TEST_EQ(source_id, 1);
   TEST_EQ(changes.source_id_inserted, 1);
   TEST_EQ(changes.source_id_already_present, 1);
 
-  did_find = manager.find(binary_0, source_id);
+  did_find = manager.find(binary_00, source_id);
   TEST_EQ(did_find, true);
   TEST_EQ(source_id, 1)
 
   // iterator
   did_insert = manager.insert(binary_2, changes, source_id);
   TEST_EQ(source_id, 2);
-  did_insert = manager.insert(binary_1, changes, source_id);
+  did_insert = manager.insert(binary_01, changes, source_id);
   TEST_EQ(source_id, 3);
   file_binary_hash = manager.first_source();
-  TEST_EQ(file_binary_hash, binary_0);
+  TEST_EQ(file_binary_hash, binary_00);
   file_binary_hash = manager.next_source(file_binary_hash);
-  TEST_EQ(file_binary_hash, binary_1);
+  TEST_EQ(file_binary_hash, binary_01);
   file_binary_hash = manager.next_source(file_binary_hash);
   TEST_EQ(file_binary_hash, binary_2);
   file_binary_hash = manager.next_source(file_binary_hash);
@@ -452,7 +369,6 @@ int main(int argc, char* argv[]) {
   lmdb_hash_manager_create();
   lmdb_hash_manager_write();
   lmdb_hash_manager_read();
-  lmdb_hash_manager_settings();
   lmdb_hash_manager_count();
 
   // source ID manager

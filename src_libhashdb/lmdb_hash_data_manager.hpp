@@ -25,14 +25,14 @@
  *
  * Type 1: only one entry for this hash:
  *         source_id, entropy, block_label, 2-byte sub_count up to
- *         65535, do not wrap, 2-byte buffer 0x0000 to allow transition
- *         to Type 2.
+ *         65535, clip, do not wrap, up to 2-byte buffer 0x0000 to allow
+ *         transition to Type 2.
  *
  * Type 2: first line of multi-entry hash:
- *         NULL, entropy, block_label, 4-byte count, do not wrap.
+ *         NULL, entropy, block_label, 4-byte count, clip, do not wrap.
  *
  * Type 3: remaining lines of multi-entry hash:
- *         source_id, 2-byte sub_count up to 65535, do not wrap.
+ *         source_id, 2-byte sub_count up to 65535, clip, do not wrap.
  *
  * NOTES:
  *   * Source ID must be > 0 because this field also distinguishes between

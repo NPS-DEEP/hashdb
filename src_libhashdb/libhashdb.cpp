@@ -138,19 +138,6 @@ namespace hashdb {
     delete source_names;
   }
 
-  // helper: read settings, report and fail on error
-  static hashdb::settings_t private_read_settings(
-                                       const std::string& hashdb_dir) {
-    hashdb::settings_t settings;
-    std::string error_message = hashdb::read_settings(hashdb_dir, settings);
-    if (error_message.size() != 0) {
-      std::cerr << "Error: hashdb settings file not read:\n"
-                << error_message << "\nAborting.\n";
-      exit(1);
-    }
-    return settings;
-  }
-
   static uint32_t calculate_crc(
                        const hashdb::source_sub_counts_t& source_sub_counts) {
 
@@ -213,8 +200,7 @@ namespace hashdb {
 
     // create new LMDB stores
     lmdb_hash_data_manager_t(hashdb_dir, RW_NEW);
-    lmdb_hash_manager_t(hashdb_dir, RW_NEW,
-                  settings.hash_prefix_bits, settings.hash_suffix_bytes);
+    lmdb_hash_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_data_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_id_manager_t(hashdb_dir, RW_NEW);
     lmdb_source_name_manager_t(hashdb_dir, RW_NEW);
@@ -242,17 +228,13 @@ namespace hashdb {
   // ************************************************************
   settings_t::settings_t() :
          settings_version(settings_t::CURRENT_SETTINGS_VERSION),
-         block_size(512),
-         hash_prefix_bits(28),   // for 2^28 prefix possibilities
-         hash_suffix_bytes(3) {  // for 2^(3*8) suffix possibilities
+         block_size(512) {
   }
 
   std::string settings_t::settings_string() const {
     std::stringstream ss;
     ss << "{\"settings_version\":" << settings_version
        << ", \"block_size\":" << block_size
-       << ", \"hash_prefix_bits\":" << hash_prefix_bits
-       << ", \"hash_suffix_bytes\":" << hash_suffix_bytes
        << "}";
     return ss.str();
   }
@@ -273,14 +255,10 @@ namespace hashdb {
           logger(new logger_t(hashdb_dir, command_string)),
           changes(new hashdb::lmdb_changes_t) {
 
-    // read settings
-    hashdb::settings_t settings = private_read_settings(hashdb_dir);
-
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
                                                           RW_MODIFY);
-    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY,
-            settings.hash_prefix_bits, settings.hash_suffix_bytes);
+    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, RW_MODIFY);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
                                                               RW_MODIFY);
     lmdb_source_id_manager = new lmdb_source_id_manager_t(hashdb_dir,
@@ -624,14 +602,10 @@ namespace hashdb {
           hashes(new locked_member_t),
           sources(new locked_member_t) {
 
-    // read settings
-    hashdb::settings_t settings = private_read_settings(hashdb_dir);
-
     // open managers
     lmdb_hash_data_manager = new lmdb_hash_data_manager_t(hashdb_dir,
                                                           READ_ONLY);
-    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY,
-           settings.hash_prefix_bits, settings.hash_suffix_bytes);
+    lmdb_hash_manager = new lmdb_hash_manager_t(hashdb_dir, READ_ONLY);
     lmdb_source_data_manager = new lmdb_source_data_manager_t(hashdb_dir,
                                                               READ_ONLY);
     lmdb_source_id_manager = new lmdb_source_id_manager_t(hashdb_dir,

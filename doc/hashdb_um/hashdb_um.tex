@@ -576,20 +576,14 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 
 \subsection{Database Settings}
 \label{DBSettings}
-Function and performance of a \hdb database is set using configurable settings:
+The following database settings are available:
 
 \begin{itemize}
-\item \textbf{Byte alignment}\\
-Byte alignment is an optimization parameter created to help reduce the size of the database. To be optimal, this value should be large, but it must be divisible by the step size used when importing hashes. If you only scan storage devices, use the sector size of the storage device since this is the smallest value that data in storage devices can align to, specifically, 512.
+\item \textbf{Settings Version}\\
+This hardcoded value identifies the database version.
 
 \item \textbf{Block size}\\
-The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512.
-
-\item \textbf{Hash prefix bits}\\
-The number of bits of the hash prefix to use as the key in the store. The idea is to select a value given the size of the database so that the average number of hashes with this prefix is slightly greater than 0, for example 20. For example if you expect 5 billion hashes, you might select 28 because $5/2^{28}=18.6$, which is near 20.
-
-\item \textbf{Hash suffix bytes}\\
-The number of bytes of the hash suffix to store in the set of values of hash suffixes for this hash key. The idea is to store as few bytes as possible while minimizing false positives. For example if you expect 5 billion hashes, you might select 28 prefix bits and 3 suffix bytes because $5 / 2^{((28) + 8*(3))} = 5 / 2^{52} = 0.00011\%$ false positive rate, about 1 in 1 million.
+The size of data blocks the database expects to store. Block hashes are calculated from data of this size. The default is 512. \hdb does not enforce correct block size when importing using the \verb+import+ and \verb+import_tab+ commands.
 \end{itemize}
 
 \subsection{Maintaining Database Integrity}

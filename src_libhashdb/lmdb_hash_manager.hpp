@@ -78,16 +78,15 @@ for i in range(1500):
 
 namespace hashdb {
 
-static uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
+static const uint8_t masks[8] = {0xff,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe};
+
+static const size_t num_prefix_bytes = 7;
 
 class lmdb_hash_manager_t {
 
   private:
   const std::string hashdb_dir;
   const hashdb::file_mode_type_t file_mode;
-  const size_t num_prefix_bytes;
-  const uint8_t prefix_mask;
-  const size_t num_suffix_bytes;
   MDB_env* env;
 #ifdef HAVE_PTHREAD
   mutable pthread_mutex_t M;                  // mutext
@@ -125,25 +124,13 @@ class lmdb_hash_manager_t {
 
   public:
   lmdb_hash_manager_t(const std::string& p_hashdb_dir,
-                      const hashdb::file_mode_type_t p_file_mode,
-                      const uint32_t p_hash_prefix_bits,
-                      const uint32_t p_hash_suffix_bytes) :
-       hashdb_dir(p_hashdb_dir),
-       file_mode(p_file_mode),
-       num_prefix_bytes((p_hash_prefix_bits + 7) / 8),
-       prefix_mask(masks[p_hash_prefix_bits % 8]),
-       num_suffix_bytes(p_hash_suffix_bytes),
-       env(lmdb_helper::open_env(
+                      const hashdb::file_mode_type_t p_file_mode) :
+          hashdb_dir(p_hashdb_dir),
+          file_mode(p_file_mode),
+          env(lmdb_helper::open_env(
                            hashdb_dir + "/lmdb_hash_store", file_mode)),
-       M() {
-
+          M() {
     MUTEX_INIT(&M);
-
-    // require valid parameters
-    if (num_prefix_bytes == 0) {
-      std::cerr << "invalid hash store configuration\n";
-      assert(0);
-    }
   }
 
   ~lmdb_hash_manager_t() {
@@ -166,7 +153,7 @@ class lmdb_hash_manager_t {
     // make key and data from binary_hash and count
     // ************************************************************
     uint8_t key[num_prefix_bytes];
-    uint8_t data[num_suffix_bytes + 1];  // allow 1 byte for count_encoding
+    uint8_t data[1];  // 1 byte for count_encoding
 
     size_t hash_size = binary_hash.size();
 
@@ -175,21 +162,8 @@ class lmdb_hash_manager_t {
               (hash_size > num_prefix_bytes) ? num_prefix_bytes : hash_size;
     memcpy(key, binary_hash.c_str(), prefix_size);
 
-    // zero out bits at the end as needed using prefix_mask
-    key[prefix_size - 1] &= prefix_mask;
-
     // set data
-    if (hash_size < num_suffix_bytes) {
-      // short so use entire hash in aligned encoding
-      memset(data, 0, num_suffix_bytes);
-      memcpy(data, binary_hash.c_str(), hash_size);
-    } else {
-      // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size - num_suffix_bytes), num_suffix_bytes);
-    }
-
-    // append count encoding to data
-    data[num_suffix_bytes] = count_to_byte(count);
+    data[0] = count_to_byte(count);
 
     // ************************************************************
     // insert
@@ -216,7 +190,7 @@ class lmdb_hash_manager_t {
     if (rc == MDB_NOTFOUND) {
 
       // set context data
-      context.data.mv_size = num_suffix_bytes + 1;
+      context.data.mv_size = 1;
       context.data.mv_data = data;
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager insert not found key", context.key);
@@ -233,10 +207,9 @@ print_mdb_val("hash_manager insert not found data", context.data);
         assert(0);
       }
 
-      // hash inserted
+      // new hash inserted
       context.close();
-      ++changes.hash_prefix_inserted;
-      ++changes.hash_suffix_inserted;
+      ++changes.hash_inserted;
       MUTEX_UNLOCK(&M);
       return;
 
@@ -244,89 +217,44 @@ print_mdb_val("hash_manager insert not found data", context.data);
     } else if (rc == 0) {
 
       // validate data size
-      if (context.data.mv_size % (num_suffix_bytes +1) != 0) {
+      if (context.data.mv_size != 1) {
         std::cerr << "corrupted DB\n";
         assert(0);
       }
 
-      // look for duplicate suffix
+      // maybe update count
       uint8_t* const p = static_cast<uint8_t*>(context.data.mv_data);
-      for (size_t i = 0; i < context.data.mv_size;
-                                   i += (num_suffix_bytes + 1)) {
-        bool match = true;
-        for (size_t j = 0; j < num_suffix_bytes; ++j) {
-          if (p[i + j] != data[j]) {
-            match = false;
-            break;
-          }
-        }
-
-        if (match == true) {
-          // suffix already there
-
-          // maybe update count
-          if (p[i + num_suffix_bytes] != data[num_suffix_bytes]) {
-
-            // write back just to update count
-            p[i + num_suffix_bytes] = data[num_suffix_bytes];
+      if (*data == *p) {
+        // same
+        ++changes.hash_count_not_changed;
+      } else {
+        // write back just to update count
+        *p = *data;
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager insert update count key", context.key);
 print_mdb_val("hash_manager insert update count data", context.data);
 #endif
-            rc = mdb_put(context.txn, context.dbi,
-                           &context.key, &context.data, MDB_NODUPDATA);
-
-            // write must work
-            if (rc != 0) {
-              std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-              assert(0);
-            }
-
-            ++changes.hash_count_changed;
-          } else {
-            ++changes.hash_not_changed;
-          }
-
-          // done because suffix matched
-          context.close();
-          MUTEX_UNLOCK(&M);
-          return;
-        }
-      }
-
-      // here so there was no match so append and write
-
-      // prepare new data
-      size_t new_size = context.data.mv_size + num_suffix_bytes + 1;
-      uint8_t* new_data = new uint8_t[new_size]();
-      memcpy(new_data, context.data.mv_data, context.data.mv_size);
-      memcpy(new_data + context.data.mv_size, data, num_suffix_bytes + 1);
-
-      // write new data
-      context.data.mv_size = new_size;
-      context.data.mv_data = new_data;
-#ifdef DEBUG_LMDB_HASH_MANAGER_HPP
-print_mdb_val("hash_manager insert append key", context.key);
-print_mdb_val("hash_manager insert append data", context.data);
-#endif
-      rc = mdb_put(context.txn, context.dbi,
+        rc = mdb_put(context.txn, context.dbi,
                      &context.key, &context.data, MDB_NODUPDATA);
 
-      // release new_data resource
-      delete[] new_data;
+        // write must work
+        if (rc != 0) {
+          std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+          assert(0);
+        }
 
-      // write must work
-      if (rc != 0) {
-        std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
-        std::cerr << "data size: " << context.data.mv_size << "\n";
-        assert(0);
+        ++changes.hash_count_changed;
       }
 
-      // hash suffix inserted
+      // done because suffix matched
       context.close();
-      ++changes.hash_suffix_inserted;
       MUTEX_UNLOCK(&M);
       return;
+    } else {
+
+      // invalid rc
+      std::cerr << "LMDB error: " << mdb_strerror(rc) << "\n";
+      assert(0);
     }
   }
 
@@ -344,29 +272,13 @@ print_mdb_val("hash_manager insert append data", context.data);
     // ************************************************************
     // make key and data from binary_hash
     // ************************************************************
-    uint8_t key[num_prefix_bytes];
-    uint8_t data[num_suffix_bytes];
-
     size_t hash_size = binary_hash.size();
+    uint8_t key[num_prefix_bytes];
 
     // set key
     size_t prefix_size =
               (hash_size > num_prefix_bytes) ? num_prefix_bytes : hash_size;
     memcpy(key, binary_hash.c_str(), prefix_size);
-
-    // zero out bits at the end as needed using prefix_mask
-    key[prefix_size - 1] &= prefix_mask;
-
-    // set hash suffix portion of data
-    if (hash_size < num_suffix_bytes) {
-      // short so use entire hash in aligned encoding
-      memset(data, 0, num_suffix_bytes);
-      memcpy(data, binary_hash.c_str(), hash_size);
-    } else {
-      // use right side of hash
-      memcpy(data, binary_hash.c_str() + (hash_size - num_suffix_bytes),
-              num_suffix_bytes);
-    }
 
     // ************************************************************
     // find
@@ -394,41 +306,23 @@ print_mdb_val("hash_manager find look for key", context.key);
       return 0;
 
     } else if (rc == 0) {
-      // prefix present, so look for a match
+      // prefix present, so return count
 #ifdef DEBUG_LMDB_HASH_MANAGER_HPP
 print_mdb_val("hash_manager find key", context.key);
 print_mdb_val("hash_manager find data", context.data);
 #endif
 
       // validate data size
-      if (context.data.mv_size % (num_suffix_bytes +1) != 0) {
+      if (context.data.mv_size != 1) {
         std::cerr << "corrupted DB\n";
         assert(0);
       }
 
-      // look for duplicate suffix
+      // extract approximate count
       uint8_t* const p = static_cast<uint8_t*>(context.data.mv_data);
-      for (size_t i = 0; i < context.data.mv_size;
-                                   i += (num_suffix_bytes + 1)) {
-        bool match = true;
-        for (size_t j = 0; j < num_suffix_bytes; ++j) {
-          if (p[i + j] != data[j]) {
-            match = false;
-            break;
-          }
-        }
-
-        if (match == true) {
-          // extract approximate count then close context
-          size_t approximate_count = byte_to_count(p[i + num_suffix_bytes]);
-          context.close();
-          return approximate_count;
-        }
-      }
-
-      // here, so no suffix match
+      size_t approximate_count = byte_to_count(p[0]);
       context.close();
-      return 0;
+      return approximate_count;
 
     } else {
       // invalid rc

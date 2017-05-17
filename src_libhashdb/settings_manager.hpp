@@ -89,17 +89,11 @@ namespace hashdb {
     if (document.HasMember("settings_version")
         && document["settings_version"].IsUint64()
         && document.HasMember("block_size")
-        && document["block_size"].IsUint64()
-        && document.HasMember("hash_prefix_bits")
-        && document["hash_prefix_bits"].IsUint64()
-        && document.HasMember("hash_suffix_bytes")
-        && document["hash_suffix_bytes"].IsUint64()) {
+        && document["block_size"].IsUint64()) {
 
       // parse the values
       settings.settings_version = document["settings_version"].GetUint64();
       settings.block_size = document["block_size"].GetUint64();
-      settings.hash_prefix_bits = document["hash_prefix_bits"].GetUint64();
-      settings.hash_suffix_bytes = document["hash_suffix_bytes"].GetUint64();
 
     } else {
       return "Missing JSON settings in settings file at path '"
