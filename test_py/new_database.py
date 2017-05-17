@@ -14,12 +14,12 @@ def test_basic_settings():
     h.rm_tempdir("temp_1.hdb")
 
     # create new DB
-    h.hashdb(["create", "-b4", "-a2", "-m500:20", "-t30:10", "temp_1.hdb"])
+    h.hashdb(["create", "-b4", "temp_1.hdb"])
 
     # validate settings parameters
     lines = h.read_file(settings1)
     h.lines_equals(lines, [
-'{"settings_version":3, "byte_alignment":2, "block_size":4, "max_count":500, "max_sub_count":20, "hash_prefix_bits":30, "hash_suffix_bytes":10}'
+'{"settings_version":4, "block_size":4}'
 
 ])
 

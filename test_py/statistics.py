@@ -7,10 +7,10 @@ import helpers as H
 def test_size():
     # hash stores
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0011223344556677", "source_offsets":["0000000000000000", 1, [0]]}',
-'{"block_hash":"00112233556677", "source_offsets":["0000000000000000", 1, [512]]}'])
+'{"block_hash":"0011223344556677", "source_sub_counts":["0000000000000000", 1]}',
+'{"block_hash":"00112233556677", "source_sub_counts":["0000000000000000", 1]}'])
     expected_answer = [
-'{"hash_data_store":2, "hash_store":1, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
+'{"hash_data_store":2, "hash_store":2, "source_data_store":1, "source_id_store":1, "source_name_store":0}',
 '']
     returned_answer = H.hashdb(["size", "temp_1.hdb"])
     H.lines_equals(expected_answer, returned_answer)
@@ -55,9 +55,9 @@ def test_sources():
 
 def test_histogram():
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offsets":[]}',
-'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
-'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
+'{"block_hash":"0000000000000000", "source_sub_counts":[]}',
+'{"block_hash":"1111111111111111", "source_sub_counts":["0000000000000000", 1]}',
+'{"block_hash":"2222222222222222", "source_sub_counts":["0000000000000000", 2]}'])
 
     returned_answer = H.hashdb(["histogram", "temp_1.hdb"])
     H.lines_equals(returned_answer, [
@@ -74,9 +74,9 @@ def test_duplicates():
     # hash 1... has one source with one pair.
     # hash 2... has one source with two pairs.
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offsets":[]}',
-'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
-'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
+'{"block_hash":"0000000000000000", "source_sub_counts":[]}',
+'{"block_hash":"1111111111111111", "source_sub_counts":["0000000000000000", 1]}',
+'{"block_hash":"2222222222222222", "source_sub_counts":["0000000000000000", 2]}'])
 
     # zero
     returned_answer = H.hashdb(["duplicates", "temp_1.hdb", "0"])
@@ -92,7 +92,7 @@ def test_duplicates():
     H.lines_equals(returned_answer, [
 '# command: ',
 '# hashdb-Version: ',
-'1111111111111111	{"block_hash":"1111111111111111","k_entropy":0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",1,[0]]}',
+'1111111111111111	{"block_hash":"1111111111111111","k_entropy":0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_sub_counts":["0000000000000000",1]}',
 '# Processing 2 of 2 completed.',
 ''])
 
@@ -101,7 +101,7 @@ def test_duplicates():
     H.lines_equals(returned_answer, [
 '# command: ',
 '# hashdb-Version: ',
-'2222222222222222	{"block_hash":"2222222222222222","k_entropy":0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",2,[0,512]]}',
+'2222222222222222	{"block_hash":"2222222222222222","k_entropy":0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_sub_counts":["0000000000000000",2]}',
 '# Processing 2 of 2 completed.',
 ''])
 
@@ -117,9 +117,9 @@ def test_duplicates():
 def test_hash_table():
     # note that the first hash doesn't go in at all, next goes in once, last goes in twice.
     H.make_hashdb("temp_1.hdb", [
-'{"block_hash":"0000000000000000", "source_offsets":[]}',
-'{"block_hash":"1111111111111111", "source_offsets":["0000000000000000", 1, [0]]}',
-'{"block_hash":"2222222222222222", "source_offsets":["0000000000000000", 2, [0,512]]}'])
+'{"block_hash":"0000000000000000", "source_sub_counts":[]}',
+'{"block_hash":"1111111111111111", "source_sub_counts":["0000000000000000", 1]}',
+'{"block_hash":"2222222222222222", "source_sub_counts":["0000000000000000", 2]}'])
 
     # no match
     returned_answer = H.hashdb(["hash_table", "temp_1.hdb", "0011223344556677"])
@@ -132,8 +132,8 @@ def test_hash_table():
     H.lines_equals(returned_answer, [
 '# command: ',
 '# hashdb-Version: ',
-'1111111111111111	{"block_hash":"1111111111111111","k_entropy":0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["0000000000000000",1,[0]]}',
-'2222222222222222	{"block_hash":"2222222222222222","k_entropy":0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[],"source_offsets":["0000000000000000",2,[0,512]]}',
+'1111111111111111	{"block_hash":"1111111111111111","k_entropy":0,"block_label":"","count":1,"source_list_id":1696784233,"sources":[{"file_hash":"0000000000000000","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_sub_counts":["0000000000000000",1]}',
+'2222222222222222	{"block_hash":"2222222222222222","k_entropy":0,"block_label":"","count":2,"source_list_id":1696784233,"sources":[],"source_sub_counts":["0000000000000000",2]}',
 '# Processing 2 of 2 completed.',
 ''])
 

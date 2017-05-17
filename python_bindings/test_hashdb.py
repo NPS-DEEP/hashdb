@@ -98,8 +98,8 @@ import_manager = hashdb.import_manager_t("temp_1.hdb", "insert test data")
 import_manager.insert_source_name("tttttttt", "rn1", "fn1")
 import_manager.insert_source_name("tttttttt", "rn2", "fn2")
 import_manager.insert_source_data("tttttttt", 100, "ft1", 11, 1)
-import_manager.insert_hash("vvvvvvvv", 8000, "a_blocklabel","wwwwwwww", 512)
-import_manager.import_json('{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","source_offsets":["7373737373737373",1,[512]]}')
+import_manager.insert_hash("vvvvvvvv", 8000, "a_blocklabel","wwwwwwww")
+import_manager.import_json('{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","source_sub_counts":["7373737373737373",1]}')
 import_manager.import_json('"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]')
 bool_equals(import_manager.has_source("tttttttt"), True)
 first_binary_source = import_manager.first_source()
@@ -117,11 +117,11 @@ import_manager = None
 scan_manager = hashdb.scan_manager_t("temp_1.hdb")
 expanded_hash = scan_manager.find_hash_json(hashdb.EXPANDED_OPTIMIZED, "hhhhhhhh")
 str_equals(expanded_hash,
-'{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","count":1,"source_list_id":1268430100,"sources":[{"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["7373737373737373",1,[512]]}'
+'{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","count":1,"source_list_id":1268430100,"sources":[{"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_sub_counts":["7373737373737373",1]}'
 )
 
 json_hash_string = scan_manager.export_hash_json("hhhhhhhh")
-str_equals(json_hash_string, '{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","source_offsets":["7373737373737373",1,[512]]}')
+str_equals(json_hash_string, '{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","source_sub_counts":["7373737373737373",1]}')
 
 int_equals(scan_manager.find_hash_count("hhhhhhhh"), 1)
 
@@ -168,13 +168,8 @@ def temp_out_equals(a):
 
 
 # Settings
-settings.byte_alignment = 1
-settings.block_size = 2
-settings.max_count = 3
-settings.max_sub_count = 4
-settings.hash_prefix_bits = 5
-settings.hash_suffix_bytes = 6
-str_equals(settings.settings_string(), '{"settings_version":3, "byte_alignment":1, "block_size":2, "max_count":3, "max_sub_count":4, "hash_prefix_bits":5, "hash_suffix_bytes":6}')
+settings.block_size = 1
+str_equals(settings.settings_string(), '{"settings_version":4, "block_size":1}')
 
 # Timestamp
 ts = hashdb.timestamp_t()
@@ -203,14 +198,14 @@ scan_stream.put(in_bytes_a)  # check that the unfound value does not get in the 
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
 scanned = read_scan_stream(scan_stream)
-str_equals(scanned, 'hhhhhhhh\n\x00iiiiiiiiii\x20\x01\x00\x00{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","count":1,"source_list_id":1268430100,"sources":[{"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_offsets":["7373737373737373",1,[512]]}')
-int_equals(len(scanned), 312)
+str_equals(scanned, 'hhhhhhhh\n\x00iiiiiiiiii\x1d\x01\x00\x00{"block_hash":"6868686868686868","k_entropy":2000,"block_label":"blocklabel","count":1,"source_list_id":1268430100,"sources":[{"file_hash":"7373737373737373","filesize":0,"file_type":"","zero_count":0,"nonprobative_count":0,"name_pairs":[]}],"source_sub_counts":["7373737373737373",1]}')
+int_equals(len(scanned), 309)
 scanned = read_scan_stream(scan_stream)
-int_equals(len(scanned), 312)
+int_equals(len(scanned), 309)
 bool_equals(scan_stream.empty(), True)
 scan_stream.put(in_bytes_h)  # check second put
 scanned = read_scan_stream(scan_stream)
-int_equals(len(scanned), 312)
+int_equals(len(scanned), 309)
 
 # can check by hand: add data to verify warning that stream is not empty
 #scan_stream.put(in_bytes_h)
@@ -222,8 +217,8 @@ scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.EXPANDED_OPTIMIZED)
 scan_stream.put(in_bytes_h)
 scan_stream.put(in_bytes_h)
 scanned1 = read_scan_stream(scan_stream) # 57 can come up first
-scanned2 = read_scan_stream(scan_stream) # 312 can come up second
-int_equals(len(scanned1) + len(scanned2), 312 + 57)
+scanned2 = read_scan_stream(scan_stream) # 309 can come up second
+int_equals(len(scanned1) + len(scanned2), 309 + 57)
 
 # scan_stream COUNT
 scan_stream = hashdb.scan_stream_t(scan_manager, 8, hashdb.COUNT)
