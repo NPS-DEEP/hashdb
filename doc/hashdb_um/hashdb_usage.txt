@@ -1,12 +1,10 @@
-hashdb Version 3.0.0-alpha-9
+hashdb Version 3.1.0
 Usage: hashdb [-h|--help|-h all] [-v|-V|--version]
        hashdb [-h <command>]
        hashdb [options] <command> [<args>]
 
 New Database:
-  create [-b <block size>] [-a <byte alignment>]
-         [-m <max count:max sub-count>]
-         [-t <hash prefix bits:hash suffix bytes>] <hashdb>
+  create [-b <block size>] <hashdb>
 
 Import/Export:
   ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
@@ -40,31 +38,20 @@ Statistics:
   read_media_size <media image>
 
 Performance Analysis:
-  add_random <hashdb> <hex file hash> <count>
-  scan_random <hashdb> <count>
-  add_same <hashdb> <hex file hash> <count>
-  scan_same <hashdb> <count>
+  add_random <hashdb> <count>
+  scan_random [-j e|o|c|a] <hashdb> <count>
+  add_same <hashdb> <count>
+  scan_same [-j e|o|c|a] <hashdb> <count>
   test_scan_stream <hashdb> <count>
 
 New Database:
-create [-b <block size>] [-a <byte alignment>]
-       [-m <max count:max sub-count>]
-       [-t <hash prefix bits:hash suffix bytes>] <hashdb>
+create [-b <block size>] <hashdb>
   Create a new <hashdb> hash database.
 
   Options:
   -b, --block_size=<block size>
     <block size>, in bytes, or use 0 for no restriction
     (default 512)
-  -a, --byte_alignment=<n>
-    <byte_alignment>, in bytes, or 1 for any alignment (default 512)
-  -m, --max_counts=<max count:max sub-count>
-    The maximum number of source file offset references to store for a
-    hash and the maximum number of source file offset references associated
-    with a source to store for a hash (default 100000:50)
-  -t, --tuning=<hash prefix bits:hash suffix bytes>
-    The number of hash prefix bits and suffix bytes to use for
-    optimizing hash storage (default 28:3)
 
   Parameters:
   <hashdb>   the file path to the new hash database to create
@@ -83,8 +70,7 @@ ingest [-r <repository name>] [-w <whitelist.hdb>] [-s <step size>]
     The path to a whitelist hash database.  Hashes matching this database
     will be marked with a whitelist entropy flag.
   -s, --step_size
-    The step size to move along while calculating hashes.  Step size must
-    be divisible by the byte alignment defined in the database.
+    The step size to move along while calculating hashes.
   -x, --disable_processing
     Disable further processing:
       r disables recursively processing embedded data.
@@ -257,8 +243,7 @@ scan_media [-s <step size>] [-j e|o|c|a] [-x <r>] <hashdb> <media image>
 
   Options:
   -s, --step_size
-    The step size to move along while calculating hashes.  Step size must
-    be divisible by the byte alignment defined in the database.
+    The step size to move along while calculating hashes.
   -j, --json_scan_mode
     The JSON scan mode selects optimization and output (default is o):
       e return expanded output.
@@ -340,7 +325,7 @@ read_media_size <media image>
   <media image>  the media image file to print the size of
 
 Performance Analysis:
-add_random <hashdb> <hex file hash> <count>
+add_random <hashdb> <count>
   Add <count> randomly generated hashes into hash database <hashdb>.
   Write performance data in the database's log.txt file.
 
@@ -351,9 +336,8 @@ add_random <hashdb> <hex file hash> <count>
 
   Parameters:
   <hashdb>       the hash database to add randomly generated hashes into
-  <hex file hash>the file hash of the source to print hashes for
   <count>        the number of randomly generated hashes to add
-scan_random <hashdb> <count>
+scan_random [-j e|o|c|a] <hashdb> <count>
   Scan for random hashes in the <hashdb> database.  Write performance
   data in the database's log.txt file.
 
@@ -369,7 +353,7 @@ scan_random <hashdb> <count>
   Parameters:
   <hashdb>       the hash database to scan
   <count>        the number of randomly generated hashes to scan for
-add_same <hashdb> <hex file hash> <count>
+add_same <hashdb> <count>
   Add <count> block hashes of value 0x800000... into hash database <hashdb>.
   Write performance data in the database's log.txt file.
 
@@ -380,9 +364,8 @@ add_same <hashdb> <hex file hash> <count>
 
   Parameters:
   <hashdb>       the hash database to add hashes of the same value into
-  <hex file hash>the file hash of the source to print hashes for
   <count>        the number of hashes of the same value to add
-scan_same <hashdb> <count>
+scan_same [-j e|o|c|a] <hashdb> <count>
   Scan for the same hash value in the <hashdb> database.  Write
   performance data in the database's log.txt file.
 

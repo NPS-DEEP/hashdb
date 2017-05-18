@@ -1490,25 +1490,23 @@ Statistics about hash database changes are reported on the console and to the lo
 \hline
 
 % hash_data
-\verb+hash_data_source_inserted+ &  Number of hash data source entries inserted\\
+\verb+hash_data_inserted+ &  Number of insert operations issued\\
 \hline
-\verb+hash_data_offset_inserted+ &  Number of file offset values actually recorded\\
+\verb+hash_data_merged+ &  Number of merge operations issued and accepted\\
 \hline
-\verb+hash_data_data_changed+ &  Number of hash data records that changed.\\
+\verb+hash_data_merged_same+ &  Number of merge operations issued but ignored because the data is already there\\
 \hline
-\verb+hash_data_duplicate_off+- \verb+set_detected+ &  Number of file offset values already present, should be zero\\
+\verb+hash_data_mismatched_data_+ \verb+detected+ &  Number of insert or merge operations issued where entropy or label data did not match\\
 \hline
-\verb+hash_data_mismatched_sub_+ \verb+count_detected+ &  Number of mismatched sub-count values in merge, should be zero\\
+\verb+hash_data_mismatched_sub_+ \verb+count_detected+ &  Number of merge operations issued where the sub-count value did not match\\
 \hline
 
 % hash
-\verb+hash_prefix_inserted+ &  Number of hash prefix keys inserted\\
+\verb+hash_inserted+ &  Number of new hash values inserted\\
 \hline
-\verb+hash_suffix_inserted+ &  Number of hash suffix values inserted\\
+\verb+hash_count_changed+ &  Number of hash count changes applied\\
 \hline
-\verb+hash_count_changed+ &  Number of hash count changes were applied\\
-\hline
-\verb+hash_not_changed+ &  Number of hash and count values provided but same\\
+\verb+hash_count_not_changed+ &  Number of hash and count changes provided but same\\
 \hline
 
 % source data
@@ -1618,10 +1616,10 @@ Register the repository name, filename pair to the file hash.
 \verb+zero_count, nonprobative_count)+\\
 Set the source parameters for the file hash.
 \item \verb+import_manager.insert_hash(block_hash, k_entropy, block_label, file_hash,+\\
-\verb+sub_count, file_offsets)+\\
+\verb+sub_count)+\\
 Set hash parameters and add source count information for a new hash.
 \item \verb+import_manager.merge_hash(block_hash, k_entropy, block_label, file_hash,+\\
-\verb+sub_count, file_offsets)+\\
+\verb+sub_count)+\\
 C++ only. Set hash parameters and add source count information for a complete set of source information for a hash.
 \item \verb+error_message = import_manager.import_json(json_string)+\\
 Import hash or source, return \verb+error_message+ or "" for no error.
@@ -1715,28 +1713,25 @@ This section provides details of how LMDB data stores are managed within a \hdb 
 \subsection{LMDB Hash Store}
 The \textit{LMDB Hash Store} is a highly compressed optimized store of all the block hashes in the database.  When scanning for a hash, if it is not in this store, then it is not in the database.  Because of the degree of optimization, there can be false positives.  To compensate, when a hash is found in the \textit{LMDB Hash Store}, \hdb reads the \textit{LMDB Hash Data Store} to be sure the hash actually exists.\\
 
-The \textit{LMDB Hash Store} is a hybrid B-Tree and List store:
+The \textit{LMDB Hash Store} is a B-Tree-based store:
 \begin{itemize}
-\item The \verb+key+ portion consists of the first few bits of the hash, with enough bits so that the \verb+value+ portion is not too large.
-\item The \verb+value+ portion consists of a list of the last few bytes of the hash, with enough bytes so that the bits of the hash in the \verb+key+ and the bytes of the hash in the \verb+value+ collectively identify the hash as present with a sufficiently low false positive rate.
+\item The \verb+key+ portion consists of the first 7 bytes of a block hash, in binary.  In a database of one billion hashes, this will result in a false positive rate of about one in 72 million.
+\item The \verb+value+ portion consists of an approximate count encoded in one byte.
 \end{itemize}
 
-The \textit{LMDB Hash Store} uses two tuning parameters, hash prefix bits and hash suffix bytes, to minimize data store size and maximize lookup speed.  These parameters are described in \textbf{\Autoref{DBSettings}}.\\
-
-
 \subsection{LMDB Hash Data Store}
-The \textit{LMDB Hash Data Store} is a store of all hashes and their associated data and source information:
+The \textit{LMDB Hash Data Store} is a multi-map store of all hashes and their associated data and source information:
 
 \begin{itemize}
 \item The \verb+key+ portion consists of a block hash, in binary.
-\item The \verb+value+ portion contains information about the hash, sources, and offsets into the sources where the blocks are identified. Although the total count and the source sub-count of offsets is not bound, no more than 50 actual offsets can be stored per source.  There are three types of value records:
+\item The \verb+value+ portion contains information about the hash, sources, sub-counts, and total counts of identified blocks. This information is encoded within three types of value records:
   \begin{itemize}
   \item \textbf{Type 1} only one entry for this hash:\\
-\verb-source_id, k_entropy, block_label, sub_count, 0+ file_offsets-
+\verb+source_id, k_entropy, block_label, sub_count, 0-2 byte padding+
   \item \textbf{Type 2} first line of multi-entry hash:\\
-\verb-NULL, k_entropy, block_label, count, count_stored-
+\verb+NULL, k_entropy, block_label, count+
   \item \textbf{Type 3} remaining lines of multi-entry hash:\\
-\verb-source_id, sub_count, 0+ file_offsets-
+\verb+source_id, sub_count+
   \end{itemize}
 Fields in the \verb+value+ portion are:
   \begin{itemize}
@@ -1745,13 +1740,10 @@ Fields in the \verb+value+ portion are:
   \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+k_entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
   \item \verb+sub_count+ The number of times this block has been seen in this source. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
   \item \verb+count+ The total number of times this block has been seen in all the sources. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
-  \item \verb-0+ file_offsets- Zero or more file offsets associated with this source. Offsets actually stored depends on \verb+max_count+, \verb+max_sub_count+, and the hardcoded limit of 50 offsets per source. When stored, file offset indexes are stored rather than file offsets in order to save space. These indexes are calculated by dividing file offsets by \verb+byte_alignment+.
   \item \verb+NULL+ A NULL byte distinguishes Type 1 records from Type 2. Note that Type 3 records are distinguished as following Type 1 going forward until the \verb+key+ changes.
-  \item \verb+count_stored+ This field is used internally for efficiently recognizing when \verb+max_count+ has been reached.
+  \item \verb+0-2 byte padding+ Up to 2 NULL bytes of padding so Type 1 can transition to Type 2 without changing size.
   \end{itemize}
 \end{itemize}
-
-The \textit{LMDB Hash Data Store} uses three tuning parameters to minimize data store size: \verb+max_count+, \verb+max_sub_count+, and \verb+block_size+.  These parameters are described in \textbf{\Autoref{DBSettings}}.\\
 
 \subsection{LMDB Source ID Store}
 The \textit{LMDB Source ID Store} maps source file hash values to source IDs.  Although the user never sees source IDs, we use source IDs in the \textit{LMDB Source ID Store}, \textit{LMDB Source Data Store}, and the \textit{LMDB Hash Data Store} because they are significantly shorter than source file hashes.  We wouldn't need source IDs if we didn't make this optimization.
@@ -1791,22 +1783,20 @@ The following changes are logged when a \hdb operation modifies data stores with
 \begin{itemize}
 
 % hash_data
-\item \verb+hash_data_source_inserted+\\
-Incremented once for each source added to a hash. Not incremented when a source for a hash already exists.
-\item \verb+hash_data_offset_inserted+\\
-Incremented once for each file offset value actually recorded. Not incremented when a file offset is not recorded because the count recorded for the hash has reached max count or the sub-count for the hash has reached max sub-count. Note that file offset count and sub-count values are tracked regardless of whether file offset values are actually recorded.
-\item \verb+hash_data_data_changed+\\
-Incremented when the data fields for a hash change. This should never happen unless a custom version of \hdb is built that calculates different data values, specifically, different block labels or entropy algorithm, and is used with a database containing values that were calculated differently.
-\item \verb+hash_data_duplicate_offset_detected+\\
-Incremented when an offset is recorded for a source for a hash more than once. This should never happen. This can happen when API users incorrectly call import manager \verb+insert_hash+ more than once for the same source file offset.
+\item \verb+hash_data_inserted+\\
+Incremented once for each insert operation issued.  All insert operations are accepted.
+\item \verb+hash_data_merged+\\
+Incremented once for each new merge issued.  Not incremented if already there, specifically, if source information is already present for the hash.
+\item \verb+hash_data_merged_same+\\
+Incremented if already there, specifically, if source information is already present for the hash.
+\item \verb+hash_data_mismatched_data_detected+\\
+Incremented when entropy or label information provided when values stored are different.  Values stored are not changed.
 \item \verb+hash_data_mismatched_sub_count_detected+\\
-Incremented when adding a source sub-count when a different source sub-count already exists. This should never happen. This can happen when an offset sub-count for a source is wrong because its import operation did not complete. The increment value is equal to the difference in sub-count values between the disagreeing data.
+Incremented when a merge operation is issued and the sub-count value does not match. The stored sub-count value does not change.
 
 % hash
-\item \verb+hash_prefix_inserted+\\
-Incremented each time a new hash prefix is inserted. Not incremented if the hash prefix already exists.
-\item \verb+hash_suffix_inserted+\\
-Incremented each time a new hash suffix is inserted. Not incremented if the hash suffix already exists.
+\item \verb+hash_inserted+\\
+Incremented each time a new 7-byte hash prefix is inserted. Not incremented if the hash prefix already exists.
 \item \verb+hash_count_changed+\\
 Incremented each time an approximate hash count changes from one value to another. The approximate hash count is encoded in one byte. This encoding changes less frequently as the actual hash count value increases.
 \item \verb+hash_not_changed+\\
@@ -1834,9 +1824,7 @@ Incremented each time a source filename, repository name pair is submitted but n
 \end{itemize}
 
 \section{Alternate Configurations}
-By default, \hdb is compiled to calculate MD5 hashes. \hdb can be recompiled to use other encryption algorithms or even other artifacts:
-
-, please see source code file \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
+By default, \hdb is compiled to calculate MD5 hashes. \hdb can be recompiled to use other encryption algorithms or even other artifacts, please see source code file \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+.
 \begin{itemize}
 \item \textbf{Alternate Hash Algorithm}\\
 \hdb calculates block hashes using OpenSSL. If OpenSSL supports your hash algorithm, replace it with yours.  For example if you want SHA1, replace \verb+EVP_md5()+ with \verb+EVP_sha1()+ in source code file \verb+hashdb/src_libhashdb/hasher/hash_calculator.hpp+ and recompile.
