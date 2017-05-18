@@ -108,6 +108,13 @@ This manual contains example commands that should be typed in by the user. A com
 
 The first character on the line is the terminal prompt, and should not be typed. The black square is used as the standard prompt in this manual, although the prompt shown on a users screen will vary according to the system they are using.\\
 
+\subsection{Changes Over the \hdb v3.0.0 Release}
+\hdb Version 3.1.0 provides a halting bug fix that manifests when building large databases. The halt is a result of heap space exhaustion due to excessive page allocations in LMDB resulting from increasing record sizes on existing records. \hdb v2.0.0 does not increase record size and does not manifest this bug. This bug results in program termination. The fix replaces changed records in-place without changing record size.  To accomplish this, we change the data store as follows:
+\begin{itemize}
+\item \hdb no longer stores source offset values in the hash data store.  These values were used to identify where a block hash is located within a source.  This information may be obtained by reexamining the source file.  As a result of this change, the byte alignment parameter seen when creating a new database is no longer required and is discontinued.
+\item \hdb no longer stores hash suffix values in a list in the hash store.  Instead, the hash prefix is longer and is hard-coded to 7 bytes.  In a database of one billion hashes, this will result in a false positive rate of one in 72 million.  Recall that the hash store is an approximate store and that complete hashes are stored in the hash data store.
+\end{itemize}
+
 \subsection{Changes Over the \hdb v2.0.1 Release}
 \hdb Version 3 provides significant functional and performance improvements over v2.0.1:
 
@@ -149,13 +156,6 @@ The first character on the line is the terminal prompt, and should not be typed.
   \end{itemize}
 \item \hdb can now read media images, scan media images, and ingest sources directly.  \bulk is no longer required to perform these functions.
 \item The build process has been restructured to support parallel build trees (VPATH builds).  The goal is to support compiling to additional targets such as the ARM processor.
-\end{itemize}
-
-\subsection{Changes Over the \hdb v3.0.0 Release}
-\hdb Version 3.1.0 provides a halting bug fix that manifests when building large databases. The halt is a result of heap space exhaustion due to excessive page allocations in LMDB resulting from increasing record sizes on existing records. \hdb v2.0.0 does not increase record size and does not manifest this bug. This bug results in program termination. The fix replaces changed records in-place without changing record size.  To accomplish this, we change the data store as follows:
-\begin{itemize}
-\item \hdb no longer stores source offset values in the hash data store.  These values were used to identify where a block hash is located within a source.  This information may be obtained by reexamining the source file.  As a result of this change, the byte alignment parameter seen when creating a new database is no longer required and is discontinued.
-\item \hdb no longer stores hash suffix values in a list in the hash store.  Instead, the hash prefix is longer and is hard-coded to 7 bytes.  In a database of one billion hashes, this will result in a false positive rate of one in 72 million.  Recall that the hash store is an approximate store and that complete hashes are stored in the hash data store.
 \end{itemize}
 
 \subsection{Licensing}
@@ -326,8 +326,8 @@ With this media and dataset, the first block hash matched is at offset \verb+254
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
 "file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
 ["/home/bdallen/KittyMaterial","/home/bdallen/KittyMaterial/
-HighQuality/DSC00003.JPG"]}],"source_offsets":
-["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
+HighQuality/DSC00003.JPG"]}],"source_sub_counts":
+["1dd00f2e51aeebe7541cea4ade2e20b5",1]}
 \end{Verbatim}
 \endgroup
 
@@ -460,12 +460,11 @@ Data in blocks can be a member of many types of alphabets, for example readable 
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
 \item \textbf{Count}\\
 The count indicates the total number of source offsets matching a given block. High count values are likely to be nonprobative.
-\item \textbf{Source Offsets}\\
-The list of source offset information provides offset information for each source related to the block:
+\item \textbf{Source Sub-counts}\\
+The list of source sub-count information provides information for each source related to the block:
   \begin{itemize}
   \item The \textbf{file hash} of the associated block.
   \item The \textbf{sub-count} of offsets attributed by the given source.
-  \item The list of \textbf{file offsets} where the block is found in the given source. Long lists are truncated to conserve space.
   \end{itemize}
 \end{itemize}
 
@@ -531,8 +530,7 @@ This file contains the settings requested by the user when the block hash databa
 \begingroup
 \footnotesize
 \begin{Verbatim}[fontfamily=courier]
-{"settings_version":3, "byte_alignment":512, "block_size":512,
-"hash_prefix_bits":28, "hash_suffix_bytes":3}
+{"settings_version":3, "block_size":512}
 \end{Verbatim}
 \endgroup
 
@@ -544,29 +542,27 @@ Listing \ref{logfile} shows an example log file containing two entries, one for 
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption=An example \texttt{log.xml} log file showing a database creation entry and a datase ingest entry, label=logfile]
 # command: "hashdb create KittyMaterial.hdb"
-# hashdb version: 3.0.0-alpha-9
+# hashdb version: 3.1.0-alpha1
 # username: bdallen
-# start time 2016-09-08T22:57:49Z
-{"name":"begin","delta":"0.000365","total":"0.000365"}
-{"name":"end","delta":"0.000018","total":"0.000392"}
+# start time 2017-05-18T00:06:54Z
+{"name":"begin","delta":"0.000494","total":"0.000494"}
+{"name":"end","delta":"0.000014","total":"0.000512"}
 # command: "hashdb ingest KittyMaterial.hdb ../KittyMaterial"
-# hashdb version: 3.0.0-alpha-9
+# hashdb version: 3.1.0-alpha1, GIT commit: v3.0.0-9-g17ed5eb-dirty
 # username: bdallen
-# start time 2016-09-08T22:58:07Z
-{"name":"begin","delta":"0.000326","total":"0.000326"}
+# start time 2017-05-18T00:07:13Z
+{"name":"begin","delta":"0.000566","total":"0.000566"}
 # hashdb changes:
-#     hash_data_source_inserted: 401713
-#     hash_data_offset_inserted: 401732
-#     hash_prefix_inserted: 401316
-#     hash_suffix_inserted: 401598
+#     hash_data_inserted: 401732
+#     hash_inserted: 401598
 #     hash_count_changed: 88
-#     hash_not_changed: 46
+#     hash_count_not_changed: 46
 #     source_data_inserted: 88
 #     source_data_changed: 88
 #     source_id_inserted: 88
 #     source_id_already_present: 401820
 #     source_name_inserted: 88
-{"name":"end","delta":"9.397511","total":"9.397846"}
+{"name":"end","delta":"8.453844","total":"8.454414"}
 \end{lstlisting}
 
 
@@ -858,8 +854,8 @@ This command tells \hdb to scan media image \verb+jo-favorites-usb-2009-12-11.E0
 [{"file_hash":"1dd00f2e51aeebe7541cea4ade2e20b5","filesize":1549288,
 "file_type":"","zero_count":0,"nonprobative_count":10,"name_pairs":
 ["/home/bdallen/KittyMaterial","/home/bdallen/KittyMaterial/
-HighQuality/DSC00003.JPG"]}],"source_offsets":
-["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
+HighQuality/DSC00003.JPG"]}],"source_sub_counts":
+["1dd00f2e51aeebe7541cea4ade2e20b5",1]}
 \end{Verbatim}
 \endgroup
 
@@ -1066,8 +1062,6 @@ When importing, the new database of imported hashes is created in the output dir
 \hline
 \verb+hashdb_block_size+ &512 & Block size, in bytes, used to generate hashes.\\
 \hline
-\verb+hashdb_byte_alignment+ &512 & byte alignment, in bytes.  Scans and imports along sector boundaries.\\
-\hline
 \verb+hashdb_step_size+ &512 & step size, in bytes.  Scans and imports along this step value.\\
 \hline
 \verb+hashdb_scan_path+ & & The file path to a hash database to scan against.  Valid only in scan mode. No default provided. Value must be specified if in scan mode.\\
@@ -1212,7 +1206,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
   "block_hash":"1d7379fd4d5cf676a9d4de1e48337e71",
   "k_entropy":4880,
   "block_label":"",
-  "source_offsets":["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]}
+  "source_sub_counts":["1dd00f2e51aeebe7541cea4ade2e20b5",1]}
 }
 \end{lstlisting}
 
@@ -1231,7 +1225,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
-\verb+source_offsets+ & An array of source offset information consisting of triplets of source hash, sub-count, and any recorded offsets for each matching source\\
+\verb+source_sub_counts+ & An array of source offset information consisting of pairs of source hash and source sub-count values for each matching source\\
 \hline
 \end{tabular}
 \end{table}
@@ -1261,7 +1255,7 @@ The returned JSON data contains all the information about a matched hash and the
       "/home/bdallen/KittyMaterial",
       "/home/bdallen/KittyMaterial/HighQuality/DSC00003.JPG"]
   }],
-  "source_offsets":["1dd00f2e51aeebe7541cea4ade2e20b5",1,[0]]
+  "source_sub_counts":["1dd00f2e51aeebe7541cea4ade2e20b5",1]
 }
 \end{lstlisting}
 
@@ -1296,7 +1290,7 @@ The returned JSON data contains all the information about a matched hash and the
 \hline
 \verb+name_pairs+ & An array of repository name, filename pairs associated with a matching source\\
 \hline
-\verb+source_offsets+ & An array of source offset information consisting of triplets of source hash, sub-count, and any recorded offsets for each matching source\\
+\verb+source_sub_counts+ & An array of source offset information consisting of pairs of source hash and source sub-count values for each matching source\\
 \hline
 \end{tabular}
 \end{table}
@@ -1336,8 +1330,8 @@ The scan commands provided by the \hdb tool and the \bulk \hdb scanner print one
 ce_list_id":1193146442,"sources":[{"file_hash":"1dd00f2e51aeeb e7541cea4a
 de2e20b5","filesize":1549288,"file_type":"","zero_count":0,"nonprobative_
 count":10,"name_pairs":["/home/bdallen/KittyMaterial","/home/bdallen/Kitt
-yMaterial/HighQuality/DSC00003.JPG"]}],"source_offsets":["1dd00f2e51aeebe
-7541cea4ade2e20b5",1,[0]]}
+yMaterial/HighQuality/DSC00003.JPG"]}],"source_sub_counts":["1dd00f2e51ae
+ebe7541cea4ade2e20b5",1]}
 \end{lstlisting}
 
 \subsection{Scan Stream Interface Data}
@@ -1383,11 +1377,11 @@ The \hdb \verb+size+ command and \verb+size+ API interface returns size informat
 \lstset{style=customfile}
 \begin{lstlisting}[float, caption={Example JSON output of database size values}, label=JSONSize]
 {
-  "hash_data_store":402221,
-  "hash_store":401653,
-  "source_data_store":101,
-  "source_id_store":101,
-  "source_name_store":101
+  "hash_data_store":401746,
+  "hash_store":401598,
+  "source_data_store":88,
+  "source_id_store":88,
+  "source_name_store":88
 }
 \end{lstlisting}
 
@@ -1475,16 +1469,14 @@ Statistics about hash database changes are reported on the console and to the lo
 # Processing 400000 of ?...
 # Processing 401686 of 401686 completed.
 # hashdb changes:
-#     hash_data_source_inserted: 401713
-#     hash_data_offset_inserted: 401732
-#     hash_prefix_inserted: 401316
-#     hash_suffix_inserted: 401598
-#     hash_count_changed: 88
-#     hash_not_changed: 46
+#     hash_data_merged: 401713
+#     hash_inserted: 401598
+#     hash_count_changed: 69
+#     hash_count_not_changed: 46
 #     source_data_inserted: 88
 #     source_data_changed: 88
 #     source_id_inserted: 88
-#     source_id_already_present: 401820
+#     source_id_already_present: 401801
 #     source_name_inserted: 88
 \end{lstlisting}
 
@@ -1563,8 +1555,8 @@ C++ and Python use the following data type:
 
 Interfaces specific to C++ also use the following data types:
 \begin{itemize}
-\item The \verb+source_offset_t+ class holds offset information for a source, specifically, \verb+file_hash+, \verb+sub_count+, and \verb+std::set<uint64_t> file_offsets+.
-\item \verb+source_offsets_t: typedef set<source_offset_t> source_offsets_t+
+\item The \verb+source_sub_count_t+ class holds offset information for a source, specifically, \verb+file_hash+ and \verb+sub_count+.
+\item \verb+source_sub_counts_t: typedef set<source_sub_count_t> source_sub_counts_t+
 \item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
 \item \verb+source_names_t: typedef set<source_name_t> source_names_t+
 \end{itemize}
@@ -1654,7 +1646,7 @@ To scan for hashes, open a scan manager, for example\\
 \begin{itemize}
 \item \verb+scan_manager = scan_manager_t(hashdb_dir)+\\
 Open the scan manager.
-\item \verb+bool scan_manager.find_hash(block_hash, &k_entropy, &block_label, &count,+ \verb+source_offsets)+\\
+\item \verb+bool scan_manager.find_hash(block_hash, &k_entropy, &block_label, &count,+ \verb+source_sub_counts)+\\
 C++ only. Find hash, obtain fields related to hash on match.
 \item \verb+json_text = scan_manager.export_hash_json(block_hash)+\\
 Export hash information for the given binary hash else "" if not there.
