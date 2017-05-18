@@ -376,7 +376,7 @@ We build a hash database of blacklist data by importing block hashes
 from blacklist files, copying from other hash databases,
 or importing from other sources using data prepared in JSON format.\\
 
-Each block hash in the database contains one or more file offsets for one or more sources indicating a source and location within the source where the hash is located.  If a block is found several times for a source, then several offsets will be recorded for that source. If a block is found in more than one source, then more than one source will contain offset information for each source. Block hashes with many source offsets tend to contain non-probative data.\\
+Each block hash in the database includes a total count value of how many times the block has been identified in sources as well as sub-count values indicating how many times the block has been identified by each contributing source.  If a block is found several times for a source, then several sub-count values will be recorded for that source. Block hashes associated with many sources tend to contain non-probative data.\\
 
 \subsection{Repository Names}
 Blacklist data may come from multiple sources called ``repositories''. \hdb tracks repository names in order to know what categories blacklist data belongs to. When importing into a database, users may provide repository names specific to balcklist categories or cases, or allow \hdb to select default values.  When scanning, hashes may match sources from several repositories.\\
@@ -459,12 +459,12 @@ Data in blocks can be a member of many types of alphabets, for example readable 
 \item \textbf{Block Label}\\
 Block labels may be used to hold information about the nature of the block.  For example it might be used to indicate that the byte values increment, indicating a homogeneous data structure \cite{hashBasedCarving}.
 \item \textbf{Count}\\
-The count indicates the total number of source offsets matching a given block. High count values are likely to be nonprobative.
+The count indicates the total number of times the block has been seen in sources. High count values are likely to be nonprobative.
 \item \textbf{Source Sub-counts}\\
 The list of source sub-count information provides information for each source related to the block:
   \begin{itemize}
   \item The \textbf{file hash} of the associated block.
-  \item The \textbf{sub-count} of offsets attributed by the given source.
+  \item The \textbf{sub-count} of offsets contributed by the given source.
   \end{itemize}
 \end{itemize}
 
@@ -1225,7 +1225,7 @@ Block hash data is identified by the file block hash.  An example block hash lin
 \hline
 \verb+block_label+ & A label describing the type of data within the block. The block label may include information that it matched a whitelist database during import. The entropy and block label fields may be used together to estimate that a block might be nonprobative\\
 \hline
-\verb+source_sub_counts+ & An array of source offset information consisting of pairs of source hash and source sub-count values for each matching source\\
+\verb+source_sub_counts+ & An array of pairs of source hash and source sub-count values for each matching source\\
 \hline
 \end{tabular}
 \end{table}
@@ -1290,7 +1290,7 @@ The returned JSON data contains all the information about a matched hash and the
 \hline
 \verb+name_pairs+ & An array of repository name, filename pairs associated with a matching source\\
 \hline
-\verb+source_sub_counts+ & An array of source offset information consisting of pairs of source hash and source sub-count values for each matching source\\
+\verb+source_sub_counts+ & An array of pairs of source hash and source sub-count values for each matching source\\
 \hline
 \end{tabular}
 \end{table}
@@ -1553,7 +1553,7 @@ C++ and Python use the following data type:
 
 Interfaces specific to C++ also use the following data types:
 \begin{itemize}
-\item The \verb+source_sub_count_t+ class holds offset information for a source, specifically, \verb+file_hash+ and \verb+sub_count+.
+\item The \verb+source_sub_count_t+ class holds \verb+file_hash+ and \verb+sub_count+ information for a source.
 \item \verb+source_sub_counts_t: typedef set<source_sub_count_t> source_sub_counts_t+
 \item \verb+source_name_t: typedef pair<repository_name, fillename> source_name_t+
 \item \verb+source_names_t: typedef set<source_name_t> source_names_t+
@@ -1735,7 +1735,7 @@ The \textit{LMDB Hash Data Store} is a multi-map store of all hashes and their a
   \end{itemize}
 Fields in the \verb+value+ portion are:
   \begin{itemize}
-  \item \verb+source_id+ A source ID integer that maps to a source file hash. Any file offsets in this record relate to this source.
+  \item \verb+source_id+ A source ID integer that maps to a source file hash.
   \item \verb+k_entropy+ The calculated entropy for the block, scaled up by $1,000$.
   \item \verb+block_label+ A label identifying information about the block.  Users may wish to examine \verb+k_entropy+ and \verb+block_label+ together to estimate that a block might be nonprobative.
   \item \verb+sub_count+ The number of times this block has been seen in this source. For Type 1 records, the \verb+sub_count+ is also the \verb+count+.
