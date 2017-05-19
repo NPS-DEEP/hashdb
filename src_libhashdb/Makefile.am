@@ -157,6 +157,7 @@ LIBHASHDB_INCS = \
 	num_cpus.hpp \
 	print_environment.hpp \
 	settings_manager.hpp \
+	source_id_sub_counts.hpp \
 	tprint.cpp \
 	tprint.hpp
 
