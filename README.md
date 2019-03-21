@@ -4,7 +4,6 @@ HASHDB
 
 Welcome to hashdb!
 
-
 hashdb is used for finding blacklist data in raw media
 by using cryptographic hashes calculated from hash blocks.
 
