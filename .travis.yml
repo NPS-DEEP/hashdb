@@ -1,0 +1,77 @@
+
+# This software was developed in whole or in part by employees of the
+# Federal Government in the course of their official duties, and with
+# other Federal assistance. Pursuant to title 17 Section 105 of the
+# United States Code portions of this software authored by Federal
+# employees are not subject to copyright protection within the United
+# States. For portions not authored by Federal employees, the Federal
+# Government has been granted unlimited rights, and no claim to
+# copyright is made. The Federal Government assumes no responsibility
+# whatsoever for its use by other parties, and makes no guarantees,
+# expressed or implied, about its quality, reliability, or any other
+# characteristic.
+#
+# We would appreciate acknowledgement if the software is used.
+
+# travis_terminate command c/o:
+#   https://medium.com/@manjula.cse/how-to-stop-the-execution-of-travis-pipeline-if-script-exits-with-an-error-f0e5a43206bf
+
+dist: xenial
+
+# Ubuntu 16 packages listed in wiki at:
+#   https://github.com/NPS-DEEP/hashdb/wiki/Installing-hashdb
+addons:
+  apt:
+    packages:
+      - autoconf
+      - build-essential
+      - libssl-dev
+      - libtool-bin
+      - python-dev
+      - swig
+      - libewf-dev
+      - libbz2-dev
+      - valgrind
+      - zlib1g-dev
+  brew:
+    packages:
+      - libtool
+      - autoconf
+      - automake
+      - gcc
+      - libewf
+      - bzip2
+      - openssl
+      - valgrind
+
+language: cpp
+
+python: 2.7
+
+matrix:
+  include:
+    - os: linux
+    # libewf's development headers do not appear to be available in
+    # Homebrew, causing the macOS ./configure call to fail on trying to
+    # confirm libewf support.  If libewf headers can be detected,
+    # uncommenting this next line  will trigger builds for macOS.
+    #- os: osx
+
+before_script:
+  - ./bootstrap.sh
+script:
+  - ./configure || travis_terminate 1
+  - make || travis_terminate 1
+  - make check || travis_terminate 1
+  - sudo make install || travis_terminate 1
+  # pushd/popd used here because directory context was found to be
+  # preserved across script lines.
+  - pushd test ; ./memory_analysis.sh || (tail temp_vg.out ; travis_terminate 1) ; popd
+  # Note that, per the description in TESTS, these greps are manual
+  # review.  An automated test might in the future fail on detecting
+  # these strings in the valgrind output.
+  - grep Error test/temp_vg.out || echo "INFO:.travis.yml:No errors found in temp_vg.out." >&2
+  - grep Aborting test/temp_vg.out || echo "INFO:.travis.yml:No aborts found in temp_vg.out." >&2
+  - grep -i --after-context=20 leak test/temp_vg.out
+  - python python_bindings/test_hashdb.py
+  - make distcheck
