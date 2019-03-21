@@ -1,6 +1,9 @@
 HASHDB
 ======
+[![Build Status](https://travis-ci.com/NPS-DEEP/hashdeep.svg?branch=master)](https://travis-ci.com/NPS-DEEP/hashdeep)
+
 Welcome to hashdb!
+
 
 hashdb is used for finding blacklist data in raw media
 by using cryptographic hashes calculated from hash blocks.
