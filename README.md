@@ -1,6 +1,6 @@
 HASHDB
 ======
-[![Build Status](https://travis-ci.com/NPS-DEEP/hashdeep.svg?branch=master)](https://travis-ci.com/NPS-DEEP/hashdeep)
+[![Build Status](https://travis-ci.com/NPS-DEEP/hashdb.svg?branch=master)](https://travis-ci.com/NPS-DEEP/hashdb)
 
 Welcome to hashdb!
 
